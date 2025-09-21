@@ -277,9 +277,8 @@ async def login_user(login_data: UserLogin):
     }
 
 @api_router.get("/user/profile")
-async def get_user_profile(authorization: str = None):
+async def get_user_profile(user: User = Depends(get_current_user)):
     """Get user profile"""
-    user = await get_current_user(authorization)
     return {
         "user_id": user.user_id,
         "full_name": user.full_name,
