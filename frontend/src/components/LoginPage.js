@@ -1,0 +1,172 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Alert, AlertDescription } from './ui/alert';
+import { useAuth } from '../contexts/AuthContext';
+import { Brain, BookOpen, Target, Trophy } from 'lucide-react';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const result = await login(email, password);
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
+    
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-12">
+        <div className="max-w-md text-white">
+          <div className="flex items-center mb-8">
+            <Brain className="h-12 w-12 mr-4" />
+            <h1 className="text-4xl font-bold">Dhruv AI</h1>
+          </div>
+          
+          <p className="text-xl mb-8 text-blue-100">
+            Your unwavering companion for competitive exam success
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex items-center">
+              <BookOpen className="h-6 w-6 mr-3 text-blue-200" />
+              <span className="text-blue-100">Personalized AI Tutoring</span>
+            </div>
+            <div className="flex items-center">
+              <Target className="h-6 w-6 mr-3 text-blue-200" />
+              <span className="text-blue-100">Adaptive Learning Paths</span>
+            </div>
+            <div className="flex items-center">
+              <Trophy className="h-6 w-6 mr-3 text-blue-200" />
+              <span className="text-blue-100">Comprehensive Mock Tests</span>
+            </div>
+          </div>
+
+          <div className="mt-12 p-4 bg-blue-500/30 rounded-lg">
+            <p className="text-sm text-blue-100">
+              "Dhruv AI helped me improve my JEE score by 150 points with personalized doubt resolution and adaptive practice tests."
+            </p>
+            <p className="text-xs mt-2 font-medium">- Priya S., IIT Delhi (2024)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          <Card className="shadow-xl border-0">
+            <CardHeader className="text-center pb-8">
+              <div className="flex justify-center mb-4 lg:hidden">
+                <Brain className="h-10 w-10 text-blue-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Welcome Back
+              </CardTitle>
+              <p className="text-gray-600 mt-2">
+                Sign in to continue your learning journey
+              </p>
+            </CardHeader>
+
+            <CardContent>
+              {error && (
+                <Alert className="mb-6 border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="mt-1"
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="mt-1"
+                    placeholder="Enter your password"
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Signing In...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-gray-600">
+                  Don't have an account?{' '}
+                  <Link 
+                    to="/register" 
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Create Account
+                  </Link>
+                </p>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 mb-2">Trusted by students across India</p>
+                  <div className="flex justify-center space-x-8 text-xs text-gray-400">
+                    <span>JEE • NEET • UPSC</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
