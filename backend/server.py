@@ -370,6 +370,11 @@ async def get_chat_messages(session_id: str, user: User = Depends(get_current_us
         {"session_id": session_id, "user_id": user.user_id}
     ).sort("timestamp", 1).to_list(100)
     
+    # Convert ObjectId to string for JSON serialization
+    for message in messages:
+        if "_id" in message:
+            message["_id"] = str(message["_id"])
+    
     return {"messages": messages}
 
 @api_router.post("/progress/update")
