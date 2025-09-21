@@ -152,7 +152,7 @@ def verify_jwt_token(token: str) -> Dict[str, Any]:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def get_current_user(authorization: str = None):
+async def get_current_user(authorization: str = Header(None)):
     if not authorization or not authorization.startswith('Bearer '):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
     
