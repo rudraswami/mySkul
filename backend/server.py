@@ -368,9 +368,14 @@ async def get_chat_messages(session_id: str, user: User = Depends(get_current_us
     return {"messages": messages}
 
 @api_router.post("/progress/update")
-async def update_progress(progress: StudyProgress, user: User = Depends(get_current_user)):
+async def update_progress(progress_update: StudyProgressUpdate, user: User = Depends(get_current_user)):
     """Update study progress"""
-    progress.user_id = user.user_id
+    
+    # Create full progress object
+    progress = StudyProgress(
+        user_id=user.user_id,
+        **progress_update.dict()
+    )
     
     # Check if progress record exists
     existing = await db.study_progress.find_one({
