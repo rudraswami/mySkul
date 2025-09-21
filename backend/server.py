@@ -410,9 +410,8 @@ async def get_progress_summary(user: User = Depends(get_current_user)):
     return {"progress": progress_summary}
 
 @api_router.get("/dashboard/analytics")
-async def get_dashboard_analytics(authorization: str = None):
+async def get_dashboard_analytics(user: User = Depends(get_current_user)):
     """Get comprehensive analytics for dashboard"""
-    user = await get_current_user(authorization)
     
     # Get recent activity
     recent_progress = await db.study_progress.find(
