@@ -290,9 +290,8 @@ async def get_user_profile(user: User = Depends(get_current_user)):
     }
 
 @api_router.post("/chat/message")
-async def send_chat_message(chat_request: ChatRequest, authorization: str = None):
+async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_current_user)):
     """Send message to AI tutor"""
-    user = await get_current_user(authorization)
     
     # Create or get chat session
     session_id = chat_request.session_id or str(uuid.uuid4())
