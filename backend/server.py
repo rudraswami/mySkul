@@ -384,9 +384,8 @@ async def update_progress(progress: StudyProgress, user: User = Depends(get_curr
     return {"message": "Progress updated successfully"}
 
 @api_router.get("/progress/summary")
-async def get_progress_summary(authorization: str = None):
+async def get_progress_summary(user: User = Depends(get_current_user)):
     """Get user's overall progress summary"""
-    user = await get_current_user(authorization)
     
     # Aggregate progress data
     pipeline = [
