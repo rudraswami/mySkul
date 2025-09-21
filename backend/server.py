@@ -73,6 +73,15 @@ class StudyProgress(BaseModel):
     questions_attempted: int = 0
     questions_correct: int = 0
 
+class StudyProgressUpdate(BaseModel):
+    subject: str
+    chapter: str
+    concept: str
+    mastery_level: float = 0.0  # 0-100%
+    time_spent: int = 0  # minutes
+    questions_attempted: int = 0
+    questions_correct: int = 0
+
 class ChatSession(BaseModel):
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
