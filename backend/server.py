@@ -359,9 +359,8 @@ async def get_chat_messages(session_id: str, user: User = Depends(get_current_us
     return {"messages": messages}
 
 @api_router.post("/progress/update")
-async def update_progress(progress: StudyProgress, authorization: str = None):
+async def update_progress(progress: StudyProgress, user: User = Depends(get_current_user)):
     """Update study progress"""
-    user = await get_current_user(authorization)
     progress.user_id = user.user_id
     
     # Check if progress record exists
