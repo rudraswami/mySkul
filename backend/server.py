@@ -410,6 +410,9 @@ async def get_progress_summary(user: User = Depends(get_current_user)):
             "total_time": {"$sum": "$time_spent"},
             "concepts_studied": {"$sum": 1},
             "questions_attempted": {"$sum": "$questions_attempted"},
+            "questions_correct": {"$sum": "$questions_correct"}
+        }},
+        {"$addFields": {
             "accuracy": {
                 "$cond": {
                     "if": {"$gt": ["$questions_attempted", 0]},
