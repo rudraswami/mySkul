@@ -355,6 +355,11 @@ async def get_chat_sessions(user: User = Depends(get_current_user)):
         {"user_id": user.user_id}
     ).sort("last_updated", -1).to_list(50)
     
+    # Convert ObjectId to string for JSON serialization
+    for session in sessions:
+        if "_id" in session:
+            session["_id"] = str(session["_id"])
+    
     return {"sessions": sessions}
 
 @api_router.get("/chat/{session_id}/messages")
