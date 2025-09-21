@@ -349,9 +349,8 @@ async def get_chat_sessions(user: User = Depends(get_current_user)):
     return {"sessions": sessions}
 
 @api_router.get("/chat/{session_id}/messages")
-async def get_chat_messages(session_id: str, authorization: str = None):
+async def get_chat_messages(session_id: str, user: User = Depends(get_current_user)):
     """Get messages from a chat session"""
-    user = await get_current_user(authorization)
     
     messages = await db.chat_messages.find(
         {"session_id": session_id, "user_id": user.user_id}
