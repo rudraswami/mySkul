@@ -339,9 +339,8 @@ async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_
         raise HTTPException(status_code=500, detail="Failed to process message")
 
 @api_router.get("/chat/sessions")
-async def get_chat_sessions(authorization: str = None):
+async def get_chat_sessions(user: User = Depends(get_current_user)):
     """Get user's chat sessions"""
-    user = await get_current_user(authorization)
     
     sessions = await db.chat_sessions.find(
         {"user_id": user.user_id}
