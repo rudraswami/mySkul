@@ -441,9 +441,8 @@ async def get_dashboard_analytics(user: User = Depends(get_current_user)):
     }
 
 @api_router.post("/doubt/resolve")
-async def resolve_doubt(doubt_query: DoubtQuery, authorization: str = None):
+async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_current_user)):
     """Quick doubt resolution without chat session"""
-    user = await get_current_user(authorization)
     
     try:
         # Create a temporary session for doubt resolution
