@@ -183,6 +183,9 @@
         -working: true
         -agent: "main"
         -comment: "Updated Analytics component to integrate with new performance analytics API, showing real-time data, subject performance, trends, and parent summary information."
+        -working: true
+        -agent: "main"
+        -comment: "AUTHENTICATION ISSUE RESOLVED: Fixed token key mismatch - updated Analytics.js to use correct token key 'dhruv_ai_token' for localStorage access in both loadAnalytics and populateDemoData functions."
 
   - task: "Stress Management UI"
     implemented: true
