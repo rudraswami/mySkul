@@ -755,12 +755,19 @@ export default function MockTests() {
               
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start disabled:opacity-50"
                 onClick={() => generateMockTest('JEE', 'Mixed', 2, 15)}
                 disabled={isGeneratingTest}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                {isGeneratingTest ? 'Generating...' : 'Practice Questions'}
+                {isGeneratingTest ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  'Practice Questions'
+                )}
               </Button>
               
               <Button 
