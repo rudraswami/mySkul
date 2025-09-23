@@ -90,7 +90,7 @@ export default function Analytics() {
 
   const populateDemoData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       const response = await fetch(`${backendUrl}/api/demo/populate-data`, {
         method: 'POST',
         headers: {
