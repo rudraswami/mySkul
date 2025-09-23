@@ -58,6 +58,12 @@ export default function StressManagement() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        alert('Please log in to submit assessment');
+        return;
+      }
+      
       const response = await fetch(`${backendUrl}/api/wellness/stress-assessment`, {
         method: 'POST',
         headers: {
@@ -74,9 +80,17 @@ export default function StressManagement() {
         
         // Reload motivational content after assessment
         loadMotivationalContent();
+        
+        // Success feedback
+        alert(`Assessment completed! Your wellness score: ${data.wellness_score.toFixed(1)}/10`);
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        alert(`Error: ${errorData.detail || 'Failed to submit assessment'}`);
+        console.error('Assessment submission failed:', response.status, errorData);
       }
     } catch (error) {
       console.error('Error submitting assessment:', error);
+      alert('Network error occurred. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
