@@ -68,6 +68,7 @@ function AppContent() {
                 <Route path="/tutor" element={<AITutor />} />
                 <Route path="/tests" element={<MockTests />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/wellness" element={<StressManagement />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </main>
