@@ -711,22 +711,115 @@ Generate {request.num_questions} such questions now."""
         session_id = f"test_gen_{uuid.uuid4()}"
         ai_response, _ = await get_ai_tutor_response(question_prompt, request.subject, session_id)
         
-        # Parse AI response to extract questions (simplified for now)
+        # Parse AI response to extract questions
         questions = []
-        for i in range(request.num_questions):
-            questions.append({
-                "question_id": str(uuid.uuid4()),
-                "question_text": f"Sample {request.subject} question {i+1} for {request.exam_type}",
-                "options": [
-                    "A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"
+        try:
+            # Try to extract JSON from AI response
+            import json
+            import re
+            
+            # Look for JSON array in the AI response
+            json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group()
+                parsed_questions = json.loads(json_str)
+                
+                for i, q in enumerate(parsed_questions[:request.num_questions]):
+                    questions.append({
+                        "question_id": str(uuid.uuid4()),
+                        "question_text": q.get("question_text", f"Question {i+1} for {request.subject}"),
+                        "options": q.get("options", ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"]),
+                        "correct_answer": q.get("correct_answer", "A"),
+                        "explanation": q.get("explanation", "Explanation not provided"),
+                        "chapter": q.get("chapter", f"Chapter {(i % 5) + 1}"),
+                        "difficulty_level": q.get("difficulty_level", difficulty),
+                        "marks": 4,
+                        "negative_marks": 1
+                    })
+            else:
+                # Fallback: Create structured questions if JSON parsing fails
+                raise ValueError("No JSON found in AI response")
+                
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            logger.warning(f"AI JSON parsing failed: {e}. Using fallback question generation.")
+            
+            # Fallback: Generate structured sample questions based on subject and exam type
+            subject_questions = {
+                "Mathematics": [
+                    {
+                        "question_text": f"If f(x) = x³ - 3x² + 2x - 1, find f'(2)",
+                        "options": ["A) 2", "B) 4", "C) 6", "D) 8"],
+                        "correct_answer": "A",
+                        "explanation": "f'(x) = 3x² - 6x + 2, so f'(2) = 3(4) - 6(2) + 2 = 12 - 12 + 2 = 2",
+                        "chapter": "Differential Calculus"
+                    },
+                    {
+                        "question_text": f"The sum of first n natural numbers is n(n+1)/2. Find the sum of first 20 natural numbers",
+                        "options": ["A) 210", "B) 200", "C) 190", "D) 220"],
+                        "correct_answer": "A", 
+                        "explanation": "Using formula: 20(21)/2 = 420/2 = 210",
+                        "chapter": "Sequences and Series"
+                    }
                 ],
-                "correct_answer": "A",
-                "explanation": f"Detailed explanation for question {i+1}",
-                "chapter": f"Chapter {(i % 5) + 1}",
-                "difficulty_level": difficulty,
-                "marks": 4,
-                "negative_marks": 1
-            })
+                "Physics": [
+                    {
+                        "question_text": f"A body falls freely from height h. Its velocity after falling distance h/2 is",
+                        "options": ["A) √(gh)", "B) √(gh/2)", "C) √(2gh)", "D) √(3gh/2)"],
+                        "correct_answer": "A",
+                        "explanation": "Using v² = u² + 2as, where u=0, a=g, s=h/2: v² = 2g(h/2) = gh, so v = √(gh)",
+                        "chapter": "Kinematics"
+                    },
+                    {
+                        "question_text": f"The resistance of a wire is 10Ω. If it is stretched to double its length, new resistance is",
+                        "options": ["A) 20Ω", "B) 40Ω", "C) 5Ω", "D) 10Ω"],
+                        "correct_answer": "B",
+                        "explanation": "R = ρl/A. When length doubles, area becomes half, so R becomes 4 times = 40Ω",
+                        "chapter": "Current Electricity"
+                    }
+                ],
+                "Chemistry": [
+                    {
+                        "question_text": f"The IUPAC name of CH₃-CH(CH₃)-CH₂-CH₃ is",
+                        "options": ["A) 2-methylbutane", "B) 3-methylbutane", "C) Isopentane", "D) 2-methylpropane"],
+                        "correct_answer": "A",
+                        "explanation": "Longest chain has 4 carbons (butane) with methyl group at position 2",
+                        "chapter": "Organic Chemistry"
+                    },
+                    {
+                        "question_text": f"Which element has electronic configuration [Ar] 3d⁵ 4s¹?",
+                        "options": ["A) Mn", "B) Cr", "C) Fe", "D) Co"],
+                        "correct_answer": "B",
+                        "explanation": "Chromium has exceptional configuration due to half-filled d orbital stability",
+                        "chapter": "Atomic Structure"
+                    }
+                ]
+            }
+            
+            # Get subject-specific questions or create generic ones
+            base_questions = subject_questions.get(request.subject, [
+                {
+                    "question_text": f"Sample {request.subject} question for {request.exam_type}",
+                    "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
+                    "correct_answer": "A",
+                    "explanation": "Sample explanation",
+                    "chapter": "General"
+                }
+            ])
+            
+            # Generate required number of questions by cycling through base questions
+            for i in range(request.num_questions):
+                base_q = base_questions[i % len(base_questions)]
+                questions.append({
+                    "question_id": str(uuid.uuid4()),
+                    "question_text": base_q["question_text"],
+                    "options": base_q["options"],
+                    "correct_answer": base_q["correct_answer"],
+                    "explanation": base_q["explanation"],
+                    "chapter": base_q["chapter"],
+                    "difficulty_level": difficulty,
+                    "marks": 4,
+                    "negative_marks": 1
+                })
         
         # Create mock test
         mock_test = MockTest(
