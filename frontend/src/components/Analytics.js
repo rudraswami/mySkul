@@ -28,7 +28,7 @@ export default function Analytics() {
 
   const loadAnalytics = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       const response = await fetch(`${backendUrl}/api/analytics/performance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
