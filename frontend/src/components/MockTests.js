@@ -544,34 +544,54 @@ export default function MockTests() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Strong Area: Mathematics</span>
-                    <span className="font-medium text-green-600">90%</span>
-                  </div>
-                  <Progress value={90} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Needs Work: Physics</span>
-                    <span className="font-medium text-yellow-600">68%</span>
-                  </div>
-                  <Progress value={68} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Time Management</span>
-                    <span className="font-medium text-blue-600">75%</span>
-                  </div>
-                  <Progress value={75} className="h-2" />
-                </div>
+                {analytics?.subject_performance && Object.keys(analytics.subject_performance).length > 0 ? (
+                  Object.entries(analytics.subject_performance).map(([subject, data]) => (
+                    <div key={subject}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">{subject}</span>
+                        <span className={`font-medium ${getScoreColor(data.mastery_avg)}`}>
+                          {data.mastery_avg?.toFixed(0)}%
+                        </span>
+                      </div>
+                      <Progress value={data.mastery_avg || 0} className="h-2" />
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Mathematics</span>
+                        <span className="font-medium text-green-600">90%</span>
+                      </div>
+                      <Progress value={90} className="h-2" />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Physics</span>
+                        <span className="font-medium text-yellow-600">68%</span>
+                      </div>
+                      <Progress value={68} className="h-2" />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Chemistry</span>
+                        <span className="font-medium text-blue-600">75%</span>
+                      </div>
+                      <Progress value={75} className="h-2" />
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  💡 <strong>Tip:</strong> Focus more on Physics concepts. Take chapter-wise tests to improve specific areas.
+                  💡 <strong>Tip:</strong> {
+                    analytics?.areas_for_improvement?.length > 0 
+                      ? `Focus on ${analytics.areas_for_improvement.join(', ')}. Take more practice tests to improve.`
+                      : 'Keep up the great work! Continue practicing to maintain your performance.'
+                  }
                 </p>
               </div>
             </CardContent>
