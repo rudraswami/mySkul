@@ -420,7 +420,14 @@ export default function Analytics() {
                       <p className="text-sm text-gray-600">
                         Recommended: Focus on practice problems and concept review
                       </p>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          alert(`Creating personalized study plan for ${area.topic}. This will include:\n\n• Targeted practice problems\n• Video lessons on core concepts\n• Weekly progress tracking\n• AI-powered doubt resolution\n\nRedirecting to AI Tutor...`);
+                          setTimeout(() => window.location.href = '/tutor', 2000);
+                        }}
+                      >
                         Study Plan
                       </Button>
                     </div>
