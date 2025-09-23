@@ -66,6 +66,10 @@ export default function MockTests() {
         return;
       }
       
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
         method: 'POST',
         headers: {
@@ -78,9 +82,11 @@ export default function MockTests() {
           difficulty: difficulty,
           num_questions: numQuestions
         }),
-        // Add timeout to prevent infinite loading
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: controller.signal
       });
+      
+      // Clear timeout if request completed
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         const testData = await response.json();
