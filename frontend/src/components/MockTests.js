@@ -15,65 +15,265 @@ import {
 
 export default function MockTests() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [mockTests, setMockTests] = useState([]);
+  const [recentResults, setRecentResults] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [activeTest, setActiveTest] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
-  // Sample mock test data
-  const mockTests = [
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${backendUrl}/api/analytics/performance`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data);
+        setRecentResults(data.recent_tests || []);
+      }
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  };
+
+  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25) => {
+    setIsGeneratingTest(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          exam_type: examType,
+          subject: subject,
+          difficulty: difficulty,
+          num_questions: numQuestions
+        })
+      });
+      
+      if (response.ok) {
+        const testData = await response.json();
+        setActiveTest(testData);
+        setTimeRemaining(testData.time_limit * 60); // Convert minutes to seconds
+        setCurrentQuestion(0);
+        setAnswers({});
+        
+        // Start timer
+        const timer = setInterval(() => {
+          setTimeRemaining(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              submitTest();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error generating test:', error);
+    } finally {
+      setIsGeneratingTest(false);
+    }
+  };
+
+  const submitTest = async () => {
+    if (!activeTest) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const timeTaken = (activeTest.time_limit * 60) - timeRemaining;
+      
+      const response = await fetch(`${backendUrl}/api/mock-tests/${activeTest.test_id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          answers: answers,
+          time_taken: timeTaken
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Test completed! Score: ${result.percentage.toFixed(1)}%`);
+        setActiveTest(null);
+        loadAnalytics(); // Refresh analytics
+      }
+    } catch (error) {
+      console.error('Error submitting test:', error);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // If there's an active test, show the test interface
+  if (activeTest) {
+    const question = activeTest.questions[currentQuestion];
+    const isLastQuestion = currentQuestion === activeTest.questions.length - 1;
+
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen">
+        {/* Test Header */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{activeTest.test_name}</h1>
+              <p className="text-gray-600">Question {currentQuestion + 1} of {activeTest.questions.length}</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-red-600">{formatTime(timeRemaining)}</div>
+              <p className="text-sm text-gray-500">Time Remaining</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all" 
+                style={{ width: `${((currentQuestion + 1) / activeTest.questions.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Question Card */}
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-6">{question.question_text}</h2>
+          
+          <div className="space-y-4">
+            {question.options.map((option, index) => (
+              <div 
+                key={index}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  answers[question.question_id] === option.charAt(0) 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setAnswers({...answers, [question.question_id]: option.charAt(0)})}
+              >
+                {option}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="outline"
+              disabled={currentQuestion === 0}
+              onClick={() => setCurrentQuestion(currentQuestion - 1)}
+            >
+              Previous
+            </Button>
+            
+            <div className="space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setAnswers({...answers, [question.question_id]: ''})}
+              >
+                Clear Answer
+              </Button>
+              
+              {isLastQuestion ? (
+                <Button onClick={submitTest} className="bg-green-600 hover:bg-green-700">
+                  Submit Test
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setCurrentQuestion(currentQuestion + 1)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Next Question
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Question Navigation */}
+        <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+          <h3 className="font-semibold mb-4">Question Navigation</h3>
+          <div className="grid grid-cols-10 gap-2">
+            {activeTest.questions.map((_, index) => (
+              <button
+                key={index}
+                className={`w-10 h-10 rounded text-sm font-medium ${
+                  index === currentQuestion
+                    ? 'bg-blue-600 text-white'
+                    : answers[activeTest.questions[index].question_id]
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setCurrentQuestion(index)}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Sample mock test data - will be replaced by API data
+  const sampleTests = [
     {
       id: 1,
       title: 'JEE Main Mathematics - Full Length Test',
+      examType: 'JEE',
+      subject: 'Mathematics',
       duration: '3 hours',
       questions: 75,
       difficulty: 'High',
       completed: false,
       bestScore: null,
-      subjects: ['Mathematics'],
       description: 'Comprehensive test covering all mathematics topics for JEE Main'
     },
     {
       id: 2,
       title: 'Physics Mechanics - Chapter Test',
+      examType: 'JEE', 
+      subject: 'Physics',
       duration: '1.5 hours',
       questions: 30,
       difficulty: 'Medium',
       completed: true,
       bestScore: 85,
-      subjects: ['Physics'],
       description: 'Focus test on mechanics including motion, forces, and energy'
     },
     {
       id: 3,
       title: 'Organic Chemistry - Quick Assessment',
+      examType: 'JEE',
+      subject: 'Chemistry', 
       duration: '45 minutes',
       questions: 20,
       difficulty: 'Easy',
       completed: true,
       bestScore: 92,
-      subjects: ['Chemistry'],
       description: 'Assessment covering basic organic chemistry concepts'
-    }
-  ];
-
-  const recentResults = [
-    {
-      testName: 'Physics Mechanics - Chapter Test',
-      score: 85,
-      date: '2 days ago',
-      rank: 156,
-      totalStudents: 1250
-    },
-    {
-      testName: 'Algebra Fundamentals',
-      score: 78,
-      date: '1 week ago',
-      rank: 89,
-      totalStudents: 890
-    },
-    {
-      testName: 'Organic Chemistry Basics',
-      score: 92,
-      date: '2 weeks ago',
-      rank: 45,
-      totalStudents: 2100
     }
   ];
 
