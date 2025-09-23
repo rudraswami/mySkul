@@ -267,40 +267,66 @@ class DhruvAITester:
     # ============= PHASE 4: ENHANCED FEATURES TESTS =============
 
     def test_generate_mock_test(self):
-        """Test enhanced mock test generation"""
+        """Test enhanced mock test generation with JSON request body"""
         if not self.token:
             print("❌ No token available for mock test generation")
             return False
             
-        # Test with different parameters
+        # Test with different parameters as specified in review request
         test_params = [
             {"exam_type": "JEE", "subject": "Mathematics", "difficulty": 3, "num_questions": 10},
             {"exam_type": "JEE", "subject": "Physics", "difficulty": 4, "num_questions": 5},
-            {"exam_type": "JEE", "subject": "Chemistry", "difficulty": 2, "num_questions": 8}
+            {"exam_type": "JEE", "subject": "Chemistry", "difficulty": 2, "num_questions": 25},
+            {"exam_type": "NEET", "subject": "Mathematics", "difficulty": 1, "num_questions": 5},
+            {"exam_type": "NEET", "subject": "Physics", "difficulty": 5, "num_questions": 10}
         ]
         
         success_count = 0
         self.test_ids = []  # Store test IDs for submission tests
         
         for i, params in enumerate(test_params):
-            print(f"   Testing mock test generation {i+1}/3: {params['subject']} Level {params['difficulty']}")
+            print(f"   Testing mock test generation {i+1}/{len(test_params)}: {params['subject']} Level {params['difficulty']} ({params['num_questions']} questions)")
             
+            # Use JSON body instead of query parameters (as per review request)
             success, response = self.run_test(
-                f"Generate Mock Test - {params['subject']}",
+                f"Generate Mock Test - {params['subject']} L{params['difficulty']}",
                 "POST",
-                f"mock-tests/generate?exam_type={params['exam_type']}&subject={params['subject']}&difficulty={params['difficulty']}&num_questions={params['num_questions']}",
+                "mock-tests/generate",
                 200,
+                data=params,  # Send as JSON body
                 headers={'Authorization': f'Bearer {self.token}'}
             )
             
             if success and 'test_id' in response:
-                self.test_ids.append(response['test_id'])
+                self.test_ids.append({
+                    'test_id': response['test_id'],
+                    'questions': response.get('questions', []),
+                    'subject': params['subject']
+                })
                 success_count += 1
                 print(f"   ✅ Generated test ID: {response['test_id']}")
+                print(f"   Test name: {response.get('test_name', 'N/A')}")
                 print(f"   Questions count: {len(response.get('questions', []))}")
                 print(f"   Total marks: {response.get('total_marks', 0)}")
+                print(f"   Time limit: {response.get('time_limit', 0)} minutes")
+                
+                # Validate response structure as per review request
+                questions = response.get('questions', [])
+                if questions:
+                    sample_question = questions[0]
+                    required_fields = ['question_id', 'question_text', 'options', 'correct_answer', 'explanation', 'chapter']
+                    missing_fields = [field for field in required_fields if field not in sample_question]
+                    if missing_fields:
+                        print(f"   ⚠️  Missing question fields: {missing_fields}")
+                    else:
+                        print(f"   ✅ Question structure validated")
+                        print(f"   Sample question: {sample_question['question_text'][:50]}...")
+                        print(f"   Options count: {len(sample_question.get('options', []))}")
+                        print(f"   Chapter: {sample_question.get('chapter', 'N/A')}")
+            else:
+                print(f"   ❌ Failed to generate test for {params['subject']}")
             
-            time.sleep(2)  # Delay between AI calls
+            time.sleep(3)  # Delay between AI calls
         
         return success_count == len(test_params)
 
