@@ -53,7 +53,12 @@ export default function MockTests() {
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25) => {
     setIsGeneratingTest(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
+      if (!token) {
+        alert('Please log in again to continue');
+        return;
+      }
+      
       const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
         method: 'POST',
         headers: {
