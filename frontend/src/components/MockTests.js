@@ -72,24 +72,29 @@ export default function MockTests() {
 
     const maxRetries = 2;
     let attempts = 0;
-    let controller = null;
 
     while (attempts <= maxRetries) {
       try {
-        // Create new AbortController for each attempt
-        controller = new AbortController();
-        
-        // Set timeout (25 seconds to be safe)
-        const timeoutId = setTimeout(() => {
-          if (controller) {
-            controller.abort();
-          }
-        }, 25000);
-
         // Update retry status
         if (attempts > 0) {
           setRetryStatus(`Retrying... (${attempts + 1}/${maxRetries + 1})`);
         }
+
+        // Create timeout and manual abort signals
+        let timeoutSignal;
+        let controller = new AbortController();
+        
+        // Use modern AbortSignal.timeout if available, fallback for older browsers
+        if (AbortSignal.timeout) {
+          timeoutSignal = AbortSignal.timeout(20000); // 20 seconds
+        } else {
+          // Fallback for older browsers
+          controller = new AbortController();
+          setTimeout(() => controller.abort('timeout'), 20000);
+        }
+        
+        // Combine signals if modern API is available
+        const signal = AbortSignal.timeout && timeoutSignal ? timeoutSignal : controller.signal;
 
         const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
           method: 'POST',
@@ -103,15 +108,13 @@ export default function MockTests() {
             difficulty: difficulty,
             num_questions: numQuestions
           }),
-          signal: controller.signal
+          signal: signal
         });
-
-        clearTimeout(timeoutId);
 
         if (response.ok) {
           const testData = await response.json();
           
-          // Success - clear all error states and set up test
+          // Success - clear all states and set up test
           setIsGeneratingTest(false);
           setGenerationError(null);
           setRetryStatus(null);
@@ -133,7 +136,7 @@ export default function MockTests() {
             });
           }, 1000);
 
-          return; // Success - exit retry loop
+          return; // Success - exit function
         } else {
           // Handle HTTP errors
           let errorMessage = 'Failed to generate test. Please try again.';
@@ -145,54 +148,50 @@ export default function MockTests() {
             // Ignore JSON parsing errors
           }
 
-          if (response.status >= 500) {
-            // Server error - retry if attempts left
+          if (response.status >= 500 && attempts < maxRetries) {
+            // Server error - retry
             attempts++;
-            if (attempts <= maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
-              continue;
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+            continue;
+          } else {
+            // Final error or non-retryable error
+            if (response.status >= 500) {
+              errorMessage = 'Our AI service is temporarily busy. Please try again in a few moments.';
+            } else if (response.status === 401) {
+              errorMessage = 'Please log in again to continue.';
             }
-            errorMessage = 'Our AI service is temporarily busy. Please try again in a few moments.';
-          } else if (response.status === 401) {
-            errorMessage = 'Please log in again to continue.';
+            setGenerationError(errorMessage);
+            break;
           }
-
-          // No more retries or non-retryable error
-          setGenerationError(errorMessage);
-          setRetryStatus(null);
-          break;
         }
       } catch (error) {
         console.error('Mock test generation error:', error);
         
-        if (error.name === 'AbortError') {
-          // Timeout
-          attempts++;
-          if (attempts <= maxRetries) {
+        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+          // Timeout or abort
+          if (attempts < maxRetries) {
+            attempts++;
             await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
             continue;
           }
           setGenerationError('Request timed out. Please check your connection and try again.');
         } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          // Network error
+          // Network error - don't retry
           setGenerationError('Network error. Please check your internet connection.');
-          break;
         } else {
           // Other errors
-          attempts++;
-          if (attempts <= maxRetries) {
+          if (attempts < maxRetries) {
+            attempts++;
             await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
             continue;
           }
           setGenerationError('Failed to generate test. Please try again.');
         }
-        
-        setRetryStatus(null);
         break;
       }
     }
 
-    // Always ensure loading state is cleared
+    // Ensure loading state is always cleared
     setIsGeneratingTest(false);
     setRetryStatus(null);
   };
