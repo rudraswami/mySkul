@@ -109,7 +109,12 @@ export default function MockTests() {
     if (!activeTest) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
+      if (!token) {
+        alert('Please log in again to continue');
+        return;
+      }
+      
       const timeTaken = (activeTest.time_limit * 60) - timeRemaining;
       
       const response = await fetch(`${backendUrl}/api/mock-tests/${activeTest.test_id}/submit`, {
