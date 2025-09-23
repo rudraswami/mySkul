@@ -504,12 +504,12 @@ class DhruvAITester:
         return success_count == len(endpoints_to_test)
 
 def main():
-    print("🚀 Starting Dhruv AI Backend API Tests")
-    print("=" * 50)
+    print("🚀 Starting Dhruv AI Backend API Tests - Phase 4 Enhanced Features")
+    print("=" * 70)
     
     tester = DhruvAITester()
     
-    # Test sequence
+    # Test sequence - Core APIs first, then Phase 4 features
     tests = [
         ("Health Check", tester.test_health_check),
         ("Root Endpoint", tester.test_root_endpoint),
@@ -523,6 +523,14 @@ def main():
         ("Progress Summary", tester.test_progress_summary),
         ("Update Progress", tester.test_update_progress),
         ("Doubt Resolution", tester.test_doubt_resolution),
+        
+        # Phase 4 Enhanced Features
+        ("🆕 Generate Mock Tests", tester.test_generate_mock_test),
+        ("🆕 Submit Mock Test", tester.test_submit_mock_test),
+        ("🆕 Performance Analytics", tester.test_performance_analytics),
+        ("🆕 Stress Assessment", tester.test_stress_assessment),
+        ("🆕 Motivational Content", tester.test_motivational_content),
+        ("🆕 Auth Validation", tester.test_integration_auth_validation),
     ]
     
     failed_tests = []
