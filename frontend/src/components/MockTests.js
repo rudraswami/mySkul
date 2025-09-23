@@ -313,7 +313,9 @@ export default function MockTests() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Tests Taken</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analytics?.recent_tests?.length || 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -327,7 +329,9 @@ export default function MockTests() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold text-gray-900">82%</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analytics?.overall_performance?.average_score?.toFixed(0) || 0}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -341,7 +345,9 @@ export default function MockTests() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Best Rank</p>
-                <p className="text-2xl font-bold text-gray-900">#45</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  #{recentResults[0]?.rank || 'N/A'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -355,7 +361,10 @@ export default function MockTests() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Improvement</p>
-                <p className="text-2xl font-bold text-green-600">+15%</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {analytics?.overall_performance?.improvement_rate > 0 ? '+' : ''}
+                  {analytics?.overall_performance?.improvement_rate?.toFixed(0) || 0}%
+                </p>
               </div>
             </div>
           </CardContent>
