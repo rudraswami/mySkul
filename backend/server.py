@@ -101,6 +101,20 @@ class ChatMessage(BaseModel):
     feedback: Optional[str] = None  # helpful, not_helpful
     confidence: Optional[float] = None
 
+class Question(BaseModel):
+    question_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    question_text: str
+    options: List[str]
+    correct_answer: str
+    explanation: str
+    subject: str
+    chapter: str
+    difficulty_level: int = Field(ge=1, le=5)  # 1=Easy, 5=Very Hard
+    exam_type: str
+    marks: int = 1
+    negative_marks: float = 0.25
+    time_limit: int = 120  # seconds per question
+
 class MockTest(BaseModel):
     test_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
@@ -113,6 +127,48 @@ class MockTest(BaseModel):
     time_taken: Optional[int] = None  # seconds
     completed_at: Optional[datetime] = None
     analysis: Optional[Dict[str, Any]] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    difficulty_level: int = 3  # Adaptive difficulty
+    total_marks: int = 100
+    passing_marks: int = 40
+
+class MockTestResult(BaseModel):
+    result_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    test_id: str
+    user_id: str
+    answers: Dict[str, str]  # question_id: selected_answer
+    score: float
+    percentage: float
+    time_taken: int
+    correct_answers: int
+    wrong_answers: int
+    unanswered: int
+    subject_wise_analysis: Dict[str, Any]
+    difficulty_performance: Dict[str, Any]
+    recommendations: List[str]
+    rank: Optional[int] = None
+    completed_at: datetime = Field(default_factory=datetime.utcnow)
+
+class StressAssessment(BaseModel):
+    assessment_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    stress_level: int = Field(ge=1, le=10)  # 1=Very Low, 10=Very High
+    anxiety_level: int = Field(ge=1, le=10)
+    sleep_quality: int = Field(ge=1, le=10)
+    study_motivation: int = Field(ge=1, le=10)
+    physical_symptoms: List[str] = []
+    emotional_state: str
+    assessment_date: datetime = Field(default_factory=datetime.utcnow)
+    recommendations: List[str] = []
+
+class MotivationalContent(BaseModel):
+    content_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    content_type: str  # quote, tip, exercise, success_story
+    title: str
+    content: str
+    category: str  # motivation, stress_relief, study_tips, health
+    engagement_score: Optional[float] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class StudyPlan(BaseModel):
