@@ -670,27 +670,42 @@ async def generate_mock_test(
                 difficulty = max(1, difficulty - 1)
         
         # Generate questions using AI
-        question_prompt = f"""Generate {request.num_questions} multiple choice questions for {request.exam_type} {request.subject} exam.
-        Difficulty level: {difficulty}/5 (1=Easy, 5=Very Hard)
-        
-        For each question provide:
-        - Question text (clear and specific)
-        - 4 options (A, B, C, D)
-        - Correct answer (A/B/C/D)
-        - Detailed explanation
-        - Chapter/topic
-        - Difficulty level (1-5)
-        
-        Format as JSON array with this structure:
-        {{
-            "question_text": "...",
-            "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-            "correct_answer": "A",
-            "explanation": "...",
-            "chapter": "...",
-            "difficulty_level": {difficulty}
-        }}
-        """
+        current_year = datetime.utcnow().year
+        question_prompt = f"""You specialize in creating high-quality, original questions that mirror the style, difficulty, and format of official {request.exam_type} papers. Generate {request.num_questions} multiple choice questions for {request.exam_type} {request.subject} exam.
+
+Context:
+- Exam Type: {request.exam_type}
+- Subject: {request.subject}  
+- Difficulty level: {difficulty}/5 (1=Easy, 5=Very Hard)
+- Current Year: {current_year}
+- Target: Questions should align with {current_year-1}-{current_year} yearly trends and patterns
+
+Requirements for each question:
+1. Question text must be factually correct and follow {request.exam_type} {current_year-1} patterns
+2. 4 answer options (A, B, C, D) with only one correct answer
+3. Correct answer (A/B/C/D)
+4. One-line explanation for the correct answer
+5. Appropriate chapter/topic classification
+6. Match reference style, length, and cognitive level of real {request.exam_type} papers
+
+Please generate REAL, PRACTICAL questions that students would encounter in actual {request.exam_type} exams. Focus on:
+- Core concepts and applications relevant to {request.subject}
+- Problem-solving scenarios typical of {request.exam_type} level
+- Current syllabus alignment for {request.exam_type} {current_year}
+
+Format response as JSON array with this exact structure:
+[
+  {{
+    "question_text": "Clear, specific question text here",
+    "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+    "correct_answer": "A",
+    "explanation": "Brief explanation for why this answer is correct",
+    "chapter": "Relevant chapter/topic name",
+    "difficulty_level": {difficulty}
+  }}
+]
+
+Generate {request.num_questions} such questions now."""
         
         # Get AI-generated questions
         session_id = f"test_gen_{uuid.uuid4()}"
