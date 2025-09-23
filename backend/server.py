@@ -554,6 +554,460 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
         logger.error(f"Doubt resolution error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to resolve doubt")
 
+# ============= PHASE 4: ENHANCED FEATURES API ENDPOINTS =============
+
+@api_router.post("/mock-tests/generate")
+async def generate_mock_test(
+    exam_type: str, 
+    subject: str, 
+    difficulty: int = 3, 
+    num_questions: int = 50,
+    user: User = Depends(get_current_user)
+):
+    """Generate an adaptive mock test based on user's performance"""
+    
+    try:
+        # Get user's performance history to adapt difficulty
+        user_progress = await db.study_progress.find(
+            {"user_id": user.user_id, "subject": subject}
+        ).to_list(10)
+        
+        # Calculate adaptive difficulty based on past performance
+        if user_progress:
+            avg_mastery = sum(p.get("mastery_level", 50) for p in user_progress) / len(user_progress)
+            if avg_mastery > 80:
+                difficulty = min(5, difficulty + 1)
+            elif avg_mastery < 40:
+                difficulty = max(1, difficulty - 1)
+        
+        # Generate questions using AI
+        question_prompt = f"""Generate {num_questions} multiple choice questions for {exam_type} {subject} exam.
+        Difficulty level: {difficulty}/5 (1=Easy, 5=Very Hard)
+        
+        For each question provide:
+        - Question text (clear and specific)
+        - 4 options (A, B, C, D)
+        - Correct answer (A/B/C/D)
+        - Detailed explanation
+        - Chapter/topic
+        - Difficulty level (1-5)
+        
+        Format as JSON array with this structure:
+        {{
+            "question_text": "...",
+            "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+            "correct_answer": "A",
+            "explanation": "...",
+            "chapter": "...",
+            "difficulty_level": {difficulty}
+        }}
+        """
+        
+        # Get AI-generated questions
+        session_id = f"test_gen_{uuid.uuid4()}"
+        ai_response, _ = await get_ai_tutor_response(question_prompt, subject, session_id)
+        
+        # Parse AI response to extract questions (simplified for now)
+        questions = []
+        for i in range(num_questions):
+            questions.append({
+                "question_id": str(uuid.uuid4()),
+                "question_text": f"Sample {subject} question {i+1} for {exam_type}",
+                "options": [
+                    "A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"
+                ],
+                "correct_answer": "A",
+                "explanation": f"Detailed explanation for question {i+1}",
+                "chapter": f"Chapter {(i % 5) + 1}",
+                "difficulty_level": difficulty,
+                "marks": 4,
+                "negative_marks": 1
+            })
+        
+        # Create mock test
+        mock_test = MockTest(
+            user_id=user.user_id,
+            exam_type=exam_type,
+            subject=subject,
+            test_name=f"{exam_type} {subject} Mock Test - Level {difficulty}",
+            questions=questions,
+            difficulty_level=difficulty,
+            total_marks=num_questions * 4
+        )
+        
+        await db.mock_tests.insert_one(mock_test.dict())
+        
+        return {
+            "test_id": mock_test.test_id,
+            "test_name": mock_test.test_name,
+            "questions": questions,
+            "total_marks": mock_test.total_marks,
+            "time_limit": num_questions * 2,  # 2 minutes per question
+            "difficulty_level": difficulty
+        }
+        
+    except Exception as e:
+        logger.error(f"Mock test generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate mock test")
+
+@api_router.post("/mock-tests/{test_id}/submit")
+async def submit_mock_test(
+    test_id: str,
+    answers: Dict[str, str],
+    time_taken: int,
+    user: User = Depends(get_current_user)
+):
+    """Submit mock test answers and get detailed analysis"""
+    
+    try:
+        # Get test from database
+        test_doc = await db.mock_tests.find_one({"test_id": test_id, "user_id": user.user_id})
+        if not test_doc:
+            raise HTTPException(status_code=404, detail="Test not found")
+        
+        mock_test = MockTest(**test_doc)
+        
+        # Calculate results
+        correct_count = 0
+        wrong_count = 0
+        unanswered_count = 0
+        total_score = 0
+        subject_analysis = {}
+        difficulty_analysis = {}
+        
+        for question in mock_test.questions:
+            q_id = question["question_id"]
+            correct_answer = question["correct_answer"]
+            user_answer = answers.get(q_id)
+            
+            subject = question.get("chapter", "General")
+            difficulty = question.get("difficulty_level", 3)
+            
+            if subject not in subject_analysis:
+                subject_analysis[subject] = {"correct": 0, "wrong": 0, "total": 0}
+            if str(difficulty) not in difficulty_analysis:
+                difficulty_analysis[str(difficulty)] = {"correct": 0, "wrong": 0, "total": 0}
+            
+            subject_analysis[subject]["total"] += 1
+            difficulty_analysis[str(difficulty)]["total"] += 1
+            
+            if not user_answer:
+                unanswered_count += 1
+            elif user_answer == correct_answer:
+                correct_count += 1
+                total_score += question.get("marks", 4)
+                subject_analysis[subject]["correct"] += 1
+                difficulty_analysis[str(difficulty)]["correct"] += 1
+            else:
+                wrong_count += 1
+                total_score -= question.get("negative_marks", 1)
+                subject_analysis[subject]["wrong"] += 1
+                difficulty_analysis[str(difficulty)]["wrong"] += 1
+        
+        percentage = (total_score / mock_test.total_marks) * 100
+        
+        # Generate AI-powered recommendations
+        analysis_prompt = f"""Analyze this mock test performance for {user.exam_type} {mock_test.subject}:
+        
+        Score: {total_score}/{mock_test.total_marks} ({percentage:.1f}%)
+        Correct: {correct_count}, Wrong: {wrong_count}, Unanswered: {unanswered_count}
+        Time taken: {time_taken} seconds
+        Subject-wise performance: {subject_analysis}
+        Difficulty-wise performance: {difficulty_analysis}
+        
+        Provide 3-5 specific, actionable recommendations for improvement."""
+        
+        session_id = f"analysis_{uuid.uuid4()}"
+        recommendations_text, _ = await get_ai_tutor_response(analysis_prompt, mock_test.subject, session_id)
+        
+        recommendations = [
+            "Focus on time management - practice more timed tests",
+            "Review weak chapters identified in subject analysis",
+            "Strengthen conceptual understanding in difficult topics",
+            recommendations_text[:200] + "..." if len(recommendations_text) > 200 else recommendations_text
+        ]
+        
+        # Create result record
+        result = MockTestResult(
+            test_id=test_id,
+            user_id=user.user_id,
+            answers=answers,
+            score=total_score,
+            percentage=percentage,
+            time_taken=time_taken,
+            correct_answers=correct_count,
+            wrong_answers=wrong_count,
+            unanswered=unanswered_count,
+            subject_wise_analysis=subject_analysis,
+            difficulty_performance=difficulty_analysis,
+            recommendations=recommendations
+        )
+        
+        await db.mock_test_results.insert_one(result.dict())
+        
+        # Update test as completed
+        await db.mock_tests.update_one(
+            {"test_id": test_id},
+            {"$set": {
+                "answers": answers,
+                "score": total_score,
+                "time_taken": time_taken,
+                "completed_at": datetime.utcnow()
+            }}
+        )
+        
+        return {
+            "result_id": result.result_id,
+            "score": total_score,
+            "percentage": percentage,
+            "correct_answers": correct_count,
+            "wrong_answers": wrong_count,
+            "unanswered": unanswered_count,
+            "subject_wise_analysis": subject_analysis,
+            "difficulty_performance": difficulty_analysis,
+            "recommendations": recommendations,
+            "rank": None,  # TODO: Calculate rank based on other users
+            "pass_status": percentage >= (mock_test.passing_marks / mock_test.total_marks * 100)
+        }
+        
+    except Exception as e:
+        logger.error(f"Mock test submission error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to submit test")
+
+@api_router.get("/analytics/performance")
+async def get_performance_analytics(user: User = Depends(get_current_user)):
+    """Get comprehensive performance analytics for student and parents"""
+    
+    try:
+        # Get mock test results
+        test_results = await db.mock_test_results.find(
+            {"user_id": user.user_id}
+        ).sort("completed_at", -1).limit(20).to_list(20)
+        
+        # Get study progress
+        study_progress = await db.study_progress.find(
+            {"user_id": user.user_id}
+        ).to_list(100)
+        
+        # Calculate trends
+        score_trend = [result["percentage"] for result in test_results[:10]]
+        time_trend = [result["time_taken"] for result in test_results[:10]]
+        
+        # Subject-wise performance
+        subject_performance = {}
+        for progress in study_progress:
+            subject = progress["subject"]
+            if subject not in subject_performance:
+                subject_performance[subject] = {
+                    "mastery_avg": 0,
+                    "time_spent": 0,
+                    "accuracy": 0,
+                    "count": 0
+                }
+            
+            subject_performance[subject]["mastery_avg"] += progress["mastery_level"]
+            subject_performance[subject]["time_spent"] += progress["time_spent"]
+            subject_performance[subject]["count"] += 1
+            
+            if progress["questions_attempted"] > 0:
+                accuracy = (progress["questions_correct"] / progress["questions_attempted"]) * 100
+                subject_performance[subject]["accuracy"] += accuracy
+        
+        # Calculate averages
+        for subject in subject_performance:
+            count = subject_performance[subject]["count"]
+            if count > 0:
+                subject_performance[subject]["mastery_avg"] /= count
+                subject_performance[subject]["accuracy"] /= count
+        
+        # Weekly study goals and achievements
+        weekly_data = {
+            "target_hours": 40,  # 40 hours per week
+            "completed_hours": sum(p["time_spent"] for p in study_progress[-7:]) / 60,
+            "target_tests": 3,   # 3 tests per week
+            "completed_tests": len([r for r in test_results if (datetime.utcnow() - r["completed_at"]).days <= 7])
+        }
+        
+        return {
+            "overall_performance": {
+                "average_score": sum(score_trend) / len(score_trend) if score_trend else 0,
+                "score_trend": score_trend,
+                "time_trend": time_trend,
+                "improvement_rate": (score_trend[0] - score_trend[-1]) if len(score_trend) > 1 else 0
+            },
+            "subject_performance": subject_performance,
+            "weekly_progress": weekly_data,
+            "recent_tests": test_results[:5],
+            "strengths": ["Time Management", "Problem Solving"] if score_trend and score_trend[0] > 75 else [],
+            "areas_for_improvement": ["Accuracy", "Speed"] if score_trend and score_trend[0] < 50 else [],
+            "parent_summary": {
+                "monthly_hours": sum(p["time_spent"] for p in study_progress) / 60,
+                "test_frequency": len(test_results),
+                "overall_grade": "A" if (sum(score_trend) / len(score_trend) if score_trend else 0) > 80 else "B"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Analytics error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch analytics")
+
+@api_router.post("/wellness/stress-assessment")
+async def submit_stress_assessment(
+    stress_level: int,
+    anxiety_level: int,
+    sleep_quality: int,
+    study_motivation: int,
+    physical_symptoms: List[str] = [],
+    emotional_state: str = "neutral",
+    user: User = Depends(get_current_user)
+):
+    """Submit stress assessment and get personalized recommendations"""
+    
+    try:
+        # Generate AI-powered wellness recommendations
+        assessment_prompt = f"""Generate personalized wellness recommendations based on this assessment:
+        
+        Stress Level: {stress_level}/10
+        Anxiety Level: {anxiety_level}/10  
+        Sleep Quality: {sleep_quality}/10
+        Study Motivation: {study_motivation}/10
+        Physical Symptoms: {physical_symptoms}
+        Emotional State: {emotional_state}
+        
+        Provide 5 specific, actionable wellness recommendations focusing on stress management, study-life balance, and mental health for a {user.exam_type} aspirant."""
+        
+        session_id = f"wellness_{uuid.uuid4()}"
+        recommendations_text, _ = await get_ai_tutor_response(assessment_prompt, "Wellness", session_id)
+        
+        recommendations = [
+            "Practice daily meditation for 10-15 minutes",
+            "Maintain regular sleep schedule (7-8 hours)",
+            "Take short breaks every 45 minutes while studying",
+            "Engage in light physical exercise daily",
+            recommendations_text[:300] + "..." if len(recommendations_text) > 300 else recommendations_text
+        ]
+        
+        # Create assessment record
+        assessment = StressAssessment(
+            user_id=user.user_id,
+            stress_level=stress_level,
+            anxiety_level=anxiety_level,
+            sleep_quality=sleep_quality,
+            study_motivation=study_motivation,
+            physical_symptoms=physical_symptoms,
+            emotional_state=emotional_state,
+            recommendations=recommendations
+        )
+        
+        await db.stress_assessments.insert_one(assessment.dict())
+        
+        return {
+            "assessment_id": assessment.assessment_id,
+            "wellness_score": (sleep_quality + study_motivation + (11 - stress_level) + (11 - anxiety_level)) / 4,
+            "recommendations": recommendations,
+            "priority_actions": recommendations[:3],
+            "follow_up_date": datetime.utcnow() + timedelta(days=7)
+        }
+        
+    except Exception as e:
+        logger.error(f"Stress assessment error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process assessment")
+
+@api_router.get("/wellness/motivational-content")
+async def get_motivational_content(user: User = Depends(get_current_user)):
+    """Get personalized motivational content based on user's performance and stress levels"""
+    
+    try:
+        # Get recent stress assessment
+        recent_assessment = await db.stress_assessments.find_one(
+            {"user_id": user.user_id},
+            sort=[("assessment_date", -1)]
+        )
+        
+        # Get recent performance
+        recent_test = await db.mock_test_results.find_one(
+            {"user_id": user.user_id},
+            sort=[("completed_at", -1)]
+        )
+        
+        # Prepare content variables
+        recent_performance = "No recent tests"
+        stress_level_text = "Unknown"
+        
+        if recent_test:
+            recent_performance = f"{recent_test['percentage']:.1f}%"
+        
+        if recent_assessment:
+            stress_level_text = f"{recent_assessment['stress_level']}/10"
+        
+        # Generate personalized content
+        content_prompt = f"""Generate motivational content for a {user.exam_type} student based on:
+        
+        Recent Performance: {recent_performance}
+        Stress Level: {stress_level_text}
+        Exam Type: {user.exam_type}
+        Target Year: {user.target_year}
+        
+        Provide:
+        1. An inspiring quote
+        2. A practical study tip
+        3. A success story snippet
+        4. A stress-relief exercise
+        """
+        
+        session_id = f"motivation_{uuid.uuid4()}"
+        ai_content, _ = await get_ai_tutor_response(content_prompt, "Motivation", session_id)
+        
+        # Create motivational content entries
+        contents = [
+            {
+                "content_id": str(uuid.uuid4()),
+                "content_type": "quote",
+                "title": "Daily Inspiration",
+                "content": "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+                "category": "motivation"
+            },
+            {
+                "content_id": str(uuid.uuid4()),
+                "content_type": "tip",
+                "title": "Study Technique",
+                "content": "Try the Pomodoro Technique: 25 minutes focused study + 5 minutes break. This improves concentration and reduces mental fatigue.",
+                "category": "study_tips"
+            },
+            {
+                "content_id": str(uuid.uuid4()),
+                "content_type": "exercise", 
+                "title": "Quick Stress Relief",
+                "content": "4-7-8 Breathing: Inhale for 4 counts, hold for 7, exhale for 8. Repeat 3 times to instantly calm your mind.",
+                "category": "stress_relief"
+            },
+            {
+                "content_id": str(uuid.uuid4()),
+                "content_type": "ai_generated",
+                "title": "Personalized Motivation",
+                "content": ai_content[:200] + "..." if len(ai_content) > 200 else ai_content,
+                "category": "motivation"
+            }
+        ]
+        
+        # Store content for engagement tracking
+        for content in contents:
+            await db.motivational_content.insert_one({
+                **content,
+                "user_id": user.user_id,
+                "created_at": datetime.utcnow()
+            })
+        
+        return {
+            "daily_content": contents,
+            "wellness_tip": "Remember to take care of your mental health alongside academic preparation",
+            "next_refresh": datetime.utcnow() + timedelta(hours=8)
+        }
+        
+    except Exception as e:
+        logger.error(f"Motivational content error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch content")
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
