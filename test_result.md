@@ -171,6 +171,9 @@
         -working: true
         -agent: "main"
         -comment: "AUTHENTICATION ISSUE RESOLVED: Fixed token key mismatch between AuthContext ('dhruv_ai_token') and MockTests component ('token'). Updated MockTests.js, Analytics.js, and StressManagement.js to use correct token key 'dhruv_ai_token'. Backend API parameter structure issues were already resolved. All mock test buttons should now work properly without 'Invalid token' errors."
+        -working: false
+        -agent: "testing"
+        -comment: "CRITICAL ISSUE CONFIRMED: Mock test buttons are stuck in 'Generating...' state - this is the exact 'blank loading states' issue reported by the user. Root cause identified: Backend intermittent AI service failures (OpenAI API 502 errors) cause mock test generation to fail, but frontend doesn't handle these failures properly - it gets stuck in loading state without showing error messages or recovering. Authentication works correctly, but error handling in mock test generation is broken. All three test generation buttons (Math, Physics, Chemistry) exhibit this behavior. The issue is NOT with authentication tokens but with error handling when AI service calls fail."
 
   - task: "Advanced Analytics Dashboard"
     implemented: true
