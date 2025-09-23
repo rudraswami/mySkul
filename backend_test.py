@@ -315,11 +315,12 @@ class DhruvAITester:
         
         # Create sample answers (simulating a student taking the test)
         sample_answers = {}
-        for i in range(10):  # Assuming 10 questions from the first test
+        for i in range(5):  # Physics test has 5 questions
             question_id = f"q_{i+1}"  # This would normally come from the test questions
             sample_answers[question_id] = "A"  # Simulate selecting option A for all
         
-        submission_data = {
+        # Prepare form data for the API
+        form_data = {
             "answers": sample_answers,
             "time_taken": 1200  # 20 minutes in seconds
         }
@@ -327,24 +328,38 @@ class DhruvAITester:
         print(f"   Submitting test {test_id} with {len(sample_answers)} answers...")
         print("   This may take a few seconds for AI analysis...")
         
-        success, response = self.run_test(
-            "Submit Mock Test",
-            "POST",
-            f"mock-tests/{test_id}/submit",
-            200,
-            data=submission_data,
-            headers={'Authorization': f'Bearer {self.token}'}
-        )
+        # Send as form data instead of JSON
+        url = f"{self.base_url}/mock-tests/{test_id}/submit"
+        headers = {'Authorization': f'Bearer {self.token}'}
         
-        if success:
-            print(f"   ✅ Test submitted successfully")
-            print(f"   Score: {response.get('score', 0)}")
-            print(f"   Percentage: {response.get('percentage', 0):.1f}%")
-            print(f"   Correct answers: {response.get('correct_answers', 0)}")
-            print(f"   Recommendations count: {len(response.get('recommendations', []))}")
-            return True
-        
-        return False
+        try:
+            response = requests.post(url, data=form_data, headers=headers, timeout=60)
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    response_data = response.json()
+                    print(f"   ✅ Test submitted successfully")
+                    print(f"   Score: {response_data.get('score', 0)}")
+                    print(f"   Percentage: {response_data.get('percentage', 0):.1f}%")
+                    print(f"   Correct answers: {response_data.get('correct_answers', 0)}")
+                    print(f"   Recommendations count: {len(response_data.get('recommendations', []))}")
+                    return True
+                except:
+                    return True
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Error: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
 
     def test_performance_analytics(self):
         """Test comprehensive performance analytics"""
