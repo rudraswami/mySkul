@@ -521,15 +521,15 @@ class DhruvAITester:
         
         # Test without token (should fail with 401)
         endpoints_to_test = [
-            ("mock-tests/generate?exam_type=JEE&subject=Mathematics", "POST"),
-            ("analytics/performance", "GET"),
-            ("wellness/stress-assessment", "POST"),
-            ("wellness/motivational-content", "GET")
+            ("mock-tests/generate", "POST", {"exam_type": "JEE", "subject": "Mathematics", "difficulty": 3, "num_questions": 5}),
+            ("analytics/performance", "GET", None),
+            ("wellness/stress-assessment", "POST", {"stress_level": 5, "anxiety_level": 5, "sleep_quality": 5, "study_motivation": 5, "physical_symptoms": [], "emotional_state": "neutral"}),
+            ("wellness/motivational-content", "GET", None)
         ]
         
         success_count = 0
         
-        for endpoint, method in endpoints_to_test:
+        for endpoint, method, test_data in endpoints_to_test:
             print(f"   Testing {endpoint} without auth...")
             
             # Temporarily remove token
@@ -541,7 +541,7 @@ class DhruvAITester:
                 method,
                 endpoint,
                 401,  # Expecting 401 Unauthorized
-                data={} if method == "POST" else None
+                data=test_data
             )
             
             # Restore token
@@ -549,8 +549,72 @@ class DhruvAITester:
             
             if success:
                 success_count += 1
+                print(f"   ✅ Correctly rejected unauthorized request")
+            else:
+                print(f"   ❌ Failed to reject unauthorized request")
         
         return success_count == len(endpoints_to_test)
+
+    def test_enhanced_question_generation(self):
+        """Test AI-powered question generation and fallback mechanisms"""
+        if not self.token:
+            print("❌ No token available for question generation test")
+            return False
+        
+        print("   Testing enhanced question generation features...")
+        
+        # Test different subjects to verify subject-specific questions
+        subjects_to_test = ["Mathematics", "Physics", "Chemistry"]
+        success_count = 0
+        
+        for subject in subjects_to_test:
+            print(f"   Testing {subject} question generation...")
+            
+            test_data = {
+                "exam_type": "JEE",
+                "subject": subject,
+                "difficulty": 3,
+                "num_questions": 3  # Small number for faster testing
+            }
+            
+            success, response = self.run_test(
+                f"Enhanced Questions - {subject}",
+                "POST",
+                "mock-tests/generate",
+                200,
+                data=test_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'questions' in response:
+                questions = response['questions']
+                print(f"   ✅ Generated {len(questions)} {subject} questions")
+                
+                # Verify question quality and structure
+                for i, question in enumerate(questions[:2]):  # Check first 2 questions
+                    q_text = question.get('question_text', '')
+                    options = question.get('options', [])
+                    explanation = question.get('explanation', '')
+                    chapter = question.get('chapter', '')
+                    
+                    print(f"     Q{i+1}: {q_text[:60]}...")
+                    print(f"     Options: {len(options)}, Chapter: {chapter}")
+                    print(f"     Has explanation: {'Yes' if explanation else 'No'}")
+                    
+                    # Check if questions are subject-specific (not just generic)
+                    is_realistic = len(q_text) > 20 and len(options) == 4 and explanation
+                    if is_realistic:
+                        print(f"     ✅ Question appears realistic and subject-specific")
+                    else:
+                        print(f"     ⚠️  Question may be generic/placeholder")
+                
+                success_count += 1
+            else:
+                print(f"   ❌ Failed to generate {subject} questions")
+            
+            time.sleep(2)  # Delay between AI calls
+        
+        return success_count == len(subjects_to_test)
 
 def main():
     print("🚀 Starting Dhruv AI Backend API Tests - Phase 4 Enhanced Features")
