@@ -30,6 +30,16 @@ export default function MockTests() {
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      // Reset states on cleanup to prevent memory leaks
+      setIsGeneratingTest(false);
+      setGenerationError(null);
+      setRetryStatus(null);
+    };
+  }, []);
+
   useEffect(() => {
     loadAnalytics();
   }, []);
