@@ -494,7 +494,13 @@ export default function MockTests() {
               </div>
 
               <div className="mt-6 text-center">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    alert('Additional test categories:\n\n• Subject-wise Tests\n• Previous Year Papers\n• Speed Tests (30 min)\n• Sectional Tests\n• Full-length Simulations\n\nSelect "Generate New Test" above to create practice tests!');
+                  }}
+                >
                   View All Tests
                 </Button>
               </div>
