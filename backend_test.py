@@ -639,6 +639,7 @@ def main():
         
         # Phase 4 Enhanced Features
         ("🆕 Generate Mock Tests", tester.test_generate_mock_test),
+        ("🆕 Enhanced Question Generation", tester.test_enhanced_question_generation),
         ("🆕 Submit Mock Test", tester.test_submit_mock_test),
         ("🆕 Performance Analytics", tester.test_performance_analytics),
         ("🆕 Stress Assessment", tester.test_stress_assessment),
