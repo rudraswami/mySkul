@@ -41,150 +41,88 @@ export default function MockTests() {
       const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       if (!token) return;
       
-      const response = await fetch(`${backendUrl}/api/analytics/performance`, {
+      const data = await callAnalyticsApi(`${backendUrl}/api/analytics/performance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      if (response.ok) {
-        const data = await response.json();
+      if (data) {
         setAnalytics(data);
         setRecentResults(data.recent_tests || []);
       }
     } catch (error) {
       console.error('Error loading analytics:', error);
+      // Analytics error shouldn't block the page
     }
   };
 
-  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, retryCount = 0) => {
-    const maxRetries = 2;
-    
-    setIsGeneratingTest(true);
-    setGenerationError(null); // Clear previous errors
-    
+  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25) => {
+    const token = localStorage.getItem('dhruv_ai_token');
+    if (!token) {
+      alert('Please log in again to continue');
+      return;
+    }
+
+    // Reset any previous errors
+    resetApiState();
+    setRetryStatus(null);
+
     try {
-      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
-      if (!token) {
-        alert('Please log in again to continue');
-        return;
-      }
-      
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const testData = await callMockTestApi(
+        `${backendUrl}/api/mock-tests/generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            exam_type: examType,
+            subject: subject,
+            difficulty: difficulty,
+            num_questions: numQuestions
+          })
         },
-        body: JSON.stringify({
-          exam_type: examType,
-          subject: subject,
-          difficulty: difficulty,
-          num_questions: numQuestions
-        }),
-        signal: controller.signal
-      });
-      
-      // Clear timeout if request completed
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        const testData = await response.json();
-        setActiveTest(testData);
-        setTimeRemaining(testData.time_limit * 60); // Convert minutes to seconds
-        setCurrentQuestion(0);
-        setAnswers({});
-        setGenerationError(null); // Clear any previous errors
-        
-        // Start timer
-        const timer = setInterval(() => {
-          setTimeRemaining(prev => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              submitTest();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        // Handle API errors properly
-        let errorMessage = 'Failed to generate test. Please try again.';
-        let shouldRetry = false;
-        
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
+        {
+          retries: 3,
+          timeout: 30000,
+          retryDelay: 2000,
+          onRetry: (attempt, total) => {
+            setRetryStatus(`Retrying... (${attempt}/${total})`);
+          },
+          onSuccess: () => {
+            setRetryStatus(null);
+          },
+          onError: (error) => {
+            setRetryStatus(null);
+            // Error is already handled by the hook
+          }
         }
-        
-        // Determine error type and retry logic
-        if (response.status === 500) {
-          errorMessage = 'Our AI service is temporarily busy.';
-          shouldRetry = retryCount < maxRetries;
-        } else if (response.status === 401) {
-          errorMessage = 'Please log in again to continue.';
-        } else if (response.status >= 500) {
-          errorMessage = 'Server is temporarily unavailable.';
-          shouldRetry = retryCount < maxRetries;
-        }
-        
-        // Auto-retry for server errors
-        if (shouldRetry) {
-          console.log(`Retrying test generation (attempt ${retryCount + 2}/${maxRetries + 1})...`);
-          setGenerationError(`${errorMessage} Retrying... (${retryCount + 2}/${maxRetries + 1})`);
-          
-          // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
-          
-          // Recursive retry
-          return generateMockTest(examType, subject, difficulty, numQuestions, retryCount + 1);
-        } else {
-          setGenerationError(errorMessage);
-          alert(errorMessage);
-        }
-        
-        console.error(`Mock test generation failed: ${response.status} - ${errorMessage}`);
-      }
+      );
+
+      // Success - set up the test
+      setActiveTest(testData);
+      setTimeRemaining(testData.time_limit * 60); // Convert minutes to seconds
+      setCurrentQuestion(0);
+      setAnswers({});
+
+      // Start timer
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            submitTest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
     } catch (error) {
-      console.error('Error generating test:', error);
-      
-      // Handle network and other errors
-      let errorMessage = 'Failed to generate test.';
-      let shouldRetry = retryCount < maxRetries;
-      
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection.';
-        shouldRetry = false; // Don't retry network errors
-      } else if (error.name === 'AbortError' || error.message.includes('timeout')) {
-        errorMessage = 'Request timed out.';
-      } else if (error.name === 'TimeoutError') {
-        errorMessage = 'The request is taking longer than expected.';
-      }
-      
-      // Auto-retry for timeout and server errors
-      if (shouldRetry && (error.name === 'AbortError' || error.message.includes('500'))) {
-        console.log(`Retrying test generation after error (attempt ${retryCount + 2}/${maxRetries + 1})...`);
-        setGenerationError(`${errorMessage} Retrying... (${retryCount + 2}/${maxRetries + 1})`);
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
-        
-        // Recursive retry
-        return generateMockTest(examType, subject, difficulty, numQuestions, retryCount + 1);
-      } else {
-        setGenerationError(errorMessage);
-        alert(`${errorMessage} Please try again.`);
-      }
-    } finally {
-      // Always reset loading state
-      setIsGeneratingTest(false);
+      // Error handling is done by the hook
+      console.error('Mock test generation failed:', error.message);
     }
   };
 
