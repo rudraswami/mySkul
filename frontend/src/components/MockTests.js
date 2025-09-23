@@ -19,6 +19,7 @@ export default function MockTests() {
   const [recentResults, setRecentResults] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [generationError, setGenerationError] = useState(null);
   const [activeTest, setActiveTest] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
