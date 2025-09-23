@@ -153,15 +153,18 @@
 ## frontend:
   - task: "Enhanced Mock Tests UI"
     implemented: true
-    working: true
+    working: false
     file: "MockTests.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
         -working: true
         -agent: "main"
         -comment: "Enhanced MockTests component with comprehensive test interface, real-time test taking functionality, timer, question navigation, adaptive test generation integration with backend APIs."
+        -working: false
+        -agent: "user"
+        -comment: "USER FEEDBACK: Mock test flow issues persist - tapping buttons like 'Subjects', 'Start Test', 'Retake', 'Practice Questions' leads to blank loading states with no results. Questions should be dynamically generated based on selected subject, aligned with yearly trends, and properly loaded for practice. Need proper question generation and loading functionality."
 
   - task: "Advanced Analytics Dashboard"
     implemented: true
