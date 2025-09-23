@@ -295,6 +295,22 @@ export default function StressManagement() {
               >
                 {isSubmitting ? 'Analyzing...' : 'Get Wellness Recommendations'}
               </Button>
+
+              {/* Assessment Status */}
+              {isSubmitting && (
+                <div className="text-center text-sm text-gray-600 mt-3">
+                  <div className="animate-pulse">
+                    Analyzing your wellness data and generating personalized recommendations...
+                  </div>
+                </div>
+              )}
+
+              {/* Show prompt if no recommendations yet */}
+              {!isSubmitting && recommendations.length === 0 && wellnessScore === null && (
+                <div className="text-center text-sm text-gray-500 mt-3 p-3 bg-gray-50 rounded-lg">
+                  Complete the assessment above to receive personalized wellness recommendations and insights.
+                </div>
+              )}
             </CardContent>
           </Card>
 
