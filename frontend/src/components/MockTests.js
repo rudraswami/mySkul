@@ -94,13 +94,42 @@ export default function MockTests() {
           });
         }, 1000);
       } else {
-        const errorData = await response.json();
-        alert(`Failed to generate test: ${errorData.detail || 'Unknown error'}`);
+        // Handle API errors properly
+        let errorMessage = 'Failed to generate test. Please try again.';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        
+        // Show user-friendly error based on status code
+        if (response.status === 500) {
+          errorMessage = 'Our AI service is temporarily busy. Please try again in a few seconds.';
+        } else if (response.status === 401) {
+          errorMessage = 'Please log in again to continue.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server is temporarily unavailable. Please try again in a moment.';
+        }
+        
+        alert(errorMessage);
+        console.error(`Mock test generation failed: ${response.status} - ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error generating test:', error);
-      alert(`Failed to generate test: ${error.message}. Please check your internet connection and try again.`);
+      
+      // Handle network and other errors
+      let errorMessage = 'Failed to generate test. Please check your internet connection and try again.';
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please try again.';
+      }
+      
+      alert(errorMessage);
     } finally {
+      // Always reset loading state
       setIsGeneratingTest(false);
     }
   };
