@@ -182,6 +182,12 @@ class StudyPlan(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class MockTestGenerationRequest(BaseModel):
+    exam_type: str
+    subject: str
+    difficulty: int = 3
+    num_questions: int = 25
+
 class DoubtQuery(BaseModel):
     query: str
     subject: Optional[str] = None
