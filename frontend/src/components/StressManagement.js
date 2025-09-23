@@ -37,7 +37,7 @@ export default function StressManagement() {
 
   const loadMotivationalContent = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       const response = await fetch(`${backendUrl}/api/wellness/motivational-content`, {
         headers: {
           'Authorization': `Bearer ${token}`,
