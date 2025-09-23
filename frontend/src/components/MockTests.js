@@ -523,10 +523,10 @@ export default function MockTests() {
                   <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
                     <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-red-800 text-sm">{generationError.message}</p>
+                      <p className="text-red-800 text-sm">{generationError}</p>
                       {!isGeneratingTest && (
                         <button
-                          onClick={() => resetApiState()}
+                          onClick={() => setGenerationError(null)}
                           className="mt-2 text-red-600 hover:text-red-800 text-xs underline flex items-center"
                         >
                           <RefreshCw className="h-3 w-3 mr-1" />
