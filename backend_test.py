@@ -331,61 +331,66 @@ class DhruvAITester:
         return success_count == len(test_params)
 
     def test_submit_mock_test(self):
-        """Test mock test submission and analysis"""
+        """Test mock test submission with JSON body"""
         if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
             print("❌ No token or test IDs available for mock test submission")
             return False
         
         # Use the first generated test for submission
-        test_id = self.test_ids[0]
+        test_data = self.test_ids[0]
+        test_id = test_data['test_id']
+        questions = test_data['questions']
         
-        # Create sample answers (simulating a student taking the test)
+        # Create realistic answers based on actual question IDs
         sample_answers = {}
-        for i in range(5):  # Physics test has 5 questions
-            question_id = f"q_{i+1}"  # This would normally come from the test questions
-            sample_answers[question_id] = "A"  # Simulate selecting option A for all
+        for i, question in enumerate(questions[:5]):  # Test with first 5 questions
+            question_id = question['question_id']
+            # Simulate realistic test-taking: some correct, some wrong
+            if i % 3 == 0:  # Every 3rd answer is correct
+                sample_answers[question_id] = question['correct_answer']
+            else:  # Others are random wrong answers
+                options = ['A', 'B', 'C', 'D']
+                wrong_options = [opt for opt in options if opt != question['correct_answer']]
+                sample_answers[question_id] = wrong_options[i % len(wrong_options)]
         
-        # Prepare form data for the API
-        form_data = {
+        # Prepare JSON data for the API (not form data)
+        submission_data = {
             "answers": sample_answers,
-            "time_taken": 1200  # 20 minutes in seconds
+            "time_taken": 1800  # 30 minutes in seconds
         }
         
         print(f"   Submitting test {test_id} with {len(sample_answers)} answers...")
         print("   This may take a few seconds for AI analysis...")
         
-        # Send as form data instead of JSON
-        url = f"{self.base_url}/mock-tests/{test_id}/submit"
-        headers = {'Authorization': f'Bearer {self.token}'}
+        success, response = self.run_test(
+            "Submit Mock Test",
+            "POST",
+            f"mock-tests/{test_id}/submit",
+            200,
+            data=submission_data,  # Send as JSON body
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
         
-        try:
-            response = requests.post(url, data=form_data, headers=headers, timeout=60)
-            print(f"   Status Code: {response.status_code}")
+        if success:
+            print(f"   ✅ Test submitted successfully")
+            print(f"   Score: {response.get('score', 0)}")
+            print(f"   Percentage: {response.get('percentage', 0):.1f}%")
+            print(f"   Correct answers: {response.get('correct_answers', 0)}")
+            print(f"   Wrong answers: {response.get('wrong_answers', 0)}")
+            print(f"   Unanswered: {response.get('unanswered', 0)}")
+            print(f"   Recommendations count: {len(response.get('recommendations', []))}")
             
-            if response.status_code == 200:
-                self.tests_passed += 1
-                print(f"✅ Passed - Status: {response.status_code}")
-                try:
-                    response_data = response.json()
-                    print(f"   ✅ Test submitted successfully")
-                    print(f"   Score: {response_data.get('score', 0)}")
-                    print(f"   Percentage: {response_data.get('percentage', 0):.1f}%")
-                    print(f"   Correct answers: {response_data.get('correct_answers', 0)}")
-                    print(f"   Recommendations count: {len(response_data.get('recommendations', []))}")
-                    return True
-                except:
-                    return True
+            # Validate response structure
+            required_fields = ['result_id', 'score', 'percentage', 'correct_answers', 'wrong_answers', 'subject_wise_analysis']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"   ⚠️  Missing response fields: {missing_fields}")
             else:
-                print(f"❌ Failed - Expected 200, got {response.status_code}")
-                try:
-                    error_data = response.json()
-                    print(f"   Error: {error_data}")
-                except:
-                    print(f"   Error: {response.text}")
-                return False
-        except Exception as e:
-            print(f"❌ Failed - Error: {str(e)}")
-            return False
+                print(f"   ✅ Response structure validated")
+            
+            return True
+        
+        return False
 
     def test_performance_analytics(self):
         """Test comprehensive performance analytics"""
