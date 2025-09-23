@@ -649,10 +649,7 @@ async def populate_demo_data(user: User = Depends(get_current_user)):
 
 @api_router.post("/mock-tests/generate")
 async def generate_mock_test(
-    exam_type: str, 
-    subject: str, 
-    difficulty: int = 3, 
-    num_questions: int = 50,
+    request: MockTestGenerationRequest,
     user: User = Depends(get_current_user)
 ):
     """Generate an adaptive mock test based on user's performance"""
@@ -660,10 +657,11 @@ async def generate_mock_test(
     try:
         # Get user's performance history to adapt difficulty
         user_progress = await db.study_progress.find(
-            {"user_id": user.user_id, "subject": subject}
+            {"user_id": user.user_id, "subject": request.subject}
         ).to_list(10)
         
         # Calculate adaptive difficulty based on past performance
+        difficulty = request.difficulty
         if user_progress:
             avg_mastery = sum(p.get("mastery_level", 50) for p in user_progress) / len(user_progress)
             if avg_mastery > 80:
@@ -672,7 +670,7 @@ async def generate_mock_test(
                 difficulty = max(1, difficulty - 1)
         
         # Generate questions using AI
-        question_prompt = f"""Generate {num_questions} multiple choice questions for {exam_type} {subject} exam.
+        question_prompt = f"""Generate {request.num_questions} multiple choice questions for {request.exam_type} {request.subject} exam.
         Difficulty level: {difficulty}/5 (1=Easy, 5=Very Hard)
         
         For each question provide:
@@ -696,14 +694,14 @@ async def generate_mock_test(
         
         # Get AI-generated questions
         session_id = f"test_gen_{uuid.uuid4()}"
-        ai_response, _ = await get_ai_tutor_response(question_prompt, subject, session_id)
+        ai_response, _ = await get_ai_tutor_response(question_prompt, request.subject, session_id)
         
         # Parse AI response to extract questions (simplified for now)
         questions = []
-        for i in range(num_questions):
+        for i in range(request.num_questions):
             questions.append({
                 "question_id": str(uuid.uuid4()),
-                "question_text": f"Sample {subject} question {i+1} for {exam_type}",
+                "question_text": f"Sample {request.subject} question {i+1} for {request.exam_type}",
                 "options": [
                     "A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"
                 ],
@@ -718,12 +716,12 @@ async def generate_mock_test(
         # Create mock test
         mock_test = MockTest(
             user_id=user.user_id,
-            exam_type=exam_type,
-            subject=subject,
-            test_name=f"{exam_type} {subject} Mock Test - Level {difficulty}",
+            exam_type=request.exam_type,
+            subject=request.subject,
+            test_name=f"{request.exam_type} {request.subject} Mock Test - Level {difficulty}",
             questions=questions,
             difficulty_level=difficulty,
-            total_marks=num_questions * 4
+            total_marks=request.num_questions * 4
         )
         
         await db.mock_tests.insert_one(mock_test.dict())
@@ -733,7 +731,7 @@ async def generate_mock_test(
             "test_name": mock_test.test_name,
             "questions": questions,
             "total_marks": mock_test.total_marks,
-            "time_limit": num_questions * 2,  # 2 minutes per question
+            "time_limit": request.num_questions * 2,  # 2 minutes per question
             "difficulty_level": difficulty
         }
         
