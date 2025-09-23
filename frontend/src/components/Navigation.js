@@ -42,6 +42,12 @@ export default function Navigation() {
       href: '/analytics',
       icon: BarChart3,
       current: location.pathname === '/analytics'
+    },
+    {
+      name: 'Wellness',
+      href: '/wellness',
+      icon: Heart,
+      current: location.pathname === '/wellness'
     }
   ];
 
