@@ -187,6 +187,23 @@ class DoubtQuery(BaseModel):
     subject: Optional[str] = None
     context: Optional[str] = None
 
+class MockTestSubmission(BaseModel):
+    answers: Dict[str, str]  # question_id: selected_answer
+    time_taken: int  # seconds
+
+class StressAssessmentRequest(BaseModel):
+    stress_level: int = Field(ge=1, le=10)
+    anxiety_level: int = Field(ge=1, le=10)
+    sleep_quality: int = Field(ge=1, le=10)
+    study_motivation: int = Field(ge=1, le=10)
+    physical_symptoms: List[str] = []
+    emotional_state: str = "neutral"
+
+class DoubtQuery(BaseModel):
+    query: str
+    subject: Optional[str] = None
+    context: Optional[str] = None
+
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
