@@ -405,8 +405,36 @@ export default function MockTests() {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Quick Test Generation */}
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-3">Generate New Test</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Button 
+                    onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25)}
+                    disabled={isGeneratingTest}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isGeneratingTest ? 'Generating...' : 'Math Test'}
+                  </Button>
+                  <Button 
+                    onClick={() => generateMockTest('JEE', 'Physics', 3, 25)}
+                    disabled={isGeneratingTest}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isGeneratingTest ? 'Generating...' : 'Physics Test'}
+                  </Button>
+                  <Button 
+                    onClick={() => generateMockTest('JEE', 'Chemistry', 3, 25)}
+                    disabled={isGeneratingTest}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isGeneratingTest ? 'Generating...' : 'Chemistry Test'}
+                  </Button>
+                </div>
+              </div>
+
               <div className="space-y-4">
-                {mockTests.map((test) => (
+                {sampleTests.map((test) => (
                   <div key={test.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -450,6 +478,8 @@ export default function MockTests() {
                         <Button 
                           className="bg-blue-600 hover:bg-blue-700"
                           size="sm"
+                          onClick={() => generateMockTest(test.examType, test.subject, test.difficulty === 'Easy' ? 2 : test.difficulty === 'Medium' ? 3 : 4, test.questions)}
+                          disabled={isGeneratingTest}
                         >
                           {test.completed ? 'Retake' : 'Start Test'}
                         </Button>
