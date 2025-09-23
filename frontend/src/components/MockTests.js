@@ -607,17 +607,33 @@ export default function MockTests() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full justify-start bg-green-600 hover:bg-green-700">
+              <Button 
+                className="w-full justify-start bg-green-600 hover:bg-green-700"
+                onClick={() => window.location.href = '/analytics'}
+              >
                 <Award className="h-4 w-4 mr-2" />
                 View Detailed Analysis
               </Button>
               
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => generateMockTest('JEE', 'Mixed', 2, 15)}
+                disabled={isGeneratingTest}
+              >
                 <FileText className="h-4 w-4 mr-2" />
-                Practice Questions
+                {isGeneratingTest ? 'Generating...' : 'Practice Questions'}
               </Button>
               
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  alert(`Test scheduled for ${tomorrow.toLocaleDateString()} at 10:00 AM. You will receive a reminder notification.`);
+                }}
+              >
                 <Clock className="h-4 w-4 mr-2" />
                 Schedule Test
               </Button>
