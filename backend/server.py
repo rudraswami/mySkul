@@ -869,12 +869,7 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
 
 @api_router.post("/wellness/stress-assessment")
 async def submit_stress_assessment(
-    stress_level: int,
-    anxiety_level: int,
-    sleep_quality: int,
-    study_motivation: int,
-    physical_symptoms: List[str] = [],
-    emotional_state: str = "neutral",
+    assessment: StressAssessmentRequest,
     user: User = Depends(get_current_user)
 ):
     """Submit stress assessment and get personalized recommendations"""
@@ -883,12 +878,12 @@ async def submit_stress_assessment(
         # Generate AI-powered wellness recommendations
         assessment_prompt = f"""Generate personalized wellness recommendations based on this assessment:
         
-        Stress Level: {stress_level}/10
-        Anxiety Level: {anxiety_level}/10  
-        Sleep Quality: {sleep_quality}/10
-        Study Motivation: {study_motivation}/10
-        Physical Symptoms: {physical_symptoms}
-        Emotional State: {emotional_state}
+        Stress Level: {assessment.stress_level}/10
+        Anxiety Level: {assessment.anxiety_level}/10  
+        Sleep Quality: {assessment.sleep_quality}/10
+        Study Motivation: {assessment.study_motivation}/10
+        Physical Symptoms: {assessment.physical_symptoms}
+        Emotional State: {assessment.emotional_state}
         
         Provide 5 specific, actionable wellness recommendations focusing on stress management, study-life balance, and mental health for a {user.exam_type} aspirant."""
         
@@ -904,22 +899,24 @@ async def submit_stress_assessment(
         ]
         
         # Create assessment record
-        assessment = StressAssessment(
+        assessment_record = StressAssessment(
             user_id=user.user_id,
-            stress_level=stress_level,
-            anxiety_level=anxiety_level,
-            sleep_quality=sleep_quality,
-            study_motivation=study_motivation,
-            physical_symptoms=physical_symptoms,
-            emotional_state=emotional_state,
+            stress_level=assessment.stress_level,
+            anxiety_level=assessment.anxiety_level,
+            sleep_quality=assessment.sleep_quality,
+            study_motivation=assessment.study_motivation,
+            physical_symptoms=assessment.physical_symptoms,
+            emotional_state=assessment.emotional_state,
             recommendations=recommendations
         )
         
-        await db.stress_assessments.insert_one(assessment.dict())
+        await db.stress_assessments.insert_one(assessment_record.dict())
+        
+        wellness_score = (assessment.sleep_quality + assessment.study_motivation + (11 - assessment.stress_level) + (11 - assessment.anxiety_level)) / 4
         
         return {
-            "assessment_id": assessment.assessment_id,
-            "wellness_score": (sleep_quality + study_motivation + (11 - stress_level) + (11 - anxiety_level)) / 4,
+            "assessment_id": assessment_record.assessment_id,
+            "wellness_score": wellness_score,
             "recommendations": recommendations,
             "priority_actions": recommendations[:3],
             "follow_up_date": datetime.utcnow() + timedelta(days=7)
