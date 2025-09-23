@@ -86,9 +86,13 @@ export default function MockTests() {
             return prev - 1;
           });
         }, 1000);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to generate test: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error generating test:', error);
+      alert(`Failed to generate test: ${error.message}. Please check your internet connection and try again.`);
     } finally {
       setIsGeneratingTest(false);
     }
