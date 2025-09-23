@@ -21,12 +21,14 @@ export default function MockTests() {
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
-  const [generationError, setGenerationError] = useState(null);
   const [activeTest, setActiveTest] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [retryStatus, setRetryStatus] = useState(null);
+
+  const { callApi: callMockTestApi, isLoading: isGeneratingTest, error: generationError, reset: resetApiState } = useApiCall();
+  const { callApi: callAnalyticsApi } = useApiCall();
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
