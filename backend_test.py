@@ -427,12 +427,12 @@ class DhruvAITester:
         return False
 
     def test_stress_assessment(self):
-        """Test stress assessment and wellness recommendations"""
+        """Test stress assessment with JSON request body"""
         if not self.token:
             print("❌ No token available for stress assessment")
             return False
         
-        # Test different stress levels
+        # Test different stress levels with JSON body
         assessment_scenarios = [
             {
                 "stress_level": 7,
@@ -458,42 +458,26 @@ class DhruvAITester:
             print(f"   Testing stress assessment scenario {i+1}/2: Stress Level {scenario['stress_level']}/10")
             print("   This may take a few seconds for AI recommendations...")
             
-            # Send as form data for FastAPI
-            url = f"{self.base_url}/wellness/stress-assessment"
-            headers = {'Authorization': f'Bearer {self.token}'}
+            # Send as JSON body (not form data)
+            success, response = self.run_test(
+                f"Stress Assessment - Scenario {i+1}",
+                "POST",
+                "wellness/stress-assessment",
+                200,
+                data=scenario,  # Send as JSON body
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
             
-            # Convert list to comma-separated string for form data
-            form_data = scenario.copy()
-            form_data["physical_symptoms"] = ",".join(scenario["physical_symptoms"])
+            if success:
+                print(f"   ✅ Assessment completed")
+                print(f"   Wellness score: {response.get('wellness_score', 0):.1f}/10")
+                print(f"   Recommendations count: {len(response.get('recommendations', []))}")
+                print(f"   Priority actions: {len(response.get('priority_actions', []))}")
+                success_count += 1
+            else:
+                print(f"   ❌ Assessment failed for scenario {i+1}")
             
-            try:
-                response = requests.post(url, data=form_data, headers=headers, timeout=60)
-                print(f"   Status Code: {response.status_code}")
-                
-                if response.status_code == 200:
-                    self.tests_passed += 1
-                    print(f"✅ Passed - Status: {response.status_code}")
-                    try:
-                        response_data = response.json()
-                        print(f"   ✅ Assessment completed")
-                        print(f"   Wellness score: {response_data.get('wellness_score', 0):.1f}/10")
-                        print(f"   Recommendations count: {len(response_data.get('recommendations', []))}")
-                        print(f"   Priority actions: {len(response_data.get('priority_actions', []))}")
-                        success_count += 1
-                    except:
-                        success_count += 1
-                else:
-                    print(f"❌ Failed - Expected 200, got {response.status_code}")
-                    try:
-                        error_data = response.json()
-                        print(f"   Error: {error_data}")
-                    except:
-                        print(f"   Error: {response.text}")
-            except Exception as e:
-                print(f"❌ Failed - Error: {str(e)}")
-            
-            self.tests_run += 1
-            time.sleep(2)  # Delay between AI calls
+            time.sleep(3)  # Delay between AI calls
         
         return success_count == len(assessment_scenarios)
 
