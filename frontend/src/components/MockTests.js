@@ -496,27 +496,64 @@ export default function MockTests() {
               {/* Quick Test Generation */}
               <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-3">Generate New Test</h4>
+                
+                {/* Error Display */}
+                {generationError && (
+                  <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-orange-800 text-sm">{generationError}</p>
+                    {!isGeneratingTest && (
+                      <button
+                        onClick={() => setGenerationError(null)}
+                        className="mt-2 text-orange-600 hover:text-orange-800 text-xs underline"
+                      >
+                        Dismiss
+                      </button>
+                    )}
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Button 
                     onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25)}
                     disabled={isGeneratingTest}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
                   >
-                    {isGeneratingTest ? 'Generating...' : 'Math Test'}
+                    {isGeneratingTest ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      'Math Test'
+                    )}
                   </Button>
                   <Button 
                     onClick={() => generateMockTest('JEE', 'Physics', 3, 25)}
                     disabled={isGeneratingTest}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400"
                   >
-                    {isGeneratingTest ? 'Generating...' : 'Physics Test'}
+                    {isGeneratingTest ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      'Physics Test'
+                    )}
                   </Button>
                   <Button 
                     onClick={() => generateMockTest('JEE', 'Chemistry', 3, 25)}
                     disabled={isGeneratingTest}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400"
                   >
-                    {isGeneratingTest ? 'Generating...' : 'Chemistry Test'}
+                    {isGeneratingTest ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      'Chemistry Test'
+                    )}
                   </Button>
                 </div>
               </div>
