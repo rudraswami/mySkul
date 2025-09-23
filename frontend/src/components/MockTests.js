@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
+import { useApiCall } from '../hooks/useApiCall';
 import { 
   FileText, 
   Clock, 
@@ -10,7 +11,9 @@ import {
   Award, 
   TrendingUp, 
   CheckCircle,
-  Circle
+  Circle,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 
 export default function MockTests() {
