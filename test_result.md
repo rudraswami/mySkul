@@ -237,7 +237,8 @@
     - "Advanced Analytics Dashboard"
     - "Stress Management & Motivational API"
     - "Stress Management UI"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Enhanced Mock Tests UI"
   test_all: true
   test_priority: "high_first"
 
