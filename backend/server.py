@@ -573,6 +573,74 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
 
 # ============= PHASE 4: ENHANCED FEATURES API ENDPOINTS =============
 
+@api_router.post("/demo/populate-data")
+async def populate_demo_data(user: User = Depends(get_current_user)):
+    """Populate demo data for new users to showcase analytics features"""
+    
+    try:
+        # Create some sample study progress records
+        demo_subjects = [
+            {"subject": "Mathematics", "mastery": 85, "time": 20},
+            {"subject": "Physics", "mastery": 72, "time": 15}, 
+            {"subject": "Chemistry", "mastery": 78, "time": 12}
+        ]
+        
+        for subject_data in demo_subjects:
+            for i in range(5):  # 5 chapters per subject
+                progress = StudyProgress(
+                    user_id=user.user_id,
+                    subject=subject_data["subject"],
+                    chapter=f"Chapter {i+1}",
+                    concept=f"Concept {i+1}",
+                    mastery_level=subject_data["mastery"] + (i * 2) - 5,
+                    time_spent=subject_data["time"] + i,
+                    questions_attempted=50 + (i * 10),
+                    questions_correct=int((50 + (i * 10)) * (subject_data["mastery"]/100))
+                )
+                await db.study_progress.insert_one(progress.dict())
+        
+        # Create a sample mock test result
+        sample_test = MockTest(
+            user_id=user.user_id,
+            exam_type=user.exam_type,
+            subject="Mathematics", 
+            test_name="Sample JEE Mathematics Test",
+            questions=[],
+            total_marks=100,
+            score=76,
+            time_taken=3600,
+            completed_at=datetime.utcnow()
+        )
+        await db.mock_tests.insert_one(sample_test.dict())
+        
+        # Create a sample test result
+        sample_result = MockTestResult(
+            test_id=sample_test.test_id,
+            user_id=user.user_id,
+            answers={},
+            score=76,
+            percentage=76.0,
+            time_taken=3600,
+            correct_answers=19,
+            wrong_answers=6,
+            unanswered=0,
+            subject_wise_analysis={"Mathematics": {"correct": 19, "wrong": 6, "total": 25}},
+            difficulty_performance={"3": {"correct": 19, "wrong": 6, "total": 25}},
+            recommendations=["Focus on advanced calculus problems", "Practice more integration techniques"]
+        )
+        await db.mock_test_results.insert_one(sample_result.dict())
+        
+        return {
+            "message": "Demo data populated successfully",
+            "study_records": len(demo_subjects) * 5,
+            "mock_tests": 1,
+            "test_results": 1
+        }
+        
+    except Exception as e:
+        logger.error(f"Demo data population error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to populate demo data")
+
 @api_router.post("/mock-tests/generate")
 async def generate_mock_test(
     exam_type: str, 
