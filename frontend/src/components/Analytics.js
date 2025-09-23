@@ -88,6 +88,29 @@ export default function Analytics() {
       { topic: 'Organic Reactions', subject: 'Chemistry', accuracy: 65, priority: 'High' }
     ];
 
+  const populateDemoData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${backendUrl}/api/demo/populate-data`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        alert('Demo data populated! Refreshing analytics...');
+        await loadAnalytics(); // Refresh the data
+      } else {
+        console.error('Failed to populate demo data');
+      }
+    } catch (error) {
+      console.error('Error populating demo data:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
