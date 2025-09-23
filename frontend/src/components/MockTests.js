@@ -448,16 +448,28 @@ export default function MockTests() {
                 
                 {/* Error Display */}
                 {generationError && (
-                  <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="text-orange-800 text-sm">{generationError}</p>
-                    {!isGeneratingTest && (
-                      <button
-                        onClick={() => setGenerationError(null)}
-                        className="mt-2 text-orange-600 hover:text-orange-800 text-xs underline"
-                      >
-                        Dismiss
-                      </button>
-                    )}
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-red-800 text-sm">{generationError.message}</p>
+                      {!isGeneratingTest && (
+                        <button
+                          onClick={() => resetApiState()}
+                          className="mt-2 text-red-600 hover:text-red-800 text-xs underline flex items-center"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Try Again
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Retry Status Display */}
+                {retryStatus && (
+                  <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2"></div>
+                    <p className="text-yellow-800 text-sm">{retryStatus}</p>
                   </div>
                 )}
                 
