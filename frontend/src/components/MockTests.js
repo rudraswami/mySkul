@@ -32,7 +32,9 @@ export default function MockTests() {
 
   const loadAnalytics = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
+      if (!token) return;
+      
       const response = await fetch(`${backendUrl}/api/analytics/performance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
