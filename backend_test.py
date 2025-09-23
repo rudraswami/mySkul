@@ -264,6 +264,245 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
 
+    # ============= PHASE 4: ENHANCED FEATURES TESTS =============
+
+    def test_generate_mock_test(self):
+        """Test enhanced mock test generation"""
+        if not self.token:
+            print("❌ No token available for mock test generation")
+            return False
+            
+        # Test with different parameters
+        test_params = [
+            {"exam_type": "JEE", "subject": "Mathematics", "difficulty": 3, "num_questions": 10},
+            {"exam_type": "JEE", "subject": "Physics", "difficulty": 4, "num_questions": 5},
+            {"exam_type": "JEE", "subject": "Chemistry", "difficulty": 2, "num_questions": 8}
+        ]
+        
+        success_count = 0
+        self.test_ids = []  # Store test IDs for submission tests
+        
+        for i, params in enumerate(test_params):
+            print(f"   Testing mock test generation {i+1}/3: {params['subject']} Level {params['difficulty']}")
+            
+            success, response = self.run_test(
+                f"Generate Mock Test - {params['subject']}",
+                "POST",
+                f"mock-tests/generate?exam_type={params['exam_type']}&subject={params['subject']}&difficulty={params['difficulty']}&num_questions={params['num_questions']}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'test_id' in response:
+                self.test_ids.append(response['test_id'])
+                success_count += 1
+                print(f"   ✅ Generated test ID: {response['test_id']}")
+                print(f"   Questions count: {len(response.get('questions', []))}")
+                print(f"   Total marks: {response.get('total_marks', 0)}")
+            
+            time.sleep(2)  # Delay between AI calls
+        
+        return success_count == len(test_params)
+
+    def test_submit_mock_test(self):
+        """Test mock test submission and analysis"""
+        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
+            print("❌ No token or test IDs available for mock test submission")
+            return False
+        
+        # Use the first generated test for submission
+        test_id = self.test_ids[0]
+        
+        # Create sample answers (simulating a student taking the test)
+        sample_answers = {}
+        for i in range(10):  # Assuming 10 questions from the first test
+            question_id = f"q_{i+1}"  # This would normally come from the test questions
+            sample_answers[question_id] = "A"  # Simulate selecting option A for all
+        
+        submission_data = {
+            "answers": sample_answers,
+            "time_taken": 1200  # 20 minutes in seconds
+        }
+        
+        print(f"   Submitting test {test_id} with {len(sample_answers)} answers...")
+        print("   This may take a few seconds for AI analysis...")
+        
+        success, response = self.run_test(
+            "Submit Mock Test",
+            "POST",
+            f"mock-tests/{test_id}/submit",
+            200,
+            data=submission_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Test submitted successfully")
+            print(f"   Score: {response.get('score', 0)}")
+            print(f"   Percentage: {response.get('percentage', 0):.1f}%")
+            print(f"   Correct answers: {response.get('correct_answers', 0)}")
+            print(f"   Recommendations count: {len(response.get('recommendations', []))}")
+            return True
+        
+        return False
+
+    def test_performance_analytics(self):
+        """Test comprehensive performance analytics"""
+        if not self.token:
+            print("❌ No token available for performance analytics")
+            return False
+        
+        print("   Fetching comprehensive performance analytics...")
+        
+        success, response = self.run_test(
+            "Performance Analytics",
+            "GET",
+            "analytics/performance",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Analytics retrieved successfully")
+            
+            # Check key analytics components
+            overall_perf = response.get('overall_performance', {})
+            subject_perf = response.get('subject_performance', {})
+            weekly_progress = response.get('weekly_progress', {})
+            parent_summary = response.get('parent_summary', {})
+            
+            print(f"   Average score: {overall_perf.get('average_score', 0):.1f}")
+            print(f"   Subjects analyzed: {len(subject_perf)}")
+            print(f"   Weekly completed hours: {weekly_progress.get('completed_hours', 0):.1f}")
+            print(f"   Parent grade: {parent_summary.get('overall_grade', 'N/A')}")
+            
+            return True
+        
+        return False
+
+    def test_stress_assessment(self):
+        """Test stress assessment and wellness recommendations"""
+        if not self.token:
+            print("❌ No token available for stress assessment")
+            return False
+        
+        # Test different stress levels
+        assessment_scenarios = [
+            {
+                "stress_level": 7,
+                "anxiety_level": 6,
+                "sleep_quality": 4,
+                "study_motivation": 5,
+                "physical_symptoms": ["headache", "fatigue"],
+                "emotional_state": "overwhelmed"
+            },
+            {
+                "stress_level": 3,
+                "anxiety_level": 2,
+                "sleep_quality": 8,
+                "study_motivation": 9,
+                "physical_symptoms": [],
+                "emotional_state": "confident"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, scenario in enumerate(assessment_scenarios):
+            print(f"   Testing stress assessment scenario {i+1}/2: Stress Level {scenario['stress_level']}/10")
+            print("   This may take a few seconds for AI recommendations...")
+            
+            success, response = self.run_test(
+                f"Stress Assessment - Scenario {i+1}",
+                "POST",
+                "wellness/stress-assessment",
+                200,
+                data=scenario,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Assessment completed")
+                print(f"   Wellness score: {response.get('wellness_score', 0):.1f}/10")
+                print(f"   Recommendations count: {len(response.get('recommendations', []))}")
+                print(f"   Priority actions: {len(response.get('priority_actions', []))}")
+                success_count += 1
+            
+            time.sleep(2)  # Delay between AI calls
+        
+        return success_count == len(assessment_scenarios)
+
+    def test_motivational_content(self):
+        """Test personalized motivational content generation"""
+        if not self.token:
+            print("❌ No token available for motivational content")
+            return False
+        
+        print("   Fetching personalized motivational content...")
+        print("   This may take a few seconds for AI content generation...")
+        
+        success, response = self.run_test(
+            "Motivational Content",
+            "GET",
+            "wellness/motivational-content",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Motivational content retrieved")
+            
+            daily_content = response.get('daily_content', [])
+            print(f"   Content items: {len(daily_content)}")
+            
+            # Check content types
+            content_types = [item.get('content_type') for item in daily_content]
+            print(f"   Content types: {', '.join(set(content_types))}")
+            
+            wellness_tip = response.get('wellness_tip', '')
+            print(f"   Wellness tip provided: {'Yes' if wellness_tip else 'No'}")
+            
+            return True
+        
+        return False
+
+    def test_integration_auth_validation(self):
+        """Test authentication validation across all new endpoints"""
+        print("   Testing authentication validation on new endpoints...")
+        
+        # Test without token (should fail with 401)
+        endpoints_to_test = [
+            ("mock-tests/generate?exam_type=JEE&subject=Mathematics", "POST"),
+            ("analytics/performance", "GET"),
+            ("wellness/stress-assessment", "POST"),
+            ("wellness/motivational-content", "GET")
+        ]
+        
+        success_count = 0
+        
+        for endpoint, method in endpoints_to_test:
+            print(f"   Testing {endpoint} without auth...")
+            
+            # Temporarily remove token
+            temp_token = self.token
+            self.token = None
+            
+            success, _ = self.run_test(
+                f"Auth Validation - {endpoint}",
+                method,
+                endpoint,
+                401,  # Expecting 401 Unauthorized
+                data={} if method == "POST" else None
+            )
+            
+            # Restore token
+            self.token = temp_token
+            
+            if success:
+                success_count += 1
+        
+        return success_count == len(endpoints_to_test)
+
 def main():
     print("🚀 Starting Dhruv AI Backend API Tests")
     print("=" * 50)
