@@ -9,6 +9,7 @@ import {
   MessageCircle, 
   FileText, 
   BarChart3, 
+  Heart,
   LogOut,
   User
 } from 'lucide-react';
