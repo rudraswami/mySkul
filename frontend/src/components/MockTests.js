@@ -601,7 +601,7 @@ export default function MockTests() {
                       
                       <div className="ml-4">
                         <Button 
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
                           size="sm"
                           onClick={() => {
                             const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
@@ -610,7 +610,14 @@ export default function MockTests() {
                           }}
                           disabled={isGeneratingTest}
                         >
-                          {isGeneratingTest ? 'Generating...' : (test.completed ? 'Retake' : 'Start Test')}
+                          {isGeneratingTest ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                              Generating...
+                            </>
+                          ) : (
+                            test.completed ? 'Retake' : 'Start Test'
+                          )}
                         </Button>
                       </div>
                     </div>
