@@ -548,9 +548,9 @@ def main():
         time.sleep(1)
     
     # Print final results
-    print("\n" + "=" * 50)
-    print("📊 FINAL TEST RESULTS")
-    print("=" * 50)
+    print("\n" + "=" * 70)
+    print("📊 FINAL TEST RESULTS - DHRUV AI PHASE 4 TESTING")
+    print("=" * 70)
     print(f"Tests Run: {tester.tests_run}")
     print(f"Tests Passed: {tester.tests_passed}")
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
@@ -560,8 +560,18 @@ def main():
         print(f"\n❌ Failed Tests:")
         for test in failed_tests:
             print(f"   - {test}")
+        print(f"\n🔍 CRITICAL ISSUES FOUND:")
+        print(f"   Please review failed tests above for backend functionality issues.")
     else:
         print(f"\n✅ All tests passed!")
+        print(f"🎉 Phase 4 Enhanced Features are working correctly!")
+    
+    print(f"\n📋 PHASE 4 FEATURES TESTED:")
+    print(f"   ✓ Enhanced Mock Test System (Generation & Submission)")
+    print(f"   ✓ Performance Analytics (Student & Parent Views)")
+    print(f"   ✓ Stress Management & Wellness Assessment")
+    print(f"   ✓ Personalized Motivational Content")
+    print(f"   ✓ Authentication & Security Validation")
     
     return 0 if len(failed_tests) == 0 else 1
 
