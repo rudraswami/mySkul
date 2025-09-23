@@ -53,8 +53,12 @@ export default function MockTests() {
     }
   };
 
-  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25) => {
+  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, retryCount = 0) => {
+    const maxRetries = 2;
+    
     setIsGeneratingTest(true);
+    setGenerationError(null); // Clear previous errors
+    
     try {
       const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       if (!token) {
@@ -73,7 +77,9 @@ export default function MockTests() {
           subject: subject,
           difficulty: difficulty,
           num_questions: numQuestions
-        })
+        }),
+        // Add timeout to prevent infinite loading
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       });
       
       if (response.ok) {
@@ -82,6 +88,7 @@ export default function MockTests() {
         setTimeRemaining(testData.time_limit * 60); // Convert minutes to seconds
         setCurrentQuestion(0);
         setAnswers({});
+        setGenerationError(null); // Clear any previous errors
         
         // Start timer
         const timer = setInterval(() => {
@@ -97,6 +104,8 @@ export default function MockTests() {
       } else {
         // Handle API errors properly
         let errorMessage = 'Failed to generate test. Please try again.';
+        let shouldRetry = false;
+        
         try {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorMessage;
@@ -104,31 +113,64 @@ export default function MockTests() {
           console.error('Error parsing error response:', parseError);
         }
         
-        // Show user-friendly error based on status code
+        // Determine error type and retry logic
         if (response.status === 500) {
-          errorMessage = 'Our AI service is temporarily busy. Please try again in a few seconds.';
+          errorMessage = 'Our AI service is temporarily busy.';
+          shouldRetry = retryCount < maxRetries;
         } else if (response.status === 401) {
           errorMessage = 'Please log in again to continue.';
         } else if (response.status >= 500) {
-          errorMessage = 'Server is temporarily unavailable. Please try again in a moment.';
+          errorMessage = 'Server is temporarily unavailable.';
+          shouldRetry = retryCount < maxRetries;
         }
         
-        alert(errorMessage);
+        // Auto-retry for server errors
+        if (shouldRetry) {
+          console.log(`Retrying test generation (attempt ${retryCount + 2}/${maxRetries + 1})...`);
+          setGenerationError(`${errorMessage} Retrying... (${retryCount + 2}/${maxRetries + 1})`);
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+          
+          // Recursive retry
+          return generateMockTest(examType, subject, difficulty, numQuestions, retryCount + 1);
+        } else {
+          setGenerationError(errorMessage);
+          alert(errorMessage);
+        }
+        
         console.error(`Mock test generation failed: ${response.status} - ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error generating test:', error);
       
       // Handle network and other errors
-      let errorMessage = 'Failed to generate test. Please check your internet connection and try again.';
+      let errorMessage = 'Failed to generate test.';
+      let shouldRetry = retryCount < maxRetries;
       
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection.';
-      } else if (error.name === 'AbortError') {
-        errorMessage = 'Request timed out. Please try again.';
+        shouldRetry = false; // Don't retry network errors
+      } else if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        errorMessage = 'Request timed out.';
+      } else if (error.name === 'TimeoutError') {
+        errorMessage = 'The request is taking longer than expected.';
       }
       
-      alert(errorMessage);
+      // Auto-retry for timeout and server errors
+      if (shouldRetry && (error.name === 'AbortError' || error.message.includes('500'))) {
+        console.log(`Retrying test generation after error (attempt ${retryCount + 2}/${maxRetries + 1})...`);
+        setGenerationError(`${errorMessage} Retrying... (${retryCount + 2}/${maxRetries + 1})`);
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+        
+        // Recursive retry
+        return generateMockTest(examType, subject, difficulty, numQuestions, retryCount + 1);
+      } else {
+        setGenerationError(errorMessage);
+        alert(`${errorMessage} Please try again.`);
+      }
     } finally {
       // Always reset loading state
       setIsGeneratingTest(false);
