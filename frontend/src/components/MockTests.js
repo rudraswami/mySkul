@@ -478,10 +478,14 @@ export default function MockTests() {
                         <Button 
                           className="bg-blue-600 hover:bg-blue-700"
                           size="sm"
-                          onClick={() => generateMockTest(test.examType, test.subject, test.difficulty === 'Easy' ? 2 : test.difficulty === 'Medium' ? 3 : 4, test.questions)}
+                          onClick={() => {
+                            const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
+                            const diffLevel = difficultyMap[test.difficulty] || 3;
+                            generateMockTest(test.examType, test.subject, diffLevel, Math.min(test.questions, 25));
+                          }}
                           disabled={isGeneratingTest}
                         >
-                          {test.completed ? 'Retake' : 'Start Test'}
+                          {isGeneratingTest ? 'Generating...' : (test.completed ? 'Retake' : 'Start Test')}
                         </Button>
                       </div>
                     </div>
