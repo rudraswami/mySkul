@@ -152,6 +152,14 @@ export default function Analytics() {
         </div>
         
         <div className="flex space-x-2">
+          <Button
+            onClick={populateDemoData}
+            variant="outline"
+            size="sm"
+            className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+          >
+            Load Sample Data
+          </Button>
           {['week', 'month', 'quarter'].map((period) => (
             <Button
               key={period}
