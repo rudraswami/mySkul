@@ -57,7 +57,7 @@ export default function StressManagement() {
   const submitAssessment = async () => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
       
       if (!token) {
         alert('Please log in to submit assessment');
