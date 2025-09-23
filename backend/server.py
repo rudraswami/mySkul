@@ -670,8 +670,7 @@ async def generate_mock_test(
 @api_router.post("/mock-tests/{test_id}/submit")
 async def submit_mock_test(
     test_id: str,
-    answers: Dict[str, str],
-    time_taken: int,
+    submission: MockTestSubmission,
     user: User = Depends(get_current_user)
 ):
     """Submit mock test answers and get detailed analysis"""
@@ -695,7 +694,7 @@ async def submit_mock_test(
         for question in mock_test.questions:
             q_id = question["question_id"]
             correct_answer = question["correct_answer"]
-            user_answer = answers.get(q_id)
+            user_answer = submission.answers.get(q_id)
             
             subject = question.get("chapter", "General")
             difficulty = question.get("difficulty_level", 3)
@@ -728,7 +727,7 @@ async def submit_mock_test(
         
         Score: {total_score}/{mock_test.total_marks} ({percentage:.1f}%)
         Correct: {correct_count}, Wrong: {wrong_count}, Unanswered: {unanswered_count}
-        Time taken: {time_taken} seconds
+        Time taken: {submission.time_taken} seconds
         Subject-wise performance: {subject_analysis}
         Difficulty-wise performance: {difficulty_analysis}
         
@@ -748,10 +747,10 @@ async def submit_mock_test(
         result = MockTestResult(
             test_id=test_id,
             user_id=user.user_id,
-            answers=answers,
+            answers=submission.answers,
             score=total_score,
             percentage=percentage,
-            time_taken=time_taken,
+            time_taken=submission.time_taken,
             correct_answers=correct_count,
             wrong_answers=wrong_count,
             unanswered=unanswered_count,
@@ -766,9 +765,9 @@ async def submit_mock_test(
         await db.mock_tests.update_one(
             {"test_id": test_id},
             {"$set": {
-                "answers": answers,
+                "answers": submission.answers,
                 "score": total_score,
-                "time_taken": time_taken,
+                "time_taken": submission.time_taken,
                 "completed_at": datetime.utcnow()
             }}
         )
