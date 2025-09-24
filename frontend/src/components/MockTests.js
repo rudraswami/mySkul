@@ -27,6 +27,8 @@ export default function MockTests() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [testResults, setTestResults] = useState(null);
+  const [showResults, setShowResults] = useState(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
