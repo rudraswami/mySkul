@@ -785,6 +785,155 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
         logger.error(f"Doubt resolution error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to resolve doubt")
 
+# ============= DUAL-LAYER AI API ENDPOINTS =============
+
+@api_router.post("/ai/dual-response")
+async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
+    """Get coordinated response from both Mentor and Professor AI layers"""
+    
+    try:
+        session_id = chat_request.session_id or str(uuid.uuid4())
+        
+        # Get user context for personalization
+        user_context = {
+            'exam_type': user.exam_type,
+            'grade': user.grade,
+            'target_year': user.target_year,
+            'user_id': user.user_id
+        }
+        
+        # Get coordinated dual-layer response
+        coordinated_response = await dual_ai.get_coordinated_response(
+            chat_request.message, 
+            chat_request.subject, 
+            session_id, 
+            user_context
+        )
+        
+        # Save chat message with dual-layer data
+        chat_message = ChatMessage(
+            session_id=session_id,
+            user_id=user.user_id,
+            message=chat_request.message,
+            response=coordinated_response['primary_response'],
+            reasoning=f"Dual-layer AI: {coordinated_response['primary_persona']} leading. Scenario: {coordinated_response['scenario_type']}"
+        )
+        
+        await db.chat_messages.insert_one(chat_message.dict())
+        
+        return {
+            "session_id": session_id,
+            "message": chat_request.message,
+            "dual_response": {
+                "primary": {
+                    "persona": coordinated_response['primary_persona'],
+                    "response": coordinated_response['primary_response'],
+                    "reasoning": coordinated_response['primary_reasoning']
+                },
+                "secondary": {
+                    "persona": coordinated_response['secondary_persona'],
+                    "response": coordinated_response['secondary_response'],
+                    "reasoning": coordinated_response['secondary_reasoning']
+                },
+                "scenario_type": coordinated_response['scenario_type'],
+                "confidence": coordinated_response['confidence']
+            },
+            "timestamp": chat_message.timestamp
+        }
+        
+    except Exception as e:
+        logger.error(f"Dual AI response error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get dual AI response")
+
+@api_router.post("/ai/mentor-only")
+async def get_mentor_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
+    """Get response only from Mentor AI layer"""
+    
+    try:
+        session_id = chat_request.session_id or str(uuid.uuid4())
+        
+        user_context = {
+            'exam_type': user.exam_type,
+            'grade': user.grade,
+            'target_year': user.target_year,
+            'user_id': user.user_id
+        }
+        
+        mentor_response, mentor_reasoning = await dual_ai.mentor.get_response(
+            chat_request.message,
+            chat_request.subject,
+            session_id,
+            user_context
+        )
+        
+        return {
+            "session_id": session_id,
+            "message": chat_request.message,
+            "response": mentor_response,
+            "reasoning": mentor_reasoning,
+            "persona": "mentor",
+            "timestamp": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(f"Mentor AI error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get mentor response")
+
+@api_router.post("/ai/professor-only")
+async def get_professor_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
+    """Get response only from Professor AI layer"""
+    
+    try:
+        session_id = chat_request.session_id or str(uuid.uuid4())
+        
+        user_context = {
+            'exam_type': user.exam_type,
+            'grade': user.grade,
+            'target_year': user.target_year,
+            'user_id': user.user_id
+        }
+        
+        professor_response, professor_reasoning = await dual_ai.professor.get_response(
+            chat_request.message,
+            chat_request.subject,
+            session_id,
+            user_context
+        )
+        
+        return {
+            "session_id": session_id,
+            "message": chat_request.message,
+            "response": professor_response,
+            "reasoning": professor_reasoning,
+            "persona": "professor", 
+            "timestamp": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(f"Professor AI error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get professor response")
+
+@api_router.get("/ai/scenario-classify")
+async def classify_message_scenario(message: str):
+    """Classify a message to determine which AI persona should lead"""
+    
+    try:
+        classifier = ScenarioClassifier()
+        scenario = classifier.classify_scenario(message)
+        
+        return {
+            "message": message,
+            "classification": scenario,
+            "explanation": {
+                "professor_scenarios": "Fact/concept questions, problem solving, step-by-step solutions",
+                "mentor_scenarios": "Study planning, motivation, stress management, guidance"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Scenario classification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to classify scenario")
+
 # ============= PHASE 4: ENHANCED FEATURES API ENDPOINTS =============
 
 @api_router.post("/demo/populate-data")
