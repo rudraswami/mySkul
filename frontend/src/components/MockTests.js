@@ -167,16 +167,27 @@ export default function MockTests() {
           }
 
           if (response.status >= 500 && attempts < maxRetries) {
-            // Server error - retry
+            // Server error - retry with exponential backoff
             attempts++;
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
             continue;
           } else {
             // Final error or non-retryable error
             if (response.status >= 500) {
-              errorMessage = 'Our AI service is temporarily busy. Please try again in a few moments.';
+              errorMessage = `🤖 Our AI tutoring system is currently experiencing high demand. 
+
+This happens when many students are using the platform simultaneously. 
+
+📝 What you can do:
+• Try again in 2-3 minutes when AI load decreases
+• Contact support if this persists
+• Our team is working to scale AI capacity
+
+🎯 Dhruv AI is committed to providing reliable, world-class education technology.`;
             } else if (response.status === 401) {
-              errorMessage = 'Please log in again to continue.';
+              errorMessage = 'Your session has expired. Please log in again to continue your learning journey.';
+            } else if (response.status === 403) {
+              errorMessage = 'Access denied. Please ensure you have the proper permissions to generate tests.';
             }
             setGenerationError(errorMessage);
             break;
