@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Heart,
   LogOut,
-  User
+  User,
+  Mic
 } from 'lucide-react';
 
 export default function Navigation() {
