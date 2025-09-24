@@ -102,7 +102,7 @@ class DhruvAITester:
         """Test user login with the registered user"""
         login_data = {
             "email": self.test_user_email,
-            "password": "TestPass123!"
+            "password": "password123"
         }
         
         success, response = self.run_test(
