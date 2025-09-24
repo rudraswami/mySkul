@@ -992,12 +992,18 @@ async def create_dual_study_plan(
         professor_plan = dual_response['primary_response'] if dual_response['primary_persona'] == 'professor' else dual_response['secondary_response']
         mentor_guidance = dual_response['primary_response'] if dual_response['primary_persona'] == 'mentor' else dual_response['secondary_response']
         
-        # Create study plan record
+        # Create study plan record with properly formatted subjects
+        all_subjects = []
+        for subject in plan_request.weak_subjects:
+            all_subjects.append({"name": subject, "type": "weak", "priority": "high"})
+        for subject in plan_request.strong_subjects:
+            all_subjects.append({"name": subject, "type": "strong", "priority": "medium"})
+        
         study_plan = StudyPlan(
             user_id=user.user_id,
             exam_type=user.exam_type,
             target_date=datetime.fromisoformat(plan_request.target_exam_date.replace('Z', '+00:00')),
-            subjects=plan_request.weak_subjects + plan_request.strong_subjects,
+            subjects=all_subjects,
             daily_goals={"study_hours": plan_request.daily_study_hours},
             weekly_targets={"progress_target": 10}  # 10% progress per week
         )
