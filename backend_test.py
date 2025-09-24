@@ -1045,7 +1045,7 @@ def main():
     
     # Print final results
     print("\n" + "=" * 70)
-    print("📊 FINAL TEST RESULTS - DHRUV AI PHASE 4 TESTING")
+    print("📊 FINAL TEST RESULTS - DHRUV AI DUAL-LAYER SYSTEM TESTING")
     print("=" * 70)
     print(f"Tests Run: {tester.tests_run}")
     print(f"Tests Passed: {tester.tests_passed}")
