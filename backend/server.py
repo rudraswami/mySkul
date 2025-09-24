@@ -1308,7 +1308,7 @@ async def submit_mock_test(
                 "Strengthen conceptual understanding in difficult topics"
             ]
         
-        # Create result record
+        # Create result record with dual AI feedback
         result = MockTestResult(
             test_id=test_id,
             user_id=user.user_id,
