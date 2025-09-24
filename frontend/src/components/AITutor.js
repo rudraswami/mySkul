@@ -270,15 +270,35 @@ export default function AITutor() {
                   Dhruv AI - {selectedSubject} Tutor
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Your 24/7 personalized learning companion
+                  {aiMode === 'dual' && 'Dual-layer AI: Mentor + Professor intelligence'}
+                  {aiMode === 'mentor' && 'Mentor mode: Adaptive, friendly, motivational'}
+                  {aiMode === 'professor' && 'Professor mode: Rule-based, verified reasoning'}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center space-x-2">
+              {aiMode === 'dual' && (
+                <Badge variant="outline" className="flex items-center">
+                  <Users className="h-3 w-3 mr-1" />
+                  Dual Intelligence
+                </Badge>
+              )}
+              {aiMode === 'mentor' && (
+                <Badge variant="outline" className="flex items-center bg-green-50 text-green-700 border-green-200">
+                  <Heart className="h-3 w-3 mr-1" />
+                  Mentor Mode
+                </Badge>
+              )}
+              {aiMode === 'professor' && (
+                <Badge variant="outline" className="flex items-center bg-purple-50 text-purple-700 border-purple-200">
+                  <GraduationCap className="h-3 w-3 mr-1" />
+                  Professor Mode
+                </Badge>
+              )}
               <Badge variant="secondary" className="flex items-center">
-                <Zap className="h-3 w-3 mr-1" />
-                Accuracy Guaranteed
+                <Shield className="h-3 w-3 mr-1" />
+                Neuro-Symbolic AI
               </Badge>
             </div>
           </div>
