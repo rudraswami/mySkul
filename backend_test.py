@@ -619,6 +619,531 @@ class DhruvAITester:
         
         return success_count == len(subjects_to_test)
 
+    # ============= PHASE 2: DUAL-LAYER AI SCENARIO IMPLEMENTATIONS =============
+
+    def test_mock_tests_dual_feedback_system(self):
+        """Test Phase 2: Mock Tests Dual Feedback System with dual AI feedback"""
+        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
+            print("❌ No token or test IDs available for dual feedback test")
+            return False
+        
+        print("   Testing Phase 2: Mock Tests Dual Feedback System...")
+        
+        # Use the first generated test for submission with dual feedback
+        test_data = self.test_ids[0]
+        test_id = test_data['test_id']
+        questions = test_data['questions']
+        
+        # Create realistic answers with varying performance levels
+        performance_scenarios = [
+            {"name": "High Performance", "correct_ratio": 0.8},
+            {"name": "Medium Performance", "correct_ratio": 0.6},
+            {"name": "Low Performance", "correct_ratio": 0.3}
+        ]
+        
+        success_count = 0
+        
+        for scenario in performance_scenarios:
+            print(f"   Testing {scenario['name']} scenario (correct ratio: {scenario['correct_ratio']})")
+            
+            # Create answers based on performance level
+            sample_answers = {}
+            for i, question in enumerate(questions[:5]):  # Test with first 5 questions
+                question_id = question['question_id']
+                if i < len(questions) * scenario['correct_ratio']:
+                    # Correct answer
+                    sample_answers[question_id] = question['correct_answer']
+                else:
+                    # Wrong answer
+                    options = ['A', 'B', 'C', 'D']
+                    wrong_options = [opt for opt in options if opt != question['correct_answer']]
+                    sample_answers[question_id] = wrong_options[i % len(wrong_options)]
+            
+            submission_data = {
+                "answers": sample_answers,
+                "time_taken": 1800  # 30 minutes
+            }
+            
+            print(f"   Submitting test with {len(sample_answers)} answers for dual AI feedback...")
+            print("   This may take 10-15 seconds for dual AI analysis...")
+            
+            success, response = self.run_test(
+                f"Dual Feedback - {scenario['name']}",
+                "POST",
+                f"mock-tests/{test_id}/submit",
+                200,
+                data=submission_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'dual_feedback' in response:
+                dual_feedback = response['dual_feedback']
+                professor_analysis = dual_feedback.get('professor_analysis', '')
+                mentor_feedback = dual_feedback.get('mentor_feedback', '')
+                scenario_confidence = dual_feedback.get('scenario_confidence', 0)
+                
+                print(f"   ✅ Dual feedback received")
+                print(f"   Professor analysis length: {len(professor_analysis)}")
+                print(f"   Mentor feedback length: {len(mentor_feedback)}")
+                print(f"   Scenario confidence: {scenario_confidence:.2f}")
+                
+                # Verify dual intelligence structure
+                has_professor = professor_analysis and len(professor_analysis) > 50
+                has_mentor = mentor_feedback and len(mentor_feedback) > 50
+                has_confidence = scenario_confidence > 0
+                
+                if has_professor and has_mentor and has_confidence:
+                    print(f"   ✅ Dual intelligence structure validated")
+                    print(f"   Professor provides: Technical analysis")
+                    print(f"   Mentor provides: Motivational feedback")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Dual intelligence structure incomplete")
+                    print(f"   Professor analysis: {'✓' if has_professor else '✗'}")
+                    print(f"   Mentor feedback: {'✓' if has_mentor else '✗'}")
+                    print(f"   Confidence score: {'✓' if has_confidence else '✗'}")
+            else:
+                print(f"   ❌ Dual feedback failed for {scenario['name']}")
+            
+            time.sleep(3)  # Delay between tests
+        
+        return success_count >= len(performance_scenarios) * 0.8  # 80% success threshold
+
+    def test_study_planning_dual_intelligence(self):
+        """Test Phase 2: Study Planning Dual Intelligence with StudyPlanRequest model"""
+        if not self.token:
+            print("❌ No token available for study planning test")
+            return False
+        
+        print("   Testing Phase 2: Study Planning Dual Intelligence...")
+        
+        # Test different user preferences and stress levels
+        study_plan_scenarios = [
+            {
+                "name": "High Stress Student",
+                "target_exam_date": "2025-05-15T00:00:00Z",
+                "daily_study_hours": 8,
+                "weak_subjects": ["Mathematics", "Physics"],
+                "strong_subjects": ["Chemistry"],
+                "preferred_study_times": ["morning", "evening"],
+                "stress_level": 8
+            },
+            {
+                "name": "Balanced Student",
+                "target_exam_date": "2025-05-15T00:00:00Z",
+                "daily_study_hours": 6,
+                "weak_subjects": ["Physics"],
+                "strong_subjects": ["Mathematics", "Chemistry"],
+                "preferred_study_times": ["afternoon", "evening"],
+                "stress_level": 4
+            },
+            {
+                "name": "Low Stress Student",
+                "target_exam_date": "2025-05-15T00:00:00Z",
+                "daily_study_hours": 4,
+                "weak_subjects": [],
+                "strong_subjects": ["Mathematics", "Physics", "Chemistry"],
+                "preferred_study_times": ["morning"],
+                "stress_level": 2
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in study_plan_scenarios:
+            print(f"   Testing {scenario['name']} (stress level: {scenario['stress_level']}/10)")
+            print(f"   Daily hours: {scenario['daily_study_hours']}, Weak subjects: {len(scenario['weak_subjects'])}")
+            print("   This may take 10-15 seconds for dual AI planning...")
+            
+            success, response = self.run_test(
+                f"Study Plan - {scenario['name']}",
+                "POST",
+                "ai/dual-study-plan",
+                200,
+                data=scenario,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'dual_intelligence_plan' in response:
+                dual_plan = response['dual_intelligence_plan']
+                professor_plan = dual_plan.get('professor', {})
+                mentor_plan = dual_plan.get('mentor', {})
+                scenario_classification = response.get('scenario_classification', {})
+                implementation_timeline = response.get('implementation_timeline', {})
+                
+                print(f"   ✅ Dual intelligence plan generated")
+                print(f"   Plan ID: {response.get('plan_id', 'N/A')}")
+                print(f"   Professor focus: {professor_plan.get('focus', 'N/A')}")
+                print(f"   Mentor focus: {mentor_plan.get('focus', 'N/A')}")
+                print(f"   Primary persona: {scenario_classification.get('primary_persona', 'N/A')}")
+                print(f"   Timeline start: {implementation_timeline.get('start_date', 'N/A')[:10]}")
+                print(f"   Review frequency: {implementation_timeline.get('review_frequency', 'N/A')}")
+                
+                # Verify dual intelligence structure
+                has_professor_structure = (
+                    professor_plan.get('academic_structure') and 
+                    professor_plan.get('focus') and
+                    len(professor_plan.get('academic_structure', '')) > 100
+                )
+                has_mentor_guidance = (
+                    mentor_plan.get('personalized_guidance') and
+                    mentor_plan.get('focus') and
+                    len(mentor_plan.get('personalized_guidance', '')) > 100
+                )
+                has_timeline = implementation_timeline.get('review_frequency') == 'weekly'
+                
+                if has_professor_structure and has_mentor_guidance and has_timeline:
+                    print(f"   ✅ Dual intelligence structure validated")
+                    print(f"   Professor provides: Academic structure & curriculum compliance")
+                    print(f"   Mentor provides: Personalized guidance & motivation")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Dual intelligence structure incomplete")
+                    print(f"   Professor structure: {'✓' if has_professor_structure else '✗'}")
+                    print(f"   Mentor guidance: {'✓' if has_mentor_guidance else '✗'}")
+                    print(f"   Timeline setup: {'✓' if has_timeline else '✗'}")
+            else:
+                print(f"   ❌ Study plan generation failed for {scenario['name']}")
+            
+            time.sleep(5)  # Delay between AI calls
+        
+        return success_count >= len(study_plan_scenarios) * 0.8  # 80% success threshold
+
+    def test_enhanced_question_analysis(self):
+        """Test Phase 2: Enhanced Question Analysis with dual intelligence and student psychology"""
+        if not self.token:
+            print("❌ No token available for enhanced question analysis")
+            return False
+        
+        print("   Testing Phase 2: Enhanced Question Analysis...")
+        
+        # Test different student contexts and question types
+        analysis_scenarios = [
+            {
+                "name": "Stressed Student - Math Problem",
+                "message": "Solve the integral ∫(x² + 3x + 2)dx step by step",
+                "subject": "Mathematics",
+                "context": "High stress, struggling student"
+            },
+            {
+                "name": "Confident Student - Physics Concept",
+                "message": "Explain the concept of electromagnetic induction and Faraday's law",
+                "subject": "Physics", 
+                "context": "Confident student seeking deeper understanding"
+            },
+            {
+                "name": "Average Student - Chemistry Problem",
+                "message": "Balance the chemical equation: C₂H₆ + O₂ → CO₂ + H₂O",
+                "subject": "Chemistry",
+                "context": "Average performance student"
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in analysis_scenarios:
+            print(f"   Testing {scenario['name']}")
+            print(f"   Question: '{scenario['message'][:50]}...'")
+            print("   This may take 10-15 seconds for enhanced dual analysis...")
+            
+            success, response = self.run_test(
+                f"Enhanced Analysis - {scenario['name']}",
+                "POST",
+                "ai/enhanced-question-analysis",
+                200,
+                data={
+                    "message": scenario['message'],
+                    "subject": scenario['subject']
+                },
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'enhanced_analysis' in response:
+                enhanced_analysis = response['enhanced_analysis']
+                technical_accuracy = enhanced_analysis.get('technical_accuracy', {})
+                learning_psychology = enhanced_analysis.get('learning_psychology', {})
+                student_context = response.get('student_context', {})
+                scenario_metadata = response.get('scenario_metadata', {})
+                
+                print(f"   ✅ Enhanced analysis received")
+                print(f"   Technical accuracy persona: {technical_accuracy.get('persona', 'N/A')}")
+                print(f"   Learning psychology persona: {learning_psychology.get('persona', 'N/A')}")
+                print(f"   Student performance level: {student_context.get('performance_level', 'N/A')}")
+                print(f"   Student stress status: {student_context.get('stress_status', 'N/A')}")
+                print(f"   Recommended approach: {student_context.get('recommended_approach', 'N/A')}")
+                print(f"   Primary persona: {scenario_metadata.get('primary_persona', 'N/A')}")
+                
+                # Verify enhanced analysis structure
+                has_technical_analysis = (
+                    technical_accuracy.get('persona') == 'professor' and
+                    technical_accuracy.get('analysis') and
+                    len(technical_accuracy.get('analysis', '')) > 100
+                )
+                has_psychology_guidance = (
+                    learning_psychology.get('persona') == 'mentor' and
+                    learning_psychology.get('guidance') and
+                    len(learning_psychology.get('guidance', '')) > 100
+                )
+                has_student_assessment = (
+                    student_context.get('performance_level') and
+                    student_context.get('stress_status') and
+                    student_context.get('recommended_approach')
+                )
+                has_scenario_metadata = (
+                    scenario_metadata.get('primary_persona') and
+                    scenario_metadata.get('scenario_type') and
+                    scenario_metadata.get('confidence', 0) > 0
+                )
+                
+                if has_technical_analysis and has_psychology_guidance and has_student_assessment and has_scenario_metadata:
+                    print(f"   ✅ Enhanced analysis structure validated")
+                    print(f"   Technical accuracy: Professor provides factual correctness")
+                    print(f"   Learning psychology: Mentor optimizes for student understanding")
+                    print(f"   Student context: Performance and stress assessment included")
+                    print(f"   Scenario metadata: Persona classification provided")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Enhanced analysis structure incomplete")
+                    print(f"   Technical analysis: {'✓' if has_technical_analysis else '✗'}")
+                    print(f"   Psychology guidance: {'✓' if has_psychology_guidance else '✗'}")
+                    print(f"   Student assessment: {'✓' if has_student_assessment else '✗'}")
+                    print(f"   Scenario metadata: {'✓' if has_scenario_metadata else '✗'}")
+            else:
+                print(f"   ❌ Enhanced analysis failed for {scenario['name']}")
+            
+            time.sleep(5)  # Delay between AI calls
+        
+        return success_count >= len(analysis_scenarios) * 0.8  # 80% success threshold
+
+    def test_phase2_integration_with_authentication(self):
+        """Test Phase 2 endpoints integration with authentication and database operations"""
+        if not self.token:
+            print("❌ No token available for Phase 2 integration test")
+            return False
+        
+        print("   Testing Phase 2 integration with authentication and database...")
+        
+        # Test all Phase 2 endpoints with authentication
+        phase2_endpoints = [
+            {
+                "name": "Mock Test Dual Feedback",
+                "endpoint": f"mock-tests/{self.test_ids[0]['test_id'] if hasattr(self, 'test_ids') and self.test_ids else 'dummy'}/submit",
+                "method": "POST",
+                "data": {
+                    "answers": {"q1": "A", "q2": "B"},
+                    "time_taken": 1800
+                },
+                "skip_if_no_test": True
+            },
+            {
+                "name": "Study Planning Dual Intelligence",
+                "endpoint": "ai/dual-study-plan",
+                "method": "POST",
+                "data": {
+                    "target_exam_date": "2025-05-15T00:00:00Z",
+                    "daily_study_hours": 6,
+                    "weak_subjects": ["Mathematics"],
+                    "strong_subjects": ["Physics"],
+                    "preferred_study_times": ["morning"],
+                    "stress_level": 5
+                }
+            },
+            {
+                "name": "Enhanced Question Analysis",
+                "endpoint": "ai/enhanced-question-analysis",
+                "method": "POST",
+                "data": {
+                    "message": "What is the derivative of x³?",
+                    "subject": "Mathematics"
+                }
+            }
+        ]
+        
+        success_count = 0
+        
+        for test_case in phase2_endpoints:
+            if test_case.get('skip_if_no_test') and (not hasattr(self, 'test_ids') or not self.test_ids):
+                print(f"   Skipping {test_case['name']} - no test IDs available")
+                continue
+            
+            print(f"   Testing {test_case['name']} with authentication...")
+            
+            # Test with valid authentication
+            success, response = self.run_test(
+                f"Phase 2 Auth - {test_case['name']}",
+                test_case['method'],
+                test_case['endpoint'],
+                200,
+                data=test_case['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {test_case['name']} authenticated successfully")
+                success_count += 1
+                
+                # Test database operations (check if data is persisted)
+                if test_case['name'] == "Study Planning Dual Intelligence" and 'plan_id' in response:
+                    print(f"   ✅ Study plan persisted with ID: {response['plan_id']}")
+                elif test_case['name'] == "Enhanced Question Analysis" and 'session_id' in response:
+                    print(f"   ✅ Analysis session created: {response['session_id']}")
+            else:
+                print(f"   ❌ {test_case['name']} authentication failed")
+            
+            # Test without authentication (should fail with 401)
+            print(f"   Testing {test_case['name']} without authentication...")
+            temp_token = self.token
+            self.token = None
+            
+            success_unauth, _ = self.run_test(
+                f"Phase 2 Unauth - {test_case['name']}",
+                test_case['method'],
+                test_case['endpoint'],
+                401,  # Expecting 401 Unauthorized
+                data=test_case['data']
+            )
+            
+            self.token = temp_token
+            
+            if success_unauth:
+                print(f"   ✅ Correctly rejected unauthorized request")
+            else:
+                print(f"   ⚠️  Failed to reject unauthorized request")
+            
+            time.sleep(2)  # Delay between tests
+        
+        return success_count >= len([tc for tc in phase2_endpoints if not tc.get('skip_if_no_test')]) * 0.8
+
+    def test_phase2_error_handling_and_fallbacks(self):
+        """Test Phase 2 error handling and fallback mechanisms"""
+        if not self.token:
+            print("❌ No token available for Phase 2 error handling test")
+            return False
+        
+        print("   Testing Phase 2 error handling and fallback mechanisms...")
+        
+        # Test error scenarios
+        error_scenarios = [
+            {
+                "name": "Invalid Study Plan Date",
+                "endpoint": "ai/dual-study-plan",
+                "method": "POST",
+                "data": {
+                    "target_exam_date": "invalid-date",
+                    "daily_study_hours": 6,
+                    "weak_subjects": ["Mathematics"],
+                    "strong_subjects": ["Physics"],
+                    "preferred_study_times": ["morning"],
+                    "stress_level": 5
+                },
+                "expected_status": 422  # Validation error
+            },
+            {
+                "name": "Invalid Study Hours",
+                "endpoint": "ai/dual-study-plan", 
+                "method": "POST",
+                "data": {
+                    "target_exam_date": "2025-05-15T00:00:00Z",
+                    "daily_study_hours": 25,  # Invalid: > 16
+                    "weak_subjects": ["Mathematics"],
+                    "strong_subjects": ["Physics"],
+                    "preferred_study_times": ["morning"],
+                    "stress_level": 5
+                },
+                "expected_status": 422  # Validation error
+            },
+            {
+                "name": "Empty Question Analysis",
+                "endpoint": "ai/enhanced-question-analysis",
+                "method": "POST",
+                "data": {
+                    "message": "",  # Empty message
+                    "subject": "Mathematics"
+                },
+                "expected_status": 422  # Validation error
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in error_scenarios:
+            print(f"   Testing {scenario['name']}...")
+            
+            success, response = self.run_test(
+                f"Error Handling - {scenario['name']}",
+                scenario['method'],
+                scenario['endpoint'],
+                scenario['expected_status'],
+                data=scenario['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Error handled correctly (status {scenario['expected_status']})")
+                success_count += 1
+            else:
+                print(f"   ❌ Error handling failed")
+            
+            time.sleep(1)  # Small delay between tests
+        
+        return success_count >= len(error_scenarios) * 0.8
+
+    def test_phase2_backward_compatibility(self):
+        """Test that Phase 2 enhancements maintain backward compatibility with existing mock test system"""
+        if not self.token:
+            print("❌ No token available for backward compatibility test")
+            return False
+        
+        print("   Testing Phase 2 backward compatibility with existing mock test system...")
+        
+        # Test that existing mock test endpoints still work
+        compatibility_tests = [
+            {
+                "name": "Legacy Mock Test Generation",
+                "endpoint": "mock-tests/generate",
+                "method": "POST",
+                "data": {
+                    "exam_type": "JEE",
+                    "subject": "Mathematics",
+                    "difficulty": 3,
+                    "num_questions": 5
+                }
+            }
+        ]
+        
+        success_count = 0
+        
+        for test_case in compatibility_tests:
+            print(f"   Testing {test_case['name']}...")
+            print("   This may take 5-10 seconds for AI processing...")
+            
+            success, response = self.run_test(
+                f"Backward Compatibility - {test_case['name']}",
+                test_case['method'],
+                test_case['endpoint'],
+                200,
+                data=test_case['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {test_case['name']} still works")
+                
+                # Verify response structure is maintained
+                if 'test_id' in response and 'questions' in response:
+                    print(f"   ✅ Response structure maintained")
+                    print(f"   Test ID: {response['test_id']}")
+                    print(f"   Questions count: {len(response.get('questions', []))}")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Response structure may have changed")
+            else:
+                print(f"   ❌ {test_case['name']} failed")
+            
+            time.sleep(3)  # Delay for AI processing
+        
+        return success_count >= len(compatibility_tests)
+
     # ============= DUAL-LAYER AI SYSTEM TESTS =============
 
     def test_scenario_classification(self):
