@@ -104,11 +104,11 @@ export default function MockTests() {
         
         // Use modern AbortSignal.timeout if available, fallback for older browsers
         if (AbortSignal.timeout) {
-          timeoutSignal = AbortSignal.timeout(20000); // 20 seconds
+          timeoutSignal = AbortSignal.timeout(45000); // 45 seconds - AI needs more time
         } else {
           // Fallback for older browsers
           controller = new AbortController();
-          setTimeout(() => controller.abort('timeout'), 20000);
+          setTimeout(() => controller.abort('timeout'), 45000);
         }
         
         // Combine signals if modern API is available
