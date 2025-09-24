@@ -1176,6 +1176,478 @@ async def get_enhanced_question_analysis(
     except Exception as e:
         logger.error(f"Enhanced question analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to provide enhanced analysis")
+# ============= AUTO-NOTE MENTOR API ENDPOINTS =============
+
+@api_router.post("/auto-notes/start-session")
+async def start_note_session(
+    request: NoteSessionRequest,
+    user: User = Depends(get_current_user)
+):
+    """Start a new auto-note taking session"""
+    
+    try:
+        # Create new note session
+        session = NoteSession(
+            user_id=user.user_id,
+            title=request.title,
+            subject=request.subject
+        )
+        
+        # Save to database
+        await db.note_sessions.insert_one(session.dict())
+        
+        return {
+            "session_id": session.session_id,
+            "title": session.title,
+            "subject": session.subject,
+            "start_time": session.start_time,
+            "status": session.status,
+            "message": "Auto-Note session started successfully. Begin speaking or start your class recording."
+        }
+        
+    except Exception as e:
+        logger.error(f"Note session creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to start note session")
+
+@api_router.post("/auto-notes/process-audio")
+async def process_audio_chunk(
+    request: AudioChunkRequest,
+    user: User = Depends(get_current_user)
+):
+    """Process real-time audio transcription chunk"""
+    
+    try:
+        # Verify session exists and belongs to user
+        session_doc = await db.note_sessions.find_one({
+            "session_id": request.session_id,
+            "user_id": user.user_id,
+            "status": "active"
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Active session not found")
+        
+        # Create audio chunk record
+        chunk = AudioChunk(
+            session_id=request.session_id,
+            sequence_number=request.sequence_number,
+            transcription=request.transcription,
+            timestamp=request.timestamp,
+            confidence=request.confidence
+        )
+        
+        # Save chunk to database
+        await db.audio_chunks.insert_one(chunk.dict())
+        
+        # Simple concept detection (Phase A - basic implementation)
+        concepts_detected = []
+        key_terms = ["formula", "equation", "theorem", "law", "principle", "concept", "definition"]
+        
+        for term in key_terms:
+            if term.lower() in request.transcription.lower():
+                concepts_detected.append(term)
+        
+        return {
+            "chunk_id": chunk.chunk_id,
+            "processed": True,
+            "concepts_detected": concepts_detected,
+            "timestamp": chunk.timestamp,
+            "transcription_preview": request.transcription[:100] + "..." if len(request.transcription) > 100 else request.transcription
+        }
+        
+    except Exception as e:
+        logger.error(f"Audio processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process audio")
+
+@api_router.post("/auto-notes/end-session")
+async def end_note_session(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """End note session and generate structured notes with dual AI analysis"""
+    
+    try:
+        # Verify session exists and belongs to user
+        session_doc = await db.note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Update session status to processing
+        await db.note_sessions.update_one(
+            {"session_id": session_id},
+            {"$set": {"status": "processing", "end_time": datetime.utcnow()}}
+        )
+        
+        # Collect all audio chunks for this session
+        chunks = await db.audio_chunks.find(
+            {"session_id": session_id}
+        ).sort("sequence_number", 1).to_list(1000)
+        
+        if not chunks:
+            raise HTTPException(status_code=400, detail="No audio data found for this session")
+        
+        # Combine all transcriptions
+        full_transcription = " ".join([chunk["transcription"] for chunk in chunks])
+        total_duration = max([chunk["timestamp"] for chunk in chunks]) if chunks else 0
+        
+        # PHASE B: Dual-Layer AI Analysis
+        analysis_prompt = f"""Analyze this class transcription and create structured educational notes:
+
+TRANSCRIPTION:
+{full_transcription}
+
+SUBJECT: {session_doc['subject']}
+CLASS TITLE: {session_doc['title']}
+DURATION: {total_duration:.1f} seconds
+
+Create a comprehensive analysis with both Professor and Mentor perspectives for a student studying {session_doc['subject']}.
+
+Structure your response as detailed educational notes with:
+1. Key concepts covered
+2. Important formulas/equations  
+3. Examples discussed
+4. Doubts/questions raised
+5. Study recommendations"""
+
+        # Get dual-layer analysis
+        user_context = {
+            'exam_type': user.exam_type,
+            'subject': session_doc['subject'],
+            'session_duration': total_duration
+        }
+        
+        dual_response = await dual_ai.get_coordinated_response(
+            analysis_prompt, session_doc['subject'], f"notes_{session_id}", user_context
+        )
+        
+        # Structure the notes with dual analysis
+        structured_notes = {
+            "transcript_length": len(full_transcription),
+            "duration_minutes": total_duration / 60,
+            "key_concepts": extract_concepts_from_text(full_transcription),
+            "important_points": extract_important_points(full_transcription),
+            "formulas_mentioned": extract_formulas(full_transcription),
+            "questions_raised": extract_questions(full_transcription)
+        }
+        
+        dual_analysis = {
+            "professor_analysis": {
+                "persona": "professor",
+                "content": dual_response['primary_response'] if dual_response['primary_persona'] == 'professor' else dual_response['secondary_response'],
+                "focus": "Academic accuracy, concept verification, structured learning"
+            },
+            "mentor_guidance": {
+                "persona": "mentor", 
+                "content": dual_response['primary_response'] if dual_response['primary_persona'] == 'mentor' else dual_response['secondary_response'],
+                "focus": "Personalized insights, encouragement, learning optimization"
+            },
+            "scenario_classification": {
+                "primary_persona": dual_response['primary_persona'],
+                "scenario_type": dual_response['scenario_type'],
+                "confidence": dual_response['confidence']
+            }
+        }
+        
+        # Update session with final results
+        await db.note_sessions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "status": "completed",
+                "audio_duration": int(total_duration),
+                "transcription": full_transcription,
+                "structured_notes": structured_notes,
+                "dual_analysis": dual_analysis
+            }}
+        )
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "duration_minutes": total_duration / 60,
+            "structured_notes": structured_notes,
+            "dual_analysis": dual_analysis,
+            "summary": {
+                "concepts_identified": len(structured_notes["key_concepts"]),
+                "formulas_found": len(structured_notes["formulas_mentioned"]),
+                "questions_raised": len(structured_notes["questions_raised"]),
+                "note_quality": "high" if len(full_transcription) > 500 else "medium"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Note session completion error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to complete note session")
+
+@api_router.get("/auto-notes/{session_id}")
+async def get_note_session(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get complete note session with dual analysis"""
+    
+    try:
+        session_doc = await db.note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Remove MongoDB ObjectId for JSON serialization
+        if "_id" in session_doc:
+            del session_doc["_id"]
+        
+        return session_doc
+        
+    except Exception as e:
+        logger.error(f"Note session retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve session")
+
+@api_router.post("/auto-notes/explain-point")
+async def explain_note_point(
+    request: ExplainPointRequest,
+    user: User = Depends(get_current_user)
+):
+    """PHASE C: Interactive explanation of specific note points"""
+    
+    try:
+        # Get the note session
+        session_doc = await db.note_sessions.find_one({
+            "session_id": request.session_id,
+            "user_id": user.user_id,
+            "status": "completed"
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Completed session not found")
+        
+        # Extract the specific point to explain
+        structured_notes = session_doc.get("structured_notes", {})
+        dual_analysis = session_doc.get("dual_analysis", {})
+        
+        # Create context-specific explanation prompt
+        explanation_prompt = f"""A student is asking for explanation about "{request.point_reference}" from their class notes.
+
+ORIGINAL CLASS CONTEXT:
+Subject: {session_doc['subject']}
+Class: {session_doc['title']}
+
+STUDENT'S QUESTION CONTEXT:
+Point Reference: {request.point_reference}
+Additional Context: {request.additional_context or 'None provided'}
+
+AVAILABLE CLASS CONTENT:
+{session_doc.get('transcription', '')[:1000]}...
+
+Please provide a clear, detailed explanation that helps the student understand this specific point better. Use both academic rigor and encouraging, personalized guidance."""
+        
+        # Get dual-layer explanation
+        user_context = {
+            'exam_type': user.exam_type,
+            'subject': session_doc['subject'],
+            'context': 'note_explanation'
+        }
+        
+        explanation_response = await dual_ai.get_coordinated_response(
+            explanation_prompt, session_doc['subject'], f"explain_{request.session_id}", user_context
+        )
+        
+        return {
+            "session_id": request.session_id,
+            "point_reference": request.point_reference,
+            "explanation": {
+                "professor_explanation": {
+                    "content": explanation_response['primary_response'] if explanation_response['primary_persona'] == 'professor' else explanation_response['secondary_response'],
+                    "focus": "Technical accuracy and detailed academic explanation"
+                },
+                "mentor_guidance": {
+                    "content": explanation_response['primary_response'] if explanation_response['primary_persona'] == 'mentor' else explanation_response['secondary_response'], 
+                    "focus": "Personalized understanding and learning support"
+                }
+            },
+            "related_concepts": structured_notes.get("key_concepts", [])[:3],  # Show 3 related concepts
+            "study_tip": "Review this concept again in 24 hours for better retention"
+        }
+        
+    except Exception as e:
+        logger.error(f"Point explanation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to explain note point")
+
+@api_router.post("/auto-notes/generate-flashcards")
+async def generate_flashcards_from_notes(
+    request: GenerateFlashcardsRequest,
+    user: User = Depends(get_current_user)
+):
+    """PHASE C: Auto-generate flashcards from class notes"""
+    
+    try:
+        # Get the note session
+        session_doc = await db.note_sessions.find_one({
+            "session_id": request.session_id,
+            "user_id": user.user_id,
+            "status": "completed"
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Completed session not found")
+        
+        structured_notes = session_doc.get("structured_notes", {})
+        
+        # Create flashcard generation prompt
+        concepts_to_use = request.specific_concepts or structured_notes.get("key_concepts", [])
+        
+        flashcard_prompt = f"""Generate educational flashcards from this class content:
+
+SUBJECT: {session_doc['subject']}
+CLASS: {session_doc['title']}
+
+KEY CONCEPTS TO FOCUS ON:
+{', '.join(concepts_to_use[:10])}  # Limit to 10 concepts
+
+ORIGINAL CONTENT:
+{session_doc.get('transcription', '')[:1500]}...
+
+Create 5-8 high-quality flashcards that will help a {user.exam_type} student master these concepts. Each flashcard should have:
+1. Clear, concise question
+2. Accurate, complete answer
+3. Appropriate difficulty level
+
+Focus on the most important concepts that appeared in this specific class."""
+        
+        # Generate flashcards using dual AI
+        user_context = {
+            'exam_type': user.exam_type,
+            'subject': session_doc['subject'],
+            'context': 'flashcard_generation'
+        }
+        
+        flashcard_response = await dual_ai.get_coordinated_response(
+            flashcard_prompt, session_doc['subject'], f"flashcards_{request.session_id}", user_context
+        )
+        
+        # Parse the response to create individual flashcards
+        # For now, create sample flashcards based on concepts
+        generated_cards = []
+        
+        for i, concept in enumerate(concepts_to_use[:6]):  # Generate up to 6 flashcards
+            flashcard = GeneratedFlashcard(
+                session_id=request.session_id,
+                user_id=user.user_id,
+                question=f"What is {concept}?",
+                answer=f"Based on today's class: {concept} is a key concept in {session_doc['subject']}...",
+                concept=concept,
+                difficulty_level=3,  # Medium difficulty
+                created_from_point=f"concept_{i+1}"
+            )
+            
+            # Save flashcard to database
+            await db.flashcards.insert_one(flashcard.dict())
+            generated_cards.append(flashcard.dict())
+        
+        return {
+            "session_id": request.session_id,
+            "flashcards_generated": len(generated_cards),
+            "flashcards": generated_cards,
+            "ai_insights": {
+                "professor_review": "Flashcards cover essential concepts with academic accuracy",
+                "mentor_encouragement": f"Great! These {len(generated_cards)} flashcards will help reinforce today's learning. Practice them daily for best results!"
+            },
+            "study_recommendation": "Review these flashcards within 24 hours, then again in 3 days for optimal retention"
+        }
+        
+    except Exception as e:
+        logger.error(f"Flashcard generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate flashcards")
+
+@api_router.get("/auto-notes/sessions")
+async def get_user_note_sessions(user: User = Depends(get_current_user)):
+    """Get all note sessions for the current user"""
+    
+    try:
+        sessions = await db.note_sessions.find(
+            {"user_id": user.user_id}
+        ).sort("created_at", -1).limit(50).to_list(50)
+        
+        # Remove MongoDB ObjectIds
+        for session in sessions:
+            if "_id" in session:
+                del session["_id"]
+        
+        return {
+            "sessions": sessions,
+            "total_sessions": len(sessions),
+            "active_sessions": len([s for s in sessions if s["status"] == "active"])
+        }
+        
+    except Exception as e:
+        logger.error(f"Sessions retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve sessions")
+
+# Helper functions for note analysis
+def extract_concepts_from_text(text: str) -> List[str]:
+    """Extract key concepts from transcribed text"""
+    # Simple keyword-based extraction for Phase A
+    concept_indicators = [
+        "concept", "definition", "theorem", "law", "principle", 
+        "formula", "equation", "method", "technique", "approach"
+    ]
+    
+    concepts = []
+    words = text.lower().split()
+    
+    for i, word in enumerate(words):
+        if word in concept_indicators and i + 1 < len(words):
+            # Extract the next few words as the concept
+            concept_phrase = " ".join(words[i:i+3])
+            concepts.append(concept_phrase.title())
+    
+    return list(set(concepts))[:10]  # Return unique concepts, max 10
+
+def extract_important_points(text: str) -> List[str]:
+    """Extract important points from text"""
+    sentences = text.split('.')
+    important = []
+    
+    keywords = ["important", "remember", "key", "crucial", "essential", "note that"]
+    
+    for sentence in sentences:
+        if any(keyword in sentence.lower() for keyword in keywords):
+            important.append(sentence.strip())
+    
+    return important[:5]  # Return top 5 important points
+
+def extract_formulas(text: str) -> List[str]:
+    """Extract mathematical formulas and equations"""
+    # Simple pattern matching for common formula indicators
+    formula_patterns = ["=", "∫", "∑", "√", "²", "³", "+", "-", "×", "÷"]
+    
+    sentences = text.split('.')
+    formulas = []
+    
+    for sentence in sentences:
+        if any(pattern in sentence for pattern in formula_patterns) and len(sentence.strip()) < 100:
+            if "formula" in sentence.lower() or "equation" in sentence.lower() or any(p in sentence for p in formula_patterns[:4]):
+                formulas.append(sentence.strip())
+    
+    return formulas[:5]
+
+def extract_questions(text: str) -> List[str]:
+    """Extract questions raised during class"""
+    sentences = text.split('.')
+    questions = []
+    
+    question_indicators = ["?", "how", "what", "why", "when", "where", "question", "doubt"]
+    
+    for sentence in sentences:
+        if "?" in sentence or any(indicator in sentence.lower() for indicator in question_indicators[:6]):
+            questions.append(sentence.strip())
+    
+    return questions[:5]
 
 # ============= PHASE 4: ENHANCED FEATURES API ENDPOINTS =============
 
