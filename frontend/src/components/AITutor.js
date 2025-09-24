@@ -430,119 +430,16 @@ export default function AITutor() {
 
                   {/* AI Response */}
                   <div className="flex justify-start">
-                    <div className="max-w-4xl w-full">
+                    <div className="max-w-5xl w-full">
                       {message.dual_response ? (
-                        /* Dual Response Layout */
-                        <div className="space-y-4">
-                          {/* Scenario indicator */}
-                          <div className="flex items-center justify-center">
-                            <Badge variant="outline" className="text-xs">
-                              <Target className="h-3 w-3 mr-1" />
-                              {message.dual_response.scenario_type.replace('_', ' ')} scenario detected
-                            </Badge>
-                          </div>
-                          
-                          {/* Primary Response */}
-                          <div className="relative">
-                            <div className="flex items-center mb-2">
-                              {message.dual_response.primary.persona === 'professor' ? (
-                                <GraduationCap className="h-5 w-5 text-purple-600 mr-2" />
-                              ) : (
-                                <Heart className="h-5 w-5 text-green-600 mr-2" />
-                              )}
-                              <span className="text-sm font-medium text-gray-700">
-                                {message.dual_response.primary.persona === 'professor' ? 'Professor' : 'Mentor'} (Leading)
-                              </span>
-                              <Badge 
-                                variant="outline" 
-                                className={`ml-2 text-xs ${
-                                  message.dual_response.primary.persona === 'professor' 
-                                    ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                                    : 'bg-green-50 text-green-700 border-green-200'
-                                }`}
-                              >
-                                Primary
-                              </Badge>
-                            </div>
-                            
-                            <div className={`bg-white rounded-lg p-4 shadow-sm border-l-4 ${
-                              message.dual_response.primary.persona === 'professor' 
-                                ? 'border-purple-500' 
-                                : 'border-green-500'
-                            }`}>
-                              <div className="prose prose-sm max-w-none">
-                                <div className="whitespace-pre-wrap text-gray-800">
-                                  {message.dual_response.primary.response}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Secondary Response (if exists) */}
-                          {message.dual_response.secondary.response && (
-                            <div className="relative">
-                              <div className="flex items-center mb-2">
-                                {message.dual_response.secondary.persona === 'professor' ? (
-                                  <GraduationCap className="h-5 w-5 text-purple-600 mr-2" />
-                                ) : (
-                                  <Heart className="h-5 w-5 text-green-600 mr-2" />
-                                )}
-                                <span className="text-sm font-medium text-gray-700">
-                                  {message.dual_response.secondary.persona === 'professor' ? 'Professor' : 'Mentor'} (Supporting)
-                                </span>
-                                <Badge variant="outline" className="ml-2 text-xs">
-                                  <Sparkles className="h-3 w-3 mr-1" />
-                                  Additional Insights
-                                </Badge>
-                              </div>
-                              
-                              <div className={`bg-gray-50 rounded-lg p-4 border-l-4 ${
-                                message.dual_response.secondary.persona === 'professor' 
-                                  ? 'border-purple-300' 
-                                  : 'border-green-300'
-                              }`}>
-                                <div className="prose prose-sm max-w-none">
-                                  <div className="whitespace-pre-wrap text-gray-700">
-                                    {message.dual_response.secondary.response}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Confidence & Feedback */}
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-gray-500 hover:text-green-600"
-                                >
-                                  <ThumbsUp className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-gray-500 hover:text-red-600"
-                                >
-                                  <ThumbsDown className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              
-                              {message.dual_response.confidence && (
-                                <Badge variant="outline" className="text-xs">
-                                  {Math.round(message.dual_response.confidence * 100)}% confidence
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center text-xs text-gray-500">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {formatTime(message.timestamp)}
-                            </div>
-                          </div>
-                        </div>
+                        /* Enhanced Dual Response Layout */
+                        <DualResponseContainer
+                          primaryResponse={message.dual_response.primary}
+                          secondaryResponse={message.dual_response.secondary}
+                          scenarioType={message.dual_response.scenario_type}
+                          confidence={message.dual_response.confidence}
+                          timestamp={formatTime(message.timestamp)}
+                        />
                       ) : (
                         /* Single Response Layout (mentor-only or professor-only) */
                         <div>
