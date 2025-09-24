@@ -200,21 +200,48 @@ This happens when many students are using the platform simultaneously.
           // Timeout or abort
           if (attempts < maxRetries) {
             attempts++;
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
             continue;
           }
-          setGenerationError('AI test generation is taking longer than expected. This may happen during high usage. Please try again or contact support if this persists.');
+          setGenerationError(`⏱️ Test generation is taking longer than usual (45+ seconds).
+
+This can happen when:
+• AI is creating complex, high-quality questions
+• High platform usage during peak study hours
+• Network connectivity issues
+
+💡 Recommendations:
+• Try again - AI generation usually completes in 15-30 seconds
+• Check your internet connection
+• Contact support if this problem persists
+
+🎓 Dhruv AI generates questions using advanced AI to match real exam patterns.`);
         } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
           // Network error - don't retry
-          setGenerationError('Network error. Please check your internet connection.');
+          setGenerationError(`🌐 Network Connection Issue
+
+Please check your internet connection and try again. 
+
+📞 If you're on campus/institutional Wi-Fi, contact your IT support for assistance with educational platform access.
+
+🔄 Retry once your connection is stable - your learning progress is important to us.`);
         } else {
           // Other errors
           if (attempts < maxRetries) {
             attempts++;
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
             continue;
           }
-          setGenerationError('Failed to generate test. Please try again.');
+          setGenerationError(`⚠️ Unexpected Error Occurred
+
+We encountered an issue generating your test. Our technical team has been notified.
+
+📋 Next Steps:
+• Try again in a few minutes
+• Contact support with error details
+• Use other study materials while we resolve this
+
+🏆 Your education is our priority - we're working to fix this quickly.`);
         }
         break;
       }
