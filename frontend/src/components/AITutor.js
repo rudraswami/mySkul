@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import FormattedAIResponse, { DualResponseContainer } from './FormattedAIResponse';
 import { 
   Brain, 
   Send, 
