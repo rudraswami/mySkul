@@ -1,9 +1,9 @@
 <analysis>
-The AI engineer successfully initiated the Dhruv AI project, developing an EdTech platform. After an initial overview and confirmation of the React/FastAPI/MongoDB stack, the engineer focused on implementing Phase 4: Advanced Features. This involved significant backend development for enhanced mock tests, analytics, and stress management, extending . Corresponding frontend components (, , , , ) were created or updated. Initial backend testing revealed minor API parameter issues, which were fixed. Following user feedback on non-functional frontend elements, the engineer systematically addressed issues in , , and , adding functionality, improving interactivity, and implementing demo data generation. The application is now poised for comprehensive frontend testing.
+The AI engineer successfully progressed the Dhruv AI project, focusing on Phase 4: Advanced Features. Initially, the backend's  was extended for mock tests, analytics, and stress management, with corresponding frontend components updated. A critical issue emerged with mock test functionality: buttons led to blank states and Invalid token errors. The AI diagnosed and fixed a backend API parameter mismatch for mock test generation and a frontend authentication token key mismatch across , , and . Despite these fixes, the primary challenge became persistent frontend blank loading states due to intermittent backend AI service failures (budget limits). The engineer iteratively enhanced  with retry logic, error handling, and  mechanisms, even attempting a custom  hook before reverting to direct component logic. The final attempt involves  and  for cleanup in , with the system poised for another frontend test.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project aims to build an innovative B2C EdTech platform in India for competitive exam preparation (JEE, NEET, UPSC). Its mission is to democratize elite, one-to-one tutoring using a personalized, affordable, and hallucination-free Neuro-Symbolic AI mentor. The solution features a Neural Mentor for personalization and a Symbolic Professor for verifiable accuracy. Key features include Personalized Learning Paths, Interactive Problem Solving, 24/7 Doubt Resolution, Advanced Performance Analytics, Realistic Mock Tests, and Stress Management/Motivational Modules. The business model is B2C subscription-based, with a digital marketing and partnership GTM strategy. Implementation so far includes a full-stack React frontend, FastAPI backend, MongoDB, LLM integration using , and initial versions of core components like login, registration, dashboard, AI tutor, mock tests, and analytics.
+The Dhruv AI project aims to establish a B2C EdTech platform in India, specializing in competitive exam preparation (JEE, NEET, UPSC). Its core mission is to democratize high-quality, personalized one-to-one tutoring through a hallucination-free Neuro-Symbolic AI mentor. The platform combines a Neural Mentor for personalization with a Symbolic Professor for verifiable accuracy. Key functionalities include Personalized Learning Paths, Interactive Problem Solving, 24/7 Doubt Resolution, Advanced Performance Analytics, Realistic Mock Tests, and Stress Management/Motivational Modules. The business model is subscription-based, leveraging digital marketing and partnerships for market entry. Current implementation includes a React frontend, FastAPI backend, MongoDB, and LLM integration via , with initial versions of core components like authentication, dashboard, AI tutor, mock tests, and analytics already developed and deployed.
 </product_requirements>
 
 <key_technical_concepts>
@@ -11,64 +11,56 @@ The Dhruv AI project aims to build an innovative B2C EdTech platform in India fo
 -   **AI Integration:** Emergent Integrations library, Emergent LLM Key, Neuro-Symbolic AI.
 -   **Styling:** Tailwind CSS.
 -   **Process Management:** Supervisor.
--   **Authentication:** JWT (implied).
+-   **Authentication:** JWT (JSON Web Tokens) using .
+-   **Asynchronous Operations:** Fetch API, , , .
 </key_technical_concepts>
 
 <code_architecture>
-The application has a standard full-stack architecture with  (FastAPI),  (React), , , and  directories.
+The application features a standard full-stack architecture residing in the  directory, structured into  (FastAPI),  (React), , , and .
 
 
 
 -   **/app/backend/server.py:**
-    -   **Summary:** The main FastAPI application handling all backend logic, including database models, user authentication, and API endpoints.
-    -   **Changes Made:** Initially rewritten for core Dhruv AI features (LLM integration, user/chat/progress APIs). Extended for Phase 4 with enhanced mock test, performance analytics, stress management APIs, and a demo data generation endpoint. Minor fixes for API parameter structure.
+    -   **Summary:** The core FastAPI backend. Handles API endpoints for user authentication, LLM interaction, and new Phase 4 features like mock tests, analytics, and stress management.
+    -   **Changes Made:** Extended to include  endpoint, adding  Pydantic model. AI question generation logic was enhanced, and question parsing improved.
 -   **/app/backend/.env:**
     -   **Summary:** Stores backend environment variables.
-    -   **Changes Made:** Added  for LLM integration.
--   **/app/backend/requirements.txt:**
-    -   **Summary:** Python dependencies for the backend.
-    -   **Changes Made:** Updated to include  and other necessary libraries.
+    -   **Changes Made:**  added for LLM integration.
 -   **/app/frontend/src/App.js:**
-    -   **Summary:** The main React component containing routing logic.
-    -   **Changes Made:** Rewritten for initial component integration, and later updated to include the new  component route.
--   **/app/frontend/src/App.css:**
-    -   **Summary:** Global CSS file for styling.
-    -   **Changes Made:** Updated to support the new UI components.
--   **/app/frontend/src/components/LoginPage.js, RegisterPage.js, Dashboard.js, AITutor.js:**
-    -   **Summary:** React components for authentication, dashboard, and AI tutoring.
-    -   **Changes Made:** Created from scratch in the initial phase.
+    -   **Summary:** Main React component managing application routing.
+    -   **Changes Made:** Updated to include routes for new components like .
 -   **/app/frontend/src/components/MockTests.js:**
-    -   **Summary:** React component for the mock test system.
-    -   **Changes Made:** Created, then enhanced to integrate Phase 4 backend APIs. Functional improvements for Start Test, Retake, Practice Questions, Schedule Test, and View All Tests buttons, addressing user feedback.
+    -   **Summary:** React component for generating and managing mock tests. Central to the current development.
+    -   **Changes Made:** Initially enhanced for Phase 4. Subsequently, critical fixes were applied: authentication token key changed from  to . Error handling, loading states, and retry mechanisms for API calls were extensively implemented and refined using , , and .
 -   **/app/frontend/src/components/Analytics.js:**
-    -   **Summary:** React component for performance analytics.
-    -   **Changes Made:** Created, then enhanced for Phase 4 with new backend APIs. Renamed Weekly Activity for clarity, made tabs functional, added  handlers for Study Plan buttons, and integrated a Populate Demo Data button.
--   **/app/frontend/src/components/StressManagement.js:** (New File)
-    -   **Summary:** React component for stress management and wellness recommendations.
-    -   **Changes Made:** Created as part of Phase 4. Enhanced with proper error handling, fallback display, and a status display for the Get Wellness Recommendation feature.
--   **/app/frontend/src/components/Navigation.js:**
-    -   **Summary:** React component for the main navigation bar.
-    -   **Changes Made:** Updated to include the new route for the  component.
--   **/app/docs/business_plan.md & /app/docs/technical_architecture.md:**
-    -   **Summary:** Project documentation.
-    -   **Changes Made:** Created to capture project requirements and technical design.
+    -   **Summary:** React component for displaying performance analytics.
+    -   **Changes Made:** Token key mismatch fixed from  to .
+-   **/app/frontend/src/components/StressManagement.js:**
+    -   **Summary:** React component for wellness recommendations.
+    -   **Changes Made:** Token key mismatch fixed from  to .
+-   **/app/frontend/src/contexts/AuthContext.js:**
+    -   **Summary:** Provides authentication context to the React application, managing JWT tokens.
+    -   **Changes Made:** Stores the JWT token in  under the key .
+-   **/app/frontend/src/hooks/useApiCall.js:**
+    -   **Summary:** A custom React hook intended for robust API call management with retry logic and timeouts.
+    -   **Changes Made:** Created and partially integrated into , but later its usage was effectively removed due to integration issues, and the logic was moved back into .
 </code_architecture>
 
 <pending_tasks>
--   **User Feedback Verification:** Confirm all previously reported non-functional frontend elements (Mock Test buttons, Analytics tabs/data, Wellness recommendations) are now fully interactive and data-driven after the latest fixes.
+-   **Frontend Stability for AI Failures:** The frontend still struggles to recover gracefully from intermittent backend AI service failures, leading to persistent blank loading states in the mock test flow.
+-   **Comprehensive Frontend Test Validation:** A final comprehensive frontend test is needed to verify if the latest  and  cleanup changes in  resolve the blank loading state issue.
 </pending_tasks>
 
 <current_work>
-The AI engineer has just completed a significant round of updates to the Dhruv AI application. Initially, the core backend () was extended to support Phase 4 features, including advanced mock test functionality, comprehensive analytics, and stress management tools. Corresponding frontend components like , , and the newly created  were updated to integrate with these new APIs. Routing in  and  was adjusted to include the wellness section.
+Immediately prior to this summary, the AI engineer was deep into resolving persistent issues with the mock test functionality, specifically the blank loading state when generating tests. This was primarily attributed to intermittent failures of the backend AI service (due to budget limits or service unavailability) and the frontend's inability to gracefully handle these.
 
-After an initial backend test, minor API parameter structure issues were identified and fixed in . Subsequently, the user provided detailed feedback indicating several non-functional frontend elements. The engineer systematically addressed these:
--   In : Fixed unresponsive Start Test, Retake, Practice Questions, and Schedule Test buttons by adding appropriate  handlers and correcting difficulty mapping logic. The View All Tests button was also made functional.
--   In : Weekly Activity was clarified, tabs were made functional, and  handlers were added for Study Plan buttons. A Populate Demo Data button and corresponding backend endpoint were added to  to facilitate initial data visualization for new users.
--   In : Added error handling, a fallback display, and status indicators to ensure the Get Wellness Recommendation button provides proper user feedback.
-
-The backend has been restarted to load all latest changes, and the application's visual state has been verified via a screenshot. The system is now ready for a comprehensive frontend test to validate all implemented fixes and new functionalities.
+The work involved:
+1.  **Backend ():** Ensuring the  API endpoint correctly accepted the JSON request body and enhancing the AI question generation logic.
+2.  **Authentication (, , , ):** Fixing a critical bug where the frontend components were looking for an  in  while  stored it as . This was resolved across all relevant files. A test user (/) was also successfully created.
+3.  **Frontend Error Handling ():** Multiple attempts were made to improve the robustness of the  function. This included adding retry mechanisms, better visual feedback, and implementing  for timeouts. A custom  hook was created but later reverted from due to integration issues, with the logic being re-integrated directly into .
+4.  **Latest Fix:** The most recent change involves implementing the  method and a  cleanup function within  to specifically address issues with  handling and prevent memory leaks during API calls.
 </current_work>
 
 <optional_next_step>
-Run comprehensive frontend testing using .
+Run a final comprehensive frontend test to verify the  and  cleanup changes.
 </optional_next_step>
