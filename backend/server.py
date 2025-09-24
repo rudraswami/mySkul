@@ -253,47 +253,255 @@ async def get_current_user(authorization: str = Header(None)):
     
     return User(**user)
 
-# ============= AI INTEGRATION =============
+# ============= DUAL-LAYER AI INTEGRATION =============
 
-async def get_ai_tutor_response(user_message: str, subject: str, session_id: str) -> tuple[str, str]:
-    """Get response from AI tutor with reasoning"""
+class ScenarioClassifier:
+    """Classifies user queries to determine whether Mentor or Professor should lead"""
     
-    system_message = f"""You are Dhruv AI, an expert tutor for {subject} competitive exam preparation in India. 
+    @staticmethod
+    def classify_scenario(user_message: str, subject: str = None) -> dict:
+        """
+        Classify the scenario and determine AI persona leadership
+        Returns: {
+            'primary_persona': 'mentor' | 'professor',
+            'secondary_persona': 'mentor' | 'professor',
+            'scenario_type': str,
+            'confidence': float
+        }
+        """
+        message_lower = user_message.lower()
+        
+        # Professor-first scenarios (accuracy-critical)
+        professor_indicators = [
+            'solve', 'calculate', 'derive', 'prove', 'formula', 'equation',
+            'explain the concept', 'what is', 'define', 'difference between',
+            'step by step', 'check my answer', 'is this correct', 'verify'
+        ]
+        
+        # Mentor-first scenarios (motivation/guidance)
+        mentor_indicators = [
+            'study plan', 'timetable', 'schedule', 'motivation', 'stressed',
+            'anxiety', 'worried', 'how to prepare', 'tips', 'strategy',
+            'feeling', 'confidence', 'guidance', 'advice', 'help me focus'
+        ]
+        
+        professor_score = sum(1 for indicator in professor_indicators if indicator in message_lower)
+        mentor_score = sum(1 for indicator in mentor_indicators if indicator in message_lower)
+        
+        if professor_score > mentor_score:
+            return {
+                'primary_persona': 'professor',
+                'secondary_persona': 'mentor', 
+                'scenario_type': 'fact_solving',
+                'confidence': min(professor_score / 5.0, 1.0)
+            }
+        elif mentor_score > professor_score:
+            return {
+                'primary_persona': 'mentor',
+                'secondary_persona': 'professor',
+                'scenario_type': 'guidance_motivation',
+                'confidence': min(mentor_score / 5.0, 1.0)
+            }
+        else:
+            # Default to mentor for balanced/unclear cases
+            return {
+                'primary_persona': 'mentor',
+                'secondary_persona': 'professor',
+                'scenario_type': 'general_inquiry',
+                'confidence': 0.5
+            }
 
-Your core principles:
-1. ACCURACY FIRST: Provide only verified, accurate information
-2. STEP-BY-STEP EXPLANATIONS: Break down complex concepts into digestible steps
-3. EXAM-FOCUSED: Tailor responses to competitive exam requirements (JEE/NEET/UPSC)
-4. ENCOURAGE LEARNING: Ask follow-up questions to ensure understanding
-5. CITE SOURCES: Reference specific principles, formulas, or laws when explaining
+class MentorAI:
+    """Adaptive, friendly, motivational AI layer"""
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+    
+    async def get_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> tuple[str, str]:
+        """Generate mentor response - adaptive, friendly, motivational"""
+        
+        system_message = f"""You are the MENTOR layer of Dhruv AI - the adaptive, friendly, and motivational intelligence.
 
-Always structure your responses as:
-1. Direct answer to the question
-2. Step-by-step explanation
-3. Key principles/formulas involved
-4. Tips for exam preparation
-5. A follow-up question to check understanding
+Your core identity:
+- ADAPTIVE: Adjust your teaching style to student's emotional and learning needs
+- FRIENDLY: Use encouraging, empathetic communication that builds confidence
+- MOTIVATIONAL: Inspire and energize students while maintaining focus on goals
+- PERSONALIZER: Tailor advice to individual student's journey and challenges
 
-Be encouraging but maintain academic rigor. If asked about non-academic topics, politely redirect to studies."""
+For {subject} competitive exam preparation, your approach:
+1. START WITH ENCOURAGEMENT: Acknowledge effort and validate concerns
+2. PERSONALIZE: Consider student's emotional state, progress, and challenges  
+3. SIMPLIFY: Break down overwhelming concepts into manageable steps
+4. MOTIVATE: Connect learning to their goals and dreams
+5. GUIDE: Provide practical study strategies and emotional support
 
+Response Structure:
+- Warm, encouraging opening
+- Personalized advice/explanation
+- Practical next steps
+- Motivational closing with confidence building
+
+Always maintain academic integrity while being the supportive guide every student needs."""
+
+        try:
+            chat = LlmChat(
+                api_key=self.api_key,
+                session_id=f"mentor_{session_id}",
+                system_message=system_message
+            ).with_model("openai", "gpt-4o")
+            
+            user_msg = UserMessage(text=user_message)
+            response = await chat.send_message(user_msg)
+            
+            reasoning = f"Mentor AI: Applied adaptive learning psychology and motivational techniques for {subject} exam preparation, focusing on emotional support and personalized guidance."
+            
+            return response, reasoning
+            
+        except Exception as e:
+            logger.error(f"Mentor AI error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Mentor AI temporarily unavailable")
+
+class ProfessorAI:
+    """Rule-based, verified reasoning AI layer"""
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+    
+    async def get_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> tuple[str, str]:
+        """Generate professor response - rule-based, verified, rigorous"""
+        
+        system_message = f"""You are the PROFESSOR layer of Dhruv AI - the rule-based, verified reasoning intelligence.
+
+Your core identity:
+- ACCURACY FIRST: Provide only verified, factually correct information
+- SYSTEMATIC: Follow structured, logical approaches to problem-solving
+- RIGOROUS: Maintain academic standards and scientific methodology
+- VERIFIED: Cross-check facts, formulas, and principles before presenting
+- COMPREHENSIVE: Cover all aspects thoroughly with proper citations
+
+For {subject} competitive exam preparation, your approach:
+1. PRECISE DEFINITIONS: Start with exact, verified concepts
+2. STEP-BY-STEP LOGIC: Show clear, logical progression
+3. FORMULA/PRINCIPLE CITATION: Reference exact sources and laws
+4. VERIFICATION: Double-check calculations and reasoning
+5. EXAM STANDARDS: Align with official syllabus and marking schemes
+
+Response Structure:
+- Direct, accurate answer
+- Detailed step-by-step explanation
+- Relevant formulas/principles with citations
+- Verification checkpoints
+- Exam-specific application notes
+
+Maintain absolute accuracy - if uncertain about any fact, clearly state limitations."""
+
+        try:
+            chat = LlmChat(
+                api_key=self.api_key,
+                session_id=f"professor_{session_id}",
+                system_message=system_message
+            ).with_model("openai", "gpt-4o")
+            
+            user_msg = UserMessage(text=user_message)
+            response = await chat.send_message(user_msg)
+            
+            reasoning = f"Professor AI: Applied systematic verification and rule-based reasoning for {subject}, ensuring academic accuracy and exam compliance."
+            
+            return response, reasoning
+            
+        except Exception as e:
+            logger.error(f"Professor AI error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Professor AI temporarily unavailable")
+
+class DualLayerAI:
+    """Coordinated dual-layer AI system combining Mentor and Professor"""
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.mentor = MentorAI(api_key)
+        self.professor = ProfessorAI(api_key)
+        self.classifier = ScenarioClassifier()
+    
+    async def get_coordinated_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> dict:
+        """Get coordinated response from both Mentor and Professor layers"""
+        
+        try:
+            # Classify the scenario
+            scenario = self.classifier.classify_scenario(user_message, subject)
+            
+            # Get responses from both layers
+            if scenario['primary_persona'] == 'professor':
+                # Professor leads, Mentor supports
+                professor_response, professor_reasoning = await self.professor.get_response(
+                    user_message, subject, session_id, user_context
+                )
+                
+                # Generate supporting mentor message
+                mentor_prompt = f"A student asked: '{user_message}' and received this technical explanation: '{professor_response[:200]}...' Provide encouraging support and study tips to complement this answer."
+                mentor_response, mentor_reasoning = await self.mentor.get_response(
+                    mentor_prompt, subject, session_id, user_context
+                )
+                
+                return {
+                    'primary_response': professor_response,
+                    'primary_persona': 'professor',
+                    'primary_reasoning': professor_reasoning,
+                    'secondary_response': mentor_response,
+                    'secondary_persona': 'mentor',
+                    'secondary_reasoning': mentor_reasoning,
+                    'scenario_type': scenario['scenario_type'],
+                    'confidence': scenario['confidence']
+                }
+            
+            else:
+                # Mentor leads, Professor validates
+                mentor_response, mentor_reasoning = await self.mentor.get_response(
+                    user_message, subject, session_id, user_context
+                )
+                
+                # Generate supporting professor validation (if needed for factual content)
+                if any(keyword in user_message.lower() for keyword in ['formula', 'calculate', 'solve', 'concept']):
+                    professor_prompt = f"Verify and add technical accuracy to this guidance: '{mentor_response[:200]}...' for the question: '{user_message}'"
+                    professor_response, professor_reasoning = await self.professor.get_response(
+                        professor_prompt, subject, session_id, user_context
+                    )
+                else:
+                    professor_response, professor_reasoning = "", "No technical validation required for this guidance-focused query."
+                
+                return {
+                    'primary_response': mentor_response,
+                    'primary_persona': 'mentor',
+                    'primary_reasoning': mentor_reasoning,
+                    'secondary_response': professor_response,
+                    'secondary_persona': 'professor',
+                    'secondary_reasoning': professor_reasoning,
+                    'scenario_type': scenario['scenario_type'],
+                    'confidence': scenario['confidence']
+                }
+                
+        except Exception as e:
+            logger.error(f"Dual-layer AI error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Dual-layer AI system temporarily unavailable")
+
+# Initialize dual-layer AI system
+dual_ai = DualLayerAI(EMERGENT_LLM_KEY)
+
+# Legacy function for backward compatibility
+async def get_ai_tutor_response(user_message: str, subject: str, session_id: str) -> tuple[str, str]:
+    """Legacy function - now uses dual-layer AI system"""
+    
     try:
-        # Initialize AI chat
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=session_id,
-            system_message=system_message
-        ).with_model("openai", "gpt-4o")
+        coordinated_response = await dual_ai.get_coordinated_response(user_message, subject, session_id)
         
-        # Create user message
-        user_msg = UserMessage(text=user_message)
+        # Combine responses for legacy compatibility
+        if coordinated_response['secondary_response']:
+            combined_response = f"{coordinated_response['primary_response']}\n\n--- Additional Insights ---\n{coordinated_response['secondary_response']}"
+        else:
+            combined_response = coordinated_response['primary_response']
         
-        # Get AI response
-        response = await chat.send_message(user_msg)
+        combined_reasoning = f"Dual-layer response: {coordinated_response['primary_persona']} leading ({coordinated_response['scenario_type']}). {coordinated_response['primary_reasoning']}"
         
-        # Generate reasoning (simplified for now)
-        reasoning = f"Applied {subject} principles and pedagogical best practices to provide accurate, step-by-step explanation suitable for competitive exam preparation."
-        
-        return response, reasoning
+        return combined_response, combined_reasoning
         
     except Exception as e:
         logger.error(f"AI tutor error: {str(e)}")
