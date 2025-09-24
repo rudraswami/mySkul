@@ -1347,14 +1347,14 @@ Generate {request.num_questions} such questions now."""
             subject_questions = {
                 "Mathematics": [
                     {
-                        "question_text": f"If f(x) = x³ - 3x² + 2x - 1, find f'(2)",
+                        "question_text": "If f(x) = x³ - 3x² + 2x - 1, find f'(2)",
                         "options": ["A) 2", "B) 4", "C) 6", "D) 8"],
                         "correct_answer": "A",
                         "explanation": "f'(x) = 3x² - 6x + 2, so f'(2) = 3(4) - 6(2) + 2 = 12 - 12 + 2 = 2",
                         "chapter": "Differential Calculus"
                     },
                     {
-                        "question_text": f"The sum of first n natural numbers is n(n+1)/2. Find the sum of first 20 natural numbers",
+                        "question_text": "The sum of first n natural numbers is n(n+1)/2. Find the sum of first 20 natural numbers",
                         "options": ["A) 210", "B) 200", "C) 190", "D) 220"],
                         "correct_answer": "A", 
                         "explanation": "Using formula: 20(21)/2 = 420/2 = 210",
@@ -1363,14 +1363,14 @@ Generate {request.num_questions} such questions now."""
                 ],
                 "Physics": [
                     {
-                        "question_text": f"A body falls freely from height h. Its velocity after falling distance h/2 is",
+                        "question_text": "A body falls freely from height h. Its velocity after falling distance h/2 is",
                         "options": ["A) √(gh)", "B) √(gh/2)", "C) √(2gh)", "D) √(3gh/2)"],
                         "correct_answer": "A",
                         "explanation": "Using v² = u² + 2as, where u=0, a=g, s=h/2: v² = 2g(h/2) = gh, so v = √(gh)",
                         "chapter": "Kinematics"
                     },
                     {
-                        "question_text": f"The resistance of a wire is 10Ω. If it is stretched to double its length, new resistance is",
+                        "question_text": "The resistance of a wire is 10Ω. If it is stretched to double its length, new resistance is",
                         "options": ["A) 20Ω", "B) 40Ω", "C) 5Ω", "D) 10Ω"],
                         "correct_answer": "B",
                         "explanation": "R = ρl/A. When length doubles, area becomes half, so R becomes 4 times = 40Ω",
@@ -1379,14 +1379,14 @@ Generate {request.num_questions} such questions now."""
                 ],
                 "Chemistry": [
                     {
-                        "question_text": f"The IUPAC name of CH₃-CH(CH₃)-CH₂-CH₃ is",
+                        "question_text": "The IUPAC name of CH₃-CH(CH₃)-CH₂-CH₃ is",
                         "options": ["A) 2-methylbutane", "B) 3-methylbutane", "C) Isopentane", "D) 2-methylpropane"],
                         "correct_answer": "A",
                         "explanation": "Longest chain has 4 carbons (butane) with methyl group at position 2",
                         "chapter": "Organic Chemistry"
                     },
                     {
-                        "question_text": f"Which element has electronic configuration [Ar] 3d⁵ 4s¹?",
+                        "question_text": "Which element has electronic configuration [Ar] 3d⁵ 4s¹?",
                         "options": ["A) Mn", "B) Cr", "C) Fe", "D) Co"],
                         "correct_answer": "B",
                         "explanation": "Chromium has exceptional configuration due to half-filled d orbital stability",
