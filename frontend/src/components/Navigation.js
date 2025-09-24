@@ -39,6 +39,12 @@ export default function Navigation() {
       current: location.pathname === '/tests'
     },
     {
+      name: 'Auto-Note Mentor',
+      href: '/auto-notes',
+      icon: Mic,
+      current: location.pathname === '/auto-notes'
+    },
+    {
       name: 'Analytics',
       href: '/analytics',
       icon: BarChart3,
