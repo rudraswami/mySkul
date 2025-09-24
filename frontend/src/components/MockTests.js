@@ -374,6 +374,203 @@ export default function MockTests() {
     );
   }
 
+  // Dual-Layer Test Results Modal
+  if (showResults && testResults) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Results Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-xl">
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Test Results - Dual AI Analysis</h2>
+                <p className="opacity-90">Revolutionary feedback from Mentor + Professor intelligence</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeResults}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            {/* Score Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-white/20 rounded-lg p-4">
+                <div className="text-3xl font-bold">{testResults.percentage.toFixed(1)}%</div>
+                <div className="text-sm opacity-90">Overall Score</div>
+              </div>
+              <div className="bg-white/20 rounded-lg p-4">
+                <div className="text-3xl font-bold text-green-300">{testResults.correct_answers}</div>
+                <div className="text-sm opacity-90">Correct</div>
+              </div>
+              <div className="bg-white/20 rounded-lg p-4">
+                <div className="text-3xl font-bold text-red-300">{testResults.wrong_answers}</div>
+                <div className="text-sm opacity-90">Wrong</div>
+              </div>
+              <div className="bg-white/20 rounded-lg p-4">
+                <div className="text-3xl font-bold text-yellow-300">{testResults.unanswered}</div>
+                <div className="text-sm opacity-90">Unanswered</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Pass/Fail Status */}
+            <div className="mb-6">
+              <div className={`inline-flex items-center px-4 py-2 rounded-full ${
+                testResults.pass_status 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {testResults.pass_status ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Passed! Great work!
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="h-5 w-5 mr-2" />
+                    Keep practicing! You'll get there!
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Dual AI Feedback Section */}
+            {testResults.dual_feedback && (
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <Users className="h-6 w-6 text-blue-600 mr-2" />
+                  <h3 className="text-xl font-semibold">Dual Intelligence Analysis</h3>
+                  <Badge variant="outline" className="ml-2">
+                    <Star className="h-3 w-3 mr-1" />
+                    {Math.round(testResults.dual_feedback.scenario_confidence * 100)}% Confidence
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Professor Analysis */}
+                  <Card className="border-l-4 border-purple-500">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center">
+                        <GraduationCap className="h-6 w-6 text-purple-600 mr-3" />
+                        <div>
+                          <CardTitle className="text-lg">Professor Analysis</CardTitle>
+                          <p className="text-sm text-gray-600">Technical • Verified • Rigorous</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <div className="whitespace-pre-wrap text-gray-800 text-sm">
+                          {testResults.dual_feedback.professor_analysis}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Mentor Guidance */}
+                  <Card className="border-l-4 border-green-500">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center">
+                        <Heart className="h-6 w-6 text-green-600 mr-3" />
+                        <div>
+                          <CardTitle className="text-lg">Mentor Guidance</CardTitle>
+                          <p className="text-sm text-gray-600">Adaptive • Motivational • Personalized</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <div className="whitespace-pre-wrap text-gray-800 text-sm">
+                          {testResults.dual_feedback.mentor_feedback}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* Performance Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Subject-wise Analysis */}
+              {testResults.subject_wise_analysis && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                      Subject Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {Object.entries(testResults.subject_wise_analysis).map(([subject, data]) => (
+                        <div key={subject}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium">{subject}</span>
+                            <span className="text-sm text-gray-600">
+                              {data.correct}/{data.total}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={(data.correct / data.total) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recommendations */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="h-5 w-5 mr-2 text-orange-600" />
+                    Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {testResults.recommendations.map((rec, index) => (
+                      <div key={index} className="flex items-start">
+                        <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={closeResults} className="flex-1">
+                Continue Learning
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  closeResults();
+                  // Could trigger retake functionality
+                }}
+                className="flex-1"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retake Test
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Sample mock test data - will be replaced by API data
   const sampleTests = [
     {
