@@ -205,11 +205,6 @@ class StressAssessmentRequest(BaseModel):
     physical_symptoms: List[str] = []
     emotional_state: str = "neutral"
 
-class DoubtQuery(BaseModel):
-    query: str
-    subject: Optional[str] = None
-    context: Optional[str] = None
-
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
