@@ -1259,26 +1259,54 @@ async def submit_mock_test(
         
         percentage = (total_score / mock_test.total_marks) * 100
         
-        # Generate AI-powered recommendations
+        # Generate AI-powered dual feedback (Professor + Mentor)
         analysis_prompt = f"""Analyze this mock test performance for {user.exam_type} {mock_test.subject}:
         
         Score: {total_score}/{mock_test.total_marks} ({percentage:.1f}%)
         Correct: {correct_count}, Wrong: {wrong_count}, Unanswered: {unanswered_count}
-        Time taken: {submission.time_taken} seconds
+        Time taken: {submission.time_taken} seconds ({submission.time_taken // 60} minutes)
         Subject-wise performance: {subject_analysis}
         Difficulty-wise performance: {difficulty_analysis}
         
-        Provide 3-5 specific, actionable recommendations for improvement."""
+        Provide detailed performance analysis with specific recommendations for improvement."""
+        
+        # Get user context for dual AI
+        user_context = {
+            'exam_type': user.exam_type,
+            'target_year': user.target_year,
+            'recent_performance': percentage
+        }
         
         session_id = f"analysis_{uuid.uuid4()}"
-        recommendations_text, _ = await get_ai_tutor_response(analysis_prompt, mock_test.subject, session_id)
         
-        recommendations = [
-            "Focus on time management - practice more timed tests",
-            "Review weak chapters identified in subject analysis",
-            "Strengthen conceptual understanding in difficult topics",
-            recommendations_text[:200] + "..." if len(recommendations_text) > 200 else recommendations_text
-        ]
+        # Get dual-layer AI feedback
+        try:
+            dual_feedback = await dual_ai.get_coordinated_response(
+                analysis_prompt, mock_test.subject, session_id, user_context
+            )
+            
+            # Extract structured feedback
+            professor_analysis = dual_feedback['primary_response'] if dual_feedback['primary_persona'] == 'professor' else dual_feedback['secondary_response']
+            mentor_feedback = dual_feedback['primary_response'] if dual_feedback['primary_persona'] == 'mentor' else dual_feedback['secondary_response']
+            
+            # Fallback recommendations if AI fails
+            fallback_recommendations = [
+                "Focus on time management - practice more timed tests",
+                "Review weak chapters identified in subject analysis", 
+                "Strengthen conceptual understanding in difficult topics"
+            ]
+            
+            recommendations = fallback_recommendations
+            
+        except Exception as e:
+            logger.warning(f"Dual AI feedback failed: {e}. Using fallback.")
+            professor_analysis = "Technical analysis temporarily unavailable."
+            mentor_feedback = "Keep practicing! Every test is a step toward your goal."
+            recommendations = [
+                "Focus on time management - practice more timed tests",
+                "Review weak chapters identified in subject analysis",
+                "Strengthen conceptual understanding in difficult topics"
+            ]
         
         # Create result record
         result = MockTestResult(
