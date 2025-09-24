@@ -991,7 +991,7 @@ class DhruvAITester:
         return success_count == len(endpoints_to_test)
 
 def main():
-    print("🚀 Starting Dhruv AI Backend API Tests - Phase 4 Enhanced Features")
+    print("🚀 Starting Dhruv AI Backend API Tests - Dual-Layer AI System")
     print("=" * 70)
     
     tester = DhruvAITester()
