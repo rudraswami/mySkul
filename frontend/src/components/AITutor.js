@@ -36,6 +36,8 @@ export default function AITutor() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sessions, setSessions] = useState([]);
+  const [aiMode, setAiMode] = useState('dual'); // 'dual', 'mentor', 'professor'
+  const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
 
   const subjects = {
