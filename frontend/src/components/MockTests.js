@@ -192,7 +192,7 @@ export default function MockTests() {
             await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
             continue;
           }
-          setGenerationError('Request timed out. Please check your connection and try again.');
+          setGenerationError('AI test generation is taking longer than expected. This may happen during high usage. Please try again or contact support if this persists.');
         } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
           // Network error - don't retry
           setGenerationError('Network error. Please check your internet connection.');
