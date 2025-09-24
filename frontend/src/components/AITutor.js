@@ -15,7 +15,13 @@ import {
   ThumbsUp,
   ThumbsDown,
   Clock,
-  Zap
+  Zap,
+  GraduationCap,
+  Heart,
+  Users,
+  Shield,
+  Target,
+  Sparkles
 } from 'lucide-react';
 import axios from 'axios';
 
