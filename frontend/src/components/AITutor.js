@@ -158,7 +158,7 @@ export default function AITutor() {
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">AI Tutor</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Dhruv AI</h2>
             <Button 
               size="sm" 
               onClick={startNewSession}
@@ -168,18 +168,56 @@ export default function AITutor() {
             </Button>
           </div>
           
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects[user?.exam_type]?.map(subject => (
-                <SelectItem key={subject} value={subject}>
-                  {subject}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-3">
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects[user?.exam_type]?.map(subject => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* AI Mode Selection */}
+            <div className="bg-gray-50 rounded-lg p-3">
+              <label className="text-xs font-medium text-gray-700 mb-2 block">AI Mode</label>
+              <Select value={aiMode} onValueChange={setAiMode}>
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dual">
+                    <div className="flex items-center">
+                      <Users className="h-3 w-3 mr-2" />
+                      Dual Layer (Mentor + Professor)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="mentor">
+                    <div className="flex items-center">
+                      <Heart className="h-3 w-3 mr-2" />
+                      Mentor Only (Motivational)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="professor">
+                    <div className="flex items-center">
+                      <GraduationCap className="h-3 w-3 mr-2" />
+                      Professor Only (Technical)
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {aiMode === 'dual' && (
+                <div className="mt-2 text-xs text-gray-600">
+                  Adaptive intelligence: The right persona leads based on your question type
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Sessions List */}
