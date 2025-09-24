@@ -1545,6 +1545,14 @@ def main():
         ("🆕 Motivational Content", tester.test_motivational_content),
         ("🆕 Auth Validation", tester.test_integration_auth_validation),
         
+        # Phase 2: Dual-Layer AI Scenario Implementations
+        ("🚀 Phase 2: Mock Tests Dual Feedback", tester.test_mock_tests_dual_feedback_system),
+        ("🚀 Phase 2: Study Planning Dual Intelligence", tester.test_study_planning_dual_intelligence),
+        ("🚀 Phase 2: Enhanced Question Analysis", tester.test_enhanced_question_analysis),
+        ("🚀 Phase 2: Integration with Authentication", tester.test_phase2_integration_with_authentication),
+        ("🚀 Phase 2: Error Handling & Fallbacks", tester.test_phase2_error_handling_and_fallbacks),
+        ("🚀 Phase 2: Backward Compatibility", tester.test_phase2_backward_compatibility),
+        
         # Dual-Layer AI System Tests
         ("🤖 Scenario Classification", tester.test_scenario_classification),
         ("🤖 Dual-Layer AI Response", tester.test_dual_layer_ai_response),
