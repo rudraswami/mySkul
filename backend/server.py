@@ -1531,6 +1531,7 @@ Focus on the most important concepts that appeared in this specific class."""
         
         # Parse the response to create individual flashcards
         # For now, create sample flashcards based on concepts
+        # TODO: Parse flashcard_response to extract AI-generated flashcards
         generated_cards = []
         
         for i, concept in enumerate(concepts_to_use[:6]):  # Generate up to 6 flashcards
