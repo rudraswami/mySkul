@@ -811,43 +811,31 @@ export default function MockTests() {
               </div>
 
               <div className="space-y-4">
-                {sampleTests.map((test) => (
-                  <div key={test.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
+                {testTemplates.map((template) => (
+                  <div key={template.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          {test.completed ? (
-                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-gray-300 mr-2" />
-                          )}
-                          <h3 className="font-semibold text-gray-900">{test.title}</h3>
-                          <Badge 
-                            className={`ml-2 ${getDifficultyColor(test.difficulty)}`}
-                          >
-                            {test.difficulty}
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-gray-900">{template.title}</h3>
+                          <Badge className={getDifficultyColor(template.difficulty)}>
+                            {template.difficulty}
                           </Badge>
                         </div>
-                        
-                        <p className="text-sm text-gray-600 mb-3">{test.description}</p>
+                        <p className="text-sm text-gray-600 mb-3">{template.description}</p>
                         
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            {test.duration}
+                            {template.duration}
                           </div>
                           <div className="flex items-center">
                             <FileText className="h-4 w-4 mr-1" />
-                            {test.questions} questions
+                            {template.questions} questions
                           </div>
-                          {test.completed && test.bestScore && (
-                            <div className="flex items-center">
-                              <Award className="h-4 w-4 mr-1" />
-                              <span className={getScoreColor(test.bestScore)}>
-                                Best: {test.bestScore}%
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center text-green-600">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            AI Generated
+                          </div>
                         </div>
                       </div>
                       
@@ -857,8 +845,8 @@ export default function MockTests() {
                           size="sm"
                           onClick={() => {
                             const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
-                            const diffLevel = difficultyMap[test.difficulty] || 3;
-                            generateMockTest(test.examType, test.subject, diffLevel, Math.min(test.questions, 25));
+                            const diffLevel = difficultyMap[template.difficulty] || 3;
+                            generateMockTest(template.examType, template.subject, diffLevel, template.questions);
                           }}
                           disabled={isGeneratingTest}
                         >
@@ -868,7 +856,7 @@ export default function MockTests() {
                               Generating...
                             </>
                           ) : (
-                            test.completed ? 'Retake' : 'Start Test'
+                            'Generate Test'
                           )}
                         </Button>
                       </div>
