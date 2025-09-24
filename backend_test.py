@@ -524,7 +524,10 @@ class DhruvAITester:
             ("mock-tests/generate", "POST", {"exam_type": "JEE", "subject": "Mathematics", "difficulty": 3, "num_questions": 5}),
             ("analytics/performance", "GET", None),
             ("wellness/stress-assessment", "POST", {"stress_level": 5, "anxiety_level": 5, "sleep_quality": 5, "study_motivation": 5, "physical_symptoms": [], "emotional_state": "neutral"}),
-            ("wellness/motivational-content", "GET", None)
+            ("wellness/motivational-content", "GET", None),
+            ("ai/dual-response", "POST", {"message": "Test message", "subject": "Mathematics"}),
+            ("ai/mentor-only", "POST", {"message": "Test message", "subject": "Mathematics"}),
+            ("ai/professor-only", "POST", {"message": "Test message", "subject": "Mathematics"})
         ]
         
         success_count = 0
