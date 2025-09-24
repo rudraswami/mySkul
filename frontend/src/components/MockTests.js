@@ -775,21 +775,41 @@ We encountered an issue generating your test. Our technical team has been notifi
               <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-3">Generate New Test</h4>
                 
-                {/* Error Display */}
+                {/* Professional Error Display */}
                 {generationError && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
-                    <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-red-800 text-sm">{generationError}</p>
-                      {!isGeneratingTest && (
-                        <button
-                          onClick={() => setGenerationError(null)}
-                          className="mt-2 text-red-600 hover:text-red-800 text-xs underline flex items-center"
-                        >
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          Try Again
-                        </button>
-                      )}
+                  <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+                    <div className="flex items-start">
+                      <AlertTriangle className="h-6 w-6 text-red-500 mr-3 mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-red-800 font-semibold mb-2">Test Generation Issue</h4>
+                        <div className="text-red-700 text-sm whitespace-pre-line leading-relaxed">
+                          {generationError}
+                        </div>
+                        {!isGeneratingTest && (
+                          <div className="mt-4 flex gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setGenerationError(null)}
+                              className="border-red-300 text-red-700 hover:bg-red-100"
+                            >
+                              <RefreshCw className="h-4 w-4 mr-1" />
+                              Try Again
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Could open support chat or contact form
+                                window.open('mailto:support@dhruvai.com?subject=Mock Test Generation Issue', '_blank');
+                              }}
+                              className="border-red-300 text-red-700 hover:bg-red-100"
+                            >
+                              Contact Support
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
