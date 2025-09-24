@@ -10,6 +10,7 @@ import AITutor from './components/AITutor';
 import MockTests from './components/MockTests';
 import Analytics from './components/Analytics';
 import StressManagement from './components/StressManagement';
+import AutoNoteMentor from './components/AutoNoteMentor';
 import Navigation from './components/Navigation';
 import { Toaster } from './components/ui/toaster';
 
