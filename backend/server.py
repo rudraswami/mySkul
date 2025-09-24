@@ -934,6 +934,192 @@ async def classify_message_scenario(message: str):
         logger.error(f"Scenario classification error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to classify scenario")
 
+# ============= PHASE 2: DUAL-LAYER SCENARIO IMPLEMENTATIONS =============
+
+class StudyPlanRequest(BaseModel):
+    target_exam_date: str  # ISO date string
+    daily_study_hours: int = Field(ge=1, le=16)
+    weak_subjects: List[str] = []
+    strong_subjects: List[str] = []
+    preferred_study_times: List[str] = []  # morning, afternoon, evening, night
+    stress_level: int = Field(ge=1, le=10, default=5)
+
+@api_router.post("/ai/dual-study-plan")
+async def create_dual_study_plan(
+    plan_request: StudyPlanRequest,
+    user: User = Depends(get_current_user)
+):
+    """Generate comprehensive study plan using dual-layer AI intelligence"""
+    
+    try:
+        # Get user's current performance for context
+        recent_progress = await db.study_progress.find(
+            {"user_id": user.user_id}
+        ).sort("last_accessed", -1).limit(10).to_list(10)
+        
+        # Calculate performance metrics
+        avg_mastery = sum(p.get("mastery_level", 50) for p in recent_progress) / max(len(recent_progress), 1)
+        
+        # Create study plan prompt
+        study_plan_prompt = f"""Create a comprehensive study plan for {user.exam_type} preparation:
+        
+        Student Profile:
+        - Target Exam: {user.exam_type} {user.target_year}
+        - Exam Date: {plan_request.target_exam_date}
+        - Daily Study Hours: {plan_request.daily_study_hours}
+        - Current Average Mastery: {avg_mastery:.1f}%
+        - Weak Subjects: {', '.join(plan_request.weak_subjects) if plan_request.weak_subjects else 'None specified'}
+        - Strong Subjects: {', '.join(plan_request.strong_subjects) if plan_request.strong_subjects else 'None specified'}
+        - Preferred Study Times: {', '.join(plan_request.preferred_study_times)}
+        - Current Stress Level: {plan_request.stress_level}/10
+        
+        Create a detailed, actionable study plan that balances academic rigor with student well-being."""
+        
+        # Get dual-layer response
+        user_context = {
+            'exam_type': user.exam_type,
+            'target_year': user.target_year,
+            'current_performance': avg_mastery,
+            'stress_level': plan_request.stress_level
+        }
+        
+        session_id = f"study_plan_{uuid.uuid4()}"
+        dual_response = await dual_ai.get_coordinated_response(
+            study_plan_prompt, "Study Planning", session_id, user_context
+        )
+        
+        # Parse the coordinated response
+        professor_plan = dual_response['primary_response'] if dual_response['primary_persona'] == 'professor' else dual_response['secondary_response']
+        mentor_guidance = dual_response['primary_response'] if dual_response['primary_persona'] == 'mentor' else dual_response['secondary_response']
+        
+        # Create study plan record
+        study_plan = StudyPlan(
+            user_id=user.user_id,
+            exam_type=user.exam_type,
+            target_date=datetime.fromisoformat(plan_request.target_exam_date.replace('Z', '+00:00')),
+            subjects=plan_request.weak_subjects + plan_request.strong_subjects,
+            daily_goals={"study_hours": plan_request.daily_study_hours},
+            weekly_targets={"progress_target": 10}  # 10% progress per week
+        )
+        
+        await db.study_plans.insert_one(study_plan.dict())
+        
+        return {
+            "plan_id": study_plan.plan_id,
+            "dual_intelligence_plan": {
+                "professor": {
+                    "persona": "professor",
+                    "academic_structure": professor_plan,
+                    "focus": "Curriculum coverage, exam compliance, rigorous preparation"
+                },
+                "mentor": {
+                    "persona": "mentor", 
+                    "personalized_guidance": mentor_guidance,
+                    "focus": "Motivation, stress management, adaptive learning"
+                }
+            },
+            "scenario_classification": {
+                "primary_persona": dual_response['primary_persona'],
+                "scenario_type": dual_response['scenario_type'],
+                "confidence": dual_response['confidence']
+            },
+            "implementation_timeline": {
+                "start_date": datetime.utcnow().isoformat(),
+                "target_date": plan_request.target_exam_date,
+                "review_frequency": "weekly"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Dual study plan creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create dual study plan")
+
+@api_router.post("/ai/enhanced-question-analysis")
+async def get_enhanced_question_analysis(
+    chat_request: ChatRequest,
+    user: User = Depends(get_current_user)
+):
+    """Get enhanced question analysis with dual-layer intelligence and student psychology"""
+    
+    try:
+        # Get student's recent performance and stress levels for context
+        recent_assessments = await db.stress_assessments.find(
+            {"user_id": user.user_id}
+        ).sort("assessment_date", -1).limit(3).to_list(3)
+        
+        recent_tests = await db.mock_test_results.find(
+            {"user_id": user.user_id}
+        ).sort("completed_at", -1).limit(5).to_list(5)
+        
+        # Calculate student context
+        avg_stress = sum(a.get("stress_level", 5) for a in recent_assessments) / max(len(recent_assessments), 1)
+        avg_performance = sum(t.get("percentage", 0) for t in recent_tests) / max(len(recent_tests), 1)
+        
+        # Enhanced analysis prompt with student psychology
+        analysis_prompt = f"""Provide enhanced analysis for this {chat_request.subject} question: "{chat_request.message}"
+        
+        Student Context:
+        - Exam Type: {user.exam_type}
+        - Recent Performance: {avg_performance:.1f}% average
+        - Current Stress Level: {avg_stress:.1f}/10
+        - Subject: {chat_request.subject}
+        
+        Provide both technical accuracy AND learning psychology optimization for maximum student understanding and confidence building."""
+        
+        # Get dual-layer enhanced response
+        user_context = {
+            'exam_type': user.exam_type,
+            'recent_performance': avg_performance,
+            'stress_level': avg_stress,
+            'subject': chat_request.subject
+        }
+        
+        session_id = chat_request.session_id or f"enhanced_{uuid.uuid4()}"
+        dual_response = await dual_ai.get_coordinated_response(
+            analysis_prompt, chat_request.subject, session_id, user_context
+        )
+        
+        # Save enhanced chat message
+        chat_message = ChatMessage(
+            session_id=session_id,
+            user_id=user.user_id,
+            message=chat_request.message,
+            response=dual_response['primary_response'],
+            reasoning=f"Enhanced dual analysis: {dual_response['primary_persona']} leading with learning psychology optimization"
+        )
+        
+        await db.chat_messages.insert_one(chat_message.dict())
+        
+        return {
+            "session_id": session_id,
+            "enhanced_analysis": {
+                "technical_accuracy": {
+                    "persona": "professor",
+                    "analysis": dual_response['primary_response'] if dual_response['primary_persona'] == 'professor' else dual_response['secondary_response'],
+                    "focus": "Factual correctness, step-by-step reasoning, exam compliance"
+                },
+                "learning_psychology": {
+                    "persona": "mentor",
+                    "guidance": dual_response['primary_response'] if dual_response['primary_persona'] == 'mentor' else dual_response['secondary_response'],
+                    "focus": "Student understanding, confidence building, personalized approach"
+                }
+            },
+            "student_context": {
+                "performance_level": "high" if avg_performance > 75 else "medium" if avg_performance > 50 else "developing",
+                "stress_status": "high" if avg_stress > 7 else "moderate" if avg_stress > 4 else "low",
+                "recommended_approach": "encouraging" if avg_stress > 6 or avg_performance < 50 else "challenging"
+            },
+            "scenario_metadata": {
+                "primary_persona": dual_response['primary_persona'],
+                "scenario_type": dual_response['scenario_type'],
+                "confidence": dual_response['confidence']
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Enhanced question analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to provide enhanced analysis")
+
 # ============= PHASE 4: ENHANCED FEATURES API ENDPOINTS =============
 
 @api_router.post("/demo/populate-data")
