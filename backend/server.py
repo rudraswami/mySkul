@@ -193,6 +193,62 @@ class DoubtQuery(BaseModel):
     subject: Optional[str] = None
     context: Optional[str] = None
 
+# ============= AUTO-NOTE MENTOR DATA MODELS =============
+
+class NoteSession(BaseModel):
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    subject: str
+    start_time: datetime = Field(default_factory=datetime.utcnow)
+    end_time: Optional[datetime] = None
+    status: str = "active"  # active, processing, completed
+    audio_duration: Optional[int] = None  # seconds
+    transcription: Optional[str] = None
+    structured_notes: Optional[Dict[str, Any]] = None
+    dual_analysis: Optional[Dict[str, Any]] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AudioChunk(BaseModel):
+    chunk_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    sequence_number: int
+    transcription: str
+    timestamp: float  # seconds from start
+    confidence: Optional[float] = None
+    processed: bool = False
+
+class GeneratedFlashcard(BaseModel):
+    card_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: str
+    question: str
+    answer: str
+    concept: str
+    difficulty_level: int = Field(ge=1, le=5)
+    created_from_point: Optional[str] = None  # Reference to note point
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class NoteSessionRequest(BaseModel):
+    title: str
+    subject: str
+
+class AudioChunkRequest(BaseModel):
+    session_id: str
+    transcription: str
+    timestamp: float
+    sequence_number: int
+    confidence: Optional[float] = None
+
+class ExplainPointRequest(BaseModel):
+    session_id: str
+    point_reference: str  # e.g., "point_3", "concept_1"
+    additional_context: Optional[str] = None
+
+class GenerateFlashcardsRequest(BaseModel):
+    session_id: str
+    specific_concepts: Optional[List[str]] = None  # If empty, generate from all notes
+
 class MockTestSubmission(BaseModel):
     answers: Dict[str, str]  # question_id: selected_answer
     time_taken: int  # seconds
