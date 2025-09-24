@@ -1347,6 +1347,11 @@ async def submit_mock_test(
             "subject_wise_analysis": subject_analysis,
             "difficulty_performance": difficulty_analysis,
             "recommendations": recommendations,
+            "dual_feedback": {
+                "professor_analysis": professor_analysis,
+                "mentor_feedback": mentor_feedback,
+                "scenario_confidence": dual_feedback.get('confidence', 0.8) if 'dual_feedback' in locals() else 0.8
+            },
             "rank": None,  # TODO: Calculate rank based on other users
             "pass_status": percentage >= (mock_test.passing_marks / mock_test.total_marks * 100)
         }
