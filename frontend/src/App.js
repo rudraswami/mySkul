@@ -70,6 +70,7 @@ function AppContent() {
                 <Route path="/tests" element={<MockTests />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/wellness" element={<StressManagement />} />
+                <Route path="/auto-notes" element={<AutoNoteMentor />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </main>
