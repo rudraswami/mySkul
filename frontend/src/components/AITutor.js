@@ -310,39 +310,107 @@ export default function AITutor() {
             {messages.length === 0 ? (
               // Welcome Message
               <div className="text-center py-12">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Brain className="h-10 w-10 text-blue-600" />
+                <div className="flex justify-center items-center mb-6 space-x-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <Heart className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Brain className="h-10 w-10 text-blue-600" />
+                  </div>
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <GraduationCap className="h-8 w-8 text-purple-600" />
+                  </div>
                 </div>
                 
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  Welcome to Dhruv AI Tutor!
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Welcome to Dhruv AI - Dual Intelligence System!
                 </h3>
                 
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  I'm your personal AI tutor for {selectedSubject}. Ask me anything from basic concepts to complex problems, and I'll provide step-by-step explanations.
+                <p className="text-gray-600 mb-6 max-w-lg mx-auto">
+                  Experience revolutionary dual-layer AI for {selectedSubject}. Our system combines:
                 </p>
 
+                <div className="flex justify-center space-x-6 mb-8">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <Heart className="h-6 w-6 text-green-600" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-gray-900">Mentor</h4>
+                    <p className="text-xs text-gray-600">Adaptive • Motivational</p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <GraduationCap className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-gray-900">Professor</h4>
+                    <p className="text-xs text-gray-600">Verified • Rigorous</p>
+                  </div>
+                </div>
+
                 {/* Sample Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
                   <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("Explain the concept of limits in calculus")}>
                     <CardContent className="p-4 text-left">
-                      <div className="flex items-center mb-2">
-                        <BookOpen className="h-4 w-4 text-blue-600 mr-2" />
-                        <span className="text-sm font-medium text-blue-600">Concept</span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <GraduationCap className="h-4 w-4 text-purple-600 mr-2" />
+                          <span className="text-sm font-medium text-purple-600">Professor Leads</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">Fact/Concept</Badge>
                       </div>
                       <p className="text-sm text-gray-700">Explain the concept of limits in calculus</p>
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("Solve this quadratic equation: x² - 5x + 6 = 0")}>
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?")}>
                     <CardContent className="p-4 text-left">
-                      <div className="flex items-center mb-2">
-                        <Lightbulb className="h-4 w-4 text-green-600 mr-2" />
-                        <span className="text-sm font-medium text-green-600">Problem</span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <Heart className="h-4 w-4 text-green-600 mr-2" />
+                          <span className="text-sm font-medium text-green-600">Mentor Leads</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">Guidance</Badge>
                       </div>
-                      <p className="text-sm text-gray-700">Solve this quadratic equation: x² - 5x + 6 = 0</p>
+                      <p className="text-sm text-gray-700">I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?</p>
                     </CardContent>
                   </Card>
+
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("Solve this quadratic equation step by step: x² - 5x + 6 = 0")}>
+                    <CardContent className="p-4 text-left">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <GraduationCap className="h-4 w-4 text-purple-600 mr-2" />
+                          <span className="text-sm font-medium text-purple-600">Professor Leads</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">Problem Solving</Badge>
+                      </div>
+                      <p className="text-sm text-gray-700">Solve this quadratic equation step by step: x² - 5x + 6 = 0</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("What are some effective study techniques for competitive exams?")}>
+                    <CardContent className="p-4 text-left">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 text-blue-600 mr-2" />
+                          <span className="text-sm font-medium text-blue-600">Both Contribute</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">General Inquiry</Badge>
+                      </div>
+                      <p className="text-sm text-gray-700">What are some effective study techniques for competitive exams?</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="mt-8 p-4 bg-blue-50 rounded-lg max-w-2xl mx-auto">
+                  <div className="flex items-center justify-center mb-2">
+                    <Sparkles className="h-4 w-4 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium text-blue-600">Intelligent Routing</span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Our AI automatically determines whether you need technical expertise (Professor) or motivational guidance (Mentor) based on your question.
+                  </p>
                 </div>
               </div>
             ) : (
