@@ -1428,7 +1428,6 @@ async def explain_note_point(
         
         # Extract the specific point to explain
         structured_notes = session_doc.get("structured_notes", {})
-        dual_analysis = session_doc.get("dual_analysis", {})
         
         # Create context-specific explanation prompt
         explanation_prompt = f"""A student is asking for explanation about "{request.point_reference}" from their class notes.
