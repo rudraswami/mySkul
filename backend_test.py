@@ -996,7 +996,7 @@ def main():
     
     tester = DhruvAITester()
     
-    # Test sequence - Core APIs first, then Phase 4 features
+    # Test sequence - Core APIs first, then Phase 4 features, then Dual-Layer AI
     tests = [
         ("Health Check", tester.test_health_check),
         ("Root Endpoint", tester.test_root_endpoint),
@@ -1019,6 +1019,14 @@ def main():
         ("🆕 Stress Assessment", tester.test_stress_assessment),
         ("🆕 Motivational Content", tester.test_motivational_content),
         ("🆕 Auth Validation", tester.test_integration_auth_validation),
+        
+        # Dual-Layer AI System Tests
+        ("🤖 Scenario Classification", tester.test_scenario_classification),
+        ("🤖 Dual-Layer AI Response", tester.test_dual_layer_ai_response),
+        ("🤖 Mentor-Only Response", tester.test_mentor_only_response),
+        ("🤖 Professor-Only Response", tester.test_professor_only_response),
+        ("🤖 Backward Compatibility", tester.test_backward_compatibility),
+        ("🤖 Dual AI Authentication", tester.test_dual_ai_authentication_integration),
     ]
     
     failed_tests = []
