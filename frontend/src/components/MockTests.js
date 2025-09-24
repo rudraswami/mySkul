@@ -571,42 +571,36 @@ export default function MockTests() {
     );
   }
 
-  // Sample mock test data - will be replaced by API data
-  const sampleTests = [
+  // Professional test generation templates - no fake completed tests
+  const testTemplates = [
     {
-      id: 1,
-      title: 'JEE Main Mathematics - Full Length Test',
+      id: 'math_full',
+      title: 'JEE Main Mathematics - Full Length Test', 
       examType: 'JEE',
       subject: 'Mathematics',
       duration: '3 hours',
-      questions: 75,
+      questions: 25,
       difficulty: 'High',
-      completed: false,
-      bestScore: null,
       description: 'Comprehensive test covering all mathematics topics for JEE Main'
     },
     {
-      id: 2,
+      id: 'physics_mechanics',
       title: 'Physics Mechanics - Chapter Test',
-      examType: 'JEE', 
-      subject: 'Physics',
+      examType: 'JEE',
+      subject: 'Physics', 
       duration: '1.5 hours',
-      questions: 30,
+      questions: 15,
       difficulty: 'Medium',
-      completed: true,
-      bestScore: 85,
       description: 'Focus test on mechanics including motion, forces, and energy'
     },
     {
-      id: 3,
+      id: 'chemistry_organic',
       title: 'Organic Chemistry - Quick Assessment',
       examType: 'JEE',
-      subject: 'Chemistry', 
-      duration: '45 minutes',
-      questions: 20,
+      subject: 'Chemistry',
+      duration: '45 minutes', 
+      questions: 10,
       difficulty: 'Easy',
-      completed: true,
-      bestScore: 92,
       description: 'Assessment covering basic organic chemistry concepts'
     }
   ];
