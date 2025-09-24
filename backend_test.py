@@ -12,7 +12,7 @@ class DhruvAITester:
         self.session_id = None
         self.tests_run = 0
         self.tests_passed = 0
-        self.test_user_email = f"test_user_{datetime.now().strftime('%H%M%S')}@test.com"
+        self.test_user_email = "test@dhruvai.com"
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
