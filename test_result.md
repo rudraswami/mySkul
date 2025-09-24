@@ -261,6 +261,8 @@
     - "Advanced Analytics Dashboard"
     - "Stress Management & Motivational API"
     - "Stress Management UI"
+    - "Dual-Layer AI System - Backend"
+    - "Dual-Layer AI System - Frontend"
   stuck_tasks:
     - "Enhanced Mock Tests UI"
   test_all: true
