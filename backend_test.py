@@ -619,6 +619,377 @@ class DhruvAITester:
         
         return success_count == len(subjects_to_test)
 
+    # ============= DUAL-LAYER AI SYSTEM TESTS =============
+
+    def test_scenario_classification(self):
+        """Test scenario classification endpoint"""
+        print("   Testing scenario classification logic...")
+        
+        # Test different types of questions as specified in review request
+        test_scenarios = [
+            {
+                "message": "Solve x² + 5x + 6 = 0 step by step",
+                "expected_primary": "professor",
+                "scenario_type": "Technical/factual question"
+            },
+            {
+                "message": "I'm stressed about my JEE exam, help me plan",
+                "expected_primary": "mentor", 
+                "scenario_type": "Motivational/guidance question"
+            },
+            {
+                "message": "What are effective study techniques?",
+                "expected_primary": "mentor",
+                "scenario_type": "Mixed/general question"
+            },
+            {
+                "message": "Explain the concept of derivatives in calculus",
+                "expected_primary": "professor",
+                "scenario_type": "Technical/factual question"
+            },
+            {
+                "message": "I'm feeling demotivated and need guidance",
+                "expected_primary": "mentor",
+                "scenario_type": "Motivational/guidance question"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, scenario in enumerate(test_scenarios):
+            print(f"   Testing scenario {i+1}/5: {scenario['scenario_type']}")
+            print(f"   Message: '{scenario['message'][:50]}...'")
+            
+            success, response = self.run_test(
+                f"Scenario Classification - {scenario['scenario_type']}",
+                "GET",
+                f"ai/scenario-classify?message={scenario['message']}",
+                200
+            )
+            
+            if success and 'classification' in response:
+                classification = response['classification']
+                primary_persona = classification.get('primary_persona')
+                scenario_type = classification.get('scenario_type')
+                confidence = classification.get('confidence', 0)
+                
+                print(f"   ✅ Classification successful")
+                print(f"   Primary persona: {primary_persona}")
+                print(f"   Scenario type: {scenario_type}")
+                print(f"   Confidence: {confidence:.2f}")
+                
+                # Validate expected persona
+                if primary_persona == scenario['expected_primary']:
+                    print(f"   ✅ Correct persona classification")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Expected {scenario['expected_primary']}, got {primary_persona}")
+                    success_count += 0.5  # Partial credit as AI classification can vary
+            else:
+                print(f"   ❌ Classification failed")
+        
+        return success_count >= len(test_scenarios) * 0.8  # 80% success threshold
+
+    def test_dual_layer_ai_response(self):
+        """Test coordinated dual-layer AI responses"""
+        if not self.token:
+            print("❌ No token available for dual AI test")
+            return False
+        
+        print("   Testing dual-layer AI coordinated responses...")
+        
+        # Test scenarios from review request
+        test_messages = [
+            {
+                "message": "Solve x² + 5x + 6 = 0 step by step",
+                "subject": "Mathematics",
+                "expected_primary": "professor",
+                "description": "Technical math problem"
+            },
+            {
+                "message": "I'm stressed about my JEE exam, help me plan",
+                "subject": "General",
+                "expected_primary": "mentor",
+                "description": "Motivational guidance"
+            },
+            {
+                "message": "What are effective study techniques?",
+                "subject": "General", 
+                "expected_primary": "mentor",
+                "description": "Mixed/general question"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, test_case in enumerate(test_messages):
+            print(f"   Testing dual response {i+1}/3: {test_case['description']}")
+            print(f"   Message: '{test_case['message'][:50]}...'")
+            print("   This may take 10-15 seconds for dual AI processing...")
+            
+            success, response = self.run_test(
+                f"Dual AI Response - {test_case['description']}",
+                "POST",
+                "ai/dual-response",
+                200,
+                data={
+                    "message": test_case['message'],
+                    "subject": test_case['subject']
+                },
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'dual_response' in response:
+                dual_resp = response['dual_response']
+                primary = dual_resp.get('primary', {})
+                secondary = dual_resp.get('secondary', {})
+                scenario_type = dual_resp.get('scenario_type')
+                confidence = dual_resp.get('confidence', 0)
+                
+                print(f"   ✅ Dual response received")
+                print(f"   Primary persona: {primary.get('persona')}")
+                print(f"   Secondary persona: {secondary.get('persona')}")
+                print(f"   Scenario type: {scenario_type}")
+                print(f"   Confidence: {confidence:.2f}")
+                print(f"   Primary response length: {len(primary.get('response', ''))}")
+                print(f"   Secondary response length: {len(secondary.get('response', ''))}")
+                
+                # Validate response structure
+                required_fields = ['primary', 'secondary', 'scenario_type', 'confidence']
+                has_all_fields = all(field in dual_resp for field in required_fields)
+                
+                # Validate persona responses
+                primary_valid = primary.get('persona') and primary.get('response') and primary.get('reasoning')
+                secondary_valid = secondary.get('persona') and secondary.get('reasoning')
+                
+                if has_all_fields and primary_valid and secondary_valid:
+                    print(f"   ✅ Response structure validated")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Response structure incomplete")
+                    print(f"   Missing fields: {[f for f in required_fields if f not in dual_resp]}")
+            else:
+                print(f"   ❌ Dual response failed")
+            
+            time.sleep(5)  # Delay between AI calls
+        
+        return success_count == len(test_messages)
+
+    def test_mentor_only_response(self):
+        """Test pure Mentor AI responses"""
+        if not self.token:
+            print("❌ No token available for mentor test")
+            return False
+        
+        print("   Testing pure Mentor AI responses...")
+        
+        # Test mentor-focused messages
+        mentor_messages = [
+            {
+                "message": "I'm feeling overwhelmed with JEE preparation, need motivation",
+                "subject": "General"
+            },
+            {
+                "message": "How can I manage my study schedule better?",
+                "subject": "General"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, test_case in enumerate(mentor_messages):
+            print(f"   Testing mentor response {i+1}/2")
+            print(f"   Message: '{test_case['message'][:50]}...'")
+            print("   This may take 5-10 seconds for AI processing...")
+            
+            success, response = self.run_test(
+                f"Mentor Only Response - {i+1}",
+                "POST",
+                "ai/mentor-only",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                persona = response.get('persona')
+                ai_response = response.get('response', '')
+                reasoning = response.get('reasoning', '')
+                
+                print(f"   ✅ Mentor response received")
+                print(f"   Persona: {persona}")
+                print(f"   Response length: {len(ai_response)}")
+                print(f"   Has reasoning: {'Yes' if reasoning else 'No'}")
+                
+                # Validate mentor persona
+                if persona == 'mentor' and ai_response and reasoning:
+                    print(f"   ✅ Mentor response validated")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Mentor response incomplete")
+            else:
+                print(f"   ❌ Mentor response failed")
+            
+            time.sleep(3)  # Delay between AI calls
+        
+        return success_count == len(mentor_messages)
+
+    def test_professor_only_response(self):
+        """Test pure Professor AI responses"""
+        if not self.token:
+            print("❌ No token available for professor test")
+            return False
+        
+        print("   Testing pure Professor AI responses...")
+        
+        # Test professor-focused messages
+        professor_messages = [
+            {
+                "message": "Derive the quadratic formula step by step",
+                "subject": "Mathematics"
+            },
+            {
+                "message": "Explain Newton's laws of motion with examples",
+                "subject": "Physics"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, test_case in enumerate(professor_messages):
+            print(f"   Testing professor response {i+1}/2")
+            print(f"   Message: '{test_case['message'][:50]}...'")
+            print("   This may take 5-10 seconds for AI processing...")
+            
+            success, response = self.run_test(
+                f"Professor Only Response - {i+1}",
+                "POST",
+                "ai/professor-only",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                persona = response.get('persona')
+                ai_response = response.get('response', '')
+                reasoning = response.get('reasoning', '')
+                
+                print(f"   ✅ Professor response received")
+                print(f"   Persona: {persona}")
+                print(f"   Response length: {len(ai_response)}")
+                print(f"   Has reasoning: {'Yes' if reasoning else 'No'}")
+                
+                # Validate professor persona
+                if persona == 'professor' and ai_response and reasoning:
+                    print(f"   ✅ Professor response validated")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Professor response incomplete")
+            else:
+                print(f"   ❌ Professor response failed")
+            
+            time.sleep(3)  # Delay between AI calls
+        
+        return success_count == len(professor_messages)
+
+    def test_backward_compatibility(self):
+        """Test that existing /api/chat/message endpoint still works with legacy functionality"""
+        if not self.token:
+            print("❌ No token available for backward compatibility test")
+            return False
+        
+        print("   Testing backward compatibility with legacy chat endpoint...")
+        
+        # Test that legacy endpoint still works
+        legacy_message = {
+            "message": "What is the derivative of x²?",
+            "subject": "Mathematics"
+        }
+        
+        print("   Testing legacy /api/chat/message endpoint...")
+        print("   This may take 5-10 seconds for AI processing...")
+        
+        success, response = self.run_test(
+            "Legacy Chat Message Compatibility",
+            "POST",
+            "chat/message",
+            200,
+            data=legacy_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            ai_response = response.get('response', '')
+            reasoning = response.get('reasoning', '')
+            session_id = response.get('session_id', '')
+            
+            print(f"   ✅ Legacy endpoint working")
+            print(f"   Response length: {len(ai_response)}")
+            print(f"   Has reasoning: {'Yes' if reasoning else 'No'}")
+            print(f"   Session ID: {session_id[:20]}..." if session_id else "No session ID")
+            
+            # Check if response indicates dual-layer usage
+            if 'dual-layer' in reasoning.lower() or 'mentor' in reasoning.lower() or 'professor' in reasoning.lower():
+                print(f"   ✅ Legacy endpoint now uses dual-layer AI system")
+                return True
+            else:
+                print(f"   ⚠️  Legacy endpoint may not be using dual-layer system")
+                return True  # Still working, just may not be enhanced
+        else:
+            print(f"   ❌ Legacy endpoint failed")
+            return False
+
+    def test_dual_ai_authentication_integration(self):
+        """Test that all dual-layer AI endpoints work with existing JWT authentication"""
+        if not self.token:
+            print("❌ No token available for auth integration test")
+            return False
+        
+        print("   Testing dual-layer AI authentication integration...")
+        
+        # Test all dual AI endpoints with valid token
+        endpoints_to_test = [
+            ("ai/dual-response", "POST", {"message": "Test auth", "subject": "Mathematics"}),
+            ("ai/mentor-only", "POST", {"message": "Test auth", "subject": "Mathematics"}),
+            ("ai/professor-only", "POST", {"message": "Test auth", "subject": "Mathematics"}),
+            ("ai/scenario-classify", "GET", None)  # GET endpoint with query param
+        ]
+        
+        success_count = 0
+        
+        for endpoint, method, test_data in endpoints_to_test:
+            print(f"   Testing {endpoint} with valid authentication...")
+            
+            if endpoint == "ai/scenario-classify":
+                # Special handling for GET endpoint with query param
+                success, response = self.run_test(
+                    f"Auth Integration - {endpoint}",
+                    method,
+                    f"{endpoint}?message=Test message",
+                    200,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+            else:
+                success, response = self.run_test(
+                    f"Auth Integration - {endpoint}",
+                    method,
+                    endpoint,
+                    200,
+                    data=test_data,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+            
+            if success:
+                print(f"   ✅ {endpoint} authenticated successfully")
+                success_count += 1
+            else:
+                print(f"   ❌ {endpoint} authentication failed")
+            
+            time.sleep(2)  # Small delay between requests
+        
+        return success_count == len(endpoints_to_test)
+
 def main():
     print("🚀 Starting Dhruv AI Backend API Tests - Phase 4 Enhanced Features")
     print("=" * 70)
