@@ -76,7 +76,7 @@ class DhruvAITester:
         registration_data = {
             "full_name": "Test User",
             "email": self.test_user_email,
-            "password": "TestPass123!",
+            "password": "password123",
             "exam_type": "JEE",
             "grade": "Class 12",
             "target_year": 2026
