@@ -1534,6 +1534,9 @@ Focus on the most important concepts that appeared in this specific class."""
         # TODO: Parse flashcard_response to extract AI-generated flashcards
         generated_cards = []
         
+        # Log the AI response for future enhancement
+        logger.info(f"AI flashcard response received for session {request.session_id}: {len(flashcard_response.get('primary_response', ''))} chars")
+        
         for i, concept in enumerate(concepts_to_use[:6]):  # Generate up to 6 flashcards
             flashcard = GeneratedFlashcard(
                 session_id=request.session_id,
