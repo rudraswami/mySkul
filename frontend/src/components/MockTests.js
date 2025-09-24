@@ -249,6 +249,18 @@ export default function MockTests() {
     }
   };
 
+  const showTestResults = (result) => {
+    setTestResults(result);
+    setShowResults(true);
+    setActiveTest(null);
+    loadAnalytics(); // Refresh analytics
+  };
+
+  const closeResults = () => {
+    setShowResults(false);
+    setTestResults(null);
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
