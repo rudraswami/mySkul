@@ -210,7 +210,7 @@ export default function MockTests() {
     if (!activeTest) return;
     
     try {
-      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
+      const token = localStorage.getItem('dhruv_ai_token');
       if (!token) {
         alert('Please log in again to continue');
         return;
@@ -232,12 +232,12 @@ export default function MockTests() {
       
       if (response.ok) {
         const result = await response.json();
-        alert(`Test completed! Score: ${result.percentage.toFixed(1)}%`);
-        setActiveTest(null);
-        loadAnalytics(); // Refresh analytics
+        // Show dual-layer feedback instead of simple alert
+        showTestResults(result);
       }
     } catch (error) {
       console.error('Error submitting test:', error);
+      alert('Error submitting test. Please try again.');
     }
   };
 
