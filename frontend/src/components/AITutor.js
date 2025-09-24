@@ -661,7 +661,12 @@ export default function AITutor() {
             
             <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
               <span>Press Enter to send, Shift+Enter for new line</span>
-              <span>Powered by Neuro-Symbolic AI</span>
+              <div className="flex items-center">
+                {aiMode === 'dual' && <span className="mr-2">🧠 Dual Intelligence Active</span>}
+                {aiMode === 'mentor' && <span className="mr-2">💚 Mentor Mode</span>}
+                {aiMode === 'professor' && <span className="mr-2">🎓 Professor Mode</span>}
+                <span>Neuro-Symbolic AI</span>
+              </div>
             </div>
           </div>
         </div>
