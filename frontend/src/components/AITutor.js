@@ -85,11 +85,28 @@ export default function AITutor() {
     setCurrentMessage('');
 
     try {
-      const response = await axios.post(`${API}/chat/message`, {
-        message: messageToSend,
-        subject: selectedSubject,
-        session_id: currentSession
-      });
+      let response;
+      
+      // Choose API endpoint based on AI mode
+      if (aiMode === 'dual') {
+        response = await axios.post(`${API}/ai/dual-response`, {
+          message: messageToSend,
+          subject: selectedSubject,
+          session_id: currentSession
+        });
+      } else if (aiMode === 'mentor') {
+        response = await axios.post(`${API}/ai/mentor-only`, {
+          message: messageToSend,
+          subject: selectedSubject,
+          session_id: currentSession
+        });
+      } else { // professor
+        response = await axios.post(`${API}/ai/professor-only`, {
+          message: messageToSend,
+          subject: selectedSubject,
+          session_id: currentSession
+        });
+      }
 
       const newMessage = response.data;
       
@@ -97,6 +114,11 @@ export default function AITutor() {
       if (!currentSession) {
         setCurrentSession(newMessage.session_id);
         fetchChatSessions(); // Refresh sessions list
+      }
+
+      // Track scenario type for dual mode
+      if (aiMode === 'dual' && newMessage.dual_response?.scenario_type) {
+        setLastScenarioType(newMessage.dual_response.scenario_type);
       }
 
       // Add message to current conversation
