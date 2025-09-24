@@ -12,7 +12,13 @@ import {
   CheckCircle,
   Circle,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  GraduationCap,
+  Heart,
+  Star,
+  Users,
+  BarChart3,
+  X
 } from 'lucide-react';
 
 export default function MockTests() {
