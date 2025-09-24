@@ -299,6 +299,9 @@
     - "Stress Management UI"
     - "Dual-Layer AI System - Backend"
     - "Dual-Layer AI System - Frontend"
+    - "Phase 2: Mock Tests Dual Feedback"
+    - "Phase 2: Study Planning Dual Intelligence"
+    - "Phase 2: Enhanced Question Analysis"
   stuck_tasks:
     - "Enhanced Mock Tests UI"
   test_all: true
