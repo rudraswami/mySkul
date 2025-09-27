@@ -191,18 +191,56 @@ class DhruvAITester:
         )
 
     def test_dashboard_analytics(self):
-        """Test dashboard analytics"""
+        """Test dashboard analytics - PRIORITY TEST for loading placeholder issue"""
         if not self.token:
             print("❌ No token available for analytics test")
             return False
-            
-        return self.run_test(
+        
+        print("   🎯 PRIORITY TEST: Dashboard Analytics API")
+        print("   Testing for MongoDB ObjectId serialization issues...")
+        print("   Expected: Valid JSON with study time, progress data")
+        
+        success, response = self.run_test(
             "Dashboard Analytics",
             "GET",
             "dashboard/analytics",
             200,
             headers={'Authorization': f'Bearer {self.token}'}
         )
+        
+        if success:
+            print("   ✅ Dashboard analytics API returned 200 OK")
+            
+            # Check for expected data structure
+            expected_fields = ['study_time', 'progress_data', 'recent_activity', 'performance_summary']
+            missing_fields = []
+            
+            for field in expected_fields:
+                if field not in response:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"   ⚠️  Missing expected fields: {missing_fields}")
+            else:
+                print("   ✅ All expected fields present in response")
+            
+            # Check for actual data vs placeholders
+            study_time = response.get('study_time', {})
+            if study_time and study_time.get('total_minutes', 0) > 0:
+                print(f"   ✅ Study time data: {study_time.get('total_minutes', 0)} minutes")
+            else:
+                print("   ⚠️  Study time appears to be placeholder/empty")
+            
+            progress_data = response.get('progress_data', {})
+            if progress_data and len(progress_data) > 0:
+                print(f"   ✅ Progress data contains {len(progress_data)} entries")
+            else:
+                print("   ⚠️  Progress data appears to be placeholder/empty")
+            
+            return True
+        else:
+            print("   ❌ Dashboard analytics API failed - this explains loading placeholders")
+            return False
 
     def test_progress_summary(self):
         """Test progress summary"""
