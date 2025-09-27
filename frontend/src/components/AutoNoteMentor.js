@@ -1272,12 +1272,22 @@ export default function AutoNoteMentor() {
                           </div>
                         </div>
                         
-                        {sessionStatus === 'uploading' && (
-                          <div className="flex items-center">
-                            <Loader className="h-4 w-4 animate-spin text-purple-600 mr-2" />
-                            <span className="text-sm text-purple-600">Processing...</span>
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {sessionStatus === 'uploading' ? (
+                            <div className="flex items-center">
+                              <Loader className="h-4 w-4 animate-spin text-purple-600 mr-2" />
+                              <span className="text-sm text-purple-600">Processing...</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={clearSelectedFile}
+                              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                              title="Remove file"
+                            >
+                              <X className="h-4 w-4 text-gray-500" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       {sessionStatus === 'uploading' && (
