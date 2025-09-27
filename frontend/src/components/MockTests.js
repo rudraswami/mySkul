@@ -400,19 +400,34 @@ We encountered an issue generating your test. Our technical team has been notifi
       }
     } finally {
       // Always cleanup and reset states
-      console.log('Cleaning up mock test generation...');
+      console.log('Cleaning up mock test generation for button:', buttonId);
       
+      // Clear timeout
       if (timeoutId) {
         clearTimeout(timeoutId);
+        timeoutId = null;
       }
       
+      // Only abort if not successful (avoid aborting successful requests)
       if (controller && !controller.signal.aborted) {
         controller.abort();
+        controller = null;
       }
       
-      // Reset individual button loading state
+      // CRITICAL: Always reset button loading state regardless of success/failure
       setButtonLoading(buttonId, false);
       setRetryStatus(null);
+      
+      // Clear any lingering progress updates
+      setTimeout(() => {
+        setGenerationProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[buttonId];
+          return newProgress;
+        });
+      }, 100);
+      
+      console.log('Cleanup completed for button:', buttonId);
     }
   };
 
