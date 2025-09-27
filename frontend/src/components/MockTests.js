@@ -1090,10 +1090,17 @@ We encountered an issue generating your test. Our technical team has been notifi
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
                   >
                     {loadingStates['math-quick'] ? (
-                      <>
+                      <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generating...
-                      </>
+                        <div className="flex flex-col">
+                          <span className="text-xs">Generating...</span>
+                          {generationProgress['math-quick'] && (
+                            <span className="text-xs opacity-75">
+                              {generationProgress['math-quick'].stage}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <>
                         🧮 Math Test
