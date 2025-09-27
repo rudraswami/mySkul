@@ -33,7 +33,7 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# ============= DATA MODELS =============
+# ============= CORE DATA MODELS =============
 
 class User(BaseModel):
     user_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
