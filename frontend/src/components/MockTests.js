@@ -48,6 +48,9 @@ export default function MockTests() {
   const [quickGeneration, setQuickGeneration] = useState(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
+  
+  // Difficulty mapping for consistent use
+  const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
 
   // Cleanup on component unmount
   useEffect(() => {
