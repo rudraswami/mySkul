@@ -297,14 +297,14 @@ export default function Dashboard() {
         {/* Enhanced Study Dashboard - Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Recent Study Activity */}
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-              <CardTitle className="flex items-center justify-between">
+          <Card className="border border-gray-200 hover:shadow-md transition-shadow duration-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center justify-between text-gray-900">
                 <div className="flex items-center">
-                  <BookOpen className="h-6 w-6 mr-3" />
-                  Your Learning Journey
+                  <BookOpen className="h-5 w-5 mr-3 text-blue-600" />
+                  Recent Study Progress
                 </div>
-                <Badge variant="secondary" className="bg-white/20 text-white">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                   Active
                 </Badge>
               </CardTitle>
