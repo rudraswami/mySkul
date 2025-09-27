@@ -56,7 +56,7 @@ export default function MockTests() {
   useEffect(() => {
     return () => {
       // Reset states on cleanup to prevent memory leaks
-      setIsGeneratingTest(false);
+      setLoadingStates({});
       setGenerationError(null);
       setRetryStatus(null);
     };
