@@ -27,7 +27,8 @@ import {
   AlertCircle,
   PlayCircle,
   BookMarked,
-  Lightbulb
+  Lightbulb,
+  Circle
 } from 'lucide-react';
 import axios from 'axios';
 
