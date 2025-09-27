@@ -1221,17 +1221,27 @@ export default function AutoNoteMentor() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="bg-purple-50 rounded-lg p-4">
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
                     <div className="flex items-start">
-                      <Brain className="h-5 w-5 text-purple-600 mr-2 mt-0.5" />
+                      <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                        <Upload className="h-4 w-4 text-white" />
+                      </div>
                       <div className="text-sm">
-                        <p className="font-semibold text-purple-900 mb-1">Upload Existing Recordings:</p>
-                        <ul className="text-purple-800 space-y-1">
-                          <li>• Upload class recordings, lectures, or study sessions</li>
-                          <li>• Supports MP3, WAV, MP4 audio and video files</li>
-                          <li>• AI will transcribe and create structured notes automatically</li>
-                          <li>• Get the same dual-layer AI analysis as live sessions</li>
-                        </ul>
+                        <p className="font-semibold text-gray-900 mb-2">Turn Any Recording into Verified Study Material:</p>
+                        <div className="space-y-2">
+                          <div className="flex items-start">
+                            <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                            <span className="text-gray-700">Upload lectures, classes, or study sessions (MP3, WAV, MP4)</span>
+                          </div>
+                          <div className="flex items-start">
+                            <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                            <span className="text-gray-700">Get hallucination-free transcription with dual AI verification</span>
+                          </div>
+                          <div className="flex items-start">
+                            <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                            <span className="text-gray-700">Receive structured notes, flashcards, and personalized insights</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
