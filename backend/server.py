@@ -513,7 +513,7 @@ class MockTestEngine:
                                 subject=subject,
                                 chapter=q_data.get('chapter', 'General'),
                                 topic=q_data.get('topic', 'Mixed'),
-                                difficulty_level=int(difficulty.replace('level_', '')),
+                                difficulty_level={"easy": 2, "medium": 3, "hard": 4, "very_hard": 5}.get(difficulty, 3),
                                 verified_by_professor=True,
                                 professor_confidence=q_data.get('confidence', 0.9)
                             )
