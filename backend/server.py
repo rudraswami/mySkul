@@ -2125,19 +2125,35 @@ async def generate_mock_test(
     """Generate a new mock test with enhanced architecture and caching"""
     
     try:
-        # Get user's performance history to adapt difficulty
-        user_progress = await db.study_progress.find(
-            {"user_id": user.user_id, "subject": request.subject}
-        ).to_list(10)
+        # Check cache first for instant loading
+        cache_key = create_cache_key(user.user_id, request.test_type, request.subjects)
+        cached_test = await get_cached_test(cache_key)
         
-        # Calculate adaptive difficulty based on past performance
-        difficulty = request.difficulty
-        if user_progress:
-            avg_mastery = sum(p.get("mastery_level", 50) for p in user_progress) / len(user_progress)
-            if avg_mastery > 80:
-                difficulty = min(5, difficulty + 1)
-            elif avg_mastery < 40:
-                difficulty = max(1, difficulty - 1)
+        if cached_test and request.generation_mode == "standard":
+            logger.info(f"Returning cached test for user {user.user_id}")
+            return cached_test
+        
+        # Create test blueprint
+        blueprint = TestBlueprint(
+            exam_type=request.exam_type,
+            test_type=request.test_type,
+            subjects=request.subjects,
+            chapters=request.chapters,
+            difficulty_distribution={
+                "easy": max(1, request.num_questions // 5),
+                "medium": request.num_questions // 2,
+                "hard": max(1, request.num_questions // 4),
+                "very_hard": max(1, request.num_questions // 10)
+            },
+            total_questions=request.num_questions,
+            total_marks=request.num_questions * 4,
+            time_limit=max(30, request.num_questions * 2),  # 2 min per question, min 30 min
+            generation_mode=request.generation_mode,
+            adaptive_focus=request.focus_areas
+        )
+        
+        # Create test using new architecture
+        test = await MockTestEngine.create_test_from_blueprint(blueprint, user.user_id)
         
         # Generate questions using AI
         current_year = datetime.utcnow().year
