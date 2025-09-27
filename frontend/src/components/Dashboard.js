@@ -369,29 +369,44 @@ export default function Dashboard() {
           </Card>
 
           {/* Subject Performance Overview */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-              <CardTitle className="flex items-center">
-                <BarChart3 className="h-6 w-6 mr-3" />
-                Performance Overview
+          <Card className="border border-gray-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center text-gray-900">
+                <BarChart3 className="h-5 w-5 mr-3 text-blue-600" />
+                Subject Performance
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-                  <div className="text-2xl font-bold text-green-600 mb-1">87%</div>
-                  <p className="text-sm text-green-700 font-medium">Mathematics</p>
-                  <p className="text-xs text-green-600">Strong 💪</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="font-medium text-gray-900">Mathematics</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Progress value={87} className="w-24 h-2" />
+                    <span className="text-sm font-semibold text-gray-900 w-12">87%</span>
+                  </div>
                 </div>
-                <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
-                  <div className="text-2xl font-bold text-yellow-600 mb-1">72%</div>
-                  <p className="text-sm text-yellow-700 font-medium">Physics</p>
-                  <p className="text-xs text-yellow-600">Improving 📈</p>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span className="font-medium text-gray-900">Physics</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Progress value={72} className="w-24 h-2" />
+                    <span className="text-sm font-semibold text-gray-900 w-12">72%</span>
+                  </div>
                 </div>
-                <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
-                  <div className="text-2xl font-bold text-red-600 mb-1">65%</div>
-                  <p className="text-sm text-red-700 font-medium">Chemistry</p>
-                  <p className="text-xs text-red-600">Focus needed 🎯</p>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="font-medium text-gray-900">Chemistry</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Progress value={65} className="w-24 h-2" />
+                    <span className="text-sm font-semibold text-gray-900 w-12">65%</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
