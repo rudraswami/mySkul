@@ -18,7 +18,10 @@ import {
   Star,
   Users,
   BarChart3,
-  X
+  X,
+  Trophy,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 
 export default function MockTests() {
