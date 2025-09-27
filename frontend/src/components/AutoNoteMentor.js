@@ -1235,7 +1235,7 @@ export default function AutoNoteMentor() {
                                 : 'bg-purple-600 hover:bg-purple-700 cursor-pointer'
                             }`}
                           >
-                            <FileText className="h-4 w-4 mr-2" />
+                            <Upload className="h-4 w-4 mr-2" />
                             Choose File
                           </label>
                           
