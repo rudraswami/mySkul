@@ -1313,18 +1313,23 @@ We encountered an issue generating your test. Our technical team has been notifi
               
               <Button 
                 variant="outline" 
-                className="w-full justify-start disabled:opacity-50"
-                onClick={() => generateMockTest('JEE', 'Mixed', 2, 15)}
-                disabled={isGeneratingTest}
+                className="w-full justify-start disabled:opacity-50 relative"
+                onClick={() => generateMockTest('JEE', 'Mixed', 2, 15, 'practice-questions')}
+                disabled={loadingStates['practice-questions']}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                {isGeneratingTest ? (
+                {loadingStates['practice-questions'] ? (
                   <>
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
                     Generating...
                   </>
                 ) : (
-                  'Practice Questions'
+                  <>
+                    Practice Questions
+                    {testCache.has(getCacheKey('JEE', 'Mixed', 2, 15)) && (
+                      <Sparkles className="h-3 w-3 text-green-500 ml-auto" />
+                    )}
+                  </>
                 )}
               </Button>
               
