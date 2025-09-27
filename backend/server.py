@@ -571,7 +571,7 @@ class MockTestEngine:
             if existing:
                 question_ids.append(existing['question_id'])
             else:
-                question_dict = question.dict()
+                question_dict = prepare_for_mongo(question.dict())
                 await db.questions.insert_one(question_dict)
                 question_ids.append(question.question_id)
         
