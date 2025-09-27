@@ -470,11 +470,8 @@ class MockTestEngine:
         try:
             # Use Professor AI to generate verified questions
             professor_service = ProfessorAI()
-            mentor_service = MentorAI()
             
             for subject in blueprint.subjects:
-                subject_questions = blueprint.total_questions // len(blueprint.subjects)
-                
                 # Get difficulty distribution for this subject
                 difficulty_counts = blueprint.difficulty_distribution
                 
