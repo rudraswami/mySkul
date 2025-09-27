@@ -469,7 +469,7 @@ class MockTestEngine:
         
         try:
             # Use Professor AI to generate verified questions
-            professor_service = ProfessorAI()
+            professor_service = ProfessorAI(EMERGENT_LLM_KEY)
             
             for subject in blueprint.subjects:
                 # Get difficulty distribution for this subject
