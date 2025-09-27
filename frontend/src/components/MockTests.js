@@ -141,13 +141,22 @@ export default function MockTests() {
   };
 
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
-    if (loadingStates[buttonId]) return; // Prevent multiple calls for same button
+    // CRITICAL: Prevent multiple calls and add emergency cleanup
+    if (loadingStates[buttonId]) {
+      console.warn(`Button ${buttonId} is already loading, ignoring duplicate call`);
+      return;
+    }
     
     const token = localStorage.getItem('dhruv_ai_token');
     if (!token) {
       alert('Please log in again to continue');
       return;
     }
+    
+    // Emergency cleanup for any stuck states
+    setButtonLoading(buttonId, false);
+    setGenerationError(null);
+    setRetryStatus(null);
 
     // Check cache first for instant loading
     const cacheKey = getCacheKey(examType, subject, difficulty, numQuestions);
