@@ -213,16 +213,28 @@ export default function MockTests() {
             { delay: 12000, progress: 90, stage: 'Finalizing test...' }
           ];
           
+          // Store timeout IDs for cleanup
+          const progressTimeouts = [];
+          
           progressUpdates.forEach(update => {
-            setTimeout(() => {
-              if (loadingStates[buttonId]) {
+            const timeoutId = setTimeout(() => {
+              // Check both loading state and controller to ensure request is still active
+              if (loadingStates[buttonId] && controller && !controller.signal.aborted) {
                 setGenerationProgress(prev => ({
                   ...prev,
                   [buttonId]: { progress: update.progress, stage: update.stage }
                 }));
               }
             }, update.delay);
+            progressTimeouts.push(timeoutId);
           });
+          
+          // Clear progress timeouts on controller abort or success
+          const originalAbort = controller.abort.bind(controller);
+          controller.abort = () => {
+            progressTimeouts.forEach(id => clearTimeout(id));
+            originalAbort();
+          };
           
           const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
             method: 'POST',
