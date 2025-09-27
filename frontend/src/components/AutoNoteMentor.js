@@ -118,6 +118,7 @@ export default function AutoNoteMentor() {
     }
   };
 
+  // Enhanced session creation with multi-modal support
   const startNewSession = async () => {
     if (!newSessionTitle.trim()) {
       setError('Please enter a title for your class session');
