@@ -185,12 +185,28 @@ export default function MockTests() {
 
     let timeoutId = null;
     let controller = null;
+    let emergencyTimeoutId = null;
     
     try {
       // Set individual button loading state
       setButtonLoading(buttonId, true);
       setGenerationError(null);
       setRetryStatus(null);
+      
+      // FAILSAFE: Emergency timeout to prevent permanent loading states
+      emergencyTimeoutId = setTimeout(() => {
+        console.error(`EMERGENCY TIMEOUT: Forcing cleanup for button ${buttonId} after 60 seconds`);
+        setButtonLoading(buttonId, false);
+        setGenerationError('Request timed out. Please try again.');
+        setRetryStatus(null);
+        
+        // Clear progress
+        setGenerationProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[buttonId];
+          return newProgress;
+        });
+      }, 60000); // 60 second emergency timeout
 
       const maxRetries = 2;
       let attempts = 0;
