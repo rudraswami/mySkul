@@ -2597,7 +2597,7 @@ Structure your response as detailed educational notes with:
         }
         
         # Update session with final results
-        await db.note_sessions.update_one(
+        await db.auto_note_sessions.update_one(
             {"session_id": session_id},
             {"$set": {
                 "status": "completed",
