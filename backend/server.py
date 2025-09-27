@@ -486,51 +486,53 @@ class MockTestEngine:
     
     @staticmethod
     async def generate_questions(blueprint: TestBlueprint, user: User) -> List[Question]:
-        """Generate AI questions based on blueprint using dual-layer AI"""
-        questions = []
+        """Generate AI questions based on blueprint using optimized dual-layer AI"""
+        
+        # PERFORMANCE OPTIMIZATION: Check question pool first for instant response
+        pooled_questions = await MockTestEngine.get_from_question_pool(blueprint)
+        if pooled_questions and len(pooled_questions) >= blueprint.total_questions:
+            logger.info(f"🚀 Serving {len(pooled_questions)} questions from pre-generated pool")
+            return pooled_questions[:blueprint.total_questions]
         
         try:
-            # Use Professor AI to generate verified questions
+            # OPTIMIZATION: Single optimized AI call instead of multiple calls
             professor_service = ProfessorAI(EMERGENT_LLM_KEY)
             
-            for subject in blueprint.subjects:
-                # Get difficulty distribution for this subject
-                difficulty_counts = blueprint.difficulty_distribution
-                
-                for difficulty, count in difficulty_counts.items():
-                    if count > 0:
-                        # Generate questions for this difficulty level
-                        generated = await professor_service.generate_questions(
-                            subject=subject,
-                            difficulty=difficulty,
-                            count=count,
-                            chapters=blueprint.chapters,
-                            exam_type=blueprint.exam_type
-                        )
-                        
-                        for q_data in generated:
-                            # Create Question object with verification
-                            question = Question(
-                                content_hash=generate_content_hash(q_data['question_text']),
-                                question_text=q_data['question_text'],
-                                options=q_data['options'],
-                                correct_answer=q_data['correct_answer'],
-                                explanation=q_data['explanation'],
-                                subject=subject,
-                                chapter=q_data.get('chapter', 'General'),
-                                topic=q_data.get('topic', 'Mixed'),
-                                difficulty_level={"easy": 2, "medium": 3, "hard": 4, "very_hard": 5}.get(difficulty, 3),
-                                verified_by_professor=True,
-                                professor_confidence=q_data.get('confidence', 0.9)
-                            )
-                            questions.append(question)
+            # Generate all questions in one efficient call
+            generated_questions = await professor_service.generate_questions_optimized(
+                subjects=blueprint.subjects,
+                difficulty_distribution=blueprint.difficulty_distribution,
+                total_questions=blueprint.total_questions,
+                chapters=blueprint.chapters,
+                exam_type=blueprint.exam_type
+            )
+            
+            questions = []
+            for i, q_data in enumerate(generated_questions):
+                question = Question(
+                    content_hash=generate_content_hash(q_data['question_text']),
+                    question_text=q_data['question_text'],
+                    options=q_data['options'],
+                    correct_answer=q_data['correct_answer'],
+                    explanation=q_data['explanation'],
+                    subject=q_data.get('subject', blueprint.subjects[0]),
+                    chapter=q_data.get('chapter', 'General'),
+                    topic=q_data.get('topic', 'Mixed'),
+                    difficulty_level=q_data.get('difficulty_level', 3),
+                    verified_by_professor=True,
+                    professor_confidence=q_data.get('confidence', 0.9)
+                )
+                questions.append(question)
+            
+            # OPTIMIZATION: Cache generated questions in pool for future use
+            await MockTestEngine.add_to_question_pool(blueprint, questions)
             
             return questions
             
         except Exception as e:
-            logger.error(f"Error generating questions: {str(e)}")
-            # Fallback to sample questions for development
-            return await MockTestEngine.generate_fallback_questions(blueprint)
+            logger.error(f"Error in optimized question generation: {str(e)}")
+            # FAST FALLBACK: Return high-quality fallback questions immediately
+            return await MockTestEngine.generate_enhanced_fallback_questions(blueprint)
     
     @staticmethod
     async def generate_fallback_questions(blueprint: TestBlueprint) -> List[Question]:
