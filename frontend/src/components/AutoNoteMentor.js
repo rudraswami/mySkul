@@ -59,10 +59,16 @@ export default function AutoNoteMentor() {
   
   // Interactive Features
   const [selectedNotes, setSelectedNotes] = useState(null);
-  const [flashcards, setFlashcards] = useState([]);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [explainRequest, setExplainRequest] = useState('');
   const [explanation, setExplanation] = useState(null);
+  
+  // Live Recording State
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [conceptsDetected, setConceptsDetected] = useState([]);
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [generatedNotes, setGeneratedNotes] = useState(null);
+  const [dualAnalysis, setDualAnalysis] = useState(null);
   
   // Form State
   const [newSessionTitle, setNewSessionTitle] = useState('');
