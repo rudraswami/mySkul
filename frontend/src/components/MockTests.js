@@ -459,25 +459,70 @@ We encountered an issue generating your test. Our technical team has been notifi
           </div>
         </div>
 
-        {/* Question Card */}
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-6">{question.question_text}</h2>
-          
-          <div className="space-y-4">
-            {question.options.map((option, index) => (
-              <div 
-                key={index}
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                  answers[question.question_id] === option.charAt(0) 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setAnswers({...answers, [question.question_id]: option.charAt(0)})}
-              >
-                {option}
+        {/* Enhanced Question Interface */}
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+            {/* Question Header */}
+            <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                    Q{currentQuestion + 1}
+                  </span>
+                  <span className="text-gray-600 text-sm">
+                    {question.chapter ? `Chapter: ${question.chapter}` : 'General Question'}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    {question.marks || 4} marks
+                  </span>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* Question Content */}
+            <div className="p-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-8 leading-relaxed">
+                {question.question_text}
+              </h2>
+              
+              {/* Enhanced Options */}
+              <div className="space-y-3">
+                {question.options.map((option, index) => {
+                  const optionLetter = option.charAt(0);
+                  const isSelected = answers[question.question_id] === optionLetter;
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className={`group p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setAnswers({...answers, [question.question_id]: optionLetter})}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          isSelected
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-200 text-gray-600 group-hover:bg-blue-100'
+                        }`}>
+                          {optionLetter}
+                        </div>
+                        <span className={`flex-1 ${isSelected ? 'text-blue-900 font-medium' : 'text-gray-700'}`}>
+                          {option.substring(3).trim()}
+                        </span>
+                        {isSelected && (
+                          <CheckCircle className="h-5 w-5 text-blue-500" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
           <div className="flex justify-between mt-8">
             <Button
