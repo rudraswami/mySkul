@@ -353,7 +353,8 @@ We encountered an issue generating your test. Our technical team has been notifi
 • Contact support with error details
 • Use other study materials while we resolve this
 
-🏆 Your education is our priority - we're working to fix this quickly.`);
+🏆 Your education is our priority - we're working to fix this quickly.`;
+            setGenerationError(unexpectedMessage);
           }
           break;
         }
