@@ -152,7 +152,7 @@ export default function MockTests() {
   };
 
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
-    // CRITICAL: Prevent multiple calls and add emergency cleanup
+    // CRITICAL: Prevent multiple calls
     if (loadingStates[buttonId]) {
       console.warn(`Button ${buttonId} is already loading, ignoring duplicate call`);
       return;
@@ -163,11 +163,6 @@ export default function MockTests() {
       alert('Please log in again to continue');
       return;
     }
-    
-    // Emergency cleanup for any stuck states
-    setButtonLoading(buttonId, false);
-    setGenerationError(null);
-    setRetryStatus(null);
 
     // Check cache first for instant loading
     const cacheKey = getCacheKey(examType, subject, difficulty, numQuestions);
@@ -194,309 +189,135 @@ export default function MockTests() {
       return;
     }
 
-    let timeoutId = null;
-    let controller = null;
-    let emergencyTimeoutId = null;
+    // Simplified approach - no AbortController to avoid complexity
+    console.log(`Starting simplified mock test generation for ${subject}`);
     
+    // Start loading state
+    setButtonLoading(buttonId, true);
+    setGenerationError(null);
+    setRetryStatus(null);
+    
+    // Simple progress indicator
+    setGenerationProgress(prev => ({
+      ...prev,
+      [buttonId]: { progress: 20, stage: 'Generating AI questions...' }
+    }));
+    
+    // Fallback timeout - force cleanup after 45 seconds
+    const fallbackTimeout = setTimeout(() => {
+      console.warn('FALLBACK: Forcing cleanup after 45 seconds');
+      setButtonLoading(buttonId, false);
+      setGenerationProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[buttonId];
+        return newProgress;
+      });
+      setGenerationError('Request timed out. Please try again.');
+    }, 45000);
+
     try {
-      // Set individual button loading state
-      setButtonLoading(buttonId, true);
-      setGenerationError(null);
-      setRetryStatus(null);
+      // Update progress to show AI working
+      setTimeout(() => {
+        setGenerationProgress(prev => ({
+          ...prev,
+          [buttonId]: { progress: 60, stage: 'Verifying question quality...' }
+        }));
+      }, 3000);
       
-      // FAILSAFE: Emergency timeout to prevent permanent loading states
-      emergencyTimeoutId = setTimeout(() => {
-        console.error(`EMERGENCY TIMEOUT: Forcing cleanup for button ${buttonId} after 60 seconds`);
-        setButtonLoading(buttonId, false);
-        setGenerationError('Request timed out. Please try again.');
-        setRetryStatus(null);
+      setTimeout(() => {
+        setGenerationProgress(prev => ({
+          ...prev,
+          [buttonId]: { progress: 85, stage: 'Finalizing test structure...' }
+        }));
+      }, 8000);
+      
+      // Make the API call with a simple fetch
+      const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          exam_type: examType,
+          subject: subject, // Use single subject as expected by backend
+          difficulty: difficulty,
+          num_questions: numQuestions
+        })
+      });
+
+      clearTimeout(fallbackTimeout); // Clear fallback since we got a response
+      
+      if (response.ok) {
+        const testData = await response.json();
+        console.log('✅ Test generated successfully:', testData.test_name);
         
-        // Clear progress
-        setGenerationProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[buttonId];
-          return newProgress;
-        });
-      }, 60000); // 60 second emergency timeout
+        // Cache the test
+        cacheTest(cacheKey, testData);
+        
+        // Set up the test
+        setActiveTest(testData);
+        setTimeRemaining(testData.time_limit * 60);
+        setCurrentQuestion(0);
+        setAnswers({});
 
-      const maxRetries = 2;
-      let attempts = 0;
+        // Start timer
+        const timer = setInterval(() => {
+          setTimeRemaining(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              submitTest();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
 
-      while (attempts <= maxRetries) {
+      } else {
+        // Handle errors
+        const errorText = await response.text();
+        let errorMessage = 'Failed to generate test. Please try again.';
+        
         try {
-          // Update retry status
-          if (attempts > 0) {
-            setRetryStatus(`Retrying... (${attempts + 1}/${maxRetries + 1})`);
+          const errorData = JSON.parse(errorText);
+          if (errorData.detail) {
+            errorMessage = errorData.detail;
           }
-
-          // Create abort controller for this attempt
-          controller = new AbortController();
-          
-          // Set timeout manually
-          timeoutId = setTimeout(() => {
-            if (controller && !controller.signal.aborted) {
-              controller.abort();
-            }
-          }, 30000); // Reduced to 30 seconds with optimizations
-
-          console.log(`Attempt ${attempts + 1}: Starting optimized mock test generation for ${subject}`);
-          
-          // Progress updates during generation
-          const progressUpdates = [
-            { delay: 1000, progress: 25, stage: 'Analyzing subject patterns...' },
-            { delay: 3000, progress: 50, stage: 'Generating AI questions...' },
-            { delay: 8000, progress: 75, stage: 'Verifying accuracy...' },
-            { delay: 12000, progress: 90, stage: 'Finalizing test...' }
-          ];
-          
-          // Store timeout IDs for cleanup
-          const progressTimeouts = [];
-          
-          progressUpdates.forEach(update => {
-            const timeoutId = setTimeout(() => {
-              // Check both loading state and controller to ensure request is still active
-              if (loadingStates[buttonId] && controller && !controller.signal.aborted) {
-                setGenerationProgress(prev => ({
-                  ...prev,
-                  [buttonId]: { progress: update.progress, stage: update.stage }
-                }));
-              }
-            }, update.delay);
-            progressTimeouts.push(timeoutId);
-          });
-          
-          // Clear progress timeouts on controller abort or success
-          const originalAbort = controller.abort.bind(controller);
-          controller.abort = () => {
-            progressTimeouts.forEach(id => clearTimeout(id));
-            originalAbort();
-          };
-          
-          const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              exam_type: examType,
-              subjects: [subject], // Convert to array as expected by new backend
-              difficulty_level: difficulty,
-              num_questions: numQuestions,
-              test_type: "full_length",
-              generation_mode: "standard"
-            }),
-            signal: controller.signal
-          });
-
-          // Clear timeout on successful response
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-
-          console.log(`Response status: ${response.status}`);
-
-          if (response.ok) {
-            const testData = await response.json();
-            console.log('Test generated successfully:', testData.test_name);
-            
-            // IMMEDIATE SUCCESS CLEANUP - Clear loading states first
-            setButtonLoading(buttonId, false);
-            setGenerationProgress(prev => {
-              const newProgress = { ...prev };
-              delete newProgress[buttonId];
-              return newProgress;
-            });
-            setRetryStatus(null);
-            setGenerationError(null);
-            
-            // Clear emergency timeout since we succeeded
-            if (emergencyTimeoutId) {
-              clearTimeout(emergencyTimeoutId);
-              emergencyTimeoutId = null;
-            }
-            
-            // Cache the generated test for future use
-            cacheTest(cacheKey, testData);
-            
-            // Success - set up test
-            setActiveTest(testData);
-            setTimeRemaining(testData.time_limit * 60);
-            setCurrentQuestion(0);
-            setAnswers({});
-
-            // Start timer
-            const timer = setInterval(() => {
-              setTimeRemaining(prev => {
-                if (prev <= 1) {
-                  clearInterval(timer);
-                  submitTest();
-                  return 0;
-                }
-                return prev - 1;
-              });
-            }, 1000);
-
-            return; // Success - exit function
-          } else {
-            // Handle HTTP errors
-            let errorMessage = 'Failed to generate test. Please try again.';
-            
-            try {
-              const errorData = await response.json();
-              
-              // Handle different error formats
-              if (typeof errorData.detail === 'string') {
-                errorMessage = errorData.detail;
-              } else if (Array.isArray(errorData.detail)) {
-                // Handle Pydantic validation errors
-                const validationErrors = errorData.detail.map(err => 
-                  `${err.loc?.join('.')}: ${err.msg}`
-                ).join(', ');
-                errorMessage = `Validation Error: ${validationErrors}`;
-              } else if (errorData.message) {
-                errorMessage = errorData.message;
-              } else {
-                console.error('Unexpected error format:', errorData);
-                errorMessage = 'An unexpected error occurred. Please try again.';
-              }
-            } catch (parseError) {
-              console.error('Error parsing response:', parseError);
-              errorMessage = 'Failed to parse error response. Please try again.';
-            }
-
-            console.error(`HTTP Error ${response.status}:`, errorMessage);
-
-            if (response.status >= 500 && attempts < maxRetries) {
-              // Server error - retry with exponential backoff
-              attempts++;
-              console.log(`Server error, retrying in ${3 * attempts} seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-              continue;
-            } else {
-              // Final error or non-retryable error
-              if (response.status >= 500) {
-                errorMessage = `🤖 Our AI tutoring system is currently experiencing high demand. 
-
-This happens when many students are using the platform simultaneously. 
-
-📝 What you can do:
-• Try again in 2-3 minutes when AI load decreases
-• Contact support if this persists
-• Our team is working to scale AI capacity
-
-🎯 Dhruv AI is committed to providing reliable, world-class education technology.`;
-              } else if (response.status === 401) {
-                errorMessage = 'Your session has expired. Please log in again to continue your learning journey.';
-              } else if (response.status === 403) {
-                errorMessage = 'Access denied. Please ensure you have the proper permissions to generate tests.';
-              }
-              // Ensure errorMessage is always a string
-              const safeErrorMessage = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
-              setGenerationError(safeErrorMessage);
-              break;
-            }
-          }
-        } catch (fetchError) {
-          console.error('Fetch error:', fetchError);
-          
-          // Clear timeout if error occurs
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-          
-          if (fetchError.name === 'AbortError') {
-            console.log('Request was aborted (timeout or manual cancel)');
-            if (attempts < maxRetries) {
-              attempts++;
-              console.log(`Timeout occurred, retrying in ${3 * attempts} seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-              continue;
-            }
-            const timeoutMessage = `⏱️ Test generation is taking longer than usual.
-
-This can happen when:
-• AI is creating complex, high-quality questions
-• High platform usage during peak study hours
-• Network connectivity issues
-
-💡 Recommendations:
-• Try again - AI generation usually completes in 15-30 seconds
-• Check your internet connection
-• Contact support if this problem persists
-
-🎓 Dhruv AI generates questions using advanced AI to match real exam patterns.`;
-            setGenerationError(timeoutMessage);
-          } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
-            console.error('Network error:', fetchError);
-            const networkMessage = `🌐 Network Connection Issue
-
-Please check your internet connection and try again. 
-
-📞 If you're on campus/institutional Wi-Fi, contact your IT support for assistance with educational platform access.
-
-🔄 Retry once your connection is stable - your learning progress is important to us.`;
-            setGenerationError(networkMessage);
-          } else {
-            console.error('Unknown error:', fetchError);
-            if (attempts < maxRetries) {
-              attempts++;
-              console.log(`Unknown error, retrying in ${3 * attempts} seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-              continue;
-            }
-            const unexpectedMessage = `⚠️ Unexpected Error Occurred
-
-We encountered an issue generating your test. Our technical team has been notified.
-
-📋 Next Steps:
-• Try again in a few minutes
-• Contact support with error details
-• Use other study materials while we resolve this
-
-🏆 Your education is our priority - we're working to fix this quickly.`;
-            setGenerationError(unexpectedMessage);
-          }
-          break;
+        } catch (e) {
+          console.error('Could not parse error response:', errorText);
         }
+        
+        if (response.status >= 500) {
+          errorMessage = 'AI system is busy. Please try again in 30 seconds.';
+        }
+        
+        setGenerationError(errorMessage);
       }
+      
+    } catch (error) {
+      clearTimeout(fallbackTimeout);
+      console.error('Mock test generation error:', error);
+      
+      let errorMessage = 'Network error. Please check your connection and try again.';
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Connection failed. Please check your internet and try again.';
+      }
+      
+      setGenerationError(errorMessage);
     } finally {
-      // Always cleanup and reset states
-      console.log('Cleaning up mock test generation for button:', buttonId);
-      
-      // Clear all timeouts
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      
-      if (emergencyTimeoutId) {
-        clearTimeout(emergencyTimeoutId);
-        emergencyTimeoutId = null;
-      }
-      
-      // Only abort if not successful (avoid aborting successful requests)
-      if (controller && !controller.signal.aborted) {
-        controller.abort();
-        controller = null;
-      }
-      
-      // CRITICAL: Always reset button loading state regardless of success/failure
+      // ALWAYS cleanup - this is the critical part
+      console.log('🧹 Cleaning up button state:', buttonId);
       setButtonLoading(buttonId, false);
       setRetryStatus(null);
       
-      // Clear any lingering progress updates
+      // Clear progress after a brief delay
       setTimeout(() => {
         setGenerationProgress(prev => {
           const newProgress = { ...prev };
           delete newProgress[buttonId];
           return newProgress;
         });
-      }, 100);
-      
-      console.log('Cleanup completed for button:', buttonId);
+      }, 500);
     }
   };
 
