@@ -150,24 +150,139 @@ export default function AutoNoteMentor() {
       if (response.ok) {
         const sessionData = await response.json();
         setCurrentSession(sessionData);
-        setSessionStatus('ready');
+        setSessionStatus('active');
+        setActiveView('home');
         setNewSessionTitle('');
-        setLiveTranscript('');
-        setConceptsDetected([]);
+        setNewSessionSubject('Mathematics');
         
-        // Request microphone permission
-        try {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (permissionError) {
-          setError('Microphone access required for Auto-Note Mentor. Please allow microphone permission and try again.');
-        }
+        // Load updated sessions
+        loadUserSessions();
       } else {
-        const errorData = await response.json();
-        setError(errorData.detail || 'Failed to start session');
+        const error = await response.json();
+        setError(error.detail || 'Failed to start session');
       }
     } catch (error) {
-      console.error('Session start error:', error);
-      setError('Failed to start session. Please check your connection.');
+      console.error('Error starting session:', error);
+      setError('Failed to start new session. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Enhanced file upload and processing
+  const handleFileUpload = async (file) => {
+    if (!currentSession) {
+      setError('Please start a session first');
+      return;
+    }
+    
+    if (!file) {
+      setError('Please select a file to upload');
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'video/mp4'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please upload an audio or video file (MP3, WAV, MP4)');
+      return;
+    }
+    
+    setLoading(true);
+    setSessionStatus('uploading');
+    setProcessingProgress(0);
+    setError(null);
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`${API}/auto-notes/upload-audio?session_id=${currentSession.session_id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update states with processed data
+        setProcessedNote(result);
+        setMentorSummary(result.mentor_summary);
+        setSessionStatus('completed');
+        setProcessingProgress(100);
+        
+        // Load the detailed processed note
+        await loadProcessedNote(result.note_id);
+        
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to process audio file');
+        setSessionStatus('active');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setError('Failed to upload and process file. Please try again.');
+      setSessionStatus('active');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Load detailed processed note data
+  const loadProcessedNote = async (noteId) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/processed-note/${noteId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const noteData = await response.json();
+        
+        setTopicCards(noteData.topic_cards || []);
+        setFlashcards(noteData.interactive_features.flashcards || []);
+        setQuizQuestions(noteData.interactive_features.quiz_questions || []);
+        setMentorSummary(noteData.mentor_summary || '');
+        
+        setActiveView('notes');
+      }
+    } catch (error) {
+      console.error('Error loading processed note:', error);
+      setError('Failed to load processed notes');
+    }
+  };
+  
+  // Generate additional flashcards
+  const generateMoreFlashcards = async () => {
+    if (!processedNote) return;
+    
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/generate-flashcards?note_id=${processedNote.note_id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setFlashcards(prev => [...prev, ...result.flashcards]);
+      }
+    } catch (error) {
+      console.error('Error generating flashcards:', error);
+      setError('Failed to generate additional flashcards');
     } finally {
       setLoading(false);
     }
