@@ -984,7 +984,7 @@ We encountered an issue generating your test. Our technical team has been notifi
                         <div className="text-red-700 text-sm whitespace-pre-line leading-relaxed">
                           {generationError}
                         </div>
-                        {!isGeneratingTest && (
+                        {Object.keys(loadingStates).length === 0 && (
                           <div className="mt-4 flex gap-3">
                             <Button
                               variant="outline"
