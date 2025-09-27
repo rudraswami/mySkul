@@ -1036,6 +1036,12 @@ We encountered an issue generating your test. Our technical team has been notifi
                   </div>
                 )}
                 
+                {estimatedTime && (
+                  <div className="mb-3 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+                    🚀 Optimized generation in progress • Estimated: {estimatedTime}
+                  </div>
+                )}
+                
                 {/* Professional Error Display */}
                 {generationError && (
                   <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
