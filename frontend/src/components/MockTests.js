@@ -98,6 +98,22 @@ export default function MockTests() {
       ...prev,
       [buttonId]: loading
     }));
+    
+    // Set progress tracking
+    if (loading) {
+      setGenerationProgress(prev => ({
+        ...prev,
+        [buttonId]: { progress: 10, stage: 'Starting AI generation...' }
+      }));
+      setEstimatedTime('15-30 seconds');
+    } else {
+      setGenerationProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[buttonId];
+        return newProgress;
+      });
+      setEstimatedTime(null);
+    }
   };
 
   // Smart caching system
