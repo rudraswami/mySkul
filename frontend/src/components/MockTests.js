@@ -1146,10 +1146,17 @@ We encountered an issue generating your test. Our technical team has been notifi
                     className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 relative"
                   >
                     {loadingStates['chemistry-quick'] ? (
-                      <>
+                      <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generating...
-                      </>
+                        <div className="flex flex-col">
+                          <span className="text-xs">Generating...</span>
+                          {generationProgress['chemistry-quick'] && (
+                            <span className="text-xs opacity-75">
+                              {generationProgress['chemistry-quick'].stage}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <>
                         🧪 Chemistry Test
