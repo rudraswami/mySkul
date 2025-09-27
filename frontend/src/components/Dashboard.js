@@ -293,7 +293,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Enhanced Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Study Progress */}
         <div className="lg:col-span-2">
