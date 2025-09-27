@@ -2816,7 +2816,7 @@ async def get_user_note_sessions(user: User = Depends(get_current_user)):
     """Get all note sessions for the current user"""
     
     try:
-        sessions = await db.note_sessions.find(
+        sessions = await db.auto_note_sessions.find(
             {"user_id": user.user_id}
         ).sort("created_at", -1).limit(50).to_list(50)
         
