@@ -3482,17 +3482,7 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
         ).sort("completed_at", -1).limit(20).to_list(20)
         
         # Clean ObjectId fields from results and handle datetime serialization
-        clean_test_results = []
-        for result in test_results:
-            # Remove MongoDB ObjectId fields and handle datetime
-            clean_result = {}
-            for k, v in result.items():
-                if k != '_id':
-                    if isinstance(v, datetime):
-                        clean_result[k] = v.isoformat()
-                    else:
-                        clean_result[k] = v
-            clean_test_results.append(clean_result)
+        clean_test_results = [clean_mongodb_doc(result) for result in test_results]
         
         # Get study progress with ObjectId handling
         study_progress_docs = await db.study_progress.find(
