@@ -328,7 +328,7 @@ This can happen when:
             setGenerationError(timeoutMessage);
           } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
             console.error('Network error:', fetchError);
-            setGenerationError(`🌐 Network Connection Issue
+            const networkMessage = `🌐 Network Connection Issue
 
 Please check your internet connection and try again. 
 
