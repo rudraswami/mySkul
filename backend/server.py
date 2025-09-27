@@ -3481,10 +3481,16 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
             {"user_id": user.user_id}
         ).to_list(100)
         
-        # Clean ObjectId fields from progress
+        # Clean ObjectId fields from progress and handle datetime serialization
         study_progress = []
         for progress in study_progress_docs:
-            clean_progress = {k: v for k, v in progress.items() if k != '_id'}
+            clean_progress = {}
+            for k, v in progress.items():
+                if k != '_id':
+                    if isinstance(v, datetime):
+                        clean_progress[k] = v.isoformat()
+                    else:
+                        clean_progress[k] = v
             study_progress.append(clean_progress)
         
         # Calculate trends using cleaned results
