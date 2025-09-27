@@ -348,8 +348,8 @@ We encountered an issue generating your test. Our technical team has been notifi
         controller.abort();
       }
       
-      // Reset loading states
-      setIsGeneratingTest(false);
+      // Reset individual button loading state
+      setButtonLoading(buttonId, false);
       setRetryStatus(null);
     }
   };
