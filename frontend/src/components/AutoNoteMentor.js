@@ -205,6 +205,17 @@ export default function AutoNoteMentor() {
       handleFileUpload(file);
     }
   };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setProcessingProgress(0);
+    if (sessionStatus === 'uploading') {
+      setSessionStatus('active');
+    }
+    // Reset file input
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) fileInput.value = '';
+  };
   
   // Enhanced file upload and processing
   const handleFileUpload = async (file) => {
