@@ -2115,12 +2115,14 @@ async def populate_demo_data(user: User = Depends(get_current_user)):
         logger.error(f"Demo data population error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to populate demo data")
 
+# ============= MOCK TEST API ENDPOINTS =============
+
 @api_router.post("/mock-tests/generate")
 async def generate_mock_test(
-    request: MockTestGenerationRequest,
+    request: TestGenerationRequest,
     user: User = Depends(get_current_user)
 ):
-    """Generate an adaptive mock test based on user's performance"""
+    """Generate a new mock test with enhanced architecture and caching"""
     
     try:
         # Get user's performance history to adapt difficulty
