@@ -2730,7 +2730,7 @@ async def generate_flashcards_from_notes(
     
     try:
         # Get the note session
-        session_doc = await db.note_sessions.find_one({
+        session_doc = await db.auto_note_sessions.find_one({
             "session_id": request.session_id,
             "user_id": user.user_id,
             "status": "completed"
