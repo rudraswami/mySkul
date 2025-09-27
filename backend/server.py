@@ -589,7 +589,7 @@ class MockTestEngine:
     async def generate_mentor_tips(blueprint: TestBlueprint) -> str:
         """Generate pre-test motivation from Mentor AI"""
         try:
-            mentor_service = MentorAI()
+            mentor_service = MentorAI(EMERGENT_LLM_KEY)
             tips = await mentor_service.generate_pre_test_coaching(
                 subjects=blueprint.subjects,
                 difficulty=blueprint.difficulty_distribution,
