@@ -587,40 +587,99 @@ We encountered an issue generating your test. Our technical team has been notifi
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          {/* Results Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-xl">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Test Results - Dual AI Analysis</h2>
-                <p className="opacity-90">Revolutionary feedback from Mentor + Professor intelligence</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeResults}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            
-            {/* Score Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-white/20 rounded-lg p-4">
-                <div className="text-3xl font-bold">{testResults.percentage.toFixed(1)}%</div>
-                <div className="text-sm opacity-90">Overall Score</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-4">
-                <div className="text-3xl font-bold text-green-300">{testResults.correct_answers}</div>
-                <div className="text-sm opacity-90">Correct</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-4">
-                <div className="text-3xl font-bold text-red-300">{testResults.wrong_answers}</div>
-                <div className="text-sm opacity-90">Wrong</div>
-              </div>
-              <div className="bg-white/20 rounded-lg p-4">
-                <div className="text-3xl font-bold text-yellow-300">{testResults.unanswered}</div>
-                <div className="text-sm opacity-90">Unanswered</div>
+          {/* Enhanced Results Header */}
+          <div className="relative overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-8 rounded-t-xl">
+              <div className="absolute inset-0 bg-black/20"></div>
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="bg-white/20 p-2 rounded-lg">
+                        <Trophy className="h-6 w-6" />
+                      </div>
+                      <h2 className="text-3xl font-bold">Test Completed! 🎉</h2>
+                    </div>
+                    <p className="opacity-90 text-lg">AI-powered analysis with personalized insights</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={closeResults}
+                    className="text-white hover:bg-white/20"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+                
+                {/* Enhanced Score Overview */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {/* Main Score */}
+                  <div className="col-span-1 bg-white/25 backdrop-blur rounded-xl p-6 text-center border border-white/20">
+                    <div className="text-4xl font-bold mb-1">{testResults.percentage.toFixed(1)}%</div>
+                    <div className="text-sm opacity-90">Overall Score</div>
+                    <div className={`text-xs mt-1 px-2 py-1 rounded-full ${
+                      testResults.percentage >= 85 ? 'bg-green-500/30 text-green-100' :
+                      testResults.percentage >= 70 ? 'bg-yellow-500/30 text-yellow-100' :
+                      'bg-red-500/30 text-red-100'
+                    }`}>
+                      {testResults.percentage >= 85 ? 'Excellent!' :
+                       testResults.percentage >= 70 ? 'Good!' : 'Keep practicing!'}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/20 rounded-xl p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-green-300">{testResults.correct_answers}</div>
+                    <div className="text-xs opacity-90">Correct Answers</div>
+                  </div>
+                  <div className="bg-white/20 rounded-xl p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-red-300">{testResults.wrong_answers}</div>
+                    <div className="text-xs opacity-90">Incorrect</div>
+                  </div>
+                  <div className="bg-white/20 rounded-xl p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-yellow-300">{testResults.unanswered}</div>
+                    <div className="text-xs opacity-90">Skipped</div>
+                  </div>
+                  <div className="bg-white/20 rounded-xl p-4 border border-white/10">
+                    <div className="text-2xl font-bold text-blue-300">{testResults.time_taken || '15m'}</div>
+                    <div className="text-xs opacity-90">Time Taken</div>
+                  </div>
+                </div>
+
+                {/* Performance Ring */}
+                <div className="flex justify-center mt-6">
+                  <div className="relative w-32 h-32">
+                    <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        stroke="rgba(255,255,255,0.2)"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        stroke="url(#gradient)"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={`${(testResults.percentage / 100) * 314} 314`}
+                        className="transition-all duration-1000 ease-out"
+                      />
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#10B981" />
+                          <stop offset="100%" stopColor="#3B82F6" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl font-bold">{testResults.percentage.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
