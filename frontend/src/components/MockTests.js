@@ -26,15 +26,23 @@ export default function MockTests() {
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  
+  // Individual loading states for each button
+  const [loadingStates, setLoadingStates] = useState({});
   const [generationError, setGenerationError] = useState(null);
   const [retryStatus, setRetryStatus] = useState(null);
+  
+  // Test execution states
   const [activeTest, setActiveTest] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [testResults, setTestResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  
+  // Caching system
+  const [testCache, setTestCache] = useState(new Map());
+  const [quickGeneration, setQuickGeneration] = useState(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
