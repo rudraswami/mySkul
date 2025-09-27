@@ -295,55 +295,106 @@ export default function Dashboard() {
 
       {/* Enhanced Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Study Progress */}
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-                Recent Study Progress
+        {/* Enhanced Study Dashboard - Left Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent Study Activity */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <BookOpen className="h-6 w-6 mr-3" />
+                  Your Learning Journey
+                </div>
+                <Badge variant="secondary" className="bg-white/20 text-white">
+                  Active
+                </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {analytics?.recent_progress?.length > 0 ? (
                 <div className="space-y-4">
-                  {analytics.recent_progress.map((progress, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-gray-900">
-                          {progress.subject} - {progress.chapter}
-                        </h4>
-                        <p className="text-sm text-gray-600">{progress.concept}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Last accessed: {new Date(progress.last_accessed).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center mb-2">
-                          <Progress 
-                            value={progress.mastery_level} 
-                            className="w-20 h-2 mr-2" 
-                          />
-                          <span className="text-sm font-medium">
-                            {Math.round(progress.mastery_level)}%
-                          </span>
+                  {analytics.recent_progress.slice(0, 3).map((progress, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border-l-4 border-blue-500 hover:shadow-md transition-all duration-300">
+                      <div className="flex items-center space-x-4">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <BookMarked className="h-5 w-5 text-blue-600" />
                         </div>
-                        <p className="text-xs text-gray-500">
-                          {formatTime(progress.time_spent)}
-                        </p>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">
+                            {progress.subject} - {progress.chapter}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-1">{progress.concept}</p>
+                          <div className="flex items-center space-x-3 text-xs text-gray-500">
+                            <span>📅 {new Date(progress.last_accessed).toLocaleDateString()}</span>
+                            <span>⏱️ {formatTime(progress.time_spent)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{Math.round(progress.mastery_level)}%</div>
+                          <Progress value={progress.mastery_level} className="w-16 h-2 mt-1" />
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No study progress yet</p>
-                  <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
-                    Start Learning
-                  </Button>
+                <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
+                  <div className="p-4 bg-blue-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <PlayCircle className="h-10 w-10 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to start your journey?</h3>
+                  <p className="text-gray-600 mb-6">Begin with AI tutoring to unlock your potential!</p>
+                  <div className="space-y-3">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 px-8 py-3"
+                      onClick={() => window.location.href = '/tutor'}
+                    >
+                      <Brain className="h-5 w-5 mr-2" />
+                      Start AI Tutoring
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="ml-4 px-8 py-3"
+                      onClick={() => window.location.href = '/tests'}
+                    >
+                      <FileText className="h-5 w-5 mr-2" />
+                      Take Practice Test
+                    </Button>
+                  </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Subject Performance Overview */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-6 w-6 mr-3" />
+                Performance Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                  <div className="text-2xl font-bold text-green-600 mb-1">87%</div>
+                  <p className="text-sm text-green-700 font-medium">Mathematics</p>
+                  <p className="text-xs text-green-600">Strong 💪</p>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
+                  <div className="text-2xl font-bold text-yellow-600 mb-1">72%</div>
+                  <p className="text-sm text-yellow-700 font-medium">Physics</p>
+                  <p className="text-xs text-yellow-600">Improving 📈</p>
+                </div>
+                <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
+                  <div className="text-2xl font-bold text-red-600 mb-1">65%</div>
+                  <p className="text-sm text-red-700 font-medium">Chemistry</p>
+                  <p className="text-xs text-red-600">Focus needed 🎯</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
