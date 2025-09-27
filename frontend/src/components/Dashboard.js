@@ -12,7 +12,22 @@ import {
   BookOpen, 
   MessageCircle,
   FileText,
-  Calendar
+  Calendar,
+  Award,
+  Zap,
+  ChevronRight,
+  Timer,
+  Trophy,
+  Flame,
+  CheckCircle2,
+  Star,
+  BarChart3,
+  Users,
+  GraduationCap,
+  AlertCircle,
+  PlayCircle,
+  BookMarked,
+  Lightbulb
 } from 'lucide-react';
 import axios from 'axios';
 
