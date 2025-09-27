@@ -82,8 +82,40 @@ export default function MockTests() {
     }
   };
 
-  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25) => {
-    if (isGeneratingTest) return; // Prevent multiple simultaneous calls
+  // Helper to set loading state for specific button
+  const setButtonLoading = (buttonId, loading) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      [buttonId]: loading
+    }));
+  };
+
+  // Smart caching system
+  const getCacheKey = (examType, subject, difficulty, numQuestions) => {
+    return `${examType}-${subject}-${difficulty}-${numQuestions}`;
+  };
+
+  const getCachedTest = (cacheKey) => {
+    const cached = testCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < 3600000) { // 1 hour cache
+      return cached.data;
+    }
+    return null;
+  };
+
+  const cacheTest = (cacheKey, testData) => {
+    setTestCache(prev => {
+      const newCache = new Map(prev);
+      newCache.set(cacheKey, {
+        data: testData,
+        timestamp: Date.now()
+      });
+      return newCache;
+    });
+  };
+
+  const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
+    if (loadingStates[buttonId]) return; // Prevent multiple calls for same button
     
     const token = localStorage.getItem('dhruv_ai_token');
     if (!token) {
