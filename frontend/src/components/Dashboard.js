@@ -76,8 +76,11 @@ export default function Dashboard() {
                 <h1 className="text-4xl font-bold mb-2">
                   Welcome back, {user?.email?.split('@')[0] || 'Student'}! 👋
                 </h1>
-                <p className="text-blue-100 text-xl">
-                  Your personal AI mentor is ready to accelerate your learning journey
+                <p className="text-blue-100 text-xl mb-2">
+                  Your trusted, hallucination-free AI mentor is ready to transform your learning
+                </p>
+                <p className="text-blue-200 text-sm">
+                  Verified notes • Personalized prep • Affordable success
                 </p>
               </div>
             </div>
