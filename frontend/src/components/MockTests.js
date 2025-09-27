@@ -126,12 +126,6 @@ export default function MockTests() {
       return;
     }
 
-    const token = localStorage.getItem('dhruv_ai_token');
-    if (!token) {
-      alert('Please log in again to continue');
-      return;
-    }
-
     // Check cache first for instant loading
     const cacheKey = getCacheKey(examType, subject, difficulty, numQuestions);
     const cachedTest = getCachedTest(cacheKey);
