@@ -2462,7 +2462,7 @@ async def process_audio_chunk(
     
     try:
         # Verify session exists and belongs to user
-        session_doc = await db.note_sessions.find_one({
+        session_doc = await db.auto_note_sessions.find_one({
             "session_id": request.session_id,
             "user_id": user.user_id,
             "status": "active"
