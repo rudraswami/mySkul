@@ -1374,19 +1374,17 @@ export default function AutoNoteMentor() {
                     </div>
                   )}
 
-                  {!currentSession && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <div className="flex items-start">
-                        <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
-                        <div className="text-sm">
-                          <p className="font-semibold text-yellow-800 mb-1">Start a Session First</p>
-                          <p className="text-yellow-700">
-                            Please create a new session above before uploading files. This helps organize your notes properly.
-                          </p>
-                        </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-semibold text-blue-800 mb-1">Standalone File Processing</p>
+                        <p className="text-blue-700">
+                          Upload files directly! No need to create a session first. Each file will be processed independently with full AI analysis.
+                        </p>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
