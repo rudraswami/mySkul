@@ -1809,11 +1809,257 @@ class DhruvAITester:
         
         return success_count == len(endpoints_to_test)
 
+    # ============= CRITICAL FIXES VERIFICATION TESTS =============
+    
+    def test_critical_fixes_verification(self):
+        """Test the critical fixes as specified in review request"""
+        print("\n🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING")
+        print("   Testing high-priority fixes that were just implemented")
+        print("=" * 80)
+        
+        # Ensure we have authentication
+        if not self.token:
+            print("   Setting up authentication for critical tests...")
+            if not self.test_user_login():
+                if not self.test_user_registration():
+                    print("❌ Authentication setup failed. Cannot proceed with critical tests.")
+                    return False
+        
+        critical_success = True
+        
+        # PRIORITY 1: Auto-Note Mentor Database Collection Fix
+        print("\n🎯 PRIORITY 1: Auto-Note Mentor Database Collection Fix")
+        priority1_success = self.test_auto_note_database_collection_fix()
+        critical_success = critical_success and priority1_success
+        
+        # PRIORITY 2: MongoDB ObjectId Serialization Fix  
+        print("\n🎯 PRIORITY 2: MongoDB ObjectId Serialization Fix")
+        priority2_success = self.test_mongodb_objectid_serialization_fix()
+        critical_success = critical_success and priority2_success
+        
+        # PRIORITY 3: Mock Test Generation API
+        print("\n🎯 PRIORITY 3: Mock Test Generation API")
+        priority3_success = self.test_mock_test_generation_api_fix()
+        critical_success = critical_success and priority3_success
+        
+        return critical_success
+    
+    def test_auto_note_database_collection_fix(self):
+        """Test Auto-Note Mentor database collection consistency fix"""
+        print("   Testing Auto-Note Mentor database collection fix...")
+        
+        success_count = 0
+        total_tests = 4
+        
+        # Test 1: Start session (should create in auto_note_sessions collection)
+        print("   1. Testing /api/auto-notes/start-session...")
+        session_data = {
+            "title": "Critical Fix Test - Physics",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Start Session (Collection Fix)",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            self.critical_session_id = response['session_id']
+            print(f"   ✅ Session created successfully: {self.critical_session_id}")
+            print(f"   Session name: {response.get('session_name', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            success_count += 1
+        else:
+            print("   ❌ Failed to create session")
+            return False
+        
+        # Test 2: Get session (should retrieve from auto_note_sessions collection)
+        print("   2. Testing /api/auto-notes/{session_id}...")
+        success, response = self.run_test(
+            "Auto-Note Get Session (Collection Fix)",
+            "GET",
+            f"auto-notes/{self.critical_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and response.get('session_id') == self.critical_session_id:
+            print(f"   ✅ Session retrieved successfully from auto_note_sessions collection")
+            print(f"   Retrieved session ID: {response.get('session_id')}")
+            print(f"   Title: {response.get('session_name', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            success_count += 1
+        else:
+            print("   ❌ Failed to retrieve session - collection mismatch issue persists")
+        
+        # Test 3: List sessions (should list from auto_note_sessions collection)
+        print("   3. Testing /api/auto-notes/sessions...")
+        success, response = self.run_test(
+            "Auto-Note List Sessions (Collection Fix)",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            # Check if our created session is in the list
+            session_found = any(s.get('session_id') == self.critical_session_id for s in sessions)
+            if session_found:
+                print(f"   ✅ Sessions listed successfully from auto_note_sessions collection")
+                print(f"   Total sessions: {len(sessions)}")
+                print(f"   Our test session found in list: ✓")
+                success_count += 1
+            else:
+                print("   ❌ Session not found in list - collection mismatch issue persists")
+        else:
+            print("   ❌ Failed to list sessions - 500 error persists")
+        
+        # Test 4: Verify no more 500 "Failed to retrieve session" errors
+        print("   4. Testing error elimination...")
+        if success_count >= 3:
+            print("   ✅ No 500 'Failed to retrieve session' errors detected")
+            success_count += 1
+        else:
+            print("   ❌ 500 errors still occurring - fix incomplete")
+        
+        print(f"   Auto-Note Database Collection Fix: {success_count}/{total_tests} tests passed")
+        return success_count == total_tests
+    
+    def test_mongodb_objectid_serialization_fix(self):
+        """Test MongoDB ObjectId serialization fix"""
+        print("   Testing MongoDB ObjectId serialization fix...")
+        
+        success_count = 0
+        total_tests = 2
+        
+        # Test 1: Dashboard analytics (should not have ObjectId serialization errors)
+        print("   1. Testing /api/dashboard/analytics...")
+        success, response = self.run_test(
+            "Dashboard Analytics (ObjectId Fix)",
+            "GET",
+            "dashboard/analytics",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Dashboard analytics returned without ObjectId serialization errors")
+            # Check if response is properly serialized JSON
+            try:
+                import json
+                json_str = json.dumps(response)
+                print(f"   Response properly serialized: {len(json_str)} characters")
+                success_count += 1
+            except Exception as e:
+                print(f"   ❌ JSON serialization failed: {str(e)}")
+        else:
+            print("   ❌ Dashboard analytics failed - ObjectId serialization issue persists")
+        
+        # Test 2: Performance analytics (should properly serialize datetime objects)
+        print("   2. Testing /api/analytics/performance...")
+        success, response = self.run_test(
+            "Performance Analytics (ObjectId Fix)",
+            "GET",
+            "analytics/performance",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Performance analytics returned without ObjectId/datetime serialization errors")
+            # Check for proper datetime serialization
+            weekly_progress = response.get('weekly_progress', {})
+            if 'last_updated' in weekly_progress:
+                last_updated = weekly_progress['last_updated']
+                if isinstance(last_updated, str) and 'T' in last_updated:
+                    print("   ✅ Datetime objects properly serialized to ISO format")
+                else:
+                    print(f"   ⚠️  Datetime serialization format: {type(last_updated)}")
+            success_count += 1
+        else:
+            print("   ❌ Performance analytics failed - ObjectId/datetime serialization issue persists")
+        
+        print(f"   MongoDB ObjectId Serialization Fix: {success_count}/{total_tests} tests passed")
+        return success_count == total_tests
+    
+    def test_mock_test_generation_api_fix(self):
+        """Test Mock Test Generation API with simplified request format"""
+        print("   Testing Mock Test Generation API fix...")
+        
+        success_count = 0
+        total_tests = 3
+        
+        # Test with different subjects as specified in review request
+        test_subjects = ["Mathematics", "Physics", "Chemistry"]
+        
+        for i, subject in enumerate(test_subjects):
+            print(f"   {i+1}. Testing {subject} mock test generation...")
+            
+            # Use simplified request format as specified
+            test_data = {
+                "exam_type": "JEE",
+                "subject": subject,
+                "difficulty": 3,
+                "num_questions": 5
+            }
+            
+            print(f"   Request: {test_data}")
+            print("   This may take 5-10 seconds for AI processing...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation - {subject} (API Fix)",
+                "POST",
+                "mock-tests/generate",
+                200,
+                data=test_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and 'test_id' in response:
+                print(f"   ✅ {subject} mock test generated successfully")
+                print(f"   Test ID: {response['test_id']}")
+                print(f"   Test name: {response.get('test_name', 'N/A')}")
+                print(f"   Questions count: {len(response.get('questions', []))}")
+                print(f"   Total marks: {response.get('total_marks', 0)}")
+                print(f"   Time limit: {response.get('time_limit', 0)} minutes")
+                
+                # Validate response structure
+                questions = response.get('questions', [])
+                if questions and len(questions) == 5:
+                    sample_question = questions[0]
+                    required_fields = ['question_id', 'question_text', 'options', 'correct_answer', 'explanation', 'chapter']
+                    missing_fields = [field for field in required_fields if field not in sample_question]
+                    if not missing_fields:
+                        print(f"   ✅ Question structure validated for {subject}")
+                        success_count += 1
+                    else:
+                        print(f"   ⚠️  Missing question fields: {missing_fields}")
+                else:
+                    print(f"   ⚠️  Expected 5 questions, got {len(questions)}")
+            else:
+                print(f"   ❌ {subject} mock test generation failed - 500 error persists")
+            
+            time.sleep(3)  # Delay between AI calls
+        
+        print(f"   Mock Test Generation API Fix: {success_count}/{total_tests} tests passed")
+        return success_count == total_tests
+
 def main():
-    print("🚀 Starting Dhruv AI Backend API Tests - Dual-Layer AI System")
-    print("=" * 70)
+    print("🚀 Starting Dhruv AI Backend API Tests - CRITICAL FIXES VERIFICATION")
+    print("=" * 80)
     
     tester = DhruvAITester()
+    
+    # CRITICAL FIXES VERIFICATION - TOP PRIORITY
+    print("\n🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING")
+    critical_fixes_success = tester.test_critical_fixes_verification()
     
     # Test sequence - Core APIs first, then Phase 4 features, then Dual-Layer AI
     tests = [
