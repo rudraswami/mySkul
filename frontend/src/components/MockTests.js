@@ -83,98 +83,106 @@ export default function MockTests() {
       return;
     }
 
-    // Clear previous errors and set loading state
-    setIsGeneratingTest(true);
-    setGenerationError(null);
-    setRetryStatus(null);
+    let timeoutId = null;
+    let controller = null;
+    
+    try {
+      // Clear previous errors and set loading state
+      setIsGeneratingTest(true);
+      setGenerationError(null);
+      setRetryStatus(null);
 
-    const maxRetries = 2;
-    let attempts = 0;
+      const maxRetries = 2;
+      let attempts = 0;
 
-    while (attempts <= maxRetries) {
-      try {
-        // Update retry status
-        if (attempts > 0) {
-          setRetryStatus(`Retrying... (${attempts + 1}/${maxRetries + 1})`);
-        }
-
-        // Create timeout and manual abort signals
-        let timeoutSignal;
-        let controller = new AbortController();
-        
-        // Use modern AbortSignal.timeout if available, fallback for older browsers
-        if (AbortSignal.timeout) {
-          timeoutSignal = AbortSignal.timeout(45000); // 45 seconds - AI needs more time
-        } else {
-          // Fallback for older browsers
-          controller = new AbortController();
-          setTimeout(() => controller.abort('timeout'), 45000);
-        }
-        
-        // Combine signals if modern API is available
-        const signal = AbortSignal.timeout && timeoutSignal ? timeoutSignal : controller.signal;
-
-        const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            exam_type: examType,
-            subject: subject,
-            difficulty: difficulty,
-            num_questions: numQuestions
-          }),
-          signal: signal
-        });
-
-        if (response.ok) {
-          const testData = await response.json();
-          
-          // Success - clear all states and set up test
-          setIsGeneratingTest(false);
-          setGenerationError(null);
-          setRetryStatus(null);
-          
-          setActiveTest(testData);
-          setTimeRemaining(testData.time_limit * 60);
-          setCurrentQuestion(0);
-          setAnswers({});
-
-          // Start timer
-          const timer = setInterval(() => {
-            setTimeRemaining(prev => {
-              if (prev <= 1) {
-                clearInterval(timer);
-                submitTest();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-
-          return; // Success - exit function
-        } else {
-          // Handle HTTP errors
-          let errorMessage = 'Failed to generate test. Please try again.';
-          
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorMessage;
-          } catch (parseError) {
-            // Ignore JSON parsing errors
+      while (attempts <= maxRetries) {
+        try {
+          // Update retry status
+          if (attempts > 0) {
+            setRetryStatus(`Retrying... (${attempts + 1}/${maxRetries + 1})`);
           }
 
-          if (response.status >= 500 && attempts < maxRetries) {
-            // Server error - retry with exponential backoff
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-            continue;
+          // Create abort controller for this attempt
+          controller = new AbortController();
+          
+          // Set timeout manually
+          timeoutId = setTimeout(() => {
+            if (controller && !controller.signal.aborted) {
+              controller.abort();
+            }
+          }, 50000); // 50 seconds timeout
+
+          console.log(`Attempt ${attempts + 1}: Starting mock test generation for ${subject}`);
+          
+          const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              exam_type: examType,
+              subject: subject,
+              difficulty: difficulty,
+              num_questions: numQuestions
+            }),
+            signal: controller.signal
+          });
+
+          // Clear timeout on successful response
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+
+          console.log(`Response status: ${response.status}`);
+
+          if (response.ok) {
+            const testData = await response.json();
+            console.log('Test generated successfully:', testData.test_name);
+            
+            // Success - clear all states and set up test
+            setActiveTest(testData);
+            setTimeRemaining(testData.time_limit * 60);
+            setCurrentQuestion(0);
+            setAnswers({});
+
+            // Start timer
+            const timer = setInterval(() => {
+              setTimeRemaining(prev => {
+                if (prev <= 1) {
+                  clearInterval(timer);
+                  submitTest();
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+
+            return; // Success - exit function
           } else {
-            // Final error or non-retryable error
-            if (response.status >= 500) {
-              errorMessage = `🤖 Our AI tutoring system is currently experiencing high demand. 
+            // Handle HTTP errors
+            let errorMessage = 'Failed to generate test. Please try again.';
+            
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.detail || errorMessage;
+            } catch (parseError) {
+              console.error('Error parsing response:', parseError);
+            }
+
+            console.error(`HTTP Error ${response.status}:`, errorMessage);
+
+            if (response.status >= 500 && attempts < maxRetries) {
+              // Server error - retry with exponential backoff
+              attempts++;
+              console.log(`Server error, retrying in ${3 * attempts} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
+              continue;
+            } else {
+              // Final error or non-retryable error
+              if (response.status >= 500) {
+                errorMessage = `🤖 Our AI tutoring system is currently experiencing high demand. 
 
 This happens when many students are using the platform simultaneously. 
 
@@ -184,26 +192,33 @@ This happens when many students are using the platform simultaneously.
 • Our team is working to scale AI capacity
 
 🎯 Dhruv AI is committed to providing reliable, world-class education technology.`;
-            } else if (response.status === 401) {
-              errorMessage = 'Your session has expired. Please log in again to continue your learning journey.';
-            } else if (response.status === 403) {
-              errorMessage = 'Access denied. Please ensure you have the proper permissions to generate tests.';
+              } else if (response.status === 401) {
+                errorMessage = 'Your session has expired. Please log in again to continue your learning journey.';
+              } else if (response.status === 403) {
+                errorMessage = 'Access denied. Please ensure you have the proper permissions to generate tests.';
+              }
+              setGenerationError(errorMessage);
+              break;
             }
-            setGenerationError(errorMessage);
-            break;
           }
-        }
-      } catch (error) {
-        console.error('Mock test generation error:', error);
-        
-        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-          // Timeout or abort
-          if (attempts < maxRetries) {
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-            continue;
+        } catch (fetchError) {
+          console.error('Fetch error:', fetchError);
+          
+          // Clear timeout if error occurs
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
           }
-          setGenerationError(`⏱️ Test generation is taking longer than usual (45+ seconds).
+          
+          if (fetchError.name === 'AbortError') {
+            console.log('Request was aborted (timeout or manual cancel)');
+            if (attempts < maxRetries) {
+              attempts++;
+              console.log(`Timeout occurred, retrying in ${3 * attempts} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
+              continue;
+            }
+            setGenerationError(`⏱️ Test generation is taking longer than usual.
 
 This can happen when:
 • AI is creating complex, high-quality questions
@@ -216,23 +231,24 @@ This can happen when:
 • Contact support if this problem persists
 
 🎓 Dhruv AI generates questions using advanced AI to match real exam patterns.`);
-        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          // Network error - don't retry
-          setGenerationError(`🌐 Network Connection Issue
+          } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+            console.error('Network error:', fetchError);
+            setGenerationError(`🌐 Network Connection Issue
 
 Please check your internet connection and try again. 
 
 📞 If you're on campus/institutional Wi-Fi, contact your IT support for assistance with educational platform access.
 
 🔄 Retry once your connection is stable - your learning progress is important to us.`);
-        } else {
-          // Other errors
-          if (attempts < maxRetries) {
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
-            continue;
-          }
-          setGenerationError(`⚠️ Unexpected Error Occurred
+          } else {
+            console.error('Unknown error:', fetchError);
+            if (attempts < maxRetries) {
+              attempts++;
+              console.log(`Unknown error, retrying in ${3 * attempts} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
+              continue;
+            }
+            setGenerationError(`⚠️ Unexpected Error Occurred
 
 We encountered an issue generating your test. Our technical team has been notified.
 
@@ -242,14 +258,26 @@ We encountered an issue generating your test. Our technical team has been notifi
 • Use other study materials while we resolve this
 
 🏆 Your education is our priority - we're working to fix this quickly.`);
+          }
+          break;
         }
-        break;
       }
+    } finally {
+      // Always cleanup and reset states
+      console.log('Cleaning up mock test generation...');
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      if (controller && !controller.signal.aborted) {
+        controller.abort();
+      }
+      
+      // Reset loading states
+      setIsGeneratingTest(false);
+      setRetryStatus(null);
     }
-
-    // Ensure loading state is always cleared
-    setIsGeneratingTest(false);
-    setRetryStatus(null);
   };
 
   const submitTest = async () => {
