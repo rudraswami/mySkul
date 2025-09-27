@@ -245,16 +245,19 @@
         -comment: "FOCUSED FILE UPLOAD TESTING COMPLETED: Core Auto-Note Mentor file upload functionality is WORKING. ✅ /api/auto-notes/start-session: Creates sessions successfully in auto_note_sessions collection. ✅ /api/auto-notes/upload-audio: File upload working perfectly with proper parameter structure (session_id as query param, file as multipart form data). Successfully processes MP3 files through complete AI pipeline (Whisper transcription, topic cards, flashcards, quiz generation). ✅ Authentication: All endpoints properly secured. ❌ BACKEND DATABASE COLLECTION MISMATCH: Session retrieval and sessions list endpoints look in 'note_sessions' collection while start-session stores in 'auto_note_sessions' collection, causing 500 errors. This is a backend implementation inconsistency requiring main agent fix. OVERALL ASSESSMENT: File upload workflow is functional and ready for production use. Database collection issue is separate backend maintenance task."
 
   - task: "Auto-Note Mentor Database Collection Fix"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         -working: false
         -agent: "testing"
         -comment: "BACKEND DATABASE COLLECTION MISMATCH IDENTIFIED: Auto-Note Mentor system has inconsistent database collection usage. start-session endpoint stores sessions in 'auto_note_sessions' collection, but get session (/api/auto-notes/{session_id}) and list sessions (/api/auto-notes/sessions) endpoints look in 'note_sessions' collection. This causes 500 'Failed to retrieve session' errors. SOLUTION NEEDED: Update session retrieval endpoints to use consistent 'auto_note_sessions' collection or standardize on single collection name across all Auto-Note Mentor endpoints."
+        -working: true
+        -agent: "main"
+        -comment: "CRITICAL DATABASE COLLECTION MISMATCH RESOLVED: Updated all Auto-Note Mentor session retrieval endpoints to use consistent 'auto_note_sessions' collection. Fixed: get_note_session (/api/auto-notes/{session_id}), get_user_note_sessions (/api/auto-notes/sessions), end_note_session, explain_note_point, and generate_flashcards_from_notes endpoints. Also implemented clean_mongodb_doc utility function to handle ObjectId serialization issues throughout the system. All Auto-Note Mentor endpoints now use consistent database collection and properly serialize MongoDB documents for JSON responses."
 
   - task: "Dual-Layer AI System - Backend"
     implemented: true
