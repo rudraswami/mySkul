@@ -289,7 +289,9 @@ This happens when many students are using the platform simultaneously.
               } else if (response.status === 403) {
                 errorMessage = 'Access denied. Please ensure you have the proper permissions to generate tests.';
               }
-              setGenerationError(errorMessage);
+              // Ensure errorMessage is always a string
+              const safeErrorMessage = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
+              setGenerationError(safeErrorMessage);
               break;
             }
           }
