@@ -1194,6 +1194,29 @@ We encountered an issue generating your test. Our technical team has been notifi
                   </div>
                 )}
                 
+                {/* Emergency Reset Button - Shows if any buttons are stuck loading */}
+                {Object.values(loadingStates).some(loading => loading) && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
+                        <span className="text-red-800 text-sm">
+                          Taking longer than expected? 
+                        </span>
+                      </div>
+                      <Button
+                        onClick={emergencyResetAllStates}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-300 hover:bg-red-100"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Reset & Try Again
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Button 
                     onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25, 'math-quick')}
