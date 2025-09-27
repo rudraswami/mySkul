@@ -103,22 +103,7 @@ class ChatMessage(BaseModel):
 
 # Question class moved to Mock Test Architecture section for better organization
 
-class MockTest(BaseModel):
-    test_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    exam_type: str
-    subject: str
-    test_name: str
-    questions: List[Dict[str, Any]]
-    answers: Dict[str, Any] = {}
-    score: Optional[float] = None
-    time_taken: Optional[int] = None  # seconds
-    completed_at: Optional[datetime] = None
-    analysis: Optional[Dict[str, Any]] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    difficulty_level: int = 3  # Adaptive difficulty
-    total_marks: int = 100
-    passing_marks: int = 40
+# MockTest class moved to Mock Test Architecture section for better organization
 
 class MockTestResult(BaseModel):
     result_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
