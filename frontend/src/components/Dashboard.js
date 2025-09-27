@@ -341,27 +341,26 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                  <div className="p-4 bg-blue-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                    <PlayCircle className="h-10 w-10 text-blue-600" />
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="p-4 bg-white rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center border border-gray-200">
+                    <PlayCircle className="h-8 w-8 text-gray-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to start your journey?</h3>
-                  <p className="text-gray-600 mb-6">Begin with AI tutoring to unlock your potential!</p>
-                  <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Start Your Learning Journey</h3>
+                  <p className="text-gray-600 mb-6">Begin with AI tutoring or take a practice test</p>
+                  <div className="space-x-4">
                     <Button 
-                      className="bg-blue-600 hover:bg-blue-700 px-8 py-3"
+                      className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => window.location.href = '/tutor'}
                     >
-                      <Brain className="h-5 w-5 mr-2" />
-                      Start AI Tutoring
+                      <Brain className="h-4 w-4 mr-2" />
+                      AI Tutoring
                     </Button>
                     <Button 
                       variant="outline" 
-                      className="ml-4 px-8 py-3"
                       onClick={() => window.location.href = '/tests'}
                     >
-                      <FileText className="h-5 w-5 mr-2" />
-                      Take Practice Test
+                      <FileText className="h-4 w-4 mr-2" />
+                      Practice Test
                     </Button>
                   </div>
                 </div>
