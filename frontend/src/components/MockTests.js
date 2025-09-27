@@ -1003,9 +1003,33 @@ We encountered an issue generating your test. Our technical team has been notifi
               </div>
             </CardHeader>
             <CardContent>
-              {/* Quick Test Generation */}
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-3">Generate New Test</h4>
+              {/* Enhanced Quick Test Generation */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-blue-900 flex items-center">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Generate New Test
+                  </h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-600">Cached: {testCache.size}</span>
+                    <button
+                      onClick={() => setQuickGeneration(!quickGeneration)}
+                      className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                        quickGeneration 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {quickGeneration ? '⚡ Quick' : '🧠 AI'}
+                    </button>
+                  </div>
+                </div>
+                
+                {testCache.size > 0 && (
+                  <div className="mb-3 text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                    💾 {testCache.size} tests cached for instant loading! Look for ⚡ indicators.
+                  </div>
+                )}
                 
                 {/* Professional Error Display */}
                 {generationError && (
