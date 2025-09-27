@@ -61,26 +61,65 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user?.full_name?.split(' ')[0]}! 👋
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Ready to continue your {user?.exam_type} preparation journey?
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="text-sm">
-            {user?.exam_type} • {user?.target_year}
-          </Badge>
-          <Badge variant="outline" className="text-sm">
-            {user?.subscription_type} Plan
-          </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Enhanced Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 opacity-90"></div>
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative p-8 text-white">
+          <div className="max-w-4xl">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="bg-white/20 backdrop-blur-lg p-4 rounded-2xl">
+                <Brain className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-2">
+                  Welcome back, {user?.email?.split('@')[0] || 'Student'}! 👋
+                </h1>
+                <p className="text-blue-100 text-xl">
+                  Your personal AI mentor is ready to accelerate your learning journey
+                </p>
+              </div>
+            </div>
+            
+            {/* Achievement Highlights */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <Target className="h-6 w-6 text-yellow-300" />
+                  <div>
+                    <div className="text-2xl font-bold">Coming Soon</div>
+                    <div className="text-blue-100 text-sm">Daily Streak</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <TrendingUp className="h-6 w-6 text-green-300" />
+                  <div>
+                    <div className="text-2xl font-bold">Ready</div>
+                    <div className="text-blue-100 text-sm">AI Tutor Status</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
+                <div className="flex items-center space-x-3">
+                  <BookOpen className="h-6 w-6 text-blue-300" />
+                  <div>
+                    <div className="text-2xl font-bold">Start Learning</div>
+                    <div className="text-blue-100 text-sm">Begin Your Journey</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* Main Content */}
+      <div className="p-8 -mt-4 relative z-10">
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
