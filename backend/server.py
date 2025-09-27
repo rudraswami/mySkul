@@ -2910,15 +2910,28 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
     """Get comprehensive performance analytics for student and parents"""
     
     try:
-        # Get mock test results
+        # Get mock test results with ObjectId handling
         test_results = await db.mock_test_results.find(
             {"user_id": user.user_id}
         ).sort("completed_at", -1).limit(20).to_list(20)
         
-        # Get study progress
-        study_progress = await db.study_progress.find(
+        # Clean ObjectId fields from results
+        clean_test_results = []
+        for result in test_results:
+            # Remove MongoDB ObjectId fields
+            clean_result = {k: v for k, v in result.items() if k != '_id'}
+            clean_test_results.append(clean_result)
+        
+        # Get study progress with ObjectId handling
+        study_progress_docs = await db.study_progress.find(
             {"user_id": user.user_id}
         ).to_list(100)
+        
+        # Clean ObjectId fields from progress
+        study_progress = []
+        for progress in study_progress_docs:
+            clean_progress = {k: v for k, v in progress.items() if k != '_id'}
+            study_progress.append(clean_progress)
         
         # Calculate trends
         score_trend = [result["percentage"] for result in test_results[:10]]
