@@ -1120,6 +1120,139 @@ export default function AutoNoteMentor() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* File Upload Section */}
+            <Card className="border-0 shadow-md mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-purple-600" />
+                  Upload Audio/Video Files
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <Brain className="h-5 w-5 text-purple-600 mr-2 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-semibold text-purple-900 mb-1">Upload Existing Recordings:</p>
+                        <ul className="text-purple-800 space-y-1">
+                          <li>• Upload class recordings, lectures, or study sessions</li>
+                          <li>• Supports MP3, WAV, MP4 audio and video files</li>
+                          <li>• AI will transcribe and create structured notes automatically</li>
+                          <li>• Get the same dual-layer AI analysis as live sessions</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Drag and Drop Upload Area */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      dragOver 
+                        ? 'border-purple-500 bg-purple-50' 
+                        : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <div className="space-y-4">
+                      <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-purple-600" />
+                      </div>
+                      
+                      <div>
+                        <p className="text-lg font-medium text-gray-900 mb-2">
+                          {dragOver ? 'Drop your file here' : 'Upload Audio or Video File'}
+                        </p>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Drag and drop a file, or click to browse
+                        </p>
+                        
+                        <div className="space-y-2">
+                          <input
+                            type="file"
+                            id="file-upload"
+                            className="hidden"
+                            accept="audio/*,video/*,.mp3,.wav,.mp4,.m4a"
+                            onChange={handleFileSelect}
+                            disabled={!currentSession || loading}
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                              !currentSession || loading
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 cursor-pointer'
+                            }`}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Choose File
+                          </label>
+                          
+                          <p className="text-xs text-gray-500">
+                            Supported formats: MP3, WAV, MP4, M4A (Max 100MB)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selected File Display */}
+                  {selectedFile && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <FileText className="h-5 w-5 text-gray-500 mr-2" />
+                          <div>
+                            <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {sessionStatus === 'uploading' && (
+                          <div className="flex items-center">
+                            <Loader className="h-4 w-4 animate-spin text-purple-600 mr-2" />
+                            <span className="text-sm text-purple-600">Processing...</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {sessionStatus === 'uploading' && (
+                        <div className="mt-3">
+                          <div className="bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${processingProgress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Processing: {processingProgress}%
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!currentSession && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-yellow-800 mb-1">Start a Session First</p>
+                          <p className="text-yellow-700">
+                            Please create a new session above before uploading files. This helps organize your notes properly.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Previous Sessions */}
