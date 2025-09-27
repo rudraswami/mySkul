@@ -216,17 +216,32 @@ export default function AutoNoteMentor() {
       return;
     }
     
-    // Validate file type
-    const allowedTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'video/mp4'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please upload an audio or video file (MP3, WAV, MP4)');
+    // Validate file type and size
+    const allowedTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'video/mp4', 'audio/m4a'];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|mp4|m4a)$/i)) {
+      setError('Please upload an audio or video file (MP3, WAV, MP4, M4A)');
+      return;
+    }
+    
+    // Check file size (100MB limit)
+    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    if (file.size > maxSize) {
+      setError('File size too large. Please upload a file smaller than 100MB.');
       return;
     }
     
     setLoading(true);
     setSessionStatus('uploading');
-    setProcessingProgress(0);
+    setProcessingProgress(10);
     setError(null);
+    
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setProcessingProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 10;
+      });
+    }, 500);
     
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -241,27 +256,58 @@ export default function AutoNoteMentor() {
         body: formData
       });
       
+      clearInterval(progressInterval);
+      
       if (response.ok) {
         const result = await response.json();
         
-        // Update states with processed data
-        setProcessedNote(result);
-        setMentorSummary(result.mentor_summary);
-        setSessionStatus('completed');
         setProcessingProgress(100);
         
-        // Load the detailed processed note
-        await loadProcessedNote(result.note_id);
+        // Update states with processed data
+        setProcessedNote(result);
+        setMentorSummary(result.mentor_summary || '');
+        setSessionStatus('completed');
+        
+        // If we have a note_id, load the detailed processed note
+        if (result.note_id) {
+          await loadProcessedNote(result.note_id);
+        } else {
+          // Directly display the result as structured notes
+          setGeneratedNotes({
+            key_concepts: result.concepts_learned || [],
+            important_points: result.concepts_learned || [],
+            formulas_mentioned: [],
+            questions_raised: [],
+            duration_minutes: result.audio_duration || 0
+          });
+          
+          setDualAnalysis({
+            professor_analysis: {
+              content: "Audio processing completed successfully. Technical concepts have been extracted and organized."
+            },
+            mentor_guidance: {
+              content: result.mentor_summary || "Your uploaded content has been processed and organized into structured notes."
+            },
+            scenario_classification: {
+              confidence: 0.8
+            }
+          });
+          
+          setActiveView('notes');
+        }
         
       } else {
-        const error = await response.json();
-        setError(error.detail || 'Failed to process audio file');
+        const errorData = await response.json();
+        setError(errorData.detail || 'Failed to process audio file');
         setSessionStatus('active');
+        setProcessingProgress(0);
       }
     } catch (error) {
+      clearInterval(progressInterval);
       console.error('Error uploading file:', error);
-      setError('Failed to upload and process file. Please try again.');
+      setError('Failed to upload and process file. Please check your connection and try again.');
       setSessionStatus('active');
+      setProcessingProgress(0);
     } finally {
       setLoading(false);
     }
