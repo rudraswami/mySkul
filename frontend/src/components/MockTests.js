@@ -522,34 +522,35 @@ We encountered an issue generating your test. Our technical team has been notifi
 
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-            <Button
-              variant="outline"
-              disabled={currentQuestion === 0}
-              onClick={() => setCurrentQuestion(currentQuestion - 1)}
-            >
-              Previous
-            </Button>
-            
-            <div className="space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => setAnswers({...answers, [question.question_id]: ''})}
-              >
-                Clear Answer
-              </Button>
-              
-              {isLastQuestion ? (
-                <Button onClick={submitTest} className="bg-green-600 hover:bg-green-700">
-                  Submit Test
-                </Button>
-              ) : (
                 <Button
-                  onClick={() => setCurrentQuestion(currentQuestion + 1)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  variant="outline"
+                  disabled={currentQuestion === 0}
+                  onClick={() => setCurrentQuestion(currentQuestion - 1)}
                 >
-                  Next Question
+                  Previous
                 </Button>
-              )}
+                
+                <div className="space-x-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setAnswers({...answers, [question.question_id]: ''})}
+                  >
+                    Clear Answer
+                  </Button>
+                  
+                  {isLastQuestion ? (
+                    <Button onClick={submitTest} className="bg-green-600 hover:bg-green-700">
+                      Submit Test
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setCurrentQuestion(currentQuestion + 1)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Next Question
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
