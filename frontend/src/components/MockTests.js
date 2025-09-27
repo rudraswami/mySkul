@@ -212,7 +212,10 @@ export default function MockTests() {
             const testData = await response.json();
             console.log('Test generated successfully:', testData.test_name);
             
-            // Success - clear all states and set up test
+            // Cache the generated test for future use
+            cacheTest(cacheKey, testData);
+            
+            // Success - set up test
             setActiveTest(testData);
             setTimeRemaining(testData.time_limit * 60);
             setCurrentQuestion(0);
