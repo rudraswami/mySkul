@@ -193,9 +193,11 @@ export default function MockTests() {
             },
             body: JSON.stringify({
               exam_type: examType,
-              subject: subject,
-              difficulty: difficulty,
-              num_questions: numQuestions
+              subjects: [subject], // Convert to array as expected by new backend
+              difficulty_level: difficulty,
+              num_questions: numQuestions,
+              test_type: "full_length",
+              generation_mode: "standard"
             }),
             signal: controller.signal
           });
