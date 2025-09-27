@@ -828,6 +828,8 @@ Confidence: [0.0-1.0]
             response = await chat.send_message(user_msg)
             
             # Parse response into structured format (simplified for now)
+            # TODO: Parse the actual AI response instead of using sample data
+            logger.info(f"Generated questions response: {response[:100]}...")
             questions = []
             for i in range(count):
                 questions.append({
