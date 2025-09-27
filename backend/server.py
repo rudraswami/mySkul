@@ -166,7 +166,42 @@ class DoubtQuery(BaseModel):
     subject: Optional[str] = None
     context: Optional[str] = None
 
-# ============= AUTO-NOTE MENTOR DATA MODELS =============
+# ============= ENHANCED AUTO-NOTE MENTOR MODELS =============
+
+class AutoNoteSession(BaseModel):
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subject: str
+    session_name: str
+    source_type: str = "live"  # live, uploaded, image, pdf
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    status: str = "active"  # active, completed, processing, transcribing
+    audio_duration: float = 0.0
+    processing_progress: int = 0  # 0-100
+    
+class TopicCard(BaseModel):
+    card_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    heading: str
+    key_points: List[str]
+    formulas: List[str] = []
+    examples: List[str] = []
+    confidence_score: float = 0.0
+    professor_verified: bool = False
+    syllabus_tags: List[str] = []
+    
+class ProcessedNote(BaseModel):
+    note_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: str
+    transcript: str = ""
+    topic_cards: List[TopicCard] = []
+    mentor_summary: str = ""
+    professor_verification: Dict[str, Any] = {}
+    flashcards: List[Dict[str, str]] = []
+    quiz_questions: List[Dict[str, Any]] = []
+    concepts_learned: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_reviewed: Optional[datetime] = None
 
 class NoteSession(BaseModel):
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
