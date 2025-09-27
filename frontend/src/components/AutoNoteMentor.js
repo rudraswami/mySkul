@@ -1165,17 +1165,27 @@ export default function AutoNoteMentor() {
                     </div>
                   </div>
                   
-                  <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
                     <div className="flex items-start">
-                      <Brain className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                      <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                        <Brain className="h-4 w-4 text-white" />
+                      </div>
                       <div className="text-sm">
-                        <p className="font-semibold text-blue-900 mb-1">How Auto-Note Mentor Works:</p>
-                        <ul className="text-blue-800 space-y-1">
-                          <li>• Captures real-time audio from your class or study session</li>
-                          <li>• Professor AI analyzes concepts, formulas, and academic accuracy</li>
-                          <li>• Mentor AI personalizes insights and creates encouraging summaries</li>
-                          <li>• Generates interactive notes with "explain point" and flashcard features</li>
-                        </ul>
+                        <p className="font-semibold text-gray-900 mb-2">Trusted, Hallucination-Free Auto-Note Generation:</p>
+                        <div className="space-y-2">
+                          <div className="flex items-start">
+                            <div className="h-2 w-2 bg-green-500 rounded-full mr-2 mt-2"></div>
+                            <span className="text-gray-700"><strong>Trust:</strong> Verified, accurate AI with zero hallucinations</span>
+                          </div>
+                          <div className="flex items-start">
+                            <div className="h-2 w-2 bg-purple-500 rounded-full mr-2 mt-2"></div>
+                            <span className="text-gray-700"><strong>Personalisation:</strong> Adaptive dual-AI tailored to your learning style</span>
+                          </div>
+                          <div className="flex items-start">
+                            <div className="h-2 w-2 bg-yellow-500 rounded-full mr-2 mt-2"></div>
+                            <span className="text-gray-700"><strong>Empowerment:</strong> Professional-grade notes at fraction of coaching costs</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
