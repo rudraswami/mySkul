@@ -707,6 +707,39 @@ Always maintain academic integrity while being the supportive guide every studen
         except Exception as e:
             logger.error(f"Mentor AI error: {str(e)}")
             raise HTTPException(status_code=500, detail="Mentor AI temporarily unavailable")
+    
+    async def generate_pre_test_coaching(self, subjects: List[str], difficulty: Dict[str, int], test_type: str) -> str:
+        """Generate motivational pre-test coaching"""
+        try:
+            coaching_prompt = f"""Generate encouraging pre-test coaching for a student about to take a {test_type} test.
+            
+Test Details:
+- Subjects: {', '.join(subjects)}
+- Difficulty Distribution: {difficulty}
+- Test Type: {test_type}
+
+Provide motivational, confidence-building guidance that:
+1. Acknowledges their preparation
+2. Gives practical last-minute tips
+3. Builds confidence and reduces anxiety
+4. Reminds them of effective test-taking strategies
+
+Keep it encouraging, personal, and under 200 words."""
+
+            chat = LlmChat(
+                api_key=self.api_key,
+                session_id=f"coaching_{test_type}",
+                system_message="You are a supportive Mentor AI providing pre-test motivation and guidance."
+            ).with_model("openai", "gpt-4o")
+            
+            user_msg = UserMessage(text=coaching_prompt)
+            response = await chat.send_message(user_msg)
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Pre-test coaching error: {str(e)}")
+            return f"You're well-prepared for this {test_type} test! Trust your knowledge, stay calm, and give your best effort. Remember to read questions carefully and manage your time wisely. You've got this! 🌟"
 
 class ProfessorAI:
     """Rule-based, verified reasoning AI layer"""
