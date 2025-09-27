@@ -145,9 +145,26 @@ export default function Analytics() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Learning Analytics</h1>
+          <div className="flex items-center mb-3">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-3 rounded-xl mr-4">
+              <BarChart3 className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Learning Analytics</h1>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center text-sm text-green-600">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                  <span>Verified Progress</span>
+                </div>
+                <div className="flex items-center text-sm text-blue-600">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                  <span>Personalized Insights</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <p className="text-gray-600">
-            Track your progress and identify areas for improvement
+            Track your trusted, data-driven progress with personalized insights — no hallucinations, just real results
           </p>
         </div>
         
