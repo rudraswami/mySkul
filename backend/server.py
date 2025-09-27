@@ -2155,178 +2155,25 @@ async def generate_mock_test(
         # Create test using new architecture
         test = await MockTestEngine.create_test_from_blueprint(blueprint, user.user_id)
         
-        # Generate questions using AI
-        current_year = datetime.utcnow().year
-        question_prompt = f"""You specialize in creating high-quality, original questions that mirror the style, difficulty, and format of official {request.exam_type} papers. Generate {request.num_questions} multiple choice questions for {request.exam_type} {request.subject} exam.
-
-Context:
-- Exam Type: {request.exam_type}
-- Subject: {request.subject}  
-- Difficulty level: {difficulty}/5 (1=Easy, 5=Very Hard)
-- Current Year: {current_year}
-- Target: Questions should align with {current_year-1}-{current_year} yearly trends and patterns
-
-Requirements for each question:
-1. Question text must be factually correct and follow {request.exam_type} {current_year-1} patterns
-2. 4 answer options (A, B, C, D) with only one correct answer
-3. Correct answer (A/B/C/D)
-4. One-line explanation for the correct answer
-5. Appropriate chapter/topic classification
-6. Match reference style, length, and cognitive level of real {request.exam_type} papers
-
-Please generate REAL, PRACTICAL questions that students would encounter in actual {request.exam_type} exams. Focus on:
-- Core concepts and applications relevant to {request.subject}
-- Problem-solving scenarios typical of {request.exam_type} level
-- Current syllabus alignment for {request.exam_type} {current_year}
-
-Format response as JSON array with this exact structure:
-[
-  {{
-    "question_text": "Clear, specific question text here",
-    "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
-    "correct_answer": "A",
-    "explanation": "Brief explanation for why this answer is correct",
-    "chapter": "Relevant chapter/topic name",
-    "difficulty_level": {difficulty}
-  }}
-]
-
-Generate {request.num_questions} such questions now."""
+        # Get questions for the test
+        questions_data = []
+        for question_id in test.questions:
+            question_doc = await db.questions.find_one({"question_id": question_id})
+            if question_doc:
+                questions_data.append(Question(**question_doc))
         
-        # Get AI-generated questions
-        session_id = f"test_gen_{uuid.uuid4()}"
-        ai_response, _ = await get_ai_tutor_response(question_prompt, request.subject, session_id)
-        
-        # Parse AI response to extract questions
-        questions = []
-        try:
-            # Try to extract JSON from AI response
-            import json
-            import re
-            
-            # Look for JSON array in the AI response
-            json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group()
-                parsed_questions = json.loads(json_str)
-                
-                for i, q in enumerate(parsed_questions[:request.num_questions]):
-                    questions.append({
-                        "question_id": str(uuid.uuid4()),
-                        "question_text": q.get("question_text", f"Question {i+1} for {request.subject}"),
-                        "options": q.get("options", ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"]),
-                        "correct_answer": q.get("correct_answer", "A"),
-                        "explanation": q.get("explanation", "Explanation not provided"),
-                        "chapter": q.get("chapter", f"Chapter {(i % 5) + 1}"),
-                        "difficulty_level": q.get("difficulty_level", difficulty),
-                        "marks": 4,
-                        "negative_marks": 1
-                    })
-            else:
-                # Fallback: Create structured questions if JSON parsing fails
-                raise ValueError("No JSON found in AI response")
-                
-        except (json.JSONDecodeError, ValueError, KeyError) as e:
-            logger.warning(f"AI JSON parsing failed: {e}. Using fallback question generation.")
-            
-            # Fallback: Generate structured sample questions based on subject and exam type
-            subject_questions = {
-                "Mathematics": [
-                    {
-                        "question_text": "If f(x) = x³ - 3x² + 2x - 1, find f'(2)",
-                        "options": ["A) 2", "B) 4", "C) 6", "D) 8"],
-                        "correct_answer": "A",
-                        "explanation": "f'(x) = 3x² - 6x + 2, so f'(2) = 3(4) - 6(2) + 2 = 12 - 12 + 2 = 2",
-                        "chapter": "Differential Calculus"
-                    },
-                    {
-                        "question_text": "The sum of first n natural numbers is n(n+1)/2. Find the sum of first 20 natural numbers",
-                        "options": ["A) 210", "B) 200", "C) 190", "D) 220"],
-                        "correct_answer": "A", 
-                        "explanation": "Using formula: 20(21)/2 = 420/2 = 210",
-                        "chapter": "Sequences and Series"
-                    }
-                ],
-                "Physics": [
-                    {
-                        "question_text": "A body falls freely from height h. Its velocity after falling distance h/2 is",
-                        "options": ["A) √(gh)", "B) √(gh/2)", "C) √(2gh)", "D) √(3gh/2)"],
-                        "correct_answer": "A",
-                        "explanation": "Using v² = u² + 2as, where u=0, a=g, s=h/2: v² = 2g(h/2) = gh, so v = √(gh)",
-                        "chapter": "Kinematics"
-                    },
-                    {
-                        "question_text": "The resistance of a wire is 10Ω. If it is stretched to double its length, new resistance is",
-                        "options": ["A) 20Ω", "B) 40Ω", "C) 5Ω", "D) 10Ω"],
-                        "correct_answer": "B",
-                        "explanation": "R = ρl/A. When length doubles, area becomes half, so R becomes 4 times = 40Ω",
-                        "chapter": "Current Electricity"
-                    }
-                ],
-                "Chemistry": [
-                    {
-                        "question_text": "The IUPAC name of CH₃-CH(CH₃)-CH₂-CH₃ is",
-                        "options": ["A) 2-methylbutane", "B) 3-methylbutane", "C) Isopentane", "D) 2-methylpropane"],
-                        "correct_answer": "A",
-                        "explanation": "Longest chain has 4 carbons (butane) with methyl group at position 2",
-                        "chapter": "Organic Chemistry"
-                    },
-                    {
-                        "question_text": "Which element has electronic configuration [Ar] 3d⁵ 4s¹?",
-                        "options": ["A) Mn", "B) Cr", "C) Fe", "D) Co"],
-                        "correct_answer": "B",
-                        "explanation": "Chromium has exceptional configuration due to half-filled d orbital stability",
-                        "chapter": "Atomic Structure"
-                    }
-                ]
-            }
-            
-            # Get subject-specific questions or create generic ones
-            base_questions = subject_questions.get(request.subject, [
-                {
-                    "question_text": f"Sample {request.subject} question for {request.exam_type}",
-                    "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
-                    "correct_answer": "A",
-                    "explanation": "Sample explanation",
-                    "chapter": "General"
-                }
-            ])
-            
-            # Generate required number of questions by cycling through base questions
-            for i in range(request.num_questions):
-                base_q = base_questions[i % len(base_questions)]
-                questions.append({
-                    "question_id": str(uuid.uuid4()),
-                    "question_text": base_q["question_text"],
-                    "options": base_q["options"],
-                    "correct_answer": base_q["correct_answer"],
-                    "explanation": base_q["explanation"],
-                    "chapter": base_q["chapter"],
-                    "difficulty_level": difficulty,
-                    "marks": 4,
-                    "negative_marks": 1
-                })
-        
-        # Create mock test
-        mock_test = MockTest(
-            user_id=user.user_id,
-            exam_type=request.exam_type,
-            subject=request.subject,
-            test_name=f"{request.exam_type} {request.subject} Mock Test - Level {difficulty}",
-            questions=questions,
-            difficulty_level=difficulty,
-            total_marks=request.num_questions * 4
-        )
-        
-        await db.mock_tests.insert_one(mock_test.dict())
-        
+        # Return enhanced test data
         return {
-            "test_id": mock_test.test_id,
-            "test_name": mock_test.test_name,
-            "questions": questions,
-            "total_marks": mock_test.total_marks,
-            "time_limit": request.num_questions * 2,  # 2 minutes per question
-            "difficulty_level": difficulty
+            "test_id": test.test_id,
+            "test_name": test.title,
+            "description": test.description,
+            "questions": [q.dict() for q in questions_data],
+            "total_marks": test.total_marks,
+            "time_limit": test.time_limit,
+            "mentor_tips": test.mentor_pre_tips,
+            "cache_status": "generated" if not cached_test else "cached",
+            "expires_at": test.expires_at.isoformat(),
+            "generation_mode": blueprint.generation_mode
         }
         
     except Exception as e:
