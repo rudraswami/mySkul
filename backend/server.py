@@ -2842,8 +2842,8 @@ async def get_user_note_sessions(user: User = Depends(get_current_user)):
         clean_sessions = [clean_mongodb_doc(session) for session in sessions]
         
         return {
-            "sessions": sessions,
-            "total_sessions": len(sessions),
+            "sessions": clean_sessions,
+            "total_sessions": len(clean_sessions),
             "active_sessions": len([s for s in sessions if s["status"] == "active"])
         }
         
