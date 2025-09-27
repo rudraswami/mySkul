@@ -2933,9 +2933,9 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
             clean_progress = {k: v for k, v in progress.items() if k != '_id'}
             study_progress.append(clean_progress)
         
-        # Calculate trends
-        score_trend = [result["percentage"] for result in test_results[:10]]
-        time_trend = [result["time_taken"] for result in test_results[:10]]
+        # Calculate trends using cleaned results
+        score_trend = [result.get("percentage", 0) for result in clean_test_results[:10]]
+        time_trend = [result.get("time_taken", 0) for result in clean_test_results[:10]]
         
         # Subject-wise performance
         subject_performance = {}
