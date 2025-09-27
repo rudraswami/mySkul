@@ -123,12 +123,43 @@ export default function MockTests() {
       return;
     }
 
+    const token = localStorage.getItem('dhruv_ai_token');
+    if (!token) {
+      alert('Please log in again to continue');
+      return;
+    }
+
+    // Check cache first for instant loading
+    const cacheKey = getCacheKey(examType, subject, difficulty, numQuestions);
+    const cachedTest = getCachedTest(cacheKey);
+    
+    if (cachedTest && !quickGeneration) {
+      console.log('🚀 Loading test from cache instantly!');
+      setActiveTest(cachedTest);
+      setTimeRemaining(cachedTest.time_limit * 60);
+      setCurrentQuestion(0);
+      setAnswers({});
+      
+      // Start timer
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            submitTest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return;
+    }
+
     let timeoutId = null;
     let controller = null;
     
     try {
-      // Clear previous errors and set loading state
-      setIsGeneratingTest(true);
+      // Set individual button loading state
+      setButtonLoading(buttonId, true);
       setGenerationError(null);
       setRetryStatus(null);
 
