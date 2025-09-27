@@ -926,17 +926,24 @@ We encountered an issue generating your test. Our technical team has been notifi
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Button 
-                    onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25)}
-                    disabled={isGeneratingTest}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                    onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25, 'math-quick')}
+                    disabled={loadingStates['math-quick']}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
                   >
-                    {isGeneratingTest ? (
+                    {loadingStates['math-quick'] ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Generating...
                       </>
                     ) : (
-                      'Math Test'
+                      <>
+                        🧮 Math Test
+                        {testCache.has(getCacheKey('JEE', 'Mathematics', 3, 25)) && (
+                          <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
+                            ⚡
+                          </span>
+                        )}
+                      </>
                     )}
                   </Button>
                   <Button 
