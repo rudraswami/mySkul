@@ -242,9 +242,25 @@ export default function MockTests() {
             
             try {
               const errorData = await response.json();
-              errorMessage = errorData.detail || errorMessage;
+              
+              // Handle different error formats
+              if (typeof errorData.detail === 'string') {
+                errorMessage = errorData.detail;
+              } else if (Array.isArray(errorData.detail)) {
+                // Handle Pydantic validation errors
+                const validationErrors = errorData.detail.map(err => 
+                  `${err.loc?.join('.')}: ${err.msg}`
+                ).join(', ');
+                errorMessage = `Validation Error: ${validationErrors}`;
+              } else if (errorData.message) {
+                errorMessage = errorData.message;
+              } else {
+                console.error('Unexpected error format:', errorData);
+                errorMessage = 'An unexpected error occurred. Please try again.';
+              }
             } catch (parseError) {
               console.error('Error parsing response:', parseError);
+              errorMessage = 'Failed to parse error response. Please try again.';
             }
 
             console.error(`HTTP Error ${response.status}:`, errorMessage);
