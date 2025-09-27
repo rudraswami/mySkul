@@ -2169,7 +2169,7 @@ async def generate_mock_test(
         )
         
         # Store blueprint in database first
-        blueprint_dict = blueprint.dict()
+        blueprint_dict = prepare_for_mongo(blueprint.dict())
         await db.test_blueprints.insert_one(blueprint_dict)
         
         # Create test using new architecture
