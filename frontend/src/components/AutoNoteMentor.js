@@ -1304,12 +1304,12 @@ export default function AutoNoteMentor() {
                             className="hidden"
                             accept="audio/*,video/*,.mp3,.wav,.mp4,.m4a"
                             onChange={handleFileSelect}
-                            disabled={!currentSession || loading}
+                            disabled={loading}
                           />
                           <label
                             htmlFor="file-upload"
                             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                              !currentSession || loading
+                              loading
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-purple-600 hover:bg-purple-700 cursor-pointer'
                             }`}
