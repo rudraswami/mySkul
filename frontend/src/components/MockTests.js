@@ -324,7 +324,8 @@ This can happen when:
 • Check your internet connection
 • Contact support if this problem persists
 
-🎓 Dhruv AI generates questions using advanced AI to match real exam patterns.`);
+🎓 Dhruv AI generates questions using advanced AI to match real exam patterns.`;
+            setGenerationError(timeoutMessage);
           } else if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
             console.error('Network error:', fetchError);
             setGenerationError(`🌐 Network Connection Issue
