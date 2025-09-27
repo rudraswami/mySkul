@@ -900,9 +900,30 @@ We encountered an issue generating your test. Our technical team has been notifi
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mock Tests</h1>
-        <p className="text-gray-600">
-          Practice with our comprehensive test series designed to simulate real exam conditions
+        <div className="flex items-center mb-4">
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 p-3 rounded-xl mr-4">
+            <Trophy className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">Mock Tests</h1>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center text-sm text-green-600">
+                <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                <span>Trusted & Accurate</span>
+              </div>
+              <div className="flex items-center text-sm text-blue-600">
+                <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                <span>Hallucination-Free Questions</span>
+              </div>
+              <div className="flex items-center text-sm text-purple-600">
+                <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
+                <span>Dual AI Feedback</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p className="text-gray-600 text-lg">
+          Practice with verified, hallucination-free mock tests at a fraction of coaching costs — get personalized dual AI feedback on every attempt
         </p>
       </div>
 
