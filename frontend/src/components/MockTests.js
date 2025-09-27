@@ -312,7 +312,7 @@ This happens when many students are using the platform simultaneously.
               await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
               continue;
             }
-            setGenerationError(`⏱️ Test generation is taking longer than usual.
+            const timeoutMessage = `⏱️ Test generation is taking longer than usual.
 
 This can happen when:
 • AI is creating complex, high-quality questions
