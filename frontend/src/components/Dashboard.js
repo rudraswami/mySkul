@@ -523,37 +523,37 @@ export default function Dashboard() {
           </Card>
 
           {/* Study Insights */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50">
-            <CardHeader>
-              <CardTitle className="flex items-center text-indigo-700">
-                <Lightbulb className="h-6 w-6 mr-3" />
+          <Card className="border border-gray-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center text-gray-900">
+                <Lightbulb className="h-5 w-5 mr-3 text-blue-600" />
                 Study Insights
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Users className="h-4 w-4 text-blue-600" />
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Clock className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">Peak Study Time</p>
-                    <p className="text-xs text-gray-600">You're most focused at 9-11 AM</p>
+                    <p className="text-xs text-gray-600">Most focused at 9-11 AM</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
-                  <div className="p-2 bg-green-100 rounded-full">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="p-2 bg-green-50 rounded-lg">
                     <TrendingUp className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Strength Subject</p>
+                    <p className="text-sm font-medium text-gray-900">Strongest Subject</p>
                     <p className="text-xs text-gray-600">Mathematics - 87% accuracy</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
-                  <div className="p-2 bg-orange-100 rounded-full">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="p-2 bg-orange-50 rounded-lg">
                     <Target className="h-4 w-4 text-orange-600" />
                   </div>
                   <div>
@@ -563,8 +563,8 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="mt-6 text-center">
-                <p className="text-sm font-semibold text-indigo-700 mb-2">💡 Today's Tip</p>
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900 mb-2">Today's Tip</p>
                 <p className="text-sm text-gray-600">
                   {getMotivationalMessage()}
                 </p>
