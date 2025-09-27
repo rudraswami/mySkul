@@ -1,18 +1,20 @@
 <analysis>
-The AI engineer successfully progressed the Dhruv AI project, focusing on Phase 4: Advanced Features. Initially, the backend's  was extended for mock tests, analytics, and stress management, with corresponding frontend components updated. A critical issue emerged with mock test functionality: buttons led to blank states and Invalid token errors. The AI diagnosed and fixed a backend API parameter mismatch for mock test generation and a frontend authentication token key mismatch across , , and . Despite these fixes, the primary challenge became persistent frontend blank loading states due to intermittent backend AI service failures (budget limits). The engineer iteratively enhanced  with retry logic, error handling, and  mechanisms, even attempting a custom  hook before reverting to direct component logic. The final attempt involves  and  for cleanup in , with the system poised for another frontend test.
+The AI engineer successfully progressed the Dhruv AI project through several critical phases. Initially, work focused on fixing persistent blank loading states in mock test generation, caused by backend AI service failures and frontend timeout issues. This involved refactoring  with improved error handling, increased timeouts, and removal of misleading sample data. Subsequently, the system was upgraded to a dual-layer AI architecture (Mentor + Professor) in  and , creating specialized personas for different educational scenarios. This was successfully implemented and tested. The project then advanced to developing the Auto-Note Mentor feature, which enables real-time transcription and AI-generated notes, also implemented end-to-end (Phases A, B, C) with new backend APIs and a frontend component. The current task is to address a UI/UX issue where dual-layer AI responses are rendered as raw markdown, requiring a new  component and updates to .
 </analysis>
 
 <product_requirements>
-The Dhruv AI project aims to establish a B2C EdTech platform in India, specializing in competitive exam preparation (JEE, NEET, UPSC). Its core mission is to democratize high-quality, personalized one-to-one tutoring through a hallucination-free Neuro-Symbolic AI mentor. The platform combines a Neural Mentor for personalization with a Symbolic Professor for verifiable accuracy. Key functionalities include Personalized Learning Paths, Interactive Problem Solving, 24/7 Doubt Resolution, Advanced Performance Analytics, Realistic Mock Tests, and Stress Management/Motivational Modules. The business model is subscription-based, leveraging digital marketing and partnerships for market entry. Current implementation includes a React frontend, FastAPI backend, MongoDB, and LLM integration via , with initial versions of core components like authentication, dashboard, AI tutor, mock tests, and analytics already developed and deployed.
+The Dhruv AI project is an Indian B2C EdTech platform targeting competitive exams (JEE, NEET, UPSC). Its core offering is a personalized, hallucination-free Neuro-Symbolic AI mentor, comprising a Neural Mentor for personalization and a Symbolic Professor for verifiable accuracy. Key features include Personalized Learning Paths, Interactive Problem Solving, 24/7 Doubt Resolution, Advanced Performance Analytics, Realistic Mock Tests, and Stress Management/Motivational Modules. The platform is subscription-based, leveraging digital marketing and partnerships.
+
+So far, core components like authentication, dashboard, AI tutor, mock tests, and analytics have been developed. The application has evolved to incorporate a dual-layer AI system, distinguishing between a friendly, motivational Mentor and a rule-based, accurate Professor. This dual intelligence guides various interactions, from fact-checking to study planning. A significant recent addition is the Auto-Note Mentor feature, designed to transcribe live classes, identify key concepts, generate structured notes, and offer interactive post-class explanations and flashcards, aiming to revolutionize note-taking.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Development:** React (frontend), FastAPI (backend), MongoDB (database).
--   **AI Integration:** Emergent Integrations library, Emergent LLM Key, Neuro-Symbolic AI.
+-   **AI Integration:** Emergent Integrations, Emergent LLM Key, Neuro-Symbolic AI, Dual-Layer AI (Mentor/Professor).
+-   **Asynchronous Operations:** Fetch API, , , , retry mechanisms.
+-   **Real-time Audio/Speech:** MediaRecorder API, Web Speech API (for Auto-Note Mentor).
 -   **Styling:** Tailwind CSS.
--   **Process Management:** Supervisor.
--   **Authentication:** JWT (JSON Web Tokens) using .
--   **Asynchronous Operations:** Fetch API, , , .
+-   **State Management:** React hooks (, , ).
 </key_technical_concepts>
 
 <code_architecture>
@@ -21,46 +23,57 @@ The application features a standard full-stack architecture residing in the  dir
 
 
 -   **/app/backend/server.py:**
-    -   **Summary:** The core FastAPI backend. Handles API endpoints for user authentication, LLM interaction, and new Phase 4 features like mock tests, analytics, and stress management.
-    -   **Changes Made:** Extended to include  endpoint, adding  Pydantic model. AI question generation logic was enhanced, and question parsing improved.
+    -   **Summary:** Core FastAPI backend.
+    -   **Changes Made:** Extended for dual-layer AI with  and  service classes, new endpoints (, , ), and  data models and 7 API endpoints (, , etc.).
 -   **/app/backend/.env:**
     -   **Summary:** Stores backend environment variables.
-    -   **Changes Made:**  added for LLM integration.
+    -   **Changes Made:**  for LLM integration.
 -   **/app/frontend/src/App.js:**
-    -   **Summary:** Main React component managing application routing.
-    -   **Changes Made:** Updated to include routes for new components like .
+    -   **Summary:** Main React component for routing.
+    -   **Changes Made:** Updated to include routes for , enhanced  component, and .
+-   **/app/frontend/src/components/AITutor.js:**
+    -   **Summary:** React component for AI tutoring.
+    -   **Changes Made:** Significantly refactored for the dual-layer system, including mode selection, welcome messages, and displaying dual responses. Currently being updated to use .
 -   **/app/frontend/src/components/MockTests.js:**
-    -   **Summary:** React component for generating and managing mock tests. Central to the current development.
-    -   **Changes Made:** Initially enhanced for Phase 4. Subsequently, critical fixes were applied: authentication token key changed from  to . Error handling, loading states, and retry mechanisms for API calls were extensively implemented and refined using , , and .
--   **/app/frontend/src/components/Analytics.js:**
-    -   **Summary:** React component for displaying performance analytics.
-    -   **Changes Made:** Token key mismatch fixed from  to .
--   **/app/frontend/src/components/StressManagement.js:**
-    -   **Summary:** React component for wellness recommendations.
+    -   **Summary:** React component for mock tests.
+    -   **Changes Made:** Critical fixes for blank loading states (timeout increased from 20s to 45s), authentication token key fixed, error handling improved with retry mechanisms and professional messaging, sample data removed, and UI updated to display dual feedback from test results and only show real tests.
+-   **/app/frontend/src/components/Analytics.js & StressManagement.js:**
+    -   **Summary:** React components for analytics and stress management.
     -   **Changes Made:** Token key mismatch fixed from  to .
 -   **/app/frontend/src/contexts/AuthContext.js:**
-    -   **Summary:** Provides authentication context to the React application, managing JWT tokens.
-    -   **Changes Made:** Stores the JWT token in  under the key .
--   **/app/frontend/src/hooks/useApiCall.js:**
-    -   **Summary:** A custom React hook intended for robust API call management with retry logic and timeouts.
-    -   **Changes Made:** Created and partially integrated into , but later its usage was effectively removed due to integration issues, and the logic was moved back into .
+    -   **Summary:** Manages authentication.
+    -   **Changes Made:** Stores JWT token in  under .
+-   **/app/frontend/src/components/Navigation.js:**
+    -   **Summary:** Handles application navigation.
+    -   **Changes Made:** Updated to include the new  link.
+-   **/app/frontend/src/components/AutoNoteMentor.js (NEW):**
+    -   **Summary:** New React component for the Auto-Note Mentor feature. Handles audio recording, transcription, and displaying AI-generated notes with dual intelligence.
+    -   **Changes Made:** Created from scratch with UI for starting/stopping sessions, displaying live transcripts, and showing past sessions.
+-   **/app/frontend/src/components/FormattedAIResponse.js (NEW):**
+    -   **Summary:** New React component designed to parse and format AI responses, handling markdown and dual-layer display.
+    -   **Changes Made:** Created to address the UI/UX issue of raw markdown responses in .
+-   **/app/PENDING_TASKS.md (NEW):**
+    -   **Summary:** Markdown file created to document pending tasks.
+-   **/app/AUTO_NOTE_MENTOR_PLAN.md (NEW):**
+    -   **Summary:** Markdown file outlining the plan for the Auto-Note Mentor feature.
 </code_architecture>
 
 <pending_tasks>
--   **Frontend Stability for AI Failures:** The frontend still struggles to recover gracefully from intermittent backend AI service failures, leading to persistent blank loading states in the mock test flow.
--   **Comprehensive Frontend Test Validation:** A final comprehensive frontend test is needed to verify if the latest  and  cleanup changes in  resolve the blank loading state issue.
+-   **Auto-Note Mentor Testing & Validation:** End-to-end testing with real audio, backend API validation for 7 new endpoints, cross-browser compatibility, and error handling.
+-   **Previous Core Features Testing:** Comprehensive testing of mock tests (timeout fix verification) and dual-layer AI tutor responses.
+-   **UI/UX Improvement for AI Responses:** Complete the integration of  into  to properly display structured AI responses.
+-   **Phase D: Advanced Auto-Note Features:** Implement Zoom/Meet integration, offline recording, multi-language support, and class series tracking.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was deep into resolving persistent issues with the mock test functionality, specifically the blank loading state when generating tests. This was primarily attributed to intermittent failures of the backend AI service (due to budget limits or service unavailability) and the frontend's inability to gracefully handle these.
+Immediately prior to this summary, the AI engineer was addressing a critical UI/UX issue reported by the user/tool: the dual-layer AI responses in the chat window were appearing as raw, unformatted text with markdown syntax, making them hard to read and visually cluttered.
 
-The work involved:
-1.  **Backend ():** Ensuring the  API endpoint correctly accepted the JSON request body and enhancing the AI question generation logic.
-2.  **Authentication (, , , ):** Fixing a critical bug where the frontend components were looking for an  in  while  stored it as . This was resolved across all relevant files. A test user (/) was also successfully created.
-3.  **Frontend Error Handling ():** Multiple attempts were made to improve the robustness of the  function. This included adding retry mechanisms, better visual feedback, and implementing  for timeouts. A custom  hook was created but later reverted from due to integration issues, with the logic being re-integrated directly into .
-4.  **Latest Fix:** The most recent change involves implementing the  method and a  cleanup function within  to specifically address issues with  handling and prevent memory leaks during API calls.
+The current work involves:
+1.  **Diagnosing the issue**: Identifying that the  component was directly rendering raw markdown from AI responses.
+2.  **Creating a new component**: A new React component, , has been created. This component is designed to parse and format the AI responses properly, including markdown syntax, to present a clean, structured, and professional display.
+3.  **Updating AITutor.js**: The AI engineer is in the process of modifying  to integrate this new  component. The last action indicates updating the dual response rendering section within . This will replace the direct rendering of raw text with the formatted output.
 </current_work>
 
 <optional_next_step>
-Run a final comprehensive frontend test to verify the  and  cleanup changes.
+Complete the integration of  into  to properly format and display dual-layer AI responses.
 </optional_next_step>
