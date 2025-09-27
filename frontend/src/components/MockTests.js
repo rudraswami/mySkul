@@ -947,17 +947,24 @@ We encountered an issue generating your test. Our technical team has been notifi
                     )}
                   </Button>
                   <Button 
-                    onClick={() => generateMockTest('JEE', 'Physics', 3, 25)}
-                    disabled={isGeneratingTest}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400"
+                    onClick={() => generateMockTest('JEE', 'Physics', 3, 25, 'physics-quick')}
+                    disabled={loadingStates['physics-quick']}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 relative"
                   >
-                    {isGeneratingTest ? (
+                    {loadingStates['physics-quick'] ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Generating...
                       </>
                     ) : (
-                      'Physics Test'
+                      <>
+                        ⚛️ Physics Test
+                        {testCache.has(getCacheKey('JEE', 'Physics', 3, 25)) && (
+                          <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
+                            ⚡
+                          </span>
+                        )}
+                      </>
                     )}
                   </Button>
                   <Button 
