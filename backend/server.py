@@ -33,6 +33,27 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ============= UTILITY FUNCTIONS =============
+
+def clean_mongodb_doc(doc: dict) -> dict:
+    """Remove ObjectId and serialize datetime objects for JSON response"""
+    if not doc:
+        return doc
+        
+    clean_doc = {}
+    for k, v in doc.items():
+        if k == '_id':
+            continue
+        elif isinstance(v, datetime):
+            clean_doc[k] = v.isoformat()
+        elif isinstance(v, list):
+            clean_doc[k] = [clean_mongodb_doc(item) if isinstance(item, dict) else item for item in v]
+        elif isinstance(v, dict):
+            clean_doc[k] = clean_mongodb_doc(v)
+        else:
+            clean_doc[k] = v
+    return clean_doc
+
 # ============= CORE DATA MODELS =============
 
 class User(BaseModel):
