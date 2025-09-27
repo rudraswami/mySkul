@@ -334,7 +334,8 @@ Please check your internet connection and try again.
 
 📞 If you're on campus/institutional Wi-Fi, contact your IT support for assistance with educational platform access.
 
-🔄 Retry once your connection is stable - your learning progress is important to us.`);
+🔄 Retry once your connection is stable - your learning progress is important to us.`;
+            setGenerationError(networkMessage);
           } else {
             console.error('Unknown error:', fetchError);
             if (attempts < maxRetries) {
