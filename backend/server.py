@@ -457,6 +457,22 @@ def cleanup_expired_cache():
         del test_cache[key]
     logger.info(f"Cleaned up {len(expired_keys)} expired cache entries")
 
+def prepare_for_mongo(data: dict) -> dict:
+    """Prepare data for MongoDB storage by handling datetime serialization"""
+    if isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                result[key] = value
+            elif isinstance(value, dict):
+                result[key] = prepare_for_mongo(value)
+            elif isinstance(value, list):
+                result[key] = [prepare_for_mongo(item) if isinstance(item, dict) else item for item in value]
+            else:
+                result[key] = value
+        return result
+    return data
+
 # ============= MOCK TEST BUSINESS LOGIC =============
 
 class MockTestEngine:
