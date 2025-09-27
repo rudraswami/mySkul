@@ -290,6 +290,22 @@ export default function MockTests() {
             const testData = await response.json();
             console.log('Test generated successfully:', testData.test_name);
             
+            // IMMEDIATE SUCCESS CLEANUP - Clear loading states first
+            setButtonLoading(buttonId, false);
+            setGenerationProgress(prev => {
+              const newProgress = { ...prev };
+              delete newProgress[buttonId];
+              return newProgress;
+            });
+            setRetryStatus(null);
+            setGenerationError(null);
+            
+            // Clear emergency timeout since we succeeded
+            if (emergencyTimeoutId) {
+              clearTimeout(emergencyTimeoutId);
+              emergencyTimeoutId = null;
+            }
+            
             // Cache the generated test for future use
             cacheTest(cacheKey, testData);
             
