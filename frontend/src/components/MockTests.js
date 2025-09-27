@@ -519,9 +519,9 @@ We encountered an issue generating your test. Our technical team has been notifi
                   );
                 })}
               </div>
-            </div>
 
-          <div className="flex justify-between mt-8">
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
             <Button
               variant="outline"
               disabled={currentQuestion === 0}
