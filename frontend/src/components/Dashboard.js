@@ -182,67 +182,111 @@ export default function Dashboard() {
       
       {/* Main Content */}
       <div className="p-8 -mt-4 relative z-10 space-y-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="h-6 w-6 text-blue-600" />
+        {/* Enhanced Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-700 mb-1">Total Study Time</p>
+                  <p className="text-3xl font-bold text-blue-900">
+                    {formatTime(analytics?.total_study_time || 0)}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">Keep it up! 📚</p>
+                </div>
+                <div className="p-3 bg-blue-200 rounded-full">
+                  <Clock className="h-8 w-8 text-blue-700" />
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Study Time</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatTime(analytics?.total_study_time || 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Target className="h-6 w-6 text-green-600" />
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-700 mb-1">Study Streak</p>
+                  <p className="text-3xl font-bold text-green-900 flex items-center">
+                    {analytics?.current_streak || 0}
+                    <Flame className="h-6 w-6 text-orange-500 ml-1" />
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">Amazing consistency! 🔥</p>
+                </div>
+                <div className="p-3 bg-green-200 rounded-full">
+                  <Target className="h-8 w-8 text-green-700" />
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Current Streak</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics?.current_streak || 0} days
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <MessageCircle className="h-6 w-6 text-purple-600" />
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-purple-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-700 mb-1">AI Sessions</p>
+                  <p className="text-3xl font-bold text-purple-900">
+                    {analytics?.chat_sessions_count || 0}
+                  </p>
+                  <p className="text-xs text-purple-600 mt-1">AI mentoring sessions 🤖</p>
+                </div>
+                <div className="p-3 bg-purple-200 rounded-full">
+                  <Brain className="h-8 w-8 text-purple-700" />
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">AI Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics?.chat_sessions_count || 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-orange-600" />
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-orange-50 to-orange-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-orange-700 mb-1">Weekly Progress</p>
+                  <p className="text-3xl font-bold text-orange-900">
+                    {analytics?.weekly_goals_progress || 75}%
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">On track! 📈</p>
+                </div>
+                <div className="p-3 bg-orange-200 rounded-full">
+                  <TrendingUp className="h-8 w-8 text-orange-700" />
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Weekly Progress</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics?.weekly_goals_progress || 0}%
-                </p>
+            </CardContent>
+          </Card>
+
+          {/* New Exam Countdown Card */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-red-50 to-red-100">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-700 mb-1">{user?.exam_type || 'JEE'} Countdown</p>
+                  <p className="text-3xl font-bold text-red-900">
+                    {examCountdown || 120}
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">days remaining ⏰</p>
+                </div>
+                <div className="p-3 bg-red-200 rounded-full">
+                  <Timer className="h-8 w-8 text-red-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Motivational Banner */}
+        <Card className="border-0 shadow-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+                  <Lightbulb className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl mb-1">Daily Motivation</h3>
+                  <p className="text-indigo-100">{getMotivationalMessage()}</p>
+                </div>
+              </div>
+              <div className="hidden md:flex space-x-2">
+                <Trophy className="h-12 w-12 text-yellow-300" />
               </div>
             </div>
           </CardContent>
