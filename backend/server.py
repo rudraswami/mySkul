@@ -1875,11 +1875,8 @@ async def get_dashboard_analytics(user: User = Depends(get_current_user)):
         {"user_id": user.user_id}
     ).sort("last_accessed", -1).limit(5).to_list(5)
     
-    # Clean ObjectId fields
-    recent_progress = []
-    for progress in recent_progress_docs:
-        clean_progress = {k: v for k, v in progress.items() if k != '_id'}
-        recent_progress.append(clean_progress)
+    # Clean ObjectId fields and datetime serialization
+    recent_progress = [clean_mongodb_doc(progress) for progress in recent_progress_docs]
     
     # Get chat sessions count
     chat_sessions_count = await db.chat_sessions.count_documents(
