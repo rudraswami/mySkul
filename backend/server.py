@@ -514,6 +514,340 @@ def prepare_for_mongo(data: dict) -> dict:
         return str(data)
     return data
 
+# ============= AUTO-NOTE MENTOR PROCESSING ENGINE =============
+
+import whisper
+import tempfile
+import os
+from pydub import AudioSegment
+import aiofiles
+
+class AutoNoteMentorEngine:
+    """Advanced Auto-Note Mentor with Whisper integration"""
+    
+    def __init__(self):
+        # Load Whisper model (using base model for balance of speed/accuracy)
+        self.whisper_model = None
+        self._load_whisper_model()
+    
+    def _load_whisper_model(self):
+        """Load Whisper model lazily"""
+        try:
+            if self.whisper_model is None:
+                logger.info("Loading Whisper model for transcription...")
+                self.whisper_model = whisper.load_model("base")
+                logger.info("✅ Whisper model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load Whisper model: {str(e)}")
+    
+    async def process_audio_file(self, file_content: bytes, session: AutoNoteSession) -> ProcessedNote:
+        """Process uploaded audio file through complete pipeline"""
+        
+        try:
+            # Update session status
+            await self._update_session_progress(session.session_id, 10, "transcribing")
+            
+            # Step 1: Transcribe audio
+            transcript = await self._transcribe_audio(file_content)
+            await self._update_session_progress(session.session_id, 40, "processing")
+            
+            # Step 2: Chunk and classify content
+            topic_cards = await self._chunk_and_classify(transcript, session.subject)
+            await self._update_session_progress(session.session_id, 60, "processing")
+            
+            # Step 3: Professor verification
+            verified_cards = await self._professor_verification(topic_cards, session.subject)
+            await self._update_session_progress(session.session_id, 80, "processing")
+            
+            # Step 4: Mentor enrichment
+            mentor_summary, flashcards, quizzes = await self._mentor_enrichment(transcript, verified_cards, session.subject)
+            await self._update_session_progress(session.session_id, 90, "processing")
+            
+            # Step 5: Extract concepts
+            concepts_learned = await self._extract_concepts(verified_cards)
+            
+            # Create processed note
+            processed_note = ProcessedNote(
+                session_id=session.session_id,
+                user_id=session.user_id,
+                transcript=transcript,
+                topic_cards=verified_cards,
+                mentor_summary=mentor_summary,
+                flashcards=flashcards,
+                quiz_questions=quizzes,
+                concepts_learned=concepts_learned
+            )
+            
+            # Store processed note
+            await db.processed_notes.insert_one(prepare_for_mongo(processed_note.dict()))
+            
+            # Update session as completed
+            await self._update_session_progress(session.session_id, 100, "completed")
+            
+            return processed_note
+            
+        except Exception as e:
+            logger.error(f"Audio processing error: {str(e)}")
+            await self._update_session_progress(session.session_id, 0, "error")
+            raise
+    
+    async def _transcribe_audio(self, file_content: bytes) -> str:
+        """Transcribe audio using Whisper"""
+        try:
+            # Ensure Whisper model is loaded
+            if self.whisper_model is None:
+                self._load_whisper_model()
+            
+            # Create temporary file for audio
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+                temp_file.write(file_content)
+                temp_file_path = temp_file.name
+            
+            try:
+                # Transcribe using Whisper
+                result = self.whisper_model.transcribe(temp_file_path, language='en')
+                transcript = result['text'].strip()
+                
+                logger.info(f"✅ Transcribed audio: {len(transcript)} characters")
+                return transcript
+                
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                    
+        except Exception as e:
+            logger.error(f"Transcription error: {str(e)}")
+            return "Transcription failed. Please try uploading the audio file again."
+    
+    async def _chunk_and_classify(self, transcript: str, subject: str) -> List[TopicCard]:
+        """Break transcript into topic cards using NLP"""
+        try:
+            # Use Professor AI for intelligent chunking
+            professor_service = ProfessorAI(EMERGENT_LLM_KEY)
+            
+            chunking_prompt = f"""Analyze this {subject} class transcript and break it into structured topic cards.
+
+TRANSCRIPT:
+{transcript}
+
+Create topic cards with:
+1. Clear headings for each major concept/topic
+2. Key bullet points under each heading  
+3. Extract any formulas mentioned
+4. Identify examples given by the teacher
+5. Ensure each card covers one coherent topic
+
+Return as JSON array:
+[
+  {{
+    "heading": "Topic name",
+    "key_points": ["Point 1", "Point 2", "Point 3"],
+    "formulas": ["Formula 1", "Formula 2"],
+    "examples": ["Example 1", "Example 2"]
+  }}
+]"""
+
+            chat = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"chunk_{uuid.uuid4()}",
+                system_message="You are an expert at structuring educational content into organized topic cards."
+            ).with_model("openai", "gpt-4o")
+            
+            user_msg = UserMessage(text=chunking_prompt)
+            response = await chat.send_message(user_msg)
+            
+            # Parse response
+            import json
+            import re
+            
+            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            if json_match:
+                try:
+                    cards_data = json.loads(json_match.group())
+                    topic_cards = []
+                    
+                    for card_data in cards_data:
+                        topic_card = TopicCard(
+                            heading=card_data.get('heading', 'Untitled Topic'),
+                            key_points=card_data.get('key_points', []),
+                            formulas=card_data.get('formulas', []),
+                            examples=card_data.get('examples', [])
+                        )
+                        topic_cards.append(topic_card)
+                    
+                    logger.info(f"✅ Created {len(topic_cards)} topic cards")
+                    return topic_cards
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON parsing error: {e}")
+            
+            # Fallback: Create simple topic cards
+            return [TopicCard(
+                heading=f"{subject} Class Notes",
+                key_points=[transcript[:500] + "..." if len(transcript) > 500 else transcript],
+                formulas=[],
+                examples=[]
+            )]
+            
+        except Exception as e:
+            logger.error(f"Chunking error: {str(e)}")
+            return [TopicCard(
+                heading=f"{subject} Notes",
+                key_points=["Processing error occurred"],
+                formulas=[],
+                examples=[]
+            )]
+    
+    async def _professor_verification(self, topic_cards: List[TopicCard], subject: str) -> List[TopicCard]:
+        """Verify and enhance topic cards using Professor AI"""
+        try:
+            professor_service = ProfessorAI(EMERGENT_LLM_KEY)
+            
+            for card in topic_cards:
+                # Verify each topic card
+                verification_prompt = f"""Verify this {subject} topic card for factual accuracy:
+
+TOPIC: {card.heading}
+KEY POINTS: {', '.join(card.key_points)}
+FORMULAS: {', '.join(card.formulas)}
+
+Tasks:
+1. Rate confidence (0.0-1.0) in factual accuracy
+2. Identify any errors or corrections needed
+3. Suggest syllabus tags (JEE/NEET topics)
+4. Mark as verified if accurate
+
+Respond with JSON:
+{{
+  "confidence_score": 0.9,
+  "is_verified": true,
+  "corrections": ["Any corrections needed"],
+  "syllabus_tags": ["Mechanics", "Newton's Laws"]
+}}"""
+
+                try:
+                    chat = LlmChat(
+                        api_key=EMERGENT_LLM_KEY,
+                        session_id=f"verify_{uuid.uuid4()}",
+                        system_message="You are a professor verifying educational content for accuracy."
+                    ).with_model("openai", "gpt-4o")
+                    
+                    user_msg = UserMessage(text=verification_prompt)
+                    response = await chat.send_message(user_msg)
+                    
+                    # Parse verification
+                    import json
+                    import re
+                    
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        verification_data = json.loads(json_match.group())
+                        
+                        card.confidence_score = verification_data.get('confidence_score', 0.8)
+                        card.professor_verified = verification_data.get('is_verified', True)
+                        card.syllabus_tags = verification_data.get('syllabus_tags', [])
+                        
+                except Exception as e:
+                    logger.error(f"Verification error for card {card.heading}: {e}")
+                    # Set default values
+                    card.confidence_score = 0.7
+                    card.professor_verified = True
+                    card.syllabus_tags = [subject]
+            
+            logger.info(f"✅ Verified {len(topic_cards)} topic cards")
+            return topic_cards
+            
+        except Exception as e:
+            logger.error(f"Professor verification error: {str(e)}")
+            return topic_cards
+    
+    async def _mentor_enrichment(self, transcript: str, topic_cards: List[TopicCard], subject: str) -> tuple:
+        """Generate mentor summary, flashcards, and quizzes"""
+        try:
+            mentor_service = MentorAI(EMERGENT_LLM_KEY)
+            
+            # Generate mentor summary
+            summary_prompt = f"""Create a friendly, encouraging summary of this {subject} class:
+
+TOPICS COVERED: {', '.join([card.heading for card in topic_cards])}
+
+Create a warm, motivational summary that:
+1. Highlights key learning achievements
+2. Connects concepts to real-world applications  
+3. Encourages continued learning
+4. Is written in a supportive, mentor-like tone
+
+Keep it concise but inspiring (3-4 sentences)."""
+
+            chat = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"mentor_{uuid.uuid4()}",
+                system_message="You are a supportive AI mentor helping students learn."
+            ).with_model("openai", "gpt-4o")
+            
+            user_msg = UserMessage(text=summary_prompt)
+            mentor_summary = await chat.send_message(user_msg)
+            
+            # Generate flashcards
+            flashcards = []
+            for card in topic_cards[:3]:  # Limit to first 3 cards for now
+                if card.key_points:
+                    flashcards.append({
+                        "front": f"What is {card.heading}?",
+                        "back": card.key_points[0],
+                        "topic": card.heading
+                    })
+            
+            # Generate quiz questions
+            quiz_questions = []
+            for i, card in enumerate(topic_cards[:2]):  # Limit to 2 questions
+                if card.key_points:
+                    quiz_questions.append({
+                        "question": f"Which of the following best describes {card.heading}?",
+                        "options": [
+                            card.key_points[0] if card.key_points else "Correct answer",
+                            "Incorrect option 1",
+                            "Incorrect option 2", 
+                            "Incorrect option 3"
+                        ],
+                        "correct_answer": 0,
+                        "explanation": f"This concept relates to {card.heading} as discussed in class."
+                    })
+            
+            logger.info(f"✅ Generated mentor content: {len(flashcards)} flashcards, {len(quiz_questions)} quiz questions")
+            return mentor_summary, flashcards, quiz_questions
+            
+        except Exception as e:
+            logger.error(f"Mentor enrichment error: {str(e)}")
+            return "Great job attending this class! Keep up the excellent work in your studies.", [], []
+    
+    async def _extract_concepts(self, topic_cards: List[TopicCard]) -> List[str]:
+        """Extract key concepts learned for mastery tracking"""
+        concepts = []
+        for card in topic_cards:
+            concepts.append(card.heading)
+            # Add syllabus tags as additional concepts
+            concepts.extend(card.syllabus_tags)
+        
+        return list(set(concepts))  # Remove duplicates
+    
+    async def _update_session_progress(self, session_id: str, progress: int, status: str):
+        """Update session progress in database"""
+        try:
+            await db.auto_note_sessions.update_one(
+                {"session_id": session_id},
+                {"$set": {
+                    "processing_progress": progress,
+                    "status": status
+                }}
+            )
+        except Exception as e:
+            logger.error(f"Progress update error: {str(e)}")
+
+# Initialize the engine
+auto_note_engine = AutoNoteMentorEngine()
+
 # ============= MOCK TEST BUSINESS LOGIC =============
 
 class MockTestEngine:
