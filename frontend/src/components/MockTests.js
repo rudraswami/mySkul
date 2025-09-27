@@ -550,6 +550,7 @@ We encountered an issue generating your test. Our technical team has been notifi
                   Next Question
                 </Button>
               )}
+              </div>
             </div>
           </div>
         </div>
