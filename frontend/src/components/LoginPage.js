@@ -43,30 +43,45 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold">Dhruv AI</h1>
           </div>
           
-          <p className="text-xl mb-8 text-blue-100">
-            Your unwavering companion for competitive exam success
+          <p className="text-xl mb-4 text-blue-100 font-medium">
+            The trusted, hallucination-free AI mentor that turns every class into verified notes, flashcards and personalised prep — at a fraction of coaching fees.
           </p>
 
-          <div className="space-y-6">
-            <div className="flex items-center">
-              <BookOpen className="h-6 w-6 mr-3 text-blue-200" />
-              <span className="text-blue-100">Personalized AI Tutoring</span>
+          <div className="space-y-6 mt-8">
+            <div className="flex items-start">
+              <div className="h-6 w-6 mr-3 mt-0.5 bg-green-400 rounded-full flex items-center justify-center">
+                <span className="text-green-900 text-xs font-bold">✓</span>
+              </div>
+              <div>
+                <span className="text-white font-semibold">Trust</span>
+                <p className="text-blue-100 text-sm">Verified, hallucination-free, accurate AI mentoring</p>
+              </div>
             </div>
-            <div className="flex items-center">
-              <Target className="h-6 w-6 mr-3 text-blue-200" />
-              <span className="text-blue-100">Adaptive Learning Paths</span>
+            <div className="flex items-start">
+              <div className="h-6 w-6 mr-3 mt-0.5 bg-purple-400 rounded-full flex items-center justify-center">
+                <span className="text-purple-900 text-xs font-bold">♥</span>
+              </div>
+              <div>
+                <span className="text-white font-semibold">Personalisation</span>
+                <p className="text-blue-100 text-sm">Adaptive, empathetic, one-to-one learning experience</p>
+              </div>
             </div>
-            <div className="flex items-center">
-              <Trophy className="h-6 w-6 mr-3 text-blue-200" />
-              <span className="text-blue-100">Comprehensive Mock Tests</span>
+            <div className="flex items-start">
+              <div className="h-6 w-6 mr-3 mt-0.5 bg-yellow-400 rounded-full flex items-center justify-center">
+                <span className="text-yellow-900 text-xs font-bold">⚡</span>
+              </div>
+              <div>
+                <span className="text-white font-semibold">Empowerment</span>
+                <p className="text-blue-100 text-sm">Accessible, affordable success for independent learners</p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-12 p-4 bg-blue-500/30 rounded-lg">
+          <div className="mt-12 p-4 bg-blue-500/30 rounded-lg border border-blue-400/30">
             <p className="text-sm text-blue-100">
-              "Dhruv AI helped me improve my JEE score by 150 points with personalized doubt resolution and adaptive practice tests."
+              "Dhruv AI's verified notes and hallucination-free AI helped me crack JEE at 10% of coaching center costs. The personalized approach made all the difference!"
             </p>
-            <p className="text-xs mt-2 font-medium">- Priya S., IIT Delhi (2024)</p>
+            <p className="text-xs mt-2 font-medium text-blue-200">- Priya S., IIT Delhi (2024)</p>
           </div>
         </div>
       </div>
