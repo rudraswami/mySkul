@@ -1122,7 +1122,6 @@ We encountered an issue generating your test. Our technical team has been notifi
                           className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
                           size="sm"
                           onClick={() => {
-                            const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
                             const diffLevel = difficultyMap[template.difficulty] || 3;
                             generateMockTest(template.examType, template.subject, diffLevel, template.questions, `template-${template.id}`);
                           }}
