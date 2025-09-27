@@ -101,19 +101,7 @@ class ChatMessage(BaseModel):
     feedback: Optional[str] = None  # helpful, not_helpful
     confidence: Optional[float] = None
 
-class Question(BaseModel):
-    question_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    question_text: str
-    options: List[str]
-    correct_answer: str
-    explanation: str
-    subject: str
-    chapter: str
-    difficulty_level: int = Field(ge=1, le=5)  # 1=Easy, 5=Very Hard
-    exam_type: str
-    marks: int = 1
-    negative_marks: float = 0.25
-    time_limit: int = 120  # seconds per question
+# Question class moved to Mock Test Architecture section for better organization
 
 class MockTest(BaseModel):
     test_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
