@@ -2660,11 +2660,8 @@ async def get_note_session(
         if not session_doc:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        # Remove MongoDB ObjectId for JSON serialization
-        if "_id" in session_doc:
-            del session_doc["_id"]
-        
-        return session_doc
+        # Remove MongoDB ObjectId for JSON serialization and handle datetime
+        return clean_mongodb_doc(session_doc)
         
     except Exception as e:
         logger.error(f"Note session retrieval error: {str(e)}")
