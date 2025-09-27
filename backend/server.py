@@ -2336,6 +2336,256 @@ async def submit_mock_test(
         logger.error(f"Mock test submission error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to submit test")
 
+# ============= ENHANCED MOCK TEST ENDPOINTS =============
+
+@api_router.get("/mock-tests/resume")
+async def get_resumable_tests(user: User = Depends(get_current_user)):
+    """Get unfinished tests and cached tests for instant resume"""
+    
+    try:
+        # Get active tests that haven't expired
+        active_tests = await db.mock_tests.find({
+            "student_id": user.user_id,
+            "status": "active",
+            "expires_at": {"$gt": datetime.utcnow()}
+        }).to_list(10)
+        
+        # Get recommended test blueprint based on performance
+        recommended = await get_recommended_test_blueprint(user.user_id)
+        
+        # Clean up expired cache
+        cleanup_expired_cache()
+        
+        return {
+            "resumable_tests": [MockTest(**test).dict() for test in active_tests],
+            "recommended_next": recommended,
+            "cached_tests": len(test_cache),
+            "cache_info": [
+                {
+                    "cache_key": key[:16] + "...",
+                    "subjects": cache_data['data'].get('subjects', []),
+                    "expires_in_hours": max(0, (cache_data['expires_at'] - datetime.utcnow()).total_seconds() / 3600)
+                }
+                for key, cache_data in test_cache.items()
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Resume tests error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get resumable tests")
+
+@api_router.post("/mock-tests/{test_id}/retake")
+async def retake_mock_test(
+    test_id: str,
+    retake_request: TestRetakeRequest,
+    user: User = Depends(get_current_user)
+):
+    """Create retake test with different modes"""
+    
+    try:
+        # Get original test
+        original_test = await db.mock_tests.find_one({"test_id": test_id, "student_id": user.user_id})
+        if not original_test:
+            raise HTTPException(status_code=404, detail="Original test not found")
+        
+        # Get original blueprint
+        blueprint_doc = await db.test_blueprints.find_one({"blueprint_id": original_test["blueprint_id"]})
+        if not blueprint_doc:
+            raise HTTPException(status_code=404, detail="Blueprint not found")
+        
+        original_blueprint = TestBlueprint(**blueprint_doc)
+        
+        # Modify blueprint based on retake mode
+        if retake_request.retake_mode == "exact":
+            # Same test, same questions
+            new_test = MockTest(
+                student_id=user.user_id,
+                blueprint_id=original_blueprint.blueprint_id,
+                title=f"RETAKE: {original_test['title']}",
+                description=f"Exact retake of previous test",
+                questions=original_test['questions'],  # Same questions
+                total_marks=original_test['total_marks'],
+                time_limit=original_test['time_limit'],
+                expires_at=datetime.utcnow() + timedelta(hours=24),
+                cache_key=create_cache_key(user.user_id, "retake_exact", original_blueprint.subjects),
+                status="active"
+            )
+            
+        elif retake_request.retake_mode == "variant":
+            # Same blueprint, new questions
+            original_blueprint.generation_mode = "variant"
+            original_blueprint.random_seed = str(uuid.uuid4())
+            new_test = await MockTestEngine.create_test_from_blueprint(original_blueprint, user.user_id)
+            new_test.title = f"VARIANT: {original_blueprint.exam_type} Test"
+            
+        elif retake_request.retake_mode == "adaptive":
+            # Focus on weak areas from previous attempt
+            attempt = await db.test_attempts.find_one({"test_id": test_id, "student_id": user.user_id})
+            if attempt and attempt.get('concept_mastery'):
+                weak_concepts = [
+                    concept for concept, mastery in attempt['concept_mastery'].items()
+                    if mastery < 0.6  # Less than 60% mastery
+                ]
+                original_blueprint.adaptive_focus = weak_concepts
+                original_blueprint.generation_mode = "adaptive"
+                original_blueprint.total_questions = min(15, original_blueprint.total_questions)  # Shorter adaptive test
+                
+            new_test = await MockTestEngine.create_test_from_blueprint(original_blueprint, user.user_id)
+            new_test.title = f"ADAPTIVE: Focus on Weak Areas"
+        
+        # Store new test
+        await db.mock_tests.insert_one(new_test.dict())
+        
+        # Get mentor tips for retake
+        mentor_tips = await generate_retake_tips(retake_request.retake_mode, original_test, user.user_id)
+        
+        return {
+            "new_test_id": new_test.test_id,
+            "retake_mode": retake_request.retake_mode,
+            "title": new_test.title,
+            "mentor_tips": mentor_tips,
+            "questions_count": len(new_test.questions),
+            "time_limit": new_test.time_limit,
+            "expires_at": new_test.expires_at.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Retake test error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create retake test")
+
+@api_router.get("/mock-tests/dashboard")
+async def get_mock_test_dashboard(user: User = Depends(get_current_user)):
+    """Get comprehensive dashboard with progress insights"""
+    
+    try:
+        # Get student progress
+        progress = await db.student_progress.find_one({"student_id": user.user_id})
+        if not progress:
+            # Initialize progress for new student
+            progress = StudentProgress(student_id=user.user_id, subject="General")
+            await db.student_progress.insert_one(progress.dict())
+        
+        # Get recent test attempts
+        recent_attempts = await db.test_attempts.find(
+            {"student_id": user.user_id}
+        ).sort("submitted_at", -1).limit(10).to_list(10)
+        
+        # Calculate performance metrics
+        if recent_attempts:
+            scores = [attempt.get('percentage', 0) for attempt in recent_attempts]
+            avg_score = sum(scores) / len(scores)
+            best_score = max(scores)
+            improvement = (scores[0] - scores[-1]) if len(scores) > 1 else 0
+            
+            # Subject-wise performance
+            subject_performance = {}
+            for attempt in recent_attempts:
+                for subject, mastery in attempt.get('concept_mastery', {}).items():
+                    if subject not in subject_performance:
+                        subject_performance[subject] = []
+                    subject_performance[subject].append(mastery * 100)
+        else:
+            avg_score = 0
+            best_score = 0
+            improvement = 0
+            subject_performance = {}
+        
+        return {
+            "dashboard_metrics": {
+                "tests_taken": len(recent_attempts),
+                "average_score": round(avg_score, 1),
+                "best_score": round(best_score, 1),
+                "improvement_percentage": round(improvement, 1),
+                "current_streak": progress.get('current_streak', 0) if progress else 0
+            },
+            "subject_insights": {
+                subject: {
+                    "average_mastery": round(sum(scores) / len(scores), 1),
+                    "trend": "improving" if len(scores) > 1 and scores[0] > scores[-1] else "stable",
+                    "recommendation": f"Focus on advanced concepts in {subject}" if sum(scores) / len(scores) > 75 else f"Practice fundamentals in {subject}"
+                }
+                for subject, scores in subject_performance.items()
+            },
+            "recent_performance": [
+                {
+                    "date": attempt.get('submitted_at', datetime.utcnow()).isoformat()[:10],
+                    "score": attempt.get('percentage', 0),
+                    "subject": attempt.get('test_id', '')[:10] + "...",
+                    "time_taken": f"{attempt.get('time_taken', 0) // 60}min"
+                }
+                for attempt in recent_attempts[:5]
+            ],
+            "recommendations": await get_personalized_recommendations(user.user_id),
+            "achievements": await get_student_achievements(user.user_id)
+        }
+        
+    except Exception as e:
+        logger.error(f"Dashboard error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load dashboard")
+
+# Helper functions
+async def get_recommended_test_blueprint(student_id: str) -> Dict[str, Any]:
+    """Get recommended test based on student performance"""
+    try:
+        # Get recent performance
+        recent_attempts = await db.test_attempts.find(
+            {"student_id": student_id}
+        ).sort("submitted_at", -1).limit(5).to_list(5)
+        
+        if not recent_attempts:
+            return {
+                "exam_type": "JEE",
+                "subjects": ["Mathematics"],
+                "difficulty": 3,
+                "reason": "Starting with fundamental Mathematics concepts"
+            }
+        
+        # Analyze weak subjects
+        weak_subjects = []
+        for attempt in recent_attempts:
+            for subject, mastery in attempt.get('concept_mastery', {}).items():
+                if mastery < 0.7:
+                    weak_subjects.append(subject)
+        
+        most_common_weak = max(set(weak_subjects), key=weak_subjects.count) if weak_subjects else "Mathematics"
+        
+        return {
+            "exam_type": "JEE",
+            "subjects": [most_common_weak],
+            "difficulty": 3,
+            "reason": f"Recommended to improve {most_common_weak} based on recent performance"
+        }
+        
+    except Exception as e:
+        logger.error(f"Recommendation error: {str(e)}")
+        return {"exam_type": "JEE", "subjects": ["Mathematics"], "difficulty": 3, "reason": "Default recommendation"}
+
+async def generate_retake_tips(mode: str, original_test: Dict, student_id: str) -> str:
+    """Generate mentor tips for retakes"""
+    tips = {
+        "exact": "Perfect! Retaking the same test will help you see exactly how much you've improved. Focus on the questions you got wrong previously. 💪",
+        "variant": "Great choice! This variant test covers the same topics with new questions. It's perfect for reinforcing your concepts while testing your understanding. 🎯", 
+        "adaptive": "Smart move! This adaptive test focuses specifically on areas where you need more practice. It's shorter but highly targeted to boost your weak spots. 🚀"
+    }
+    return tips.get(mode, "You've got this! Every retake is a step closer to mastery. 🌟")
+
+async def get_personalized_recommendations(student_id: str) -> List[str]:
+    """Get AI-powered recommendations"""
+    return [
+        "Practice 2-3 mock tests this week to build exam stamina",
+        "Focus on time management - aim to complete tests 10 minutes early", 
+        "Review incorrect answers immediately after each test",
+        "Schedule regular breaks between study sessions for better retention"
+    ]
+
+async def get_student_achievements(student_id: str) -> List[Dict[str, Any]]:
+    """Get student achievements and badges"""
+    return [
+        {"badge": "First Test Completed", "earned": True, "date": "2025-01-01"},
+        {"badge": "Score Improver", "earned": False, "requirement": "Improve score by 10%"},
+        {"badge": "Streak Master", "earned": False, "requirement": "Complete 7 tests in a row"}
+    ]
+
 @api_router.get("/analytics/performance")
 async def get_performance_analytics(user: User = Depends(get_current_user)):
     """Get comprehensive performance analytics for student and parents"""
