@@ -313,28 +313,29 @@ export default function Dashboard() {
               {analytics?.recent_progress?.length > 0 ? (
                 <div className="space-y-4">
                   {analytics.recent_progress.slice(0, 3).map((progress, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border-l-4 border-blue-500 hover:shadow-md transition-all duration-300">
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
                       <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <BookMarked className="h-5 w-5 text-blue-600" />
+                        <div className="p-2 bg-white rounded-lg border border-gray-200">
+                          <BookMarked className="h-4 w-4 text-gray-600" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-1">
+                          <h4 className="font-medium text-gray-900 mb-1">
                             {progress.subject} - {progress.chapter}
                           </h4>
                           <p className="text-sm text-gray-600 mb-1">{progress.concept}</p>
                           <div className="flex items-center space-x-3 text-xs text-gray-500">
-                            <span>📅 {new Date(progress.last_accessed).toLocaleDateString()}</span>
-                            <span>⏱️ {formatTime(progress.time_spent)}</span>
+                            <span>{new Date(progress.last_accessed).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span>{formatTime(progress.time_spent)}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{Math.round(progress.mastery_level)}%</div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-gray-900">{Math.round(progress.mastery_level)}%</div>
                           <Progress value={progress.mastery_level} className="w-16 h-2 mt-1" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
                       </div>
                     </div>
                   ))}
