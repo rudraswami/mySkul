@@ -2249,36 +2249,209 @@ async def get_enhanced_question_analysis(
         raise HTTPException(status_code=500, detail="Failed to provide enhanced analysis")
 # ============= AUTO-NOTE MENTOR API ENDPOINTS =============
 
+# ============= ENHANCED AUTO-NOTE MENTOR API ENDPOINTS =============
+
 @api_router.post("/auto-notes/start-session")
-async def start_note_session(
+async def start_enhanced_note_session(
     request: NoteSessionRequest,
     user: User = Depends(get_current_user)
 ):
-    """Start a new auto-note taking session"""
+    """Start a new enhanced auto-note session with multi-modal support"""
     
     try:
-        # Create new note session
-        session = NoteSession(
+        # Create enhanced auto-note session
+        session = AutoNoteSession(
             user_id=user.user_id,
-            title=request.title,
-            subject=request.subject
+            subject=request.subject,
+            session_name=request.title,
+            source_type="live",
+            status="active"
         )
         
         # Save to database
-        await db.note_sessions.insert_one(session.dict())
+        session_dict = prepare_for_mongo(session.dict())
+        await db.auto_note_sessions.insert_one(session_dict)
         
         return {
             "session_id": session.session_id,
-            "title": session.title,
+            "session_name": session.session_name,
             "subject": session.subject,
-            "start_time": session.start_time,
+            "source_type": session.source_type,
             "status": session.status,
-            "message": "Auto-Note session started successfully. Begin speaking or start your class recording."
+            "created_at": session.created_at.isoformat(),
+            "message": "🎤 Enhanced Auto-Note session started! Ready for live recording, file upload, or image capture.",
+            "supported_formats": ["audio (MP3, WAV)", "video (MP4)", "images (JPG, PNG)", "documents (PDF)"],
+            "features": ["Real-time transcription", "Topic cards", "Professor verification", "Auto flashcards"]
         }
         
     except Exception as e:
-        logger.error(f"Note session creation error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to start note session")
+        logger.error(f"Enhanced note session creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create enhanced note session")
+
+@api_router.post("/auto-notes/upload-audio")
+async def upload_and_process_audio(
+    session_id: str,
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user)
+):
+    """Upload and process audio file with Whisper transcription and AI analysis"""
+    
+    try:
+        # Validate file type
+        allowed_types = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'video/mp4']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.content_type}")
+        
+        # Get session
+        session_doc = await db.auto_note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        session = AutoNoteSession(**session_doc)
+        
+        # Read file content
+        file_content = await file.read()
+        
+        # Update session with file info
+        await db.auto_note_sessions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "status": "processing",
+                "source_type": "uploaded",
+                "audio_duration": len(file_content) / 1000000,  # Rough estimate
+                "processing_progress": 5
+            }}
+        )
+        
+        # Process audio through enhanced pipeline
+        processed_note = await auto_note_engine.process_audio_file(file_content, session)
+        
+        return {
+            "note_id": processed_note.note_id,
+            "session_id": session_id,
+            "processing_status": "completed",
+            "transcript_length": len(processed_note.transcript),
+            "topic_cards_count": len(processed_note.topic_cards),
+            "flashcards_generated": len(processed_note.flashcards),
+            "quiz_questions": len(processed_note.quiz_questions),
+            "concepts_learned": processed_note.concepts_learned,
+            "mentor_summary": processed_note.mentor_summary,
+            "message": "🎉 Audio processed successfully! Your enhanced notes are ready with topic cards, flashcards, and quizzes."
+        }
+        
+    except Exception as e:
+        logger.error(f"Audio upload processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+
+@api_router.get("/auto-notes/processed-note/{note_id}")
+async def get_processed_note(
+    note_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get processed note with topic cards, flashcards, and interactive features"""
+    
+    try:
+        # Get processed note
+        note_doc = await db.processed_notes.find_one({
+            "note_id": note_id,
+            "user_id": user.user_id
+        })
+        
+        if not note_doc:
+            raise HTTPException(status_code=404, detail="Processed note not found")
+        
+        # Clean ObjectId
+        clean_note = {k: v for k, v in note_doc.items() if k != '_id'}
+        processed_note = ProcessedNote(**clean_note)
+        
+        return {
+            "note_id": processed_note.note_id,
+            "session_id": processed_note.session_id,
+            "transcript": processed_note.transcript,
+            "mentor_summary": processed_note.mentor_summary,
+            "topic_cards": [
+                {
+                    "card_id": card.card_id,
+                    "heading": card.heading,
+                    "key_points": card.key_points,
+                    "formulas": card.formulas,
+                    "examples": card.examples,
+                    "confidence_score": card.confidence_score,
+                    "professor_verified": card.professor_verified,
+                    "syllabus_tags": card.syllabus_tags
+                }
+                for card in processed_note.topic_cards
+            ],
+            "interactive_features": {
+                "flashcards": processed_note.flashcards,
+                "quiz_questions": processed_note.quiz_questions,
+                "concepts_learned": processed_note.concepts_learned
+            },
+            "metadata": {
+                "created_at": processed_note.created_at.isoformat(),
+                "last_reviewed": processed_note.last_reviewed.isoformat() if processed_note.last_reviewed else None,
+                "total_cards": len(processed_note.topic_cards),
+                "verification_status": f"{sum(1 for card in processed_note.topic_cards if card.professor_verified)}/{len(processed_note.topic_cards)} verified"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Get processed note error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve processed note")
+
+@api_router.post("/auto-notes/generate-flashcards")
+async def generate_additional_flashcards(
+    note_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Generate additional flashcards from processed notes"""
+    
+    try:
+        # Get processed note
+        note_doc = await db.processed_notes.find_one({
+            "note_id": note_id,
+            "user_id": user.user_id
+        })
+        
+        if not note_doc:
+            raise HTTPException(status_code=404, detail="Note not found")
+        
+        processed_note = ProcessedNote(**{k: v for k, v in note_doc.items() if k != '_id'})
+        
+        # Generate more flashcards using Mentor AI
+        additional_flashcards = []
+        for card in processed_note.topic_cards:
+            for point in card.key_points:
+                additional_flashcards.append({
+                    "front": f"Explain: {point[:50]}...",
+                    "back": point,
+                    "topic": card.heading,
+                    "type": "detailed"
+                })
+        
+        # Update processed note with additional flashcards
+        all_flashcards = processed_note.flashcards + additional_flashcards
+        
+        await db.processed_notes.update_one(
+            {"note_id": note_id},
+            {"$set": {"flashcards": all_flashcards}}
+        )
+        
+        return {
+            "note_id": note_id,
+            "new_flashcards": len(additional_flashcards),
+            "total_flashcards": len(all_flashcards),
+            "flashcards": additional_flashcards,
+            "message": f"Generated {len(additional_flashcards)} additional flashcards for enhanced review!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Additional flashcard generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate additional flashcards")
 
 @api_router.post("/auto-notes/process-audio")
 async def process_audio_chunk(
