@@ -2152,6 +2152,10 @@ async def generate_mock_test(
             adaptive_focus=request.focus_areas
         )
         
+        # Store blueprint in database first
+        blueprint_dict = blueprint.dict()
+        await db.test_blueprints.insert_one(blueprint_dict)
+        
         # Create test using new architecture
         test = await MockTestEngine.create_test_from_blueprint(blueprint, user.user_id)
         
