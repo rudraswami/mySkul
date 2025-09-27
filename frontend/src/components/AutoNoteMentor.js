@@ -1127,9 +1127,28 @@ export default function AutoNoteMentor() {
               </div>
             </div>
           </div>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-lg mb-4">
             Turn every class into verified notes, flashcards and personalized prep — powered by trusted, hallucination-free AI
           </p>
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-center justify-center space-x-8">
+              <div className="text-center">
+                <div className="bg-blue-600 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center mx-auto mb-2">
+                  <Mic className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-semibold text-gray-800">Live Recording</p>
+                <p className="text-xs text-gray-600">Real-time sessions</p>
+              </div>
+              <div className="text-2xl text-gray-400">OR</div>
+              <div className="text-center">
+                <div className="bg-purple-600 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center mx-auto mb-2">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-semibold text-gray-800">File Upload</p>
+                <p className="text-xs text-gray-600">Independent processing</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Error Display */}
