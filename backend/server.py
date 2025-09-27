@@ -2512,7 +2512,7 @@ async def end_note_session(
     
     try:
         # Verify session exists and belongs to user
-        session_doc = await db.note_sessions.find_one({
+        session_doc = await db.auto_note_sessions.find_one({
             "session_id": session_id,
             "user_id": user.user_id
         })
@@ -2521,7 +2521,7 @@ async def end_note_session(
             raise HTTPException(status_code=404, detail="Session not found")
         
         # Update session status to processing
-        await db.note_sessions.update_one(
+        await db.auto_note_sessions.update_one(
             {"session_id": session_id},
             {"$set": {"status": "processing", "end_time": datetime.utcnow()}}
         )
