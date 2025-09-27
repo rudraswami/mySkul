@@ -119,10 +119,9 @@ export default function Dashboard() {
       </div>
       
       {/* Main Content */}
-      <div className="p-8 -mt-4 relative z-10">
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="p-8 -mt-4 relative z-10 space-y-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center">
