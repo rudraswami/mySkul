@@ -2634,7 +2634,7 @@ async def get_note_session(
     """Get complete note session with dual analysis"""
     
     try:
-        session_doc = await db.note_sessions.find_one({
+        session_doc = await db.auto_note_sessions.find_one({
             "session_id": session_id,
             "user_id": user.user_id
         })
