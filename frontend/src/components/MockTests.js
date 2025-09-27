@@ -344,7 +344,7 @@ Please check your internet connection and try again.
               await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
               continue;
             }
-            setGenerationError(`⚠️ Unexpected Error Occurred
+            const unexpectedMessage = `⚠️ Unexpected Error Occurred
 
 We encountered an issue generating your test. Our technical team has been notified.
 
