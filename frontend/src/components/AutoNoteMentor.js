@@ -42,6 +42,8 @@ export default function AutoNoteMentor() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   
   // Enhanced Notes & Features
   const [processedNote, setProcessedNote] = useState(null);
