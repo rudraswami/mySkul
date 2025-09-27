@@ -61,9 +61,9 @@ function AppContent() {
       {/* Protected Routes */}
       <Route path="/*" element={
         user ? (
-          <div className="flex h-screen bg-gray-50">
+          <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             <Navigation />
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm">
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/tutor" element={<AITutor />} />
