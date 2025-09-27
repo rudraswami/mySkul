@@ -1156,9 +1156,12 @@ export default function AutoNoteMentor() {
             <Card className="border-0 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
-                  Start New Auto-Note Session
+                  <Mic className="h-5 w-5 mr-2 text-blue-600" />
+                  Live Recording Session
                 </CardTitle>
+                <p className="text-sm text-gray-600 mt-2">
+                  Record live classes or study sessions in real-time
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
