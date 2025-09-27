@@ -217,13 +217,8 @@ export default function AutoNoteMentor() {
     if (fileInput) fileInput.value = '';
   };
   
-  // Enhanced file upload and processing
+  // Enhanced file upload and processing - STANDALONE (no session required)
   const handleFileUpload = async (file) => {
-    if (!currentSession) {
-      setError('Please start a session first');
-      return;
-    }
-    
     if (!file) {
       setError('Please select a file to upload');
       return;
