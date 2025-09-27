@@ -1839,6 +1839,15 @@ def main():
         ("🆕 Motivational Content", tester.test_motivational_content),
         ("🆕 Auth Validation", tester.test_integration_auth_validation),
         
+        # Auto-Note Mentor API Tests
+        ("📝 Auto-Note Start Session", tester.test_auto_note_start_session),
+        ("📝 Auto-Note Process Audio", tester.test_auto_note_process_audio),
+        ("📝 Auto-Note End Session", tester.test_auto_note_end_session),
+        ("📝 Auto-Note Get Session", tester.test_auto_note_get_session),
+        ("📝 Auto-Note List Sessions", tester.test_auto_note_list_sessions),
+        ("📝 Auto-Note Explain Point", tester.test_auto_note_explain_point),
+        ("📝 Auto-Note Generate Flashcards", tester.test_auto_note_generate_flashcards),
+        
         # Phase 2: Dual-Layer AI Scenario Implementations
         ("🚀 Phase 2: Mock Tests Dual Feedback", tester.test_mock_tests_dual_feedback_system),
         ("🚀 Phase 2: Study Planning Dual Intelligence", tester.test_study_planning_dual_intelligence),
