@@ -1245,9 +1245,12 @@ export default function AutoNoteMentor() {
             <Card className="border-0 shadow-md mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <FileText className="h-5 w-5 mr-2 text-purple-600" />
+                  <Upload className="h-5 w-5 mr-2 text-purple-600" />
                   Upload Audio/Video Files
                 </CardTitle>
+                <p className="text-sm text-gray-600 mt-2">
+                  Process existing recordings independently - no session required
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
