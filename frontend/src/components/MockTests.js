@@ -407,31 +407,54 @@ We encountered an issue generating your test. Our technical team has been notifi
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // If there's an active test, show the test interface
+  // Enhanced test interface with better UX
   if (activeTest) {
     const question = activeTest.questions[currentQuestion];
     const isLastQuestion = currentQuestion === activeTest.questions.length - 1;
+    const progress = ((currentQuestion + 1) / activeTest.questions.length) * 100;
+    const answered = Object.keys(answers).filter(id => answers[id] && answers[id].trim()).length;
 
     return (
-      <div className="p-8 bg-gray-50 min-h-screen">
-        {/* Test Header */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{activeTest.test_name}</h1>
-              <p className="text-gray-600">Question {currentQuestion + 1} of {activeTest.questions.length}</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Enhanced Test Header */}
+        <div className="bg-white border-b border-gray-200 shadow-lg">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-lg">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">{activeTest.test_name}</h1>
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <span>Question {currentQuestion + 1} of {activeTest.questions.length}</span>
+                    <span>•</span>
+                    <span className="text-green-600">✓ {answered} answered</span>
+                    <span>•</span>
+                    <span className="text-gray-500">⭕ {activeTest.questions.length - answered} remaining</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-3xl font-bold ${timeRemaining < 300 ? 'text-red-600 animate-pulse' : timeRemaining < 900 ? 'text-orange-500' : 'text-blue-600'}`}>
+                  {formatTime(timeRemaining)}
+                </div>
+                <p className="text-sm text-gray-500">Time Remaining</p>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-red-600">{formatTime(timeRemaining)}</div>
-              <p className="text-sm text-gray-500">Time Remaining</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all" 
-                style={{ width: `${((currentQuestion + 1) / activeTest.questions.length) * 100}%` }}
-              ></div>
+            
+            {/* Enhanced Progress Bar */}
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Progress: {progress.toFixed(0)}%</span>
+                <span>Total Marks: {activeTest.total_marks}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>
