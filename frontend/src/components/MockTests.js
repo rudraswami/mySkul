@@ -439,10 +439,15 @@ We encountered an issue generating your test. Our technical team has been notifi
       // Always cleanup and reset states
       console.log('Cleaning up mock test generation for button:', buttonId);
       
-      // Clear timeout
+      // Clear all timeouts
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
+      }
+      
+      if (emergencyTimeoutId) {
+        clearTimeout(emergencyTimeoutId);
+        emergencyTimeoutId = null;
       }
       
       // Only abort if not successful (avoid aborting successful requests)
