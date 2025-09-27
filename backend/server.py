@@ -2838,10 +2838,8 @@ async def get_user_note_sessions(user: User = Depends(get_current_user)):
             {"user_id": user.user_id}
         ).sort("created_at", -1).limit(50).to_list(50)
         
-        # Remove MongoDB ObjectIds
-        for session in sessions:
-            if "_id" in session:
-                del session["_id"]
+        # Remove MongoDB ObjectIds and handle datetime serialization
+        clean_sessions = [clean_mongodb_doc(session) for session in sessions]
         
         return {
             "sessions": sessions,
