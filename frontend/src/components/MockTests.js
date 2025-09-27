@@ -35,6 +35,10 @@ export default function MockTests() {
   const [generationError, setGenerationError] = useState(null);
   const [retryStatus, setRetryStatus] = useState(null);
   
+  // Performance optimization states
+  const [generationProgress, setGenerationProgress] = useState({});
+  const [estimatedTime, setEstimatedTime] = useState(null);
+  
   // Test execution states
   const [activeTest, setActiveTest] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
