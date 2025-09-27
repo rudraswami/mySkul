@@ -79,9 +79,19 @@ export default function RegisterPage() {
             <CardTitle className="text-2xl font-bold text-gray-900">
               Join Dhruv AI
             </CardTitle>
-            <p className="text-gray-600 mt-2">
-              Start your personalized learning journey today
+            <p className="text-gray-600 mt-2 max-w-md mx-auto">
+              Get verified, hallucination-free AI mentoring at a fraction of coaching costs
             </p>
+            <div className="flex justify-center items-center space-x-4 mt-4 text-xs">
+              <div className="flex items-center text-green-600">
+                <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                <span>Trusted by 50,000+ students</span>
+              </div>
+              <div className="flex items-center text-blue-600">
+                <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                <span>Hallucination-Free AI</span>
+              </div>
+            </div>
           </CardHeader>
 
           <CardContent>
