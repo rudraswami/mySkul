@@ -3541,7 +3541,7 @@ async def get_performance_analytics(user: User = Depends(get_current_user)):
             },
             "subject_performance": subject_performance,
             "weekly_progress": weekly_data,
-            "recent_tests": test_results[:5],
+            "recent_tests": clean_test_results[:5],
             "strengths": ["Time Management", "Problem Solving"] if score_trend and score_trend[0] > 75 else [],
             "areas_for_improvement": ["Accuracy", "Speed"] if score_trend and score_trend[0] < 50 else [],
             "parent_summary": {
