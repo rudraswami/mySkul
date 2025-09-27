@@ -399,93 +399,160 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions & Today's Plan */}
+        {/* Enhanced Right Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card className="border-0 shadow-md">
-            <CardHeader>
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center">
-                <Brain className="h-5 w-5 mr-2 text-purple-600" />
+                <Zap className="h-6 w-6 mr-3" />
                 Quick Actions
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="p-6 space-y-4">
               <Button 
-                className="w-full justify-start bg-blue-600 hover:bg-blue-700" 
+                className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                 onClick={() => window.location.href = '/tutor'}
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Start AI Tutoring
+                <Brain className="h-5 w-5 mr-3" />
+                <div className="text-left">
+                  <div className="font-semibold">AI Tutoring</div>
+                  <div className="text-xs text-blue-100">Get personalized help</div>
+                </div>
               </Button>
               
               <Button 
-                variant="outline" 
-                className="w-full justify-start" 
+                className="w-full justify-start bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                 onClick={() => window.location.href = '/tests'}
               >
-                <FileText className="h-4 w-4 mr-2" />
-                Take Mock Test
+                <FileText className="h-5 w-5 mr-3" />
+                <div className="text-left">
+                  <div className="font-semibold">Mock Test</div>
+                  <div className="text-xs text-green-100">Test your knowledge</div>
+                </div>
               </Button>
               
               <Button 
-                variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => window.location.href = '/notes'}
               >
-                <Calendar className="h-4 w-4 mr-2" />
-                View Study Plan
+                <BookMarked className="h-5 w-5 mr-3" />
+                <div className="text-left">
+                  <div className="font-semibold">Auto Notes</div>
+                  <div className="text-xs text-orange-100">AI-powered notes</div>
+                </div>
               </Button>
             </CardContent>
           </Card>
 
           {/* Today's Goals */}
-          <Card className="border-0 shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Target className="h-5 w-5 mr-2 text-green-600" />
-                Today's Goals
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Target className="h-6 w-6 mr-3" />
+                  Today's Goals
+                </div>
+                <Badge variant="secondary" className="bg-white/20 text-white">
+                  3/5
+                </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Study for 2 hours</span>
-                  <Progress value={60} className="w-20 h-2" />
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-gray-700">Study for 2 hours</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={75} className="w-16 h-2" />
+                    <span className="text-xs text-green-600 font-medium">75%</span>
+                  </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Complete 20 problems</span>
-                  <Progress value={35} className="w-20 h-2" />
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                  <div className="flex items-center space-x-3">
+                    <Circle className="h-5 w-5 text-yellow-600" />
+                    <span className="text-sm font-medium text-gray-700">Complete 20 problems</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={45} className="w-16 h-2" />
+                    <span className="text-xs text-yellow-600 font-medium">45%</span>
+                  </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Review weak areas</span>
-                  <Progress value={0} className="w-20 h-2" />
+                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <span className="text-sm font-medium text-gray-700">Review Chemistry</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Progress value={0} className="w-16 h-2" />
+                    <span className="text-xs text-red-600 font-medium">0%</span>
+                  </div>
                 </div>
               </div>
               
-              <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-800 font-medium">
-                  🎯 You're making great progress! Keep it up!
-                </p>
+              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
+                <div className="flex items-center space-x-3">
+                  <Trophy className="h-8 w-8 text-yellow-500" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Great progress today! 🎉</p>
+                    <p className="text-xs text-gray-600">You're 75% towards your daily goal</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Motivation Card */}
-          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50">
-            <CardContent className="p-6 text-center">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-                  <Brain className="h-8 w-8 text-blue-600" />
+          {/* Study Insights */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50">
+            <CardHeader>
+              <CardTitle className="flex items-center text-indigo-700">
+                <Lightbulb className="h-6 w-6 mr-3" />
+                Study Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Peak Study Time</p>
+                    <p className="text-xs text-gray-600">You're most focused at 9-11 AM</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Strength Subject</p>
+                    <p className="text-xs text-gray-600">Mathematics - 87% accuracy</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-3 bg-white/50 rounded-lg">
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <Target className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Focus Area</p>
+                    <p className="text-xs text-gray-600">Chemistry needs attention</p>
+                  </div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Daily Tip
-              </h3>
-              <p className="text-sm text-gray-600">
-                "Success is the sum of small efforts repeated day in and day out." 
-                Keep practicing consistently!
-              </p>
+              
+              <div className="mt-6 text-center">
+                <p className="text-sm font-semibold text-indigo-700 mb-2">💡 Today's Tip</p>
+                <p className="text-sm text-gray-600">
+                  {getMotivationalMessage()}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
