@@ -172,7 +172,17 @@ export default function LoginPage() {
 
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-2">Trusted by students across India</p>
+                  <p className="text-xs text-gray-500 mb-3">Trusted by 50,000+ students across India</p>
+                  <div className="flex justify-center items-center space-x-4 text-xs text-gray-600 mb-3">
+                    <div className="flex items-center">
+                      <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                      <span>Hallucination-Free AI</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                      <span>Verified Content</span>
+                    </div>
+                  </div>
                   <div className="flex justify-center space-x-8 text-xs text-gray-400">
                     <span>JEE • NEET • UPSC</span>
                   </div>
