@@ -159,11 +159,11 @@
 ## frontend:
   - task: "Enhanced Mock Tests UI"
     implemented: true
-    working: false
+    working: true
     file: "MockTests.js"
     stuck_count: 4
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         -working: true
         -agent: "main"
