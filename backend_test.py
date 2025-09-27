@@ -1144,6 +1144,300 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= AUTO-NOTE MENTOR API TESTS =============
+
+    def test_auto_note_start_session(self):
+        """Test starting a new auto-note session"""
+        if not self.token:
+            print("❌ No token available for auto-note session test")
+            return False
+        
+        print("   Testing auto-note session start...")
+        
+        session_data = {
+            "title": "Physics Class - Electromagnetic Induction",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Start Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            self.note_session_id = response['session_id']
+            print(f"   ✅ Session started: {self.note_session_id}")
+            print(f"   Title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            return True
+        
+        return False
+
+    def test_auto_note_process_audio(self):
+        """Test processing audio transcription chunks"""
+        if not self.token or not hasattr(self, 'note_session_id'):
+            print("❌ No token or session ID available for audio processing test")
+            return False
+        
+        print("   Testing audio chunk processing...")
+        
+        # Test multiple audio chunks
+        audio_chunks = [
+            {
+                "session_id": self.note_session_id,
+                "transcription": "Today we will learn about electromagnetic induction and Faraday's law",
+                "timestamp": 0.0,
+                "sequence_number": 1,
+                "confidence": 0.95
+            },
+            {
+                "session_id": self.note_session_id,
+                "transcription": "The formula for electromagnetic induction is EMF equals negative dPhi by dt",
+                "timestamp": 15.5,
+                "sequence_number": 2,
+                "confidence": 0.92
+            },
+            {
+                "session_id": self.note_session_id,
+                "transcription": "This principle is fundamental to understanding how generators and transformers work",
+                "timestamp": 30.2,
+                "sequence_number": 3,
+                "confidence": 0.88
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, chunk_data in enumerate(audio_chunks):
+            print(f"   Processing audio chunk {i+1}/3...")
+            
+            success, response = self.run_test(
+                f"Process Audio Chunk {i+1}",
+                "POST",
+                "auto-notes/process-audio",
+                200,
+                data=chunk_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Chunk {i+1} processed")
+                print(f"   Concepts detected: {len(response.get('concepts_detected', []))}")
+                print(f"   Transcription preview: {response.get('transcription_preview', 'N/A')[:50]}...")
+                success_count += 1
+            else:
+                print(f"   ❌ Chunk {i+1} processing failed")
+            
+            time.sleep(1)  # Small delay between chunks
+        
+        return success_count == len(audio_chunks)
+
+    def test_auto_note_end_session(self):
+        """Test ending auto-note session and generating structured notes"""
+        if not self.token or not hasattr(self, 'note_session_id'):
+            print("❌ No token or session ID available for ending session test")
+            return False
+        
+        print("   Testing auto-note session completion...")
+        print("   This may take 10-15 seconds for dual AI analysis...")
+        
+        success, response = self.run_test(
+            "Auto-Note End Session",
+            "POST",
+            f"auto-notes/end-session?session_id={self.note_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Session completed")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            print(f"   Duration: {response.get('duration_minutes', 0):.1f} minutes")
+            
+            # Check structured notes
+            structured_notes = response.get('structured_notes', {})
+            print(f"   Key concepts: {len(structured_notes.get('key_concepts', []))}")
+            print(f"   Important points: {len(structured_notes.get('important_points', []))}")
+            print(f"   Formulas mentioned: {len(structured_notes.get('formulas_mentioned', []))}")
+            
+            # Check dual analysis
+            dual_analysis = response.get('dual_analysis', {})
+            professor_analysis = dual_analysis.get('professor_analysis', {})
+            mentor_guidance = dual_analysis.get('mentor_guidance', {})
+            
+            print(f"   Professor analysis: {'✓' if professor_analysis.get('content') else '✗'}")
+            print(f"   Mentor guidance: {'✓' if mentor_guidance.get('content') else '✗'}")
+            
+            # Check summary
+            summary = response.get('summary', {})
+            print(f"   Note quality: {summary.get('note_quality', 'N/A')}")
+            
+            return True
+        
+        return False
+
+    def test_auto_note_get_session(self):
+        """Test retrieving auto-note session details"""
+        if not self.token or not hasattr(self, 'note_session_id'):
+            print("❌ No token or session ID available for get session test")
+            return False
+        
+        print("   Testing auto-note session retrieval...")
+        
+        success, response = self.run_test(
+            "Get Auto-Note Session",
+            "GET",
+            f"auto-notes/{self.note_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Session retrieved")
+            print(f"   Session ID: {response.get('session_id', 'N/A')}")
+            print(f"   Title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            print(f"   Has transcription: {'Yes' if response.get('transcription') else 'No'}")
+            print(f"   Has structured notes: {'Yes' if response.get('structured_notes') else 'No'}")
+            print(f"   Has dual analysis: {'Yes' if response.get('dual_analysis') else 'No'}")
+            return True
+        
+        return False
+
+    def test_auto_note_list_sessions(self):
+        """Test listing all auto-note sessions"""
+        if not self.token:
+            print("❌ No token available for list sessions test")
+            return False
+        
+        print("   Testing auto-note sessions listing...")
+        
+        success, response = self.run_test(
+            "List Auto-Note Sessions",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            total_sessions = response.get('total_sessions', 0)
+            active_sessions = response.get('active_sessions', 0)
+            
+            print(f"   ✅ Sessions listed")
+            print(f"   Total sessions: {total_sessions}")
+            print(f"   Active sessions: {active_sessions}")
+            print(f"   Sessions returned: {len(sessions)}")
+            
+            # Check session structure
+            if sessions:
+                sample_session = sessions[0]
+                required_fields = ['session_id', 'title', 'subject', 'status', 'created_at']
+                missing_fields = [field for field in required_fields if field not in sample_session]
+                if missing_fields:
+                    print(f"   ⚠️  Missing session fields: {missing_fields}")
+                else:
+                    print(f"   ✅ Session structure validated")
+            
+            return True
+        
+        return False
+
+    def test_auto_note_explain_point(self):
+        """Test explaining specific note points"""
+        if not self.token or not hasattr(self, 'note_session_id'):
+            print("❌ No token or session ID available for explain point test")
+            return False
+        
+        print("   Testing auto-note point explanation...")
+        print("   This may take 5-10 seconds for dual AI explanation...")
+        
+        explain_data = {
+            "session_id": self.note_session_id,
+            "point_reference": "concept_1",
+            "additional_context": "I need more details about electromagnetic induction"
+        }
+        
+        success, response = self.run_test(
+            "Explain Note Point",
+            "POST",
+            "auto-notes/explain-point",
+            200,
+            data=explain_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            explanation = response.get('explanation', {})
+            professor_explanation = explanation.get('professor_explanation', {})
+            mentor_guidance = explanation.get('mentor_guidance', {})
+            
+            print(f"   ✅ Point explanation received")
+            print(f"   Professor explanation: {'✓' if professor_explanation.get('content') else '✗'}")
+            print(f"   Mentor guidance: {'✓' if mentor_guidance.get('content') else '✗'}")
+            print(f"   Related concepts: {len(response.get('related_concepts', []))}")
+            print(f"   Study tip: {'✓' if response.get('study_tip') else '✗'}")
+            
+            return True
+        
+        return False
+
+    def test_auto_note_generate_flashcards(self):
+        """Test generating flashcards from notes"""
+        if not self.token or not hasattr(self, 'note_session_id'):
+            print("❌ No token or session ID available for flashcard generation test")
+            return False
+        
+        print("   Testing auto-note flashcard generation...")
+        print("   This may take 5-10 seconds for AI flashcard creation...")
+        
+        flashcard_data = {
+            "session_id": self.note_session_id,
+            "specific_concepts": ["electromagnetic induction", "Faraday's law"]
+        }
+        
+        success, response = self.run_test(
+            "Generate Flashcards",
+            "POST",
+            "auto-notes/generate-flashcards",
+            200,
+            data=flashcard_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            flashcards_generated = response.get('flashcards_generated', 0)
+            flashcards = response.get('flashcards', [])
+            ai_insights = response.get('ai_insights', {})
+            
+            print(f"   ✅ Flashcards generated: {flashcards_generated}")
+            print(f"   Flashcards returned: {len(flashcards)}")
+            print(f"   Professor review: {'✓' if ai_insights.get('professor_review') else '✗'}")
+            print(f"   Mentor encouragement: {'✓' if ai_insights.get('mentor_encouragement') else '✗'}")
+            print(f"   Study recommendation: {'✓' if response.get('study_recommendation') else '✗'}")
+            
+            # Check flashcard structure
+            if flashcards:
+                sample_card = flashcards[0]
+                required_fields = ['card_id', 'question', 'answer', 'concept', 'difficulty_level']
+                missing_fields = [field for field in required_fields if field not in sample_card]
+                if missing_fields:
+                    print(f"   ⚠️  Missing flashcard fields: {missing_fields}")
+                else:
+                    print(f"   ✅ Flashcard structure validated")
+                    print(f"   Sample question: {sample_card.get('question', '')[:50]}...")
+            
+            return True
+        
+        return False
+
     # ============= DUAL-LAYER AI SYSTEM TESTS =============
 
     def test_scenario_classification(self):
