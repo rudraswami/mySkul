@@ -172,6 +172,37 @@ export default function AutoNoteMentor() {
       setLoading(false);
     }
   };
+
+  // File Selection and Handling
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      setSelectedFile(file);
+      handleFileUpload(file);
+    }
+  };
   
   // Enhanced file upload and processing
   const handleFileUpload = async (file) => {
