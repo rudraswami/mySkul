@@ -201,9 +201,28 @@ export default function MockTests() {
             if (controller && !controller.signal.aborted) {
               controller.abort();
             }
-          }, 50000); // 50 seconds timeout
+          }, 30000); // Reduced to 30 seconds with optimizations
 
-          console.log(`Attempt ${attempts + 1}: Starting mock test generation for ${subject}`);
+          console.log(`Attempt ${attempts + 1}: Starting optimized mock test generation for ${subject}`);
+          
+          // Progress updates during generation
+          const progressUpdates = [
+            { delay: 1000, progress: 25, stage: 'Analyzing subject patterns...' },
+            { delay: 3000, progress: 50, stage: 'Generating AI questions...' },
+            { delay: 8000, progress: 75, stage: 'Verifying accuracy...' },
+            { delay: 12000, progress: 90, stage: 'Finalizing test...' }
+          ];
+          
+          progressUpdates.forEach(update => {
+            setTimeout(() => {
+              if (loadingStates[buttonId]) {
+                setGenerationProgress(prev => ({
+                  ...prev,
+                  [buttonId]: { progress: update.progress, stage: update.stage }
+                }));
+              }
+            }, update.delay);
+          });
           
           const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
             method: 'POST',
