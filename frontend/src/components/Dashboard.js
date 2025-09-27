@@ -38,20 +38,36 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [motivationalContent, setMotivationalContent] = useState(null);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await axios.get(`${API}/dashboard/analytics`);
-        setAnalytics(response.data);
+        const token = localStorage.getItem('dhruv_ai_token');
+        if (!token) return;
+
+        // Fetch analytics and motivational content in parallel
+        const [analyticsResponse, motivationalResponse] = await Promise.all([
+          axios.get(`${API}/dashboard/analytics`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API}/wellness/motivational-content`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => null) // Don't fail if motivational content fails
+        ]);
+
+        setAnalytics(analyticsResponse.data);
+        if (motivationalResponse) {
+          setMotivationalContent(motivationalResponse.data);
+        }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error);
+        console.error('Failed to fetch dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnalytics();
+    fetchDashboardData();
   }, []);
 
   const formatTime = (minutes) => {
@@ -59,6 +75,28 @@ export default function Dashboard() {
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
+
+  const calculateExamCountdown = () => {
+    if (!user?.target_year) return null;
+    const targetDate = new Date(`${user.target_year}-05-01`); // Assume JEE is in May
+    const today = new Date();
+    const diffTime = targetDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const getMotivationalMessage = () => {
+    const messages = [
+      "Every expert was once a beginner. Keep pushing forward! 🚀",
+      "Your dedication today builds tomorrow's success! ⭐",
+      "Small consistent actions lead to remarkable results! 💪",
+      "You're closer to your goal than you were yesterday! 🎯",
+      "Great students aren't made in comfort zones! 🔥"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const examCountdown = calculateExamCountdown();
 
   if (loading) {
     return (
