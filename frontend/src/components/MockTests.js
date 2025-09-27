@@ -1152,22 +1152,29 @@ We encountered an issue generating your test. Our technical team has been notifi
                       
                       <div className="ml-4">
                         <Button 
-                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
                           size="sm"
                           onClick={() => {
                             const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
                             const diffLevel = difficultyMap[template.difficulty] || 3;
-                            generateMockTest(template.examType, template.subject, diffLevel, template.questions);
+                            generateMockTest(template.examType, template.subject, diffLevel, template.questions, `template-${template.id}`);
                           }}
-                          disabled={isGeneratingTest}
+                          disabled={loadingStates[`template-${template.id}`]}
                         >
-                          {isGeneratingTest ? (
+                          {loadingStates[`template-${template.id}`] ? (
                             <>
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
                               Generating...
                             </>
                           ) : (
-                            'Generate Test'
+                            <>
+                              Generate Test
+                              {testCache.has(getCacheKey(template.examType, template.subject, difficultyMap[template.difficulty] || 3, template.questions)) && (
+                                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
+                                  ⚡
+                                </span>
+                              )}
+                            </>
                           )}
                         </Button>
                       </div>
