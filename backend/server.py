@@ -1261,7 +1261,7 @@ async def process_audio_chunk(
 
 @api_router.post("/auto-notes/end-session")
 async def end_note_session(
-    session_id: str,
+    session_id: str = None,
     user: User = Depends(get_current_user)
 ):
     """End note session and generate structured notes with dual AI analysis"""
