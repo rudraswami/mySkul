@@ -459,11 +459,15 @@ def cleanup_expired_cache():
 
 def prepare_for_mongo(data: dict) -> dict:
     """Prepare data for MongoDB storage by handling datetime serialization"""
+    from bson import ObjectId
+    
     if isinstance(data, dict):
         result = {}
         for key, value in data.items():
             if isinstance(value, datetime):
                 result[key] = value
+            elif isinstance(value, ObjectId):
+                result[key] = str(value)  # Convert ObjectId to string
             elif isinstance(value, dict):
                 result[key] = prepare_for_mongo(value)
             elif isinstance(value, list):
@@ -471,6 +475,8 @@ def prepare_for_mongo(data: dict) -> dict:
             else:
                 result[key] = value
         return result
+    elif isinstance(data, ObjectId):
+        return str(data)
     return data
 
 # ============= MOCK TEST BUSINESS LOGIC =============
