@@ -56,15 +56,26 @@ export default function MockTests() {
   // Difficulty mapping for consistent use
   const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
 
+  // Global cleanup utility to reset all stuck states
+  const emergencyResetAllStates = () => {
+    console.log('EMERGENCY: Resetting all loading states');
+    setLoadingStates({});
+    setGenerationError(null);
+    setRetryStatus(null);
+    setGenerationProgress({});
+    setEstimatedTime(null);
+  };
+
   // Cleanup on component unmount
   useEffect(() => {
     return () => {
       // Reset states on cleanup to prevent memory leaks
-      setLoadingStates({});
-      setGenerationError(null);
-      setRetryStatus(null);
+      emergencyResetAllStates();
     };
   }, []);
+
+  // Global emergency reset button (for debugging)
+  window.dhruvAI_emergencyReset = emergencyResetAllStates;
 
   useEffect(() => {
     loadAnalytics();
