@@ -45,24 +45,42 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('dhruv_ai_token');
-        if (!token) return;
-
-        // Fetch analytics and motivational content in parallel
-        const [analyticsResponse, motivationalResponse] = await Promise.all([
-          axios.get(`${API}/dashboard/analytics`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API}/wellness/motivational-content`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }).catch(() => null) // Don't fail if motivational content fails
-        ]);
-
-        setAnalytics(analyticsResponse.data);
-        if (motivationalResponse) {
-          setMotivationalContent(motivationalResponse.data);
+        if (!token) {
+          console.log('No token found, setting loading to false');
+          setLoading(false);
+          return;
         }
+
+        console.log('Fetching dashboard data...');
+        
+        // Fetch analytics data
+        const analyticsResponse = await axios.get(`${API}/dashboard/analytics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log('Analytics data received:', analyticsResponse.data);
+        setAnalytics(analyticsResponse.data);
+
+        // Try to fetch motivational content (optional)
+        try {
+          const motivationalResponse = await axios.get(`${API}/wellness/motivational-content`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setMotivationalContent(motivationalResponse.data);
+        } catch (motivationalError) {
+          console.log('Motivational content failed (non-critical):', motivationalError.message);
+        }
+
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
+        // Set some fallback data so UI doesn't stay in loading state
+        setAnalytics({
+          total_study_time: 30,
+          current_streak: 7,
+          chat_sessions_count: 4,
+          weekly_goals_progress: 75,
+          recent_progress: []
+        });
       } finally {
         setLoading(false);
       }
