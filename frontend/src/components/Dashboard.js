@@ -85,34 +85,40 @@ export default function Dashboard() {
               </div>
             </div>
             
-            {/* Achievement Highlights */}
+            {/* Brand Pillars Highlights */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
               <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
-                  <Target className="h-6 w-6 text-yellow-300" />
+                  <div className="h-8 w-8 bg-green-400 rounded-full flex items-center justify-center">
+                    <span className="text-green-900 text-sm font-bold">✓</span>
+                  </div>
                   <div>
-                    <div className="text-2xl font-bold">Coming Soon</div>
-                    <div className="text-blue-100 text-sm">Daily Streak</div>
+                    <div className="text-xl font-bold">Trust</div>
+                    <div className="text-blue-100 text-sm">Hallucination-free, verified AI</div>
                   </div>
                 </div>
               </div>
               
               <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
-                  <TrendingUp className="h-6 w-6 text-green-300" />
+                  <div className="h-8 w-8 bg-purple-400 rounded-full flex items-center justify-center">
+                    <span className="text-purple-900 text-sm font-bold">♥</span>
+                  </div>
                   <div>
-                    <div className="text-2xl font-bold">Ready</div>
-                    <div className="text-blue-100 text-sm">AI Tutor Status</div>
+                    <div className="text-xl font-bold">Personalisation</div>
+                    <div className="text-blue-100 text-sm">Adaptive, one-to-one mentoring</div>
                   </div>
                 </div>
               </div>
               
               <div className="bg-white/15 backdrop-blur-lg rounded-xl p-4 border border-white/20">
                 <div className="flex items-center space-x-3">
-                  <BookOpen className="h-6 w-6 text-blue-300" />
+                  <div className="h-8 w-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-900 text-sm font-bold">⚡</span>
+                  </div>
                   <div>
-                    <div className="text-2xl font-bold">Start Learning</div>
-                    <div className="text-blue-100 text-sm">Begin Your Journey</div>
+                    <div className="text-xl font-bold">Empowerment</div>
+                    <div className="text-blue-100 text-sm">Affordable, independent success</div>
                   </div>
                 </div>
               </div>
