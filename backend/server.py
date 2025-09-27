@@ -593,7 +593,7 @@ class MockTestEngine:
         )
         
         # Store test in database
-        test_dict = test.dict()
+        test_dict = prepare_for_mongo(test.dict())
         await db.mock_tests.insert_one(test_dict)
         
         # Cache the test
