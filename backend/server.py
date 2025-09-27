@@ -2181,24 +2181,36 @@ async def generate_mock_test(
         # Create test using new architecture
         test = await MockTestEngine.create_test_from_blueprint(blueprint, user.user_id)
         
-        # Get questions for the test
+        # Get questions for the test - simplified to avoid serialization issues
         questions_data = []
         for question_id in test.questions:
             question_doc = await db.questions.find_one({"question_id": question_id})
             if question_doc:
-                questions_data.append(Question(**question_doc))
+                # Remove MongoDB ObjectId and prepare for JSON serialization
+                clean_question = {
+                    "question_id": question_doc.get("question_id"),
+                    "question_text": question_doc.get("question_text"),
+                    "options": question_doc.get("options", []),
+                    "correct_answer": question_doc.get("correct_answer"),
+                    "explanation": question_doc.get("explanation"),
+                    "subject": question_doc.get("subject"),
+                    "chapter": question_doc.get("chapter"),
+                    "difficulty_level": question_doc.get("difficulty_level", 3),
+                    "marks": question_doc.get("marks", 4)
+                }
+                questions_data.append(clean_question)
         
-        # Return enhanced test data
+        # Return simplified test data  
         return {
             "test_id": test.test_id,
             "test_name": test.title,
             "description": test.description,
-            "questions": [q.dict() for q in questions_data],
+            "questions": questions_data,
             "total_marks": test.total_marks,
             "time_limit": test.time_limit,
             "mentor_tips": test.mentor_pre_tips,
             "cache_status": "generated" if not cached_test else "cached",
-            "expires_at": test.expires_at.isoformat(),
+            "expires_at": test.expires_at.isoformat() if test.expires_at else None,
             "generation_mode": blueprint.generation_mode
         }
         
