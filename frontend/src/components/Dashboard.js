@@ -416,44 +416,46 @@ export default function Dashboard() {
         {/* Enhanced Right Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
-              <CardTitle className="flex items-center">
-                <Zap className="h-6 w-6 mr-3" />
+          <Card className="border border-gray-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center text-gray-900">
+                <Zap className="h-5 w-5 mr-3 text-blue-600" />
                 Quick Actions
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-3">
               <Button 
-                className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white" 
                 onClick={() => window.location.href = '/tutor'}
               >
-                <Brain className="h-5 w-5 mr-3" />
+                <Brain className="h-4 w-4 mr-3" />
                 <div className="text-left">
-                  <div className="font-semibold">AI Tutoring</div>
+                  <div className="font-medium">AI Tutoring</div>
                   <div className="text-xs text-blue-100">Get personalized help</div>
                 </div>
               </Button>
               
               <Button 
-                className="w-full justify-start bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                variant="outline"
+                className="w-full justify-start border-gray-300 hover:bg-gray-50" 
                 onClick={() => window.location.href = '/tests'}
               >
-                <FileText className="h-5 w-5 mr-3" />
+                <FileText className="h-4 w-4 mr-3 text-gray-600" />
                 <div className="text-left">
-                  <div className="font-semibold">Mock Test</div>
-                  <div className="text-xs text-green-100">Test your knowledge</div>
+                  <div className="font-medium text-gray-900">Mock Test</div>
+                  <div className="text-xs text-gray-600">Test your knowledge</div>
                 </div>
               </Button>
               
               <Button 
-                className="w-full justify-start bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                variant="outline"
+                className="w-full justify-start border-gray-300 hover:bg-gray-50"
                 onClick={() => window.location.href = '/notes'}
               >
-                <BookMarked className="h-5 w-5 mr-3" />
+                <BookMarked className="h-4 w-4 mr-3 text-gray-600" />
                 <div className="text-left">
-                  <div className="font-semibold">Auto Notes</div>
-                  <div className="text-xs text-orange-100">AI-powered notes</div>
+                  <div className="font-medium text-gray-900">Auto Notes</div>
+                  <div className="text-xs text-gray-600">AI-powered notes</div>
                 </div>
               </Button>
             </CardContent>
