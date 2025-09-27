@@ -74,10 +74,6 @@ export default function AutoNoteMentor() {
   const [newSessionTitle, setNewSessionTitle] = useState('');
   const [newSessionSubject, setNewSessionSubject] = useState('Mathematics');
   
-  // Error & Loading
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  
   // Refs
   const mediaRecorderRef = useRef(null);
   const recordingTimerRef = useRef(null);
