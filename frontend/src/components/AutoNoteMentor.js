@@ -253,10 +253,42 @@ export default function AutoNoteMentor() {
     
     try {
       const token = localStorage.getItem('dhruv_ai_token');
+      
+      // Create a temporary session for file upload if none exists
+      let sessionId = currentSession?.session_id;
+      
+      if (!sessionId) {
+        console.log('Creating temporary session for file upload...');
+        setProcessingProgress(5);
+        
+        const sessionResponse = await fetch(`${API}/auto-notes/start-session`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: `File Upload - ${file.name}`,
+            subject: 'General' // Default subject for file uploads
+          })
+        });
+        
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          sessionId = sessionData.session_id;
+          setCurrentSession(sessionData); // Store the created session
+          console.log('Temporary session created:', sessionId);
+        } else {
+          throw new Error('Failed to create session for file upload');
+        }
+      }
+      
+      setProcessingProgress(15);
+      
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`${API}/auto-notes/upload-audio?session_id=${currentSession.session_id}`, {
+      const response = await fetch(`${API}/auto-notes/upload-audio?session_id=${sessionId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
