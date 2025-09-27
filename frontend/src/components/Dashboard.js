@@ -462,60 +462,60 @@ export default function Dashboard() {
           </Card>
 
           {/* Today's Goals */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-              <CardTitle className="flex items-center justify-between">
+          <Card className="border border-gray-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center justify-between text-gray-900">
                 <div className="flex items-center">
-                  <Target className="h-6 w-6 mr-3" />
+                  <Target className="h-5 w-5 mr-3 text-blue-600" />
                   Today's Goals
                 </div>
-                <Badge variant="secondary" className="bg-white/20 text-white">
-                  3/5
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  2/3
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <span className="text-sm font-medium text-gray-700">Study for 2 hours</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Progress value={75} className="w-16 h-2" />
-                    <span className="text-xs text-green-600 font-medium">75%</span>
+                    <span className="text-xs text-gray-600 font-medium">75%</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <Circle className="h-5 w-5 text-yellow-600" />
+                    <Circle className="h-4 w-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-700">Complete 20 problems</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Progress value={45} className="w-16 h-2" />
-                    <span className="text-xs text-yellow-600 font-medium">45%</span>
+                    <span className="text-xs text-gray-600 font-medium">45%</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <Circle className="h-4 w-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-700">Review Chemistry</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Progress value={0} className="w-16 h-2" />
-                    <span className="text-xs text-red-600 font-medium">0%</span>
+                    <span className="text-xs text-gray-600 font-medium">0%</span>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center space-x-3">
-                  <Trophy className="h-8 w-8 text-yellow-500" />
+                  <Trophy className="h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Great progress today! 🎉</p>
-                    <p className="text-xs text-gray-600">You're 75% towards your daily goal</p>
+                    <p className="text-sm font-medium text-gray-900">Good progress today!</p>
+                    <p className="text-xs text-gray-600">Keep up the consistent effort</p>
                   </div>
                 </div>
               </div>
