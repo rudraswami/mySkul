@@ -1076,11 +1076,32 @@ export default function AutoNoteMentor() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🎤 Auto-Note Mentor
-          </h1>
-          <p className="text-gray-600">
-            Revolutionary AI that listens to your classes and creates structured notes with dual intelligence
+          <div className="flex items-center mb-4">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
+              <Mic className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                Auto-Note Mentor
+              </h1>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center text-sm text-green-600">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                  <span>Hallucination-Free</span>
+                </div>
+                <div className="flex items-center text-sm text-blue-600">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                  <span>Verified Notes</span>
+                </div>
+                <div className="flex items-center text-sm text-purple-600">
+                  <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
+                  <span>Dual AI Intelligence</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-gray-600 text-lg">
+            Turn every class into verified notes, flashcards and personalized prep — powered by trusted, hallucination-free AI
           </p>
         </div>
 
