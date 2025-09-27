@@ -344,6 +344,7 @@
     - "Phase 2: Mock Tests Dual Feedback"
     - "Phase 2: Study Planning Dual Intelligence"
     - "Phase 2: Enhanced Question Analysis"
+    - "Auto-Note Mentor File Upload Feature"
   stuck_tasks:
     - "Enhanced Mock Tests UI"
   test_all: true
