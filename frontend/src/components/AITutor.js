@@ -324,12 +324,27 @@ export default function AITutor() {
                 </div>
                 
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Welcome to Dhruv AI - Dual Intelligence System!
+                  Welcome to Your Trusted, Hallucination-Free AI Tutor!
                 </h3>
                 
-                <p className="text-gray-600 mb-6 max-w-lg mx-auto">
-                  Experience revolutionary dual-layer AI for {selectedSubject}. Our system combines:
+                <p className="text-gray-600 mb-4 max-w-lg mx-auto">
+                  Experience personalized, verified AI tutoring for {selectedSubject} at a fraction of coaching costs. Our dual intelligence ensures:
                 </p>
+                
+                <div className="flex justify-center items-center space-x-6 mb-6 text-sm">
+                  <div className="flex items-center text-green-600">
+                    <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                    <span>Zero Hallucinations</span>
+                  </div>
+                  <div className="flex items-center text-blue-600">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                    <span>Verified Accuracy</span>
+                  </div>
+                  <div className="flex items-center text-purple-600">
+                    <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
+                    <span>Personalized Learning</span>
+                  </div>
+                </div>
 
                 <div className="flex justify-center space-x-6 mb-8">
                   <div className="text-center">
