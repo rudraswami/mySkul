@@ -1480,10 +1480,16 @@ async def get_progress_summary(user: User = Depends(get_current_user)):
 async def get_dashboard_analytics(user: User = Depends(get_current_user)):
     """Get comprehensive analytics for dashboard"""
     
-    # Get recent activity
-    recent_progress = await db.study_progress.find(
+    # Get recent activity with ObjectId handling
+    recent_progress_docs = await db.study_progress.find(
         {"user_id": user.user_id}
     ).sort("last_accessed", -1).limit(5).to_list(5)
+    
+    # Clean ObjectId fields
+    recent_progress = []
+    for progress in recent_progress_docs:
+        clean_progress = {k: v for k, v in progress.items() if k != '_id'}
+        recent_progress.append(clean_progress)
     
     # Get chat sessions count
     chat_sessions_count = await db.chat_sessions.count_documents(
