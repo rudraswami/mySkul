@@ -32,21 +32,28 @@ const API = `${BACKEND_URL}/api`;
 export default function AutoNoteMentor() {
   const { user } = useAuth();
   
-  // Session Management
+  // Enhanced Session Management
   const [currentSession, setCurrentSession] = useState(null);
-  const [sessionStatus, setSessionStatus] = useState('idle'); // idle, recording, processing, completed
+  const [sessionStatus, setSessionStatus] = useState('idle'); // idle, recording, processing, completed, uploading
   const [sessions, setSessions] = useState([]);
   
-  // Recording State
+  // Enhanced Recording & Upload State
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioChunks, setAudioChunks] = useState([]);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
   
-  // Transcription & Notes
-  const [liveTranscript, setLiveTranscript] = useState('');
-  const [conceptsDetected, setConceptsDetected] = useState([]);
-  const [generatedNotes, setGeneratedNotes] = useState(null);
-  const [dualAnalysis, setDualAnalysis] = useState(null);
+  // Enhanced Notes & Features
+  const [processedNote, setProcessedNote] = useState(null);
+  const [topicCards, setTopicCards] = useState([]);
+  const [flashcards, setFlashcards] = useState([]);
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [mentorSummary, setMentorSummary] = useState('');
+  
+  // UI State
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [activeView, setActiveView] = useState('home'); // home, notes, flashcards, quiz
   
   // Interactive Features
   const [selectedNotes, setSelectedNotes] = useState(null);
