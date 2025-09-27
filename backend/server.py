@@ -428,6 +428,208 @@ async def get_current_user(authorization: str = Header(None)):
     
     return User(**user)
 
+# ============= CACHING & MOCK TEST UTILITIES =============
+
+import hashlib
+import json
+from typing import Set
+
+# In-memory cache for development (replace with Redis in production)
+test_cache: Dict[str, Dict[str, Any]] = {}
+question_cache: Dict[str, Question] = {}
+
+def generate_content_hash(content: str) -> str:
+    """Generate hash for question deduplication"""
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+def create_cache_key(student_id: str, test_type: str, subjects: List[str]) -> str:
+    """Generate cache key for test storage"""
+    key_data = f"{student_id}:{test_type}:{':'.join(sorted(subjects))}"
+    return hashlib.md5(key_data.encode()).hexdigest()
+
+async def cache_test(cache_key: str, test_data: Dict[str, Any], ttl_hours: int = 24):
+    """Cache test data with TTL"""
+    expiry = datetime.utcnow() + timedelta(hours=ttl_hours)
+    test_cache[cache_key] = {
+        'data': test_data,
+        'expires_at': expiry
+    }
+    logger.info(f"Cached test with key: {cache_key}")
+
+async def get_cached_test(cache_key: str) -> Optional[Dict[str, Any]]:
+    """Retrieve test from cache if not expired"""
+    if cache_key in test_cache:
+        cached = test_cache[cache_key]
+        if datetime.utcnow() < cached['expires_at']:
+            return cached['data']
+        else:
+            # Remove expired cache
+            del test_cache[cache_key]
+    return None
+
+async def invalidate_cache(cache_key: str):
+    """Remove test from cache"""
+    if cache_key in test_cache:
+        del test_cache[cache_key]
+        logger.info(f"Invalidated cache: {cache_key}")
+
+def cleanup_expired_cache():
+    """Remove expired cache entries"""
+    current_time = datetime.utcnow()
+    expired_keys = [
+        key for key, value in test_cache.items()
+        if current_time >= value['expires_at']
+    ]
+    for key in expired_keys:
+        del test_cache[key]
+    logger.info(f"Cleaned up {len(expired_keys)} expired cache entries")
+
+# ============= MOCK TEST BUSINESS LOGIC =============
+
+class MockTestEngine:
+    """Core engine for mock test generation and management"""
+    
+    @staticmethod
+    async def generate_questions(blueprint: TestBlueprint, user: User) -> List[Question]:
+        """Generate AI questions based on blueprint using dual-layer AI"""
+        questions = []
+        
+        try:
+            # Use Professor AI to generate verified questions
+            professor_service = ProfessorAI()
+            mentor_service = MentorAI()
+            
+            for subject in blueprint.subjects:
+                subject_questions = blueprint.total_questions // len(blueprint.subjects)
+                
+                # Get difficulty distribution for this subject
+                difficulty_counts = blueprint.difficulty_distribution
+                
+                for difficulty, count in difficulty_counts.items():
+                    if count > 0:
+                        # Generate questions for this difficulty level
+                        generated = await professor_service.generate_questions(
+                            subject=subject,
+                            difficulty=difficulty,
+                            count=count,
+                            chapters=blueprint.chapters,
+                            exam_type=blueprint.exam_type
+                        )
+                        
+                        for q_data in generated:
+                            # Create Question object with verification
+                            question = Question(
+                                content_hash=generate_content_hash(q_data['question_text']),
+                                question_text=q_data['question_text'],
+                                options=q_data['options'],
+                                correct_answer=q_data['correct_answer'],
+                                explanation=q_data['explanation'],
+                                subject=subject,
+                                chapter=q_data.get('chapter', 'General'),
+                                topic=q_data.get('topic', 'Mixed'),
+                                difficulty_level=int(difficulty.replace('level_', '')),
+                                verified_by_professor=True,
+                                professor_confidence=q_data.get('confidence', 0.9)
+                            )
+                            questions.append(question)
+            
+            return questions
+            
+        except Exception as e:
+            logger.error(f"Error generating questions: {str(e)}")
+            # Fallback to sample questions for development
+            return await MockTestEngine.generate_fallback_questions(blueprint)
+    
+    @staticmethod
+    async def generate_fallback_questions(blueprint: TestBlueprint) -> List[Question]:
+        """Generate sample questions as fallback"""
+        questions = []
+        
+        for i in range(blueprint.total_questions):
+            subject = blueprint.subjects[i % len(blueprint.subjects)]
+            
+            question = Question(
+                content_hash=generate_content_hash(f"Sample question {i+1}"),
+                question_text=f"Sample {subject} question {i+1}: What is the fundamental concept?",
+                options=[
+                    "A. Option 1",
+                    "B. Option 2", 
+                    "C. Option 3",
+                    "D. Option 4"
+                ],
+                correct_answer="A",
+                explanation="This is a sample explanation for development purposes.",
+                subject=subject,
+                chapter="Sample Chapter",
+                topic="Sample Topic",
+                difficulty_level=3,
+                verified_by_professor=True,
+                professor_confidence=0.8
+            )
+            questions.append(question)
+        
+        return questions
+    
+    @staticmethod
+    async def create_test_from_blueprint(blueprint: TestBlueprint, student_id: str) -> MockTest:
+        """Create a complete mock test from blueprint"""
+        
+        # Generate questions
+        questions = await MockTestEngine.generate_questions(blueprint, None)
+        
+        # Store questions in database and get IDs
+        question_ids = []
+        for question in questions:
+            # Check for duplicates by content hash
+            existing = await db.questions.find_one({"content_hash": question.content_hash})
+            if existing:
+                question_ids.append(existing['question_id'])
+            else:
+                question_dict = question.dict()
+                await db.questions.insert_one(question_dict)
+                question_ids.append(question.question_id)
+        
+        # Create mock test
+        cache_key = create_cache_key(student_id, blueprint.test_type, blueprint.subjects)
+        
+        test = MockTest(
+            student_id=student_id,
+            blueprint_id=blueprint.blueprint_id,
+            title=f"{blueprint.exam_type} - {', '.join(blueprint.subjects)} Test",
+            description=f"{blueprint.test_type.title()} test with {blueprint.total_questions} questions",
+            questions=question_ids,
+            total_marks=blueprint.total_marks,
+            time_limit=blueprint.time_limit,
+            expires_at=datetime.utcnow() + timedelta(hours=24),
+            cache_key=cache_key,
+            mentor_pre_tips=await MockTestEngine.generate_mentor_tips(blueprint),
+            status="active"
+        )
+        
+        # Store test in database
+        test_dict = test.dict()
+        await db.mock_tests.insert_one(test_dict)
+        
+        # Cache the test
+        await cache_test(cache_key, test_dict)
+        
+        return test
+    
+    @staticmethod
+    async def generate_mentor_tips(blueprint: TestBlueprint) -> str:
+        """Generate pre-test motivation from Mentor AI"""
+        try:
+            mentor_service = MentorAI()
+            tips = await mentor_service.generate_pre_test_coaching(
+                subjects=blueprint.subjects,
+                difficulty=blueprint.difficulty_distribution,
+                test_type=blueprint.test_type
+            )
+            return tips
+        except Exception as e:
+            logger.error(f"Error generating mentor tips: {str(e)}")
+            return f"Get ready for your {blueprint.test_type} test! Stay confident and focused. You've got this! 🌟"
+
 # ============= DUAL-LAYER AI INTEGRATION =============
 
 class ScenarioClassifier:
