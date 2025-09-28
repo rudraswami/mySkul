@@ -312,10 +312,10 @@ export default function AITutor() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       {/* Sidebar - Chat Sessions */}
-      <div className="w-80 bg-white/90 backdrop-blur-sm border-r border-gray-200/60 flex flex-col shadow-lg">
-        <div className="p-4 border-b border-gray-200/60 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div className="w-80 bg-white/95 backdrop-blur-sm border-r border-gray-200/60 flex flex-col shadow-lg">
+        <div className="p-4 border-b border-gray-200/60 bg-gradient-to-r from-gray-800 to-slate-700 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
