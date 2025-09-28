@@ -107,8 +107,8 @@ class MathFormattingTester:
                     print(f"\n🤖 DUAL AI RESPONSE STRUCTURE:")
                     print(f"   Primary persona: {primary_response.get('persona', 'N/A')}")
                     print(f"   Secondary persona: {secondary_response.get('persona', 'N/A')}")
-                    print(f"   Scenario type: {scenario_classification.get('scenario_type', 'N/A')}")
-                    print(f"   Confidence: {scenario_classification.get('confidence', 0):.2f}")
+                    print(f"   Scenario type: {scenario_type}")
+                    print(f"   Confidence: {confidence:.2f}")
                     
                     # Extract response content for analysis
                     primary_content = primary_response.get('response', '')
