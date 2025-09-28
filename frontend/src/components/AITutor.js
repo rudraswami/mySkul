@@ -80,6 +80,32 @@ export default function AITutor() {
     scrollToBottom();
   }, [messages]);
 
+  // Phase 3: Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyboardShortcuts = (e) => {
+      // Ctrl/Cmd + / to toggle quick suggestions
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShowQuickSuggestions(!showQuickSuggestions);
+      }
+      
+      // Ctrl/Cmd + E to export conversation
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e' && messages.length > 0) {
+        e.preventDefault();
+        exportConversation();
+      }
+      
+      // Ctrl/Cmd + N for new chat
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        startNewSession();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [showQuickSuggestions, messages]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
