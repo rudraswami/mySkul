@@ -388,12 +388,12 @@ export default function AITutor() {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Welcome to Your Trusted, Hallucination-Free AI Tutor!
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3">
+                  Welcome to Your Trusted, Hallucination-Free AI Tutor! ✨
                 </h3>
                 
-                <p className="text-gray-600 mb-4 max-w-lg mx-auto">
-                  Experience personalized, verified AI tutoring for {selectedSubject} at a fraction of coaching costs. Our dual intelligence ensures:
+                <p className="text-gray-700 mb-6 max-w-2xl mx-auto text-lg leading-relaxed">
+                  Experience personalized, verified AI tutoring for <span className="font-semibold text-blue-600">{selectedSubject}</span> at a fraction of coaching costs. Our revolutionary dual intelligence ensures:
                 </p>
                 
                 <div className="flex justify-center items-center space-x-6 mb-6 text-sm">
