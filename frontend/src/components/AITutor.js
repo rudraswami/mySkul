@@ -154,17 +154,24 @@ export default function AITutor() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Sidebar - Chat Sessions */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-80 bg-white/90 backdrop-blur-sm border-r border-gray-200/60 flex flex-col shadow-lg">
+        <div className="p-4 border-b border-gray-200/60 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Dhruv AI</h2>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Brain className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold">Dhruv AI</h2>
+            </div>
             <Button 
               size="sm" 
               onClick={startNewSession}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white hover:text-white transition-all duration-200"
+              variant="outline"
             >
+              <MessageCircle className="h-4 w-4 mr-2" />
               New Chat
             </Button>
           </div>
