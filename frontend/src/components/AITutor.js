@@ -82,6 +82,50 @@ export default function AITutor() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Phase 3: Speech Recognition Setup
+  const initializeSpeechRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = true;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onstart = () => {
+        setIsListening(true);
+      };
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setCurrentMessage(transcript);
+      };
+      
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+  };
+
+  const startVoiceInput = () => {
+    if (recognition) {
+      recognition.start();
+    }
+  };
+
+  const stopVoiceInput = () => {
+    if (recognition) {
+      recognition.stop();
+    }
+  };
+
   const fetchChatSessions = async () => {
     try {
       const response = await axios.get(`${API}/chat/sessions`);
