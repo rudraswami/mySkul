@@ -246,38 +246,73 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Sessions List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
+        {/* Enhanced Sessions List */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-transparent to-gray-50/30">
+          <div className="space-y-3">
             {sessions.length > 0 ? (
               sessions.map((session) => (
                 <div
                   key={session.session_id}
                   onClick={() => loadSession(session.session_id)}
-                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                  className={`group p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
                     currentSession === session.session_id
-                      ? 'bg-blue-50 border-blue-200 border'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
+                      : 'bg-white hover:bg-gray-50 hover:shadow-md border border-gray-200/60'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <MessageCircle className="h-4 w-4 text-gray-400" />
-                    <Badge variant="outline" className="text-xs">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`p-2 rounded-lg ${
+                      currentSession === session.session_id 
+                        ? 'bg-white/20' 
+                        : 'bg-gray-100 group-hover:bg-blue-100'
+                    }`}>
+                      <MessageCircle className={`h-4 w-4 ${
+                        currentSession === session.session_id 
+                          ? 'text-white' 
+                          : 'text-gray-600 group-hover:text-blue-600'
+                      }`} />
+                    </div>
+                    <Badge 
+                      variant={currentSession === session.session_id ? "secondary" : "outline"} 
+                      className={`text-xs ${
+                        currentSession === session.session_id 
+                          ? 'bg-white/20 text-white border-white/30' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
                       {session.subject}
                     </Badge>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 mt-1 truncate">
+                  <p className={`text-sm font-medium mb-2 truncate ${
+                    currentSession === session.session_id 
+                      ? 'text-white' 
+                      : 'text-gray-900'
+                  }`}>
                     {session.title}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {formatTime(session.last_updated)}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Clock className={`h-3 w-3 ${
+                      currentSession === session.session_id 
+                        ? 'text-white/70' 
+                        : 'text-gray-400'
+                    }`} />
+                    <p className={`text-xs ${
+                      currentSession === session.session_id 
+                        ? 'text-white/90' 
+                        : 'text-gray-500'
+                    }`}>
+                      {formatTime(session.last_updated)}
+                    </p>
+                  </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No previous sessions</p>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="h-8 w-8 text-blue-500" />
+                </div>
+                <p className="text-sm text-gray-600 mb-2">No previous sessions</p>
+                <p className="text-xs text-gray-400">Start a conversation to see your history</p>
               </div>
             )}
           </div>
