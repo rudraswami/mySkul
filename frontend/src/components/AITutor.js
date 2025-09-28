@@ -213,6 +213,69 @@ export default function AITutor() {
     }
   };
 
+  // Phase 3: Enhanced functionality methods
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    // Could add a toast notification here
+  };
+
+  const bookmarkResponse = (messageIndex) => {
+    const response = messages[messageIndex];
+    setBookmarkedResponses(prev => [...prev, { ...response, bookmarkedAt: new Date() }]);
+  };
+
+  const exportConversation = () => {
+    const conversationText = messages.map(msg => {
+      if (msg.dual_response) {
+        return `User: ${msg.message}\n\nProfessor: ${msg.dual_response.primary.response}\n\nMentor: ${msg.dual_response.secondary.reasoning}\n\n---\n\n`;
+      } else {
+        return `User: ${msg.message}\n\nAI: ${msg.response}\n\n---\n\n`;
+      }
+    }).join('');
+    
+    const blob = new Blob([conversationText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dhruv-ai-conversation-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const getSubjectSuggestions = () => {
+    const suggestions = {
+      'Mathematics': [
+        "Explain the concept of derivatives and their applications",
+        "How do I solve complex integration problems?",
+        "What are the key trigonometric identities I should memorize?",
+        "Help me understand matrices and determinants",
+        "Explain coordinate geometry concepts for JEE"
+      ],
+      'Physics': [
+        "Explain Newton's laws with real-world examples",
+        "How does electromagnetic induction work?",
+        "What are the key concepts in thermodynamics?",
+        "Help me understand wave optics and interference",
+        "Explain quantum mechanics basics for competitive exams"
+      ],
+      'Chemistry': [
+        "What are the important organic reaction mechanisms?",
+        "Explain chemical bonding and molecular structures",
+        "How do I balance complex chemical equations?",
+        "What are the key concepts in electrochemistry?",
+        "Help me understand thermodynamics in chemistry"
+      ],
+      'Biology': [
+        "Explain the process of photosynthesis in detail",
+        "What are the key concepts in genetics and heredity?",
+        "How does the human circulatory system work?",
+        "Explain cellular respiration and energy production",
+        "What are the important topics in ecology?"
+      ]
+    };
+    return suggestions[selectedSubject] || [];
+  };
+
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
