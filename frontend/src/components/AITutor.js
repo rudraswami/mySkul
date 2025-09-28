@@ -475,19 +475,19 @@ export default function AITutor() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Enhanced Chat Header */}
-        <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200/60 p-6 shadow-sm">
+        {/* Professional Chat Header */}
+        <div className="bg-white border-b border-gray-200 p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg flex items-center justify-center mr-4 shadow-md">
                 <Brain className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold text-gray-900">
                   Dhruv AI - {selectedSubject} Tutor
                 </h1>
                 <div className="flex items-center mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                   <p className="text-sm text-gray-600">
                     {aiMode === 'dual' && 'Dual-layer AI: Mentor + Professor intelligence'}
                     {aiMode === 'mentor' && 'Mentor mode: Adaptive, friendly, motivational'}
@@ -499,26 +499,26 @@ export default function AITutor() {
             
             <div className="flex items-center space-x-3">
               {aiMode === 'dual' && (
-                <Badge className="flex items-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-blue-200 shadow-sm">
+                <Badge variant="outline" className="flex items-center bg-gray-50 text-gray-700 border-gray-300">
                   <Users className="h-3 w-3 mr-1" />
                   Dual Intelligence
                 </Badge>
               )}
               {aiMode === 'mentor' && (
-                <Badge className="flex items-center bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm">
+                <Badge variant="outline" className="flex items-center bg-green-50 text-green-700 border-green-300">
                   <Heart className="h-3 w-3 mr-1" />
                   Mentor Mode
                 </Badge>
               )}
               {aiMode === 'professor' && (
-                <Badge className="flex items-center bg-gradient-to-r from-purple-100 to-violet-100 text-purple-800 border-purple-200 shadow-sm">
+                <Badge variant="outline" className="flex items-center bg-purple-50 text-purple-700 border-purple-300">
                   <GraduationCap className="h-3 w-3 mr-1" />
                   Professor Mode
                 </Badge>
               )}
-              <Badge className="flex items-center bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border-gray-200 shadow-sm">
+              <Badge variant="outline" className="flex items-center bg-gray-50 text-gray-600 border-gray-300">
                 <Shield className="h-3 w-3 mr-1" />
-                Hallucination-Free AI
+                Verified AI
               </Badge>
             </div>
           </div>
