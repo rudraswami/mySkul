@@ -40,6 +40,15 @@ export default function AITutor() {
   const [aiMode, setAiMode] = useState('dual'); // 'dual', 'mentor', 'professor'
   const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
+  
+  // Phase 3: Enhanced functionality states
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredSessions, setFilteredSessions] = useState([]);
+  const [showSessionSearch, setShowSessionSearch] = useState(false);
+  const [bookmarkedResponses, setBookmarkedResponses] = useState([]);
+  const [showQuickSuggestions, setShowQuickSuggestions] = useState(false);
 
   const subjects = {
     'JEE': ['Mathematics', 'Physics', 'Chemistry'],
