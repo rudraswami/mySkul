@@ -177,51 +177,69 @@ export default function AITutor() {
           </div>
           
           <div className="space-y-3">
-            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects[user?.exam_type]?.map(subject => (
-                  <SelectItem key={subject} value={subject}>
-                    {subject}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                <SelectTrigger className="bg-white/50 border-white/30 text-white placeholder:text-white/70">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Select subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects[user?.exam_type]?.map(subject => (
+                    <SelectItem key={subject} value={subject}>
+                      {subject}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* AI Mode Selection */}
-            <div className="bg-gray-50 rounded-lg p-3">
-              <label className="text-xs font-medium text-gray-700 mb-2 block">AI Mode</label>
+            {/* Enhanced AI Mode Selection */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <label className="text-xs font-medium text-white/90 mb-3 block flex items-center">
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI Intelligence Mode
+              </label>
               <Select value={aiMode} onValueChange={setAiMode}>
-                <SelectTrigger className="h-8">
+                <SelectTrigger className="bg-white/30 border-white/20 text-white h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dual">
                     <div className="flex items-center">
-                      <Users className="h-3 w-3 mr-2" />
-                      Dual Layer (Mentor + Professor)
+                      <Users className="h-4 w-4 mr-2 text-blue-600" />
+                      <div>
+                        <div className="font-medium">Dual Intelligence</div>
+                        <div className="text-xs text-gray-500">Mentor + Professor</div>
+                      </div>
                     </div>
                   </SelectItem>
                   <SelectItem value="mentor">
                     <div className="flex items-center">
-                      <Heart className="h-3 w-3 mr-2" />
-                      Mentor Only (Motivational)
+                      <Heart className="h-4 w-4 mr-2 text-green-600" />
+                      <div>
+                        <div className="font-medium">Mentor Mode</div>
+                        <div className="text-xs text-gray-500">Motivational & Adaptive</div>
+                      </div>
                     </div>
                   </SelectItem>
                   <SelectItem value="professor">
                     <div className="flex items-center">
-                      <GraduationCap className="h-3 w-3 mr-2" />
-                      Professor Only (Technical)
+                      <GraduationCap className="h-4 w-4 mr-2 text-purple-600" />
+                      <div>
+                        <div className="font-medium">Professor Mode</div>
+                        <div className="text-xs text-gray-500">Technical & Rigorous</div>
+                      </div>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
               
               {aiMode === 'dual' && (
-                <div className="mt-2 text-xs text-gray-600">
-                  Adaptive intelligence: The right persona leads based on your question type
+                <div className="mt-3 p-2 bg-white/20 rounded-lg">
+                  <div className="flex items-center text-xs text-white/90">
+                    <Target className="h-3 w-3 mr-1" />
+                    Smart routing: AI selects the best persona for your question
+                  </div>
                 </div>
               )}
             </div>
