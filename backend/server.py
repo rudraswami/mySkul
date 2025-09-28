@@ -1828,6 +1828,144 @@ async def get_ai_tutor_response(user_message: str, subject: str, session_id: str
         logger.error(f"AI tutor error: {str(e)}")
         raise HTTPException(status_code=500, detail="AI tutor temporarily unavailable")
 
+# ============= SUBSCRIPTION & ACCESS CONTROL =============
+
+async def get_user_subscription(user_id: str) -> UserSubscription:
+    """Get user's current subscription details"""
+    subscription_doc = await db.user_subscriptions.find_one({"user_id": user_id})
+    if not subscription_doc:
+        # Create default free subscription for new users
+        free_subscription = UserSubscription(
+            user_id=user_id,
+            plan_id="free",
+            plan_name="free",
+            status="active",
+            current_period_end=datetime.utcnow() + timedelta(days=365)  # Free never expires
+        )
+        await db.user_subscriptions.insert_one(free_subscription.dict())
+        return free_subscription
+    return UserSubscription(**clean_mongodb_doc(subscription_doc))
+
+async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any]:
+    """Check if user has access to specific feature and usage limits"""
+    subscription = await get_user_subscription(user_id)
+    plan_config = SUBSCRIPTION_PLANS.get(subscription.plan_name, SUBSCRIPTION_PLANS["free"])
+    
+    feature_limit = plan_config["limits"].get(feature_name, 0)
+    
+    # Check if subscription is active
+    if subscription.status != "active" or subscription.current_period_end < datetime.utcnow():
+        return {"has_access": False, "reason": "subscription_expired", "limit": 0, "used": 0}
+    
+    # For unlimited features (-1)
+    if feature_limit == -1:
+        return {"has_access": True, "reason": "unlimited", "limit": -1, "used": 0}
+    
+    # For features not available (0)
+    if feature_limit == 0:
+        return {"has_access": False, "reason": "feature_not_available", "limit": 0, "used": 0}
+    
+    # Check current usage for limited features
+    current_usage = await get_current_usage(user_id, feature_name)
+    has_access = current_usage < feature_limit
+    
+    return {
+        "has_access": has_access,
+        "reason": "usage_limit_reached" if not has_access else "within_limits",
+        "limit": feature_limit,
+        "used": current_usage
+    }
+
+async def get_current_usage(user_id: str, feature_name: str) -> int:
+    """Get current usage count for a feature"""
+    now = datetime.utcnow()
+    
+    # Determine the reset period based on feature
+    if "daily" in feature_name:
+        start_of_period = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    else:  # monthly features
+        start_of_period = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    usage_doc = await db.usage_tracking.find_one({
+        "user_id": user_id,
+        "feature_name": feature_name,
+        "usage_date": {"$gte": start_of_period}
+    })
+    
+    return usage_doc.get("usage_count", 0) if usage_doc else 0
+
+async def track_feature_usage(user_id: str, feature_name: str, usage_amount: int = 1):
+    """Track usage of a feature"""
+    now = datetime.utcnow()
+    
+    # Determine the reset period
+    if "daily" in feature_name:
+        start_of_period = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        reset_date = start_of_period + timedelta(days=1)
+    else:  # monthly features
+        start_of_period = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        next_month = start_of_period + timedelta(days=32)
+        reset_date = next_month.replace(day=1)
+    
+    # Update or create usage record
+    await db.usage_tracking.update_one(
+        {
+            "user_id": user_id,
+            "feature_name": feature_name,
+            "usage_date": {"$gte": start_of_period}
+        },
+        {
+            "$inc": {"usage_count": usage_amount},
+            "$setOnInsert": {
+                "usage_id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "feature_name": feature_name,
+                "usage_date": now,
+                "reset_date": reset_date
+            }
+        },
+        upsert=True
+    )
+
+async def require_subscription_access(feature_name: str):
+    """Decorator to check subscription access for API endpoints"""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            # Get user from kwargs (assumes user is passed as dependency)
+            user = kwargs.get('user')
+            if not user:
+                raise HTTPException(status_code=401, detail="Authentication required")
+            
+            # Check feature access
+            access_info = await check_feature_access(user.user_id, feature_name)
+            if not access_info["has_access"]:
+                if access_info["reason"] == "subscription_expired":
+                    raise HTTPException(
+                        status_code=402, 
+                        detail="Subscription expired. Please upgrade your plan to continue using this feature."
+                    )
+                elif access_info["reason"] == "feature_not_available":
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"This feature is not available in your current plan. Please upgrade to access this feature."
+                    )
+                elif access_info["reason"] == "usage_limit_reached":
+                    raise HTTPException(
+                        status_code=429,
+                        detail=f"Usage limit reached. You have used {access_info['used']}/{access_info['limit']} for this feature. Please upgrade your plan."
+                    )
+            
+            # Execute the original function
+            result = await func(*args, **kwargs)
+            
+            # Track usage after successful execution
+            if access_info["limit"] != -1:  # Don't track unlimited features
+                await track_feature_usage(user.user_id, feature_name)
+            
+            return result
+        return wrapper
+    return decorator
+
 # ============= API ENDPOINTS =============
 
 @api_router.post("/auth/register")
