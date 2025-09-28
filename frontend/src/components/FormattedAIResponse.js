@@ -25,6 +25,35 @@ export default function FormattedAIResponse({ content, persona, isLeading = fals
     }));
   };
 
+  // Enhanced math formatting function
+  const formatMathText = (text) => {
+    if (!text) return text;
+    
+    // Replace common math expressions with better formatting
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+      .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic text
+      .replace(/x\^2/g, 'x²') // x squared
+      .replace(/x\^3/g, 'x³') // x cubed
+      .replace(/x\^(\d+)/g, 'x^$1') // Other powers
+      .replace(/([+-]?\d*\.?\d+)\s*\/\s*([+-]?\d*\.?\d+)/g, '$1/$2') // Fractions
+      .replace(/sqrt\((.*?)\)/g, '√($1)') // Square root
+      .replace(/\+\-/g, '±') // Plus minus
+      .replace(/([a-z])\^2/g, '$1²') // Any variable squared
+      .replace(/([a-z])\^3/g, '$1³') // Any variable cubed
+      .replace(/delta/gi, 'Δ') // Delta symbol
+      .replace(/theta/gi, 'θ') // Theta symbol
+      .replace(/pi/gi, 'π') // Pi symbol
+      .replace(/alpha/gi, 'α') // Alpha symbol
+      .replace(/beta/gi, 'β') // Beta symbol
+      .replace(/gamma/gi, 'γ') // Gamma symbol
+      .replace(/->/g, '→') // Arrow
+      .replace(/<=/g, '≤') // Less than or equal
+      .replace(/>=/g, '≥') // Greater than or equal
+      .replace(/!=/g, '≠') // Not equal
+      .replace(/infinity/gi, '∞'); // Infinity
+  };
+
   const parseContent = (text) => {
     if (!text) return [];
 
