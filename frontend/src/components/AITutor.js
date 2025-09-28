@@ -776,13 +776,32 @@ export default function AITutor() {
                               </div>
                             )}
 
-                            {/* Feedback buttons */}
+                            {/* Enhanced Action Buttons */}
                             <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                               <div className="flex items-center space-x-2">
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
+                                  onClick={() => copyToClipboard(message.response)}
+                                  className="text-gray-500 hover:text-blue-600"
+                                  title="Copy response"
+                                >
+                                  <BookOpen className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => bookmarkResponse(index)}
+                                  className="text-gray-500 hover:text-yellow-600"
+                                  title="Bookmark response"
+                                >
+                                  <Star className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
                                   className="text-gray-500 hover:text-green-600"
+                                  title="Helpful"
                                 >
                                   <ThumbsUp className="h-4 w-4" />
                                 </Button>
@@ -790,14 +809,24 @@ export default function AITutor() {
                                   variant="ghost" 
                                   size="sm"
                                   className="text-gray-500 hover:text-red-600"
+                                  title="Not helpful"
                                 >
                                   <ThumbsDown className="h-4 w-4" />
                                 </Button>
                               </div>
                               
-                              <div className="flex items-center text-xs text-gray-500">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {formatTime(message.timestamp)}
+                              <div className="flex items-center space-x-3 text-xs text-gray-500">
+                                <button
+                                  onClick={() => setCurrentMessage(`Can you explain more about: ${message.response.substring(0, 50)}...`)}
+                                  className="hover:text-blue-600 transition-colors"
+                                  title="Ask follow-up question"
+                                >
+                                  Follow up
+                                </button>
+                                <div className="flex items-center">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {formatTime(message.timestamp)}
+                                </div>
                               </div>
                             </div>
                           </div>
