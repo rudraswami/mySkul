@@ -260,7 +260,7 @@ export default function FormattedAIResponse({ content, persona, isLeading = fals
                   <div className={`${colors.bg} rounded-lg p-3 border-l-4 ${colors.accent}`}>
                     <div className="flex items-start">
                       <Target className={`h-4 w-4 ${colors.text} mr-2 mt-0.5`} />
-                      <p className={`font-medium ${colors.text}`}>{section.text}</p>
+                      <p className={`font-medium ${colors.text}`} dangerouslySetInnerHTML={{__html: formatMathText(section.text)}}></p>
                     </div>
                   </div>
                 )}
