@@ -938,6 +938,41 @@ export default function AITutor() {
                 )}
               </Button>
             </div>
+
+            {/* Quick Suggestions Panel */}
+            {showQuickSuggestions && (
+              <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-800 flex items-center">
+                    <Lightbulb className="h-4 w-4 mr-2 text-blue-600" />
+                    Quick Questions for {selectedSubject}
+                  </h4>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowQuickSuggestions(false)}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                  {getSubjectSuggestions().map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setCurrentMessage(suggestion);
+                        setShowQuickSuggestions(false);
+                      }}
+                      className="text-left text-xs p-2 bg-white rounded-lg hover:bg-blue-50 transition-colors border border-gray-200 hover:border-blue-300"
+                      disabled={loading}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="flex items-center justify-between mt-4 px-2">
               <div className="flex items-center space-x-4 text-xs text-gray-500">
