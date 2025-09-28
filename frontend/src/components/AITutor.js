@@ -323,6 +323,28 @@ export default function AITutor() {
               </Select>
             </div>
 
+            {/* Enhanced Session Search */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 border border-white/20 mb-3">
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search conversations..."
+                  className="bg-white/30 border-white/20 text-white placeholder:text-white/70 text-sm h-8"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={exportConversation}
+                  disabled={messages.length === 0}
+                  className="text-white/80 hover:text-white hover:bg-white/20 h-8 w-8 p-0"
+                  title="Export conversation"
+                >
+                  <FileText className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
             {/* Enhanced AI Mode Selection */}
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/20">
               <label className="text-xs font-medium text-white/90 mb-3 block flex items-center">
