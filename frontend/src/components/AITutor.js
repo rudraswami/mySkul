@@ -1001,19 +1001,19 @@ export default function AITutor() {
               </div>
               <div className="flex items-center space-x-3">
                 {aiMode === 'dual' && (
-                  <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  <div className="flex items-center text-xs text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
                     <Users className="h-3 w-3 mr-1" />
                     <span className="font-medium">Dual Intelligence Active</span>
                   </div>
                 )}
                 {aiMode === 'mentor' && (
-                  <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                  <div className="flex items-center text-xs text-green-700 bg-green-100 px-3 py-1 rounded-full">
                     <Heart className="h-3 w-3 mr-1" />
                     <span className="font-medium">Mentor Mode</span>
                   </div>
                 )}
                 {aiMode === 'professor' && (
-                  <div className="flex items-center text-xs text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                  <div className="flex items-center text-xs text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
                     <GraduationCap className="h-3 w-3 mr-1" />
                     <span className="font-medium">Professor Mode</span>
                   </div>
@@ -1021,7 +1021,7 @@ export default function AITutor() {
                 <div className="flex items-center text-xs text-gray-500 space-x-4">
                   <div className="flex items-center">
                     <Shield className="h-3 w-3 mr-1" />
-                    <span>Hallucination-Free</span>
+                    <span>Verified AI</span>
                   </div>
                   <div className="hidden md:flex items-center space-x-2 text-gray-400">
                     <span>Shortcuts:</span>
