@@ -58,7 +58,21 @@ export default function AITutor() {
 
   useEffect(() => {
     fetchChatSessions();
+    initializeSpeechRecognition();
   }, []);
+
+  useEffect(() => {
+    // Filter sessions based on search query
+    if (searchQuery.trim()) {
+      const filtered = sessions.filter(session => 
+        session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        session.subject.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredSessions(filtered);
+    } else {
+      setFilteredSessions(sessions);
+    }
+  }, [searchQuery, sessions]);
 
   useEffect(() => {
     scrollToBottom();
