@@ -4034,6 +4034,388 @@ async def health_check():
 async def root():
     return {"message": "Dhruv AI API - Empowering Education with AI"}
 
+# ============= SUBSCRIPTION & PAYMENT ENDPOINTS =============
+
+@api_router.get("/subscription/plans")
+async def get_subscription_plans():
+    """Get all available subscription plans"""
+    return {
+        "plans": list(SUBSCRIPTION_PLANS.values()),
+        "currency": "INR",
+        "billing_cycles": ["monthly", "yearly"]
+    }
+
+@api_router.get("/subscription/current")
+async def get_current_subscription(user: User = Depends(get_current_user)):
+    """Get user's current subscription details"""
+    subscription = await get_user_subscription(user.user_id)
+    plan_config = SUBSCRIPTION_PLANS.get(subscription.plan_name, SUBSCRIPTION_PLANS["free"])
+    
+    # Get current usage for all features
+    usage_summary = {}
+    for feature_name in plan_config["limits"].keys():
+        current_usage = await get_current_usage(user.user_id, feature_name)
+        usage_summary[feature_name] = {
+            "used": current_usage,
+            "limit": plan_config["limits"][feature_name],
+            "unlimited": plan_config["limits"][feature_name] == -1
+        }
+    
+    return {
+        "subscription": clean_mongodb_doc(subscription.dict()),
+        "plan_details": plan_config,
+        "usage_summary": usage_summary,
+        "days_remaining": (subscription.current_period_end - datetime.utcnow()).days if subscription.current_period_end > datetime.utcnow() else 0
+    }
+
+@api_router.post("/subscription/checkout")
+async def create_checkout_session(
+    request: Request,
+    checkout_request: CheckoutRequest,
+    user: User = Depends(get_current_user)
+):
+    """Create Stripe checkout session for subscription"""
+    try:
+        # Validate plan exists
+        if checkout_request.plan_name not in SUBSCRIPTION_PLANS:
+            raise HTTPException(status_code=400, detail="Invalid subscription plan")
+        
+        plan_config = SUBSCRIPTION_PLANS[checkout_request.plan_name]
+        
+        # Don't allow checkout for free plan
+        if checkout_request.plan_name == "free":
+            raise HTTPException(status_code=400, detail="Free plan doesn't require payment")
+        
+        # Get amount based on billing cycle
+        if checkout_request.billing_cycle == "yearly":
+            amount = plan_config["price_yearly"]
+        else:
+            amount = plan_config["price_monthly"]
+        
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Invalid plan pricing")
+        
+        # Initialize Stripe checkout
+        host_url = str(request.base_url)
+        webhook_url = f"{host_url}api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Create checkout session request
+        stripe_request = CheckoutSessionRequest(
+            amount=amount,
+            currency="INR",
+            success_url=checkout_request.success_url,
+            cancel_url=checkout_request.cancel_url,
+            metadata={
+                "user_id": user.user_id,
+                "plan_name": checkout_request.plan_name,
+                "billing_cycle": checkout_request.billing_cycle,
+                "user_email": user.email
+            }
+        )
+        
+        # Create checkout session
+        session_response = await stripe_checkout.create_checkout_session(stripe_request)
+        
+        # Create payment transaction record
+        transaction = PaymentTransaction(
+            user_id=user.user_id,
+            amount=amount,
+            currency="INR",
+            stripe_session_id=session_response.session_id,
+            status="initiated",
+            description=f"Subscription: {plan_config['display_name']} ({checkout_request.billing_cycle})",
+            metadata={
+                "plan_name": checkout_request.plan_name,
+                "billing_cycle": checkout_request.billing_cycle
+            }
+        )
+        
+        await db.payment_transactions.insert_one(transaction.dict())
+        
+        return {
+            "checkout_url": session_response.url,
+            "session_id": session_response.session_id,
+            "amount": amount,
+            "currency": "INR",
+            "plan_name": checkout_request.plan_name,
+            "billing_cycle": checkout_request.billing_cycle
+        }
+        
+    except Exception as e:
+        logger.error(f"Checkout session creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create checkout session")
+
+@api_router.get("/subscription/payment-status/{session_id}")
+async def check_payment_status(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Check payment status for a checkout session"""
+    try:
+        # Initialize Stripe checkout
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        
+        # Get checkout status from Stripe
+        checkout_status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Find transaction record
+        transaction = await db.payment_transactions.find_one({
+            "stripe_session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Payment transaction not found")
+        
+        # Update transaction status if payment is completed and not already processed
+        if (checkout_status.payment_status == "paid" and 
+            transaction.get("payment_status") != "paid"):
+            
+            # Update transaction
+            await db.payment_transactions.update_one(
+                {"stripe_session_id": session_id},
+                {
+                    "$set": {
+                        "status": "completed",
+                        "payment_status": "paid",
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            # Create or update subscription
+            metadata = transaction.get("metadata", {})
+            plan_name = metadata.get("plan_name")
+            billing_cycle = metadata.get("billing_cycle", "monthly")
+            
+            if plan_name:
+                await activate_subscription(user.user_id, plan_name, billing_cycle, session_id)
+        
+        return {
+            "status": checkout_status.status,
+            "payment_status": checkout_status.payment_status,
+            "amount_total": checkout_status.amount_total,
+            "currency": checkout_status.currency,
+            "metadata": checkout_status.metadata
+        }
+        
+    except Exception as e:
+        logger.error(f"Payment status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to check payment status")
+
+async def activate_subscription(user_id: str, plan_name: str, billing_cycle: str, stripe_session_id: str):
+    """Activate user subscription after successful payment"""
+    try:
+        # Calculate subscription period
+        if billing_cycle == "yearly":
+            period_end = datetime.utcnow() + timedelta(days=365)
+        else:
+            period_end = datetime.utcnow() + timedelta(days=30)
+        
+        # Deactivate any existing subscription
+        await db.user_subscriptions.update_many(
+            {"user_id": user_id},
+            {"$set": {"status": "cancelled", "updated_at": datetime.utcnow()}}
+        )
+        
+        # Create new subscription
+        new_subscription = UserSubscription(
+            user_id=user_id,
+            plan_id=plan_name,
+            plan_name=plan_name,
+            status="active",
+            billing_cycle=billing_cycle,
+            current_period_end=period_end,
+            stripe_subscription_id=stripe_session_id
+        )
+        
+        await db.user_subscriptions.insert_one(new_subscription.dict())
+        
+        # Update user's subscription_type field
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"subscription_type": plan_name}}
+        )
+        
+        logger.info(f"Activated {plan_name} subscription for user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Subscription activation error: {str(e)}")
+        raise
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    try:
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        # Initialize Stripe checkout for webhook handling
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        
+        # Handle webhook
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        # Process webhook events
+        if webhook_response.event_type in ["checkout.session.completed", "payment_intent.succeeded"]:
+            session_id = webhook_response.session_id
+            
+            # Find and update transaction
+            if session_id:
+                transaction = await db.payment_transactions.find_one({"stripe_session_id": session_id})
+                if transaction and transaction.get("payment_status") != "paid":
+                    # Update transaction
+                    await db.payment_transactions.update_one(
+                        {"stripe_session_id": session_id},
+                        {
+                            "$set": {
+                                "status": "completed",
+                                "payment_status": webhook_response.payment_status,
+                                "updated_at": datetime.utcnow()
+                            }
+                        }
+                    )
+                    
+                    # Activate subscription if payment successful
+                    if webhook_response.payment_status == "paid":
+                        metadata = webhook_response.metadata or transaction.get("metadata", {})
+                        user_id = metadata.get("user_id")
+                        plan_name = metadata.get("plan_name")
+                        billing_cycle = metadata.get("billing_cycle", "monthly")
+                        
+                        if user_id and plan_name:
+                            await activate_subscription(user_id, plan_name, billing_cycle, session_id)
+        
+        return {"received": True, "event_type": webhook_response.event_type}
+        
+    except Exception as e:
+        logger.error(f"Webhook processing error: {str(e)}")
+        return {"error": str(e)}, 400
+
+@api_router.get("/subscription/usage")
+async def get_usage_summary(user: User = Depends(get_current_user)):
+    """Get detailed usage summary for user"""
+    subscription = await get_user_subscription(user.user_id)
+    plan_config = SUBSCRIPTION_PLANS.get(subscription.plan_name, SUBSCRIPTION_PLANS["free"])
+    
+    usage_details = {}
+    for feature_name, limit in plan_config["limits"].items():
+        access_info = await check_feature_access(user.user_id, feature_name)
+        usage_details[feature_name] = {
+            "limit": limit,
+            "used": access_info["used"],
+            "remaining": max(0, limit - access_info["used"]) if limit != -1 else -1,
+            "unlimited": limit == -1,
+            "has_access": access_info["has_access"]
+        }
+    
+    return {
+        "user_id": user.user_id,
+        "current_plan": subscription.plan_name,
+        "usage_details": usage_details,
+        "subscription_status": subscription.status,
+        "period_end": subscription.current_period_end.isoformat()
+    }
+
+@api_router.post("/subscription/cancel")
+async def cancel_subscription(user: User = Depends(get_current_user)):
+    """Cancel user's current subscription"""
+    try:
+        # Update subscription status
+        result = await db.user_subscriptions.update_one(
+            {"user_id": user.user_id, "status": "active"},
+            {
+                "$set": {
+                    "status": "cancelled",
+                    "auto_renew": False,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="No active subscription found")
+        
+        # Update user's subscription type to free
+        await db.users.update_one(
+            {"user_id": user.user_id},
+            {"$set": {"subscription_type": "free"}}
+        )
+        
+        return {
+            "message": "Subscription cancelled successfully",
+            "status": "cancelled",
+            "access_until": "Current billing period end"
+        }
+        
+    except Exception as e:
+        logger.error(f"Subscription cancellation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to cancel subscription")
+
+# ============= REVENUE ANALYTICS ENDPOINTS =============
+
+@api_router.get("/admin/revenue/analytics")
+async def get_revenue_analytics(user: User = Depends(get_current_user)):
+    """Get revenue analytics (admin only)"""
+    try:
+        # Simple admin check - in production, implement proper admin role checking
+        if user.email != "admin@dhruvai.com":  # Replace with proper admin checking
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        now = datetime.utcnow()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Get subscription counts by plan
+        pipeline = [
+            {"$match": {"status": "active"}},
+            {"$group": {"_id": "$plan_name", "count": {"$sum": 1}}}
+        ]
+        subscription_counts = await db.user_subscriptions.aggregate(pipeline).to_list(None)
+        
+        # Get revenue for current month
+        revenue_pipeline = [
+            {
+                "$match": {
+                    "payment_status": "paid",
+                    "created_at": {"$gte": start_of_month}
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total_revenue": {"$sum": "$amount"},
+                    "transaction_count": {"$sum": 1}
+                }
+            }
+        ]
+        revenue_data = await db.payment_transactions.aggregate(revenue_pipeline).to_list(None)
+        
+        # Calculate MRR (Monthly Recurring Revenue)
+        mrr = 0
+        for plan_count in subscription_counts:
+            plan_name = plan_count["_id"]
+            count = plan_count["count"]
+            if plan_name in SUBSCRIPTION_PLANS:
+                mrr += SUBSCRIPTION_PLANS[plan_name]["price_monthly"] * count
+        
+        total_revenue = revenue_data[0]["total_revenue"] if revenue_data else 0
+        transaction_count = revenue_data[0]["transaction_count"] if revenue_data else 0
+        
+        return {
+            "period": "current_month",
+            "total_revenue": total_revenue,
+            "mrr": mrr,
+            "arr": mrr * 12,  # Annual Recurring Revenue
+            "transaction_count": transaction_count,
+            "subscription_breakdown": subscription_counts,
+            "total_active_subscriptions": sum(s["count"] for s in subscription_counts)
+        }
+        
+    except Exception as e:
+        logger.error(f"Revenue analytics error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch revenue analytics")
+
 # Include router in main app
 app.include_router(api_router)
 
