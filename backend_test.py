@@ -2293,6 +2293,7 @@ def main():
         ("🚀 Phase 2: Backward Compatibility", tester.test_phase2_backward_compatibility),
         
         # Dual-Layer AI System Tests
+        ("🎯 Mathematical Formatting", tester.test_mathematical_formatting_functionality),
         ("🤖 Scenario Classification", tester.test_scenario_classification),
         ("🤖 Dual-Layer AI Response", tester.test_dual_layer_ai_response),
         ("🤖 Mentor-Only Response", tester.test_mentor_only_response),
