@@ -872,15 +872,52 @@ export default function AITutor() {
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder={`Ask me anything about ${selectedSubject}... ✨`}
-                  className="resize-none border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                  className={`resize-none border-2 ${isListening ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-blue-500'} rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg`}
                   rows={3}
                   disabled={loading}
                 />
                 {currentMessage.trim() && (
-                  <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+                  <div className="absolute bottom-3 right-16 text-xs text-gray-400">
                     {currentMessage.length} characters
                   </div>
                 )}
+                
+                {/* Voice Input Button */}
+                <div className="absolute bottom-3 right-3 flex items-center space-x-2">
+                  {recognition && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isListening ? "destructive" : "ghost"}
+                      onClick={isListening ? stopVoiceInput : startVoiceInput}
+                      className={`h-8 w-8 p-0 ${isListening ? 'animate-pulse' : ''}`}
+                      title={isListening ? 'Stop voice input' : 'Start voice input'}
+                      disabled={loading}
+                    >
+                      {isListening ? (
+                        <div className="w-3 h-3 bg-white rounded-sm"></div>
+                      ) : (
+                        <div className="relative">
+                          <div className="w-3 h-4 bg-gray-600 rounded-t-full"></div>
+                          <div className="w-4 h-1 bg-gray-600 rounded mt-0.5"></div>
+                        </div>
+                      )}
+                    </Button>
+                  )}
+                  
+                  {/* Quick Suggestions Toggle */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowQuickSuggestions(!showQuickSuggestions)}
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                    title="Quick suggestions"
+                    disabled={loading}
+                  >
+                    <Lightbulb className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
               
               <Button 
