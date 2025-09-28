@@ -12,7 +12,8 @@ import {
   Heart,
   LogOut,
   User,
-  Mic
+  Mic,
+  CreditCard
 } from 'lucide-react';
 
 export default function Navigation() {
