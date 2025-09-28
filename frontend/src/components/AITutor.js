@@ -412,7 +412,7 @@ export default function AITutor() {
           </div>
           <div className="space-y-3">
             {filteredSessions.length > 0 ? (
-              sessions.map((session) => (
+              filteredSessions.map((session) => (
                 <div
                   key={session.session_id}
                   onClick={() => loadSession(session.session_id)}
