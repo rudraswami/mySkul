@@ -187,6 +187,86 @@ class DoubtQuery(BaseModel):
     subject: Optional[str] = None
     context: Optional[str] = None
 
+# ============= SUBSCRIPTION & REVENUE MODELS =============
+
+class SubscriptionPlan(BaseModel):
+    plan_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # free, basic, premium, pro
+    display_name: str
+    price_monthly: float = 0.0
+    price_yearly: float = 0.0
+    stripe_price_monthly: Optional[str] = None
+    stripe_price_yearly: Optional[str] = None
+    features: List[str] = []
+    limits: Dict[str, int] = {}  # feature_name: limit_value
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserSubscription(BaseModel):
+    subscription_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    plan_id: str
+    plan_name: str  # free, basic, premium, pro
+    status: str = "active"  # active, cancelled, expired, paused
+    billing_cycle: str = "monthly"  # monthly, yearly
+    current_period_start: datetime = Field(default_factory=datetime.utcnow)
+    current_period_end: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=30))
+    stripe_subscription_id: Optional[str] = None
+    stripe_customer_id: Optional[str] = None
+    auto_renew: bool = True
+    trial_end: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PaymentTransaction(BaseModel):
+    transaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subscription_id: Optional[str] = None
+    amount: float
+    currency: str = "INR"
+    payment_method: str = "stripe"
+    stripe_session_id: Optional[str] = None
+    stripe_payment_intent_id: Optional[str] = None
+    status: str = "initiated"  # initiated, pending, completed, failed, cancelled, refunded
+    payment_status: str = "unpaid"  # unpaid, paid, failed
+    description: str
+    metadata: Dict[str, Any] = {}
+    invoice_number: Optional[str] = None
+    gst_amount: Optional[float] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UsageTracking(BaseModel):
+    usage_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    feature_name: str  # ai_conversations, mock_tests, audio_processing
+    usage_count: int = 0
+    usage_date: datetime = Field(default_factory=datetime.utcnow)
+    reset_date: datetime = Field(default_factory=lambda: datetime.utcnow().replace(day=1) + timedelta(days=32))
+
+class RevenueAnalytics(BaseModel):
+    analytics_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    period: str  # daily, weekly, monthly
+    date: datetime = Field(default_factory=datetime.utcnow)
+    total_revenue: float = 0.0
+    new_subscribers: int = 0
+    churned_subscribers: int = 0
+    active_subscribers: int = 0
+    mrr: float = 0.0  # Monthly Recurring Revenue
+    arr: float = 0.0  # Annual Recurring Revenue
+    ltv: float = 0.0  # Lifetime Value
+    cac: float = 0.0  # Customer Acquisition Cost
+    
+class SubscriptionRequest(BaseModel):
+    plan_name: str
+    billing_cycle: str = "monthly"  # monthly, yearly
+    
+class CheckoutRequest(BaseModel):
+    plan_name: str
+    billing_cycle: str = "monthly"
+    success_url: str
+    cancel_url: str
+
 # ============= ENHANCED AUTO-NOTE MENTOR MODELS =============
 
 class AutoNoteSession(BaseModel):
