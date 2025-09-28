@@ -524,8 +524,8 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Enhanced Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20">
+        {/* Professional Messages Area */}
+        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <div className="max-w-5xl mx-auto space-y-8">
             {messages.length === 0 ? (
               // Welcome Message
