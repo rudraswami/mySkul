@@ -191,14 +191,14 @@ class DhruvAITester:
         )
 
     def test_dashboard_analytics(self):
-        """Test dashboard analytics - PRIORITY TEST for loading placeholder issue"""
+        """Test dashboard analytics - PRIORITY TEST for review request"""
         if not self.token:
             print("❌ No token available for analytics test")
             return False
         
-        print("   🎯 PRIORITY TEST: Dashboard Analytics API")
-        print("   Testing for MongoDB ObjectId serialization issues...")
-        print("   Expected: Valid JSON with study time, progress data")
+        print("   🎯 PRIORITY TEST: Dashboard Analytics API - Review Request Focus")
+        print("   Testing /api/dashboard/analytics endpoint specifically")
+        print("   Expected fields: recent_progress, total_study_time, chat_sessions_count, current_streak, weekly_goals_progress")
         
         success, response = self.run_test(
             "Dashboard Analytics",
@@ -210,32 +210,75 @@ class DhruvAITester:
         
         if success:
             print("   ✅ Dashboard analytics API returned 200 OK")
+            print(f"   📊 Full Response Structure: {json.dumps(response, indent=2)}")
             
-            # Check for expected data structure
-            expected_fields = ['study_time', 'progress_data', 'recent_activity', 'performance_summary']
+            # Check for specific fields mentioned in review request
+            required_fields = ['recent_progress', 'total_study_time', 'chat_sessions_count', 'current_streak', 'weekly_goals_progress']
             missing_fields = []
+            present_fields = []
             
-            for field in expected_fields:
-                if field not in response:
+            for field in required_fields:
+                if field in response:
+                    present_fields.append(field)
+                    value = response[field]
+                    print(f"   ✅ {field}: {value} (type: {type(value).__name__})")
+                else:
                     missing_fields.append(field)
             
             if missing_fields:
-                print(f"   ⚠️  Missing expected fields: {missing_fields}")
+                print(f"   ⚠️  Missing required fields: {missing_fields}")
             else:
-                print("   ✅ All expected fields present in response")
+                print("   ✅ All required fields present in response")
             
-            # Check for actual data vs placeholders
-            study_time = response.get('study_time', {})
-            if study_time and study_time.get('total_minutes', 0) > 0:
-                print(f"   ✅ Study time data: {study_time.get('total_minutes', 0)} minutes")
-            else:
-                print("   ⚠️  Study time appears to be placeholder/empty")
+            # Analyze data quality - actual vs placeholder
+            recent_progress = response.get('recent_progress', [])
+            total_study_time = response.get('total_study_time', 0)
+            chat_sessions_count = response.get('chat_sessions_count', 0)
+            current_streak = response.get('current_streak', 0)
+            weekly_goals_progress = response.get('weekly_goals_progress', 0)
             
-            progress_data = response.get('progress_data', {})
-            if progress_data and len(progress_data) > 0:
-                print(f"   ✅ Progress data contains {len(progress_data)} entries")
+            print("\n   📈 DATA QUALITY ANALYSIS:")
+            
+            # Check if data appears to be actual database data or fallback values
+            if isinstance(recent_progress, list) and len(recent_progress) > 0:
+                print(f"   ✅ recent_progress: Contains {len(recent_progress)} entries (appears to be actual data)")
+                for i, item in enumerate(recent_progress[:2]):  # Show first 2 items
+                    print(f"      Item {i+1}: {item}")
             else:
-                print("   ⚠️  Progress data appears to be placeholder/empty")
+                print(f"   ⚠️  recent_progress: Empty or placeholder ({recent_progress})")
+            
+            if isinstance(total_study_time, (int, float)) and total_study_time > 0:
+                print(f"   ✅ total_study_time: {total_study_time} (appears to be actual data)")
+            else:
+                print(f"   ⚠️  total_study_time: Zero or placeholder ({total_study_time})")
+            
+            if isinstance(chat_sessions_count, int) and chat_sessions_count >= 0:
+                print(f"   ✅ chat_sessions_count: {chat_sessions_count} (valid count)")
+            else:
+                print(f"   ⚠️  chat_sessions_count: Invalid format ({chat_sessions_count})")
+            
+            if isinstance(current_streak, int) and current_streak >= 0:
+                print(f"   ✅ current_streak: {current_streak} (valid streak)")
+            else:
+                print(f"   ⚠️  current_streak: Invalid format ({current_streak})")
+            
+            if isinstance(weekly_goals_progress, (int, float)) and 0 <= weekly_goals_progress <= 100:
+                print(f"   ✅ weekly_goals_progress: {weekly_goals_progress}% (valid percentage)")
+            else:
+                print(f"   ⚠️  weekly_goals_progress: Invalid format or range ({weekly_goals_progress})")
+            
+            # Final assessment
+            has_actual_data = (
+                (isinstance(recent_progress, list) and len(recent_progress) > 0) or
+                (isinstance(total_study_time, (int, float)) and total_study_time > 0) or
+                (isinstance(chat_sessions_count, int) and chat_sessions_count > 0)
+            )
+            
+            print(f"\n   🎯 REVIEW REQUEST CONCLUSION:")
+            if has_actual_data:
+                print("   ✅ API returns ACTUAL DATABASE DATA (not just placeholder values)")
+            else:
+                print("   ⚠️  API returns PLACEHOLDER/FALLBACK VALUES (no actual database data)")
             
             return True
         else:
