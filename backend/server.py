@@ -60,6 +60,104 @@ def clean_mongodb_doc(doc: dict) -> dict:
             clean_doc[k] = v
     return clean_doc
 
+# ============= SUBSCRIPTION PLANS CONFIGURATION =============
+
+SUBSCRIPTION_PLANS = {
+    "free": {
+        "name": "free",
+        "display_name": "Free Plan",
+        "price_monthly": 0.0,
+        "price_yearly": 0.0,
+        "features": [
+            "Limited AI Tutor conversations (10 messages/day)",
+            "Basic mock tests (2 tests/month)", 
+            "Basic analytics dashboard",
+            "Stress management tools",
+            "Limited auto-note processing (15 minutes audio/month)"
+        ],
+        "limits": {
+            "ai_conversations_daily": 10,
+            "mock_tests_monthly": 2,
+            "audio_processing_monthly": 15,  # minutes
+            "export_functionality": 0,
+            "voice_input": 0,
+            "dual_feedback": 0
+        }
+    },
+    "basic": {
+        "name": "basic",
+        "display_name": "Basic Plan", 
+        "price_monthly": 299.0,
+        "price_yearly": 2990.0,  # 2 months free
+        "features": [
+            "Unlimited AI Tutor conversations",
+            "Standard mock tests (20 tests/month)",
+            "Enhanced analytics with trends", 
+            "Auto-note processing (2 hours audio/month)",
+            "Study planning with basic AI",
+            "Email support"
+        ],
+        "limits": {
+            "ai_conversations_daily": -1,  # unlimited
+            "mock_tests_monthly": 20,
+            "audio_processing_monthly": 120,  # minutes
+            "export_functionality": 1,
+            "voice_input": 0,
+            "dual_feedback": 0
+        }
+    },
+    "premium": {
+        "name": "premium",
+        "display_name": "Premium Plan",
+        "price_monthly": 799.0, 
+        "price_yearly": 7990.0,  # 2 months free
+        "features": [
+            "Everything in Basic",
+            "Advanced mock tests with retake functionality",
+            "Dual-layer feedback system",
+            "Unlimited auto-note processing",
+            "Advanced study planning with dual AI",
+            "Voice input features",
+            "Mathematical formatting support", 
+            "Priority support"
+        ],
+        "limits": {
+            "ai_conversations_daily": -1,  # unlimited
+            "mock_tests_monthly": -1,  # unlimited
+            "audio_processing_monthly": -1,  # unlimited
+            "export_functionality": 1,
+            "voice_input": 1,
+            "dual_feedback": 1
+        }
+    },
+    "pro": {
+        "name": "pro", 
+        "display_name": "Pro Plan",
+        "price_monthly": 1999.0,
+        "price_yearly": 19990.0,  # 2 months free
+        "features": [
+            "Everything in Premium",
+            "Custom test generation modes (adaptive, variant)",
+            "Advanced performance analytics for parents",
+            "Export functionality for all data",
+            "Personalized learning paths",
+            "Phone support",
+            "Early access to new features"
+        ],
+        "limits": {
+            "ai_conversations_daily": -1,  # unlimited
+            "mock_tests_monthly": -1,  # unlimited  
+            "audio_processing_monthly": -1,  # unlimited
+            "export_functionality": 1,
+            "voice_input": 1,
+            "dual_feedback": 1,
+            "custom_test_modes": 1,
+            "parent_analytics": 1,
+            "personalized_paths": 1
+        }
+    }
+}
+
 # ============= CORE DATA MODELS =============
 
 class User(BaseModel):
