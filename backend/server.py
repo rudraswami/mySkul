@@ -27,6 +27,11 @@ db = client[os.environ['DB_NAME']]
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dhruv-ai-secret-key-2025')
 
+# Stripe Configuration
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+if not STRIPE_API_KEY:
+    logger.warning("STRIPE_API_KEY not found in environment variables")
+
 app = FastAPI(title="Dhruv AI API", description="AI-Powered Competitive Exam Preparation Platform")
 api_router = APIRouter(prefix="/api")
 
