@@ -1057,9 +1057,18 @@ export default function AITutor() {
                     <span className="font-medium">Professor Mode</span>
                   </div>
                 )}
-                <div className="flex items-center text-xs text-gray-500">
-                  <Shield className="h-3 w-3 mr-1" />
-                  <span>Hallucination-Free</span>
+                <div className="flex items-center text-xs text-gray-500 space-x-4">
+                  <div className="flex items-center">
+                    <Shield className="h-3 w-3 mr-1" />
+                    <span>Hallucination-Free</span>
+                  </div>
+                  <div className="hidden md:flex items-center space-x-2 text-gray-400">
+                    <span>Shortcuts:</span>
+                    <code className="bg-gray-100 px-1 rounded text-xs">Ctrl+/</code>
+                    <span>Suggestions</span>
+                    <code className="bg-gray-100 px-1 rounded text-xs">Ctrl+N</code>
+                    <span>New Chat</span>
+                  </div>
                 </div>
               </div>
             </div>
