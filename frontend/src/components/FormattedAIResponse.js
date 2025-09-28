@@ -287,13 +287,33 @@ export function DualResponseContainer({
         </div>
         
         <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" className="text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs hover:text-blue-600"
+            onClick={() => navigator.clipboard.writeText(`Professor: ${primaryResponse.response}\n\nMentor: ${secondaryResponse.reasoning || secondaryResponse.response}`)}
+            title="Copy full response"
+          >
             <BookOpen className="h-3 w-3 mr-1" />
-            Save Notes
+            Copy Response
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs hover:text-yellow-600"
+            title="Bookmark this response"
+          >
+            <Star className="h-3 w-3 mr-1" />
+            Bookmark
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs hover:text-green-600"
+            title="Ask follow-up question"
+          >
             <ArrowRight className="h-3 w-3 mr-1" />
-            Continue Chat
+            Follow Up
           </Button>
         </div>
       </div>
