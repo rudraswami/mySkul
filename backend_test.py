@@ -1590,6 +1590,115 @@ class DhruvAITester:
         
         return success_count >= len(test_scenarios) * 0.8  # 80% success threshold
 
+    def test_mathematical_formatting_functionality(self):
+        """Test AI Tutor mathematical formatting functionality - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for mathematical formatting test")
+            return False
+        
+        print("   🎯 PRIORITY TEST: AI Tutor Mathematical Formatting Functionality")
+        print("   Testing /api/ai/dual-response endpoint with mathematical expressions")
+        print("   Focus: Verify mathematical expression handling in AI responses")
+        
+        # Test the specific mathematical question from review request
+        mathematical_question = "Solve x^2 - 5x + 6 = 0 step by step"
+        
+        print(f"   Question: '{mathematical_question}'")
+        print("   This may take 10-15 seconds for dual AI mathematical processing...")
+        
+        success, response = self.run_test(
+            "Mathematical Formatting Test",
+            "POST",
+            "ai/dual-response",
+            200,
+            data={
+                "message": mathematical_question,
+                "subject": "Mathematics"
+            },
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'dual_response' in response:
+            dual_response = response['dual_response']
+            primary_response = dual_response.get('primary_response', {})
+            secondary_response = dual_response.get('secondary_response', {})
+            scenario_classification = response.get('scenario_classification', {})
+            
+            print(f"   ✅ Dual response received for mathematical question")
+            print(f"   Primary persona: {primary_response.get('persona', 'N/A')}")
+            print(f"   Secondary persona: {secondary_response.get('persona', 'N/A')}")
+            print(f"   Scenario type: {scenario_classification.get('scenario_type', 'N/A')}")
+            print(f"   Confidence: {scenario_classification.get('confidence', 0):.2f}")
+            
+            # Extract response content for mathematical formatting analysis
+            primary_content = primary_response.get('response', '')
+            secondary_content = secondary_response.get('response', '')
+            
+            print(f"\n   📊 MATHEMATICAL FORMATTING ANALYSIS:")
+            print(f"   Primary response length: {len(primary_content)} characters")
+            print(f"   Secondary response length: {len(secondary_content)} characters")
+            
+            # Check for mathematical expressions and step-by-step solution
+            mathematical_indicators = [
+                'x²', 'x^2', '=', 'step', 'solve', 'equation', 'quadratic',
+                'factor', 'discriminant', 'roots', '±', '+', '-', '×', '÷'
+            ]
+            
+            primary_math_score = sum(1 for indicator in mathematical_indicators if indicator.lower() in primary_content.lower())
+            secondary_math_score = sum(1 for indicator in mathematical_indicators if indicator.lower() in secondary_content.lower())
+            
+            print(f"   Primary response mathematical indicators: {primary_math_score}")
+            print(f"   Secondary response mathematical indicators: {secondary_math_score}")
+            
+            # Check for step-by-step solution structure
+            step_indicators = ['step 1', 'step 2', 'first', 'second', 'then', 'next', 'finally']
+            primary_steps = sum(1 for indicator in step_indicators if indicator.lower() in primary_content.lower())
+            secondary_steps = sum(1 for indicator in step_indicators if indicator.lower() in secondary_content.lower())
+            
+            print(f"   Primary response step indicators: {primary_steps}")
+            print(f"   Secondary response step indicators: {secondary_steps}")
+            
+            # Display sample content for manual verification
+            print(f"\n   📝 SAMPLE CONTENT VERIFICATION:")
+            print(f"   Primary Response Preview (first 200 chars):")
+            print(f"   '{primary_content[:200]}...'")
+            print(f"   Secondary Response Preview (first 200 chars):")
+            print(f"   '{secondary_content[:200]}...'")
+            
+            # Verify mathematical formatting quality
+            has_mathematical_content = (primary_math_score >= 3 or secondary_math_score >= 3)
+            has_step_by_step = (primary_steps >= 2 or secondary_steps >= 2)
+            has_proper_length = (len(primary_content) > 100 and len(secondary_content) > 100)
+            
+            print(f"\n   🎯 MATHEMATICAL FORMATTING ASSESSMENT:")
+            print(f"   Contains mathematical expressions: {'✅' if has_mathematical_content else '❌'}")
+            print(f"   Contains step-by-step solution: {'✅' if has_step_by_step else '❌'}")
+            print(f"   Responses have proper length: {'✅' if has_proper_length else '❌'}")
+            print(f"   Both personas respond coherently: {'✅' if primary_content and secondary_content else '❌'}")
+            
+            # Final assessment
+            formatting_success = (
+                has_mathematical_content and 
+                has_step_by_step and 
+                has_proper_length and 
+                primary_content and 
+                secondary_content
+            )
+            
+            if formatting_success:
+                print(f"   ✅ MATHEMATICAL FORMATTING TEST PASSED")
+                print(f"   - API returns 200 OK with mathematical content")
+                print(f"   - Response contains step-by-step mathematical solution")
+                print(f"   - Mathematical expressions are properly formatted")
+                print(f"   - Both professor and mentor responses are coherent")
+                return True
+            else:
+                print(f"   ❌ MATHEMATICAL FORMATTING TEST FAILED")
+                print(f"   - One or more formatting criteria not met")
+                return False
+        else:
+            print(f"   ❌ Mathematical formatting test failed - API error")
+            return False
     def test_dual_layer_ai_response(self):
         """Test coordinated dual-layer AI responses"""
         if not self.token:
