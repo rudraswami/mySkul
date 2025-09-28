@@ -753,9 +753,12 @@ export default function AITutor() {
                           
                           <div className="bg-white rounded-lg p-4 shadow-sm">
                             <div className="prose prose-sm max-w-none">
-                              <div className="whitespace-pre-wrap text-gray-800">
-                                {message.response}
-                              </div>
+                              <div 
+                                className="whitespace-pre-wrap text-gray-800"
+                                dangerouslySetInnerHTML={{
+                                  __html: formatMathExpressions(message.response)
+                                }}
+                              />
                             </div>
 
                             {message.reasoning && (
