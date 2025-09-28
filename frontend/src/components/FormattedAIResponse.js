@@ -25,33 +25,107 @@ export default function FormattedAIResponse({ content, persona, isLeading = fals
     }));
   };
 
-  // Enhanced math formatting function
+  // Comprehensive math formatting function
   const formatMathText = (text) => {
     if (!text) return text;
     
-    // Replace common math expressions with better formatting
-    return text
+    // First handle LaTeX delimiters and convert them to proper math
+    let formattedText = text
+      // Remove LaTeX inline math delimiters \( and \)
+      .replace(/\\?\\\(/g, '')
+      .replace(/\\?\\\)/g, '')
+      // Remove LaTeX display math delimiters \[ and \]
+      .replace(/\\?\\\[/g, '')
+      .replace(/\\?\\\]/g, '')
+      // Handle escaped backslashes
+      .replace(/\\\\/g, '')
+      
+      // Mathematical expressions
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
       .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic text
-      .replace(/x\^2/g, 'x²') // x squared
-      .replace(/x\^3/g, 'x³') // x cubed
-      .replace(/x\^(\d+)/g, 'x^$1') // Other powers
-      .replace(/([+-]?\d*\.?\d+)\s*\/\s*([+-]?\d*\.?\d+)/g, '$1/$2') // Fractions
-      .replace(/sqrt\((.*?)\)/g, '√($1)') // Square root
-      .replace(/\+\-/g, '±') // Plus minus
-      .replace(/([a-z])\^2/g, '$1²') // Any variable squared
-      .replace(/([a-z])\^3/g, '$1³') // Any variable cubed
-      .replace(/delta/gi, 'Δ') // Delta symbol
-      .replace(/theta/gi, 'θ') // Theta symbol
-      .replace(/pi/gi, 'π') // Pi symbol
-      .replace(/alpha/gi, 'α') // Alpha symbol
-      .replace(/beta/gi, 'β') // Beta symbol
-      .replace(/gamma/gi, 'γ') // Gamma symbol
-      .replace(/->/g, '→') // Arrow
-      .replace(/<=/g, '≤') // Less than or equal
-      .replace(/>=/g, '≥') // Greater than or equal
-      .replace(/!=/g, '≠') // Not equal
-      .replace(/infinity/gi, '∞'); // Infinity
+      
+      // Powers and superscripts
+      .replace(/([a-zA-Z0-9])\^(-?\d+)/g, (match, base, exp) => {
+        const superscripts = {
+          '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', 
+          '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+          '-': '⁻', '+': '⁺'
+        };
+        let formattedExp = exp.split('').map(char => superscripts[char] || char).join('');
+        return base + formattedExp;
+      })
+      
+      // Common mathematical expressions
+      .replace(/x\^2/g, 'x²')
+      .replace(/x\^3/g, 'x³')
+      .replace(/([a-zA-Z])\^2/g, '$1²')
+      .replace(/([a-zA-Z])\^3/g, '$1³')
+      
+      // Fractions - simple cases
+      .replace(/(\d+)\/(\d+)/g, '$1/$2')
+      .replace(/\(([^)]+)\)\/\(([^)]+)\)/g, '($1)/($2)')
+      
+      // Mathematical functions
+      .replace(/sqrt\((.*?)\)/g, '√($1)')
+      .replace(/\\sqrt\{(.*?)\}/g, '√($1)')
+      .replace(/cbrt\((.*?)\)/g, '∛($1)')
+      
+      // Mathematical symbols
+      .replace(/\+\-/g, '±').replace(/\+-/g, '±')
+      .replace(/\\pm/g, '±')
+      .replace(/\\mp/g, '∓')
+      .replace(/->/g, '→').replace(/\\to/g, '→')
+      .replace(/<->/g, '↔').replace(/\\leftrightarrow/g, '↔')
+      .replace(/<=/g, '≤').replace(/\\leq/g, '≤')
+      .replace(/>=/g, '≥').replace(/\\geq/g, '≥')
+      .replace(/!=/g, '≠').replace(/\\neq/g, '≠')
+      .replace(/\\approx/g, '≈')
+      .replace(/\\equiv/g, '≡')
+      .replace(/\\propto/g, '∝')
+      .replace(/\\infty/g, '∞').replace(/infinity/gi, '∞')
+      
+      // Greek letters (both uppercase and lowercase)
+      .replace(/\\alpha/g, 'α').replace(/alpha/gi, 'α')
+      .replace(/\\beta/g, 'β').replace(/beta/gi, 'β')
+      .replace(/\\gamma/g, 'γ').replace(/gamma/gi, 'γ')
+      .replace(/\\delta/g, 'δ').replace(/delta/gi, 'δ')
+      .replace(/\\Delta/g, 'Δ')
+      .replace(/\\epsilon/g, 'ε').replace(/epsilon/gi, 'ε')
+      .replace(/\\theta/g, 'θ').replace(/theta/gi, 'θ')
+      .replace(/\\Theta/g, 'Θ')
+      .replace(/\\lambda/g, 'λ').replace(/lambda/gi, 'λ')
+      .replace(/\\mu/g, 'μ').replace(/mu/gi, 'μ')
+      .replace(/\\pi/g, 'π').replace(/\\Pi/g, 'Π').replace(/\bpi\b/gi, 'π')
+      .replace(/\\rho/g, 'ρ').replace(/rho/gi, 'ρ')
+      .replace(/\\sigma/g, 'σ').replace(/\\Sigma/g, 'Σ')
+      .replace(/\\phi/g, 'φ').replace(/\\Phi/g, 'Φ')
+      .replace(/\\omega/g, 'ω').replace(/\\Omega/g, 'Ω')
+      
+      // Set theory and logic
+      .replace(/\\in/g, '∈')
+      .replace(/\\notin/g, '∉')
+      .replace(/\\subset/g, '⊂')
+      .replace(/\\supset/g, '⊃')
+      .replace(/\\subseteq/g, '⊆')
+      .replace(/\\supseteq/g, '⊇')
+      .replace(/\\cup/g, '∪')
+      .replace(/\\cap/g, '∩')
+      .replace(/\\emptyset/g, '∅')
+      .replace(/\\forall/g, '∀')
+      .replace(/\\exists/g, '∃')
+      
+      // Calculus
+      .replace(/\\partial/g, '∂')
+      .replace(/\\nabla/g, '∇')
+      .replace(/\\int/g, '∫')
+      
+      // Clean up any remaining LaTeX artifacts
+      .replace(/\\\w+\{([^}]*)\}/g, '$1') // Remove LaTeX commands with braces
+      .replace(/\\\w+/g, '') // Remove remaining LaTeX commands
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+    
+    return formattedText;
   };
 
   const parseContent = (text) => {
