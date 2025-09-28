@@ -99,9 +99,10 @@ class MathFormattingTester:
                 # Check response structure
                 if 'dual_response' in data:
                     dual_response = data['dual_response']
-                    primary_response = dual_response.get('primary_response', {})
-                    secondary_response = dual_response.get('secondary_response', {})
-                    scenario_classification = data.get('scenario_classification', {})
+                    primary_response = dual_response.get('primary', {})
+                    secondary_response = dual_response.get('secondary', {})
+                    scenario_type = dual_response.get('scenario_type', 'N/A')
+                    confidence = dual_response.get('confidence', 0)
                     
                     print(f"\n🤖 DUAL AI RESPONSE STRUCTURE:")
                     print(f"   Primary persona: {primary_response.get('persona', 'N/A')}")
