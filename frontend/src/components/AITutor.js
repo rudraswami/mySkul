@@ -508,14 +508,32 @@ export default function AITutor() {
                   </Card>
                 </div>
 
-                <div className="mt-8 p-4 bg-blue-50 rounded-lg max-w-2xl mx-auto">
-                  <div className="flex items-center justify-center mb-2">
-                    <Sparkles className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm font-medium text-blue-600">Intelligent Routing</span>
+                <div className="mt-10 p-6 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl max-w-3xl mx-auto border border-blue-200/50 shadow-lg">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
+                      <Sparkles className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Intelligent Question Routing</span>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    Our AI automatically determines whether you need technical expertise (Professor) or motivational guidance (Mentor) based on your question.
+                  <p className="text-sm text-gray-700 leading-relaxed text-center">
+                    Our advanced AI automatically analyzes your question and routes it to the most appropriate persona—whether you need 
+                    <span className="font-semibold text-purple-600"> technical expertise (Professor)</span> or 
+                    <span className="font-semibold text-green-600"> motivational guidance (Mentor)</span>—ensuring you always get the perfect response for your learning needs.
                   </p>
+                  <div className="mt-4 flex items-center justify-center space-x-6 text-xs">
+                    <div className="flex items-center text-purple-600">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                      <span>Technical Questions → Professor</span>
+                    </div>
+                    <div className="flex items-center text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                      <span>Guidance Questions → Mentor</span>
+                    </div>
+                    <div className="flex items-center text-blue-600">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                      <span>Complex Questions → Both</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
