@@ -429,57 +429,81 @@ export default function AITutor() {
                   </div>
                 </div>
 
-                {/* Sample Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("Explain the concept of limits in calculus")}>
-                    <CardContent className="p-4 text-left">
-                      <div className="flex items-center justify-between mb-2">
+                {/* Enhanced Sample Questions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100" onClick={() => setCurrentMessage("Explain the concept of limits in calculus")}>
+                    <CardContent className="p-6 text-left">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                          <GraduationCap className="h-4 w-4 text-purple-600 mr-2" />
-                          <span className="text-sm font-medium text-purple-600">Professor Leads</span>
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mr-3">
+                            <GraduationCap className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-purple-700">Professor Leads</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">Fact/Concept</Badge>
+                        <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">Fact/Concept</Badge>
                       </div>
-                      <p className="text-sm text-gray-700">Explain the concept of limits in calculus</p>
+                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">Explain the concept of limits in calculus</p>
+                      <div className="mt-4 flex items-center text-xs text-purple-600">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        <span>Click to ask this question</span>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?")}>
-                    <CardContent className="p-4 text-left">
-                      <div className="flex items-center justify-between mb-2">
+                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100" onClick={() => setCurrentMessage("I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?")}>
+                    <CardContent className="p-6 text-left">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                          <Heart className="h-4 w-4 text-green-600 mr-2" />
-                          <span className="text-sm font-medium text-green-600">Mentor Leads</span>
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                            <Heart className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-green-700">Mentor Leads</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">Guidance</Badge>
+                        <Badge className="text-xs bg-green-100 text-green-700 border-green-200">Guidance</Badge>
                       </div>
-                      <p className="text-sm text-gray-700">I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?</p>
+                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?</p>
+                      <div className="mt-4 flex items-center text-xs text-green-600">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        <span>Click to ask this question</span>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("Solve this quadratic equation step by step: x² - 5x + 6 = 0")}>
-                    <CardContent className="p-4 text-left">
-                      <div className="flex items-center justify-between mb-2">
+                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100" onClick={() => setCurrentMessage("Solve this quadratic equation step by step: x² - 5x + 6 = 0")}>
+                    <CardContent className="p-6 text-left">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                          <GraduationCap className="h-4 w-4 text-purple-600 mr-2" />
-                          <span className="text-sm font-medium text-purple-600">Professor Leads</span>
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mr-3">
+                            <GraduationCap className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-purple-700">Professor Leads</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">Problem Solving</Badge>
+                        <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">Problem Solving</Badge>
                       </div>
-                      <p className="text-sm text-gray-700">Solve this quadratic equation step by step: x² - 5x + 6 = 0</p>
+                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">Solve this quadratic equation step by step: x² - 5x + 6 = 0</p>
+                      <div className="mt-4 flex items-center text-xs text-purple-600">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        <span>Click to ask this question</span>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setCurrentMessage("What are some effective study techniques for competitive exams?")}>
-                    <CardContent className="p-4 text-left">
-                      <div className="flex items-center justify-between mb-2">
+                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100" onClick={() => setCurrentMessage("What are some effective study techniques for competitive exams?")}>
+                    <CardContent className="p-6 text-left">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                          <Users className="h-4 w-4 text-blue-600 mr-2" />
-                          <span className="text-sm font-medium text-blue-600">Both Contribute</span>
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                            <Users className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-blue-700">Both Contribute</span>
                         </div>
-                        <Badge variant="outline" className="text-xs">General Inquiry</Badge>
+                        <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">General Inquiry</Badge>
                       </div>
-                      <p className="text-sm text-gray-700">What are some effective study techniques for competitive exams?</p>
+                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">What are some effective study techniques for competitive exams?</p>
+                      <div className="mt-4 flex items-center text-xs text-blue-600">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        <span>Click to ask this question</span>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
