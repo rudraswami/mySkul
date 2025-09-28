@@ -911,17 +911,14 @@ export default function AITutor() {
                       size="sm"
                       variant={isListening ? "destructive" : "ghost"}
                       onClick={isListening ? stopVoiceInput : startVoiceInput}
-                      className={`h-8 w-8 p-0 ${isListening ? 'animate-pulse' : ''}`}
-                      title={isListening ? 'Stop voice input' : 'Start voice input'}
+                      className={`h-8 w-8 p-0 ${isListening ? 'animate-pulse bg-red-500 text-white' : 'hover:bg-gray-100'}`}
+                      title={isListening ? 'Stop recording' : 'Voice input'}
                       disabled={loading}
                     >
                       {isListening ? (
-                        <div className="w-3 h-3 bg-white rounded-sm"></div>
+                        <MicOff className="h-4 w-4" />
                       ) : (
-                        <div className="relative">
-                          <div className="w-3 h-4 bg-gray-600 rounded-t-full"></div>
-                          <div className="w-4 h-1 bg-gray-600 rounded mt-0.5"></div>
-                        </div>
+                        <Mic className="h-4 w-4 text-gray-600" />
                       )}
                     </Button>
                   )}
