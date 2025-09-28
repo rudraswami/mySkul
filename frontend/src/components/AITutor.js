@@ -644,38 +644,76 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="bg-white border-t border-gray-200 p-4">
+        {/* Enhanced Input Area */}
+        <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200/60 p-6 shadow-lg">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1">
+            <div className="flex items-end space-x-4">
+              <div className="flex-1 relative">
                 <Textarea
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Ask me anything about ${selectedSubject}...`}
-                  className="resize-none"
-                  rows={2}
+                  placeholder={`Ask me anything about ${selectedSubject}... ✨`}
+                  className="resize-none border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg"
+                  rows={3}
                   disabled={loading}
                 />
+                {currentMessage.trim() && (
+                  <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+                    {currentMessage.length} characters
+                  </div>
+                )}
               </div>
               
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3 h-auto rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none"
               >
-                <Send className="h-4 w-4" />
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span className="text-sm">Sending...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Send className="h-4 w-4" />
+                    <span className="text-sm font-medium">Send</span>
+                  </div>
+                )}
               </Button>
             </div>
             
-            <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-              <span>Press Enter to send, Shift+Enter for new line</span>
-              <div className="flex items-center">
-                {aiMode === 'dual' && <span className="mr-2">🧠 Dual Intelligence Active</span>}
-                {aiMode === 'mentor' && <span className="mr-2">💚 Mentor Mode</span>}
-                {aiMode === 'professor' && <span className="mr-2">🎓 Professor Mode</span>}
-                <span>Neuro-Symbolic AI</span>
+            <div className="flex items-center justify-between mt-4 px-2">
+              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  <span>Press Enter to send, Shift+Enter for new line</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                {aiMode === 'dual' && (
+                  <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                    <Users className="h-3 w-3 mr-1" />
+                    <span className="font-medium">Dual Intelligence Active</span>
+                  </div>
+                )}
+                {aiMode === 'mentor' && (
+                  <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                    <Heart className="h-3 w-3 mr-1" />
+                    <span className="font-medium">Mentor Mode</span>
+                  </div>
+                )}
+                {aiMode === 'professor' && (
+                  <div className="flex items-center text-xs text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                    <GraduationCap className="h-3 w-3 mr-1" />
+                    <span className="font-medium">Professor Mode</span>
+                  </div>
+                )}
+                <div className="flex items-center text-xs text-gray-500">
+                  <Shield className="h-3 w-3 mr-1" />
+                  <span>Hallucination-Free</span>
+                </div>
               </div>
             </div>
           </div>
