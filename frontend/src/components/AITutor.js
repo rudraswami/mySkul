@@ -24,7 +24,9 @@ import {
   Target,
   Sparkles,
   FileText,
-  Star
+  Star,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import axios from 'axios';
 
