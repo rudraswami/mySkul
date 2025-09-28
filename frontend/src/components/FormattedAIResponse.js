@@ -253,7 +253,7 @@ export default function FormattedAIResponse({ content, persona, isLeading = fals
             return (
               <div key={sectionIndex}>
                 {section.type === 'text' && (
-                  <p className="text-gray-700 leading-relaxed">{section.text}</p>
+                  <p className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{__html: formatMathText(section.text)}}></p>
                 )}
                 
                 {section.type === 'highlight' && (
