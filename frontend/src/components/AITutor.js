@@ -400,8 +400,18 @@ export default function AITutor() {
 
         {/* Enhanced Sessions List */}
         <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-transparent to-gray-50/30">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-600">
+              {searchQuery ? `Found ${filteredSessions.length} sessions` : 'Recent Conversations'}
+            </h3>
+            {sessions.length > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {sessions.length} total
+              </Badge>
+            )}
+          </div>
           <div className="space-y-3">
-            {sessions.length > 0 ? (
+            {filteredSessions.length > 0 ? (
               sessions.map((session) => (
                 <div
                   key={session.session_id}
