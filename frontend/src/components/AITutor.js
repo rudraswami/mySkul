@@ -22,7 +22,9 @@ import {
   Users,
   Shield,
   Target,
-  Sparkles
+  Sparkles,
+  FileText,
+  Star
 } from 'lucide-react';
 import axios from 'axios';
 
