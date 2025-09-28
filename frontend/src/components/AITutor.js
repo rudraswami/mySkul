@@ -883,8 +883,8 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Enhanced Input Area */}
-        <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200/60 p-6 shadow-lg">
+        {/* Professional Input Area */}
+        <div className="bg-white border-t border-gray-200 p-6 shadow-sm">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-end space-x-4">
               <div className="flex-1 relative">
@@ -892,8 +892,8 @@ export default function AITutor() {
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Ask me anything about ${selectedSubject}... ✨`}
-                  className={`resize-none border-2 ${isListening ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-blue-500'} rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg`}
+                  placeholder={`Ask me anything about ${selectedSubject}...`}
+                  className={`resize-none border-2 ${isListening ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-gray-500'} rounded-lg transition-all duration-200 shadow-sm focus:shadow-md`}
                   rows={3}
                   disabled={loading}
                 />
@@ -929,7 +929,7 @@ export default function AITutor() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowQuickSuggestions(!showQuickSuggestions)}
-                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
                     title="Quick suggestions"
                     disabled={loading}
                   >
@@ -941,7 +941,7 @@ export default function AITutor() {
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3 h-auto rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none"
+                className="bg-gray-800 hover:bg-gray-900 px-6 py-3 h-auto rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
