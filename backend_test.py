@@ -2670,13 +2670,23 @@ def main():
     print("\n🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING")
     critical_fixes_success = tester.test_critical_fixes_verification()
     
-    # Test sequence - Core APIs first, then Phase 4 features, then Dual-Layer AI
+    # Test sequence - Core APIs first, then SUBSCRIPTION SYSTEM (Priority), then Phase 4 features, then Dual-Layer AI
     tests = [
         ("Health Check", tester.test_health_check),
         ("Root Endpoint", tester.test_root_endpoint),
         ("User Registration", tester.test_user_registration),
         ("User Login", tester.test_user_login),
         ("User Profile", tester.test_user_profile),
+        
+        # SUBSCRIPTION SYSTEM TESTS (PRIORITY FOR REVIEW REQUEST)
+        ("💰 Subscription Plans API", tester.test_subscription_plans_api),
+        ("💰 Current Subscription API", tester.test_current_subscription_api),
+        ("💰 Checkout Session Creation", tester.test_checkout_session_creation),
+        ("💰 Payment Status API", tester.test_payment_status_api),
+        ("💰 Usage Tracking & Access Control", tester.test_usage_tracking_access_control),
+        ("💰 Stripe Webhook Endpoint", tester.test_stripe_webhook_endpoint),
+        ("💰 Subscription Integration Flow", tester.test_subscription_integration_flow),
+        
         ("AI Chat Message", tester.test_ai_chat_message),
         ("Chat Sessions", tester.test_chat_sessions),
         ("Chat Messages", tester.test_chat_messages),
