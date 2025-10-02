@@ -2241,6 +2241,425 @@ class DhruvAITester:
         print(f"   Mock Test Generation API Fix: {success_count}/{total_tests} tests passed")
         return success_count == total_tests
 
+    # ============= SUBSCRIPTION SYSTEM TESTS =============
+    
+    def test_subscription_plans_api(self):
+        """Test GET /api/subscription/plans to verify all 4 subscription tiers"""
+        print("   Testing subscription plans API...")
+        
+        success, response = self.run_test(
+            "Subscription Plans API",
+            "GET",
+            "subscription/plans",
+            200
+        )
+        
+        if success:
+            plans = response.get('plans', [])
+            currency = response.get('currency')
+            billing_cycles = response.get('billing_cycles', [])
+            
+            print(f"   ✅ Plans API returned {len(plans)} plans")
+            print(f"   Currency: {currency}")
+            print(f"   Billing cycles: {billing_cycles}")
+            
+            # Verify all 4 tiers exist
+            expected_plans = ['free', 'basic', 'premium', 'pro']
+            plan_names = [plan.get('name') for plan in plans]
+            
+            missing_plans = [plan for plan in expected_plans if plan not in plan_names]
+            if missing_plans:
+                print(f"   ⚠️  Missing plans: {missing_plans}")
+                return False
+            
+            # Verify pricing for key plans
+            for plan in plans:
+                name = plan.get('name')
+                monthly_price = plan.get('price_monthly', 0)
+                yearly_price = plan.get('price_yearly', 0)
+                features = plan.get('features', [])
+                limits = plan.get('limits', {})
+                
+                print(f"   Plan: {name}")
+                print(f"     Monthly: ₹{monthly_price}, Yearly: ₹{yearly_price}")
+                print(f"     Features: {len(features)}, Limits: {len(limits)}")
+                
+                # Verify specific pricing as mentioned in review request
+                if name == 'basic' and monthly_price != 299.0:
+                    print(f"   ❌ Basic plan pricing incorrect: expected ₹299, got ₹{monthly_price}")
+                    return False
+                elif name == 'premium' and monthly_price != 799.0:
+                    print(f"   ❌ Premium plan pricing incorrect: expected ₹799, got ₹{monthly_price}")
+                    return False
+                elif name == 'pro' and monthly_price != 1999.0:
+                    print(f"   ❌ Pro plan pricing incorrect: expected ₹1999, got ₹{monthly_price}")
+                    return False
+                
+                # Verify free plan limits
+                if name == 'free':
+                    ai_limit = limits.get('ai_conversations_daily', 0)
+                    mock_limit = limits.get('mock_tests_monthly', 0)
+                    if ai_limit != 10:
+                        print(f"   ❌ Free plan AI limit incorrect: expected 10, got {ai_limit}")
+                        return False
+                    if mock_limit != 2:
+                        print(f"   ❌ Free plan mock test limit incorrect: expected 2, got {mock_limit}")
+                        return False
+            
+            print("   ✅ All subscription plans validated with correct pricing and limits")
+            return True
+        
+        return False
+    
+    def test_current_subscription_api(self):
+        """Test GET /api/subscription/current with authenticated user"""
+        if not self.token:
+            print("❌ No token available for current subscription test")
+            return False
+        
+        print("   Testing current subscription API...")
+        
+        success, response = self.run_test(
+            "Current Subscription API",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            subscription = response.get('subscription', {})
+            plan_details = response.get('plan_details', {})
+            usage_summary = response.get('usage_summary', {})
+            days_remaining = response.get('days_remaining', 0)
+            
+            print(f"   ✅ Current subscription retrieved")
+            print(f"   Plan: {subscription.get('plan_name', 'N/A')}")
+            print(f"   Status: {subscription.get('status', 'N/A')}")
+            print(f"   Days remaining: {days_remaining}")
+            print(f"   Usage features tracked: {len(usage_summary)}")
+            
+            # Verify user should have free plan by default
+            if subscription.get('plan_name') != 'free':
+                print(f"   ⚠️  Expected free plan for test user, got: {subscription.get('plan_name')}")
+            
+            # Verify usage summary structure
+            for feature, usage_info in usage_summary.items():
+                used = usage_info.get('used', 0)
+                limit = usage_info.get('limit', 0)
+                unlimited = usage_info.get('unlimited', False)
+                
+                print(f"   Feature {feature}: {used}/{limit if not unlimited else '∞'}")
+            
+            # Verify free plan limits are enforced
+            ai_usage = usage_summary.get('ai_conversations_daily', {})
+            mock_usage = usage_summary.get('mock_tests_monthly', {})
+            
+            if ai_usage.get('limit') != 10:
+                print(f"   ❌ AI conversation limit incorrect: expected 10, got {ai_usage.get('limit')}")
+                return False
+            
+            if mock_usage.get('limit') != 2:
+                print(f"   ❌ Mock test limit incorrect: expected 2, got {mock_usage.get('limit')}")
+                return False
+            
+            print("   ✅ Current subscription details validated")
+            return True
+        
+        return False
+    
+    def test_checkout_session_creation(self):
+        """Test POST /api/subscription/checkout to create Stripe checkout sessions"""
+        if not self.token:
+            print("❌ No token available for checkout session test")
+            return False
+        
+        print("   Testing checkout session creation...")
+        
+        # Test different plans
+        checkout_scenarios = [
+            {
+                "plan_name": "basic",
+                "billing_cycle": "monthly",
+                "expected_amount": 299.0
+            },
+            {
+                "plan_name": "premium", 
+                "billing_cycle": "monthly",
+                "expected_amount": 799.0
+            },
+            {
+                "plan_name": "pro",
+                "billing_cycle": "yearly",
+                "expected_amount": 19990.0
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in checkout_scenarios:
+            print(f"   Testing {scenario['plan_name']} plan ({scenario['billing_cycle']})...")
+            
+            checkout_data = {
+                "plan_name": scenario['plan_name'],
+                "billing_cycle": scenario['billing_cycle'],
+                "success_url": "https://example.com/success",
+                "cancel_url": "https://example.com/cancel"
+            }
+            
+            success, response = self.run_test(
+                f"Checkout Session - {scenario['plan_name']}",
+                "POST",
+                "subscription/checkout",
+                200,
+                data=checkout_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                checkout_url = response.get('checkout_url')
+                session_id = response.get('session_id')
+                amount = response.get('amount')
+                currency = response.get('currency')
+                
+                print(f"   ✅ Checkout session created")
+                print(f"   Session ID: {session_id}")
+                print(f"   Amount: {amount} {currency}")
+                print(f"   Checkout URL: {'✓' if checkout_url else '✗'}")
+                
+                # Verify amount matches expected
+                if amount != scenario['expected_amount']:
+                    print(f"   ❌ Amount mismatch: expected {scenario['expected_amount']}, got {amount}")
+                    continue
+                
+                # Store session ID for payment status test
+                if not hasattr(self, 'checkout_sessions'):
+                    self.checkout_sessions = []
+                self.checkout_sessions.append({
+                    'session_id': session_id,
+                    'plan_name': scenario['plan_name'],
+                    'amount': amount
+                })
+                
+                success_count += 1
+            else:
+                print(f"   ❌ Checkout session creation failed for {scenario['plan_name']}")
+        
+        # Test free plan rejection
+        print("   Testing free plan checkout rejection...")
+        free_checkout_data = {
+            "plan_name": "free",
+            "billing_cycle": "monthly",
+            "success_url": "https://example.com/success",
+            "cancel_url": "https://example.com/cancel"
+        }
+        
+        success, response = self.run_test(
+            "Checkout Session - Free Plan (Should Fail)",
+            "POST",
+            "subscription/checkout",
+            400,  # Should return 400 error
+            data=free_checkout_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Free plan checkout correctly rejected")
+            success_count += 1
+        
+        return success_count >= len(checkout_scenarios)
+    
+    def test_payment_status_api(self):
+        """Test GET /api/subscription/payment-status/{session_id} endpoint"""
+        if not self.token or not hasattr(self, 'checkout_sessions') or not self.checkout_sessions:
+            print("❌ No token or checkout sessions available for payment status test")
+            return False
+        
+        print("   Testing payment status API...")
+        
+        success_count = 0
+        
+        for session_info in self.checkout_sessions[:2]:  # Test first 2 sessions
+            session_id = session_info['session_id']
+            plan_name = session_info['plan_name']
+            
+            print(f"   Checking payment status for {plan_name} session...")
+            
+            success, response = self.run_test(
+                f"Payment Status - {plan_name}",
+                "GET",
+                f"subscription/payment-status/{session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                status = response.get('status')
+                payment_status = response.get('payment_status')
+                amount_total = response.get('amount_total')
+                currency = response.get('currency')
+                metadata = response.get('metadata', {})
+                
+                print(f"   ✅ Payment status retrieved")
+                print(f"   Status: {status}")
+                print(f"   Payment status: {payment_status}")
+                print(f"   Amount: {amount_total} {currency}")
+                print(f"   Metadata: {len(metadata)} fields")
+                
+                # Verify response structure
+                if status and payment_status and currency:
+                    success_count += 1
+                    print(f"   ✅ Payment status structure validated")
+                else:
+                    print(f"   ⚠️  Payment status structure incomplete")
+            else:
+                print(f"   ❌ Payment status check failed for {plan_name}")
+        
+        return success_count > 0
+    
+    def test_usage_tracking_access_control(self):
+        """Test the access control system by verifying usage limits are enforced"""
+        if not self.token:
+            print("❌ No token available for usage tracking test")
+            return False
+        
+        print("   Testing usage tracking and access control...")
+        
+        # First, get current usage
+        success, response = self.run_test(
+            "Usage Summary",
+            "GET",
+            "subscription/usage",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            current_plan = response.get('current_plan')
+            usage_details = response.get('usage_details', {})
+            subscription_status = response.get('subscription_status')
+            
+            print(f"   ✅ Usage summary retrieved")
+            print(f"   Current plan: {current_plan}")
+            print(f"   Subscription status: {subscription_status}")
+            print(f"   Features tracked: {len(usage_details)}")
+            
+            # Verify free plan limits
+            if current_plan == 'free':
+                ai_usage = usage_details.get('ai_conversations_daily', {})
+                mock_usage = usage_details.get('mock_tests_monthly', {})
+                
+                print(f"   AI conversations: {ai_usage.get('used', 0)}/{ai_usage.get('limit', 0)}")
+                print(f"   Mock tests: {mock_usage.get('used', 0)}/{mock_usage.get('limit', 0)}")
+                
+                # Verify limits match expected values
+                if ai_usage.get('limit') != 10:
+                    print(f"   ❌ AI conversation limit incorrect: expected 10, got {ai_usage.get('limit')}")
+                    return False
+                
+                if mock_usage.get('limit') != 2:
+                    print(f"   ❌ Mock test limit incorrect: expected 2, got {mock_usage.get('limit')}")
+                    return False
+                
+                print("   ✅ Free plan usage limits correctly configured")
+            
+            # Test access control by checking if limits are enforced
+            for feature, details in usage_details.items():
+                limit = details.get('limit')
+                used = details.get('used')
+                has_access = details.get('has_access')
+                unlimited = details.get('unlimited')
+                
+                if not unlimited and limit > 0:
+                    if used >= limit and has_access:
+                        print(f"   ⚠️  Feature {feature} shows access despite limit exceeded")
+                    elif used < limit and not has_access:
+                        print(f"   ⚠️  Feature {feature} shows no access despite limit not reached")
+                    else:
+                        print(f"   ✅ Feature {feature} access control working correctly")
+            
+            return True
+        
+        return False
+    
+    def test_stripe_webhook_endpoint(self):
+        """Test POST /api/webhook/stripe endpoint for webhook handling"""
+        print("   Testing Stripe webhook endpoint...")
+        
+        # Create a mock webhook payload (this won't actually process payment)
+        mock_webhook_data = {
+            "id": "evt_test_webhook",
+            "object": "event",
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "id": "cs_test_session",
+                    "payment_status": "paid",
+                    "metadata": {
+                        "user_id": self.user_id if hasattr(self, 'user_id') else "test_user",
+                        "plan_name": "basic",
+                        "billing_cycle": "monthly"
+                    }
+                }
+            }
+        }
+        
+        # Note: This test will likely fail without proper Stripe signature
+        # but we can test the endpoint exists and handles requests
+        success, response = self.run_test(
+            "Stripe Webhook",
+            "POST",
+            "webhook/stripe",
+            400,  # Expect 400 due to missing/invalid signature
+            data=mock_webhook_data,
+            headers={'Stripe-Signature': 'test_signature'}
+        )
+        
+        # Even if it fails due to signature, the endpoint should exist
+        if success or "signature" in str(response).lower():
+            print("   ✅ Stripe webhook endpoint exists and handles requests")
+            return True
+        else:
+            print("   ❌ Stripe webhook endpoint not responding properly")
+            return False
+    
+    def test_subscription_integration_flow(self):
+        """Test complete subscription flow integration"""
+        if not self.token:
+            print("❌ No token available for subscription integration test")
+            return False
+        
+        print("   Testing complete subscription integration flow...")
+        
+        # Step 1: Get available plans
+        print("   Step 1: Getting available plans...")
+        plans_success = self.test_subscription_plans_api()
+        
+        # Step 2: Check current subscription (should be free)
+        print("   Step 2: Checking current subscription...")
+        current_success = self.test_current_subscription_api()
+        
+        # Step 3: Test checkout session creation
+        print("   Step 3: Testing checkout session creation...")
+        checkout_success = self.test_checkout_session_creation()
+        
+        # Step 4: Test usage tracking
+        print("   Step 4: Testing usage tracking...")
+        usage_success = self.test_usage_tracking_access_control()
+        
+        # Calculate success rate
+        tests = [plans_success, current_success, checkout_success, usage_success]
+        success_count = sum(1 for test in tests if test)
+        
+        print(f"   Integration flow: {success_count}/{len(tests)} steps successful")
+        
+        if success_count >= 3:
+            print("   ✅ Subscription integration flow working correctly")
+            return True
+        else:
+            print("   ⚠️  Subscription integration has issues")
+            return False
+
 def main():
     print("🚀 Starting Dhruv AI Backend API Tests - CRITICAL FIXES VERIFICATION")
     print("=" * 80)
