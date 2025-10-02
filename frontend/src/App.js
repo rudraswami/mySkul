@@ -72,6 +72,7 @@ function AppContent() {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/wellness" element={<StressManagement />} />
                 <Route path="/auto-notes" element={<AutoNoteMentor />} />
+                <Route path="/subscription" element={<Subscription />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </main>
