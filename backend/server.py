@@ -2302,6 +2302,10 @@ async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(g
         
         await db.chat_messages.insert_one(chat_message.dict())
         
+        # Track feature usage for non-unlimited users
+        if access_info["limit"] != -1:
+            await track_feature_usage(user.user_id, "ai_conversations_daily")
+        
         return {
             "session_id": session_id,
             "message": chat_request.message,
