@@ -2254,6 +2254,25 @@ async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(g
     """Get coordinated response from both Mentor and Professor AI layers"""
     
     try:
+        # Check subscription access for AI conversations
+        access_info = await check_feature_access(user.user_id, "ai_conversations_daily")
+        if not access_info["has_access"]:
+            if access_info["reason"] == "subscription_expired":
+                raise HTTPException(
+                    status_code=402, 
+                    detail="Subscription expired. Please upgrade your plan to continue using AI Tutor."
+                )
+            elif access_info["reason"] == "feature_not_available":
+                raise HTTPException(
+                    status_code=402,
+                    detail="AI Tutor is not available in your current plan. Please upgrade to access this feature."
+                )
+            elif access_info["reason"] == "usage_limit_reached":
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Daily AI conversation limit reached. You have used {access_info['used']}/{access_info['limit']} messages today. Please upgrade your plan or try again tomorrow."
+                )
+        
         session_id = chat_request.session_id or str(uuid.uuid4())
         
         # Get user context for personalization
