@@ -393,6 +393,7 @@
 
 ## test_plan:
   current_focus:
+    - "Comprehensive Revenue Module Subscription System"
     - "Enhanced Mock Test System API"
     - "Enhanced Mock Tests UI"
     - "Performance Analytics API"
