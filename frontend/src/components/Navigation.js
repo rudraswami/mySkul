@@ -56,6 +56,12 @@ export default function Navigation() {
       href: '/wellness',
       icon: Heart,
       current: location.pathname === '/wellness'
+    },
+    {
+      name: 'Subscription',
+      href: '/subscription',
+      icon: CreditCard,
+      current: location.pathname === '/subscription'
     }
   ];
 
