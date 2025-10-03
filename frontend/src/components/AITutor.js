@@ -1222,48 +1222,22 @@ export default function AITutor() {
               ))
             )}
             
-            {/* Enhanced Loading indicator */}
+            {/* Clean Loading indicator */}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-gradient-to-r from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100 max-w-md">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center animate-pulse">
-                        <Brain className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-ping"></div>
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 max-w-sm">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                      <Brain className="h-4 w-4 text-teal-600 animate-pulse" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-sm font-medium text-gray-800">Dhruv AI is thinking</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-700">AI is thinking</span>
                         <div className="flex space-x-1">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></div>
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce"></div>
+                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                      </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        {aiMode === 'dual' && (
-                          <>
-                            <Users className="h-3 w-3 mr-1" />
-                            <span>Coordinating Mentor + Professor responses...</span>
-                          </>
-                        )}
-                        {aiMode === 'mentor' && (
-                          <>
-                            <Heart className="h-3 w-3 mr-1" />
-                            <span>Crafting personalized guidance...</span>
-                          </>
-                        )}
-                        {aiMode === 'professor' && (
-                          <>
-                            <GraduationCap className="h-3 w-3 mr-1" />
-                            <span>Analyzing with academic precision...</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="mt-2 bg-gray-200 rounded-full h-1 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-pulse" style={{ width: '60%' }}></div>
                       </div>
                     </div>
                   </div>
