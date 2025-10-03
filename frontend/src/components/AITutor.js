@@ -1259,20 +1259,24 @@ export default function AITutor() {
                             value={renameValue}
                             onChange={(e) => setRenameValue(e.target.value)}
                             onBlur={() => {
-                              if (renameValue.trim()) {
+                              if (renameValue.trim() && renameValue.trim() !== session.title) {
                                 renameSession(session.session_id, renameValue.trim());
                               } else {
                                 setSessionActions({ ...sessionActions, isRenaming: null });
                                 setRenameValue('');
                               }
                             }}
-                            onKeyPress={(e) => {
+                            onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.target.blur();
+                              } else if (e.key === 'Escape') {
+                                setSessionActions({ ...sessionActions, isRenaming: null });
+                                setRenameValue('');
                               }
                             }}
-                            className="flex-1 text-sm bg-white border border-teal-200 rounded px-1 py-0.5 mr-2"
+                            className="flex-1 text-sm bg-white border-2 border-teal-300 rounded px-2 py-1 mr-2 focus:outline-none focus:border-teal-500"
                             autoFocus
+                            placeholder="Enter session name..."
                           />
                         ) : (
                           <span className="truncate font-medium flex-1">{session.title}</span>
