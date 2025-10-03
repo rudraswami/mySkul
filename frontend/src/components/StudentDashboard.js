@@ -61,6 +61,14 @@ export default function StudentDashboard() {
     fetchDashboardData();
   }, []);
 
+  // Performance optimization: Set minimal loading time
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) setLoading(false);
+    }, 2000); // Max 2 seconds loading
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
