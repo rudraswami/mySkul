@@ -562,17 +562,29 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
 
+      const newBookmarkedState = !isBookmarked;
+
       await axios.put(`${API}/chat/${sessionId}/bookmark`, {
-        bookmarked: !isBookmarked
+        bookmarked: newBookmarkedState
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      // Refresh sessions list
-      fetchChatSessions();
+      // Update sessions list immediately
+      setSessions(prevSessions => 
+        prevSessions.map(session => 
+          session.session_id === sessionId 
+            ? { ...session, bookmarked: newBookmarkedState }
+            : session
+        )
+      );
+
       setSessionActions({ showMenu: null, isRenaming: null });
+      const action = newBookmarkedState ? 'bookmarked' : 'removed from bookmarks';
+      showToast(`Session ${action}`, 'success');
     } catch (error) {
       console.error('Failed to bookmark/unbookmark session:', error);
+      showToast('Failed to update bookmark', 'error');
     }
   };
 
