@@ -6857,11 +6857,9 @@ async def get_detailed_test_review(
                 difficulty_level=question.get("difficulty_level", 3),
                 subject=question.get("chapter", "General"),
                 chapter=question.get("chapter", "General"),
-                time_spent=submission_doc.get("question_times", {}).get(q_id, 0)
+                time_spent=submission_doc.get("question_times", {}).get(q_id, 0),
+                bookmarked=q_id in bookmarked_question_ids
             )
-            
-            # Add bookmark status
-            review.bookmarked = q_id in bookmarked_question_ids
             
             question_reviews.append(review)
         
