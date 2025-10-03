@@ -1737,24 +1737,30 @@ class DhruvAITester:
         return success_rate >= 80.0
 
     def run_comprehensive_tests(self):
-        """Run focused test for free tier access validation"""
-        print("🚀 Starting Free Tier Access Validation Testing...")
+        """Run focused test for Auto-Note Mentor ObjectId serialization fix"""
+        print("🚀 Starting Auto-Note Mentor ObjectId Serialization Fix Testing...")
         print(f"   Base URL: {self.base_url}")
-        print("   Focus: Critical debugging of free tier mock test generation")
+        print("   Focus: Testing fixed Auto-Note Mentor endpoints that were failing with 500 errors")
+        print("   Review Request: Verify ObjectId serialization fix works correctly")
         
-        # Run the critical free tier test
-        critical_success = self.test_free_tier_access_validation_critical()
+        # Run the Auto-Note Mentor ObjectId fix test
+        auto_note_success = self.test_auto_note_mentor_objectid_fix()
         
         # Final summary
-        print(f"\n🎯 CRITICAL TEST SUMMARY")
-        print(f"   🎯 Free Tier Access Validation: {'✅ PASSED' if critical_success else '❌ FAILED'}")
+        print(f"\n🎯 AUTO-NOTE MENTOR FIX TEST SUMMARY")
+        print(f"   🎯 ObjectId Serialization Fix: {'✅ PASSED' if auto_note_success else '❌ FAILED'}")
         
-        if critical_success:
-            print("🎉 CRITICAL TEST PASSED - Free tier access working!")
+        if auto_note_success:
+            print("🎉 AUTO-NOTE MENTOR FIX SUCCESSFUL - All endpoints working correctly!")
+            print("   ✅ Session Creation: Working")
+            print("   ✅ Session Retrieval: Working (was failing with 500 before)")
+            print("   ✅ Analytics: Working (was failing with 500 before)")
+            print("   ✅ Class Series: Working (was failing with 500 before)")
         else:
-            print("⚠️  CRITICAL TEST FAILED - Free tier access blocked")
+            print("❌ AUTO-NOTE MENTOR FIX INCOMPLETE - Some endpoints still failing")
+            print("   Review the detailed test output above for specific failures")
         
-        return critical_success
+        return auto_note_success
 
     def test_subscription_infrastructure_retest(self):
         """CRITICAL SUBSCRIPTION INFRASTRUCTURE RETEST - Test if subscription fixes resolved 500 errors"""
