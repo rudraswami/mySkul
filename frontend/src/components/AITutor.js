@@ -426,8 +426,94 @@ export default function AITutor() {
   };
 
   const startNewSession = () => {
-    setCurrentSession(null);
     setMessages([]);
+    setCurrentSession(null);
+    setSessionActions({ showMenu: null, isRenaming: null });
+  };
+
+  // Session Management Actions
+  const renameSession = async (sessionId, newTitle) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      await axios.put(`${API}/chat/${sessionId}/rename`, {
+        title: newTitle
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      // Refresh sessions list
+      fetchChatSessions();
+      setSessionActions({ showMenu: null, isRenaming: null });
+      setRenameValue('');
+    } catch (error) {
+      console.error('Failed to rename session:', error);
+    }
+  };
+
+  const deleteSession = async (sessionId) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const confirmed = window.confirm('Are you sure you want to delete this conversation?');
+      if (!confirmed) return;
+
+      await axios.delete(`${API}/chat/${sessionId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      // If this was the current session, clear it
+      if (currentSession === sessionId) {
+        setMessages([]);
+        setCurrentSession(null);
+      }
+
+      // Refresh sessions list
+      fetchChatSessions();
+      setSessionActions({ showMenu: null, isRenaming: null });
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+    }
+  };
+
+  const togglePinSession = async (sessionId, isPinned) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      await axios.put(`${API}/chat/${sessionId}/pin`, {
+        pinned: !isPinned
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      // Refresh sessions list
+      fetchChatSessions();
+      setSessionActions({ showMenu: null, isRenaming: null });
+    } catch (error) {
+      console.error('Failed to pin/unpin session:', error);
+    }
+  };
+
+  const toggleBookmarkSession = async (sessionId, isBookmarked) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      await axios.put(`${API}/chat/${sessionId}/bookmark`, {
+        bookmarked: !isBookmarked
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      // Refresh sessions list
+      fetchChatSessions();
+      setSessionActions({ showMenu: null, isRenaming: null });
+    } catch (error) {
+      console.error('Failed to bookmark/unbookmark session:', error);
+    }
   };
 
   const handleKeyPress = (e) => {
