@@ -1558,10 +1558,17 @@ class DhruvAITester:
         
         decks_get_success = 1 if success else 0
         if success:
-            decks = response.get('flashcard_decks', [])
+            # Handle both dict and list response formats
+            if isinstance(response, dict):
+                decks = response.get('flashcard_decks', [])
+            elif isinstance(response, list):
+                decks = response
+            else:
+                decks = []
+                
             print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
             if decks:
-                sample_deck = decks[0]
+                sample_deck = decks[0] if isinstance(decks[0], dict) else {}
                 print(f"   Sample deck: {sample_deck.get('title', 'N/A')}")
                 print(f"   Total cards: {sample_deck.get('total_cards', 0)}")
         else:
