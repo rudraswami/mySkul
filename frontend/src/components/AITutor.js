@@ -1315,16 +1315,11 @@ export default function AITutor() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  console.log('Rename clicked for session:', session.session_id, session.title);
-                                  
-                                  // Set both actions simultaneously
                                   setRenameValue(session.title);
                                   setSessionActions({ 
                                     showMenu: null, 
                                     isRenaming: session.session_id 
                                   });
-                                  
-                                  console.log('Rename state updated - isRenaming:', session.session_id);
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                                 type="button"
