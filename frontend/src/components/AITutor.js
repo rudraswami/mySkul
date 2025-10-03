@@ -1346,12 +1346,14 @@ export default function AITutor() {
                               
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   console.log('Bookmark clicked for session:', session.session_id, 'Current bookmark state:', session.bookmarked);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   toggleBookmarkSession(session.session_id, session.bookmarked || false);
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                type="button"
                               >
                                 <Star className={`h-4 w-4 mr-3 ${session.bookmarked ? 'text-yellow-500 fill-current' : 'text-gray-500'}`} />
                                 {session.bookmarked ? 'Remove bookmark' : 'Add bookmark'}
