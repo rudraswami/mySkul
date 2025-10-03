@@ -2948,24 +2948,24 @@ async def record_user_feedback(
         )
         
         # Update mastery based on feedback
-        if topic_name:
-            is_correct = feedback_type in ["helpful", "perfect"]
-            current_difficulty = await personalization_engine.get_personalized_difficulty(user.user_id, subject, topic_name)
+        if request.topic_name:
+            is_correct = request.feedback_type in ["helpful", "perfect"]
+            current_difficulty = await personalization_engine.get_personalized_difficulty(user.user_id, request.subject, request.topic_name)
             
             await personalization_engine.update_topic_mastery(
                 user_id=user.user_id,
-                subject=subject,
-                topic_name=topic_name,
+                subject=request.subject,
+                topic_name=request.topic_name,
                 is_correct=is_correct,
                 difficulty_level=current_difficulty
             )
             
             # Analyze for error patterns
-            if feedback_type in ["too_hard", "confusing"]:
+            if request.feedback_type in ["too_hard", "confusing"]:
                 await personalization_engine.analyze_and_record_errors(
                     user_id=user.user_id,
-                    subject=subject,
-                    topic_name=topic_name,
+                    subject=request.subject,
+                    topic_name=request.topic_name,
                     question="User feedback session",
                     response="Feedback-based analysis",
                     user_feedback=feedback_type
