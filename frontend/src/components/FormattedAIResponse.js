@@ -24,7 +24,7 @@ import {
   Zap,
   CreditCard,
   Clock,
-  TrendingUpRight,
+  TrendingUp,
   Shield,
   Award,
   Activity
