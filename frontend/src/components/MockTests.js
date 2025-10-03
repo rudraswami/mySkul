@@ -317,9 +317,25 @@ export default function MockTests() {
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.detail) {
-            // Handle both string details and array of validation errors
+            // Handle both string details and object details (subscription errors)
             if (typeof errorData.detail === 'string') {
               errorMessage = errorData.detail;
+            } else if (typeof errorData.detail === 'object' && errorData.detail.message) {
+              // Handle structured subscription errors
+              const detail = errorData.detail;
+              errorMessage = detail.message;
+              
+              if (detail.action === 'upgrade') {
+                // Show upgrade prompt instead of generic error
+                setShowUpgradePrompt({
+                  message: detail.message,
+                  currentPlan: detail.current_plan,
+                  used: detail.used,
+                  limit: detail.limit,
+                  resetDays: detail.reset_days
+                });
+                return; // Don't show generic error
+              }
             } else if (Array.isArray(errorData.detail)) {
               // Handle Pydantic validation errors
               errorMessage = errorData.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
