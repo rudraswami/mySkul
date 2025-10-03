@@ -88,7 +88,31 @@ export default function MockTests() {
 
   useEffect(() => {
     loadAnalytics();
+    loadBookmarkedQuestions();
+    loadPerformanceTrends();
   }, []);
+
+  const loadBookmarkedQuestions = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await fetch(`${backendUrl}/api/bookmarked-questions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const bookmarkedIds = new Set(data.bookmarked_questions.map(q => q.question_id));
+        setBookmarkedQuestions(bookmarkedIds);
+      }
+    } catch (error) {
+      console.error('Error loading bookmarked questions:', error);
+    }
+  };
 
   const loadAnalytics = async () => {
     try {
