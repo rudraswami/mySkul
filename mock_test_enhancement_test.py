@@ -146,7 +146,7 @@ class MockTestEnhancementTester:
             self.test_ids.append({
                 'test_id': response['test_id'],
                 'questions': response.get('questions', []),
-                'subject': test_params['subject']
+                'subject': test_params['subjects'][0]
             })
             
             print(f"   ✅ Test generated successfully: {response['test_id']}")
