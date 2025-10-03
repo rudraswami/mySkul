@@ -1495,7 +1495,7 @@ export default function AITutor() {
                           {loading && <span className="text-blue-600 text-sm">🤖 AI Analyzing...</span>}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
+                          Ready for analysis
                         </p>
                       </div>
                     </div>
