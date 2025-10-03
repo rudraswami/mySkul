@@ -1330,8 +1330,9 @@ export default function AITutor() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log('Pin clicked for session:', session.session_id, 'Current pinned state:', session.pinned);
                                   setSessionActions({ showMenu: null, isRenaming: null });
-                                  togglePinSession(session.session_id, session.pinned);
+                                  togglePinSession(session.session_id, session.pinned || false);
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                               >
