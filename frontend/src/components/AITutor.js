@@ -1313,6 +1313,7 @@ export default function AITutor() {
                             <div className="py-2">
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   console.log('Rename clicked for session:', session.session_id, session.title);
                                   setRenameValue(session.title);
@@ -1322,6 +1323,7 @@ export default function AITutor() {
                                   });
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                type="button"
                               >
                                 <Edit className="h-4 w-4 mr-3 text-gray-500" />
                                 Rename
