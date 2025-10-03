@@ -3245,8 +3245,8 @@ async def get_available_contexts(user: User = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Failed to fetch available contexts")
 
 @api_router.post("/ai/dual-response")
-async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
-    """Get coordinated response from both Mentor and Professor AI layers"""
+async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_current_user)):
+    """Get coordinated response from both Mentor and Professor AI layers with personalization"""
     
     try:
         # Check subscription access for AI conversations
@@ -3268,7 +3268,8 @@ async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(g
                     detail=f"Daily AI conversation limit reached. You have used {access_info['used']}/{access_info['limit']} messages today. Please upgrade your plan or try again tomorrow."
                 )
         
-        session_id = chat_request.session_id or str(uuid.uuid4())
+        # Extract topic from message (simple keyword extraction - can be enhanced)
+        topic_name = extract_topic_from_message(request.message, request.subject)
         
         # Get user context for personalization
         user_context = {
@@ -3278,19 +3279,31 @@ async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(g
             'user_id': user.user_id
         }
         
-        # Get coordinated dual-layer response
-        coordinated_response = await dual_ai.get_coordinated_response(
-            chat_request.message, 
-            chat_request.subject, 
-            session_id, 
-            user_context
-        )
+        # Get personalized dual-layer response
+        try:
+            coordinated_response = await dual_ai.get_personalized_coordinated_response(
+                request.message, 
+                request.subject, 
+                request.session_id,
+                user.user_id,
+                topic_name,
+                user_context
+            )
+        except Exception as personalization_error:
+            logger.warning(f"Personalization failed, using fallback: {str(personalization_error)}")
+            # Fallback to non-personalized response
+            coordinated_response = await dual_ai.get_coordinated_response(
+                request.message, 
+                request.subject, 
+                request.session_id, 
+                user_context
+            )
         
         # Save chat message with dual-layer data
         chat_message = ChatMessage(
-            session_id=session_id,
+            session_id=request.session_id,
             user_id=user.user_id,
-            message=chat_request.message,
+            message=request.message,
             response=coordinated_response['primary_response'],
             reasoning=f"Dual-layer AI: {coordinated_response['primary_persona']} leading. Scenario: {coordinated_response['scenario_type']}"
         )
@@ -3302,8 +3315,10 @@ async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(g
             await track_feature_usage(user.user_id, "ai_conversations_daily")
         
         return {
-            "session_id": session_id,
-            "message": chat_request.message,
+            "session_id": request.session_id,
+            "message": request.message,
+            "subject": request.subject,
+            "topic_detected": topic_name,
             "dual_response": {
                 "primary": {
                     "persona": coordinated_response['primary_persona'],
