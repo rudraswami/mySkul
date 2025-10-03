@@ -53,6 +53,8 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchDailyGoals();
+    fetchSubjectProgress();
   }, []);
 
   // Performance optimization: Set minimal loading time
