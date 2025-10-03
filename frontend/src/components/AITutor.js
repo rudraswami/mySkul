@@ -1206,8 +1206,17 @@ export default function AITutor() {
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Ask me anything about ${selectedSubject}...`}
-                  className={`resize-none border-2 ${isListening ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:border-gray-500'} rounded-lg transition-all duration-200 shadow-sm focus:shadow-md`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  placeholder={dragOver ? 'Drop your image or PDF here...' : `Ask me anything about ${selectedSubject}...`}
+                  className={`resize-none border-2 ${
+                    dragOver 
+                      ? 'border-blue-400 bg-blue-50' 
+                      : isListening 
+                        ? 'border-red-400 bg-red-50' 
+                        : 'border-gray-300 focus:border-gray-500'
+                  } rounded-lg transition-all duration-200 shadow-sm focus:shadow-md`}
                   rows={3}
                   disabled={loading}
                 />
