@@ -37,7 +37,10 @@ import {
   Plus,
   TrendingDown,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 import axios from 'axios';
 
