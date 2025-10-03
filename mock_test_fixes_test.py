@@ -368,7 +368,7 @@ class MockTestFixesTester:
         print("   Attempting to generate multiple mock tests to test subscription limits...")
         
         test_data = {
-            "test_type": "JEE", 
+            "exam_type": "JEE", 
             "subjects": ["Mathematics"],
             "difficulty_level": 3,
             "num_questions": 10,
