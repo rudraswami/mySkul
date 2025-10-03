@@ -678,49 +678,6 @@ export default function AutoNoteMentor() {
 
   // ============= ENHANCED FEATURES FUNCTIONS =============
 
-  const handleDocumentUpload = async (file) => {
-    if (!currentSession) {
-      setError('Please start a session first');
-      return;
-    }
-
-    setLoading(true);
-    setDocumentUploadProgress(0);
-
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('session_id', currentSession.session_id);
-      formData.append('document_type', file.type.startsWith('image/') ? 'image' : 'pdf');
-      formData.append('title', file.name);
-      formData.append('subject', newSessionSubject);
-
-      const response = await fetch(`${API}/auto-notes/upload-document`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setProcessedNote(result);
-        setActiveView('notes');
-      } else {
-        const error = await response.json();
-        setError(error.detail || 'Failed to process document');
-      }
-    } catch (error) {
-      console.error('Document upload error:', error);
-      setError('Failed to upload document');
-    } finally {
-      setLoading(false);
-      setDocumentUploadProgress(0);
-    }
-  };
-
   const createSpacedRepetitionCards = async (sessionId) => {
     setLoading(true);
     
