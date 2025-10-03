@@ -531,6 +531,200 @@ export function DualResponseContainer({
         />
       )}
 
+      {/* Phase C: Guardrails & Validation */}
+      {guardrails && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
+            <Shield className="h-4 w-4 mr-2" />
+            AI Verification & Sources
+          </h4>
+          
+          {/* Math Validation */}
+          {guardrails.math_validation && (
+            <div className="mb-3 p-3 bg-white rounded border border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700 flex items-center">
+                  <Calculator className="h-4 w-4 mr-1" />
+                  Math Validation
+                </span>
+                <Badge 
+                  variant={guardrails.math_validation.is_valid ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  {guardrails.math_validation.is_valid ? "Valid" : "Check Required"}
+                </Badge>
+              </div>
+              {guardrails.math_validation.result && (
+                <p className="text-xs text-gray-600">Result: {guardrails.math_validation.result}</p>
+              )}
+              {guardrails.math_validation.confidence_score > 0 && (
+                <p className="text-xs text-gray-500">
+                  Confidence: {Math.round(guardrails.math_validation.confidence_score * 100)}%
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Citations */}
+          {guardrails.citations && guardrails.citations.length > 0 && (
+            <div className="mb-3 p-3 bg-white rounded border border-blue-100">
+              <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <Link2 className="h-4 w-4 mr-1" />
+                Academic References
+              </h5>
+              <div className="space-y-1">
+                {guardrails.citations.slice(0, 3).map((citation, idx) => (
+                  <div key={idx} className="text-xs text-gray-600 flex items-start">
+                    <span className="text-blue-600 font-medium mr-1">{idx + 1}.</span>
+                    <span>{citation.source_title}</span>
+                    {citation.chapter_section && (
+                      <span className="text-gray-500 ml-1">({citation.chapter_section})</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phase C: Disagreement Alert */}
+      {disagreementAlert && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-yellow-800 mb-1">
+                Different Perspectives Detected
+              </h4>
+              <p className="text-sm text-yellow-700 mb-2">
+                Our AI tutors have slightly different approaches to this problem. This is normal and can provide richer learning!
+              </p>
+              <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
+                {disagreementAlert.conflict_type} • {disagreementAlert.severity} difference
+              </Badge>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phase D: Enhanced Action Buttons */}
+      {actionButtons && (
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+            <Zap className="h-4 w-4 mr-2" />
+            Take Action - Enhance Your Learning
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {actionButtons.practice_more_available && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPracticMore}
+                className="flex flex-col items-center p-3 h-auto text-center hover:bg-blue-50 border-blue-200"
+              >
+                <Target className="h-5 w-5 mb-1 text-blue-600" />
+                <span className="text-xs font-medium">Practice More</span>
+                <span className="text-xs text-gray-500">Similar problems</span>
+              </Button>
+            )}
+            
+            {actionButtons.add_to_notes_available && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAddToNotes}
+                className="flex flex-col items-center p-3 h-auto text-center hover:bg-green-50 border-green-200"
+              >
+                <BookOpen className="h-5 w-5 mb-1 text-green-600" />
+                <span className="text-xs font-medium">Add to Notes</span>
+                <span className="text-xs text-gray-500">Save for later</span>
+              </Button>
+            )}
+            
+            {actionButtons.create_flashcards_available && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCreateFlashcards}
+                className="flex flex-col items-center p-3 h-auto text-center hover:bg-purple-50 border-purple-200"
+              >
+                <CreditCard className="h-5 w-5 mb-1 text-purple-600" />
+                <span className="text-xs font-medium">Turn into Deck</span>
+                <span className="text-xs text-gray-500">Make flashcards</span>
+              </Button>
+            )}
+            
+            {actionButtons.schedule_revision_available && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onScheduleRevision}
+                className="flex flex-col items-center p-3 h-auto text-center hover:bg-orange-50 border-orange-200"
+              >
+                <Clock className="h-5 w-5 mb-1 text-orange-600" />
+                <span className="text-xs font-medium">Schedule Revision</span>
+                <span className="text-xs text-gray-500">Spaced learning</span>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Phase E: Analytics Display */}
+      {analytics && analytics.performance_stats && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+            <Activity className="h-4 w-4 mr-2" />
+            Your Learning Progress
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">
+                {analytics.performance_stats.study_streak}
+              </div>
+              <div className="text-xs text-gray-600">Day Streak</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">
+                {analytics.performance_stats.total_interactions}
+              </div>
+              <div className="text-xs text-gray-600">Questions Asked</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">
+                {Math.round(analytics.performance_stats.study_time_this_week * 10) / 10}h
+              </div>
+              <div className="text-xs text-gray-600">This Week</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-orange-600 flex items-center justify-center">
+                <TrendingUpRight className="h-4 w-4 mr-1" />
+                {analytics.performance_stats.performance_trend === 'improving' ? '↗️' : 
+                 analytics.performance_stats.performance_trend === 'declining' ? '↘️' : '→'}
+              </div>
+              <div className="text-xs text-gray-600 capitalize">
+                {analytics.performance_stats.performance_trend}
+              </div>
+            </div>
+          </div>
+          
+          {analytics.performance_stats.recommendations && analytics.performance_stats.recommendations.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs font-medium text-gray-700 mb-2">💡 Personalized Recommendations:</p>
+              <ul className="text-xs text-gray-600 space-y-1">
+                {analytics.performance_stats.recommendations.slice(0, 2).map((rec, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="text-blue-500 mr-1">•</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Action Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-4 text-xs text-gray-500">
