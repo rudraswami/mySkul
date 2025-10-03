@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Brain } from 'lucide-react';
+import axios from 'axios';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
