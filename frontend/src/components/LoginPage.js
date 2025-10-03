@@ -13,15 +13,20 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
+    console.log('Form submitted!', { email, password: password ? 'present' : 'missing' });
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    console.log('Calling login function...');
     const result = await login(email, password);
+    console.log('Login result:', result);
     
     if (result.success) {
+      console.log('Login successful, navigating to dashboard...');
       navigate('/dashboard');
     } else {
+      console.log('Login failed:', result.error);
       setError(result.error);
     }
     
