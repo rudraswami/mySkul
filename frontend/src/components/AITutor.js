@@ -1363,11 +1363,14 @@ export default function AITutor() {
                               
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
+                                  console.log('Delete clicked for session:', session.session_id);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   deleteSession(session.session_id);
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                type="button"
                               >
                                 <Trash2 className="h-4 w-4 mr-3" />
                                 Delete conversation
