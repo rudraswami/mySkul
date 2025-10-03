@@ -42,6 +42,9 @@ class DhruvAITester:
 
             print(f"   Status Code: {response.status_code}")
             
+            # Store last response status for subscription error checking
+            self.last_response_status = response.status_code
+            
             success = response.status_code == expected_status
             if success:
                 self.tests_passed += 1
@@ -57,12 +60,17 @@ class DhruvAITester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {error_data}")
+                    # Store error details for subscription error analysis
+                    self.last_error_data = error_data
                 except:
                     print(f"   Error: {response.text}")
+                    self.last_error_data = {"error": response.text}
                 return False, {}
 
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
+            self.last_response_status = 0
+            self.last_error_data = {"error": str(e)}
             return False, {}
 
     def test_health_check(self):
