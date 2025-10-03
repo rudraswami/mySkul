@@ -3981,6 +3981,19 @@ async def get_disagreement_alerts(
         logger.error(f"Disagreements endpoint error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get disagreement alerts")
 
+@api_router.post("/guardrails/fact-verification")
+async def verify_fact_endpoint(
+    request: FactVerificationRequest,
+    user: User = Depends(get_current_user)
+):
+    """Verify facts against established sources"""
+    try:
+        verification = await GuardrailService.verify_fact(request.statement, request.subject, request.context)
+        return verification.dict()
+    except Exception as e:
+        logger.error(f"Fact verification endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Fact verification failed")
+
 # Phase D: Enhanced Action Buttons Endpoints  
 @api_router.post("/actions/practice-more")
 async def generate_practice_problems_endpoint(
