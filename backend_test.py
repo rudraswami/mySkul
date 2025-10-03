@@ -1697,11 +1697,7 @@ class DhruvAITester:
         print(f"   Add to notes (still working): {note_success_count}/{len(note_tests)} ✓")
         print(f"   GET endpoints (still working): {get_success_count}/{len(get_endpoints)} ✓")
         
-        return total_success >= total_tests * 0.8  # 80% success thresholdrated: {len(cards)}")
-                print(f"   Difficulty: {response.get('difficulty_level', 'N/A')}")
-                flashcard_success_count += 1
-            else:
-                print(f"   ❌ Create flashcards failed")
+        return total_success >= total_tests * 0.8  # 80% success threshold
             
             time.sleep(2)
         
