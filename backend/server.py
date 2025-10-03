@@ -664,6 +664,7 @@ class DetailedQuestionReview(BaseModel):
     subject: str
     chapter: str
     time_spent: int = 0
+    bookmarked: bool = False
 
 class PostTestReview(BaseModel):
     test_id: str
