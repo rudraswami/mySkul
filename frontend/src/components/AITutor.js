@@ -1208,9 +1208,40 @@ export default function AITutor() {
                           scenarioType={message.dual_response.scenario_type}
                           confidence={message.dual_response.confidence}
                           timestamp={formatTime(message.timestamp)}
+                          
+                          // Phase C: Guardrails Data
+                          guardrails={message.guardrails}
+                          disagreementAlert={message.disagreement_alert}
+                          
+                          // Phase D: Action Buttons Data
+                          actionButtons={message.action_buttons}
+                          
+                          // Phase E: Analytics Data  
+                          analytics={message.analytics}
+                          
+                          // Event Handlers
                           onFeedback={(feedback) => submitUserFeedback(message.session_id, feedback, message.topic_detected)}
-                          onPracticMore={() => generatePracticeProblems(message.topic_detected)}
-                          onAddToNotes={() => addToAutoNotes(message)}
+                          onPracticMore={() => handlePracticeMore(message.message, message.subject, message.topic_detected)}
+                          onAddToNotes={() => handleAddToNotes(
+                            `${message.subject} - ${message.topic_detected}`,
+                            message.dual_response.primary.response,
+                            message.subject,
+                            message.topic_detected,
+                            message.session_id
+                          )}
+                          onCreateFlashcards={() => handleCreateFlashcards(
+                            `${message.subject} Flashcards - ${message.topic_detected}`,
+                            message.dual_response.primary.response,
+                            message.subject,
+                            message.topic_detected,
+                            message.session_id
+                          )}
+                          onScheduleRevision={() => handleScheduleRevision(
+                            message.session_id,
+                            'concept',
+                            `${message.subject} - ${message.topic_detected}`,
+                            0.6
+                          )}
                         />
                       ) : (
                         /* Single Response Layout (mentor-only or professor-only) */
