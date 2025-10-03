@@ -514,6 +514,79 @@ export default function AITutor() {
     setSelectedContext(null);
   };
 
+  // Phase B: Personalization Functions
+  const updatePersonalizationProfile = async (profileData) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${API}/personalization/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setStudentProfile(result.profile);
+        console.log('✅ Profile updated successfully');
+        return true;
+      } else {
+        console.error('Failed to update profile');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
+
+  const submitUserFeedback = async (sessionId, feedbackType, topicName = null) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${API}/personalization/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          subject: selectedSubject,
+          feedback_type: feedbackType,
+          topic_name: topicName
+        })
+      });
+
+      if (response.ok) {
+        setLastFeedback({ type: feedbackType, timestamp: Date.now() });
+        // Reload personalization data to reflect updates
+        loadPersonalizationData();
+        console.log('✅ Feedback submitted successfully');
+        return true;
+      } else {
+        console.error('Failed to submit feedback');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      return false;
+    }
+  };
+
+  const getDifficultyDisplay = (level) => {
+    if (level < 0.3) return { label: 'Beginner', color: 'bg-green-500', emoji: '🌱' };
+    if (level < 0.7) return { label: 'Intermediate', color: 'bg-yellow-500', emoji: '📚' };
+    return { label: 'Advanced', color: 'bg-red-500', emoji: '🏆' };
+  };
+
+  const getMasteryColor = (mastery) => {
+    if (mastery < 0.3) return 'text-red-500';
+    if (mastery < 0.7) return 'text-yellow-500';
+    return 'text-green-500';
+  };
+
   const getSubjectSuggestions = () => {
     const suggestions = {
       'Mathematics': [
