@@ -407,43 +407,72 @@ export default function StudentDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {subjectProgress.map((subject, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-4 h-4 rounded-full ${
-                            subject.status === 'strong' ? 'bg-green-500' :
-                            subject.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}></div>
-                          <h4 className="font-semibold text-gray-900">{subject.subject}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {subject.completed}/{subject.chapters} chapters
-                          </Badge>
+                {subjectsLoading ? (
+                  <div className="space-y-4">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="p-4 bg-gray-50 rounded-lg animate-pulse">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
+                            <div className="h-4 bg-gray-300 rounded w-20"></div>
+                            <div className="h-4 bg-gray-300 rounded w-16"></div>
+                          </div>
+                          <div className="h-6 bg-gray-300 rounded w-12"></div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">{subject.mastery}%</div>
-                          <div className="text-xs text-gray-500">mastery</div>
+                        <div className="h-2 bg-gray-300 rounded w-full mb-3"></div>
+                        <div className="flex space-x-2">
+                          <div className="h-6 bg-gray-300 rounded w-20"></div>
+                          <div className="h-6 bg-gray-300 rounded w-20"></div>
+                          <div className="h-6 bg-gray-300 rounded w-24"></div>
                         </div>
                       </div>
-                      <Progress value={subject.mastery} className="h-2 mb-3" />
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <BookMarked className="h-3 w-3 mr-1" />
-                          Revise Notes
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <Brain className="h-3 w-3 mr-1" />
-                          Ask Tutor
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <FileText className="h-3 w-3 mr-1" />
-                          Practice Quiz
-                        </Button>
+                    ))}
+                  </div>
+                ) : subjectProgress.length > 0 ? (
+                  <div className="space-y-4">
+                    {subjectProgress.map((subject, index) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-4 h-4 rounded-full ${
+                              subject.status === 'strong' ? 'bg-green-500' :
+                              subject.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}></div>
+                            <h4 className="font-semibold text-gray-900">{subject.subject}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              {subject.completed}/{subject.chapters} chapters
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-gray-900">{subject.mastery}%</div>
+                            <div className="text-xs text-gray-500">mastery</div>
+                          </div>
+                        </div>
+                        <Progress value={subject.mastery} className="h-2 mb-3" />
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="outline" className="text-xs">
+                            <BookMarked className="h-3 w-3 mr-1" />
+                            Revise Notes
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-xs">
+                            <Brain className="h-3 w-3 mr-1" />
+                            Ask Tutor
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-xs">
+                            <FileText className="h-3 w-3 mr-1" />
+                            Practice Quiz
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium">No subject progress data yet</p>
+                    <p className="text-gray-500 text-sm">Start studying to track your progress!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
