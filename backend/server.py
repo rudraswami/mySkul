@@ -644,6 +644,37 @@ class TestResultsResponse(BaseModel):
     retake_options: List[Dict[str, str]]
     next_recommendations: List[str]
 
+class QuestionBookmarkRequest(BaseModel):
+    question_id: str
+    test_id: str
+    bookmarked: bool
+    notes: str = ""
+
+class DetailedQuestionReview(BaseModel):
+    question_id: str
+    question_text: str
+    options: List[str]
+    correct_answer: str
+    user_answer: str
+    is_correct: bool
+    explanation: str
+    professor_solution: str
+    mentor_hint: str
+    difficulty_level: int
+    subject: str
+    chapter: str
+    time_spent: int = 0
+
+class PostTestReview(BaseModel):
+    test_id: str
+    test_name: str
+    overall_score: float
+    total_questions: int
+    correct_answers: int
+    question_reviews: List[DetailedQuestionReview]
+    performance_analysis: Dict[str, Any]
+    retake_suggestions: List[str]
+
 # ============= PHASE B: PERSONALIZATION MODELS =============
 
 class TopicMastery(BaseModel):
