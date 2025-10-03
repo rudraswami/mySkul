@@ -351,19 +351,21 @@ export default function MockTests() {
             } else if (typeof errorData.detail === 'object' && errorData.detail.message) {
               // Handle structured subscription errors
               const detail = errorData.detail;
-              errorMessage = detail.message;
               
               if (detail.action === 'upgrade') {
-                // Show upgrade prompt instead of generic error
+                // Show upgrade prompt modal instead of generic error
                 setShowUpgradePrompt({
                   message: detail.message,
-                  currentPlan: detail.current_plan,
-                  used: detail.used,
-                  limit: detail.limit,
-                  resetDays: detail.reset_days
+                  currentPlan: detail.current_plan || 'Free',
+                  used: detail.used || 0,
+                  limit: detail.limit || 0,
+                  resetDays: detail.reset_days || 30,
+                  reason: detail.reason || 'limit_reached'
                 });
+                setGenerationError(null); // Clear banner error
                 return; // Don't show generic error
               }
+              errorMessage = detail.message;
             } else if (Array.isArray(errorData.detail)) {
               // Handle Pydantic validation errors
               errorMessage = errorData.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
