@@ -1125,6 +1125,63 @@ export default function MockTests() {
     return 'text-red-600';
   };
 
+  // ============= UPGRADE PROMPT MODAL =============
+  
+  if (showUpgradePrompt) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+          <div className="p-6">
+            <div className="text-center">
+              <div className="bg-orange-100 p-4 rounded-full w-16 h-16 mx-auto mb-4">
+                <Crown className="h-8 w-8 text-orange-600 mx-auto" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Upgrade Required</h3>
+              <p className="text-gray-600 mb-4">{showUpgradePrompt.message}</p>
+              
+              {showUpgradePrompt.used && showUpgradePrompt.limit && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="text-sm text-gray-700 mb-2">Current Usage</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-gray-900">
+                      {showUpgradePrompt.used}/{showUpgradePrompt.limit}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {showUpgradePrompt.resetDays && `Resets in ${showUpgradePrompt.resetDays} days`}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => window.location.href = '/subscription'}
+                  className="w-full bg-orange-600 hover:bg-orange-700"
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  Upgrade Plan
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowUpgradePrompt(null)}
+                  className="w-full"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+              
+              {showUpgradePrompt.currentPlan && (
+                <p className="text-xs text-gray-500 mt-3">
+                  Current Plan: {showUpgradePrompt.currentPlan}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ============= RETAKE OPTIONS MODAL =============
   
   if (showRetakeOptions && retakeTestId) {
