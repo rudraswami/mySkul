@@ -2892,7 +2892,10 @@ class ActionButtonService:
             Ensure problems follow {education_standard} syllabus and standards.
             """
             
-            llm_client = LLMChat(model="gpt-3.5-turbo")
+            llm_client = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"practice_{uuid.uuid4()}"
+            ).with_model("openai", "gpt-3.5-turbo")
             response = await llm_client.achat(
                 messages=[{"role": "user", "content": prompt}],
                 system_message=f"You are an expert {education_standard} {subject} problem generator."
@@ -3011,7 +3014,10 @@ class ActionButtonService:
             Focus on key concepts, formulas, and important facts that students should memorize.
             """
             
-            llm_client = LLMChat(model="gpt-3.5-turbo")
+            llm_client = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"practice_{uuid.uuid4()}"
+            ).with_model("openai", "gpt-3.5-turbo")
             response = await llm_client.achat(
                 messages=[{"role": "user", "content": prompt}],
                 system_message="You are an expert at creating effective study flashcards."
