@@ -1118,16 +1118,28 @@ export default function AITutor() {
     });
   };
 
-  // Group sessions by subject automatically
+  // Group sessions by subject automatically, with pinned sessions at top
   const groupedSessions = React.useMemo(() => {
     const groups = {};
-    filteredSessions.forEach(session => {
+    
+    // Separate pinned and regular sessions
+    const pinnedSessions = filteredSessions.filter(session => session.pinned);
+    const regularSessions = filteredSessions.filter(session => !session.pinned);
+    
+    // Add pinned section if there are pinned sessions
+    if (pinnedSessions.length > 0) {
+      groups['📌 Pinned'] = pinnedSessions;
+    }
+    
+    // Group regular sessions by subject
+    regularSessions.forEach(session => {
       const subject = session.subject || 'General';
       if (!groups[subject]) {
         groups[subject] = [];
       }
       groups[subject].push(session);
     });
+    
     return groups;
   }, [filteredSessions]);
 
