@@ -1362,7 +1362,6 @@ export default function AITutor() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  console.log('Delete clicked for session:', session.session_id);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   deleteSession(session.session_id);
                                 }}
