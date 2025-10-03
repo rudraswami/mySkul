@@ -13,6 +13,15 @@ import uuid
 from pathlib import Path
 import bcrypt
 import jwt
+import json
+import base64
+import io
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from PyPDF2 import PdfReader
+from PIL import Image
+from sklearn.metrics.pairwise import cosine_similarity
+import math
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
@@ -191,6 +200,142 @@ SUBSCRIPTION_PLANS = {
     }
 }
 
+# ============= ENHANCED AUTONOTE CONFIGURATION =============
+
+# Initialize embedding model (will be loaded lazily)
+embedding_model = None
+
+def get_embedding_model():
+    """Lazy loading of sentence transformer model"""
+    global embedding_model
+    if embedding_model is None:
+        try:
+            embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            logger.info("✅ Sentence transformer model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load embedding model: {e}")
+            embedding_model = None
+    return embedding_model
+
+# Spaced Repetition SM-2 Algorithm Implementation
+def calculate_next_review(quality: int, ease_factor: float, interval: int, repetitions: int) -> tuple:
+    """
+    SM-2 Spaced Repetition Algorithm
+    Returns: (new_ease_factor, new_interval, new_repetitions)
+    """
+    if quality < 3:  # Incorrect response
+        repetitions = 0
+        interval = 1
+    else:  # Correct response
+        if repetitions == 0:
+            interval = 1
+        elif repetitions == 1:
+            interval = 6
+        else:
+            interval = round(interval * ease_factor)
+        repetitions += 1
+    
+    # Update ease factor
+    ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    ease_factor = max(1.3, ease_factor)  # Minimum ease factor
+    
+    return ease_factor, interval, repetitions
+
+# Document Processing Utilities
+async def extract_text_from_pdf(pdf_data: bytes) -> str:
+    """Extract text from PDF bytes"""
+    try:
+        pdf_reader = PdfReader(io.BytesIO(pdf_data))
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+        return text.strip()
+    except Exception as e:
+        logger.error(f"PDF extraction error: {e}")
+        return ""
+
+async def process_image_with_ai(image_data: bytes, user_prompt: str = "Analyze this educational content and extract all text and key concepts") -> str:
+    """Process image using GPT-4o Vision API"""
+    try:
+        # Convert image to base64
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        
+        # Create AI chat instance
+        ai_chat = LlmChat(api_key=EMERGENT_LLM_KEY, provider="openai", model="gpt-4o")
+        
+        # Send image for analysis
+        messages = [
+            UserMessage(
+                content=[
+                    {"type": "text", "text": user_prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            )
+        ]
+        
+        response = await ai_chat.chat_async(messages)
+        return response.content
+        
+    except Exception as e:
+        logger.error(f"Image processing error: {e}")
+        return "Failed to process image"
+
+# Vector Store Functions
+async def create_embeddings(texts: List[str]) -> List[List[float]]:
+    """Create embeddings for a list of texts"""
+    model = get_embedding_model()
+    if not model:
+        return []
+    
+    try:
+        embeddings = model.encode(texts)
+        return embeddings.tolist()
+    except Exception as e:
+        logger.error(f"Embedding creation error: {e}")
+        return []
+
+async def semantic_search(query: str, user_id: str, session_ids: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, Any]]:
+    """Perform semantic search across user's notes"""
+    model = get_embedding_model()
+    if not model:
+        return []
+    
+    try:
+        # Create query embedding
+        query_embedding = model.encode([query])[0]
+        
+        # Build MongoDB query
+        search_filter = {"user_id": user_id}
+        if session_ids:
+            search_filter["session_id"] = {"$in": session_ids}
+        
+        # Get all embeddings
+        embeddings_cursor = db.note_embeddings.find(search_filter)
+        embeddings_docs = await embeddings_cursor.to_list(length=None)
+        
+        if not embeddings_docs:
+            return []
+        
+        # Calculate similarities
+        similarities = []
+        for doc in embeddings_docs:
+            if 'embedding_vector' in doc and doc['embedding_vector']:
+                similarity = cosine_similarity([query_embedding], [doc['embedding_vector']])[0][0]
+                similarities.append({
+                    "content": doc['content'],
+                    "session_id": doc['session_id'],
+                    "similarity": float(similarity),
+                    "metadata": doc.get('metadata', {})
+                })
+        
+        # Sort by similarity and return top results
+        similarities.sort(key=lambda x: x['similarity'], reverse=True)
+        return similarities[:limit]
+        
+    except Exception as e:
+        logger.error(f"Semantic search error: {e}")
+        return []
+
 # ============= CORE DATA MODELS =============
 
 class User(BaseModel):
@@ -339,9 +484,10 @@ class StudyPlan(BaseModel):
 
 class MockTestGenerationRequest(BaseModel):
     exam_type: str
-    subject: str
-    difficulty: int = 3
-    num_questions: int = 25
+    subject: str  # Keep for backward compatibility
+    subjects: Optional[List[str]] = None  # New array format
+    difficulty: int = Field(default=3, ge=1, le=5)
+    num_questions: int = Field(default=5, ge=3, le=50)  # Allow 3-50 questions
 
 class DoubtQuery(BaseModel):
     query: str
@@ -370,8 +516,8 @@ class UserSubscription(BaseModel):
     plan_name: str  # free, basic, premium, pro
     status: str = "active"  # active, cancelled, expired, paused
     billing_cycle: str = "monthly"  # monthly, yearly
-    current_period_start: datetime = Field(default_factory=datetime.utcnow)
-    current_period_end: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(days=30))
+    current_period_start: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    current_period_end: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=30))
     stripe_subscription_id: Optional[str] = None
     stripe_customer_id: Optional[str] = None
     auto_renew: bool = True
@@ -402,8 +548,8 @@ class UsageTracking(BaseModel):
     user_id: str
     feature_name: str  # ai_conversations, mock_tests, audio_processing
     usage_count: int = 0
-    usage_date: datetime = Field(default_factory=datetime.utcnow)
-    reset_date: datetime = Field(default_factory=lambda: datetime.utcnow().replace(day=1) + timedelta(days=32))
+    usage_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    reset_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(day=1) + timedelta(days=32))
 
 class RevenueAnalytics(BaseModel):
     analytics_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -518,6 +664,54 @@ class ExplainPointRequest(BaseModel):
 class GenerateFlashcardsRequest(BaseModel):
     session_id: str
     specific_concepts: Optional[List[str]] = None  # If empty, generate from all notes
+
+# ============= ENHANCED AUTONOTE MODELS =============
+
+class DocumentUploadRequest(BaseModel):
+    session_id: str
+    document_type: str = Field(pattern="^(pdf|image)$")  # "pdf" or "image"
+    title: Optional[str] = None
+    subject: Optional[str] = None
+
+class SpacedRepetitionCard(BaseModel):
+    card_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_id: str
+    front: str  # Question/concept
+    back: str   # Answer/explanation
+    ease_factor: float = 2.5  # SM-2 algorithm
+    interval: int = 1  # Days until next review
+    repetitions: int = 0
+    quality: int = 0  # Last review quality (0-5)
+    next_review: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_reviewed: Optional[datetime] = None
+
+class ReviewCardRequest(BaseModel):
+    card_id: str
+    quality: int = Field(ge=0, le=5)  # 0=blackout, 5=perfect
+
+class NoteEmbedding(BaseModel):
+    embedding_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: str
+    content: str
+    embedding_vector: List[float]
+    metadata: Dict[str, Any] = {}
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SemanticSearchRequest(BaseModel):
+    query: str
+    user_id: Optional[str] = None
+    limit: int = Field(default=10, le=50)
+    session_ids: Optional[List[str]] = None  # Filter by specific sessions
+
+class ClassSeriesRequest(BaseModel):
+    series_name: str
+    subject: str
+    total_classes: int
+    schedule: str  # e.g., "Weekly on Monday 10 AM"
+    description: Optional[str] = None
 
 class MockTestSubmission(BaseModel):
     answers: Dict[str, str]  # question_id: selected_answer
@@ -653,7 +847,7 @@ class TestGenerationRequest(BaseModel):
     test_type: str = "full_length"  # "full_length", "chapter_wise", "adaptive"
     chapters: List[str] = []
     difficulty_level: int = Field(default=3, ge=1, le=5)
-    num_questions: int = Field(default=25, ge=5, le=100)
+    num_questions: int = Field(default=10, ge=3, le=100)
     generation_mode: str = "standard"  # "standard", "variant", "adaptive"
     focus_areas: List[str] = []  # For adaptive mode
 
@@ -1707,6 +1901,9 @@ class MockTestEngine:
         # Cache the test
         await cache_test(cache_key, test_dict)
         
+        # Track usage for mock test generation
+        await track_feature_usage(student_id, "mock_tests_monthly")
+        
         return test
     
     @staticmethod
@@ -2646,26 +2843,36 @@ async def get_ai_tutor_response(user_message: str, subject: str, session_id: str
 
 async def get_user_subscription(user_id: str) -> UserSubscription:
     """Get user's current subscription details"""
-    subscription_doc = await db.user_subscriptions.find_one({"user_id": user_id})
-    if not subscription_doc:
-        # Create default free subscription for new users
-        free_subscription = UserSubscription(
+    try:
+        subscription_doc = await db.user_subscriptions.find_one({"user_id": user_id})
+        if not subscription_doc:
+            # Create default free subscription for new users
+            free_subscription = UserSubscription(
+                user_id=user_id,
+                plan_id="free",
+                plan_name="free",
+                status="active",  # Free tier is always active
+                current_period_end=datetime.now(timezone.utc) + timedelta(days=365)  # Free never expires
+            )
+            await db.user_subscriptions.insert_one(free_subscription.dict())
+            return free_subscription
+        else:
+            subscription = UserSubscription(**clean_mongodb_doc(subscription_doc))
+            # Ensure free tier is always active, never cancelled
+            if subscription.plan_name == "free":
+                subscription.status = "active"
+                subscription.current_period_end = datetime.now(timezone.utc) + timedelta(days=365)
+            return subscription
+    except Exception as e:
+        logger.error(f"Error getting user subscription: {str(e)}")
+        # Return default free subscription as fallback
+        return UserSubscription(
             user_id=user_id,
             plan_id="free",
             plan_name="free",
-            status="active",  # Free tier is always active
-            current_period_end=datetime.now(timezone.utc) + timedelta(days=365)  # Free never expires
+            status="active",
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=365)
         )
-        await db.user_subscriptions.insert_one(free_subscription.dict())
-        return free_subscription
-    else:
-        subscription = UserSubscription(**subscription_doc)
-        # Ensure free tier is always active, never cancelled
-        if subscription.plan_name == "free":
-            subscription.status = "active"
-            subscription.current_period_end = datetime.now(timezone.utc) + timedelta(days=365)
-        return subscription
-    return UserSubscription(**clean_mongodb_doc(subscription_doc))
 
 async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any]:
     """Check if user has access to specific feature and usage limits"""
@@ -2674,8 +2881,13 @@ async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any
     
     feature_limit = plan_config["limits"].get(feature_name, 0)
     
-    # Check if subscription is active
-    if subscription.status != "active" or subscription.current_period_end < datetime.utcnow():
+    # Check if subscription is active (ensure timezone-aware comparison)
+    now_utc = datetime.now(timezone.utc)
+    period_end = subscription.current_period_end
+    if period_end.tzinfo is None:
+        period_end = period_end.replace(tzinfo=timezone.utc)
+    
+    if subscription.status != "active" or period_end < now_utc:
         return {"has_access": False, "reason": "subscription_expired", "limit": 0, "used": 0}
     
     # For unlimited features (-1)
@@ -2699,21 +2911,25 @@ async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any
 
 async def get_current_usage(user_id: str, feature_name: str) -> int:
     """Get current usage count for a feature"""
-    now = datetime.utcnow()
-    
-    # Determine the reset period based on feature
-    if "daily" in feature_name:
-        start_of_period = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    else:  # monthly features
-        start_of_period = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    usage_doc = await db.usage_tracking.find_one({
-        "user_id": user_id,
-        "feature_name": feature_name,
-        "usage_date": {"$gte": start_of_period}
-    })
-    
-    return usage_doc.get("usage_count", 0) if usage_doc else 0
+    try:
+        now = datetime.now(timezone.utc)
+        
+        # Determine the reset period based on feature
+        if "daily" in feature_name:
+            start_of_period = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:  # monthly features
+            start_of_period = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        usage_doc = await db.usage_tracking.find_one({
+            "user_id": user_id,
+            "feature_name": feature_name,
+            "usage_date": {"$gte": start_of_period}
+        })
+        
+        return usage_doc.get("usage_count", 0) if usage_doc else 0
+    except Exception as e:
+        logger.error(f"Error getting current usage for user {user_id}, feature {feature_name}: {str(e)}")
+        return 0  # Return 0 usage as fallback to be permissive
 
 async def track_feature_usage(user_id: str, feature_name: str, usage_amount: int = 1):
     """Track usage of a feature"""
@@ -5926,6 +6142,390 @@ async def get_user_note_sessions(user: User = Depends(get_current_user)):
         logger.error(f"Sessions retrieval error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve sessions")
 
+# ============= ENHANCED AUTONOTE API ENDPOINTS =============
+
+@api_router.post("/auto-notes/upload-document")
+async def upload_document(
+    file: UploadFile = File(...),
+    session_id: str = Form(...),
+    document_type: str = Form(...),
+    title: str = Form(None),
+    subject: str = Form(None),
+    user: User = Depends(get_current_user)
+):
+    """Upload and process PDF or image documents with OCR"""
+    
+    try:
+        # Validate file type
+        allowed_types = {
+            'pdf': ['application/pdf'],
+            'image': ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+        }
+        
+        if document_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Invalid document type")
+        
+        if file.content_type not in allowed_types[document_type]:
+            raise HTTPException(status_code=400, detail=f"Invalid file type for {document_type}")
+        
+        # Read file data
+        file_data = await file.read()
+        
+        # Process based on document type
+        extracted_text = ""
+        if document_type == 'pdf':
+            extracted_text = await extract_text_from_pdf(file_data)
+        elif document_type == 'image':
+            extracted_text = await process_image_with_ai(file_data)
+        
+        if not extracted_text:
+            raise HTTPException(status_code=400, detail="Failed to extract text from document")
+        
+        # Create embeddings for the extracted text
+        embeddings = await create_embeddings([extracted_text])
+        if embeddings:
+            # Store embedding in database
+            embedding_doc = {
+                "user_id": user.user_id,
+                "session_id": session_id,
+                "content": extracted_text,
+                "embedding_vector": embeddings[0],
+                "metadata": {
+                    "source": "document_upload",
+                    "file_name": file.filename,
+                    "document_type": document_type,
+                    "title": title or file.filename,
+                    "subject": subject
+                },
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.note_embeddings.insert_one(embedding_doc)
+        
+        # Analyze content with dual AI
+        analysis_prompt = f"""Analyze this educational document content and provide:
+1. Key concepts and topics covered
+2. Important formulas, definitions, or facts
+3. Study recommendations
+4. Potential question areas
+
+Content: {extracted_text[:2000]}..."""
+        
+        user_context = {
+            'exam_type': user.exam_type,
+            'subject': subject or 'General',
+            'context': 'document_analysis'
+        }
+        
+        dual_ai = DualLayerAI()
+        analysis = await dual_ai.get_coordinated_response(
+            analysis_prompt, subject or 'General', f"doc_analysis_{session_id}", user_context
+        )
+        
+        return {
+            "document_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "extracted_text": extracted_text,
+            "text_length": len(extracted_text),
+            "analysis": analysis,
+            "embeddings_created": len(embeddings) > 0,
+            "processing_status": "completed"
+        }
+        
+    except Exception as e:
+        logger.error(f"Document upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process document: {str(e)}")
+
+@api_router.post("/auto-notes/spaced-repetition/create-cards")
+async def create_spaced_repetition_cards(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Create spaced repetition flashcards from a session"""
+    
+    try:
+        # Get session data
+        session = await db.auto_note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Generate flashcards if not already done
+        existing_cards = await db.spaced_repetition_cards.find({
+            "session_id": session_id,
+            "user_id": user.user_id
+        }).to_list(length=None)
+        
+        if existing_cards:
+            return {
+                "cards_created": len(existing_cards),
+                "cards": [clean_mongodb_doc(card) for card in existing_cards],
+                "message": "Flashcards already exist for this session"
+            }
+        
+        # Create AI prompt for flashcard generation
+        content = session.get('transcription', '')
+        if not content:
+            raise HTTPException(status_code=400, detail="No content available for flashcard creation")
+        
+        flashcard_prompt = f"""Create educational flashcards from this content. Generate 10-15 high-quality question-answer pairs that test key concepts.
+
+Content: {content[:1500]}...
+
+Format each flashcard as:
+FRONT: [Question or concept to test]
+BACK: [Answer or explanation]
+
+Focus on the most important concepts for exam preparation."""
+        
+        # Generate flashcards using AI
+        dual_ai = DualLayerAI()
+        user_context = {
+            'exam_type': user.exam_type,
+            'subject': session.get('subject', 'General'),
+            'context': 'spaced_repetition'
+        }
+        
+        response = await dual_ai.get_coordinated_response(
+            flashcard_prompt, session.get('subject', 'General'), f"sr_cards_{session_id}", user_context
+        )
+        
+        # Parse flashcards from response (simplified parsing)
+        cards_created = []
+        lines = response.get('primary_response', '').split('\n')
+        current_front = ""
+        current_back = ""
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('FRONT:'):
+                current_front = line.replace('FRONT:', '').strip()
+            elif line.startswith('BACK:') and current_front:
+                current_back = line.replace('BACK:', '').strip()
+                
+                # Create spaced repetition card
+                card = SpacedRepetitionCard(
+                    user_id=user.user_id,
+                    session_id=session_id,
+                    front=current_front,
+                    back=current_back
+                )
+                
+                await db.spaced_repetition_cards.insert_one(card.dict())
+                cards_created.append(card.dict())
+                
+                current_front = ""
+                current_back = ""
+        
+        return {
+            "cards_created": len(cards_created),
+            "cards": cards_created,
+            "next_review_date": datetime.now(timezone.utc).date().isoformat(),
+            "message": f"Created {len(cards_created)} spaced repetition flashcards"
+        }
+        
+    except Exception as e:
+        logger.error(f"Spaced repetition cards creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create spaced repetition cards")
+
+@api_router.get("/auto-notes/spaced-repetition/due-cards")
+async def get_due_cards(user: User = Depends(get_current_user)):
+    """Get flashcards due for review"""
+    
+    try:
+        now = datetime.now(timezone.utc)
+        
+        due_cards = await db.spaced_repetition_cards.find({
+            "user_id": user.user_id,
+            "next_review": {"$lte": now}
+        }).sort("next_review", 1).to_list(length=50)
+        
+        return {
+            "due_cards": [clean_mongodb_doc(card) for card in due_cards],
+            "total_due": len(due_cards),
+            "review_session_ready": len(due_cards) > 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Due cards retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve due cards")
+
+@api_router.post("/auto-notes/spaced-repetition/review-card")
+async def review_card(
+    request: ReviewCardRequest,
+    user: User = Depends(get_current_user)
+):
+    """Review a flashcard and update spaced repetition schedule"""
+    
+    try:
+        # Get the card
+        card = await db.spaced_repetition_cards.find_one({
+            "card_id": request.card_id,
+            "user_id": user.user_id
+        })
+        
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        # Calculate next review using SM-2 algorithm
+        ease_factor, interval, repetitions = calculate_next_review(
+            request.quality,
+            card.get('ease_factor', 2.5),
+            card.get('interval', 1),
+            card.get('repetitions', 0)
+        )
+        
+        # Calculate next review date
+        next_review = datetime.now(timezone.utc) + timedelta(days=interval)
+        
+        # Update card
+        update_data = {
+            "ease_factor": ease_factor,
+            "interval": interval,
+            "repetitions": repetitions,
+            "quality": request.quality,
+            "next_review": next_review,
+            "last_reviewed": datetime.now(timezone.utc)
+        }
+        
+        await db.spaced_repetition_cards.update_one(
+            {"card_id": request.card_id, "user_id": user.user_id},
+            {"$set": update_data}
+        )
+        
+        return {
+            "card_id": request.card_id,
+            "quality": request.quality,
+            "next_review": next_review.isoformat(),
+            "interval_days": interval,
+            "performance": "good" if request.quality >= 3 else "needs_practice"
+        }
+        
+    except Exception as e:
+        logger.error(f"Card review error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to review card")
+
+@api_router.post("/auto-notes/semantic-search")
+async def search_notes(
+    request: SemanticSearchRequest,
+    user: User = Depends(get_current_user)
+):
+    """Semantic search across user's notes"""
+    
+    try:
+        # Perform semantic search
+        results = await semantic_search(
+            query=request.query,
+            user_id=user.user_id,
+            session_ids=request.session_ids,
+            limit=request.limit
+        )
+        
+        return {
+            "query": request.query,
+            "results": results,
+            "total_found": len(results),
+            "search_type": "semantic"
+        }
+        
+    except Exception as e:
+        logger.error(f"Semantic search error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to perform semantic search")
+
+@api_router.post("/auto-notes/class-series")
+async def create_class_series(
+    request: ClassSeriesRequest,
+    user: User = Depends(get_current_user)
+):
+    """Create a class series for tracking related sessions"""
+    
+    try:
+        series_id = str(uuid.uuid4())
+        
+        series_doc = {
+            "series_id": series_id,
+            "user_id": user.user_id,
+            "series_name": request.series_name,
+            "subject": request.subject,
+            "total_classes": request.total_classes,
+            "schedule": request.schedule,
+            "description": request.description,
+            "sessions": [],  # Will be populated as sessions are added
+            "created_at": datetime.now(timezone.utc),
+            "status": "active"
+        }
+        
+        await db.class_series.insert_one(series_doc)
+        
+        return {
+            "series_id": series_id,
+            "message": f"Class series '{request.series_name}' created successfully",
+            "next_steps": "Start adding sessions to this series"
+        }
+        
+    except Exception as e:
+        logger.error(f"Class series creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create class series")
+
+@api_router.get("/auto-notes/class-series")
+async def get_class_series(user: User = Depends(get_current_user)):
+    """Get all class series for the user"""
+    
+    try:
+        series_list = await db.class_series.find({
+            "user_id": user.user_id
+        }).sort("created_at", -1).to_list(length=50)
+        
+        return {
+            "series": [clean_mongodb_doc(series) for series in series_list],
+            "total_series": len(series_list)
+        }
+        
+    except Exception as e:
+        logger.error(f"Class series retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve class series")
+
+@api_router.get("/auto-notes/analytics")
+async def get_note_analytics(user: User = Depends(get_current_user)):
+    """Get comprehensive analytics for AutoNote usage"""
+    
+    try:
+        # Get session statistics
+        total_sessions = await db.auto_note_sessions.count_documents({"user_id": user.user_id})
+        
+        # Get spaced repetition statistics
+        total_cards = await db.spaced_repetition_cards.count_documents({"user_id": user.user_id})
+        due_cards = await db.spaced_repetition_cards.count_documents({
+            "user_id": user.user_id,
+            "next_review": {"$lte": datetime.now(timezone.utc)}
+        })
+        
+        # Get subject distribution
+        subjects_pipeline = [
+            {"$match": {"user_id": user.user_id}},
+            {"$group": {"_id": "$subject", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]
+        subject_stats = await db.auto_note_sessions.aggregate(subjects_pipeline).to_list(length=None)
+        
+        return {
+            "total_sessions": total_sessions,
+            "total_flashcards": total_cards,
+            "due_for_review": due_cards,
+            "subject_distribution": subject_stats,
+            "learning_streak": 0,  # TODO: Calculate based on daily usage
+            "performance_trends": {
+                "this_week": {"sessions": 0, "flashcards_reviewed": 0},
+                "this_month": {"sessions": 0, "flashcards_reviewed": 0}
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Analytics error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve analytics")
+
 # Helper functions for note analysis
 def extract_concepts_from_text(text: str) -> List[str]:
     """Extract key concepts from transcribed text"""
@@ -6174,7 +6774,15 @@ async def generate_mock_test(
                 }
                 questions_data.append(clean_question)
         
-        # Return simplified test data  
+        # Return simplified test data with safe serialization
+        expires_at_str = None
+        if hasattr(test, 'expires_at') and test.expires_at:
+            try:
+                expires_at_str = test.expires_at.isoformat()
+            except Exception as e:
+                logger.warning(f"Failed to serialize expires_at: {e}")
+                expires_at_str = None
+        
         return {
             "test_id": test.test_id,
             "test_name": test.title,
@@ -6182,9 +6790,9 @@ async def generate_mock_test(
             "questions": questions_data,
             "total_marks": test.total_marks,
             "time_limit": test.time_limit,
-            "mentor_tips": test.mentor_pre_tips,
+            "mentor_tips": getattr(test, 'mentor_pre_tips', ''),
             "cache_status": "generated" if not cached_test else "cached",
-            "expires_at": test.expires_at.isoformat() if test.expires_at else None,
+            "expires_at": expires_at_str,
             "generation_mode": blueprint.generation_mode
         }
         
@@ -7279,7 +7887,7 @@ async def get_current_subscription(user: User = Depends(get_current_user)):
         "subscription": clean_mongodb_doc(subscription.dict()),
         "plan_details": plan_config,
         "usage_summary": usage_summary,
-        "days_remaining": (subscription.current_period_end - datetime.utcnow()).days if subscription.current_period_end > datetime.utcnow() else 0
+        "days_remaining": (subscription.current_period_end - datetime.now(timezone.utc)).days if subscription.current_period_end > datetime.now(timezone.utc) else 0
     }
 
 @api_router.post("/subscription/checkout")

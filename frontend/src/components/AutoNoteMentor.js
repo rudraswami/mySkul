@@ -65,6 +65,18 @@ export default function AutoNoteMentor() {
   const [explainRequest, setExplainRequest] = useState('');
   const [explanation, setExplanation] = useState(null);
   
+  // Enhanced Features State
+  const [spacedRepetitionCards, setSpacedRepetitionCards] = useState([]);
+  const [dueCards, setDueCards] = useState([]);
+  const [currentReviewCard, setCurrentReviewCard] = useState(null);
+  const [reviewQuality, setReviewQuality] = useState(3);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [classSeries, setClassSeries] = useState([]);
+  const [newSeries, setNewSeries] = useState({ name: '', subject: '', total_classes: 10, schedule: '' });
+  const [analytics, setAnalytics] = useState(null);
+  const [documentUploadProgress, setDocumentUploadProgress] = useState(0);
+  
   // Live Recording State
   const [liveTranscript, setLiveTranscript] = useState('');
   const [conceptsDetected, setConceptsDetected] = useState([]);
@@ -670,6 +682,242 @@ export default function AutoNoteMentor() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // ============= ENHANCED FEATURES FUNCTIONS =============
+
+  const handleDocumentUpload = async (file) => {
+    if (!currentSession) {
+      setError('Please start a session first');
+      return;
+    }
+
+    setLoading(true);
+    setDocumentUploadProgress(0);
+
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('session_id', currentSession.session_id);
+      formData.append('document_type', file.type.startsWith('image/') ? 'image' : 'pdf');
+      formData.append('title', file.name);
+      formData.append('subject', newSessionSubject);
+
+      const response = await fetch(`${API}/auto-notes/upload-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setProcessedNote(result);
+        setActiveView('notes');
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to process document');
+      }
+    } catch (error) {
+      console.error('Document upload error:', error);
+      setError('Failed to upload document');
+    } finally {
+      setLoading(false);
+      setDocumentUploadProgress(0);
+    }
+  };
+
+  const createSpacedRepetitionCards = async (sessionId) => {
+    setLoading(true);
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/spaced-repetition/create-cards?session_id=${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSpacedRepetitionCards(result.cards);
+        return result;
+      }
+    } catch (error) {
+      console.error('Spaced repetition cards error:', error);
+      setError('Failed to create spaced repetition cards');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDueCards = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/spaced-repetition/due-cards`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setDueCards(result.due_cards);
+      }
+    } catch (error) {
+      console.error('Due cards error:', error);
+    }
+  };
+
+  const reviewCard = async (cardId, quality) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/spaced-repetition/review-card`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          card_id: cardId,
+          quality: quality
+        })
+      });
+
+      if (response.ok) {
+        await loadDueCards(); // Refresh due cards
+        return true;
+      }
+    } catch (error) {
+      console.error('Card review error:', error);
+      setError('Failed to review card');
+    }
+    return false;
+  };
+
+  const performSemanticSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/semantic-search`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          limit: 10
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSearchResults(result.results);
+      }
+    } catch (error) {
+      console.error('Semantic search error:', error);
+      setError('Failed to search notes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createClassSeries = async () => {
+    if (!newSeries.name || !newSeries.subject) {
+      setError('Please fill in series name and subject');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/class-series`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          series_name: newSeries.name,
+          subject: newSeries.subject,
+          total_classes: newSeries.total_classes,
+          schedule: newSeries.schedule
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        loadClassSeries(); // Refresh series list
+        setNewSeries({ name: '', subject: '', total_classes: 10, schedule: '' });
+      }
+    } catch (error) {
+      console.error('Class series creation error:', error);
+      setError('Failed to create class series');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadClassSeries = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/class-series`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setClassSeries(result.series);
+      }
+    } catch (error) {
+      console.error('Class series loading error:', error);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const response = await fetch(`${API}/auto-notes/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setAnalytics(result);
+      }
+    } catch (error) {
+      console.error('Analytics loading error:', error);
+    }
+  };
+
+  // Load enhanced features on component mount
+  useEffect(() => {
+    loadDueCards();
+    loadClassSeries();
+    loadAnalytics();
+  }, []);
 
   // Main Recording Interface
   if (sessionStatus === 'recording' || sessionStatus === 'ready') {
@@ -1468,6 +1716,321 @@ export default function AutoNoteMentor() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Enhanced Features Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              
+              {/* Document Upload Section */}
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-indigo-600" />
+                    Document Analysis
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Upload PDFs and images for AI analysis and note integration
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-3">Upload lecture slides, handwritten notes, or textbook pages</p>
+                      
+                      <input
+                        type="file"
+                        id="document-upload"
+                        className="hidden"
+                        accept=".pdf,image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) handleDocumentUpload(file);
+                        }}
+                      />
+                      <label
+                        htmlFor="document-upload"
+                        className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md cursor-pointer"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Document
+                      </label>
+                      
+                      <p className="text-xs text-gray-500 mt-2">PDF, JPG, PNG (Max 10MB)</p>
+                    </div>
+                    
+                    {documentUploadProgress > 0 && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${documentUploadProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Spaced Repetition System */}
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Brain className="h-5 w-5 mr-2 text-green-600" />
+                    Spaced Repetition
+                    {dueCards.length > 0 && (
+                      <Badge variant="destructive" className="ml-2">
+                        {dueCards.length} due
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Smart flashcard review system for optimal retention
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {dueCards.length > 0 ? (
+                      <>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="font-medium text-green-800">Ready for Review</p>
+                              <p className="text-sm text-green-600">{dueCards.length} cards due today</p>
+                            </div>
+                            <Button
+                              onClick={() => setCurrentReviewCard(dueCards[0])}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Start Review
+                            </Button>
+                          </div>
+                        </div>
+
+                        {currentReviewCard && (
+                          <div className="bg-white border rounded-lg p-6">
+                            <div className="text-center space-y-4">
+                              <div className="bg-gray-50 rounded-lg p-4">
+                                <p className="font-medium text-gray-900">{currentReviewCard.front}</p>
+                              </div>
+                              
+                              <Button
+                                onClick={() => {
+                                  const card = document.getElementById('card-back');
+                                  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+                                }}
+                                variant="outline"
+                              >
+                                Show Answer
+                              </Button>
+                              
+                              <div id="card-back" style={{ display: 'none' }} className="bg-blue-50 rounded-lg p-4">
+                                <p className="text-gray-800">{currentReviewCard.back}</p>
+                              </div>
+                              
+                              <div className="flex justify-center space-x-2">
+                                {[1, 2, 3, 4, 5].map((quality) => (
+                                  <Button
+                                    key={quality}
+                                    size="sm"
+                                    variant={quality < 3 ? "destructive" : quality === 3 ? "outline" : "default"}
+                                    onClick={async () => {
+                                      await reviewCard(currentReviewCard.card_id, quality);
+                                      setCurrentReviewCard(null);
+                                    }}
+                                  >
+                                    {quality}
+                                  </Button>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                Rate your recall: 1=Blackout, 3=Difficult, 5=Perfect
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Brain className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 mb-3">No cards due for review</p>
+                        <Button
+                          onClick={() => {
+                            const latestSession = sessions[0];
+                            if (latestSession) createSpacedRepetitionCards(latestSession.session_id);
+                          }}
+                          variant="outline"
+                          disabled={!sessions.length}
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Create Cards from Latest Session
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Semantic Search */}
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <MessageCircle className="h-5 w-5 mr-2 text-purple-600" />
+                    Smart Search
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Find concepts across all your notes with semantic understanding
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Ask about any concept from your notes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && performSemanticSearch()}
+                      />
+                      <Button onClick={performSemanticSearch} disabled={!searchQuery.trim()}>
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {searchResults.length > 0 && (
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {searchResults.map((result, index) => (
+                          <div key={index} className="border rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                {(result.similarity * 100).toFixed(1)}% match
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                Session {result.session_id.slice(-8)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{result.content.slice(0, 200)}...</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Class Series Management */}
+              <Card className="border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-orange-600" />
+                    Class Series
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Organize related sessions into structured learning series
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Create New Series */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-3">Create New Series</h4>
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="Series name (e.g., 'Physics Chapter 1')"
+                          value={newSeries.name}
+                          onChange={(e) => setNewSeries(prev => ({ ...prev, name: e.target.value }))}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Subject"
+                            value={newSeries.subject}
+                            onChange={(e) => setNewSeries(prev => ({ ...prev, subject: e.target.value }))}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Total classes"
+                            value={newSeries.total_classes}
+                            onChange={(e) => setNewSeries(prev => ({ ...prev, total_classes: parseInt(e.target.value) }))}
+                          />
+                        </div>
+                        <Input
+                          placeholder="Schedule (e.g., 'Weekly on Monday 10 AM')"
+                          value={newSeries.schedule}
+                          onChange={(e) => setNewSeries(prev => ({ ...prev, schedule: e.target.value }))}
+                        />
+                        <Button onClick={createClassSeries} className="w-full">
+                          <Users className="h-4 w-4 mr-2" />
+                          Create Series
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Existing Series */}
+                    {classSeries.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Your Series</h4>
+                        {classSeries.slice(0, 3).map((series) => (
+                          <div key={series.series_id} className="border rounded-lg p-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-sm">{series.series_name}</p>
+                                <p className="text-xs text-gray-500">{series.subject} • {series.total_classes} classes</p>
+                              </div>
+                              <Badge variant="outline">{series.status}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
+
+            {/* Analytics Dashboard */}
+            {analytics && (
+              <Card className="border-0 shadow-md mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                    AutoNote Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{analytics.total_sessions}</div>
+                      <div className="text-sm text-gray-600">Total Sessions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{analytics.total_flashcards}</div>
+                      <div className="text-sm text-gray-600">Flashcards Created</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{analytics.due_for_review}</div>
+                      <div className="text-sm text-gray-600">Due for Review</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">{analytics.learning_streak}</div>
+                      <div className="text-sm text-gray-600">Day Streak</div>
+                    </div>
+                  </div>
+                  
+                  {analytics.subject_distribution?.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="font-medium mb-3">Subject Distribution</h4>
+                      <div className="space-y-2">
+                        {analytics.subject_distribution.map((subject, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-sm">{subject._id}</span>
+                            <Badge variant="outline">{subject.count} sessions</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
           </div>
         </div>
       </div>

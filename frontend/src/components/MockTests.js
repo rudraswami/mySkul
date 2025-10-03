@@ -353,12 +353,14 @@ export default function MockTests() {
               const detail = errorData.detail;
               
               if (detail.action === 'upgrade') {
-                // Show upgrade prompt modal instead of generic error
+                // Show upgrade prompt modal instead of generic error with real data
+                const testAccess = examSubjects?.test_access || {};
                 setShowUpgradePrompt({
                   message: detail.message,
                   currentPlan: detail.current_plan || 'Free',
-                  used: detail.used || 0,
-                  limit: detail.limit || 0,
+                  used: detail.used || testAccess.used || 0,
+                  limit: detail.limit || testAccess.limit || 2,
+                  remaining: detail.remaining || testAccess.remaining || 0,
                   resetDays: detail.reset_days || 30,
                   reason: detail.reason || 'limit_reached'
                 });
@@ -381,36 +383,42 @@ export default function MockTests() {
         if (response.status >= 500) {
           errorMessage = 'AI system is busy. Please try again in 30 seconds.';
         } else if (response.status === 422) {
-          // Trigger subscription modal for validation errors
+          // Trigger subscription modal for validation errors with real subscription data
+          const testAccess = examSubjects?.test_access || {};
           setShowUpgradePrompt({
             message: 'Request validation failed. This usually indicates a subscription issue.',
             currentPlan: 'Free',
-            used: 0,
-            limit: 0,
+            used: testAccess.used || 0,
+            limit: testAccess.limit || 2,
+            remaining: testAccess.remaining || 0,
             resetDays: 30,
             reason: 'validation_failed'
           });
           setGenerationError(null);
           return;
         } else if (response.status === 402) {
-          // Trigger subscription modal for payment required
+          // Trigger subscription modal for payment required with real subscription data
+          const testAccess = examSubjects?.test_access || {};
           setShowUpgradePrompt({
             message: 'Subscription expired. Please upgrade your plan to continue using Mock Tests.',
             currentPlan: 'Free',
-            used: 0,
-            limit: 0,
+            used: testAccess.used || 0,
+            limit: testAccess.limit || 2,
+            remaining: testAccess.remaining || 0,
             resetDays: 0,
             reason: 'subscription_expired'
           });
           setGenerationError(null);
           return;
         } else if (response.status === 429) {
-          // Trigger subscription modal for rate limiting
+          // Trigger subscription modal for rate limiting with real subscription data
+          const testAccess = examSubjects?.test_access || {};
           setShowUpgradePrompt({
             message: 'Test generation limit reached for your current plan.',
             currentPlan: 'Free',
-            used: 2,
-            limit: 2,
+            used: testAccess.used || 0,
+            limit: testAccess.limit || 2,
+            remaining: testAccess.remaining || 0,
             resetDays: 30,
             reason: 'limit_reached'
           });
@@ -1255,7 +1263,7 @@ export default function MockTests() {
               </h3>
               <p className="text-gray-600 mb-4">{showUpgradePrompt.message}</p>
               
-              {showUpgradePrompt.used && showUpgradePrompt.limit && (
+              {(showUpgradePrompt.used !== undefined && showUpgradePrompt.limit !== undefined) && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="text-sm text-gray-700 mb-2">Current Usage</div>
                   <div className="flex items-center justify-between">
@@ -1263,9 +1271,14 @@ export default function MockTests() {
                       {showUpgradePrompt.used}/{showUpgradePrompt.limit}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {showUpgradePrompt.resetDays && `Resets in ${showUpgradePrompt.resetDays} days`}
+                      {showUpgradePrompt.remaining !== undefined && `Tests remaining: ${showUpgradePrompt.remaining}`}
                     </span>
                   </div>
+                  {showUpgradePrompt.resetDays > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Resets in {showUpgradePrompt.resetDays} days
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -1291,7 +1304,11 @@ export default function MockTests() {
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowUpgradePrompt(null)}
+                  onClick={() => {
+                    setShowUpgradePrompt(null);
+                    // Reload subscription data when modal is closed
+                    loadExamSubjects();
+                  }}
                   className="w-full"
                 >
                   {showUpgradePrompt.reason === 'limit_reached' ? 'Try Again Tomorrow' : 'Maybe Later'}
