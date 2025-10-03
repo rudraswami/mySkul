@@ -88,8 +88,11 @@ export default function MockTests() {
 
   useEffect(() => {
     loadAnalytics();
-    loadBookmarkedQuestions();
-    loadPerformanceTrends();
+    // Load other data after initial load
+    setTimeout(() => {
+      loadBookmarkedQuestions();
+      loadPerformanceTrends();
+    }, 1000);
   }, []);
 
   const loadBookmarkedQuestions = async () => {
