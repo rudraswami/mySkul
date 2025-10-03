@@ -6060,14 +6060,26 @@ async def generate_mock_test(
     """Generate a new mock test with enhanced architecture and caching"""
     
     try:
-        # Check subscription access for mock tests
+        # Check subscription access for mock tests with detailed logging
         try:
+            # First ensure user has a subscription record
+            subscription = await get_user_subscription(user.user_id)
+            logger.info(f"User {user.user_id} subscription: {subscription.plan_name}, status: {subscription.status}")
+            
             access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
             logger.info(f"Access check for user {user.user_id}: {access_info}")
+            
+            # Special handling for free tier - ensure first tests work
+            if subscription.plan_name == "free" and access_info["limit"] == 2:
+                current_usage = access_info.get("used", 0)
+                if current_usage < 2:
+                    logger.info(f"Free tier user {user.user_id} allowed: {current_usage}/2 tests used")
+                    access_info["has_access"] = True
+                    
         except Exception as e:
             logger.error(f"Error checking feature access: {str(e)}")
-            # Allow access if subscription check fails (graceful degradation)
-            access_info = {"has_access": True, "reason": "fallback", "limit": 1, "used": 0}
+            # Allow access if subscription check fails (graceful degradation for free tier)
+            access_info = {"has_access": True, "reason": "fallback", "limit": 2, "used": 0}
         
         if not access_info["has_access"]:
             subscription = await get_user_subscription(user.user_id)
