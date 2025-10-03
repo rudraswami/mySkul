@@ -1708,37 +1708,7 @@ export default function AITutor() {
             <div className="flex items-center justify-center mt-3">
               <span className="text-xs text-gray-400">Press Enter to send, Shift+Enter for new line</span>
             </div>
-                {aiMode === 'dual' && (
-                  <div className="flex items-center text-xs text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
-                    <Users className="h-3 w-3 mr-1" />
-                    <span className="font-medium">Dual Intelligence Active</span>
-                  </div>
-                )}
-                {aiMode === 'mentor' && (
-                  <div className="flex items-center text-xs text-green-700 bg-green-100 px-3 py-1 rounded-full">
-                    <Heart className="h-3 w-3 mr-1" />
-                    <span className="font-medium">Mentor Mode</span>
-                  </div>
-                )}
-                {aiMode === 'professor' && (
-                  <div className="flex items-center text-xs text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
-                    <GraduationCap className="h-3 w-3 mr-1" />
-                    <span className="font-medium">Professor Mode</span>
-                  </div>
-                )}
-                <div className="flex items-center text-xs text-gray-500 space-x-4">
-                  <div className="flex items-center">
-                    <Shield className="h-3 w-3 mr-1" />
-                    <span>Verified AI</span>
-                  </div>
-                  <div className="hidden md:flex items-center space-x-2 text-gray-400">
-                    <span>Shortcuts:</span>
-                    <code className="bg-gray-100 px-1 rounded text-xs">Ctrl+/</code>
-                    <span>Suggestions</span>
-                    <code className="bg-gray-100 px-1 rounded text-xs">Ctrl+N</code>
-                    <span>New Chat</span>
-                  </div>
-                </div>
+            {/* Empty - cleaned up */}
               </div>
             </div>
           </div>
