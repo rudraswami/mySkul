@@ -591,6 +591,77 @@ export default function AITutor() {
       return false;
     }
   };
+  const generatePracticeProblems = async (topicName) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${API}/ai/practice-problems`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          topic: topicName,
+          subject: selectedSubject,
+          difficulty_level: personalizedDifficulty
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Add practice problems as a new message
+        const practiceMessage = {
+          message: `Generated practice problems for: ${topicName}`,
+          response: result.problems,
+          timestamp: new Date().toISOString(),
+          session_id: currentSession,
+          persona: 'professor'
+        };
+        setMessages(prev => [...prev, practiceMessage]);
+        console.log('✅ Practice problems generated successfully');
+        return true;
+      } else {
+        console.error('Failed to generate practice problems');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error generating practice problems:', error);
+      return false;
+    }
+  };
+
+  const addToAutoNotes = async (message) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${API}/notes/auto-add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: message.dual_response ? 
+            `${message.dual_response.primary.response}\n\n${message.dual_response.secondary.reasoning}` : 
+            message.response,
+          topic: message.topic_detected || 'General',
+          subject: selectedSubject,
+          session_id: message.session_id
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Added to auto notes successfully');
+        // Could show a toast notification here
+        return true;
+      } else {
+        console.error('Failed to add to auto notes');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error adding to auto notes:', error);
+      return false;
+    }
+  };
 
   const getDifficultyDisplay = (level) => {
     if (level < 0.3) return { label: 'Beginner', color: 'bg-green-500', emoji: '🌱' };
