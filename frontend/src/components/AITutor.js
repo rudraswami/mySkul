@@ -64,6 +64,11 @@ export default function AITutor() {
   const [showSessionSearch, setShowSessionSearch] = useState(false);
   const [bookmarkedResponses, setBookmarkedResponses] = useState([]);
   const [showQuickSuggestions, setShowQuickSuggestions] = useState(false);
+  const [sessionActions, setSessionActions] = useState({
+    showMenu: null, // session_id of the session showing action menu
+    isRenaming: null // session_id of the session being renamed
+  });
+  const [renameValue, setRenameValue] = useState('');
 
   // Phase A: Complete Input Methods states
   const [selectedFile, setSelectedFile] = useState(null);
