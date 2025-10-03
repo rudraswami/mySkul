@@ -2252,10 +2252,10 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
 @api_router.post("/ai/process-file")
 async def process_file_with_ai(
     file: UploadFile = File(...),
-    subject: str = Field(...),
-    ai_mode: str = Field(default="dual"),
-    context_id: Optional[str] = Field(None),
-    context_type: Optional[str] = Field(None),
+    subject: str = Form(...),
+    ai_mode: str = Form(default="dual"),
+    context_id: Optional[str] = Form(None),
+    context_type: Optional[str] = Form(None),
     user: User = Depends(get_current_user)
 ):
     """Process uploaded image or PDF file with AI Tutor analysis"""
