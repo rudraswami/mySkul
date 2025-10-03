@@ -317,14 +317,27 @@ export default function MockTests() {
         try {
           const errorData = JSON.parse(errorText);
           if (errorData.detail) {
-            errorMessage = errorData.detail;
+            // Handle both string details and array of validation errors
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              // Handle Pydantic validation errors
+              errorMessage = errorData.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+            } else {
+              errorMessage = 'Invalid request format. Please try again.';
+            }
           }
         } catch (e) {
           console.error('Could not parse error response:', errorText);
+          errorMessage = 'Server error. Please try again.';
         }
         
         if (response.status >= 500) {
           errorMessage = 'AI system is busy. Please try again in 30 seconds.';
+        } else if (response.status === 422) {
+          errorMessage = 'Request validation failed. Please check your subscription status.';
+        } else if (response.status === 402) {
+          errorMessage = 'Subscription expired. Please upgrade your plan to continue using Mock Tests.';
         }
         
         setGenerationError(errorMessage);
