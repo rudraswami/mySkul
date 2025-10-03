@@ -350,6 +350,9 @@ export default function MockTests() {
       let errorMessage = 'Network error. Please check your connection and try again.';
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         errorMessage = 'Connection failed. Please check your internet and try again.';
+      } else if (error.message) {
+        // Ensure we only use the error message string, not the whole error object
+        errorMessage = `Error: ${error.message}`;
       }
       
       setGenerationError(errorMessage);
