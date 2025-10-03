@@ -2467,13 +2467,25 @@ async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_
         )
         await db.chat_sessions.insert_one(session.dict())
     
-    # Get AI response
+    # Get AI response with personalization
     try:
-        ai_response, reasoning = await get_ai_tutor_response(
-            chat_request.message, 
-            chat_request.subject, 
-            session_id
-        )
+        # Try personalized mentor response first
+        try:
+            ai_response, reasoning = await dual_ai.mentor.get_personalized_response(
+                chat_request.message,
+                chat_request.subject,
+                session_id,
+                user.user_id,
+                None  # topic_name - could be extracted from message in future
+            )
+        except Exception as personalization_error:
+            logger.warning(f"Personalization failed, using dual-layer fallback: {str(personalization_error)}")
+            # Fallback to dual-layer AI system
+            ai_response, reasoning = await get_ai_tutor_response(
+                chat_request.message, 
+                chat_request.subject, 
+                session_id
+            )
         
         # Save chat message
         chat_message = ChatMessage(
