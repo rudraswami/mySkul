@@ -2653,11 +2653,18 @@ async def get_user_subscription(user_id: str) -> UserSubscription:
             user_id=user_id,
             plan_id="free",
             plan_name="free",
-            status="active",
-            current_period_end=datetime.utcnow() + timedelta(days=365)  # Free never expires
+            status="active",  # Free tier is always active
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=365)  # Free never expires
         )
         await db.user_subscriptions.insert_one(free_subscription.dict())
         return free_subscription
+    else:
+        subscription = UserSubscription(**subscription_doc)
+        # Ensure free tier is always active, never cancelled
+        if subscription.plan_name == "free":
+            subscription.status = "active"
+            subscription.current_period_end = datetime.now(timezone.utc) + timedelta(days=365)
+        return subscription
     return UserSubscription(**clean_mongodb_doc(subscription_doc))
 
 async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any]:
