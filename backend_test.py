@@ -1651,6 +1651,47 @@ class DhruvAITester:
         
         return success_count >= len(retake_modes) * 0.8  # 80% success threshold
 
+    def test_generate_mock_test(self):
+        """Generate a mock test specifically for enhancement API testing"""
+        if not self.token:
+            print("❌ No token available for mock test generation")
+            return False
+        
+        print("   Generating mock test for enhancement API testing...")
+        
+        test_params = {
+            "exam_type": "JEE", 
+            "subject": "Mathematics", 
+            "difficulty": 3, 
+            "num_questions": 5
+        }
+        
+        success, response = self.run_test(
+            "Generate Test for Enhancement APIs",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=test_params,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'test_id' in response:
+            if not hasattr(self, 'test_ids'):
+                self.test_ids = []
+            
+            self.test_ids.append({
+                'test_id': response['test_id'],
+                'questions': response.get('questions', []),
+                'subject': test_params['subject']
+            })
+            
+            print(f"   ✅ Test generated successfully: {response['test_id']}")
+            print(f"   Questions: {len(response.get('questions', []))}")
+            return True
+        else:
+            print(f"   ❌ Failed to generate test")
+            return False
+
     # ============= REVIEW REQUEST FOCUSED TESTING =============
 
     def test_phase_c_advanced_guardrails_apis_focused(self):
