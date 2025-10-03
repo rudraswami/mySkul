@@ -2362,7 +2362,7 @@ async def process_image_with_ocr(image_content: bytes) -> str:
             api_key=EMERGENT_LLM_KEY,
             session_id=str(uuid.uuid4()),
             system_message="You are an expert at analyzing images and extracting text, mathematical expressions, and visual content. You can see and process images."
-        )
+        ).with_model("openai", "gpt-4o")
         
         # Convert image to base64
         import base64
@@ -2370,10 +2370,16 @@ async def process_image_with_ocr(image_content: bytes) -> str:
         
         logger.info(f"Processing image OCR - Image size: {len(image_content)} bytes, Base64 size: {len(image_base64)}")
         
-        # Create message with image
-        response = await llm_chat.send_message([
-            UserMessage("I can see the image you've provided. Please analyze this image and extract all text, mathematical expressions, equations, diagrams, or any educational content shown. Describe everything you see in detail, including any problems, formulas, or concepts that appear in the image.")
-        ], image_base64=image_base64)
+        # Create image content object
+        image_content_obj = ImageContent(image_base64=image_base64)
+        
+        # Create message with image attachment
+        user_message = UserMessage(
+            text="Please analyze this image and extract all text, mathematical expressions, equations, diagrams, or any educational content shown. Describe everything you see in detail, including any problems, formulas, or concepts that appear in the image.",
+            file_contents=[image_content_obj]
+        )
+        
+        response = await llm_chat.send_message(user_message)
         
         logger.info(f"OCR response received: {len(response.content)} characters")
         return response.content
