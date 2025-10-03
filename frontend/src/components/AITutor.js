@@ -263,7 +263,7 @@ export default function AITutor() {
       
       // Update current session if it's a new one
       if (!currentSession) {
-        setCurrentSession(newMessage.session_id);
+        setCurrentSession(sessionId);
         fetchChatSessions(); // Refresh sessions list
       }
 
