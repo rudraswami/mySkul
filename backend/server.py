@@ -3760,7 +3760,12 @@ async def get_daily_goals(user: User = Depends(get_current_user)):
     goal_id = 1
     
     # Goal 1: Study time goal
-    total_study_today = sum(p.get("time_spent", 0) for p in recent_progress if p.get("last_accessed", "").startswith(str(today)))
+    total_study_today = sum(
+        p.get("time_spent", 0) for p in recent_progress 
+        if p.get("last_accessed") and 
+        (isinstance(p.get("last_accessed"), datetime) and p.get("last_accessed").date() == today) or
+        (isinstance(p.get("last_accessed"), str) and p.get("last_accessed").startswith(str(today)))
+    )
     study_goal = {
         "id": goal_id,
         "task": f"Study for {2 * 60} minutes total",
