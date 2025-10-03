@@ -1331,12 +1331,14 @@ export default function AITutor() {
                               
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   console.log('Pin clicked for session:', session.session_id, 'Current pinned state:', session.pinned);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   togglePinSession(session.session_id, session.pinned || false);
                                 }}
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                type="button"
                               >
                                 <Pin className={`h-4 w-4 mr-3 ${session.pinned ? 'text-teal-600' : 'text-gray-500'}`} />
                                 {session.pinned ? 'Unpin' : 'Pin to top'}
