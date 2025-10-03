@@ -403,6 +403,46 @@ export default function AITutor() {
     }
   };
 
+  // Phase E: Wellness Check Handler
+  const handleWellnessCheck = async () => {
+    try {
+      const response = await axios.post(`${API}/analytics/wellness-check`, {
+        ...wellnessData,
+        session_id: currentSession || `session_${Date.now()}`
+      });
+      
+      console.log('Wellness check completed:', response.data);
+      
+      // Show recommendations if any
+      if (response.data.motivational_content_suggested) {
+        // You could show this in a notification or modal
+        console.log('Motivational content:', response.data.motivational_content_suggested);
+      }
+      
+      if (response.data.break_recommendation) {
+        // Suggest a break to the user
+        console.log('Break recommended based on wellness check');
+      }
+      
+      setShowWellnessCheck(false);
+      
+    } catch (error) {
+      console.error('Failed to conduct wellness check:', error);
+    }
+  };
+
+  // Phase E: Trigger Wellness Check Periodically
+  useEffect(() => {
+    const checkWellnessInterval = setInterval(() => {
+      // Show wellness check every 30 minutes of active usage
+      if (messages.length > 0 && messages.length % 10 === 0) { // Every 10 interactions
+        setShowWellnessCheck(true);
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+
+    return () => clearInterval(checkWellnessInterval);
+  }, [messages.length]);
+
   const exportConversation = () => {
     const conversationText = messages.map(msg => {
       if (msg.dual_response) {
