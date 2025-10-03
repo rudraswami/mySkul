@@ -453,7 +453,7 @@
 
 ## test_plan:
   current_focus:
-    - "Phase C, D, E API Parameter Structure Fixes"
+    - "AI Tutor Progressive Disclosure System Testing"
     - "Enhanced Dual Response API 500 Error Resolution"
     - "Mock Tests Blank Loading States Fix"
     - "Comprehensive Backend Testing and Verification"
