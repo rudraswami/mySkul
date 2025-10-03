@@ -66,16 +66,9 @@ export default function AutoNoteMentor() {
   const [explanation, setExplanation] = useState(null);
   
   // Enhanced Features State
-  const [spacedRepetitionCards, setSpacedRepetitionCards] = useState([]);
-  const [dueCards, setDueCards] = useState([]);
-  const [currentReviewCard, setCurrentReviewCard] = useState(null);
-  const [reviewQuality, setReviewQuality] = useState(3);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [classSeries, setClassSeries] = useState([]);
   const [newSeries, setNewSeries] = useState({ name: '', subject: '', total_classes: 10, schedule: '' });
   const [analytics, setAnalytics] = useState(null);
-  const [documentUploadProgress, setDocumentUploadProgress] = useState(0);
   
   // Live Recording State
   const [liveTranscript, setLiveTranscript] = useState('');
