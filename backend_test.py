@@ -5343,9 +5343,8 @@ def main():
     def run_review_request_focused_tests(self):
         """Run focused tests based on review request priorities"""
         print("🎯 Starting REVIEW REQUEST FOCUSED Backend Testing...")
-        print("   FOCUS: Phase C, D, E API Parameter Structure Fixes")
-        print("   FOCUS: Enhanced Dual Response API 500 Error Resolution")
-        print("   FOCUS: Import fixes and newly implemented endpoints")
+        print("   FOCUS: Mock Test Enhancement APIs Testing")
+        print("   Testing: Question Bookmarking, Detailed Review, Performance Trends, Enhanced Retake")
         print(f"   Base URL: {self.base_url}")
         print(f"   Test User: {self.test_user_email}")
         
@@ -5362,29 +5361,20 @@ def main():
                 print("❌ Authentication completely failed. Stopping tests.")
                 return False
         
-        # Create a session for testing
-        self.test_ai_chat_message()
-        
-        # REVIEW REQUEST PRIORITY TESTS
+        # REVIEW REQUEST PRIORITY TESTS - MOCK TEST ENHANCEMENT APIS
         print("\n" + "="*60)
-        print("🎯 REVIEW REQUEST PRIORITY TESTS")
+        print("🎯 MOCK TEST ENHANCEMENT APIS TESTING")
         print("="*60)
         
-        print("\n🛡️  PHASE C: ADVANCED GUARDRAILS - IMPORT & FACT VERIFICATION FIXES")
-        phase_c_success = self.test_phase_c_advanced_guardrails_apis_focused()
-        
-        print("\n🎬 PHASE D: ENHANCED ACTION BUTTONS - IMPORT FIXES")
-        phase_d_success = self.test_phase_d_enhanced_action_buttons_apis_focused()
-        
-        print("\n🤖 ENHANCED DUAL RESPONSE API - 402 SUBSCRIPTION ERROR INVESTIGATION")
-        dual_response_success = self.test_enhanced_dual_response_api_focused()
+        print("\n📝 TESTING NEWLY IMPLEMENTED MOCK TEST ENHANCEMENT APIS")
+        mock_test_enhancement_success = self.test_mock_test_enhancement_apis()
         
         # Final summary
         end_time = time.time()
         duration = end_time - start_time
         
         print("\n" + "="*60)
-        print("🎯 REVIEW REQUEST FOCUSED TESTING SUMMARY")
+        print("🎯 MOCK TEST ENHANCEMENT TESTING SUMMARY")
         print("="*60)
         print(f"Total Tests Run: {self.tests_run}")
         print(f"Tests Passed: {self.tests_passed}")
@@ -5392,41 +5382,29 @@ def main():
         print(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         print(f"Total Duration: {duration:.1f} seconds")
         
-        print(f"\n📋 PRIORITY AREA RESULTS:")
-        print(f"   Phase C (Guardrails): {'✅ PASSED' if phase_c_success else '❌ FAILED'}")
-        print(f"   Phase D (Action Buttons): {'✅ PASSED' if phase_d_success else '❌ FAILED'}")
-        print(f"   Enhanced Dual Response: {'✅ WORKING' if dual_response_success else '❌ SUBSCRIPTION ISSUES'}")
+        print(f"\n📋 MOCK TEST ENHANCEMENT RESULTS:")
+        print(f"   Enhancement APIs: {'✅ PASSED' if mock_test_enhancement_success else '❌ FAILED'}")
         
         print(f"\n🔍 KEY FINDINGS:")
-        if phase_c_success:
-            print("   ✅ Import issues appear to be resolved for Phase C")
-            print("   ✅ Fact verification endpoint is working")
-            print("   ✅ JSON body parameter structure is working")
+        if mock_test_enhancement_success:
+            print("   ✅ Question Bookmarking API working correctly")
+            print("   ✅ Detailed Test Review API generating AI explanations")
+            print("   ✅ Bookmarked Questions API retrieving user data")
+            print("   ✅ Performance Trends API providing analytics")
+            print("   ✅ Enhanced Retake API supporting all modes (exact/variant/adaptive)")
         else:
-            print("   ❌ Phase C still has issues - import errors may persist")
+            print("   ❌ Some Mock Test Enhancement APIs have issues")
+            print("   💡 Check individual API test results above for details")
         
-        if phase_d_success:
-            print("   ✅ Import issues appear to be resolved for Phase D")
-            print("   ✅ Practice problems and flashcard creation working")
-        else:
-            print("   ❌ Phase D still has issues - import errors may persist")
-        
-        if dual_response_success:
-            print("   ✅ Dual AI responses working - no subscription limits")
-        else:
-            print("   ❌ Dual AI responses blocked by subscription/budget limits")
-            print("   💡 Recommendation: Check AI service subscription configuration")
-        
-        overall_success = phase_c_success and phase_d_success
+        overall_success = mock_test_enhancement_success
         
         if overall_success:
-            print("\n🎉 REVIEW REQUEST FIXES SUCCESSFUL!")
-            print("   All critical import issues appear to be resolved")
-            print("   New fact verification endpoint is working")
-            print("   JSON body parameter structures are working")
+            print("\n🎉 MOCK TEST ENHANCEMENT APIS WORKING!")
+            print("   All newly implemented enhancement features are functional")
+            print("   Students can now bookmark questions, get detailed reviews, and retake tests")
         else:
-            print("\n⚠️  SOME REVIEW REQUEST ISSUES REMAIN")
-            print("   Additional fixes may be needed")
+            print("\n⚠️  SOME MOCK TEST ENHANCEMENT ISSUES REMAIN")
+            print("   Additional fixes may be needed for full functionality")
         
         return overall_success
 
