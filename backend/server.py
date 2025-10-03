@@ -6028,22 +6028,51 @@ async def generate_mock_test(
     
     try:
         # Check subscription access for mock tests
-        access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
+        try:
+            access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
+            logger.info(f"Access check for user {user.user_id}: {access_info}")
+        except Exception as e:
+            logger.error(f"Error checking feature access: {str(e)}")
+            # Allow access if subscription check fails (graceful degradation)
+            access_info = {"has_access": True, "reason": "fallback", "limit": 1, "used": 0}
+        
         if not access_info["has_access"]:
+            subscription = await get_user_subscription(user.user_id)
+            plan_name = subscription.plan_name.title()
+            
             if access_info["reason"] == "subscription_expired":
                 raise HTTPException(
                     status_code=402, 
-                    detail="Subscription expired. Please upgrade your plan to continue using Mock Tests."
+                    detail={
+                        "message": "Your subscription has expired. Please renew to continue using Mock Tests.",
+                        "action": "upgrade",
+                        "current_plan": plan_name,
+                        "upgrade_url": "/subscription"
+                    }
                 )
             elif access_info["reason"] == "feature_not_available":
                 raise HTTPException(
                     status_code=402,
-                    detail="Mock Tests are not available in your current plan. Please upgrade to access this feature."
+                    detail={
+                        "message": f"Mock Tests are not available in your {plan_name} plan. Upgrade to Basic Plan for 20 tests/month.",
+                        "action": "upgrade", 
+                        "current_plan": plan_name,
+                        "upgrade_url": "/subscription"
+                    }
                 )
             elif access_info["reason"] == "usage_limit_reached":
+                remaining_days = (datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timedelta(days=32)).replace(day=1) - datetime.utcnow()
                 raise HTTPException(
                     status_code=429,
-                    detail=f"Monthly mock test limit reached. You have used {access_info['used']}/{access_info['limit']} tests this month. Please upgrade your plan."
+                    detail={
+                        "message": f"Monthly limit reached! You've used {access_info['used']}/{access_info['limit']} tests. Resets in {remaining_days.days} days.",
+                        "action": "upgrade",
+                        "current_plan": plan_name,
+                        "used": access_info['used'],
+                        "limit": access_info['limit'],
+                        "reset_days": remaining_days.days,
+                        "upgrade_url": "/subscription"
+                    }
                 )
         
         # Check cache first for instant loading
