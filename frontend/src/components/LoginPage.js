@@ -145,10 +145,7 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    console.log('BUTTON CLICKED!');
-                    handleSubmit();
-                  }}
+                  id="loginBtn"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
@@ -160,14 +157,6 @@ export default function LoginPage() {
                   ) : (
                     'Sign In'
                   )}
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => console.log('TEST BUTTON CLICKED')}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md mt-2"
-                >
-                  Test Button
                 </button>
               </div>
 
