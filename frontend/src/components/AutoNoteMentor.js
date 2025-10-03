@@ -761,7 +761,6 @@ export default function AutoNoteMentor() {
 
   // Load enhanced features on component mount
   useEffect(() => {
-    loadDueCards();
     loadClassSeries();
     loadAnalytics();
   }, []);
