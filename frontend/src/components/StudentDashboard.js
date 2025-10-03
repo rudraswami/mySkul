@@ -253,35 +253,63 @@ export default function StudentDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="space-y-3">
-              {todayGoals.map((goal) => (
-                <div key={goal.id} 
-                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all
-                       ${goal.completed 
-                         ? 'bg-green-50 border-green-200' 
-                         : 'bg-white border-gray-200 hover:border-blue-300'}`}
-                     onClick={() => handleGoalToggle(goal.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    {goal.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-gray-400" />
-                    )}
-                    <div>
-                      <span className={`font-medium ${goal.completed ? 'line-through text-gray-600' : 'text-gray-900'}`}>
-                        {goal.task}
-                      </span>
-                      <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{goal.duration}</span>
-                        <Badge variant="outline" className="text-xs">{goal.subject}</Badge>
+            {goalsLoading ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex items-center space-x-3 p-3 bg-gray-100 rounded-lg animate-pulse">
+                    <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : todayGoals.length > 0 ? (
+              <div className="space-y-3">
+                {todayGoals.map((goal) => (
+                  <div key={goal.id} 
+                       className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all
+                         ${goal.completed 
+                           ? 'bg-green-50 border-green-200' 
+                           : 'bg-white border-gray-200 hover:border-blue-300'}`}
+                       onClick={() => handleGoalToggle(goal.id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {goal.completed ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-gray-400" />
+                      )}
+                      <div>
+                        <span className={`font-medium ${goal.completed ? 'line-through text-gray-600' : 'text-gray-900'}`}>
+                          {goal.task}
+                        </span>
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{goal.duration}</span>
+                          <Badge variant="outline" className="text-xs">{goal.subject}</Badge>
+                          {goal.progress !== undefined && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-8 bg-gray-200 rounded-full h-2">
+                                <div className="bg-blue-600 h-2 rounded-full" style={{width: `${goal.progress}%`}}></div>
+                              </div>
+                              <span className="text-xs">{goal.progress}%</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Target className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-600 font-medium">No goals set for today</p>
+                <p className="text-gray-500 text-sm">Start studying to generate smart goals!</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
