@@ -1247,7 +1247,12 @@ export default function MockTests() {
               <div className="bg-orange-100 p-4 rounded-full w-16 h-16 mx-auto mb-4">
                 <Crown className="h-8 w-8 text-orange-600 mx-auto" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Upgrade Required</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {showUpgradePrompt.reason === 'limit_reached' ? 'Test Limit Reached' :
+                 showUpgradePrompt.reason === 'subscription_expired' ? 'Subscription Expired' :
+                 showUpgradePrompt.reason === 'validation_failed' ? 'Free Tier Limit' :
+                 'Upgrade Required'}
+              </h3>
               <p className="text-gray-600 mb-4">{showUpgradePrompt.message}</p>
               
               {showUpgradePrompt.used && showUpgradePrompt.limit && (
