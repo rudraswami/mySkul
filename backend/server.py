@@ -3913,22 +3913,18 @@ async def generate_practice_problems_endpoint(
 
 @api_router.post("/actions/add-to-notes")
 async def add_to_notes_endpoint(
-    title: str,
-    content: str,
-    subject: str,
-    topic: str,
-    interaction_id: Optional[str] = None,
+    request: AddToNotesRequest,
     user: User = Depends(get_current_user)
 ):
     """Save content to user's notes"""
     try:
         note = await ActionButtonService.save_to_notes(
             user_id=user.user_id,
-            title=title,
-            content=content,
-            subject=subject,
-            topic=topic,
-            interaction_id=interaction_id
+            title=request.title,
+            content=request.content,
+            subject=request.subject,
+            topic=request.topic,
+            interaction_id=request.interaction_id
         )
         return note.dict()
     except Exception as e:
