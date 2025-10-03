@@ -493,12 +493,15 @@ export default function AITutor() {
   };
 
   const deleteSession = async (sessionId) => {
+    const session = sessions.find(s => s.session_id === sessionId);
+    const sessionTitle = session ? session.title : 'this conversation';
+
+    const confirmed = window.confirm(`Are you sure you want to delete "${sessionTitle}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
-
-      const confirmed = window.confirm('Are you sure you want to delete this conversation?');
-      if (!confirmed) return;
 
       await axios.delete(`${API}/chat/${sessionId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -510,11 +513,16 @@ export default function AITutor() {
         setCurrentSession(null);
       }
 
-      // Refresh sessions list
-      fetchChatSessions();
+      // Update sessions list immediately
+      setSessions(prevSessions => 
+        prevSessions.filter(session => session.session_id !== sessionId)
+      );
+
       setSessionActions({ showMenu: null, isRenaming: null });
+      showToast(`"${sessionTitle}" deleted successfully`, 'success');
     } catch (error) {
       console.error('Failed to delete session:', error);
+      showToast('Failed to delete session', 'error');
     }
   };
 
