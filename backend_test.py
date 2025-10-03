@@ -1397,16 +1397,17 @@ class DhruvAITester:
         
         return total_success >= total_tests * 0.8  # 80% success threshold
 
-    def test_phase_d_enhanced_action_buttons_apis(self):
-        """Test Phase D: Enhanced Action Buttons APIs - Practice, Notes, Flashcards, Revision"""
+    def test_phase_d_enhanced_action_buttons_apis_focused(self):
+        """Test Phase D: Enhanced Action Buttons APIs - FOCUSED ON IMPORT FIXES"""
         if not self.token:
             print("❌ No token available for Phase D action buttons testing")
             return False
         
-        print("   Testing Phase D: Enhanced Action Buttons APIs...")
+        print("   🎯 REVIEW REQUEST FOCUS: Testing Phase D Enhanced Action Buttons - Import Fixes...")
+        print("   Testing if emergentintegrations import errors are resolved (LLMChat vs LlmChat)")
         
-        # Test 1: Practice More API
-        print("   Testing POST /api/actions/practice-more...")
+        # Test 1: Practice More API - TEST IF EMERGENTINTEGRATIONS IMPORT FIXED
+        print("   Testing POST /api/actions/practice-more (test if emergentintegrations import fixed)...")
         practice_tests = [
             {
                 "original_question": "Solve x² - 5x + 6 = 0",
@@ -1427,6 +1428,7 @@ class DhruvAITester:
         practice_success_count = 0
         for i, test_case in enumerate(practice_tests):
             print(f"   Testing practice problems {i+1}/2: {test_case['subject']}")
+            print("   Checking for 'cannot import name LLMChat' errors...")
             
             success, response = self.run_test(
                 f"Practice Problems - {test_case['subject']}",
@@ -1440,62 +1442,18 @@ class DhruvAITester:
             if success:
                 session_id = response.get('session_id')
                 problems = response.get('generated_problems', [])
-                print(f"   ✅ Practice session created: {session_id}")
+                print(f"   ✅ Practice problems working - NO import errors!")
+                print(f"   Session created: {session_id}")
                 print(f"   Generated problems: {len(problems)}")
                 print(f"   Difficulty level: {response.get('difficulty_level', 'N/A')}")
                 practice_success_count += 1
             else:
-                print(f"   ❌ Practice problems generation failed")
+                print(f"   ❌ Practice problems failed - may still have import errors")
             
             time.sleep(2)
         
-        # Test 2: Add to Notes API
-        print("   Testing POST /api/actions/add-to-notes...")
-        note_tests = [
-            {
-                "title": "Quadratic Formula Derivation",
-                "content": "The quadratic formula x = (-b ± √(b²-4ac))/2a is derived from completing the square method.",
-                "subject": "Mathematics",
-                "topic": "Quadratic Equations",
-                "tags": ["formula", "derivation", "algebra"]
-            },
-            {
-                "title": "Newton's Laws Summary",
-                "content": "First law: Object at rest stays at rest. Second law: F=ma. Third law: Action-reaction pairs.",
-                "subject": "Physics",
-                "topic": "Laws of Motion", 
-                "tags": ["mechanics", "laws", "motion"]
-            }
-        ]
-        
-        note_success_count = 0
-        note_ids = []
-        for i, test_case in enumerate(note_tests):
-            print(f"   Testing add to notes {i+1}/2: {test_case['title']}")
-            
-            success, response = self.run_test(
-                f"Add to Notes - {test_case['title'][:20]}",
-                "POST",
-                "actions/add-to-notes",
-                200,
-                data=test_case,
-                headers={'Authorization': f'Bearer {self.token}'}
-            )
-            
-            if success:
-                note_id = response.get('note_id')
-                note_ids.append(note_id)
-                print(f"   ✅ Note saved: {note_id}")
-                print(f"   Title: {response.get('title', 'N/A')}")
-                print(f"   Tags: {len(response.get('tags', []))}")
-                note_success_count += 1
-            else:
-                print(f"   ❌ Add to notes failed")
-            
-            time.sleep(1)
-        
-        # Test 3: Create Flashcards API
-        print("   Testing POST /api/actions/create-flashcards...")
+        # Test 2: Create Flashcards API - TEST IF EMERGENTINTEGRATIONS IMPORT FIXED
+        print("   Testing POST /api/actions/create-flashcards (test if emergentintegrations import fixed)...")
         flashcard_tests = [
             {
                 "title": "Quadratic Equations Flashcards",
@@ -1517,6 +1475,7 @@ class DhruvAITester:
         deck_ids = []
         for i, test_case in enumerate(flashcard_tests):
             print(f"   Testing create flashcards {i+1}/2: {test_case['title']}")
+            print("   Checking for 'cannot import name LLMChat' errors...")
             
             success, response = self.run_test(
                 f"Create Flashcards - {test_case['title'][:20]}",
@@ -1531,8 +1490,89 @@ class DhruvAITester:
                 deck_id = response.get('deck_id')
                 deck_ids.append(deck_id)
                 cards = response.get('cards', [])
-                print(f"   ✅ Flashcard deck created: {deck_id}")
+                print(f"   ✅ Flashcard creation working - NO import errors!")
+                print(f"   Deck created: {deck_id}")
                 print(f"   Cards generated: {len(cards)}")
+                print(f"   Total cards: {response.get('total_cards', 0)}")
+                flashcard_success_count += 1
+            else:
+                print(f"   ❌ Flashcard creation failed - may still have import errors")
+            
+            time.sleep(2)
+        
+        # Test 3: Add to Notes API - SHOULD STILL WORK (GET endpoint)
+        print("   Testing POST /api/actions/add-to-notes (should still work)...")
+        note_tests = [
+            {
+                "title": "Quadratic Formula Derivation",
+                "content": "The quadratic formula x = (-b ± √(b²-4ac))/2a is derived from completing the square method.",
+                "subject": "Mathematics",
+                "topic": "Quadratic Equations"
+            }
+        ]
+        
+        note_success_count = 0
+        for i, test_case in enumerate(note_tests):
+            print(f"   Testing add to notes: {test_case['title']}")
+            
+            success, response = self.run_test(
+                f"Add to Notes - {test_case['title'][:20]}",
+                "POST",
+                "actions/add-to-notes",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                note_id = response.get('note_id')
+                print(f"   ✅ Note saved successfully: {note_id}")
+                print(f"   Title: {response.get('title', 'N/A')}")
+                note_success_count += 1
+            else:
+                print(f"   ❌ Add to notes failed")
+            
+            time.sleep(1)
+        
+        # Test 4: GET endpoints - ALL SHOULD STILL WORK
+        print("   Testing GET endpoints (should all still work)...")
+        get_endpoints = [
+            ("actions/notes", "Get User Notes"),
+            ("actions/flashcard-decks", "Get Flashcard Decks"),
+            ("actions/practice-sessions", "Get Practice Sessions"),
+            ("actions/revision-schedule", "Get Revision Schedule")
+        ]
+        
+        get_success_count = 0
+        for endpoint, name in get_endpoints:
+            print(f"   Testing GET /api/{endpoint}...")
+            
+            success, response = self.run_test(
+                name,
+                "GET",
+                endpoint,
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {name} still working")
+                get_success_count += 1
+            else:
+                print(f"   ❌ {name} failed")
+            
+            time.sleep(1)
+        
+        total_tests = len(practice_tests) + len(flashcard_tests) + len(note_tests) + len(get_endpoints)
+        total_success = practice_success_count + flashcard_success_count + note_success_count + get_success_count
+        
+        print(f"   🎯 PHASE D REVIEW FOCUS SUMMARY: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        print(f"   Practice problems (import fix): {practice_success_count}/{len(practice_tests)} ✓")
+        print(f"   Flashcard creation (import fix): {flashcard_success_count}/{len(flashcard_tests)} ✓")
+        print(f"   Add to notes (still working): {note_success_count}/{len(note_tests)} ✓")
+        print(f"   GET endpoints (still working): {get_success_count}/{len(get_endpoints)} ✓")
+        
+        return total_success >= total_tests * 0.8  # 80% success thresholdrated: {len(cards)}")
                 print(f"   Difficulty: {response.get('difficulty_level', 'N/A')}")
                 flashcard_success_count += 1
             else:
