@@ -1229,9 +1229,10 @@ export default function AITutor() {
                               showMenu: sessionActions.showMenu === session.session_id ? null : session.session_id
                             });
                           }}
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Session actions"
                         >
-                          <MoreVertical className="h-3 w-3 text-gray-400" />
+                          <MoreVertical className="h-3 w-3" />
                         </Button>
                         
                         {/* Action Menu */}
