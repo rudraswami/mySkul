@@ -4406,11 +4406,56 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
         
         await db.chat_messages.insert_one(chat_message.dict())
         
+        # Phase C: Advanced Guardrails Integration
+        guardrails_data = {}
+        
+        # Math/Units validation if mathematical content detected
+        import re
+        if re.search(r'[\d+\-*/=]', request.message) or any(word in request.message.lower() for word in ['calculate', 'solve', 'equation', 'formula']):
+            try:
+                math_validation = await GuardrailService.validate_mathematics(request.message)
+                guardrails_data["math_validation"] = math_validation.dict()
+            except Exception as e:
+                logger.warning(f"Math validation failed: {str(e)}")
+        
+        # Generate citations for the response
+        try:
+            citations = await GuardrailService.generate_citations(request.subject, topic_name, user.exam_type)
+            guardrails_data["citations"] = [citation.dict() for citation in citations]
+        except Exception as e:
+            logger.warning(f"Citation generation failed: {str(e)}")
+            guardrails_data["citations"] = []
+        
+        # Detect disagreements between AI personas
+        disagreement_alert = None
+        try:
+            disagreement_alert = await GuardrailService.detect_disagreement(
+                coordinated_response['primary_response'],
+                coordinated_response['secondary_response'],
+                request.message,
+                request.session_id
+            )
+        except Exception as e:
+            logger.warning(f"Disagreement detection failed: {str(e)}")
+        
+        # Phase E: Analytics Integration
+        analytics_data = {}
+        try:
+            # Record learning interaction for analytics
+            await AnalyticsService.generate_learning_analytics(user.user_id, days_back=1)
+            
+            # Get real-time performance stats 
+            performance_stats = await AnalyticsService.get_performance_stats(user.user_id)
+            analytics_data["performance_stats"] = performance_stats
+        except Exception as e:
+            logger.warning(f"Analytics integration failed: {str(e)}")
+        
         # Track feature usage for non-unlimited users
         if access_info["limit"] != -1:
             await track_feature_usage(user.user_id, "ai_conversations_daily")
         
-        return {
+        # Enhanced response with Phase C, D, E features
+        response_data = {
             "session_id": request.session_id,
             "message": request.message,
             "subject": request.subject,
@@ -4429,8 +4474,25 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
                 "scenario_type": coordinated_response['scenario_type'],
                 "confidence": coordinated_response['confidence']
             },
-            "timestamp": chat_message.timestamp
+            "timestamp": chat_message.timestamp,
+            
+            # Phase C: Guardrails Data
+            "guardrails": guardrails_data,
+            "disagreement_alert": disagreement_alert.dict() if disagreement_alert else None,
+            
+            # Phase D: Action Button Data  
+            "action_buttons": {
+                "practice_more_available": True,
+                "add_to_notes_available": True,
+                "create_flashcards_available": True,
+                "schedule_revision_available": True
+            },
+            
+            # Phase E: Analytics Data
+            "analytics": analytics_data
         }
+        
+        return response_data
         
     except Exception as e:
         logger.error(f"Dual AI response error: {str(e)}")
