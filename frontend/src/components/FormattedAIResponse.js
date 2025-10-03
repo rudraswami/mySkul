@@ -12,7 +12,13 @@ import {
   Target,
   BookOpen,
   Heart,
-  GraduationCap
+  GraduationCap,
+  FileText,
+  Plus,
+  ThumbsUp,
+  TrendingDown,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 
 export default function FormattedAIResponse({ content, persona, isLeading = false }) {
