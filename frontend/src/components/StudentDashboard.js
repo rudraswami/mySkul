@@ -45,17 +45,11 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [todayGoals, setTodayGoals] = useState([
-    { id: 1, task: "Revise Chemistry Chapter 4", duration: "20 mins", completed: true, subject: "Chemistry" },
-    { id: 2, task: "Take 10 Q UPSC History Quiz", duration: "15 mins", completed: false, subject: "History" },
-    { id: 3, task: "Flashcards from yesterday's mistakes", duration: "10 mins", completed: false, subject: "Mixed" }
-  ]);
+  const [todayGoals, setTodayGoals] = useState([]);
+  const [goalsLoading, setGoalsLoading] = useState(true);
+  const [subjectProgress, setSubjectProgress] = useState([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
   const [moodRating, setMoodRating] = useState(null);
-  const [subjectProgress, setSubjectProgress] = useState([
-    { subject: "Mathematics", chapters: 15, completed: 12, mastery: 87, color: "green", status: "strong" },
-    { subject: "Physics", chapters: 18, completed: 13, mastery: 72, color: "yellow", status: "medium" },
-    { subject: "Chemistry", chapters: 20, completed: 11, mastery: 65, color: "red", status: "weak" }
-  ]);
 
   useEffect(() => {
     fetchDashboardData();
