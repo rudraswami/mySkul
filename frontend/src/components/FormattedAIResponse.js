@@ -483,9 +483,15 @@ export function DualResponseContainer({
   scenarioType, 
   confidence,
   timestamp,
+  guardrails,
+  disagreementAlert,
+  actionButtons,
+  analytics,
   onFeedback,
   onPracticMore,
-  onAddToNotes
+  onAddToNotes,
+  onCreateFlashcards,
+  onScheduleRevision
 }) {
   return (
     <div className="space-y-6 max-w-5xl">
