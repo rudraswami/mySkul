@@ -1264,14 +1264,22 @@ export default function AITutor() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  placeholder={dragOver ? 'Drop your image or PDF here...' : `Ask me anything about ${selectedSubject}...`}
+                  placeholder={
+                    dragOver 
+                      ? '🎯 Drop your file here for instant AI analysis!' 
+                      : loading 
+                        ? '🤖 AI is processing...' 
+                        : `💬 Ask me anything about ${selectedSubject} or drag & drop files...`
+                  }
                   className={`resize-none border-2 ${
                     dragOver 
-                      ? 'border-blue-400 bg-blue-50' 
+                      ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg scale-[1.01]' 
                       : isListening 
                         ? 'border-red-400 bg-red-50' 
-                        : 'border-gray-300 focus:border-gray-500'
-                  } rounded-lg transition-all duration-200 shadow-sm focus:shadow-md`}
+                        : loading
+                          ? 'border-blue-300 bg-blue-50'
+                          : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
+                  } rounded-lg transition-all duration-300 shadow-sm focus:shadow-md`}
                   rows={3}
                   disabled={loading}
                 />
