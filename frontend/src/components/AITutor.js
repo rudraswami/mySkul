@@ -978,51 +978,35 @@ export default function AITutor() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Professional Chat Header */}
-        <div className="bg-white border-b border-gray-200 p-6 shadow-sm">
+        {/* Clean Header */}
+        <div className="bg-white border-b border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg flex items-center justify-center mr-4 shadow-md">
-                <Brain className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Dhruv AI - {selectedSubject} Tutor
-                </h1>
-                <div className="flex items-center mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <p className="text-sm text-gray-600">
-                    {aiMode === 'dual' && 'Dual-layer AI: Mentor + Professor intelligence'}
-                    {aiMode === 'mentor' && 'Mentor mode: Adaptive, friendly, motivational'}
-                    {aiMode === 'professor' && 'Professor mode: Rule-based, verified reasoning'}
-                  </p>
+              <h1 className="text-2xl font-bold text-gray-900 mr-6">
+                AI Tutor – Mentor | Professor | Both
+              </h1>
+              
+              {/* Trust Badges */}
+              <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center text-teal-600">
+                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                    <Shield className="h-3 w-3" />
+                  </div>
+                  <span>Verified</span>
+                </div>
+                <div className="flex items-center text-teal-600">
+                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                    <Target className="h-3 w-3" />
+                  </div>
+                  <span>Personalized</span>
+                </div>
+                <div className="flex items-center text-teal-600">
+                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                    <Lightbulb className="h-3 w-3" />
+                  </div>
+                  <span>Empowering</span>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              {aiMode === 'dual' && (
-                <Badge variant="outline" className="flex items-center bg-gray-50 text-gray-700 border-gray-300">
-                  <Users className="h-3 w-3 mr-1" />
-                  Dual Intelligence
-                </Badge>
-              )}
-              {aiMode === 'mentor' && (
-                <Badge variant="outline" className="flex items-center bg-green-50 text-green-700 border-green-300">
-                  <Heart className="h-3 w-3 mr-1" />
-                  Mentor Mode
-                </Badge>
-              )}
-              {aiMode === 'professor' && (
-                <Badge variant="outline" className="flex items-center bg-purple-50 text-purple-700 border-purple-300">
-                  <GraduationCap className="h-3 w-3 mr-1" />
-                  Professor Mode
-                </Badge>
-              )}
-              <Badge variant="outline" className="flex items-center bg-gray-50 text-gray-600 border-gray-300">
-                <Shield className="h-3 w-3 mr-1" />
-                Verified AI
-              </Badge>
             </div>
           </div>
         </div>
