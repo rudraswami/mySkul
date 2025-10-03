@@ -381,9 +381,41 @@ export default function MockTests() {
         if (response.status >= 500) {
           errorMessage = 'AI system is busy. Please try again in 30 seconds.';
         } else if (response.status === 422) {
-          errorMessage = 'Request validation failed. Please check your subscription status.';
+          // Trigger subscription modal for validation errors
+          setShowUpgradePrompt({
+            message: 'Request validation failed. This usually indicates a subscription issue.',
+            currentPlan: 'Free',
+            used: 0,
+            limit: 0,
+            resetDays: 30,
+            reason: 'validation_failed'
+          });
+          setGenerationError(null);
+          return;
         } else if (response.status === 402) {
-          errorMessage = 'Subscription expired. Please upgrade your plan to continue using Mock Tests.';
+          // Trigger subscription modal for payment required
+          setShowUpgradePrompt({
+            message: 'Subscription expired. Please upgrade your plan to continue using Mock Tests.',
+            currentPlan: 'Free',
+            used: 0,
+            limit: 0,
+            resetDays: 0,
+            reason: 'subscription_expired'
+          });
+          setGenerationError(null);
+          return;
+        } else if (response.status === 429) {
+          // Trigger subscription modal for rate limiting
+          setShowUpgradePrompt({
+            message: 'Test generation limit reached for your current plan.',
+            currentPlan: 'Free',
+            used: 2,
+            limit: 2,
+            resetDays: 30,
+            reason: 'limit_reached'
+          });
+          setGenerationError(null);
+          return;
         }
         
         setGenerationError(errorMessage);
