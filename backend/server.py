@@ -2633,6 +2633,709 @@ async def require_subscription_access(feature_name: str):
         return wrapper
     return decorator
 
+# ============= PHASE C, D, E SERVICES =============
+
+class GuardrailService:
+    """Phase C: Advanced Guardrails - Math/Units Checker, Citations, Disagreement Detection"""
+    
+    @staticmethod
+    async def validate_mathematics(expression: str, units_input: str = None) -> MathValidation:
+        """Validate mathematical expressions and unit conversions"""
+        try:
+            import re
+            import math
+            from fractions import Fraction
+            
+            validation = MathValidation(
+                expression=expression,
+                units_input=units_input,
+                validation_method="symbolic"
+            )
+            
+            # Clean expression for evaluation
+            cleaned_expr = re.sub(r'[^\d+\-*/().\s]', '', expression.replace('^', '**'))
+            
+            # Basic mathematical validation
+            try:
+                # Safe evaluation for basic math
+                allowed_names = {
+                    "sin": math.sin, "cos": math.cos, "tan": math.tan,
+                    "log": math.log, "sqrt": math.sqrt, "pi": math.pi,
+                    "e": math.e, "abs": abs, "pow": pow
+                }
+                result = eval(cleaned_expr, {"__builtins__": {}}, allowed_names)
+                validation.result = str(result)
+                validation.is_valid = True
+                validation.confidence_score = 0.9
+                
+            except Exception as calc_error:
+                validation.validation_errors.append(f"Mathematical error: {str(calc_error)}")
+                validation.confidence_score = 0.3
+            
+            # Unit validation if provided
+            if units_input:
+                validation.units_output = await GuardrailService._validate_units(units_input)
+            
+            # Store validation record
+            validation_dict = validation.dict()
+            validation_dict['timestamp'] = validation_dict['timestamp'].isoformat()
+            await db.math_validations.insert_one(validation_dict)
+            
+            return validation
+            
+        except Exception as e:
+            logger.error(f"Math validation error: {str(e)}")
+            return MathValidation(
+                expression=expression,
+                units_input=units_input,
+                validation_errors=[f"Validation failed: {str(e)}"],
+                validation_method="error"
+            )
+    
+    @staticmethod
+    async def _validate_units(units_str: str) -> str:
+        """Validate and standardize unit expressions"""
+        unit_mappings = {
+            # Length
+            "m": "meter", "cm": "centimeter", "mm": "millimeter", "km": "kilometer",
+            # Time  
+            "s": "second", "min": "minute", "h": "hour", "hr": "hour",
+            # Mass
+            "kg": "kilogram", "g": "gram", "mg": "milligram",
+            # Force
+            "N": "newton", "kN": "kilonewton",
+            # Energy
+            "J": "joule", "kJ": "kilojoule", "cal": "calorie", "kcal": "kilocalorie"
+        }
+        
+        # Normalize common unit formats
+        normalized = units_str.lower().strip()
+        return unit_mappings.get(normalized, units_str)
+    
+    @staticmethod
+    async def generate_citations(subject: str, topic: str, education_standard: str) -> List[Citation]:
+        """Generate relevant citations based on education standard"""
+        citations = []
+        
+        # Define standard references by education system
+        reference_sources = {
+            "JEE": {
+                "Mathematics": ["NCERT Mathematics Class 11", "NCERT Mathematics Class 12", "R.D. Sharma", "Cengage Mathematics"],
+                "Physics": ["NCERT Physics Class 11", "NCERT Physics Class 12", "H.C. Verma", "Resnick Halliday Krane"],
+                "Chemistry": ["NCERT Chemistry Class 11", "NCERT Chemistry Class 12", "O.P. Tandon", "Morrison Boyd"]
+            },
+            "NEET": {
+                "Biology": ["NCERT Biology Class 11", "NCERT Biology Class 12", "Trueman's Biology", "Campbell Biology"],
+                "Chemistry": ["NCERT Chemistry Class 11", "NCERT Chemistry Class 12", "Morrison Boyd"],
+                "Physics": ["NCERT Physics Class 11", "NCERT Physics Class 12", "H.C. Verma"]
+            },
+            "UPSC": {
+                "History": ["NCERT History Class 6-12", "Bipin Chandra", "Spectrum Modern History"],
+                "Geography": ["NCERT Geography Class 6-12", "G.C. Leong", "Oxford School Atlas"],
+                "Polity": ["Indian Constitution - D.D. Basu", "Indian Polity - Laxmikanth"]
+            }
+        }
+        
+        sources = reference_sources.get(education_standard, {}).get(subject, [f"Standard {subject} Reference"])
+        
+        for i, source_title in enumerate(sources[:3]):  # Limit to 3 citations
+            citation = Citation(
+                source_type="reference_book" if "NCERT" not in source_title else "ncert",
+                source_title=source_title,
+                confidence=0.9 - (i * 0.1),  # Decreasing confidence
+                education_standard=education_standard,
+                subject=subject,
+                topic=topic,
+                chapter_section=f"Chapter on {topic}"
+            )
+            citations.append(citation)
+        
+        return citations
+    
+    @staticmethod
+    async def detect_disagreement(mentor_response: str, professor_response: str, 
+                                question: str, session_id: str) -> Optional[DisagreementAlert]:
+        """Detect significant disagreements between AI personas"""
+        try:
+            # Simple disagreement detection based on key indicators
+            disagreement_indicators = [
+                ("actually", "correction"),
+                ("however", "contradiction"),
+                ("instead", "alternative_method"),
+                ("wrong", "error_correction"),
+                ("mistake", "error_correction")
+            ]
+            
+            mentor_lower = mentor_response.lower()
+            professor_lower = professor_response.lower()
+            
+            conflicts_found = []
+            severity = "minor"
+            
+            # Check for conflicting keywords
+            for indicator, conflict_type in disagreement_indicators:
+                if indicator in mentor_lower and indicator in professor_lower:
+                    conflicts_found.append(conflict_type)
+            
+            # Check for contradictory numbers/values
+            import re
+            mentor_numbers = set(re.findall(r'\b\d+\.?\d*\b', mentor_response))
+            professor_numbers = set(re.findall(r'\b\d+\.?\d*\b', professor_response))
+            
+            if mentor_numbers and professor_numbers and not mentor_numbers.intersection(professor_numbers):
+                conflicts_found.append("numerical")
+                severity = "moderate"
+            
+            # If significant disagreement detected
+            if len(conflicts_found) >= 2 or severity == "moderate":
+                alert = DisagreementAlert(
+                    session_id=session_id,
+                    question=question,
+                    mentor_response=mentor_response[:500],
+                    professor_response=professor_response[:500],
+                    conflict_type=conflicts_found[0] if conflicts_found else "general",
+                    severity=severity
+                )
+                
+                # Store alert
+                alert_dict = alert.dict()
+                alert_dict['timestamp'] = alert_dict['timestamp'].isoformat()
+                await db.disagreement_alerts.insert_one(alert_dict)
+                
+                return alert
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Disagreement detection error: {str(e)}")
+            return None
+
+class ActionButtonService:
+    """Phase D: Enhanced Action Buttons - Practice More, Add to Notes, Turn into Deck, Schedule Revision"""
+    
+    @staticmethod
+    async def generate_practice_problems(user_id: str, original_question: str, subject: str, 
+                                       topic: str, education_standard: str, 
+                                       difficulty_level: str = "similar") -> PracticeSession:
+        """Generate similar practice problems based on original question"""
+        try:
+            session = PracticeSession(
+                user_id=user_id,
+                original_question=original_question,
+                difficulty_level=difficulty_level,
+                education_standard=education_standard,
+                subject=subject,
+                topic=topic
+            )
+            
+            # Use Emergent LLM to generate practice problems
+            from emergentintegrations import LLMChat
+            
+            difficulty_prompt = {
+                "easier": "Generate 5 easier variations of this problem with simpler numbers or concepts",
+                "similar": "Generate 5 similar problems at the same difficulty level",
+                "harder": "Generate 5 more challenging variations with complex scenarios"
+            }
+            
+            prompt = f"""
+            Based on this {education_standard} {subject} question about {topic}:
+            "{original_question}"
+            
+            {difficulty_prompt[difficulty_level]}
+            
+            Format each problem as:
+            Problem X: [Question]
+            Answer: [Brief answer]
+            Explanation: [Key concept]
+            
+            Ensure problems follow {education_standard} syllabus and standards.
+            """
+            
+            llm_client = LLMChat(model="gpt-3.5-turbo")
+            response = await llm_client.achat(
+                messages=[{"role": "user", "content": prompt}],
+                system_message=f"You are an expert {education_standard} {subject} problem generator."
+            )
+            
+            # Parse response into problems
+            problems = ActionButtonService._parse_problems(response.content)
+            session.generated_problems = problems
+            
+            # Store session
+            session_dict = session.dict()
+            session_dict['created_at'] = session_dict['created_at'].isoformat()
+            await db.practice_sessions.insert_one(session_dict)
+            
+            return session
+            
+        except Exception as e:
+            logger.error(f"Practice generation error: {str(e)}")
+            # Return session with error message
+            session = PracticeSession(
+                user_id=user_id,
+                original_question=original_question,
+                generated_problems=[{"error": f"Could not generate problems: {str(e)}"}],
+                education_standard=education_standard,
+                subject=subject,
+                topic=topic
+            )
+            return session
+    
+    @staticmethod
+    def _parse_problems(response_text: str) -> List[Dict[str, str]]:
+        """Parse LLM response into structured problems"""
+        problems = []
+        import re
+        
+        # Split by problem numbers
+        problem_blocks = re.split(r'Problem \d+:', response_text)[1:]  # Skip first empty
+        
+        for block in problem_blocks:
+            try:
+                # Extract question, answer, explanation
+                lines = block.strip().split('\n')
+                question = lines[0].strip() if lines else "Generated problem"
+                
+                answer = ""
+                explanation = ""
+                
+                for line in lines[1:]:
+                    if line.startswith('Answer:'):
+                        answer = line.replace('Answer:', '').strip()
+                    elif line.startswith('Explanation:'):
+                        explanation = line.replace('Explanation:', '').strip()
+                
+                problems.append({
+                    "question": question,
+                    "answer": answer or "Solution provided",
+                    "explanation": explanation or "Practice problem generated"
+                })
+                
+            except Exception:
+                problems.append({
+                    "question": "Practice problem generated",
+                    "answer": "Work through this systematically",
+                    "explanation": "Apply the concepts learned"
+                })
+        
+        return problems[:5]  # Limit to 5 problems
+    
+    @staticmethod
+    async def save_to_notes(user_id: str, title: str, content: str, subject: str, 
+                          topic: str, interaction_id: str = None) -> StudyNote:
+        """Save AI response or content to user's notes"""
+        try:
+            note = StudyNote(
+                user_id=user_id,
+                title=title,
+                content=content,
+                source_interaction_id=interaction_id,
+                subject=subject,
+                topic=topic,
+                tags=[subject, topic, "ai_generated"]
+            )
+            
+            # Store note
+            note_dict = note.dict()
+            note_dict['created_at'] = note_dict['created_at'].isoformat()
+            note_dict['updated_at'] = note_dict['updated_at'].isoformat()
+            await db.study_notes.insert_one(note_dict)
+            
+            return note
+            
+        except Exception as e:
+            logger.error(f"Save to notes error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to save note")
+    
+    @staticmethod
+    async def create_flashcard_deck(user_id: str, title: str, content: str, subject: str, 
+                                  topic: str, interaction_id: str = None) -> FlashcardDeck:
+        """Convert content into flashcard deck"""
+        try:
+            # Use LLM to convert content into Q&A format
+            from emergentintegrations import LLMChat
+            
+            prompt = f"""
+            Convert this educational content into 5-8 flashcards suitable for {subject} study:
+            
+            "{content}"
+            
+            Format as:
+            Q: [Question]
+            A: [Answer]
+            
+            Q: [Question]  
+            A: [Answer]
+            
+            Focus on key concepts, formulas, and important facts that students should memorize.
+            """
+            
+            llm_client = LLMChat(model="gpt-3.5-turbo")
+            response = await llm_client.achat(
+                messages=[{"role": "user", "content": prompt}],
+                system_message="You are an expert at creating effective study flashcards."
+            )
+            
+            # Parse into flashcards
+            cards = ActionButtonService._parse_flashcards(response.content)
+            
+            deck = FlashcardDeck(
+                user_id=user_id,
+                title=title,
+                description=f"Flashcards for {topic}",
+                cards=cards,
+                source_interaction_id=interaction_id,
+                subject=subject,
+                topic=topic,
+                total_cards=len(cards),
+                study_stats={"new": len(cards), "learning": 0, "mastered": 0}
+            )
+            
+            # Store deck
+            deck_dict = deck.dict()
+            deck_dict['created_at'] = deck_dict['created_at'].isoformat()
+            await db.flashcard_decks.insert_one(deck_dict)
+            
+            return deck
+            
+        except Exception as e:
+            logger.error(f"Flashcard creation error: {str(e)}")
+            # Create basic deck with original content
+            deck = FlashcardDeck(
+                user_id=user_id,
+                title=title,
+                cards=[{"front": f"Key concept from {topic}", "back": content[:200]}],
+                subject=subject,
+                topic=topic,
+                total_cards=1
+            )
+            return deck
+    
+    @staticmethod
+    def _parse_flashcards(response_text: str) -> List[Dict[str, str]]:
+        """Parse LLM response into flashcard format"""
+        cards = []
+        import re
+        
+        # Split by Q: and A: patterns
+        qa_pairs = re.findall(r'Q:\s*(.*?)\s*A:\s*(.*?)(?=Q:|$)', response_text, re.DOTALL)
+        
+        for question, answer in qa_pairs:
+            cards.append({
+                "front": question.strip(),
+                "back": answer.strip()
+            })
+        
+        # If parsing failed, create basic cards
+        if not cards:
+            cards = [
+                {"front": "Study this concept", "back": response_text[:100]},
+                {"front": "Review this topic", "back": "Key points to remember"}
+            ]
+        
+        return cards
+    
+    @staticmethod
+    async def schedule_revision(user_id: str, content_id: str, content_type: str, 
+                              title: str, difficulty_level: float = 0.5) -> RevisionSchedule:
+        """Schedule content for spaced repetition revision"""
+        try:
+            # Calculate initial revision time based on difficulty
+            base_hours = 24  # Base: review after 1 day
+            difficulty_multiplier = 1 + (difficulty_level * 2)  # 1-3x multiplier
+            hours_delay = base_hours * difficulty_multiplier
+            
+            scheduled_time = datetime.now(timezone.utc) + timedelta(hours=hours_delay)
+            
+            schedule = RevisionSchedule(
+                user_id=user_id,
+                content_id=content_id,
+                content_type=content_type,
+                title=title,
+                scheduled_for=scheduled_time,
+                difficulty_level=difficulty_level,
+                importance_score=min(1.0, difficulty_level + 0.2)  # Higher difficulty = more important
+            )
+            
+            # Store schedule
+            schedule_dict = schedule.dict()
+            schedule_dict['scheduled_for'] = schedule_dict['scheduled_for'].isoformat()
+            schedule_dict['created_at'] = schedule_dict['created_at'].isoformat()
+            await db.revision_schedules.insert_one(schedule_dict)
+            
+            return schedule
+            
+        except Exception as e:
+            logger.error(f"Revision scheduling error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to schedule revision")
+
+class AnalyticsService:
+    """Phase E: Analytics Integration - Performance Stats, Wellness, Progress Tracking"""
+    
+    @staticmethod
+    async def generate_learning_analytics(user_id: str, days_back: int = 7) -> LearningAnalytics:
+        """Generate comprehensive learning analytics for user"""
+        try:
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=days_back)
+            
+            # Get learning interactions in period
+            interactions = await db.learning_interactions.find({
+                "user_id": user_id,
+                "timestamp": {
+                    "$gte": start_date.isoformat(),
+                    "$lte": end_date.isoformat()
+                }
+            }).to_list(length=None)
+            
+            # Calculate analytics
+            analytics = LearningAnalytics(
+                user_id=user_id,
+                period_start=start_date,
+                period_end=end_date,
+                total_interactions=len(interactions)
+            )
+            
+            if interactions:
+                # Extract subjects and topics
+                subjects = list(set(i.get('subject', 'Unknown') for i in interactions))
+                analytics.subjects_studied = subjects
+                
+                # Calculate topic mastery
+                topic_performance = {}
+                for interaction in interactions:
+                    topic = interaction.get('topic_name', 'General')
+                    if topic not in topic_performance:
+                        topic_performance[topic] = []
+                    
+                    # Estimate performance based on feedback and difficulty
+                    difficulty = interaction.get('difficulty_estimated', 0.5)
+                    feedback = interaction.get('user_feedback', '')
+                    
+                    if feedback == 'helpful':
+                        score = min(1.0, 0.7 + (difficulty * 0.3))
+                    elif feedback in ['too_easy', 'too_hard']:
+                        score = 0.6
+                    else:
+                        score = 0.5  # Neutral
+                    
+                    topic_performance[topic].append(score)
+                
+                # Average topic scores
+                for topic, scores in topic_performance.items():
+                    analytics.topics_mastered[topic] = sum(scores) / len(scores) * 100
+                
+                # Calculate study time
+                total_time = sum(i.get('time_spent', 0) for i in interactions if i.get('time_spent'))
+                analytics.total_study_time = total_time / 3600  # Convert to hours
+                
+                # Determine performance trend
+                if len(interactions) >= 4:
+                    recent_half = interactions[len(interactions)//2:]
+                    early_half = interactions[:len(interactions)//2]
+                    
+                    recent_avg = sum(i.get('difficulty_estimated', 0.5) for i in recent_half) / len(recent_half)
+                    early_avg = sum(i.get('difficulty_estimated', 0.5) for i in early_half) / len(early_half)
+                    
+                    if recent_avg > early_avg + 0.1:
+                        analytics.performance_trend = "improving"
+                    elif recent_avg < early_avg - 0.1:
+                        analytics.performance_trend = "declining"
+            
+            # Generate recommendations
+            analytics.recommendations = await AnalyticsService._generate_recommendations(analytics)
+            
+            # Store analytics
+            analytics_dict = analytics.dict()
+            analytics_dict['period_start'] = analytics_dict['period_start'].isoformat()
+            analytics_dict['period_end'] = analytics_dict['period_end'].isoformat()
+            analytics_dict['generated_at'] = analytics_dict['generated_at'].isoformat()
+            await db.learning_analytics.insert_one(analytics_dict)
+            
+            return analytics
+            
+        except Exception as e:
+            logger.error(f"Analytics generation error: {str(e)}")
+            return LearningAnalytics(
+                user_id=user_id,
+                period_start=start_date,
+                period_end=end_date,
+                recommendations=["Keep practicing regularly for better results"]
+            )
+    
+    @staticmethod
+    async def _generate_recommendations(analytics: LearningAnalytics) -> List[str]:
+        """Generate personalized study recommendations"""
+        recommendations = []
+        
+        # Study frequency recommendations
+        if analytics.total_interactions < 10:
+            recommendations.append("Try to practice more regularly - aim for at least 2-3 sessions per day")
+        
+        # Topic-specific recommendations
+        if analytics.topics_mastered:
+            weak_topics = [topic for topic, score in analytics.topics_mastered.items() if score < 60]
+            strong_topics = [topic for topic, score in analytics.topics_mastered.items() if score > 80]
+            
+            if weak_topics:
+                recommendations.append(f"Focus more practice on: {', '.join(weak_topics[:3])}")
+            
+            if strong_topics:
+                recommendations.append(f"Great progress in: {', '.join(strong_topics[:2])}")
+        
+        # Performance trend recommendations
+        if analytics.performance_trend == "declining":
+            recommendations.append("Consider taking a short break and reviewing fundamentals")
+        elif analytics.performance_trend == "improving":
+            recommendations.append("Excellent progress! Consider tackling more challenging problems")
+        
+        # Study time recommendations
+        if analytics.total_study_time < 2:
+            recommendations.append("Try to increase your daily study time for better results")
+        elif analytics.total_study_time > 8:
+            recommendations.append("Great dedication! Remember to take regular breaks for optimal learning")
+        
+        return recommendations[:4]  # Limit to 4 recommendations
+    
+    @staticmethod
+    async def conduct_wellness_check(user_id: str, session_id: str, 
+                                   stress_level: int, motivation_level: int,
+                                   confidence_level: int, study_satisfaction: int) -> WellnessCheck:
+        """Conduct wellness check and provide recommendations"""
+        try:
+            wellness = WellnessCheck(
+                user_id=user_id,
+                session_id=session_id,
+                stress_level=stress_level,
+                motivation_level=motivation_level,
+                confidence_level=confidence_level,
+                study_satisfaction=study_satisfaction
+            )
+            
+            # Determine if break is needed
+            if stress_level >= 7 or motivation_level <= 3 or study_satisfaction <= 3:
+                wellness.break_recommendation = True
+            
+            # Generate motivational content
+            if motivation_level <= 4:
+                motivational_messages = [
+                    "Remember: Every expert was once a beginner. Keep pushing forward!",
+                    "Success is the sum of small efforts repeated daily. You're on the right track!",
+                    "Challenges are what make life interesting. Overcoming them makes it meaningful.",
+                    "Your future self will thank you for the effort you put in today!"
+                ]
+                import random
+                wellness.motivational_content_suggested = random.choice(motivational_messages)
+            
+            # Schedule follow-up if needed
+            if stress_level >= 8 or (motivation_level <= 2 and confidence_level <= 3):
+                wellness.follow_up_scheduled = datetime.now(timezone.utc) + timedelta(hours=2)
+            
+            # Store wellness check
+            wellness_dict = wellness.dict()
+            wellness_dict['timestamp'] = wellness_dict['timestamp'].isoformat()
+            if wellness.follow_up_scheduled:
+                wellness_dict['follow_up_scheduled'] = wellness_dict['follow_up_scheduled'].isoformat()
+            await db.wellness_checks.insert_one(wellness_dict)
+            
+            return wellness
+            
+        except Exception as e:
+            logger.error(f"Wellness check error: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to conduct wellness check")
+    
+    @staticmethod
+    async def get_performance_stats(user_id: str) -> Dict[str, Any]:
+        """Get real-time performance statistics"""
+        try:
+            # Get recent analytics
+            analytics = await AnalyticsService.generate_learning_analytics(user_id, days_back=7)
+            
+            # Get study streak
+            streak = await AnalyticsService._calculate_study_streak(user_id)
+            
+            # Get topic progress
+            topic_mastery = await db.topic_mastery.find({"user_id": user_id}).to_list(length=None)
+            
+            mastery_summary = {}
+            for mastery in topic_mastery:
+                subject = mastery.get('subject', 'Unknown')
+                if subject not in mastery_summary:
+                    mastery_summary[subject] = []
+                mastery_summary[subject].append({
+                    'topic': mastery.get('topic_name'),
+                    'mastery': mastery.get('mastery_level', 0) * 100,
+                    'difficulty': mastery.get('difficulty_level', 0.5) * 100
+                })
+            
+            return {
+                "study_streak": streak,
+                "total_interactions": analytics.total_interactions,
+                "study_time_this_week": analytics.total_study_time,
+                "subjects_studied": analytics.subjects_studied,
+                "performance_trend": analytics.performance_trend,
+                "topic_mastery": mastery_summary,
+                "recommendations": analytics.recommendations
+            }
+            
+        except Exception as e:
+            logger.error(f"Performance stats error: {str(e)}")
+            return {
+                "study_streak": 0,
+                "total_interactions": 0,
+                "study_time_this_week": 0,
+                "subjects_studied": [],
+                "performance_trend": "stable",
+                "topic_mastery": {},
+                "recommendations": ["Keep practicing regularly!"]
+            }
+    
+    @staticmethod
+    async def _calculate_study_streak(user_id: str) -> int:
+        """Calculate consecutive days of study activity"""
+        try:
+            # Get interactions from the last 30 days
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=30)
+            
+            interactions = await db.learning_interactions.find({
+                "user_id": user_id,
+                "timestamp": {
+                    "$gte": start_date.isoformat(),
+                    "$lte": end_date.isoformat()
+                }
+            }).sort("timestamp", -1).to_list(length=None)
+            
+            if not interactions:
+                return 0
+            
+            # Group interactions by day
+            study_days = set()
+            for interaction in interactions:
+                timestamp_str = interaction.get('timestamp', '')
+                try:
+                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    day = timestamp.date()
+                    study_days.add(day)
+                except:
+                    continue
+            
+            # Calculate consecutive days from today backwards
+            streak = 0
+            current_date = datetime.now(timezone.utc).date()
+            
+            while current_date in study_days:
+                streak += 1
+                current_date -= timedelta(days=1)
+                if streak > 30:  # Reasonable limit
+                    break
+            
+            return streak
+            
+        except Exception as e:
+            logger.error(f"Study streak calculation error: {str(e)}")
+            return 0
+
 # ============= API ENDPOINTS =============
 
 @api_router.post("/auth/register")
