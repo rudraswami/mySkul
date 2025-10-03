@@ -1214,6 +1214,148 @@ export default function AITutor() {
           </div>
         </div>
 
+        {/* Phase B: Personalization Status Bar */}
+        {studentProfile && (
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 p-4 mx-6 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="bg-purple-100 rounded-full p-2">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-purple-800 mb-1">🎯 Personalized Learning Active</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-600">Language:</span>
+                      <span className="font-medium text-purple-700 capitalize">{studentProfile.preferred_language}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-600">Style:</span>
+                      <span className="font-medium text-purple-700 capitalize">{studentProfile.learning_style}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-600">Difficulty:</span>
+                      <span className={`font-medium flex items-center space-x-1`}>
+                        <span>{getDifficultyDisplay(personalizedDifficulty).emoji}</span>
+                        <span className="text-purple-700">{getDifficultyDisplay(personalizedDifficulty).label}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-gray-600">Sessions:</span>
+                      <span className="font-medium text-purple-700">{studentProfile.total_interactions || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowPersonalization(!showPersonalization)}
+                className="text-purple-600 border-purple-300 hover:bg-purple-50"
+              >
+                {showPersonalization ? 'Hide Details' : 'Customize'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Phase B: Personalization Settings Panel */}
+        {showPersonalization && studentProfile && (
+          <div className="bg-white border border-gray-200 p-6 mx-6 rounded-lg shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+              <Brain className="h-5 w-5 text-purple-600" />
+              <span>Learning Personalization</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Language Preference */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Preferred Language
+                </label>
+                <select 
+                  value={studentProfile.preferred_language} 
+                  onChange={(e) => {
+                    const newProfile = { ...studentProfile, preferred_language: e.target.value };
+                    setStudentProfile(newProfile);
+                    updatePersonalizationProfile(newProfile);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="english">English</option>
+                  <option value="hindi">हिंदी (Hindi)</option>
+                  <option value="hinglish">Hinglish</option>
+                </select>
+              </div>
+
+              {/* Learning Style */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Learning Style
+                </label>
+                <select 
+                  value={studentProfile.learning_style} 
+                  onChange={(e) => {
+                    const newProfile = { ...studentProfile, learning_style: e.target.value };
+                    setStudentProfile(newProfile);
+                    updatePersonalizationProfile(newProfile);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="visual">Visual Learner</option>
+                  <option value="analytical">Analytical Learner</option>
+                  <option value="practical">Practical Learner</option>
+                  <option value="balanced">Balanced Approach</option>
+                </select>
+              </div>
+
+              {/* Response Length */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Response Detail Level
+                </label>
+                <select 
+                  value={studentProfile.response_length_preference} 
+                  onChange={(e) => {
+                    const newProfile = { ...studentProfile, response_length_preference: e.target.value };
+                    setStudentProfile(newProfile);
+                    updatePersonalizationProfile(newProfile);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="short">Short & Concise</option>
+                  <option value="medium">Medium Detail</option>
+                  <option value="detailed">Detailed Explanations</option>
+                </select>
+              </div>
+
+              {/* Difficulty Preference */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Difficulty Preference
+                </label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.1"
+                  value={studentProfile.difficulty_preference}
+                  onChange={(e) => {
+                    const newProfile = { ...studentProfile, difficulty_preference: parseFloat(e.target.value) };
+                    setStudentProfile(newProfile);
+                    updatePersonalizationProfile(newProfile);
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-600 mt-1">
+                  <span>Beginner</span>
+                  <span>Intermediate</span>
+                  <span>Advanced</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* File Type Support Information */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-3 mx-6 rounded-lg">
           <div className="flex items-start space-x-3">
