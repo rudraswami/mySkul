@@ -60,6 +60,10 @@ export default function MockTests() {
   const [performanceTrends, setPerformanceTrends] = useState(null);
   const [currentTestMode, setCurrentTestMode] = useState('normal'); // 'normal', 'retake_exact', 'retake_variant', 'retake_adaptive'
   
+  // Dynamic subjects and subscription states
+  const [examSubjects, setExamSubjects] = useState({ subjects: ['Mathematics', 'Physics', 'Chemistry'], exam_type: 'JEE' });
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(null);
+  
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   
   // Difficulty mapping for consistent use
