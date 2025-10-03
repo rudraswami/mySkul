@@ -161,7 +161,7 @@ export default function AutoNoteMentor() {
       if (response.ok) {
         const sessionData = await response.json();
         setCurrentSession(sessionData);
-        setSessionStatus('active');
+        setSessionStatus('ready'); // Changed from 'active' to 'ready' to show recording interface
         setActiveView('home');
         setNewSessionTitle('');
         setNewSessionSubject('Mathematics');
