@@ -73,18 +73,37 @@ export default function StudentDashboard() {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) {
+        // Set demo data immediately for better UX
+        setAnalytics({
+          total_study_time: 45,
+          current_streak: 7,
+          chat_sessions_count: 12,
+          weekly_goals_progress: 78,
+          recent_progress: []
+        });
         setLoading(false);
         return;
       }
 
+      // Set timeout for API call
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const analyticsResponse = await axios.get(`${API}/dashboard/analytics`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       setAnalytics(analyticsResponse.data);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-      // Set fallback data
+      if (error.name === 'AbortError') {
+        console.log('API call timed out, using fallback data');
+      } else {
+        console.error('Failed to fetch dashboard data:', error);
+      }
+      
+      // Always set fallback data for good UX
       setAnalytics({
         total_study_time: 45,
         current_streak: 7,
