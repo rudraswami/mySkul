@@ -1283,14 +1283,14 @@ export default function AITutor() {
                 
                 {/* Input Control Buttons */}
                 <div className="absolute bottom-3 right-3 flex items-center space-x-1">
-                  {/* File Upload Button */}
+                  {/* Enhanced File Upload Button */}
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
-                    title="Upload image or PDF"
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="📁 Upload Image or PDF (JPEG, PNG, WebP, PDF - Max 25MB)"
                     disabled={loading}
                   >
                     <Upload className="h-4 w-4" />
