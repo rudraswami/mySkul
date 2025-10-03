@@ -531,17 +531,29 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
 
+      const newPinnedState = !isPinned;
+
       await axios.put(`${API}/chat/${sessionId}/pin`, {
-        pinned: !isPinned
+        pinned: newPinnedState
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      // Refresh sessions list
-      fetchChatSessions();
+      // Update sessions list immediately
+      setSessions(prevSessions => 
+        prevSessions.map(session => 
+          session.session_id === sessionId 
+            ? { ...session, pinned: newPinnedState }
+            : session
+        )
+      );
+
       setSessionActions({ showMenu: null, isRenaming: null });
+      const action = newPinnedState ? 'pinned to top' : 'unpinned';
+      showToast(`Session ${action}`, 'success');
     } catch (error) {
       console.error('Failed to pin/unpin session:', error);
+      showToast('Failed to update session', 'error');
     }
   };
 
