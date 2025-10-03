@@ -51,6 +51,15 @@ export default function MockTests() {
   const [testCache, setTestCache] = useState(new Map());
   const [quickGeneration, setQuickGeneration] = useState(false);
 
+  // New enhanced features states
+  const [showDetailedReview, setShowDetailedReview] = useState(false);
+  const [detailedReviewData, setDetailedReviewData] = useState(null);
+  const [showRetakeOptions, setShowRetakeOptions] = useState(false);
+  const [retakeTestId, setRetakeTestId] = useState(null);
+  const [bookmarkedQuestions, setBookmarkedQuestions] = useState(new Set());
+  const [performanceTrends, setPerformanceTrends] = useState(null);
+  const [currentTestMode, setCurrentTestMode] = useState('normal'); // 'normal', 'retake_exact', 'retake_variant', 'retake_adaptive'
+  
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   
   // Difficulty mapping for consistent use
