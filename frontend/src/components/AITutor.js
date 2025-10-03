@@ -1348,13 +1348,14 @@ export default function AITutor() {
                   </Button>
                 </div>
 
-                {/* Hidden File Input */}
+                {/* Enhanced Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.pdf"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                   onChange={handleFileSelect}
                   className="hidden"
+                  multiple={false}
                 />
               </div>
               
