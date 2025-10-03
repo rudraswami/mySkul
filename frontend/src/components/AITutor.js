@@ -1453,22 +1453,21 @@ export default function AITutor() {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        🚀 AI-Powered Document Analysis
+                        📄 Upload Documents & Images
                       </h3>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Upload any image or PDF for instant AI analysis using cutting-edge GPT-4o Vision
+                      <p className="text-sm text-gray-600 mb-4">
+                        Upload your study materials for instant AI analysis and help
                       </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3">
-                        <div className="flex items-center justify-center space-x-1">
+                      <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
                           <ImageIcon className="h-4 w-4 text-green-500" />
-                          <span>JPEG, PNG, WebP</span>
+                          <span>Images</span>
                         </div>
-                        <div className="flex items-center justify-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <FileIcon className="h-4 w-4 text-red-500" />
-                          <span>PDF Documents</span>
+                          <span>PDF Files</span>
                         </div>
                       </div>
-                      <p className="text-xs text-blue-600 font-medium">Max size: 25MB • Instant processing</p>
                     </div>
                   </div>
                 </div>
