@@ -33,7 +33,11 @@ import {
   X,
   Pin,
   Link,
-  History
+  History,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 
