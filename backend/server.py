@@ -1500,8 +1500,73 @@ class MentorAI:
     def __init__(self, api_key: str):
         self.api_key = api_key
     
+    async def get_personalized_response(self, user_message: str, subject: str, session_id: str, 
+                                      user_id: str, topic_name: str = None) -> tuple[str, str]:
+        """Get personalized mentor response with reasoning"""
+        
+        try:
+            # Get student profile and personalization data
+            profile = await personalization_engine.get_or_create_student_profile(user_id)
+            difficulty_level = await personalization_engine.get_personalized_difficulty(user_id, subject, topic_name or "General")
+            language = profile.preferred_language
+            
+            # Get language-specific instructions
+            language_instructions = language_engine.get_language_instructions(language, difficulty_level)
+            
+            # Build personalized system message
+            personalized_system = f"""You are Dhruv AI's Mentor - a friendly, adaptive, and motivational tutor for Indian competitive exams (JEE, NEET, UPSC).
+
+STUDENT PROFILE:
+- Preferred Language: {language}
+- Learning Style: {profile.learning_style}
+- Difficulty Level: {difficulty_level:.1f} (0.1=beginner, 1.0=advanced)
+- Response Preference: {profile.response_length_preference}
+- Weak Areas: {', '.join(profile.weak_areas[:3]) if profile.weak_areas else 'None identified'}
+- Strong Areas: {', '.join(profile.strong_areas[:3]) if profile.strong_areas else 'None identified'}
+
+PERSONALIZATION INSTRUCTIONS:
+{language_instructions}
+
+ADAPTIVE APPROACH:
+- Match difficulty to student's level ({difficulty_level:.1f})
+- Use {profile.learning_style} learning approach
+- Provide {profile.response_length_preference} explanations
+- Build on strong areas: {', '.join(profile.strong_areas[:2]) if profile.strong_areas else 'foundational concepts'}
+- Support weak areas: {', '.join(profile.weak_areas[:2]) if profile.weak_areas else 'maintain confidence'}
+
+CORE PERSONALITY:
+- Warm, encouraging, and supportive
+- Uses analogies and real-world examples adapted to student level
+- Adapts to student's emotional state and learning style
+- Focuses on building confidence progressively
+- Celebrates progress and provides personalized motivation
+
+SUBJECT FOCUS: {subject}
+TOPIC FOCUS: {topic_name or 'General concept'}
+
+Be motivational, adaptive, and ensure the student feels supported in their personalized learning journey."""
+
+            llm_chat = LlmChat(
+                api_key=self.api_key,
+                session_id=session_id,
+                system_message=personalized_system
+            )
+            
+            response = await llm_chat.send_message([
+                UserMessage(user_message)
+            ])
+            
+            reasoning = f"Mentor AI: Applied adaptive learning psychology with personalization (Language: {language}, Difficulty: {difficulty_level:.1f}, Style: {profile.learning_style}) for {subject} preparation."
+            
+            return response, reasoning
+            
+        except Exception as e:
+            logger.error(f"Personalized Mentor AI error: {str(e)}")
+            # Fallback to basic response
+            return await self.get_response(user_message, subject, session_id)
+    
     async def get_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> tuple[str, str]:
-        """Generate mentor response - adaptive, friendly, motivational"""
+        """Generate mentor response - adaptive, friendly, motivational (fallback method)"""
         
         system_message = f"""You are the MENTOR layer of Dhruv AI - the adaptive, friendly, and motivational intelligence.
 
