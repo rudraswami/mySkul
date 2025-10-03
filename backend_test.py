@@ -1698,10 +1698,8 @@ class DhruvAITester:
         print(f"   GET endpoints (still working): {get_success_count}/{len(get_endpoints)} ✓")
         
         return total_success >= total_tests * 0.8  # 80% success threshold
-            
-            time.sleep(2)
-        
-        # Test 4: Schedule Revision API
+
+    def test_phase_e_analytics_integration_apis(self):
         print("   Testing POST /api/actions/schedule-revision...")
         if note_ids:
             revision_test = {
