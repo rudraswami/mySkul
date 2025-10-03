@@ -320,6 +320,79 @@ export default function AITutor() {
     setBookmarkedResponses(prev => [...prev, { ...response, bookmarkedAt: new Date() }]);
   };
 
+  // Phase D: Enhanced Action Button Handlers
+  const handlePracticeMore = async (originalQuestion, subject, topic) => {
+    try {
+      const response = await axios.post(`${API}/actions/practice-more`, {
+        original_question: originalQuestion,
+        subject: subject || selectedSubject,
+        topic: topic || 'General',
+        education_standard: 'JEE', // This should come from user profile
+        difficulty_level: 'similar'
+      });
+      
+      // You could display the practice problems in a modal or new section
+      console.log('Practice problems generated:', response.data);
+      // For now, we'll just log - you can implement a modal to show the problems
+      
+    } catch (error) {
+      console.error('Failed to generate practice problems:', error);
+    }
+  };
+
+  const handleAddToNotes = async (title, content, subject, topic, interactionId) => {
+    try {
+      const response = await axios.post(`${API}/actions/add-to-notes`, {
+        title: title || `${subject} Notes - ${new Date().toLocaleDateString()}`,
+        content: content,
+        subject: subject || selectedSubject,
+        topic: topic || 'General',
+        interaction_id: interactionId
+      });
+      
+      console.log('Note saved:', response.data);
+      // You could show a success message here
+      
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    }
+  };
+
+  const handleCreateFlashcards = async (title, content, subject, topic, interactionId) => {
+    try {
+      const response = await axios.post(`${API}/actions/create-flashcards`, {
+        title: title || `${subject} Flashcards - ${topic}`,
+        content: content,
+        subject: subject || selectedSubject,
+        topic: topic || 'General',
+        interaction_id: interactionId
+      });
+      
+      console.log('Flashcard deck created:', response.data);
+      // You could show the flashcards in a modal or navigate to flashcard section
+      
+    } catch (error) {
+      console.error('Failed to create flashcard deck:', error);
+    }
+  };
+
+  const handleScheduleRevision = async (contentId, contentType, title, difficulty) => {
+    try {
+      const response = await axios.post(`${API}/actions/schedule-revision`, {
+        content_id: contentId || `msg_${Date.now()}`,
+        content_type: contentType || 'concept',
+        title: title || 'AI Tutor Concept',
+        difficulty_level: difficulty || 0.5
+      });
+      
+      console.log('Revision scheduled:', response.data);
+      // You could show the scheduled revision time
+      
+    } catch (error) {
+      console.error('Failed to schedule revision:', error);
+    }
+  };
+
   const exportConversation = () => {
     const conversationText = messages.map(msg => {
       if (msg.dual_response) {
