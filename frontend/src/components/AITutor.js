@@ -249,13 +249,13 @@ export default function AITutor() {
         response = await axios.post(`${API}/ai/mentor-only`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: currentSession
+          session_id: sessionId
         });
       } else { // professor
         response = await axios.post(`${API}/ai/professor-only`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: currentSession
+          session_id: sessionId
         });
       }
 
