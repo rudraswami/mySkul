@@ -3953,20 +3953,17 @@ async def create_flashcard_deck_endpoint(
 
 @api_router.post("/actions/schedule-revision")
 async def schedule_revision_endpoint(
-    content_id: str,
-    content_type: str,  # "note", "flashcard", "concept"
-    title: str,
-    difficulty_level: float = 0.5,
+    request: ScheduleRevisionRequest,
     user: User = Depends(get_current_user)
 ):
     """Schedule content for spaced repetition"""
     try:
         schedule = await ActionButtonService.schedule_revision(
             user_id=user.user_id,
-            content_id=content_id,
-            content_type=content_type,
-            title=title,
-            difficulty_level=difficulty_level
+            content_id=request.content_id,
+            content_type=request.content_type,
+            title=request.title,
+            difficulty_level=request.difficulty_level
         )
         return schedule.dict()
     except Exception as e:
