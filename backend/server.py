@@ -2381,8 +2381,16 @@ async def process_image_with_ocr(image_content: bytes) -> str:
         
         response = await llm_chat.send_message(user_message)
         
-        logger.info(f"OCR response received: {len(response.content)} characters")
-        return response.content
+        # Handle different response types
+        if hasattr(response, 'content'):
+            response_text = response.content
+        elif isinstance(response, str):
+            response_text = response
+        else:
+            response_text = str(response)
+        
+        logger.info(f"OCR response received: {len(response_text)} characters")
+        return response_text
         
     except Exception as e:
         logger.error(f"OCR processing error: {str(e)}")
