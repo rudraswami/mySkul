@@ -759,6 +759,18 @@ class DisagreementAlert(BaseModel):
     resolved_at: Optional[datetime] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class FactVerification(BaseModel):
+    verification_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    statement: str
+    subject: str
+    context: Optional[str] = None
+    is_verified: bool = False
+    confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    verification_sources: List[str] = Field(default_factory=list)
+    fact_errors: List[str] = Field(default_factory=list)
+    verification_method: str = "ai_analysis"  # "ai_analysis", "reference_check", "calculation"
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Phase D: Enhanced Action Buttons Models
 class PracticeSession(BaseModel):
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
