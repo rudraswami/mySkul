@@ -1605,91 +1605,111 @@ export default function MockTests() {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button 
-                    onClick={() => generateMockTest('JEE', 'Mathematics', 3, 25, 'math-quick')}
-                    disabled={loadingStates['math-quick']}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
-                  >
-                    {loadingStates['math-quick'] ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        <div className="flex flex-col">
-                          <span className="text-xs">Generating...</span>
-                          {generationProgress['math-quick'] && (
-                            <span className="text-xs opacity-75">
-                              {generationProgress['math-quick'].stage}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        🧮 Math Test
-                        {testCache.has(getCacheKey('JEE', 'Mathematics', 3, 25)) && (
-                          <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
-                            ⚡
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    onClick={() => generateMockTest('JEE', 'Physics', 3, 25, 'physics-quick')}
-                    disabled={loadingStates['physics-quick']}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 relative"
-                  >
-                    {loadingStates['physics-quick'] ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        <div className="flex flex-col">
-                          <span className="text-xs">Generating...</span>
-                          {generationProgress['physics-quick'] && (
-                            <span className="text-xs opacity-75">
-                              {generationProgress['physics-quick'].stage}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        ⚛️ Physics Test
-                        {testCache.has(getCacheKey('JEE', 'Physics', 3, 25)) && (
-                          <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
-                            ⚡
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    onClick={() => generateMockTest('JEE', 'Chemistry', 3, 25, 'chemistry-quick')}
-                    disabled={loadingStates['chemistry-quick']}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 relative"
-                  >
-                    {loadingStates['chemistry-quick'] ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        <div className="flex flex-col">
-                          <span className="text-xs">Generating...</span>
-                          {generationProgress['chemistry-quick'] && (
-                            <span className="text-xs opacity-75">
-                              {generationProgress['chemistry-quick'].stage}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        🧪 Chemistry Test
-                        {testCache.has(getCacheKey('JEE', 'Chemistry', 3, 25)) && (
-                          <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
-                            ⚡
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </Button>
+                {/* Dynamic Subject Test Generation */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-700">Quick Test Generation</h4>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {examSubjects.exam_display_name || examSubjects.exam_type}
+                    </span>
+                  </div>
+                  
+                  {examSubjects.test_access && !examSubjects.test_access.has_access ? (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-center">
+                      <AlertTriangle className="h-6 w-6 text-orange-600 mx-auto mb-2" />
+                      <p className="text-sm text-orange-800 mb-2">Test limit reached</p>
+                      <p className="text-xs text-orange-600">
+                        {examSubjects.test_access.limit !== -1 ? 
+                          `You've used ${examSubjects.test_access.used}/${examSubjects.test_access.limit} tests this month` :
+                          'Upgrade to continue testing'
+                        }
+                      </p>
+                      <Button size="sm" className="mt-2" onClick={() => window.location.href = '/subscription'}>
+                        Upgrade Plan
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {examSubjects.subjects.slice(0, 3).map((subject, index) => {
+                        const subjectKey = subject.toLowerCase().replace(/\s+/g, '-');
+                        const quickKey = `${subjectKey}-quick`;
+                        
+                        // Subject-specific emojis
+                        const getSubjectEmoji = (subj) => {
+                          const lowerSubj = subj.toLowerCase();
+                          if (lowerSubj.includes('math')) return '🧮';
+                          if (lowerSubj.includes('physics')) return '⚛️';
+                          if (lowerSubj.includes('chemistry')) return '🧪';
+                          if (lowerSubj.includes('biology')) return '🧬';
+                          if (lowerSubj.includes('history')) return '📚';
+                          if (lowerSubj.includes('polity')) return '🏛️';
+                          if (lowerSubj.includes('economy')) return '💰';
+                          if (lowerSubj.includes('reasoning')) return '🧠';
+                          if (lowerSubj.includes('english')) return '📝';
+                          if (lowerSubj.includes('computer')) return '💻';
+                          return '📖';
+                        };
+                        
+                        // Color schemes for different subjects
+                        const getSubjectColor = (index) => {
+                          const colors = [
+                            'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400',
+                            'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400', 
+                            'bg-green-600 hover:bg-green-700 disabled:bg-green-400',
+                            'bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400',
+                            'bg-red-600 hover:bg-red-700 disabled:bg-red-400',
+                            'bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400'
+                          ];
+                          return colors[index % colors.length];
+                        };
+                        
+                        return (
+                          <Button 
+                            key={subject}
+                            onClick={() => generateMockTest(examSubjects.exam_type, subject, 3, 25, quickKey)}
+                            disabled={loadingStates[quickKey]}
+                            className={`${getSubjectColor(index)} relative`}
+                          >
+                            {loadingStates[quickKey] ? (
+                              <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                <div className="flex flex-col">
+                                  <span className="text-xs">Generating...</span>
+                                  {generationProgress[quickKey] && (
+                                    <span className="text-xs opacity-75">
+                                      {generationProgress[quickKey].stage}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {getSubjectEmoji(subject)} {subject}
+                                {testCache.has(getCacheKey(examSubjects.exam_type, subject, 3, 25)) && (
+                                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
+                                    ⚡
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {examSubjects.test_access && examSubjects.test_access.has_access && (
+                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        Tests remaining: {examSubjects.test_access.remaining === -1 ? 'Unlimited' : examSubjects.test_access.remaining}
+                      </span>
+                      {examSubjects.test_access.limit !== -1 && (
+                        <span>
+                          Used: {examSubjects.test_access.used}/{examSubjects.test_access.limit}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
