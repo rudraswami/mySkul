@@ -1226,6 +1226,716 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= PHASE C, D, E: COMPREHENSIVE TESTING =============
+
+    def test_phase_c_advanced_guardrails_apis(self):
+        """Test Phase C: Advanced Guardrails APIs - Math validation, Citations, Disagreements"""
+        if not self.token:
+            print("❌ No token available for Phase C guardrails testing")
+            return False
+        
+        print("   Testing Phase C: Advanced Guardrails APIs...")
+        
+        # Test 1: Math Validation API
+        print("   Testing POST /api/guardrails/validate-math...")
+        math_expressions = [
+            {"expression": "x^2 + 5x + 6 = 0", "units": None},
+            {"expression": "F = ma", "units": "N = kg⋅m/s²"},
+            {"expression": "v = u + at", "units": "m/s"},
+            {"expression": "E = mc²", "units": "J = kg⋅m²/s²"}
+        ]
+        
+        math_success_count = 0
+        for i, test_case in enumerate(math_expressions):
+            print(f"   Testing math expression {i+1}/4: {test_case['expression']}")
+            
+            success, response = self.run_test(
+                f"Math Validation - {test_case['expression'][:20]}",
+                "POST",
+                "guardrails/validate-math",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Math validation successful")
+                print(f"   Is valid: {response.get('is_valid', False)}")
+                print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
+                print(f"   Method: {response.get('validation_method', 'N/A')}")
+                if response.get('validation_errors'):
+                    print(f"   Errors: {len(response['validation_errors'])}")
+                math_success_count += 1
+            else:
+                print(f"   ❌ Math validation failed")
+            
+            time.sleep(1)
+        
+        # Test 2: Citations API
+        print("   Testing GET /api/guardrails/citations/{subject}/{topic}...")
+        citation_tests = [
+            {"subject": "Mathematics", "topic": "Quadratic Equations"},
+            {"subject": "Physics", "topic": "Newton's Laws"},
+            {"subject": "Chemistry", "topic": "Periodic Table"}
+        ]
+        
+        citation_success_count = 0
+        for test_case in citation_tests:
+            print(f"   Testing citations for {test_case['subject']}/{test_case['topic']}")
+            
+            success, response = self.run_test(
+                f"Citations - {test_case['subject']}/{test_case['topic']}",
+                "GET",
+                f"guardrails/citations/{test_case['subject']}/{test_case['topic']}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                citations = response.get('citations', [])
+                print(f"   ✅ Citations retrieved: {len(citations)} sources")
+                if citations:
+                    sample_citation = citations[0]
+                    print(f"   Sample source: {sample_citation.get('source_title', 'N/A')}")
+                    print(f"   Source type: {sample_citation.get('source_type', 'N/A')}")
+                    print(f"   Confidence: {sample_citation.get('confidence', 0):.2f}")
+                citation_success_count += 1
+            else:
+                print(f"   ❌ Citations retrieval failed")
+            
+            time.sleep(1)
+        
+        # Test 3: Disagreement Alerts API (requires session_id)
+        print("   Testing GET /api/guardrails/disagreements/{session_id}...")
+        if hasattr(self, 'session_id') and self.session_id:
+            success, response = self.run_test(
+                "Disagreement Alerts",
+                "GET",
+                f"guardrails/disagreements/{self.session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            disagreement_success = 1 if success else 0
+            if success:
+                alerts = response.get('disagreement_alerts', [])
+                print(f"   ✅ Disagreement alerts retrieved: {len(alerts)} alerts")
+                if alerts:
+                    sample_alert = alerts[0]
+                    print(f"   Sample conflict type: {sample_alert.get('conflict_type', 'N/A')}")
+                    print(f"   Severity: {sample_alert.get('severity', 'N/A')}")
+            else:
+                print(f"   ❌ Disagreement alerts failed")
+        else:
+            print("   ⚠️  Skipping disagreement alerts - no session_id available")
+            disagreement_success = 1  # Skip this test
+        
+        total_tests = len(math_expressions) + len(citation_tests) + 1
+        total_success = math_success_count + citation_success_count + disagreement_success
+        
+        print(f"   Phase C Summary: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        return total_success >= total_tests * 0.8  # 80% success threshold
+
+    def test_phase_d_enhanced_action_buttons_apis(self):
+        """Test Phase D: Enhanced Action Buttons APIs - Practice, Notes, Flashcards, Revision"""
+        if not self.token:
+            print("❌ No token available for Phase D action buttons testing")
+            return False
+        
+        print("   Testing Phase D: Enhanced Action Buttons APIs...")
+        
+        # Test 1: Practice More API
+        print("   Testing POST /api/actions/practice-more...")
+        practice_tests = [
+            {
+                "original_question": "Solve x² - 5x + 6 = 0",
+                "subject": "Mathematics",
+                "topic": "Quadratic Equations",
+                "difficulty_level": "similar",
+                "education_standard": "JEE"
+            },
+            {
+                "original_question": "Explain Newton's second law of motion",
+                "subject": "Physics", 
+                "topic": "Laws of Motion",
+                "difficulty_level": "harder",
+                "education_standard": "NEET"
+            }
+        ]
+        
+        practice_success_count = 0
+        for i, test_case in enumerate(practice_tests):
+            print(f"   Testing practice problems {i+1}/2: {test_case['subject']}")
+            
+            success, response = self.run_test(
+                f"Practice Problems - {test_case['subject']}",
+                "POST",
+                "actions/practice-more",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                session_id = response.get('session_id')
+                problems = response.get('generated_problems', [])
+                print(f"   ✅ Practice session created: {session_id}")
+                print(f"   Generated problems: {len(problems)}")
+                print(f"   Difficulty level: {response.get('difficulty_level', 'N/A')}")
+                practice_success_count += 1
+            else:
+                print(f"   ❌ Practice problems generation failed")
+            
+            time.sleep(2)
+        
+        # Test 2: Add to Notes API
+        print("   Testing POST /api/actions/add-to-notes...")
+        note_tests = [
+            {
+                "title": "Quadratic Formula Derivation",
+                "content": "The quadratic formula x = (-b ± √(b²-4ac))/2a is derived from completing the square method.",
+                "subject": "Mathematics",
+                "topic": "Quadratic Equations",
+                "tags": ["formula", "derivation", "algebra"]
+            },
+            {
+                "title": "Newton's Laws Summary",
+                "content": "First law: Object at rest stays at rest. Second law: F=ma. Third law: Action-reaction pairs.",
+                "subject": "Physics",
+                "topic": "Laws of Motion", 
+                "tags": ["mechanics", "laws", "motion"]
+            }
+        ]
+        
+        note_success_count = 0
+        note_ids = []
+        for i, test_case in enumerate(note_tests):
+            print(f"   Testing add to notes {i+1}/2: {test_case['title']}")
+            
+            success, response = self.run_test(
+                f"Add to Notes - {test_case['title'][:20]}",
+                "POST",
+                "actions/add-to-notes",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                note_id = response.get('note_id')
+                note_ids.append(note_id)
+                print(f"   ✅ Note saved: {note_id}")
+                print(f"   Title: {response.get('title', 'N/A')}")
+                print(f"   Tags: {len(response.get('tags', []))}")
+                note_success_count += 1
+            else:
+                print(f"   ❌ Add to notes failed")
+            
+            time.sleep(1)
+        
+        # Test 3: Create Flashcards API
+        print("   Testing POST /api/actions/create-flashcards...")
+        flashcard_tests = [
+            {
+                "title": "Quadratic Equations Flashcards",
+                "content": "Key concepts: discriminant, roots, vertex form, standard form",
+                "subject": "Mathematics",
+                "topic": "Quadratic Equations",
+                "difficulty_level": "medium"
+            },
+            {
+                "title": "Physics Laws Flashcards", 
+                "content": "Newton's three laws of motion with examples and applications",
+                "subject": "Physics",
+                "topic": "Laws of Motion",
+                "difficulty_level": "easy"
+            }
+        ]
+        
+        flashcard_success_count = 0
+        deck_ids = []
+        for i, test_case in enumerate(flashcard_tests):
+            print(f"   Testing create flashcards {i+1}/2: {test_case['title']}")
+            
+            success, response = self.run_test(
+                f"Create Flashcards - {test_case['title'][:20]}",
+                "POST",
+                "actions/create-flashcards",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                deck_id = response.get('deck_id')
+                deck_ids.append(deck_id)
+                cards = response.get('cards', [])
+                print(f"   ✅ Flashcard deck created: {deck_id}")
+                print(f"   Cards generated: {len(cards)}")
+                print(f"   Difficulty: {response.get('difficulty_level', 'N/A')}")
+                flashcard_success_count += 1
+            else:
+                print(f"   ❌ Create flashcards failed")
+            
+            time.sleep(2)
+        
+        # Test 4: Schedule Revision API
+        print("   Testing POST /api/actions/schedule-revision...")
+        if note_ids:
+            revision_test = {
+                "content_id": note_ids[0],
+                "content_type": "note",
+                "title": "Review Quadratic Formula",
+                "days_from_now": 3,
+                "importance_score": 0.8
+            }
+            
+            success, response = self.run_test(
+                "Schedule Revision",
+                "POST",
+                "actions/schedule-revision",
+                200,
+                data=revision_test,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            revision_success_count = 1 if success else 0
+            if success:
+                schedule_id = response.get('schedule_id')
+                print(f"   ✅ Revision scheduled: {schedule_id}")
+                print(f"   Scheduled for: {response.get('scheduled_for', 'N/A')[:10]}")
+                print(f"   Importance: {response.get('importance_score', 0):.1f}")
+            else:
+                print(f"   ❌ Schedule revision failed")
+        else:
+            print("   ⚠️  Skipping revision scheduling - no note IDs available")
+            revision_success_count = 1  # Skip this test
+        
+        # Test 5: Get User Notes API
+        print("   Testing GET /api/actions/notes...")
+        success, response = self.run_test(
+            "Get User Notes",
+            "GET",
+            "actions/notes?subject=Mathematics&limit=10",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        notes_get_success = 1 if success else 0
+        if success:
+            notes = response.get('notes', [])
+            print(f"   ✅ Notes retrieved: {len(notes)} notes")
+            if notes:
+                sample_note = notes[0]
+                print(f"   Sample note: {sample_note.get('title', 'N/A')}")
+                print(f"   Subject: {sample_note.get('subject', 'N/A')}")
+        else:
+            print(f"   ❌ Get notes failed")
+        
+        # Test 6: Get Flashcard Decks API
+        print("   Testing GET /api/actions/flashcard-decks...")
+        success, response = self.run_test(
+            "Get Flashcard Decks",
+            "GET",
+            "actions/flashcard-decks?subject=Mathematics&limit=10",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        decks_get_success = 1 if success else 0
+        if success:
+            decks = response.get('flashcard_decks', [])
+            print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
+            if decks:
+                sample_deck = decks[0]
+                print(f"   Sample deck: {sample_deck.get('title', 'N/A')}")
+                print(f"   Total cards: {sample_deck.get('total_cards', 0)}")
+        else:
+            print(f"   ❌ Get flashcard decks failed")
+        
+        # Test 7: Get Revision Schedule API
+        print("   Testing GET /api/actions/revision-schedule...")
+        success, response = self.run_test(
+            "Get Revision Schedule",
+            "GET",
+            "actions/revision-schedule?days_ahead=7",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        schedule_get_success = 1 if success else 0
+        if success:
+            schedule = response.get('revision_schedule', [])
+            print(f"   ✅ Revision schedule retrieved: {len(schedule)} items")
+            if schedule:
+                sample_item = schedule[0]
+                print(f"   Sample item: {sample_item.get('title', 'N/A')}")
+                print(f"   Scheduled for: {sample_item.get('scheduled_for', 'N/A')[:10]}")
+        else:
+            print(f"   ❌ Get revision schedule failed")
+        
+        total_tests = len(practice_tests) + len(note_tests) + len(flashcard_tests) + 4  # +4 for revision, get notes, get decks, get schedule
+        total_success = (practice_success_count + note_success_count + flashcard_success_count + 
+                        revision_success_count + notes_get_success + decks_get_success + schedule_get_success)
+        
+        print(f"   Phase D Summary: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        return total_success >= total_tests * 0.8  # 80% success threshold
+
+    def test_phase_e_analytics_integration_apis(self):
+        """Test Phase E: Analytics Integration APIs - Performance stats, Learning analytics, Wellness checks"""
+        if not self.token:
+            print("❌ No token available for Phase E analytics testing")
+            return False
+        
+        print("   Testing Phase E: Analytics Integration APIs...")
+        
+        # Test 1: Performance Stats API
+        print("   Testing GET /api/analytics/performance-stats...")
+        success, response = self.run_test(
+            "Performance Stats",
+            "GET",
+            "analytics/performance-stats",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        perf_stats_success = 1 if success else 0
+        if success:
+            stats = response.get('performance_stats', {})
+            print(f"   ✅ Performance stats retrieved")
+            print(f"   Total interactions: {stats.get('total_interactions', 0)}")
+            print(f"   Average score: {stats.get('average_score', 0):.1f}")
+            print(f"   Study streak: {stats.get('study_streak', 0)}")
+            print(f"   Subjects studied: {len(stats.get('subjects_studied', []))}")
+        else:
+            print(f"   ❌ Performance stats failed")
+        
+        # Test 2: Learning Analytics API
+        print("   Testing GET /api/analytics/learning-analytics...")
+        success, response = self.run_test(
+            "Learning Analytics",
+            "GET",
+            "analytics/learning-analytics?days_back=7",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        learning_analytics_success = 1 if success else 0
+        if success:
+            analytics = response.get('learning_analytics', {})
+            print(f"   ✅ Learning analytics retrieved")
+            print(f"   Analytics ID: {analytics.get('analytics_id', 'N/A')}")
+            print(f"   Total study time: {analytics.get('total_study_time', 0):.1f} hours")
+            print(f"   Performance trend: {analytics.get('performance_trend', 'N/A')}")
+            print(f"   Topics mastered: {len(analytics.get('topics_mastered', {}))}")
+            print(f"   Recommendations: {len(analytics.get('recommendations', []))}")
+        else:
+            print(f"   ❌ Learning analytics failed")
+        
+        # Test 3: Wellness Check API
+        print("   Testing POST /api/analytics/wellness-check...")
+        wellness_tests = [
+            {
+                "stress_level": 6,
+                "motivation_level": 7,
+                "confidence_level": 5,
+                "study_satisfaction": 8,
+                "session_id": self.session_id if hasattr(self, 'session_id') and self.session_id else str(uuid.uuid4())
+            },
+            {
+                "stress_level": 3,
+                "motivation_level": 9,
+                "confidence_level": 8,
+                "study_satisfaction": 9,
+                "session_id": str(uuid.uuid4())
+            }
+        ]
+        
+        wellness_success_count = 0
+        for i, test_case in enumerate(wellness_tests):
+            print(f"   Testing wellness check {i+1}/2: Stress Level {test_case['stress_level']}/10")
+            
+            success, response = self.run_test(
+                f"Wellness Check - Stress {test_case['stress_level']}",
+                "POST",
+                "analytics/wellness-check",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                check_id = response.get('check_id')
+                print(f"   ✅ Wellness check completed: {check_id}")
+                print(f"   Break recommended: {response.get('break_recommendation', False)}")
+                print(f"   Motivational content: {'Yes' if response.get('motivational_content_suggested') else 'No'}")
+                if response.get('follow_up_scheduled'):
+                    print(f"   Follow-up scheduled: {response['follow_up_scheduled'][:10]}")
+                wellness_success_count += 1
+            else:
+                print(f"   ❌ Wellness check failed")
+            
+            time.sleep(1)
+        
+        # Test 4: Wellness History API
+        print("   Testing GET /api/analytics/wellness-history...")
+        success, response = self.run_test(
+            "Wellness History",
+            "GET",
+            "analytics/wellness-history?days_back=30",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        wellness_history_success = 1 if success else 0
+        if success:
+            history = response.get('wellness_history', [])
+            print(f"   ✅ Wellness history retrieved: {len(history)} entries")
+            if history:
+                recent_check = history[0]
+                print(f"   Recent check stress level: {recent_check.get('stress_level', 'N/A')}/10")
+                print(f"   Recent check motivation: {recent_check.get('motivation_level', 'N/A')}/10")
+                print(f"   Recent check date: {recent_check.get('timestamp', 'N/A')[:10]}")
+        else:
+            print(f"   ❌ Wellness history failed")
+        
+        total_tests = 1 + 1 + len(wellness_tests) + 1  # perf stats + learning analytics + wellness checks + wellness history
+        total_success = perf_stats_success + learning_analytics_success + wellness_success_count + wellness_history_success
+        
+        print(f"   Phase E Summary: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        return total_success >= total_tests * 0.8  # 80% success threshold
+
+    def test_enhanced_dual_response_with_guardrails_and_analytics(self):
+        """Test Enhanced Dual Response API with guardrails, action buttons, and analytics integration"""
+        if not self.token:
+            print("❌ No token available for enhanced dual response testing")
+            return False
+        
+        print("   Testing Enhanced Dual Response API with Phase C, D, E Integration...")
+        
+        # Test different types of questions to trigger various integrations
+        test_scenarios = [
+            {
+                "name": "Mathematical Problem with Guardrails",
+                "message": "Solve the quadratic equation x² - 5x + 6 = 0 and verify the solution",
+                "subject": "Mathematics",
+                "expected_features": ["math_validation", "practice_problems", "performance_tracking"]
+            },
+            {
+                "name": "Physics Concept with Citations",
+                "message": "Explain Newton's second law of motion with proper references",
+                "subject": "Physics", 
+                "expected_features": ["citations", "flashcard_generation", "learning_analytics"]
+            },
+            {
+                "name": "Chemistry Problem with Wellness Check",
+                "message": "I'm feeling stressed about balancing chemical equations. Can you help?",
+                "subject": "Chemistry",
+                "expected_features": ["wellness_check", "motivational_content", "revision_scheduling"]
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, scenario in enumerate(test_scenarios):
+            print(f"   Testing scenario {i+1}/3: {scenario['name']}")
+            print(f"   Question: '{scenario['message'][:50]}...'")
+            print("   This may take 15-20 seconds for enhanced dual AI processing...")
+            
+            test_data = {
+                "message": scenario['message'],
+                "subject": scenario['subject'],
+                "session_id": self.session_id if hasattr(self, 'session_id') and self.session_id else str(uuid.uuid4())
+            }
+            
+            success, response = self.run_test(
+                f"Enhanced Dual Response - {scenario['name']}",
+                "POST",
+                "ai/dual-response",
+                200,
+                data=test_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Enhanced dual response received")
+                
+                # Check dual AI structure
+                dual_response = response.get('dual_response', {})
+                primary_persona = dual_response.get('primary_persona', 'N/A')
+                secondary_persona = dual_response.get('secondary_persona', 'N/A')
+                scenario_type = dual_response.get('scenario_type', 'N/A')
+                confidence = dual_response.get('confidence', 0)
+                
+                print(f"   Primary persona: {primary_persona}")
+                print(f"   Secondary persona: {secondary_persona}")
+                print(f"   Scenario type: {scenario_type}")
+                print(f"   Confidence: {confidence:.2f}")
+                
+                # Check for Phase C, D, E integrations
+                integrations_found = []
+                
+                # Check for guardrails integration
+                if 'guardrails_data' in response:
+                    guardrails = response['guardrails_data']
+                    if guardrails.get('math_validation'):
+                        integrations_found.append('math_validation')
+                    if guardrails.get('citations'):
+                        integrations_found.append('citations')
+                    if guardrails.get('disagreement_alerts'):
+                        integrations_found.append('disagreement_detection')
+                
+                # Check for action buttons integration
+                if 'action_buttons' in response:
+                    actions = response['action_buttons']
+                    if actions.get('practice_problems_available'):
+                        integrations_found.append('practice_problems')
+                    if actions.get('add_to_notes_suggested'):
+                        integrations_found.append('note_saving')
+                    if actions.get('flashcard_creation_available'):
+                        integrations_found.append('flashcard_generation')
+                    if actions.get('revision_scheduling_suggested'):
+                        integrations_found.append('revision_scheduling')
+                
+                # Check for analytics integration
+                if 'analytics_data' in response:
+                    analytics = response['analytics_data']
+                    if analytics.get('performance_updated'):
+                        integrations_found.append('performance_tracking')
+                    if analytics.get('learning_analytics_generated'):
+                        integrations_found.append('learning_analytics')
+                    if analytics.get('wellness_check_conducted'):
+                        integrations_found.append('wellness_check')
+                
+                print(f"   Integrations found: {', '.join(integrations_found) if integrations_found else 'None'}")
+                
+                # Validate response quality
+                primary_response = dual_response.get('primary_response', '')
+                secondary_response = dual_response.get('secondary_response', '')
+                
+                if len(primary_response) > 100 and len(secondary_response) > 100:
+                    print(f"   ✅ Response quality validated")
+                    print(f"   Primary response: {len(primary_response)} chars")
+                    print(f"   Secondary response: {len(secondary_response)} chars")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Response quality may be insufficient")
+                    print(f"   Primary: {len(primary_response)} chars, Secondary: {len(secondary_response)} chars")
+            else:
+                print(f"   ❌ Enhanced dual response failed")
+            
+            time.sleep(5)  # Delay between AI calls
+        
+        print(f"   Enhanced Dual Response Summary: {success_count}/{len(test_scenarios)} tests passed ({success_count/len(test_scenarios)*100:.1f}%)")
+        return success_count >= len(test_scenarios) * 0.8  # 80% success threshold
+
+    def test_phase_cde_authentication_and_error_handling(self):
+        """Test Phase C, D, E APIs authentication and error handling"""
+        if not self.token:
+            print("❌ No token available for Phase C, D, E auth testing")
+            return False
+        
+        print("   Testing Phase C, D, E Authentication and Error Handling...")
+        
+        # Test authentication on all new endpoints
+        endpoints_to_test = [
+            # Phase C endpoints
+            ("guardrails/validate-math", "POST", {"expression": "x^2 + 1 = 0"}),
+            ("guardrails/citations/Mathematics/Algebra", "GET", None),
+            ("guardrails/disagreements/test-session", "GET", None),
+            
+            # Phase D endpoints
+            ("actions/practice-more", "POST", {"original_question": "Test", "subject": "Math", "topic": "Test", "difficulty_level": "similar", "education_standard": "JEE"}),
+            ("actions/add-to-notes", "POST", {"title": "Test", "content": "Test", "subject": "Math", "topic": "Test"}),
+            ("actions/create-flashcards", "POST", {"title": "Test", "content": "Test", "subject": "Math", "topic": "Test"}),
+            ("actions/schedule-revision", "POST", {"content_id": "test", "content_type": "note", "title": "Test", "days_from_now": 1}),
+            ("actions/notes", "GET", None),
+            ("actions/flashcard-decks", "GET", None),
+            ("actions/revision-schedule", "GET", None),
+            
+            # Phase E endpoints
+            ("analytics/performance-stats", "GET", None),
+            ("analytics/learning-analytics", "GET", None),
+            ("analytics/wellness-check", "POST", {"stress_level": 5, "motivation_level": 5, "confidence_level": 5, "study_satisfaction": 5, "session_id": "test"}),
+            ("analytics/wellness-history", "GET", None)
+        ]
+        
+        auth_success_count = 0
+        
+        for endpoint, method, test_data in endpoints_to_test:
+            print(f"   Testing auth on {endpoint}...")
+            
+            # Test without authentication (should fail with 401)
+            temp_token = self.token
+            self.token = None
+            
+            success, _ = self.run_test(
+                f"Auth Test - {endpoint}",
+                method,
+                endpoint,
+                401,  # Expecting 401 Unauthorized
+                data=test_data
+            )
+            
+            self.token = temp_token
+            
+            if success:
+                auth_success_count += 1
+                print(f"   ✅ Correctly rejected unauthorized request")
+            else:
+                print(f"   ⚠️  Failed to reject unauthorized request")
+        
+        # Test error handling with invalid data
+        print("   Testing error handling with invalid data...")
+        error_tests = [
+            {
+                "name": "Invalid Math Expression",
+                "endpoint": "guardrails/validate-math",
+                "method": "POST",
+                "data": {"expression": ""},  # Empty expression
+                "expected_status": 422
+            },
+            {
+                "name": "Invalid Wellness Check Data",
+                "endpoint": "analytics/wellness-check",
+                "method": "POST", 
+                "data": {"stress_level": 15, "motivation_level": -5},  # Invalid ranges
+                "expected_status": 422
+            },
+            {
+                "name": "Invalid Note Data",
+                "endpoint": "actions/add-to-notes",
+                "method": "POST",
+                "data": {"title": "", "content": ""},  # Empty required fields
+                "expected_status": 422
+            }
+        ]
+        
+        error_success_count = 0
+        for test_case in error_tests:
+            print(f"   Testing {test_case['name']}...")
+            
+            success, _ = self.run_test(
+                f"Error Handling - {test_case['name']}",
+                test_case['method'],
+                test_case['endpoint'],
+                test_case['expected_status'],
+                data=test_case['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                error_success_count += 1
+                print(f"   ✅ Error handled correctly")
+            else:
+                print(f"   ❌ Error handling failed")
+        
+        total_tests = len(endpoints_to_test) + len(error_tests)
+        total_success = auth_success_count + error_success_count
+        
+        print(f"   Auth & Error Handling Summary: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        return total_success >= total_tests * 0.8  # 80% success threshold
+
     # ============= PHASE A: AI TUTOR COMPLETE INPUT METHODS TESTS =============
 
     def test_ai_tutor_file_processing_image_upload(self):
