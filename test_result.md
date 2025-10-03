@@ -453,9 +453,13 @@
 
 ## test_plan:
   current_focus:
-    - "Enhanced AI Tutor File Upload with Cutting-Edge Features"
+    - "Phase C: Advanced Guardrails APIs"
+    - "Phase D: Enhanced Action Buttons APIs"
+    - "Phase E: Analytics Integration APIs"
+    - "Enhanced Dual Response API with Phase C, D, E Integration"
   stuck_tasks:
     - "Enhanced Mock Tests UI"
+    - "Enhanced Dual Response API with Phase C, D, E Integration"
   test_all: false
   test_priority: "high_first"
 
