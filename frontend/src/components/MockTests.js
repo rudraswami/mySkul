@@ -330,6 +330,182 @@ export default function MockTests() {
     }
   };
 
+  // ============= ENHANCED RETAKE FUNCTIONALITY =============
+  
+  const handleRetakeTest = async (testId, retakeMode) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        alert('Please log in again to continue');
+        return;
+      }
+
+      setLoadingStates(prev => ({ ...prev, [`retake-${retakeMode}`]: true }));
+
+      const response = await fetch(`${backendUrl}/api/mock-tests/${testId}/retake`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          original_test_id: testId,
+          retake_mode: retakeMode
+        })
+      });
+
+      if (response.ok) {
+        const retakeData = await response.json();
+        
+        // Load the new test directly
+        const newTestResponse = await fetch(`${backendUrl}/api/mock-tests/${retakeData.new_test_id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (newTestResponse.ok) {
+          const newTestData = await newTestResponse.json();
+          setActiveTest(newTestData);
+          setTimeRemaining(newTestData.time_limit * 60);
+          setCurrentQuestion(0);
+          setAnswers({});
+          setCurrentTestMode(`retake_${retakeMode}`);
+          setShowRetakeOptions(false);
+          
+          // Start timer
+          const timer = setInterval(() => {
+            setTimeRemaining(prev => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                submitTest();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create retake: ${errorData.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Retake creation error:', error);
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [`retake-${retakeMode}`]: false }));
+    }
+  };
+
+  // ============= DETAILED REVIEW FUNCTIONALITY =============
+  
+  const loadDetailedReview = async (testId) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        alert('Please log in again to continue');
+        return;
+      }
+
+      const response = await fetch(`${backendUrl}/api/mock-tests/${testId}/detailed-review`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const reviewData = await response.json();
+        setDetailedReviewData(reviewData);
+        setShowDetailedReview(true);
+        
+        // Load bookmarked questions
+        const bookmarkedResponse = await fetch(`${backendUrl}/api/bookmarked-questions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (bookmarkedResponse.ok) {
+          const bookmarkedData = await bookmarkedResponse.json();
+          const bookmarkedIds = new Set(bookmarkedData.bookmarked_questions.map(q => q.question_id));
+          setBookmarkedQuestions(bookmarkedIds);
+        }
+      } else {
+        alert('Failed to load detailed review');
+      }
+    } catch (error) {
+      console.error('Detailed review error:', error);
+      alert('Network error while loading review');
+    }
+  };
+
+  // ============= QUESTION BOOKMARKING FUNCTIONALITY =============
+  
+  const toggleQuestionBookmark = async (questionId, testId, bookmarked, notes = "") => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await fetch(`${backendUrl}/api/mock-tests/${testId}/bookmark-question`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question_id: questionId,
+          test_id: testId,
+          bookmarked: bookmarked,
+          notes: notes
+        })
+      });
+
+      if (response.ok) {
+        // Update local state
+        setBookmarkedQuestions(prev => {
+          const newSet = new Set(prev);
+          if (bookmarked) {
+            newSet.add(questionId);
+          } else {
+            newSet.delete(questionId);
+          }
+          return newSet;
+        });
+        
+        // Show confirmation
+        alert(bookmarked ? 'Question bookmarked!' : 'Bookmark removed!');
+      }
+    } catch (error) {
+      console.error('Bookmark error:', error);
+    }
+  };
+
+  // ============= PERFORMANCE TRENDS FUNCTIONALITY =============
+  
+  const loadPerformanceTrends = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await fetch(`${backendUrl}/api/mock-tests/performance-trends`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const trendsData = await response.json();
+        setPerformanceTrends(trendsData);
+      }
+    } catch (error) {
+      console.error('Performance trends error:', error);
+    }
+  };
+
   const submitTest = async () => {
     if (!activeTest) return;
     
