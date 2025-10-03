@@ -2900,7 +2900,7 @@ class ActionButtonService:
             response = await llm_client.send_message(user_msg)
             
             # Parse response into problems
-            problems = ActionButtonService._parse_problems(response.content)
+            problems = ActionButtonService._parse_problems(response)
             session.generated_problems = problems
             
             # Store session
