@@ -87,6 +87,7 @@ export default function AITutor() {
 
   useEffect(() => {
     fetchChatSessions();
+    loadPersonalizationData();
     initializeSpeechRecognition();
   }, []);
 
