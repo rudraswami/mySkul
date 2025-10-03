@@ -479,6 +479,11 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     subject: str
 
+class DualAIRequest(BaseModel):
+    message: str
+    session_id: str
+    subject: str
+
 # ============= MOCK TEST ARCHITECTURE MODELS =============
 
 class Question(BaseModel):
