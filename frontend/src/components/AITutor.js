@@ -1958,6 +1958,127 @@ export default function AITutor() {
           </div>
         </div>
       </div>
+
+      {/* Phase E: Wellness Check Modal */}
+      {showWellnessCheck && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <Heart className="h-5 w-5 mr-2 text-red-500" />
+              Quick Wellness Check
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Taking a moment to check in helps us personalize your learning experience better.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stress Level (1-10)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={wellnessData.stress_level}
+                  onChange={(e) => setWellnessData(prev => ({
+                    ...prev,
+                    stress_level: parseInt(e.target.value)
+                  }))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Very Low</span>
+                  <span className="font-medium">{wellnessData.stress_level}</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Motivation Level (1-10)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={wellnessData.motivation_level}
+                  onChange={(e) => setWellnessData(prev => ({
+                    ...prev,
+                    motivation_level: parseInt(e.target.value)
+                  }))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Very Low</span>
+                  <span className="font-medium">{wellnessData.motivation_level}</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confidence Level (1-10)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={wellnessData.confidence_level}
+                  onChange={(e) => setWellnessData(prev => ({
+                    ...prev,
+                    confidence_level: parseInt(e.target.value)
+                  }))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Very Low</span>
+                  <span className="font-medium">{wellnessData.confidence_level}</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Study Satisfaction (1-10)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={wellnessData.study_satisfaction}
+                  onChange={(e) => setWellnessData(prev => ({
+                    ...prev,
+                    study_satisfaction: parseInt(e.target.value)
+                  }))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Very Low</span>
+                  <span className="font-medium">{wellnessData.study_satisfaction}</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowWellnessCheck(false)}
+                className="flex-1"
+              >
+                Skip for Now
+              </Button>
+              <Button
+                onClick={handleWellnessCheck}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                Submit Check-in
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
