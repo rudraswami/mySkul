@@ -59,11 +59,18 @@ async def debug_auto_notes():
         
         # Test the specific user
         print("\n4. Testing specific user: test@dhruvai.com")
-        user_id = "a621fc79-6474-4871-8a84-255628883e229"  # From the test logs
-        print(f"   Looking for sessions with user_id: {user_id}")
+        user_id_with_extra = "a621fc79-6474-4871-8a84-25562883e229"  # From the test logs (with extra digit)
+        user_id_without_extra = "a621fc79-6474-4871-8a84-25562883e229"  # From database (without extra digit)
         
-        user_sessions = await db.auto_note_sessions.find({"user_id": user_id}).to_list(10)
-        print(f"   Found {len(user_sessions)} sessions for this user")
+        print(f"   Looking for sessions with user_id (with extra digit): {user_id_with_extra}")
+        user_sessions_extra = await db.auto_note_sessions.find({"user_id": user_id_with_extra}).to_list(10)
+        print(f"   Found {len(user_sessions_extra)} sessions for this user")
+        
+        print(f"   Looking for sessions with user_id (without extra digit): {user_id_without_extra}")
+        user_sessions_normal = await db.auto_note_sessions.find({"user_id": user_id_without_extra}).to_list(10)
+        print(f"   Found {len(user_sessions_normal)} sessions for this user")
+        
+        user_sessions = user_sessions_extra if user_sessions_extra else user_sessions_normal
         
         if user_sessions:
             for i, session in enumerate(user_sessions):
