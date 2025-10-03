@@ -1235,6 +1235,422 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= MOCK TEST ENHANCEMENT APIS TESTING =============
+
+    def test_mock_test_enhancement_apis(self):
+        """Test newly implemented Mock Test enhancement APIs as per review request"""
+        if not self.token:
+            print("❌ No token available for Mock Test enhancement testing")
+            return False
+        
+        print("   🎯 REVIEW REQUEST FOCUS: Testing Mock Test Enhancement APIs...")
+        print("   Testing: Question Bookmarking, Detailed Review, Bookmarked Questions, Performance Trends, Enhanced Retake")
+        
+        # First, ensure we have a test to work with
+        if not hasattr(self, 'test_ids') or not self.test_ids:
+            print("   Creating a test first for enhancement API testing...")
+            if not self.test_generate_mock_test():
+                print("   ❌ Failed to create test for enhancement testing")
+                return False
+        
+        # Test all enhancement APIs
+        success_count = 0
+        total_tests = 5
+        
+        # 1. Test Question Bookmarking API
+        success_count += 1 if self.test_question_bookmarking_api() else 0
+        
+        # 2. Test Detailed Test Review API  
+        success_count += 1 if self.test_detailed_test_review_api() else 0
+        
+        # 3. Test Bookmarked Questions API
+        success_count += 1 if self.test_bookmarked_questions_api() else 0
+        
+        # 4. Test Performance Trends API
+        success_count += 1 if self.test_performance_trends_api() else 0
+        
+        # 5. Test Enhanced Retake API
+        success_count += 1 if self.test_enhanced_retake_api() else 0
+        
+        print(f"   🎯 MOCK TEST ENHANCEMENT SUMMARY: {success_count}/{total_tests} APIs working ({success_count/total_tests*100:.1f}%)")
+        return success_count >= total_tests * 0.8  # 80% success threshold
+
+    def test_question_bookmarking_api(self):
+        """Test Question Bookmarking API (/api/mock-tests/{test_id}/bookmark-question)"""
+        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
+            print("❌ No token or test IDs available for bookmarking test")
+            return False
+        
+        print("   Testing Question Bookmarking API...")
+        
+        # Get test data
+        test_data = self.test_ids[0]
+        test_id = test_data['test_id']
+        questions = test_data['questions']
+        
+        if not questions:
+            print("   ❌ No questions available for bookmarking test")
+            return False
+        
+        # Test bookmarking a question
+        question_id = questions[0]['question_id']
+        
+        # Test 1: Bookmark a question
+        bookmark_data = {
+            "question_id": question_id,
+            "test_id": test_id,
+            "bookmarked": True,
+            "notes": "Need to review this concept again"
+        }
+        
+        print(f"   Bookmarking question {question_id}...")
+        success1, response1 = self.run_test(
+            "Bookmark Question - Add",
+            "POST",
+            f"mock-tests/{test_id}/bookmark-question",
+            200,
+            data=bookmark_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success1:
+            print(f"   ✅ Question bookmarked successfully")
+            print(f"   Message: {response1.get('message', 'N/A')}")
+            print(f"   Bookmarked status: {response1.get('bookmarked', False)}")
+        else:
+            print(f"   ❌ Failed to bookmark question")
+            return False
+        
+        # Test 2: Unbookmark the same question
+        bookmark_data["bookmarked"] = False
+        bookmark_data["notes"] = ""
+        
+        print(f"   Unbookmarking question {question_id}...")
+        success2, response2 = self.run_test(
+            "Bookmark Question - Remove",
+            "POST",
+            f"mock-tests/{test_id}/bookmark-question",
+            200,
+            data=bookmark_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success2:
+            print(f"   ✅ Question unbookmarked successfully")
+            print(f"   Message: {response2.get('message', 'N/A')}")
+            print(f"   Bookmarked status: {response2.get('bookmarked', False)}")
+        else:
+            print(f"   ❌ Failed to unbookmark question")
+            return False
+        
+        # Test 3: Bookmark again for other tests
+        bookmark_data["bookmarked"] = True
+        bookmark_data["notes"] = "Important question for review"
+        
+        success3, _ = self.run_test(
+            "Bookmark Question - Re-add",
+            "POST",
+            f"mock-tests/{test_id}/bookmark-question",
+            200,
+            data=bookmark_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        return success1 and success2 and success3
+
+    def test_detailed_test_review_api(self):
+        """Test Detailed Test Review API (/api/mock-tests/{test_id}/detailed-review)"""
+        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
+            print("❌ No token or test IDs available for detailed review test")
+            return False
+        
+        print("   Testing Detailed Test Review API...")
+        
+        # First submit a test to have data for review
+        test_data = self.test_ids[0]
+        test_id = test_data['test_id']
+        questions = test_data['questions']
+        
+        # Submit the test first if not already submitted
+        print("   Submitting test first to generate review data...")
+        sample_answers = {}
+        for i, question in enumerate(questions[:3]):  # Use first 3 questions
+            question_id = question['question_id']
+            if i % 2 == 0:  # Some correct, some wrong
+                sample_answers[question_id] = question['correct_answer']
+            else:
+                options = ['A', 'B', 'C', 'D']
+                wrong_options = [opt for opt in options if opt != question['correct_answer']]
+                sample_answers[question_id] = wrong_options[0] if wrong_options else 'A'
+        
+        submission_data = {
+            "answers": sample_answers,
+            "time_taken": 1200  # 20 minutes
+        }
+        
+        # Submit test
+        submit_success, _ = self.run_test(
+            "Submit Test for Review",
+            "POST",
+            f"mock-tests/{test_id}/submit",
+            200,
+            data=submission_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if not submit_success:
+            print("   ⚠️  Test submission failed, but continuing with review test...")
+        
+        # Now test detailed review
+        print("   Getting detailed test review...")
+        print("   This may take 10-15 seconds for AI-generated explanations...")
+        
+        success, response = self.run_test(
+            "Detailed Test Review",
+            "GET",
+            f"mock-tests/{test_id}/detailed-review",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Detailed review retrieved successfully")
+            
+            # Validate response structure
+            test_name = response.get('test_name', 'N/A')
+            overall_score = response.get('overall_score', 0)
+            total_questions = response.get('total_questions', 0)
+            correct_answers = response.get('correct_answers', 0)
+            question_reviews = response.get('question_reviews', [])
+            performance_analysis = response.get('performance_analysis', {})
+            retake_suggestions = response.get('retake_suggestions', [])
+            
+            print(f"   Test name: {test_name}")
+            print(f"   Overall score: {overall_score}%")
+            print(f"   Questions: {correct_answers}/{total_questions} correct")
+            print(f"   Question reviews: {len(question_reviews)} detailed reviews")
+            print(f"   Performance analysis: {len(performance_analysis)} metrics")
+            print(f"   Retake suggestions: {len(retake_suggestions)} suggestions")
+            
+            # Validate question review structure
+            if question_reviews:
+                sample_review = question_reviews[0]
+                required_fields = ['question_id', 'question_text', 'correct_answer', 'user_answer', 'is_correct', 'explanation', 'professor_solution', 'mentor_hint']
+                missing_fields = [field for field in required_fields if field not in sample_review]
+                
+                if missing_fields:
+                    print(f"   ⚠️  Missing review fields: {missing_fields}")
+                else:
+                    print(f"   ✅ Question review structure validated")
+                    print(f"   Professor solution length: {len(sample_review.get('professor_solution', ''))}")
+                    print(f"   Mentor hint length: {len(sample_review.get('mentor_hint', ''))}")
+                    print(f"   Bookmarked status: {sample_review.get('bookmarked', False)}")
+            
+            return True
+        else:
+            print(f"   ❌ Failed to get detailed review")
+            return False
+
+    def test_bookmarked_questions_api(self):
+        """Test Bookmarked Questions API (/api/bookmarked-questions)"""
+        if not self.token:
+            print("❌ No token available for bookmarked questions test")
+            return False
+        
+        print("   Testing Bookmarked Questions API...")
+        
+        success, response = self.run_test(
+            "Get Bookmarked Questions",
+            "GET",
+            "bookmarked-questions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Bookmarked questions retrieved successfully")
+            
+            bookmarked_questions = response.get('bookmarked_questions', [])
+            total_count = response.get('total_count', 0)
+            
+            print(f"   Total bookmarked questions: {total_count}")
+            print(f"   Questions in response: {len(bookmarked_questions)}")
+            
+            # Validate structure if we have bookmarked questions
+            if bookmarked_questions:
+                sample_question = bookmarked_questions[0]
+                required_fields = ['question_id', 'question_text', 'options', 'correct_answer', 'explanation', 'subject', 'test_name', 'bookmarked_at']
+                missing_fields = [field for field in required_fields if field not in sample_question]
+                
+                if missing_fields:
+                    print(f"   ⚠️  Missing question fields: {missing_fields}")
+                else:
+                    print(f"   ✅ Bookmarked question structure validated")
+                    print(f"   Sample question: {sample_question['question_text'][:50]}...")
+                    print(f"   From test: {sample_question.get('test_name', 'N/A')}")
+                    print(f"   Subject: {sample_question.get('subject', 'N/A')}")
+                    print(f"   Difficulty: {sample_question.get('difficulty_level', 'N/A')}")
+                    print(f"   Notes: {sample_question.get('notes', 'No notes')}")
+            else:
+                print(f"   ℹ️  No bookmarked questions found (this is normal if none were bookmarked)")
+            
+            return True
+        else:
+            print(f"   ❌ Failed to get bookmarked questions")
+            return False
+
+    def test_performance_trends_api(self):
+        """Test Performance Trends API (/api/mock-tests/performance-trends)"""
+        if not self.token:
+            print("❌ No token available for performance trends test")
+            return False
+        
+        print("   Testing Performance Trends API...")
+        print("   This may take a few seconds to analyze performance data...")
+        
+        success, response = self.run_test(
+            "Performance Trends",
+            "GET",
+            "mock-tests/performance-trends",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Performance trends retrieved successfully")
+            
+            # Validate response structure
+            daily_performance = response.get('daily_performance', {})
+            subject_trends = response.get('subject_trends', {})
+            weekly_improvement = response.get('weekly_improvement', {})
+            insights = response.get('insights', {})
+            
+            print(f"   Daily performance data: {len(daily_performance)} days")
+            print(f"   Subject trends: {len(subject_trends)} subjects")
+            print(f"   Weekly improvement: {len(weekly_improvement)} weeks")
+            
+            # Validate insights structure
+            if insights:
+                weak_areas = insights.get('weak_areas', [])
+                strong_areas = insights.get('strong_areas', [])
+                total_tests = insights.get('total_tests', 0)
+                study_days = insights.get('study_days', 0)
+                improvement_trend = insights.get('improvement_trend', 'N/A')
+                
+                print(f"   Insights - Total tests: {total_tests}")
+                print(f"   Insights - Study days: {study_days}")
+                print(f"   Insights - Improvement trend: {improvement_trend}")
+                print(f"   Insights - Weak areas: {len(weak_areas)}")
+                print(f"   Insights - Strong areas: {len(strong_areas)}")
+                
+                # Show sample weak/strong areas
+                if weak_areas:
+                    sample_weak = weak_areas[0]
+                    print(f"   Sample weak area: {sample_weak.get('subject', 'N/A')} ({sample_weak.get('mastery', 0):.1f}% mastery)")
+                
+                if strong_areas:
+                    sample_strong = strong_areas[0]
+                    print(f"   Sample strong area: {sample_strong.get('subject', 'N/A')} ({sample_strong.get('mastery', 0):.1f}% mastery)")
+            
+            # Validate subject trends structure
+            if subject_trends:
+                sample_subject = list(subject_trends.keys())[0]
+                sample_trend = subject_trends[sample_subject]
+                print(f"   Sample subject trend ({sample_subject}): {len(sample_trend)} data points")
+                
+                if sample_trend:
+                    latest_data = sample_trend[-1]
+                    required_trend_fields = ['date', 'mastery', 'score']
+                    missing_trend_fields = [field for field in required_trend_fields if field not in latest_data]
+                    
+                    if missing_trend_fields:
+                        print(f"   ⚠️  Missing trend fields: {missing_trend_fields}")
+                    else:
+                        print(f"   ✅ Subject trend structure validated")
+                        print(f"   Latest data: {latest_data['date']} - {latest_data['mastery']:.1f}% mastery, {latest_data['score']:.1f}% score")
+            
+            return True
+        else:
+            print(f"   ❌ Failed to get performance trends")
+            return False
+
+    def test_enhanced_retake_api(self):
+        """Test Enhanced Retake API (/api/mock-tests/{test_id}/retake)"""
+        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
+            print("❌ No token or test IDs available for retake test")
+            return False
+        
+        print("   Testing Enhanced Retake API...")
+        
+        test_data = self.test_ids[0]
+        test_id = test_data['test_id']
+        
+        # Test all three retake modes
+        retake_modes = ["exact", "variant", "adaptive"]
+        success_count = 0
+        
+        for mode in retake_modes:
+            print(f"   Testing {mode} retake mode...")
+            
+            retake_data = {
+                "original_test_id": test_id,
+                "retake_mode": mode
+            }
+            
+            success, response = self.run_test(
+                f"Enhanced Retake - {mode.title()} Mode",
+                "POST",
+                f"mock-tests/{test_id}/retake",
+                200,
+                data=retake_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {mode.title()} retake created successfully")
+                
+                # Validate response structure
+                new_test_id = response.get('new_test_id', 'N/A')
+                retake_mode_response = response.get('retake_mode', 'N/A')
+                title = response.get('title', 'N/A')
+                mentor_tips = response.get('mentor_tips', 'N/A')
+                questions_count = response.get('questions_count', 0)
+                time_limit = response.get('time_limit', 0)
+                expires_at = response.get('expires_at', 'N/A')
+                
+                print(f"   New test ID: {new_test_id}")
+                print(f"   Retake mode: {retake_mode_response}")
+                print(f"   Title: {title}")
+                print(f"   Questions count: {questions_count}")
+                print(f"   Time limit: {time_limit} minutes")
+                print(f"   Expires at: {expires_at[:19] if expires_at != 'N/A' else 'N/A'}")
+                print(f"   Mentor tips: {mentor_tips[:50]}..." if len(mentor_tips) > 50 else f"   Mentor tips: {mentor_tips}")
+                
+                # Validate required fields
+                required_fields = ['new_test_id', 'retake_mode', 'title', 'questions_count', 'time_limit']
+                missing_fields = [field for field in required_fields if field not in response]
+                
+                if missing_fields:
+                    print(f"   ⚠️  Missing response fields: {missing_fields}")
+                else:
+                    print(f"   ✅ Retake response structure validated")
+                    success_count += 1
+                    
+                    # Store new test ID for potential future use
+                    if not hasattr(self, 'retake_test_ids'):
+                        self.retake_test_ids = []
+                    self.retake_test_ids.append({
+                        'test_id': new_test_id,
+                        'mode': mode,
+                        'original_test_id': test_id
+                    })
+            else:
+                print(f"   ❌ Failed to create {mode} retake")
+            
+            time.sleep(2)  # Delay between retake creations
+        
+        return success_count >= len(retake_modes) * 0.8  # 80% success threshold
+
     # ============= REVIEW REQUEST FOCUSED TESTING =============
 
     def test_phase_c_advanced_guardrails_apis_focused(self):
