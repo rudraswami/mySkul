@@ -38,6 +38,7 @@ import {
   TrendingDown,
   TrendingUp,
   AlertCircle,
+  CheckCircle,
   Edit,
   MoreVertical,
   Trash2
