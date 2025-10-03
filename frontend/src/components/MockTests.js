@@ -121,6 +121,28 @@ export default function MockTests() {
     }
   };
 
+  const loadExamSubjects = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await fetch(`${backendUrl}/api/mock-tests/subjects`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setExamSubjects(data);
+      }
+    } catch (error) {
+      console.error('Error loading exam subjects:', error);
+      // Keep default subjects if API fails
+    }
+  };
+
   const loadAnalytics = async () => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
