@@ -1564,12 +1564,7 @@ export default function AutoNoteMentor() {
             </Card>
 
             {/* Enhanced Features Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
-              {/* Spaced Repetition feature removed - available in AI Tutor */}
-
-              {/* Smart Search feature removed - available in AI Tutor */}
-
+            <div className="mt-6">
               {/* Class Series Management */}
               <Card className="border-0 shadow-md">
                 <CardHeader>
