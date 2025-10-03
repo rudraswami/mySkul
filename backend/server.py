@@ -490,6 +490,12 @@ class ProfileUpdateRequest(BaseModel):
     difficulty_preference: float = Field(..., ge=0.1, le=1.0)
     response_length_preference: str = Field(..., pattern="^(short|medium|detailed)$")
 
+class FeedbackRequest(BaseModel):
+    session_id: str
+    subject: str
+    feedback_type: str = Field(..., pattern="^(helpful|too_easy|too_hard|confusing|perfect)$")
+    topic_name: Optional[str] = None
+
 # ============= MOCK TEST ARCHITECTURE MODELS =============
 
 class Question(BaseModel):
