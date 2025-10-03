@@ -2813,10 +2813,7 @@ async def get_student_profile(user: User = Depends(get_current_user)):
 
 @api_router.post("/personalization/profile")
 async def update_student_profile(
-    preferred_language: str = Field(..., pattern="^(english|hindi|hinglish)$"),
-    learning_style: str = Field(..., pattern="^(visual|analytical|practical|balanced)$"),
-    difficulty_preference: float = Field(..., ge=0.1, le=1.0),
-    response_length_preference: str = Field(..., pattern="^(short|medium|detailed)$"),
+    request: ProfileUpdateRequest,
     user: User = Depends(get_current_user)
 ):
     """Update student personalization preferences"""
@@ -2825,10 +2822,10 @@ async def update_student_profile(
         profile = await personalization_engine.get_or_create_student_profile(user.user_id)
         
         # Update preferences
-        profile.preferred_language = preferred_language
-        profile.learning_style = learning_style
-        profile.difficulty_preference = difficulty_preference
-        profile.response_length_preference = response_length_preference
+        profile.preferred_language = request.preferred_language
+        profile.learning_style = request.learning_style
+        profile.difficulty_preference = request.difficulty_preference
+        profile.response_length_preference = request.response_length_preference
         profile.updated_at = datetime.now(timezone.utc)
         
         # Save to database
