@@ -393,7 +393,12 @@ class PhaseCDETester:
         )
         
         if success:
-            schedule = response.get('schedule', [])
+            if isinstance(response, dict):
+                schedule = response.get('schedule', [])
+            elif isinstance(response, list):
+                schedule = response
+            else:
+                schedule = []
             print(f"   ✅ Revision schedule retrieved: {len(schedule)} items")
             success_count += 1
         else:
