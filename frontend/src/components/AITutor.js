@@ -61,6 +61,16 @@ export default function AITutor() {
   const [bookmarkedResponses, setBookmarkedResponses] = useState([]);
   const [showQuickSuggestions, setShowQuickSuggestions] = useState(false);
 
+  // Phase A: Complete Input Methods states
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [showContextPin, setShowContextPin] = useState(false);
+  const [contextPinData, setContextPinData] = useState([]);
+  const [selectedContext, setSelectedContext] = useState(null);
+  const [availableContexts, setAvailableContexts] = useState([]);
+  const fileInputRef = useRef(null);
+
   const subjects = {
     'JEE': ['Mathematics', 'Physics', 'Chemistry'],
     'NEET': ['Physics', 'Chemistry', 'Biology'],
