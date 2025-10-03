@@ -459,22 +459,36 @@ export default function AITutor() {
 
   // Session Management Actions
   const renameSession = async (sessionId, newTitle) => {
+    if (!newTitle.trim()) {
+      showToast('Session name cannot be empty', 'error');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
 
       await axios.put(`${API}/chat/${sessionId}/rename`, {
-        title: newTitle
+        title: newTitle.trim()
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      // Refresh sessions list
-      fetchChatSessions();
+      // Update sessions list immediately
+      setSessions(prevSessions => 
+        prevSessions.map(session => 
+          session.session_id === sessionId 
+            ? { ...session, title: newTitle.trim() }
+            : session
+        )
+      );
+
       setSessionActions({ showMenu: null, isRenaming: null });
       setRenameValue('');
+      showToast('Session renamed successfully', 'success');
     } catch (error) {
       console.error('Failed to rename session:', error);
+      showToast('Failed to rename session', 'error');
     }
   };
 
