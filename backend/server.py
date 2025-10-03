@@ -5950,6 +5950,86 @@ Structure your response as detailed educational notes with:
         logger.error(f"Note session completion error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to complete note session")
 
+# Move specific endpoints BEFORE general {session_id} endpoint to fix routing
+@api_router.get("/auto-notes/sessions")
+async def get_user_note_sessions(user: User = Depends(get_current_user)):
+    """Get all note sessions for the current user"""
+    
+    try:
+        sessions = await db.auto_note_sessions.find(
+            {"user_id": user.user_id}
+        ).sort("created_at", -1).limit(50).to_list(50)
+        
+        # Remove MongoDB ObjectIds and handle datetime serialization
+        clean_sessions = [clean_mongodb_doc(session) for session in sessions]
+        
+        return {
+            "sessions": clean_sessions,
+            "total_sessions": len(clean_sessions),
+            "active_sessions": len([s for s in sessions if s["status"] == "active"])
+        }
+        
+    except Exception as e:
+        logger.error(f"Sessions retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve sessions")
+
+@api_router.get("/auto-notes/class-series")
+async def get_class_series(user: User = Depends(get_current_user)):
+    """Get all class series for the user"""
+    
+    try:
+        series_list = await db.class_series.find({
+            "user_id": user.user_id
+        }).sort("created_at", -1).to_list(length=50)
+        
+        return {
+            "series": [clean_mongodb_doc(series) for series in series_list],
+            "total_series": len(series_list)
+        }
+        
+    except Exception as e:
+        logger.error(f"Class series retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve class series")
+
+@api_router.get("/auto-notes/analytics")
+async def get_note_analytics(user: User = Depends(get_current_user)):
+    """Get comprehensive analytics for AutoNote usage"""
+    
+    try:
+        # Get session statistics
+        total_sessions = await db.auto_note_sessions.count_documents({"user_id": user.user_id})
+        
+        # Get spaced repetition statistics
+        total_cards = await db.spaced_repetition_cards.count_documents({"user_id": user.user_id})
+        due_cards = await db.spaced_repetition_cards.count_documents({
+            "user_id": user.user_id,
+            "next_review": {"$lte": datetime.now(timezone.utc)}
+        })
+        
+        # Get subject distribution
+        subjects_pipeline = [
+            {"$match": {"user_id": user.user_id}},
+            {"$group": {"_id": "$subject", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]
+        subject_stats = await db.auto_note_sessions.aggregate(subjects_pipeline).to_list(length=None)
+        
+        return {
+            "total_sessions": total_sessions,
+            "total_flashcards": total_cards,
+            "due_for_review": due_cards,
+            "subject_distribution": subject_stats,
+            "learning_streak": 0,  # TODO: Calculate based on daily usage
+            "performance_trends": {
+                "this_week": {"sessions": 0, "flashcards_reviewed": 0},
+                "this_month": {"sessions": 0, "flashcards_reviewed": 0}
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Analytics error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve analytics")
+
 @api_router.get("/auto-notes/{session_id}")
 async def get_note_session(
     session_id: str,
