@@ -488,19 +488,25 @@ export function DualResponseContainer({
                 onClick={() => {
                   if (onFeedback) {
                     onFeedback('helpful');
-                    // Visual feedback
-                    const button = event.target.closest('button');
-                    const originalText = button.innerHTML;
-                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Sent!</span>';
+                    setButtonStates(prev => ({ ...prev, helpful: true }));
                     setTimeout(() => {
-                      button.innerHTML = originalText;
+                      setButtonStates(prev => ({ ...prev, helpful: false }));
                     }, 2000);
                   }
                 }}
-                className="text-gray-500 hover:text-teal-600"
+                className={`${buttonStates.helpful ? 'text-green-600' : 'text-gray-500 hover:text-teal-600'} transition-colors`}
               >
-                <ThumbsUp className="h-4 w-4 mr-1" />
-                Helpful
+                {buttonStates.helpful ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Sent!
+                  </>
+                ) : (
+                  <>
+                    <ThumbsUp className="h-4 w-4 mr-1" />
+                    Helpful
+                  </>
+                )}
               </Button>
               <Button 
                 variant="ghost" 
@@ -508,12 +514,9 @@ export function DualResponseContainer({
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(primaryResponse.response);
-                    // Visual feedback
-                    const button = event.target.closest('button');
-                    const originalText = button.innerHTML;
-                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Copied!</span>';
+                    setButtonStates(prev => ({ ...prev, copied: true }));
                     setTimeout(() => {
-                      button.innerHTML = originalText;
+                      setButtonStates(prev => ({ ...prev, copied: false }));
                     }, 2000);
                   } catch (err) {
                     console.error('Failed to copy text:', err);
@@ -525,18 +528,25 @@ export function DualResponseContainer({
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
                     
-                    const button = event.target.closest('button');
-                    const originalText = button.innerHTML;
-                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Copied!</span>';
+                    setButtonStates(prev => ({ ...prev, copied: true }));
                     setTimeout(() => {
-                      button.innerHTML = originalText;
+                      setButtonStates(prev => ({ ...prev, copied: false }));
                     }, 2000);
                   }
                 }}
-                className="text-gray-500 hover:text-teal-600"
+                className={`${buttonStates.copied ? 'text-green-600' : 'text-gray-500 hover:text-teal-600'} transition-colors`}
               >
-                <BookOpen className="h-4 w-4 mr-1" />
-                Copy
+                {buttonStates.copied ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="h-4 w-4 mr-1" />
+                    Copy
+                  </>
+                )}
               </Button>
             </div>
             <span className="text-xs text-gray-400">{timestamp}</span>
