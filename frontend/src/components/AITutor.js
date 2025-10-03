@@ -1099,6 +1099,33 @@ export default function AITutor() {
           </div>
         </div>
 
+        {/* File Type Support Information */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-3 mx-6 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <div className="bg-green-100 rounded-full p-1">
+              <Sparkles className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-medium text-green-800 mb-1">🚀 Cutting-Edge AI File Analysis</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <ImageIcon className="h-4 w-4 text-blue-500" />
+                  <span className="text-gray-700"><strong>Images:</strong> JPEG, JPG, PNG, WebP</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <FileIcon className="h-4 w-4 text-red-500" />
+                  <span className="text-gray-700"><strong>Documents:</strong> PDF files</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                ✨ <strong>GPT-4o Vision</strong> instantly extracts text, solves math problems, analyzes diagrams • 
+                📏 <strong>Max:</strong> 25MB • 
+                ⚡ <strong>Processing:</strong> 5-15 seconds
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Phase A: File Upload & Context Pin Area */}
         {(selectedFile || selectedContext || showContextPin) && (
           <div className="bg-gray-50 border-t border-gray-200 p-4">
