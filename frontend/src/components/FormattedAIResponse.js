@@ -21,7 +21,14 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-export default function FormattedAIResponse({ content, persona, isLeading = false }) {
+export default function FormattedAIResponse({ 
+  content, 
+  persona, 
+  isLeading = false, 
+  onPracticMore, 
+  onAddToNotes, 
+  onFeedback 
+}) {
   const [expandedSections, setExpandedSections] = useState({});
 
   const toggleSection = (sectionIndex) => {
