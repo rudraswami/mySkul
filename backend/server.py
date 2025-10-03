@@ -2431,6 +2431,73 @@ async def get_context_information(context_id: str, context_type: str, user_id: s
         logger.error(f"Context retrieval error: {str(e)}")
         return ""
 
+@api_router.get("/ai/available-contexts")
+async def get_available_contexts(user: User = Depends(get_current_user)):
+    """Get available contexts for Context Pin feature"""
+    
+    try:
+        contexts = []
+        
+        # Get recent AI chat sessions
+        ai_sessions = await db.ai_sessions.find({
+            "user_id": user.user_id
+        }).sort("created_at", -1).limit(10).to_list(length=None)
+        
+        for session in ai_sessions:
+            contexts.append({
+                "id": session["session_id"],
+                "type": "chat_session",
+                "title": session.get("title", "AI Chat Session"),
+                "subject": session.get("subject", "General"),
+                "created_at": session["created_at"].isoformat(),
+                "description": f"Chat session with {session.get('message_count', 0)} messages"
+            })
+        
+        # Get recent auto-note sessions
+        try:
+            note_sessions = await db.auto_note_sessions.find({
+                "user_id": user.user_id
+            }).sort("created_at", -1).limit(10).to_list(length=None)
+            
+            for session in note_sessions:
+                contexts.append({
+                    "id": session["session_id"],
+                    "type": "note_session", 
+                    "title": session.get("session_name", "Auto-Note Session"),
+                    "subject": session.get("subject", "General"),
+                    "created_at": session["created_at"].isoformat(),
+                    "description": "Auto-note session with processed content"
+                })
+        except Exception as e:
+            logger.warning(f"Could not fetch note sessions: {str(e)}")
+        
+        # Get recent mock tests
+        try:
+            mock_tests = await db.mock_tests.find({
+                "user_id": user.user_id
+            }).sort("created_at", -1).limit(10).to_list(length=None)
+            
+            for test in mock_tests:
+                contexts.append({
+                    "id": test["test_id"],
+                    "type": "mock_test",
+                    "title": test.get("test_name", "Mock Test"),
+                    "subject": test.get("subject", "General"),
+                    "created_at": test["created_at"].isoformat(),
+                    "description": f"Mock test - Score: {test.get('score', 0)}/{test.get('total_marks', 0)}"
+                })
+        except Exception as e:
+            logger.warning(f"Could not fetch mock tests: {str(e)}")
+        
+        # Sort all contexts by creation date (newest first)
+        contexts.sort(key=lambda x: x["created_at"], reverse=True)
+        
+        return {"contexts": contexts[:15]}  # Return latest 15 contexts
+        
+    except Exception as e:
+        logger.error(f"Error fetching available contexts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch available contexts")
+
 @api_router.post("/ai/dual-response")
 async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
     """Get coordinated response from both Mentor and Professor AI layers"""
