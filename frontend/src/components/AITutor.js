@@ -1571,10 +1571,53 @@ export default function AITutor() {
           </div>
         )}
 
-        {/* Professional Input Area */}
-        <div className="bg-white border-t border-gray-200 p-6 shadow-sm">
+        {/* Clean Input Area */}
+        <div className="bg-white border-t border-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-end space-x-4">
+            {/* Mode Selection Pills */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
+                <Button
+                  onClick={() => setAiMode('mentor')}
+                  variant={aiMode === 'mentor' ? 'default' : 'ghost'}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                    aiMode === 'mentor' 
+                      ? 'bg-teal-500 text-white shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                  }`}
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Mentor
+                </Button>
+                <Button
+                  onClick={() => setAiMode('professor')}
+                  variant={aiMode === 'professor' ? 'default' : 'ghost'}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                    aiMode === 'professor' 
+                      ? 'bg-teal-500 text-white shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                  }`}
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Professor
+                </Button>
+                <Button
+                  onClick={() => setAiMode('dual')}
+                  variant={aiMode === 'dual' ? 'default' : 'ghost'}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                    aiMode === 'dual' 
+                      ? 'bg-teal-500 text-white shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                  }`}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Both
+                </Button>
+              </div>
+            </div>
+
+            {/* Chat Input Bar */}
+            <div className="flex items-center space-x-3">
               <div className="flex-1 relative">
                 <Textarea
                   value={currentMessage}
@@ -1585,122 +1628,85 @@ export default function AITutor() {
                   onDrop={handleDrop}
                   placeholder={
                     dragOver 
-                      ? '🎯 Drop your file here for instant AI analysis!' 
+                      ? 'Drop your file here...' 
                       : loading 
-                        ? '🤖 AI is processing...' 
-                        : `💬 Ask me anything about ${selectedSubject} or drag & drop files...`
+                        ? 'AI is thinking...' 
+                        : 'Type your doubt here...'
                   }
-                  className={`resize-none border-2 ${
+                  className={`resize-none border ${
                     dragOver 
-                      ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg scale-[1.01]' 
+                      ? 'border-teal-300 bg-teal-50' 
                       : isListening 
-                        ? 'border-red-400 bg-red-50' 
+                        ? 'border-red-300 bg-red-50' 
                         : loading
-                          ? 'border-blue-300 bg-blue-50'
-                          : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                  } rounded-lg transition-all duration-300 shadow-sm focus:shadow-md`}
-                  rows={3}
+                          ? 'border-gray-300 bg-gray-50'
+                          : 'border-gray-200 focus:border-teal-300 hover:border-gray-300'
+                  } rounded-lg focus:ring-2 focus:ring-teal-100 transition-all`}
+                  rows={2}
                   disabled={loading}
                 />
-                {currentMessage.trim() && (
-                  <div className="absolute bottom-3 right-16 text-xs text-gray-400">
-                    {currentMessage.length} characters
-                  </div>
-                )}
                 
-                {/* Input Control Buttons */}
-                <div className="absolute bottom-3 right-3 flex items-center space-x-1">
-                  {/* Enhanced File Upload Button */}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="📁 Upload Image or PDF (JPEG, PNG, WebP, PDF - Max 25MB)"
-                    disabled={loading}
-                  >
-                    <Upload className="h-4 w-4" />
-                  </Button>
-                  
-                  {/* Context Pin Button */}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={selectedContext ? "default" : "ghost"}
-                    onClick={() => {
-                      if (showContextPin) {
-                        setShowContextPin(false);
-                      } else {
-                        loadAvailableContexts();
-                        setShowContextPin(true);
-                      }
-                    }}
-                    className={`h-8 w-8 p-0 ${selectedContext ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-purple-600'}`}
-                    title="Connect with previous content"
-                    disabled={loading}
-                  >
-                    <Pin className="h-4 w-4" />
-                  </Button>
-
+                {/* Input Icons */}
+                <div className="absolute bottom-2 right-2 flex items-center space-x-1">
                   {recognition && (
                     <Button
                       type="button"
                       size="sm"
-                      variant={isListening ? "destructive" : "ghost"}
+                      variant="ghost"
                       onClick={isListening ? stopVoiceInput : startVoiceInput}
-                      className={`h-8 w-8 p-0 ${isListening ? 'animate-pulse bg-red-500 text-white' : 'hover:bg-gray-100'}`}
-                      title={isListening ? 'Stop recording' : 'Voice input'}
+                      className={`h-7 w-7 p-0 ${isListening ? 'text-red-500' : 'text-gray-400 hover:text-teal-600'}`}
                       disabled={loading}
                     >
                       {isListening ? (
                         <MicOff className="h-4 w-4" />
                       ) : (
-                        <Mic className="h-4 w-4 text-gray-600" />
+                        <Mic className="h-4 w-4" />
                       )}
                     </Button>
                   )}
                   
-                  {/* Quick Suggestions Toggle */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-teal-600"
+                    disabled={loading}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                  
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowQuickSuggestions(!showQuickSuggestions)}
-                    className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                    title="Quick suggestions"
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-teal-600"
+                    title="⋯ More options"
                     disabled={loading}
                   >
-                    <Lightbulb className="h-3 w-3" />
+                    <AlertCircle className="h-4 w-4" />
                   </Button>
                 </div>
 
-                {/* Enhanced Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                   onChange={handleFileSelect}
                   className="hidden"
-                  multiple={false}
                 />
               </div>
               
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-gray-800 hover:bg-gray-900 px-6 py-3 h-auto rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                className="bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="text-sm">Sending...</span>
-                  </div>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                  <div className="flex items-center space-x-2">
-                    <Send className="h-4 w-4" />
-                    <span className="text-sm font-medium">Send</span>
-                  </div>
+                  <Send className="h-4 w-4" />
                 )}
               </Button>
             </div>
