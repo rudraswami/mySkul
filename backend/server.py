@@ -6759,6 +6759,338 @@ async def get_motivational_content(user: User = Depends(get_current_user)):
         logger.error(f"Motivational content error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch content")
 
+# ============= MOCK TEST REVIEW & BOOKMARKING ENDPOINTS =============
+
+@api_router.post("/mock-tests/{test_id}/bookmark-question")
+async def bookmark_question(
+    test_id: str,
+    bookmark_request: QuestionBookmarkRequest,
+    user: User = Depends(get_current_user)
+):
+    """Bookmark or unbookmark a question for later review"""
+    
+    try:
+        # Verify test belongs to user
+        test_doc = await db.mock_tests.find_one({"test_id": test_id, "user_id": user.user_id})
+        if not test_doc:
+            raise HTTPException(status_code=404, detail="Test not found")
+        
+        # Update or create bookmark
+        bookmark_data = {
+            "user_id": user.user_id,
+            "question_id": bookmark_request.question_id,
+            "test_id": test_id,
+            "bookmarked": bookmark_request.bookmarked,
+            "notes": bookmark_request.notes,
+            "bookmarked_at": datetime.now(timezone.utc)
+        }
+        
+        await db.bookmarked_questions.update_one(
+            {"user_id": user.user_id, "question_id": bookmark_request.question_id},
+            {"$set": bookmark_data},
+            upsert=True
+        )
+        
+        action = "bookmarked" if bookmark_request.bookmarked else "removed bookmark from"
+        return {"message": f"Question {action} successfully", "bookmarked": bookmark_request.bookmarked}
+        
+    except Exception as e:
+        logger.error(f"Bookmark question error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to bookmark question")
+
+@api_router.get("/mock-tests/{test_id}/detailed-review")
+async def get_detailed_test_review(
+    test_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get detailed question-by-question review of a completed test"""
+    
+    try:
+        # Get test and user's submission
+        test_doc = await db.mock_tests.find_one({"test_id": test_id, "user_id": user.user_id})
+        if not test_doc:
+            raise HTTPException(status_code=404, detail="Test not found")
+        
+        submission_doc = await db.test_attempts.find_one({"test_id": test_id, "student_id": user.user_id})
+        if not submission_doc:
+            raise HTTPException(status_code=404, detail="Test submission not found")
+        
+        mock_test = MockTest(**test_doc)
+        user_answers = submission_doc.get("answers", {})
+        
+        # Get bookmarked questions for this user
+        bookmarked_docs = await db.bookmarked_questions.find(
+            {"user_id": user.user_id, "bookmarked": True}
+        ).to_list(1000)
+        bookmarked_question_ids = {doc["question_id"] for doc in bookmarked_docs}
+        
+        # Generate detailed review for each question
+        question_reviews = []
+        
+        for question in mock_test.questions:
+            q_id = question["question_id"]
+            correct_answer = question["correct_answer"]
+            user_answer = user_answers.get(q_id, "")
+            is_correct = user_answer == correct_answer
+            
+            # Generate AI explanations for wrong answers
+            if not is_correct and user_answer:
+                # Get Professor's detailed solution
+                professor_solution = await generate_detailed_solution(question, correct_answer)
+                # Get Mentor's hint
+                mentor_hint = await generate_mentor_hint(question, user_answer, correct_answer)
+            else:
+                professor_solution = "Great job! You got this correct."
+                mentor_hint = "Well done! Keep up the excellent work! 🎉"
+            
+            review = DetailedQuestionReview(
+                question_id=q_id,
+                question_text=question["question_text"],
+                options=question["options"],
+                correct_answer=correct_answer,
+                user_answer=user_answer or "Not Answered",
+                is_correct=is_correct,
+                explanation=question.get("explanation", ""),
+                professor_solution=professor_solution,
+                mentor_hint=mentor_hint,
+                difficulty_level=question.get("difficulty_level", 3),
+                subject=question.get("chapter", "General"),
+                chapter=question.get("chapter", "General"),
+                time_spent=submission_doc.get("question_times", {}).get(q_id, 0)
+            )
+            
+            # Add bookmark status
+            review.bookmarked = q_id in bookmarked_question_ids
+            
+            question_reviews.append(review)
+        
+        # Calculate performance analysis
+        total_questions = len(question_reviews)
+        correct_answers = sum(1 for q in question_reviews if q.is_correct)
+        subject_analysis = {}
+        
+        for review in question_reviews:
+            if review.subject not in subject_analysis:
+                subject_analysis[review.subject] = {"correct": 0, "total": 0}
+            subject_analysis[review.subject]["total"] += 1
+            if review.is_correct:
+                subject_analysis[review.subject]["correct"] += 1
+        
+        # Generate retake suggestions
+        weak_subjects = [
+            subject for subject, data in subject_analysis.items()
+            if (data["correct"] / data["total"]) < 0.7
+        ]
+        
+        retake_suggestions = []
+        if weak_subjects:
+            retake_suggestions.append(f"Consider adaptive retake focusing on {', '.join(weak_subjects)}")
+        if (correct_answers / total_questions) < 0.8:
+            retake_suggestions.append("Practice variant questions to strengthen understanding")
+        retake_suggestions.append("Review bookmarked questions before next attempt")
+        
+        return PostTestReview(
+            test_id=test_id,
+            test_name=mock_test.title,
+            overall_score=round((correct_answers / total_questions) * 100, 1),
+            total_questions=total_questions,
+            correct_answers=correct_answers,
+            question_reviews=question_reviews,
+            performance_analysis={
+                "subject_wise": subject_analysis,
+                "accuracy_percentage": round((correct_answers / total_questions) * 100, 1),
+                "time_analysis": "efficiency_good" if submission_doc.get("time_taken", 0) < (mock_test.time_limit * 60 * 0.9) else "needs_improvement"
+            },
+            retake_suggestions=retake_suggestions
+        )
+        
+    except Exception as e:
+        logger.error(f"Detailed test review error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get detailed review")
+
+@api_router.get("/bookmarked-questions")
+async def get_bookmarked_questions(user: User = Depends(get_current_user)):
+    """Get all bookmarked questions for the user"""
+    
+    try:
+        bookmarked_docs = await db.bookmarked_questions.find(
+            {"user_id": user.user_id, "bookmarked": True}
+        ).sort("bookmarked_at", -1).to_list(1000)
+        
+        # Get full question details
+        bookmarked_questions = []
+        for bookmark in bookmarked_docs:
+            # Find the test and question details
+            test_doc = await db.mock_tests.find_one({"test_id": bookmark["test_id"]})
+            if test_doc:
+                mock_test = MockTest(**test_doc)
+                for question in mock_test.questions:
+                    if question["question_id"] == bookmark["question_id"]:
+                        bookmarked_questions.append({
+                            "question_id": question["question_id"],
+                            "question_text": question["question_text"],
+                            "options": question["options"],
+                            "correct_answer": question["correct_answer"],
+                            "explanation": question.get("explanation", ""),
+                            "subject": question.get("chapter", "General"),
+                            "difficulty_level": question.get("difficulty_level", 3),
+                            "test_name": mock_test.title,
+                            "bookmarked_at": bookmark["bookmarked_at"].isoformat(),
+                            "notes": bookmark.get("notes", "")
+                        })
+                        break
+        
+        return {
+            "bookmarked_questions": bookmarked_questions,
+            "total_count": len(bookmarked_questions)
+        }
+        
+    except Exception as e:
+        logger.error(f"Get bookmarked questions error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get bookmarked questions")
+
+@api_router.get("/mock-tests/performance-trends")
+async def get_performance_trends(user: User = Depends(get_current_user)):
+    """Get detailed performance trends over time"""
+    
+    try:
+        # Get test attempts over the last 3 months
+        three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
+        
+        test_attempts = await db.test_attempts.find({
+            "student_id": user.user_id,
+            "submitted_at": {"$gte": three_months_ago}
+        }).sort("submitted_at", 1).to_list(1000)
+        
+        # Organize data by date and subject
+        daily_performance = {}
+        subject_trends = {}
+        weekly_improvement = {}
+        
+        for attempt in test_attempts:
+            date_key = attempt["submitted_at"].strftime("%Y-%m-%d")
+            week_key = attempt["submitted_at"].strftime("%Y-W%U")
+            
+            # Daily performance
+            if date_key not in daily_performance:
+                daily_performance[date_key] = []
+            
+            daily_performance[date_key].append({
+                "score": attempt.get("percentage", 0),
+                "subject": attempt.get("test_id", "Unknown")[:10],
+                "time_taken": attempt.get("time_taken", 0)
+            })
+            
+            # Subject trends
+            for subject, mastery in attempt.get("concept_mastery", {}).items():
+                if subject not in subject_trends:
+                    subject_trends[subject] = []
+                subject_trends[subject].append({
+                    "date": date_key,
+                    "mastery": mastery * 100,
+                    "score": attempt.get("percentage", 0)
+                })
+            
+            # Weekly improvement
+            if week_key not in weekly_improvement:
+                weekly_improvement[week_key] = []
+            weekly_improvement[week_key].append(attempt.get("percentage", 0))
+        
+        # Calculate weekly averages
+        weekly_averages = {}
+        for week, scores in weekly_improvement.items():
+            weekly_averages[week] = {
+                "average_score": round(sum(scores) / len(scores), 1),
+                "test_count": len(scores),
+                "best_score": max(scores),
+                "consistency": round(100 - (max(scores) - min(scores)), 1) if len(scores) > 1 else 100
+            }
+        
+        # Identify patterns
+        weak_areas = []
+        strong_areas = []
+        
+        for subject, trend_data in subject_trends.items():
+            if len(trend_data) >= 3:
+                recent_avg = sum(d["mastery"] for d in trend_data[-3:]) / 3
+                if recent_avg < 70:
+                    weak_areas.append({"subject": subject, "mastery": round(recent_avg, 1)})
+                elif recent_avg > 85:
+                    strong_areas.append({"subject": subject, "mastery": round(recent_avg, 1)})
+        
+        return {
+            "daily_performance": daily_performance,
+            "subject_trends": subject_trends,
+            "weekly_improvement": weekly_averages,
+            "insights": {
+                "weak_areas": sorted(weak_areas, key=lambda x: x["mastery"]),
+                "strong_areas": sorted(strong_areas, key=lambda x: x["mastery"], reverse=True),
+                "total_tests": len(test_attempts),
+                "study_days": len(daily_performance),
+                "improvement_trend": "positive" if len(test_attempts) > 1 and test_attempts[-1].get("percentage", 0) > test_attempts[0].get("percentage", 0) else "stable"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Performance trends error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get performance trends")
+
+# AI Helper Functions for Detailed Reviews
+async def generate_detailed_solution(question: Dict, correct_answer: str) -> str:
+    """Generate step-by-step solution using Professor AI"""
+    try:
+        prompt = f"""
+        Question: {question['question_text']}
+        Options: {', '.join(question['options'])}
+        Correct Answer: {correct_answer}
+        
+        Provide a detailed step-by-step solution explaining why this answer is correct. Include:
+        1. Key concept identification
+        2. Step-by-step working
+        3. Mathematical derivation (if applicable)
+        4. Final verification
+        
+        Keep it academic and precise.
+        """
+        
+        response = await llm_chat.get_response(
+            prompt, 
+            persona="professor",
+            max_tokens=500
+        )
+        return response.get("content", "Solution explanation unavailable.")
+        
+    except Exception as e:
+        logger.error(f"Solution generation error: {str(e)}")
+        return "Step-by-step solution will be available shortly. Please review the explanation provided in the question."
+
+async def generate_mentor_hint(question: Dict, user_answer: str, correct_answer: str) -> str:
+    """Generate helpful hint using Mentor AI"""
+    try:
+        prompt = f"""
+        A student answered '{user_answer}' for this question, but the correct answer is '{correct_answer}'.
+        Question: {question['question_text']}
+        
+        Provide an encouraging hint that:
+        1. Acknowledges their effort
+        2. Points them toward the right approach
+        3. Gives a learning tip
+        4. Motivates them to keep practicing
+        
+        Be supportive and educational.
+        """
+        
+        response = await llm_chat.get_response(
+            prompt,
+            persona="mentor", 
+            max_tokens=200
+        )
+        return response.get("content", "Keep practicing! Every mistake is a learning opportunity. 💪")
+        
+    except Exception as e:
+        logger.error(f"Hint generation error: {str(e)}")
+        return "Don't worry! This type of question gets easier with practice. Review the concept and try similar problems. You've got this! 🌟"
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
