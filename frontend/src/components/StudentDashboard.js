@@ -69,46 +69,73 @@ export default function StudentDashboard() {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) {
-        // Set demo data immediately for better UX
-        setAnalytics({
-          total_study_time: 45,
-          current_streak: 7,
-          chat_sessions_count: 12,
-          weekly_goals_progress: 78,
-          recent_progress: []
-        });
         setLoading(false);
         return;
       }
 
-      // Set timeout for API call
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       const analyticsResponse = await axios.get(`${API}/dashboard/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
-        signal: controller.signal
+        timeout: 5000
       });
 
-      clearTimeout(timeoutId);
       setAnalytics(analyticsResponse.data);
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('API call timed out, using fallback data');
-      } else {
-        console.error('Failed to fetch dashboard data:', error);
-      }
+      console.error('Failed to fetch dashboard data:', error);
       
-      // Always set fallback data for good UX
+      // Minimal fallback - only if API completely fails
       setAnalytics({
-        total_study_time: 45,
-        current_streak: 7,
-        chat_sessions_count: 12,
-        weekly_goals_progress: 78,
+        total_study_time: 0,
+        current_streak: 0,
+        chat_sessions_count: 0,
+        weekly_goals_progress: 0,
         recent_progress: []
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDailyGoals = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        setGoalsLoading(false);
+        return;
+      }
+
+      const goalsResponse = await axios.get(`${API}/dashboard/daily-goals`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 5000
+      });
+
+      setTodayGoals(goalsResponse.data.goals || []);
+    } catch (error) {
+      console.error('Failed to fetch daily goals:', error);
+      setTodayGoals([]); // Empty array instead of demo data
+    } finally {
+      setGoalsLoading(false);
+    }
+  };
+
+  const fetchSubjectProgress = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        setSubjectsLoading(false);
+        return;
+      }
+
+      const progressResponse = await axios.get(`${API}/dashboard/subject-progress`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 5000
+      });
+
+      setSubjectProgress(progressResponse.data.subjects || []);
+    } catch (error) {
+      console.error('Failed to fetch subject progress:', error);
+      setSubjectProgress([]); // Empty array instead of demo data
+    } finally {
+      setSubjectsLoading(false);
     }
   };
 
