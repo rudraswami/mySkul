@@ -6212,27 +6212,7 @@ Focus on the most important concepts that appeared in this specific class."""
         logger.error(f"Flashcard generation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate flashcards")
 
-@api_router.get("/auto-notes/sessions")
-async def get_user_note_sessions(user: User = Depends(get_current_user)):
-    """Get all note sessions for the current user"""
-    
-    try:
-        sessions = await db.auto_note_sessions.find(
-            {"user_id": user.user_id}
-        ).sort("created_at", -1).limit(50).to_list(50)
-        
-        # Remove MongoDB ObjectIds and handle datetime serialization
-        clean_sessions = [clean_mongodb_doc(session) for session in sessions]
-        
-        return {
-            "sessions": clean_sessions,
-            "total_sessions": len(clean_sessions),
-            "active_sessions": len([s for s in sessions if s["status"] == "active"])
-        }
-        
-    except Exception as e:
-        logger.error(f"Sessions retrieval error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve sessions")
+# Duplicate removed - moved earlier in file for proper routing
 
 # ============= ENHANCED AUTONOTE API ENDPOINTS =============
 
