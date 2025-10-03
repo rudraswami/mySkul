@@ -1104,49 +1104,96 @@ export default function AITutor() {
           <div className="bg-gray-50 border-t border-gray-200 p-4">
             <div className="max-w-4xl mx-auto space-y-4">
               
+              {/* Enhanced File Upload Area */}
+              {!selectedFile && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-blue-300 p-6 text-center hover:border-blue-400 transition-colors">
+                  <div className="flex flex-col items-center space-y-3">
+                    <div className="bg-blue-100 rounded-full p-3">
+                      <Upload className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        🚀 AI-Powered Document Analysis
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Upload any image or PDF for instant AI analysis using cutting-edge GPT-4o Vision
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3">
+                        <div className="flex items-center justify-center space-x-1">
+                          <ImageIcon className="h-4 w-4 text-green-500" />
+                          <span>JPEG, PNG, WebP</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-1">
+                          <FileIcon className="h-4 w-4 text-red-500" />
+                          <span>PDF Documents</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-600 font-medium">Max size: 25MB • Instant processing</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Selected File Display */}
               {selectedFile && (
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-white rounded-lg border border-blue-200 p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      {selectedFile.type.startsWith('image/') ? (
-                        <ImageIcon className="h-8 w-8 text-blue-500" />
-                      ) : (
-                        <FileIcon className="h-8 w-8 text-red-500" />
-                      )}
+                      <div className="relative">
+                        {selectedFile.type.startsWith('image/') ? (
+                          <ImageIcon className="h-10 w-10 text-blue-500" />
+                        ) : (
+                          <FileIcon className="h-10 w-10 text-red-500" />
+                        )}
+                        {loading && (
+                          <div className="absolute -top-1 -right-1 h-4 w-4 bg-blue-500 rounded-full animate-pulse"></div>
+                        )}
+                      </div>
                       <div>
-                        <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                        <p className="font-medium text-gray-900 flex items-center space-x-2">
+                          <span>{selectedFile.name}</span>
+                          {loading && <span className="text-blue-600 text-sm">🤖 AI Analyzing...</span>}
+                        </p>
                         <p className="text-sm text-gray-500">
                           {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={processFileUpload}
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {loading ? 'Processing...' : 'Analyze File'}
-                      </Button>
+                      {!loading && (
+                        <Button
+                          onClick={() => processFileUpload(selectedFile)}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+                        >
+                          🚀 Analyze with AI
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={clearSelectedFile}
                         disabled={loading}
+                        className="hover:bg-red-50 hover:border-red-300"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                  {uploadProgress > 0 && uploadProgress < 100 && (
-                    <div className="mt-3">
-                      <div className="bg-gray-200 rounded-full h-2">
+                  {uploadProgress > 0 && (
+                    <div className="mt-4">
+                      <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-500 ease-out"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">Processing file... {uploadProgress}%</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-sm font-medium text-blue-600">
+                          {uploadProgress < 30 ? '📤 Uploading...' : 
+                           uploadProgress < 70 ? '🤖 AI Processing...' : 
+                           uploadProgress < 95 ? '✨ Generating Response...' : '✅ Complete!'}
+                        </p>
+                        <span className="text-sm font-bold text-blue-600">{uploadProgress}%</span>
+                      </div>
                     </div>
                   )}
                 </div>
