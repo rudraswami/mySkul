@@ -7,7 +7,7 @@ from datetime import datetime
 
 class Phase4Tester:
     def __init__(self):
-        self.base_url = "https://mentor-ai-platform.preview.emergentagent.com/api"
+        self.base_url = "https://neurotutor.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         self.test_ids = []
