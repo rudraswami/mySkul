@@ -2785,6 +2785,188 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
         logger.error(f"Doubt resolution error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to resolve doubt")
 
+# ============= PHASE B: PERSONALIZATION API ENDPOINTS =============
+
+@api_router.get("/personalization/profile")
+async def get_student_profile(user: User = Depends(get_current_user)):
+    """Get student personalization profile"""
+    try:
+        profile = await personalization_engine.get_or_create_student_profile(user.user_id)
+        return {
+            "profile": profile.dict(),
+            "message": "Student profile retrieved successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error getting student profile: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve student profile")
+
+@api_router.post("/personalization/profile")
+async def update_student_profile(
+    preferred_language: str = Field(..., regex="^(english|hindi|hinglish)$"),
+    learning_style: str = Field(..., regex="^(visual|analytical|practical|balanced)$"),
+    difficulty_preference: float = Field(..., ge=0.1, le=1.0),
+    response_length_preference: str = Field(..., regex="^(short|medium|detailed)$"),
+    user: User = Depends(get_current_user)
+):
+    """Update student personalization preferences"""
+    try:
+        # Get or create profile
+        profile = await personalization_engine.get_or_create_student_profile(user.user_id)
+        
+        # Update preferences
+        profile.preferred_language = preferred_language
+        profile.learning_style = learning_style
+        profile.difficulty_preference = difficulty_preference
+        profile.response_length_preference = response_length_preference
+        profile.updated_at = datetime.now(timezone.utc)
+        
+        # Save to database
+        profile_dict = profile.dict()
+        for field in ['created_at', 'updated_at']:
+            if isinstance(profile_dict[field], datetime):
+                profile_dict[field] = profile_dict[field].isoformat()
+        
+        await db.student_profiles.update_one(
+            {"user_id": user.user_id},
+            {"$set": profile_dict},
+            upsert=True
+        )
+        
+        logger.info(f"✅ Updated profile for user: {user.user_id}")
+        return {
+            "profile": profile.dict(),
+            "message": "Profile updated successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating student profile: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update student profile")
+
+@api_router.get("/personalization/mastery")
+async def get_topic_mastery(user: User = Depends(get_current_user)):
+    """Get student's topic mastery levels"""
+    try:
+        mastery_docs = await db.topic_mastery.find({
+            "user_id": user.user_id
+        }).sort("mastery_level", -1).to_list(length=50)
+        
+        mastery_data = []
+        for doc in mastery_docs:
+            clean_doc = clean_mongodb_doc(doc)
+            mastery_data.append(clean_doc)
+        
+        # Group by subject
+        subjects_mastery = {}
+        for mastery in mastery_data:
+            subject = mastery['subject']
+            if subject not in subjects_mastery:
+                subjects_mastery[subject] = []
+            subjects_mastery[subject].append(mastery)
+        
+        return {
+            "mastery_by_subject": subjects_mastery,
+            "total_topics": len(mastery_data),
+            "message": "Topic mastery data retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting topic mastery: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve topic mastery")
+
+@api_router.get("/personalization/error-patterns")
+async def get_error_patterns(user: User = Depends(get_current_user)):
+    """Get student's error patterns for improvement"""
+    try:
+        error_docs = await db.error_patterns.find({
+            "user_id": user.user_id,
+            "resolved": False
+        }).sort("frequency", -1).to_list(length=20)
+        
+        error_patterns = []
+        for doc in error_docs:
+            clean_doc = clean_mongodb_doc(doc)
+            error_patterns.append(clean_doc)
+        
+        # Analyze patterns
+        pattern_summary = {
+            "most_common_errors": error_patterns[:5],
+            "error_types": {},
+            "subjects_needing_help": set()
+        }
+        
+        for error in error_patterns:
+            error_type = error['error_type']
+            pattern_summary['error_types'][error_type] = pattern_summary['error_types'].get(error_type, 0) + error['frequency']
+            pattern_summary['subjects_needing_help'].add(error['subject'])
+        
+        pattern_summary['subjects_needing_help'] = list(pattern_summary['subjects_needing_help'])
+        
+        return {
+            "error_patterns": error_patterns,
+            "summary": pattern_summary,
+            "message": "Error patterns retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting error patterns: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve error patterns")
+
+@api_router.post("/personalization/feedback")
+async def record_user_feedback(
+    session_id: str,
+    feedback_type: str = Field(..., regex="^(helpful|too_easy|too_hard|confusing|perfect)$"),
+    subject: str,
+    topic_name: Optional[str] = None,
+    user: User = Depends(get_current_user)
+):
+    """Record user feedback to improve personalization"""
+    try:
+        # Record feedback in learning interactions
+        await db.learning_interactions.update_many(
+            {
+                "user_id": user.user_id,
+                "session_id": session_id,
+                "subject": subject
+            },
+            {
+                "$set": {
+                    "user_feedback": feedback_type,
+                    "feedback_recorded_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        # Update mastery based on feedback
+        if topic_name:
+            is_correct = feedback_type in ["helpful", "perfect"]
+            current_difficulty = await personalization_engine.get_personalized_difficulty(user.user_id, subject, topic_name)
+            
+            await personalization_engine.update_topic_mastery(
+                user_id=user.user_id,
+                subject=subject,
+                topic_name=topic_name,
+                is_correct=is_correct,
+                difficulty_level=current_difficulty
+            )
+            
+            # Analyze for error patterns
+            if feedback_type in ["too_hard", "confusing"]:
+                await personalization_engine.analyze_and_record_errors(
+                    user_id=user.user_id,
+                    subject=subject,
+                    topic_name=topic_name,
+                    question="User feedback session",
+                    response="Feedback-based analysis",
+                    user_feedback=feedback_type
+                )
+        
+        logger.info(f"✅ Recorded feedback: {feedback_type} for {subject}/{topic_name}")
+        return {"message": "Feedback recorded successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error recording feedback: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record feedback")
+
 # ============= DUAL-LAYER AI API ENDPOINTS =============
 
 @api_router.post("/ai/process-file")
