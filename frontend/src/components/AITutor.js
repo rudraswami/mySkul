@@ -130,6 +130,20 @@ export default function AITutor() {
     scrollToBottom();
   }, [messages]);
 
+  // Close session action menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (sessionActions.showMenu) {
+        setSessionActions({ ...sessionActions, showMenu: null });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [sessionActions.showMenu]);
+
   // Phase 3: Keyboard shortcuts
   useEffect(() => {
     const handleKeyboardShortcuts = (e) => {
