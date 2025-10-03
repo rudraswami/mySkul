@@ -6541,23 +6541,7 @@ async def create_class_series(
         logger.error(f"Class series creation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create class series")
 
-@api_router.get("/auto-notes/class-series")
-async def get_class_series(user: User = Depends(get_current_user)):
-    """Get all class series for the user"""
-    
-    try:
-        series_list = await db.class_series.find({
-            "user_id": user.user_id
-        }).sort("created_at", -1).to_list(length=50)
-        
-        return {
-            "series": [clean_mongodb_doc(series) for series in series_list],
-            "total_series": len(series_list)
-        }
-        
-    except Exception as e:
-        logger.error(f"Class series retrieval error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve class series")
+# Duplicate removed - moved earlier in file for proper routing
 
 @api_router.get("/auto-notes/analytics")
 async def get_note_analytics(user: User = Depends(get_current_user)):
