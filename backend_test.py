@@ -1594,10 +1594,15 @@ class DhruvAITester:
             print("   ❌ Session creation failed")
             self.auto_note_session_id = None
         
+        # Wait a moment for database consistency
+        import time
+        time.sleep(2)
+        
         # 3. Session Retrieval: GET /api/auto-notes/sessions (this was failing with 500 before)
         print("\n📋 Step 3: Session Retrieval - GET /api/auto-notes/sessions")
         print("   This endpoint was previously failing with 500 Internal Server Error")
         print("   Expected: 200 OK with proper ObjectId serialization")
+        print(f"   Testing with user_id: {self.user_id}")
         
         success, response = self.run_test(
             "Auto-Note Sessions List",
