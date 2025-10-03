@@ -2896,10 +2896,8 @@ class ActionButtonService:
                 api_key=EMERGENT_LLM_KEY,
                 session_id=f"practice_{uuid.uuid4()}"
             ).with_model("openai", "gpt-3.5-turbo")
-            response = await llm_client.achat(
-                messages=[{"role": "user", "content": prompt}],
-                system_message=f"You are an expert {education_standard} {subject} problem generator."
-            )
+            user_msg = UserMessage(text=prompt)
+            response = await llm_client.send_message(user_msg)
             
             # Parse response into problems
             problems = ActionButtonService._parse_problems(response.content)
