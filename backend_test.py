@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 import time
 import io
+import uuid
 
 class DhruvAITester:
     def __init__(self, base_url="https://mentor-ai-platform.preview.emergentagent.com/api"):
