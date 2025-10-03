@@ -430,8 +430,20 @@ export default function MockTests() {
           }, 1000);
         }
       } else {
-        const errorData = await response.json();
-        alert(`Failed to create retake: ${errorData.detail || 'Unknown error'}`);
+        try {
+          const errorData = await response.json();
+          let errorMsg = 'Unknown error';
+          if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMsg = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              errorMsg = errorData.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
+            }
+          }
+          alert(`Failed to create retake: ${errorMsg}`);
+        } catch (parseError) {
+          alert('Failed to create retake: Server error');
+        }
       }
     } catch (error) {
       console.error('Retake creation error:', error);
