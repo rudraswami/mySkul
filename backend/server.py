@@ -52,6 +52,9 @@ api_router = APIRouter(prefix="/api")
 
 def clean_mongodb_doc(doc: dict) -> dict:
     """Remove ObjectId and serialize datetime objects for JSON response"""
+    from bson import ObjectId
+    import datetime as dt
+    
     if not doc:
         return doc
         
@@ -59,10 +62,12 @@ def clean_mongodb_doc(doc: dict) -> dict:
     for k, v in doc.items():
         if k == '_id':
             continue
-        elif isinstance(v, datetime):
-            clean_doc[k] = v.isoformat()
+        elif isinstance(v, ObjectId):
+            clean_doc[k] = str(v)  # Convert ObjectId to string
+        elif isinstance(v, (dt.datetime, datetime)):
+            clean_doc[k] = v.isoformat()  # Handle both datetime and dt.datetime
         elif isinstance(v, list):
-            clean_doc[k] = [clean_mongodb_doc(item) if isinstance(item, dict) else item for item in v]
+            clean_doc[k] = [clean_mongodb_doc(item) if isinstance(item, dict) else str(item) if isinstance(item, ObjectId) else item for item in v]
         elif isinstance(v, dict):
             clean_doc[k] = clean_mongodb_doc(v)
         else:
