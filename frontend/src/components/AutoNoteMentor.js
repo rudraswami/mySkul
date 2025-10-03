@@ -1568,51 +1568,7 @@ export default function AutoNoteMentor() {
 
               {/* Spaced Repetition feature removed - available in AI Tutor */}
 
-              {/* Semantic Search */}
-              <Card className="border-0 shadow-md">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MessageCircle className="h-5 w-5 mr-2 text-purple-600" />
-                    Smart Search
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Find concepts across all your notes with semantic understanding
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="Ask about any concept from your notes..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && performSemanticSearch()}
-                      />
-                      <Button onClick={performSemanticSearch} disabled={!searchQuery.trim()}>
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    {searchResults.length > 0 && (
-                      <div className="max-h-64 overflow-y-auto space-y-2">
-                        {searchResults.map((result, index) => (
-                          <div key={index} className="border rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <Badge variant="outline" className="text-xs">
-                                {(result.similarity * 100).toFixed(1)}% match
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                Session {result.session_id.slice(-8)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-700">{result.content.slice(0, 200)}...</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Smart Search feature removed - available in AI Tutor */}
 
               {/* Class Series Management */}
               <Card className="border-0 shadow-md">
