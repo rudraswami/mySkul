@@ -128,8 +128,8 @@ class MockTestEnhancementTester:
         
         test_params = {
             "exam_type": "JEE", 
-            "subject": "Mathematics", 
-            "difficulty": 3, 
+            "subjects": ["Mathematics"], 
+            "difficulty_level": 3, 
             "num_questions": 5
         }
         
