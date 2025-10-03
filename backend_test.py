@@ -1292,10 +1292,17 @@ class DhruvAITester:
             )
             
             if success:
-                citations = response.get('citations', [])
+                # Handle both dict and list response formats
+                if isinstance(response, dict):
+                    citations = response.get('citations', [])
+                elif isinstance(response, list):
+                    citations = response
+                else:
+                    citations = []
+                    
                 print(f"   ✅ Citations retrieved: {len(citations)} sources")
                 if citations:
-                    sample_citation = citations[0]
+                    sample_citation = citations[0] if isinstance(citations[0], dict) else {}
                     print(f"   Sample source: {sample_citation.get('source_title', 'N/A')}")
                     print(f"   Source type: {sample_citation.get('source_type', 'N/A')}")
                     print(f"   Confidence: {sample_citation.get('confidence', 0):.2f}")
