@@ -21,7 +21,8 @@ import {
   X,
   Trophy,
   Zap,
-  Sparkles
+  Sparkles,
+  Crown
 } from 'lucide-react';
 
 export default function MockTests() {
