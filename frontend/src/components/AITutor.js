@@ -1015,166 +1015,34 @@ export default function AITutor() {
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <div className="max-w-5xl mx-auto space-y-8">
             {messages.length === 0 ? (
-              // Welcome Message
-              <div className="text-center py-12">
-                <div className="flex justify-center items-center mb-6 space-x-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                    <Heart className="h-8 w-8 text-green-600" />
-                  </div>
-                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Brain className="h-10 w-10 text-blue-600" />
-                  </div>
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                    <GraduationCap className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-                
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3">
-                  Welcome to Your Trusted, Hallucination-Free AI Tutor! ✨
+              // Clean Welcome State
+              <div className="text-center py-16">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Ask Mentor or Professor anything – doubts, concepts, or exam prep.
                 </h3>
-                
-                <p className="text-gray-700 mb-6 max-w-2xl mx-auto text-lg leading-relaxed">
-                  Experience personalized, verified AI tutoring for <span className="font-semibold text-blue-600">{selectedSubject}</span> at a fraction of coaching costs. Our revolutionary dual intelligence ensures:
+                <p className="text-gray-600 mb-8">
+                  Get personalized help for {selectedSubject} from our AI tutors
                 </p>
                 
-                <div className="flex justify-center items-center space-x-6 mb-6 text-sm">
-                  <div className="flex items-center text-green-600">
-                    <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
-                    <span>Zero Hallucinations</span>
-                  </div>
-                  <div className="flex items-center text-blue-600">
-                    <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
-                    <span>Verified Accuracy</span>
-                  </div>
-                  <div className="flex items-center text-purple-600">
-                    <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
-                    <span>Personalized Learning</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-center space-x-6 mb-8">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <Heart className="h-6 w-6 text-green-600" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-gray-900">Mentor</h4>
-                    <p className="text-xs text-gray-600">Adaptive • Motivational</p>
-                  </div>
+                {/* Simple Starter Buttons */}
+                <div className="flex flex-col items-center space-y-3 max-w-md mx-auto">
+                  <Button 
+                    onClick={() => setCurrentMessage("Explain Limits in Calculus (Professor)")}
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
+                    variant="outline"
+                  >
+                    <GraduationCap className="h-4 w-4 mr-3 text-teal-600" />
+                    Explain Limits in Calculus (Professor)
+                  </Button>
                   
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <GraduationCap className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-gray-900">Professor</h4>
-                    <p className="text-xs text-gray-600">Verified • Rigorous</p>
-                  </div>
-                </div>
-
-                {/* Enhanced Sample Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100" onClick={() => setCurrentMessage("Explain the concept of limits in calculus")}>
-                    <CardContent className="p-6 text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mr-3">
-                            <GraduationCap className="h-4 w-4 text-white" />
-                          </div>
-                          <span className="text-sm font-semibold text-purple-700">Professor Leads</span>
-                        </div>
-                        <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">Fact/Concept</Badge>
-                      </div>
-                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">Explain the concept of limits in calculus</p>
-                      <div className="mt-4 flex items-center text-xs text-purple-600">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        <span>Click to ask this question</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100" onClick={() => setCurrentMessage("I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?")}>
-                    <CardContent className="p-6 text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
-                            <Heart className="h-4 w-4 text-white" />
-                          </div>
-                          <span className="text-sm font-semibold text-green-700">Mentor Leads</span>
-                        </div>
-                        <Badge className="text-xs bg-green-100 text-green-700 border-green-200">Guidance</Badge>
-                      </div>
-                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">I'm feeling stressed about my upcoming JEE exam. Can you help me plan my studies?</p>
-                      <div className="mt-4 flex items-center text-xs text-green-600">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        <span>Click to ask this question</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100" onClick={() => setCurrentMessage("Solve this quadratic equation step by step: x² - 5x + 6 = 0")}>
-                    <CardContent className="p-6 text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mr-3">
-                            <GraduationCap className="h-4 w-4 text-white" />
-                          </div>
-                          <span className="text-sm font-semibold text-purple-700">Professor Leads</span>
-                        </div>
-                        <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">Problem Solving</Badge>
-                      </div>
-                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">Solve this quadratic equation step by step: x² - 5x + 6 = 0</p>
-                      <div className="mt-4 flex items-center text-xs text-purple-600">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        <span>Click to ask this question</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100" onClick={() => setCurrentMessage("What are some effective study techniques for competitive exams?")}>
-                    <CardContent className="p-6 text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                            <Users className="h-4 w-4 text-white" />
-                          </div>
-                          <span className="text-sm font-semibold text-blue-700">Both Contribute</span>
-                        </div>
-                        <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">General Inquiry</Badge>
-                      </div>
-                      <p className="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">What are some effective study techniques for competitive exams?</p>
-                      <div className="mt-4 flex items-center text-xs text-blue-600">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        <span>Click to ask this question</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="mt-10 p-6 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl max-w-3xl mx-auto border border-blue-200/50 shadow-lg">
-                  <div className="flex items-center justify-center mb-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
-                      <Sparkles className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Intelligent Question Routing</span>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed text-center">
-                    Our advanced AI automatically analyzes your question and routes it to the most appropriate persona—whether you need 
-                    <span className="font-semibold text-purple-600"> technical expertise (Professor)</span> or 
-                    <span className="font-semibold text-green-600"> motivational guidance (Mentor)</span>—ensuring you always get the perfect response for your learning needs.
-                  </p>
-                  <div className="mt-4 flex items-center justify-center space-x-6 text-xs">
-                    <div className="flex items-center text-purple-600">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-                      <span>Technical Questions → Professor</span>
-                    </div>
-                    <div className="flex items-center text-green-600">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                      <span>Guidance Questions → Mentor</span>
-                    </div>
-                    <div className="flex items-center text-blue-600">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                      <span>Complex Questions → Both</span>
-                    </div>
-                  </div>
+                  <Button 
+                    onClick={() => setCurrentMessage("Help me plan my study routine (Mentor)")}
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
+                    variant="outline"
+                  >
+                    <Heart className="h-4 w-4 mr-3 text-teal-600" />
+                    Help me plan my study routine (Mentor)
+                  </Button>
                 </div>
               </div>
             ) : (
