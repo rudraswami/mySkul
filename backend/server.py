@@ -685,6 +685,11 @@ class MathValidationRequest(BaseModel):
     expression: str
     units: Optional[str] = None
 
+class FactVerificationRequest(BaseModel):
+    statement: str
+    subject: str
+    context: Optional[str] = None
+
 # Phase D: Enhanced Action Buttons Request Models
 class PracticeProblemsRequest(BaseModel):
     original_question: str
