@@ -2927,10 +2927,7 @@ async def get_error_patterns(user: User = Depends(get_current_user)):
 
 @api_router.post("/personalization/feedback")
 async def record_user_feedback(
-    session_id: str,
-    subject: str,
-    feedback_type: str = Field(..., pattern="^(helpful|too_easy|too_hard|confusing|perfect)$"),
-    topic_name: Optional[str] = None,
+    request: FeedbackRequest,
     user: User = Depends(get_current_user)
 ):
     """Record user feedback to improve personalization"""
