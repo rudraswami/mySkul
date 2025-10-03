@@ -2994,7 +2994,7 @@ class ActionButtonService:
         """Convert content into flashcard deck"""
         try:
             # Use LLM to convert content into Q&A format
-            from emergentintegrations import LLMChat
+            # LLMChat is already imported as LlmChat at top of file
             
             prompt = f"""
             Convert this educational content into 5-8 flashcards suitable for {subject} study:
