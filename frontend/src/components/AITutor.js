@@ -1049,26 +1049,13 @@ export default function AITutor() {
               // Chat Messages
               messages.map((message, index) => (
                 <div key={index} className="space-y-4">
-                  {/* Enhanced User Message */}
+                  {/* Clean User Message */}
                   <div className="flex justify-end">
-                    <div className="max-w-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-br-md p-5 shadow-lg transform hover:scale-[1.02] transition-transform duration-200">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-1">
-                          <p className="text-sm leading-relaxed">{message.message}</p>
-                        </div>
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-semibold">You</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
-                        <div className="flex items-center space-x-2 text-xs text-blue-100">
-                          <Clock className="h-3 w-3" />
-                          <span>{formatTime(message.timestamp)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                          <span className="text-xs text-blue-100">Delivered</span>
-                        </div>
+                    <div className="max-w-2xl bg-teal-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
+                      <p className="text-sm leading-relaxed">{message.message}</p>
+                      <div className="flex items-center justify-end mt-2 text-xs text-teal-100">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{formatTime(message.timestamp)}</span>
                       </div>
                     </div>
                   </div>
