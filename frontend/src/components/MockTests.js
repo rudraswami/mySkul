@@ -92,6 +92,7 @@ export default function MockTests() {
 
   useEffect(() => {
     loadAnalytics();
+    loadExamSubjects(); // Load subjects first
     // Load other data after initial load
     setTimeout(() => {
       loadBookmarkedQuestions();
