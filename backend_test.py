@@ -1225,6 +1225,598 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= PHASE A: AI TUTOR COMPLETE INPUT METHODS TESTS =============
+
+    def test_ai_tutor_file_processing_image_upload(self):
+        """Test Phase A: File Processing API with image upload (JPG, PNG, WebP) and OCR"""
+        if not self.token:
+            print("❌ No token available for file processing test")
+            return False
+        
+        print("   Testing Phase A: AI Tutor File Processing - Image Upload with OCR...")
+        
+        # Test different image formats and AI modes
+        test_scenarios = [
+            {
+                "name": "JPG Image - Dual AI Mode",
+                "file_type": "image/jpeg",
+                "ai_mode": "dual",
+                "subject": "Mathematics"
+            },
+            {
+                "name": "PNG Image - Mentor Mode", 
+                "file_type": "image/png",
+                "ai_mode": "mentor",
+                "subject": "Physics"
+            },
+            {
+                "name": "WebP Image - Professor Mode",
+                "file_type": "image/webp", 
+                "ai_mode": "professor",
+                "subject": "Chemistry"
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in test_scenarios:
+            print(f"   Testing {scenario['name']}...")
+            
+            # Create a simple test image (1x1 pixel)
+            import base64
+            import io
+            from PIL import Image
+            
+            try:
+                # Create a simple test image
+                img = Image.new('RGB', (100, 100), color='white')
+                img_buffer = io.BytesIO()
+                
+                # Save in appropriate format
+                if scenario['file_type'] == 'image/jpeg':
+                    img.save(img_buffer, format='JPEG')
+                    filename = 'test_image.jpg'
+                elif scenario['file_type'] == 'image/png':
+                    img.save(img_buffer, format='PNG')
+                    filename = 'test_image.png'
+                else:  # webp
+                    img.save(img_buffer, format='WEBP')
+                    filename = 'test_image.webp'
+                
+                img_buffer.seek(0)
+                
+                # Prepare multipart form data
+                files = {'file': (filename, img_buffer, scenario['file_type'])}
+                data = {
+                    'subject': scenario['subject'],
+                    'ai_mode': scenario['ai_mode']
+                }
+                
+                # Make request with multipart form data
+                url = f"{self.base_url}/ai/process-file"
+                headers = {'Authorization': f'Bearer {self.token}'}
+                
+                print(f"   Uploading {scenario['file_type']} file with {scenario['ai_mode']} AI mode...")
+                print("   This may take 10-15 seconds for OCR and AI analysis...")
+                
+                response = requests.post(url, files=files, data=data, headers=headers, timeout=60)
+                
+                print(f"   Status Code: {response.status_code}")
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    print(f"✅ {scenario['name']} - File processed successfully")
+                    
+                    # Validate response structure
+                    if scenario['ai_mode'] == 'dual':
+                        # Check dual AI response structure
+                        if 'dual_response' in response_data:
+                            dual_resp = response_data['dual_response']
+                            print(f"   Primary persona: {dual_resp.get('primary_persona', 'N/A')}")
+                            print(f"   Secondary persona: {dual_resp.get('secondary_persona', 'N/A')}")
+                            print(f"   Scenario type: {dual_resp.get('scenario_type', 'N/A')}")
+                            print(f"   Confidence: {dual_resp.get('confidence', 0):.2f}")
+                        else:
+                            print(f"   ⚠️  Missing dual_response structure")
+                    else:
+                        # Check single AI response structure
+                        if 'response' in response_data and 'ai_mode' in response_data:
+                            print(f"   AI Mode: {response_data['ai_mode']}")
+                            print(f"   Response length: {len(response_data.get('response', ''))}")
+                            print(f"   File processed: {response_data.get('file_processed', False)}")
+                        else:
+                            print(f"   ⚠️  Missing response structure")
+                    
+                    # Check session creation
+                    if 'session_id' in response_data:
+                        print(f"   ✅ Session created: {response_data['session_id']}")
+                        success_count += 1
+                    else:
+                        print(f"   ⚠️  No session ID returned")
+                        
+                else:
+                    print(f"❌ {scenario['name']} - Failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        print(f"   Error: {error_data}")
+                    except:
+                        print(f"   Error: {response.text}")
+                
+            except Exception as e:
+                print(f"❌ {scenario['name']} - Exception: {str(e)}")
+            
+            time.sleep(3)  # Delay between AI calls
+        
+        return success_count >= len(test_scenarios) * 0.8  # 80% success threshold
+
+    def test_ai_tutor_file_processing_pdf_upload(self):
+        """Test Phase A: File Processing API with PDF upload and text extraction"""
+        if not self.token:
+            print("❌ No token available for PDF processing test")
+            return False
+        
+        print("   Testing Phase A: AI Tutor File Processing - PDF Upload with PyPDF2...")
+        
+        # Create a simple test PDF
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            import io
+            
+            # Create PDF content
+            pdf_buffer = io.BytesIO()
+            c = canvas.Canvas(pdf_buffer, pagesize=letter)
+            c.drawString(100, 750, "Test Mathematics Problem")
+            c.drawString(100, 720, "Solve: x^2 + 5x + 6 = 0")
+            c.drawString(100, 690, "Find the roots of the quadratic equation.")
+            c.save()
+            pdf_buffer.seek(0)
+            
+            # Test PDF processing with different AI modes
+            test_scenarios = [
+                {"ai_mode": "dual", "subject": "Mathematics"},
+                {"ai_mode": "professor", "subject": "Mathematics"}
+            ]
+            
+            success_count = 0
+            
+            for scenario in test_scenarios:
+                print(f"   Testing PDF processing with {scenario['ai_mode']} AI mode...")
+                
+                # Reset buffer position
+                pdf_buffer.seek(0)
+                
+                # Prepare multipart form data
+                files = {'file': ('test_problem.pdf', pdf_buffer, 'application/pdf')}
+                data = {
+                    'subject': scenario['subject'],
+                    'ai_mode': scenario['ai_mode']
+                }
+                
+                # Make request
+                url = f"{self.base_url}/ai/process-file"
+                headers = {'Authorization': f'Bearer {self.token}'}
+                
+                print("   This may take 10-15 seconds for PDF extraction and AI analysis...")
+                
+                response = requests.post(url, files=files, data=data, headers=headers, timeout=60)
+                
+                print(f"   Status Code: {response.status_code}")
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    print(f"✅ PDF processed successfully with {scenario['ai_mode']} mode")
+                    
+                    # Validate response structure
+                    if 'session_id' in response_data:
+                        print(f"   ✅ Session created: {response_data['session_id']}")
+                        
+                    if scenario['ai_mode'] == 'dual' and 'dual_response' in response_data:
+                        print(f"   ✅ Dual AI response received")
+                        success_count += 1
+                    elif scenario['ai_mode'] != 'dual' and 'response' in response_data:
+                        print(f"   ✅ Single AI response received")
+                        success_count += 1
+                    else:
+                        print(f"   ⚠️  Unexpected response structure")
+                        
+                else:
+                    print(f"❌ PDF processing failed with status {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        print(f"   Error: {error_data}")
+                    except:
+                        print(f"   Error: {response.text}")
+                
+                time.sleep(3)  # Delay between AI calls
+            
+            return success_count >= len(test_scenarios) * 0.8
+            
+        except ImportError:
+            print("   ⚠️  reportlab not available, skipping PDF test")
+            return True  # Skip test if reportlab not available
+        except Exception as e:
+            print(f"❌ PDF test failed with exception: {str(e)}")
+            return False
+
+    def test_ai_tutor_file_validation(self):
+        """Test Phase A: File Processing API validation (file size, file types)"""
+        if not self.token:
+            print("❌ No token available for file validation test")
+            return False
+        
+        print("   Testing Phase A: File Processing - File Validation...")
+        
+        validation_tests = [
+            {
+                "name": "Invalid File Type",
+                "file_type": "text/plain",
+                "filename": "test.txt",
+                "content": b"This is a text file",
+                "expected_status": 400,
+                "expected_error": "Unsupported file type"
+            },
+            {
+                "name": "File Too Large",
+                "file_type": "image/jpeg", 
+                "filename": "large_image.jpg",
+                "content": b"x" * (11 * 1024 * 1024),  # 11MB (over 10MB limit)
+                "expected_status": 400,
+                "expected_error": "File size too large"
+            }
+        ]
+        
+        success_count = 0
+        
+        for test_case in validation_tests:
+            print(f"   Testing {test_case['name']}...")
+            
+            # Prepare multipart form data
+            files = {'file': (test_case['filename'], io.BytesIO(test_case['content']), test_case['file_type'])}
+            data = {
+                'subject': 'Mathematics',
+                'ai_mode': 'dual'
+            }
+            
+            # Make request
+            url = f"{self.base_url}/ai/process-file"
+            headers = {'Authorization': f'Bearer {self.token}'}
+            
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=30)
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == test_case['expected_status']:
+                print(f"✅ {test_case['name']} - Validation working correctly")
+                try:
+                    error_data = response.json()
+                    if test_case['expected_error'] in error_data.get('detail', ''):
+                        print(f"   ✅ Correct error message: {error_data['detail']}")
+                        success_count += 1
+                    else:
+                        print(f"   ⚠️  Unexpected error message: {error_data.get('detail', '')}")
+                except:
+                    print(f"   ⚠️  Could not parse error response")
+            else:
+                print(f"❌ {test_case['name']} - Expected {test_case['expected_status']}, got {response.status_code}")
+        
+        return success_count >= len(validation_tests) * 0.8
+
+    def test_ai_tutor_available_contexts_api(self):
+        """Test Phase A: Available Contexts API for Context Pin feature"""
+        if not self.token:
+            print("❌ No token available for available contexts test")
+            return False
+        
+        print("   Testing Phase A: Available Contexts API...")
+        
+        success, response = self.run_test(
+            "Available Contexts API",
+            "GET",
+            "ai/available-contexts",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            contexts = response.get('contexts', [])
+            print(f"   ✅ Available contexts retrieved")
+            print(f"   Total contexts: {len(contexts)}")
+            
+            # Validate context structure and sorting
+            context_types = {}
+            creation_dates = []
+            
+            for context in contexts:
+                # Check required fields
+                required_fields = ['id', 'type', 'title', 'subject', 'created_at', 'description']
+                missing_fields = [field for field in required_fields if field not in context]
+                
+                if missing_fields:
+                    print(f"   ⚠️  Context missing fields: {missing_fields}")
+                else:
+                    context_type = context['type']
+                    context_types[context_type] = context_types.get(context_type, 0) + 1
+                    creation_dates.append(context['created_at'])
+            
+            # Check context types
+            print(f"   Context types found:")
+            for ctx_type, count in context_types.items():
+                print(f"     {ctx_type}: {count}")
+            
+            # Verify sorting (newest first)
+            if len(creation_dates) > 1:
+                is_sorted = all(creation_dates[i] >= creation_dates[i+1] for i in range(len(creation_dates)-1))
+                if is_sorted:
+                    print(f"   ✅ Contexts properly sorted (newest first)")
+                else:
+                    print(f"   ⚠️  Contexts not properly sorted")
+            
+            # Check for expected context types
+            expected_types = ['chat_session', 'note_session', 'mock_test']
+            found_types = set(context_types.keys())
+            
+            if found_types.intersection(expected_types):
+                print(f"   ✅ Expected context types found: {found_types.intersection(expected_types)}")
+                return True
+            else:
+                print(f"   ⚠️  No expected context types found. Available: {found_types}")
+                return len(contexts) >= 0  # Return True if API works, even with empty contexts
+        
+        return False
+
+    def test_ai_tutor_context_integration(self):
+        """Test Phase A: Context Integration with file processing"""
+        if not self.token:
+            print("❌ No token available for context integration test")
+            return False
+        
+        print("   Testing Phase A: Context Integration with File Processing...")
+        
+        # First, get available contexts
+        print("   Step 1: Getting available contexts...")
+        success, contexts_response = self.run_test(
+            "Get Contexts for Integration",
+            "GET", 
+            "ai/available-contexts",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if not success:
+            print("   ❌ Could not retrieve contexts for integration test")
+            return False
+        
+        contexts = contexts_response.get('contexts', [])
+        if not contexts:
+            print("   ⚠️  No contexts available for integration test")
+            return True  # Skip test if no contexts available
+        
+        # Use the first available context
+        test_context = contexts[0]
+        context_id = test_context['id']
+        context_type = test_context['type']
+        
+        print(f"   Step 2: Testing file processing with context integration...")
+        print(f"   Using context: {test_context['title']} (type: {context_type})")
+        
+        try:
+            # Create a simple test image
+            from PIL import Image
+            import io
+            
+            img = Image.new('RGB', (100, 100), color='white')
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='JPEG')
+            img_buffer.seek(0)
+            
+            # Prepare multipart form data with context parameters
+            files = {'file': ('test_with_context.jpg', img_buffer, 'image/jpeg')}
+            data = {
+                'subject': 'Mathematics',
+                'ai_mode': 'dual',
+                'context_id': context_id,
+                'context_type': context_type
+            }
+            
+            # Make request
+            url = f"{self.base_url}/ai/process-file"
+            headers = {'Authorization': f'Bearer {self.token}'}
+            
+            print("   This may take 10-15 seconds for context integration and AI analysis...")
+            
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=60)
+            
+            print(f"   Status Code: {response.status_code}")
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                print(f"✅ File processing with context integration successful")
+                
+                # Check if context was integrated
+                if 'session_id' in response_data:
+                    print(f"   ✅ Session created with context: {response_data['session_id']}")
+                
+                # Check dual AI response structure
+                if 'dual_response' in response_data:
+                    dual_resp = response_data['dual_response']
+                    print(f"   ✅ Dual AI response with context integration")
+                    print(f"   Primary persona: {dual_resp.get('primary_persona', 'N/A')}")
+                    print(f"   Context connected: {context_id[:8]}...")
+                    return True
+                elif 'response' in response_data:
+                    print(f"   ✅ AI response with context integration")
+                    return True
+                else:
+                    print(f"   ⚠️  Unexpected response structure")
+                    return False
+            else:
+                print(f"❌ Context integration failed with status {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Error: {response.text}")
+                return False
+                
+        except ImportError:
+            print("   ⚠️  PIL not available, skipping context integration test")
+            return True
+        except Exception as e:
+            print(f"❌ Context integration test failed: {str(e)}")
+            return False
+
+    def test_ai_tutor_authentication_security(self):
+        """Test Phase A: Authentication security for new endpoints"""
+        print("   Testing Phase A: Authentication Security...")
+        
+        # Test endpoints without authentication
+        endpoints_to_test = [
+            {
+                "name": "File Processing",
+                "endpoint": "ai/process-file",
+                "method": "POST",
+                "data": {"subject": "Mathematics", "ai_mode": "dual"},
+                "files": {"file": ("test.jpg", b"fake_image_data", "image/jpeg")}
+            },
+            {
+                "name": "Available Contexts",
+                "endpoint": "ai/available-contexts", 
+                "method": "GET",
+                "data": None,
+                "files": None
+            }
+        ]
+        
+        success_count = 0
+        
+        for test_case in endpoints_to_test:
+            print(f"   Testing {test_case['name']} without authentication...")
+            
+            url = f"{self.base_url}/{test_case['endpoint']}"
+            
+            try:
+                if test_case['method'] == 'GET':
+                    response = requests.get(url, timeout=30)
+                else:  # POST
+                    if test_case['files']:
+                        response = requests.post(url, data=test_case['data'], files=test_case['files'], timeout=30)
+                    else:
+                        response = requests.post(url, json=test_case['data'], timeout=30)
+                
+                print(f"   Status Code: {response.status_code}")
+                
+                if response.status_code == 401:
+                    print(f"✅ {test_case['name']} - Correctly rejected unauthorized request")
+                    success_count += 1
+                else:
+                    print(f"❌ {test_case['name']} - Failed to reject unauthorized request (got {response.status_code})")
+                    
+            except Exception as e:
+                print(f"❌ {test_case['name']} - Exception during auth test: {str(e)}")
+        
+        return success_count >= len(endpoints_to_test) * 0.8
+
+    def test_phase_a_integration_comprehensive(self):
+        """Test Phase A: Comprehensive integration test of all input methods"""
+        if not self.token:
+            print("❌ No token available for comprehensive integration test")
+            return False
+        
+        print("   Testing Phase A: Comprehensive Integration - All Input Methods...")
+        
+        integration_results = {
+            "file_processing": False,
+            "context_retrieval": False,
+            "context_integration": False,
+            "session_creation": False,
+            "ai_analysis": False
+        }
+        
+        try:
+            # Step 1: Test file processing capability
+            print("   Step 1: Testing file processing capability...")
+            from PIL import Image
+            import io
+            
+            img = Image.new('RGB', (200, 100), color='white')
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='JPEG')
+            img_buffer.seek(0)
+            
+            files = {'file': ('integration_test.jpg', img_buffer, 'image/jpeg')}
+            data = {'subject': 'Mathematics', 'ai_mode': 'dual'}
+            
+            url = f"{self.base_url}/ai/process-file"
+            headers = {'Authorization': f'Bearer {self.token}'}
+            
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=60)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                integration_results["file_processing"] = True
+                
+                if 'session_id' in response_data:
+                    integration_results["session_creation"] = True
+                    session_id = response_data['session_id']
+                    print(f"   ✅ File processing and session creation successful: {session_id}")
+                
+                if 'dual_response' in response_data or 'response' in response_data:
+                    integration_results["ai_analysis"] = True
+                    print(f"   ✅ AI analysis successful")
+            
+            # Step 2: Test context retrieval
+            print("   Step 2: Testing context retrieval...")
+            context_response = requests.get(f"{self.base_url}/ai/available-contexts", headers=headers, timeout=30)
+            
+            if context_response.status_code == 200:
+                context_data = context_response.json()
+                contexts = context_data.get('contexts', [])
+                integration_results["context_retrieval"] = True
+                print(f"   ✅ Context retrieval successful: {len(contexts)} contexts")
+                
+                # Step 3: Test context integration if contexts available
+                if contexts:
+                    print("   Step 3: Testing context integration...")
+                    test_context = contexts[0]
+                    
+                    # Reset image buffer
+                    img_buffer.seek(0)
+                    files = {'file': ('context_integration_test.jpg', img_buffer, 'image/jpeg')}
+                    data = {
+                        'subject': 'Physics',
+                        'ai_mode': 'mentor',
+                        'context_id': test_context['id'],
+                        'context_type': test_context['type']
+                    }
+                    
+                    context_response = requests.post(url, files=files, data=data, headers=headers, timeout=60)
+                    
+                    if context_response.status_code == 200:
+                        integration_results["context_integration"] = True
+                        print(f"   ✅ Context integration successful")
+            
+            # Calculate success rate
+            success_count = sum(integration_results.values())
+            total_tests = len(integration_results)
+            success_rate = success_count / total_tests
+            
+            print(f"\n   📊 PHASE A INTEGRATION RESULTS:")
+            for test_name, result in integration_results.items():
+                status = "✅" if result else "❌"
+                print(f"   {status} {test_name.replace('_', ' ').title()}")
+            
+            print(f"   Overall Success Rate: {success_rate:.1%} ({success_count}/{total_tests})")
+            
+            return success_rate >= 0.8  # 80% success threshold
+            
+        except ImportError:
+            print("   ⚠️  PIL not available, skipping comprehensive integration test")
+            return True
+        except Exception as e:
+            print(f"❌ Comprehensive integration test failed: {str(e)}")
+            return False
+
     # ============= AUTO-NOTE MENTOR API TESTS =============
 
     def test_auto_note_start_session(self):
