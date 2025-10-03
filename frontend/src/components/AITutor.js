@@ -1346,7 +1346,6 @@ export default function AITutor() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  console.log('Bookmark clicked for session:', session.session_id, 'Current bookmark state:', session.bookmarked);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   toggleBookmarkSession(session.session_id, session.bookmarked || false);
                                 }}
