@@ -289,11 +289,11 @@ export default function AITutor() {
     URL.revokeObjectURL(url);
   };
 
-  // Phase A: File Upload Functionality
+  // Phase A: Advanced File Upload Functionality with Cutting-Edge Technology
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      processSelectedFile(file);
     }
   };
 
@@ -314,8 +314,41 @@ export default function AITutor() {
     const files = event.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      setSelectedFile(file);
+      processSelectedFile(file);
     }
+  };
+
+  const processSelectedFile = (file) => {
+    console.log('📁 File selected:', file.name, file.type, file.size, 'bytes');
+    
+    // Enhanced validation with more specific error messages
+    const supportedTypes = {
+      'image/jpeg': 'JPEG Image',
+      'image/jpg': 'JPG Image', 
+      'image/png': 'PNG Image',
+      'image/webp': 'WebP Image',
+      'application/pdf': 'PDF Document'
+    };
+
+    if (!supportedTypes[file.type]) {
+      alert(`❌ Unsupported file type: ${file.type}\n\n✅ Supported formats:\n• JPEG/JPG Images\n• PNG Images\n• WebP Images\n• PDF Documents`);
+      return;
+    }
+
+    // Check file size (25MB limit for better performance)
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    if (file.size > maxSize) {
+      alert(`❌ File too large: ${(file.size / 1024 / 1024).toFixed(2)} MB\n\n✅ Maximum allowed: 25MB`);
+      return;
+    }
+
+    console.log('✅ File validation passed');
+    setSelectedFile(file);
+    
+    // Auto-process immediately for better UX
+    setTimeout(() => {
+      processFileUpload(file);
+    }, 500);
   };
 
   const clearSelectedFile = () => {
@@ -326,38 +359,35 @@ export default function AITutor() {
     }
   };
 
-  const processFileUpload = async () => {
-    if (!selectedFile) return;
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
-    if (!allowedTypes.includes(selectedFile.type)) {
-      alert('Please upload an image (JPG, PNG, WebP) or PDF file');
+  const processFileUpload = async (fileToProcess = selectedFile) => {
+    if (!fileToProcess) {
+      console.error('❌ No file to process');
       return;
     }
 
-    // Check file size (10MB limit for images/PDFs)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (selectedFile.size > maxSize) {
-      alert('File size too large. Please upload a file smaller than 10MB.');
-      return;
-    }
-
+    console.log('🚀 Starting file processing:', fileToProcess.name);
     setLoading(true);
-    setUploadProgress(10);
+    setUploadProgress(5);
 
     try {
       const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('file', fileToProcess);
       formData.append('subject', selectedSubject);
       formData.append('ai_mode', aiMode);
+      
       if (selectedContext) {
         formData.append('context_id', selectedContext.id);
         formData.append('context_type', selectedContext.type);
+        console.log('🔗 Context attached:', selectedContext.title);
       }
 
-      setUploadProgress(50);
+      setUploadProgress(20);
+      console.log('📤 Uploading file to AI analysis...');
 
       const response = await fetch(`${API}/ai/process-file`, {
         method: 'POST',
@@ -367,13 +397,27 @@ export default function AITutor() {
         body: formData
       });
 
-      setUploadProgress(90);
+      setUploadProgress(60);
+      console.log('📡 Response received, status:', response.status);
 
       if (response.ok) {
         const result = await response.json();
+        console.log('✅ AI analysis complete:', result);
+        
+        setUploadProgress(90);
+
+        // Create a properly formatted message object for display
+        const messageToAdd = {
+          ...result,
+          message: `📁 Analyzed file: ${fileToProcess.name}`,
+          timestamp: new Date().toISOString(),
+          file_processed: true,
+          file_name: fileToProcess.name,
+          file_type: fileToProcess.type
+        };
         
         // Add the AI response to messages
-        setMessages(prev => [...prev, result]);
+        setMessages(prev => [...prev, messageToAdd]);
         
         // Update current session if it's a new one
         if (!currentSession && result.session_id) {
@@ -384,19 +428,22 @@ export default function AITutor() {
         // Clear the uploaded file
         clearSelectedFile();
         
+        setUploadProgress(100);
+        console.log('🎉 File processing completed successfully!');
+        
       } else {
         const errorData = await response.json();
-        alert(errorData.detail || 'Failed to process file');
+        const errorMessage = errorData.detail || 'Failed to process file';
+        console.error('❌ Server error:', errorMessage);
+        alert(`❌ Processing failed: ${errorMessage}`);
       }
-
-      setUploadProgress(100);
       
     } catch (error) {
-      console.error('Error processing file:', error);
-      alert('Failed to process file. Please try again.');
+      console.error('❌ Upload error:', error);
+      alert(`❌ Upload failed: ${error.message}\n\nPlease check your connection and try again.`);
     } finally {
       setLoading(false);
-      setUploadProgress(0);
+      setTimeout(() => setUploadProgress(0), 1000);
     }
   };
 
