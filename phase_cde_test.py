@@ -370,7 +370,12 @@ class PhaseCDETester:
         )
         
         if success:
-            decks = response.get('decks', [])
+            if isinstance(response, dict):
+                decks = response.get('decks', [])
+            elif isinstance(response, list):
+                decks = response
+            else:
+                decks = []
             print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
             success_count += 1
         else:
