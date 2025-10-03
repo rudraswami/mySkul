@@ -2249,6 +2249,186 @@ async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_curren
 
 # ============= DUAL-LAYER AI API ENDPOINTS =============
 
+@api_router.post("/ai/process-file")
+async def process_file_with_ai(
+    file: UploadFile = File(...),
+    subject: str = Field(...),
+    ai_mode: str = Field(default="dual"),
+    context_id: Optional[str] = Field(None),
+    context_type: Optional[str] = Field(None),
+    user: User = Depends(get_current_user)
+):
+    """Process uploaded image or PDF file with AI Tutor analysis"""
+    
+    try:
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.content_type}")
+        
+        # Check file size (10MB limit)
+        file_content = await file.read()
+        if len(file_content) > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(status_code=400, detail="File size too large. Maximum 10MB allowed.")
+        
+        # Process file content based on type
+        if file.content_type.startswith('image/'):
+            processed_text = await process_image_with_ocr(file_content)
+        elif file.content_type == 'application/pdf':
+            processed_text = await process_pdf_content(file_content)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+        
+        # Get context information if provided
+        context_info = ""
+        if context_id and context_type:
+            context_info = await get_context_information(context_id, context_type, user.user_id)
+        
+        # Prepare message for AI processing
+        ai_message = f"""Please analyze the following content from an uploaded {file.content_type.split('/')[-1]} file:
+
+EXTRACTED CONTENT:
+{processed_text}
+
+{f"CONTEXT INFORMATION: {context_info}" if context_info else ""}
+
+Please provide a comprehensive analysis, solve any problems shown, and explain the concepts involved."""
+
+        # Generate session ID
+        session_id = str(uuid.uuid4())
+        
+        # Use dual-layer AI based on mode
+        if ai_mode == 'dual':
+            result = await dual_ai.get_coordinated_response(ai_message, subject, session_id, {
+                'file_processed': True,
+                'file_type': file.content_type,
+                'file_name': file.filename,
+                'context_connected': bool(context_id)
+            })
+        elif ai_mode == 'mentor':
+            mentor_service = MentorAI(EMERGENT_LLM_KEY)
+            response = await mentor_service.get_response(ai_message, subject, session_id)
+            result = {
+                'response': response,
+                'ai_mode': 'mentor',
+                'message': ai_message,
+                'session_id': session_id,
+                'subject': subject,
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'file_processed': True
+            }
+        else:  # professor
+            professor_service = ProfessorAI(EMERGENT_LLM_KEY)
+            response = await professor_service.get_response(ai_message, subject, session_id)
+            result = {
+                'response': response,
+                'ai_mode': 'professor',
+                'message': ai_message,
+                'session_id': session_id,
+                'subject': subject,
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'file_processed': True
+            }
+        
+        # Store the session
+        session_doc = {
+            'session_id': session_id,
+            'user_id': user.user_id,
+            'title': f"File Analysis: {file.filename}",
+            'subject': subject,
+            'created_at': datetime.now(timezone.utc),
+            'message_count': 1,
+            'file_processed': True,
+            'file_name': file.filename,
+            'file_type': file.content_type
+        }
+        await db.ai_sessions.insert_one(session_doc)
+        
+        logger.info(f"✅ File processed successfully: {file.filename} ({file.content_type})")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"File processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
+
+async def process_image_with_ocr(image_content: bytes) -> str:
+    """Extract text from image using OCR"""
+    try:
+        # Use LLM with vision capabilities for image analysis
+        llm_chat = LlmChat(api_key=EMERGENT_LLM_KEY)
+        
+        # Convert image to base64
+        import base64
+        image_base64 = base64.b64encode(image_content).decode('utf-8')
+        
+        # Create message with image
+        response = await llm_chat.send_message([
+            UserMessage(content="Please extract all text and describe any mathematical expressions, diagrams, or problems shown in this image. Be detailed and accurate.")
+        ], model="gpt-4o", image_base64=image_base64)
+        
+        return response.content
+        
+    except Exception as e:
+        logger.error(f"OCR processing error: {str(e)}")
+        return f"Unable to process image content. Error: {str(e)}"
+
+async def process_pdf_content(pdf_content: bytes) -> str:
+    """Extract text from PDF"""
+    try:
+        import PyPDF2
+        import io
+        
+        pdf_file = io.BytesIO(pdf_content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        
+        text_content = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text_content += page.extract_text() + "\n"
+        
+        if not text_content.strip():
+            return "No readable text found in PDF file."
+        
+        return text_content
+        
+    except Exception as e:
+        logger.error(f"PDF processing error: {str(e)}")
+        return f"Unable to process PDF content. Error: {str(e)}"
+
+async def get_context_information(context_id: str, context_type: str, user_id: str) -> str:
+    """Retrieve context information from previous sessions/notes/tests"""
+    try:
+        if context_type == 'chat_session':
+            session = await db.ai_sessions.find_one({
+                "session_id": context_id,
+                "user_id": user_id
+            })
+            if session:
+                return f"Previous chat session: {session.get('title', 'Unknown')} - Subject: {session.get('subject', 'Unknown')}"
+        
+        elif context_type == 'note_session':
+            note = await db.auto_note_sessions.find_one({
+                "session_id": context_id,
+                "user_id": user_id
+            })
+            if note:
+                return f"Auto-note session: {note.get('session_name', 'Unknown')} - Subject: {note.get('subject', 'Unknown')}"
+        
+        elif context_type == 'mock_test':
+            test = await db.mock_tests.find_one({
+                "test_id": context_id,
+                "user_id": user_id
+            })
+            if test:
+                return f"Mock test: {test.get('test_name', 'Unknown')} - Subject: {test.get('subject', 'Unknown')} - Score: {test.get('score', 0)}/{test.get('total_marks', 0)}"
+        
+        return ""
+        
+    except Exception as e:
+        logger.error(f"Context retrieval error: {str(e)}")
+        return ""
+
 @api_router.post("/ai/dual-response")
 async def get_dual_ai_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
     """Get coordinated response from both Mentor and Professor AI layers"""
