@@ -914,22 +914,50 @@ export default function MockTests() {
               </Card>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button onClick={closeResults} className="flex-1">
-                Continue Learning
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  closeResults();
-                  // Could trigger retake functionality
-                }}
-                className="flex-1"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retake Test
-              </Button>
+            {/* Enhanced Action Buttons */}
+            <div className="space-y-4">
+              {/* Primary Actions Row */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => {
+                    closeResults();
+                    loadDetailedReview(testResults.test_id);
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Detailed Review
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setRetakeTestId(testResults.test_id);
+                    setShowRetakeOptions(true);
+                  }}
+                  className="flex-1"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retake Options
+                </Button>
+              </div>
+              
+              {/* Secondary Actions Row */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={closeResults} variant="outline" className="flex-1">
+                  Continue Learning
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    closeResults();
+                    loadPerformanceTrends();
+                  }}
+                  className="flex-1"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  View Trends
+                </Button>
+              </div>
             </div>
           </div>
         </div>
