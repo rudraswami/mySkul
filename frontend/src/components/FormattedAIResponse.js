@@ -356,6 +356,122 @@ export default function FormattedAIResponse({
           })}
         </div>
       </CardContent>
+
+      {/* Enhanced Action Buttons with Personalization Feedback */}
+      <div className="border-t p-4 bg-gray-50">
+        <div className="space-y-3">
+          {/* Traditional Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(content);
+                alert('Response copied to clipboard!');
+              }}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Copy
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // TODO: Implement bookmarking
+                alert('Bookmarked for future reference!');
+              }}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <BookOpen className="h-3 w-3 mr-1" />
+              Bookmark
+            </Button>
+
+            {onPracticMore && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPracticMore}
+                className="text-blue-600 hover:text-blue-800 border-blue-300 hover:border-blue-400"
+              >
+                <Target className="h-3 w-3 mr-1" />
+                Practice More
+              </Button>
+            )}
+
+            {onAddToNotes && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAddToNotes}
+                className="text-green-600 hover:text-green-800 border-green-300 hover:border-green-400"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add to Notes
+              </Button>
+            )}
+          </div>
+
+          {/* Personalization Feedback */}
+          {onFeedback && (
+            <div className="border-t pt-3">
+              <p className="text-xs text-gray-600 mb-2">💡 Help us personalize your learning:</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onFeedback('perfect')}
+                  className="text-green-600 hover:text-green-800 border-green-300 hover:border-green-400 hover:bg-green-50"
+                >
+                  <ThumbsUp className="h-3 w-3 mr-1" />
+                  Perfect! 🎯
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onFeedback('helpful')}
+                  className="text-blue-600 hover:text-blue-800 border-blue-300 hover:border-blue-400 hover:bg-blue-50"
+                >
+                  <Heart className="h-3 w-3 mr-1" />
+                  Helpful ✨
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onFeedback('too_easy')}
+                  className="text-yellow-600 hover:text-yellow-800 border-yellow-300 hover:border-yellow-400 hover:bg-yellow-50"
+                >
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                  Too Easy 😴
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onFeedback('too_hard')}
+                  className="text-orange-600 hover:text-orange-800 border-orange-300 hover:border-orange-400 hover:bg-orange-50"
+                >
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Too Hard 🤯
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onFeedback('confusing')}
+                  className="text-red-600 hover:text-red-800 border-red-300 hover:border-red-400 hover:bg-red-50"
+                >
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Confusing 😕
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </Card>
   );
 }
