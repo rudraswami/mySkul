@@ -3296,6 +3296,15 @@ def main():
         ("🆕 Motivational Content", tester.test_motivational_content),
         ("🆕 Auth Validation", tester.test_integration_auth_validation),
         
+        # Phase A: AI Tutor Complete Input Methods Tests (PRIORITY FOR REVIEW REQUEST)
+        ("🎯 Phase A: Image Upload & OCR Processing", tester.test_ai_tutor_file_processing_image_upload),
+        ("🎯 Phase A: PDF Upload & Text Extraction", tester.test_ai_tutor_file_processing_pdf_upload),
+        ("🎯 Phase A: File Validation (Size & Type)", tester.test_ai_tutor_file_validation),
+        ("🎯 Phase A: Available Contexts API", tester.test_ai_tutor_available_contexts_api),
+        ("🎯 Phase A: Context Integration", tester.test_ai_tutor_context_integration),
+        ("🎯 Phase A: Authentication Security", tester.test_ai_tutor_authentication_security),
+        ("🎯 Phase A: Comprehensive Integration", tester.test_phase_a_integration_comprehensive),
+        
         # Auto-Note Mentor API Tests
         ("📝 Auto-Note Start Session", tester.test_auto_note_start_session),
         ("📝 Auto-Note Process Audio", tester.test_auto_note_process_audio),
