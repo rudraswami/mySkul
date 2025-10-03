@@ -16,7 +16,6 @@ import {
   Heart,
   Clock,
   Users,
-  Sparkles,
   MessageCircle,
   CreditCard,
   Download,
