@@ -1947,7 +1947,7 @@ async def require_subscription_access(feature_name: str):
                 elif access_info["reason"] == "feature_not_available":
                     raise HTTPException(
                         status_code=402,
-                        detail=f"This feature is not available in your current plan. Please upgrade to access this feature."
+                        detail="This feature is not available in your current plan. Please upgrade to access this feature."
                     )
                 elif access_info["reason"] == "usage_limit_reached":
                     raise HTTPException(
@@ -3826,7 +3826,7 @@ async def retake_mock_test(
                 student_id=user.user_id,
                 blueprint_id=original_blueprint.blueprint_id,
                 title=f"RETAKE: {original_test['title']}",
-                description=f"Exact retake of previous test",
+                description="Exact retake of previous test",
                 questions=original_test['questions'],  # Same questions
                 total_marks=original_test['total_marks'],
                 time_limit=original_test['time_limit'],
@@ -3855,7 +3855,7 @@ async def retake_mock_test(
                 original_blueprint.total_questions = min(15, original_blueprint.total_questions)  # Shorter adaptive test
                 
             new_test = await MockTestEngine.create_test_from_blueprint(original_blueprint, user.user_id)
-            new_test.title = f"ADAPTIVE: Focus on Weak Areas"
+            new_test.title = "ADAPTIVE: Focus on Weak Areas"
         
         # Store new test
         await db.mock_tests.insert_one(new_test.dict())
