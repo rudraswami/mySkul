@@ -190,6 +190,26 @@ export default function AITutor() {
     }
   };
 
+  const loadPersonalizationData = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+      
+      const response = await axios.get(`${API}/personalization/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data) {
+        setStudentProfile(response.data.profile);
+        setTopicMastery(response.data.topic_mastery || {});
+        setErrorPatterns(response.data.error_patterns || []);
+        setPersonalizedDifficulty(response.data.difficulty_level || 0.5);
+      }
+    } catch (error) {
+      console.error('Failed to load personalization data:', error);
+    }
+  };
+
   const loadSession = async (sessionId) => {
     try {
       const response = await axios.get(`${API}/chat/${sessionId}/messages`);
