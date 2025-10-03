@@ -1332,7 +1332,6 @@ export default function AITutor() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  console.log('Pin clicked for session:', session.session_id, 'Current pinned state:', session.pinned);
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   togglePinSession(session.session_id, session.pinned || false);
                                 }}
