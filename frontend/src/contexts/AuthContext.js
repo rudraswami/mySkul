@@ -6,6 +6,9 @@ const AuthContext = createContext();
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+console.log('AuthContext - Backend URL:', BACKEND_URL);
+console.log('AuthContext - API URL:', API);
+
 export function useAuth() {
   return useContext(AuthContext);
 }
