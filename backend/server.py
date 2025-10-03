@@ -2936,12 +2936,12 @@ async def record_user_feedback(
         await db.learning_interactions.update_many(
             {
                 "user_id": user.user_id,
-                "session_id": session_id,
-                "subject": subject
+                "session_id": request.session_id,
+                "subject": request.subject
             },
             {
                 "$set": {
-                    "user_feedback": feedback_type,
+                    "user_feedback": request.feedback_type,
                     "feedback_recorded_at": datetime.now(timezone.utc).isoformat()
                 }
             }
