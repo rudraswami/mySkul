@@ -405,66 +405,27 @@ export default function AITutor() {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       
-      const [sessionsRes, notesRes, testsRes] = await Promise.all([
-        fetch(`${API}/ai/chat-sessions`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API}/auto-notes/sessions`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API}/mock-tests/history`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).catch(() => ({ ok: false })) // Mock tests might not exist
-      ]);
+      const response = await fetch(`${API}/ai/available-contexts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      const contexts = [];
-
-      if (sessionsRes.ok) {
-        const sessions = await sessionsRes.json();
-        contexts.push(...sessions.map(session => ({
-          id: session.session_id,
-          type: 'chat_session',
-          title: session.title,
-          subject: session.subject,
-          created_at: session.created_at,
-          icon: MessageCircle,
-          description: `Chat session with ${session.message_count || 0} messages`
-        })));
+      if (response.ok) {
+        const data = await response.json();
+        const contexts = data.contexts.map(context => ({
+          ...context,
+          icon: context.type === 'chat_session' ? MessageCircle : 
+               context.type === 'note_session' ? FileText : Target
+        }));
+        
+        setAvailableContexts(contexts);
+      } else {
+        console.error('Failed to load contexts');
+        setAvailableContexts([]);
       }
-
-      if (notesRes.ok) {
-        const notes = await notesRes.json();
-        contexts.push(...notes.map(note => ({
-          id: note.session_id,
-          type: 'note_session',
-          title: note.session_name,
-          subject: note.subject,
-          created_at: note.created_at,
-          icon: FileText,
-          description: `Auto-note session with processed content`
-        })));
-      }
-
-      if (testsRes.ok) {
-        const tests = await testsRes.json();
-        contexts.push(...tests.map(test => ({
-          id: test.test_id,
-          type: 'mock_test',
-          title: test.test_name,
-          subject: test.subject,
-          created_at: test.created_at,
-          icon: Target,
-          description: `Mock test - Score: ${test.score}/${test.total_marks}`
-        })));
-      }
-
-      // Sort by creation date (newest first)
-      contexts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      
-      setAvailableContexts(contexts);
       
     } catch (error) {
       console.error('Error loading available contexts:', error);
+      setAvailableContexts([]);
     }
   };
 
