@@ -3403,7 +3403,7 @@ def main():
     print(f"   ✓ Backward Compatibility with Legacy Chat")
     print(f"   ✓ JWT Authentication Integration")
     
-        return 0 if len(failed_tests) == 0 else 1
+    return 0 if len(failed_tests) == 0 else 1
 
     # ============= PHASE B: PERSONALIZATION TESTS =============
 
