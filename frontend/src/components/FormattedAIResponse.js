@@ -480,7 +480,18 @@ export function DualResponseContainer({
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => onFeedback && onFeedback('helpful')}
+                onClick={() => {
+                  if (onFeedback) {
+                    onFeedback('helpful');
+                    // Visual feedback
+                    const button = event.target.closest('button');
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Sent!</span>';
+                    setTimeout(() => {
+                      button.innerHTML = originalText;
+                    }, 2000);
+                  }
+                }}
                 className="text-gray-500 hover:text-teal-600"
               >
                 <ThumbsUp className="h-4 w-4 mr-1" />
@@ -489,7 +500,34 @@ export function DualResponseContainer({
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigator.clipboard.writeText(primaryResponse.response)}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(primaryResponse.response);
+                    // Visual feedback
+                    const button = event.target.closest('button');
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Copied!</span>';
+                    setTimeout(() => {
+                      button.innerHTML = originalText;
+                    }, 2000);
+                  } catch (err) {
+                    console.error('Failed to copy text:', err);
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = primaryResponse.response;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    const button = event.target.closest('button');
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<span class="flex items-center"><svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Copied!</span>';
+                    setTimeout(() => {
+                      button.innerHTML = originalText;
+                    }, 2000);
+                  }
+                }}
                 className="text-gray-500 hover:text-teal-600"
               >
                 <BookOpen className="h-4 w-4 mr-1" />
