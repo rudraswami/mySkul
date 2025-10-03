@@ -3805,6 +3805,269 @@ async def record_user_feedback(
         logger.error(f"Error recording feedback: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to record feedback")
 
+# ============= PHASE C, D, E API ENDPOINTS =============
+
+# Phase C: Advanced Guardrails Endpoints
+@api_router.post("/guardrails/validate-math")
+async def validate_mathematics_endpoint(
+    expression: str,
+    units: Optional[str] = None,
+    user: User = Depends(get_current_user)
+):
+    """Validate mathematical expressions and units"""
+    try:
+        validation = await GuardrailService.validate_mathematics(expression, units)
+        return validation.dict()
+    except Exception as e:
+        logger.error(f"Math validation endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Math validation failed")
+
+@api_router.get("/guardrails/citations/{subject}/{topic}")
+async def get_citations_endpoint(
+    subject: str,
+    topic: str,
+    education_standard: str = "JEE",
+    user: User = Depends(get_current_user)
+):
+    """Get relevant citations for subject and topic"""
+    try:
+        citations = await GuardrailService.generate_citations(subject, topic, education_standard)
+        return [citation.dict() for citation in citations]
+    except Exception as e:
+        logger.error(f"Citations endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate citations")
+
+@api_router.get("/guardrails/disagreements/{session_id}")
+async def get_disagreement_alerts(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get disagreement alerts for a session"""
+    try:
+        alerts = await db.disagreement_alerts.find({"session_id": session_id}).to_list(length=10)
+        return [clean_mongodb_doc(alert) for alert in alerts]
+    except Exception as e:
+        logger.error(f"Disagreements endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get disagreement alerts")
+
+# Phase D: Enhanced Action Buttons Endpoints  
+@api_router.post("/actions/practice-more")
+async def generate_practice_problems_endpoint(
+    original_question: str,
+    subject: str,
+    topic: str,
+    education_standard: str = "JEE",
+    difficulty_level: str = "similar",
+    user: User = Depends(get_current_user)
+):
+    """Generate practice problems based on original question"""
+    try:
+        session = await ActionButtonService.generate_practice_problems(
+            user_id=user.user_id,
+            original_question=original_question,
+            subject=subject,
+            topic=topic,
+            education_standard=education_standard,
+            difficulty_level=difficulty_level
+        )
+        return session.dict()
+    except Exception as e:
+        logger.error(f"Practice problems endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate practice problems")
+
+@api_router.post("/actions/add-to-notes")
+async def add_to_notes_endpoint(
+    title: str,
+    content: str,
+    subject: str,
+    topic: str,
+    interaction_id: Optional[str] = None,
+    user: User = Depends(get_current_user)
+):
+    """Save content to user's notes"""
+    try:
+        note = await ActionButtonService.save_to_notes(
+            user_id=user.user_id,
+            title=title,
+            content=content,
+            subject=subject,
+            topic=topic,
+            interaction_id=interaction_id
+        )
+        return note.dict()
+    except Exception as e:
+        logger.error(f"Add to notes endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save note")
+
+@api_router.post("/actions/create-flashcards") 
+async def create_flashcard_deck_endpoint(
+    title: str,
+    content: str,
+    subject: str,
+    topic: str,
+    interaction_id: Optional[str] = None,
+    user: User = Depends(get_current_user)
+):
+    """Convert content into flashcard deck"""
+    try:
+        deck = await ActionButtonService.create_flashcard_deck(
+            user_id=user.user_id,
+            title=title,
+            content=content,
+            subject=subject,
+            topic=topic,
+            interaction_id=interaction_id
+        )
+        return deck.dict()
+    except Exception as e:
+        logger.error(f"Flashcard creation endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create flashcard deck")
+
+@api_router.post("/actions/schedule-revision")
+async def schedule_revision_endpoint(
+    content_id: str,
+    content_type: str,  # "note", "flashcard", "concept"
+    title: str,
+    difficulty_level: float = 0.5,
+    user: User = Depends(get_current_user)
+):
+    """Schedule content for spaced repetition"""
+    try:
+        schedule = await ActionButtonService.schedule_revision(
+            user_id=user.user_id,
+            content_id=content_id,
+            content_type=content_type,
+            title=title,
+            difficulty_level=difficulty_level
+        )
+        return schedule.dict()
+    except Exception as e:
+        logger.error(f"Schedule revision endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to schedule revision")
+
+@api_router.get("/actions/notes")
+async def get_user_notes(
+    subject: Optional[str] = None,
+    limit: int = 20,
+    user: User = Depends(get_current_user)
+):
+    """Get user's saved notes"""
+    try:
+        query = {"user_id": user.user_id}
+        if subject:
+            query["subject"] = subject
+            
+        notes = await db.study_notes.find(query).sort("created_at", -1).limit(limit).to_list(length=limit)
+        return [clean_mongodb_doc(note) for note in notes]
+    except Exception as e:
+        logger.error(f"Get notes endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get notes")
+
+@api_router.get("/actions/flashcard-decks")
+async def get_flashcard_decks(
+    subject: Optional[str] = None,
+    limit: int = 10,
+    user: User = Depends(get_current_user)
+):
+    """Get user's flashcard decks"""
+    try:
+        query = {"user_id": user.user_id}
+        if subject:
+            query["subject"] = subject
+            
+        decks = await db.flashcard_decks.find(query).sort("created_at", -1).limit(limit).to_list(length=limit)
+        return [clean_mongodb_doc(deck) for deck in decks]
+    except Exception as e:
+        logger.error(f"Get flashcard decks error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get flashcard decks")
+
+@api_router.get("/actions/revision-schedule")
+async def get_revision_schedule(
+    days_ahead: int = 7,
+    user: User = Depends(get_current_user)
+):
+    """Get scheduled revisions for upcoming days"""
+    try:
+        end_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
+        
+        schedules = await db.revision_schedules.find({
+            "user_id": user.user_id,
+            "completion_status": "scheduled",
+            "scheduled_for": {"$lte": end_date.isoformat()}
+        }).sort("scheduled_for", 1).to_list(length=50)
+        
+        return [clean_mongodb_doc(schedule) for schedule in schedules]
+    except Exception as e:
+        logger.error(f"Get revision schedule error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get revision schedule")
+
+# Phase E: Analytics Integration Endpoints
+@api_router.get("/analytics/performance-stats")
+async def get_performance_stats_endpoint(user: User = Depends(get_current_user)):
+    """Get real-time performance statistics"""
+    try:
+        stats = await AnalyticsService.get_performance_stats(user.user_id)
+        return stats
+    except Exception as e:
+        logger.error(f"Performance stats endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get performance statistics")
+
+@api_router.get("/analytics/learning-analytics")
+async def get_learning_analytics_endpoint(
+    days_back: int = 7,
+    user: User = Depends(get_current_user)
+):
+    """Get comprehensive learning analytics"""
+    try:
+        analytics = await AnalyticsService.generate_learning_analytics(user.user_id, days_back)
+        return analytics.dict()
+    except Exception as e:
+        logger.error(f"Learning analytics endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate learning analytics")
+
+@api_router.post("/analytics/wellness-check")
+async def conduct_wellness_check_endpoint(
+    stress_level: int,
+    motivation_level: int, 
+    confidence_level: int,
+    study_satisfaction: int,
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Conduct wellness check and get recommendations"""
+    try:
+        wellness = await AnalyticsService.conduct_wellness_check(
+            user_id=user.user_id,
+            session_id=session_id,
+            stress_level=stress_level,
+            motivation_level=motivation_level,
+            confidence_level=confidence_level,
+            study_satisfaction=study_satisfaction
+        )
+        return wellness.dict()
+    except Exception as e:
+        logger.error(f"Wellness check endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to conduct wellness check")
+
+@api_router.get("/analytics/wellness-history")
+async def get_wellness_history(
+    days_back: int = 30,
+    user: User = Depends(get_current_user)
+):
+    """Get wellness check history"""
+    try:
+        start_date = datetime.now(timezone.utc) - timedelta(days=days_back)
+        
+        wellness_checks = await db.wellness_checks.find({
+            "user_id": user.user_id,
+            "timestamp": {"$gte": start_date.isoformat()}
+        }).sort("timestamp", -1).to_list(length=100)
+        
+        return [clean_mongodb_doc(check) for check in wellness_checks]
+    except Exception as e:
+        logger.error(f"Wellness history error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get wellness history")
+
 # ============= DUAL-LAYER AI API ENDPOINTS =============
 
 @api_router.post("/ai/process-file")
