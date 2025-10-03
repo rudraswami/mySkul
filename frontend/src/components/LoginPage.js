@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Alert, AlertDescription } from './ui/alert';
 import { useAuth } from '../contexts/AuthContext';
-import { Brain, BookOpen, Target, Trophy } from 'lucide-react';
+import { Brain } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
