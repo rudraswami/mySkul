@@ -1488,7 +1488,7 @@ export default function MockTests() {
                       <div className="flex-1">
                         <h4 className="text-red-800 font-semibold mb-2">Test Generation Issue</h4>
                         <div className="text-red-700 text-sm whitespace-pre-line leading-relaxed">
-                          {generationError}
+                          {typeof generationError === 'string' ? generationError : 'An error occurred. Please try again.'}
                         </div>
                         {Object.keys(loadingStates).length === 0 && (
                           <div className="mt-4 flex gap-3">
