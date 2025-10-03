@@ -66,7 +66,7 @@ function AppContent() {
             <Navigation />
             <main className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm">
               <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<StudentDashboard />} />
                 <Route path="/tutor" element={<AITutor />} />
                 <Route path="/tests" element={<MockTests />} />
                 <Route path="/analytics" element={<Analytics />} />
