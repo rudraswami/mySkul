@@ -1560,6 +1560,7 @@ class DhruvAITester:
             self.token = response['token']
             if 'user' in response:
                 self.user_id = response['user'].get('user_id')
+                print(f"   User ID from auth: {self.user_id}")
             print(f"   ✅ Authentication successful - Token: {self.token[:20]}...")
             test_results['authentication'] = True
         else:
