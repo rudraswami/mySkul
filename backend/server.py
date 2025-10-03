@@ -2373,7 +2373,7 @@ async def process_image_with_ocr(image_content: bytes) -> str:
         # Create message with image
         response = await llm_chat.send_message([
             UserMessage("I can see the image you've provided. Please analyze this image and extract all text, mathematical expressions, equations, diagrams, or any educational content shown. Describe everything you see in detail, including any problems, formulas, or concepts that appear in the image.")
-        ], model="gpt-4o", image_base64=image_base64)
+        ], image_base64=image_base64)
         
         logger.info(f"OCR response received: {len(response.content)} characters")
         return response.content
