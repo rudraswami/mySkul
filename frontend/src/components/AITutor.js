@@ -82,6 +82,16 @@ export default function AITutor() {
   const [errorPatterns, setErrorPatterns] = useState([]);
   const [lastFeedback, setLastFeedback] = useState(null);
   const [personalizedDifficulty, setPersonalizedDifficulty] = useState(0.5);
+  const [feedbackSentiment, setFeedbackSentiment] = useState('neutral');
+  
+  // Phase E: Wellness Integration State
+  const [showWellnessCheck, setShowWellnessCheck] = useState(false);
+  const [wellnessData, setWellnessData] = useState({
+    stress_level: 5,
+    motivation_level: 7,
+    confidence_level: 6,
+    study_satisfaction: 7
+  });
 
   const subjects = {
     'JEE': ['Mathematics', 'Physics', 'Chemistry'],
