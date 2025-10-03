@@ -1255,6 +1255,7 @@ export default function AITutor() {
                         
                         {/* Session Title - Editable */}
                         {sessionActions.isRenaming === session.session_id ? (
+                          console.log('Showing rename input for session:', session.session_id) ||
                           <input
                             type="text"
                             value={renameValue}
