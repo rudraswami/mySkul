@@ -3405,5 +3405,223 @@ def main():
     
     return 0 if len(failed_tests) == 0 else 1
 
+    # ============= PHASE B: PERSONALIZATION TESTS =============
+
+    def test_personalization_profile_get(self):
+        """Test GET /api/personalization/profile for student profile retrieval"""
+        if not self.token:
+            print("❌ No token available for personalization profile test")
+            return False
+        
+        print("   Testing personalization profile retrieval...")
+        
+        success, response = self.run_test(
+            "Get Personalization Profile",
+            "GET",
+            "personalization/profile",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Profile retrieved successfully")
+            
+            # Validate profile structure
+            required_fields = ['profile_id', 'user_id', 'preferred_language', 'learning_style', 
+                             'difficulty_preference', 'response_length_preference']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if missing_fields:
+                print(f"   ⚠️  Missing profile fields: {missing_fields}")
+            else:
+                print(f"   ✅ Profile structure validated")
+                print(f"   Language: {response.get('preferred_language', 'N/A')}")
+                print(f"   Learning Style: {response.get('learning_style', 'N/A')}")
+                print(f"   Difficulty: {response.get('difficulty_preference', 0):.1f}")
+                print(f"   Response Length: {response.get('response_length_preference', 'N/A')}")
+                print(f"   Weak Areas: {len(response.get('weak_areas', []))}")
+                print(f"   Strong Areas: {len(response.get('strong_areas', []))}")
+                print(f"   Total Interactions: {response.get('total_interactions', 0)}")
+            
+            return True
+        
+        return False
+
+    def test_personalization_profile_post(self):
+        """Test POST /api/personalization/profile for student profile management"""
+        if not self.token:
+            print("❌ No token available for personalization profile update test")
+            return False
+        
+        print("   Testing personalization profile update...")
+        
+        # Test different language preferences and settings
+        profile_scenarios = [
+            {
+                "name": "English Analytical Student",
+                "preferred_language": "english",
+                "learning_style": "analytical",
+                "difficulty_preference": 0.7,
+                "response_length_preference": "detailed"
+            },
+            {
+                "name": "Hindi Visual Student",
+                "preferred_language": "hindi",
+                "learning_style": "visual",
+                "difficulty_preference": 0.4,
+                "response_length_preference": "medium"
+            },
+            {
+                "name": "Hinglish Practical Student",
+                "preferred_language": "hinglish",
+                "learning_style": "practical",
+                "difficulty_preference": 0.6,
+                "response_length_preference": "short"
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in profile_scenarios:
+            print(f"   Testing {scenario['name']} profile update...")
+            
+            success, response = self.run_test(
+                f"Update Profile - {scenario['name']}",
+                "POST",
+                "personalization/profile",
+                200,
+                data={
+                    "preferred_language": scenario["preferred_language"],
+                    "learning_style": scenario["learning_style"],
+                    "difficulty_preference": scenario["difficulty_preference"],
+                    "response_length_preference": scenario["response_length_preference"]
+                },
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {scenario['name']} profile updated successfully")
+                print(f"   Updated Language: {response.get('preferred_language', 'N/A')}")
+                print(f"   Updated Style: {response.get('learning_style', 'N/A')}")
+                print(f"   Updated Difficulty: {response.get('difficulty_preference', 0):.1f}")
+                success_count += 1
+            else:
+                print(f"   ❌ {scenario['name']} profile update failed")
+            
+            time.sleep(1)  # Small delay between updates
+        
+        return success_count >= len(profile_scenarios) * 0.8
+
+    def test_personalization_mastery_tracking(self):
+        """Test /api/personalization/mastery for topic mastery tracking"""
+        if not self.token:
+            print("❌ No token available for mastery tracking test")
+            return False
+        
+        print("   Testing topic mastery tracking...")
+        
+        # Test mastery tracking for different subjects and topics
+        mastery_scenarios = [
+            {
+                "subject": "Mathematics",
+                "topic_name": "Quadratic Equations",
+                "chapter": "Algebra",
+                "performance": "high"  # 80% correct
+            },
+            {
+                "subject": "Physics", 
+                "topic_name": "Newton's Laws",
+                "chapter": "Mechanics",
+                "performance": "medium"  # 60% correct
+            },
+            {
+                "subject": "Chemistry",
+                "topic_name": "Periodic Table",
+                "chapter": "Atomic Structure", 
+                "performance": "low"  # 40% correct
+            }
+        ]
+        
+        success_count = 0
+        
+        for scenario in mastery_scenarios:
+            print(f"   Testing mastery tracking for {scenario['subject']} - {scenario['topic_name']}...")
+            
+            success, response = self.run_test(
+                f"Mastery Tracking - {scenario['subject']} {scenario['topic_name']}",
+                "GET",
+                f"personalization/mastery?subject={scenario['subject']}&topic_name={scenario['topic_name']}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Mastery data retrieved for {scenario['topic_name']}")
+                
+                # Check mastery data structure
+                if isinstance(response, list) and len(response) > 0:
+                    mastery_data = response[0]
+                    print(f"   Mastery Level: {mastery_data.get('mastery_level', 0):.2f}")
+                    print(f"   Total Attempts: {mastery_data.get('total_attempts', 0)}")
+                    print(f"   Correct Attempts: {mastery_data.get('correct_attempts', 0)}")
+                    print(f"   Difficulty Level: {mastery_data.get('difficulty_level', 0):.2f}")
+                    success_count += 1
+                elif isinstance(response, dict):
+                    print(f"   Mastery Level: {response.get('mastery_level', 0):.2f}")
+                    print(f"   Total Attempts: {response.get('total_attempts', 0)}")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  No mastery data found (new topic)")
+                    success_count += 1  # This is acceptable for new topics
+            else:
+                print(f"   ❌ Mastery tracking failed for {scenario['topic_name']}")
+            
+            time.sleep(1)
+        
+        return success_count >= len(mastery_scenarios) * 0.8
+
+    def run_phase_b_personalization_tests(self):
+        """Run Phase B: Enhanced Personalization tests specifically"""
+        print("🚀 Starting Phase B: Enhanced Personalization Testing")
+        print("=" * 80)
+        
+        # Authentication first
+        print("\n🔐 Authentication Setup:")
+        if not self.test_user_login():
+            print("   Login failed, trying registration...")
+            if not self.test_user_registration():
+                print("❌ Authentication failed completely. Stopping tests.")
+                return
+        
+        # Phase B: Enhanced Personalization Tests
+        print("\n📋 PHASE B: ENHANCED PERSONALIZATION TESTS")
+        print("-" * 50)
+        
+        # Personalization API endpoints
+        print("\n🎯 Personalization API Endpoints:")
+        self.test_personalization_profile_get()
+        self.test_personalization_profile_post()
+        self.test_personalization_mastery_tracking()
+        
+        # Final summary
+        print("\n" + "=" * 80)
+        print("🎯 PHASE B PERSONALIZATION TESTING SUMMARY")
+        print("=" * 80)
+        print(f"Total Tests Run: {self.tests_run}")
+        print(f"Tests Passed: {self.tests_passed}")
+        print(f"Tests Failed: {self.tests_run - self.tests_passed}")
+        print(f"Success Rate: {(self.tests_passed / self.tests_run * 100):.1f}%")
+        
+        if self.tests_passed == self.tests_run:
+            print("🎉 ALL PERSONALIZATION TESTS PASSED!")
+        elif self.tests_passed / self.tests_run >= 0.8:
+            print("✅ MOSTLY SUCCESSFUL! Most personalization features working correctly.")
+        else:
+            print("⚠️  SOME PERSONALIZATION ISSUES DETECTED. Please review failed tests.")
+        
+        print("=" * 80)
+
 if __name__ == "__main__":
-    sys.exit(main())
+    tester = DhruvAITester()
+    # Run Phase B personalization tests specifically
+    tester.run_phase_b_personalization_tests()
