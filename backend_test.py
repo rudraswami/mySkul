@@ -4444,6 +4444,233 @@ def main():
             "overall_success_rate": self.tests_passed / self.tests_run if self.tests_run > 0 else 0
         }
 
+    def test_enhanced_dual_response_api(self):
+        """Test Enhanced Dual Response API - Critical priority for Phase C, D, E integration"""
+        if not self.token:
+            print("❌ No token available for enhanced dual response testing")
+            return False
+        
+        print("   Testing Enhanced Dual Response API (Critical Priority)...")
+        
+        # Test different types of questions to verify dual AI functionality
+        test_scenarios = [
+            {
+                "name": "Mathematical Problem",
+                "message": "Solve the quadratic equation x² - 5x + 6 = 0 step by step",
+                "subject": "Mathematics"
+            },
+            {
+                "name": "Physics Concept",
+                "message": "Explain Newton's second law of motion with examples",
+                "subject": "Physics"
+            },
+            {
+                "name": "Chemistry Problem",
+                "message": "Balance the chemical equation: C₂H₆ + O₂ → CO₂ + H₂O",
+                "subject": "Chemistry"
+            },
+            {
+                "name": "Motivational Query",
+                "message": "I'm feeling stressed about my JEE preparation. Can you help me stay motivated?",
+                "subject": "General"
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, scenario in enumerate(test_scenarios):
+            print(f"   Testing scenario {i+1}/4: {scenario['name']}")
+            print(f"   Question: '{scenario['message'][:50]}...'")
+            print("   This may take 15-20 seconds for dual AI processing...")
+            
+            test_data = {
+                "message": scenario['message'],
+                "subject": scenario['subject'],
+                "session_id": self.session_id if hasattr(self, 'session_id') and self.session_id else str(uuid.uuid4())
+            }
+            
+            success, response = self.run_test(
+                f"Enhanced Dual Response - {scenario['name']}",
+                "POST",
+                "ai/dual-response",
+                200,
+                data=test_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Enhanced dual response received")
+                
+                # Check dual AI structure
+                if 'dual_response' in response:
+                    dual_response = response['dual_response']
+                    primary_persona = dual_response.get('primary_persona', 'N/A')
+                    secondary_persona = dual_response.get('secondary_persona', 'N/A')
+                    scenario_type = dual_response.get('scenario_type', 'N/A')
+                    confidence = dual_response.get('confidence', 0)
+                    
+                    print(f"   Primary persona: {primary_persona}")
+                    print(f"   Secondary persona: {secondary_persona}")
+                    print(f"   Scenario type: {scenario_type}")
+                    print(f"   Confidence: {confidence:.2f}")
+                    
+                    # Validate response quality
+                    primary_response = dual_response.get('primary_response', '')
+                    secondary_response = dual_response.get('secondary_response', '')
+                    
+                    if len(primary_response) > 100 and len(secondary_response) > 100:
+                        print(f"   ✅ Response quality validated")
+                        print(f"   Primary: {len(primary_response)} chars, Secondary: {len(secondary_response)} chars")
+                        success_count += 1
+                    else:
+                        print(f"   ⚠️  Response quality insufficient")
+                        print(f"   Primary: {len(primary_response)} chars, Secondary: {len(secondary_response)} chars")
+                elif 'response' in response:
+                    # Single response format
+                    print(f"   ✅ Single AI response received")
+                    print(f"   Response length: {len(response.get('response', ''))}")
+                    success_count += 1
+                else:
+                    print(f"   ⚠️  Unexpected response structure")
+            else:
+                print(f"   ❌ Enhanced dual response failed")
+            
+            time.sleep(5)  # Delay between AI calls
+        
+        print(f"   Enhanced Dual Response Summary: {success_count}/{len(test_scenarios)} tests passed ({success_count/len(test_scenarios)*100:.1f}%)")
+        return success_count >= len(test_scenarios) * 0.8  # 80% success threshold
+
+    def test_authentication_and_core_apis(self):
+        """Test Authentication & Core APIs verification"""
+        print("   Testing Authentication & Core APIs...")
+        
+        # Test core authentication endpoints
+        auth_tests = [
+            {
+                "name": "User Profile",
+                "endpoint": "user/profile",
+                "method": "GET",
+                "data": None
+            },
+            {
+                "name": "Chat Sessions",
+                "endpoint": "chat/sessions", 
+                "method": "GET",
+                "data": None
+            }
+        ]
+        
+        success_count = 0
+        
+        for test_case in auth_tests:
+            print(f"   Testing {test_case['name']}...")
+            
+            success, response = self.run_test(
+                f"Core API - {test_case['name']}",
+                test_case['method'],
+                test_case['endpoint'],
+                200,
+                data=test_case['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {test_case['name']} working correctly")
+                success_count += 1
+            else:
+                print(f"   ❌ {test_case['name']} failed")
+        
+        # Test authentication validation
+        print("   Testing JWT authentication validation...")
+        temp_token = self.token
+        self.token = None
+        
+        success, _ = self.run_test(
+            "Auth Validation Test",
+            "GET",
+            "user/profile",
+            401  # Expecting 401 Unauthorized
+        )
+        
+        self.token = temp_token
+        
+        if success:
+            print(f"   ✅ Authentication validation working correctly")
+            success_count += 1
+        else:
+            print(f"   ❌ Authentication validation failed")
+        
+        total_tests = len(auth_tests) + 1
+        print(f"   Authentication & Core APIs Summary: {success_count}/{total_tests} tests passed ({success_count/total_tests*100:.1f}%)")
+        return success_count >= total_tests * 0.8
+
+    def run_phase_cde_comprehensive_tests(self):
+        """Run comprehensive Phase C, D, E testing as requested in review"""
+        print("🚀 Starting Dhruv AI Platform Phase C, D, E Backend Testing...")
+        print(f"   Base URL: {self.base_url}")
+        print(f"   Test User: {self.test_user_email}")
+        print("   FOCUS: Phase C, D, E API fixes and pre-release polish")
+        print("=" * 80)
+        
+        # Authentication first
+        print("\n🔐 AUTHENTICATION SETUP")
+        if not self.test_user_login():
+            print("⚠️  Login failed, trying registration...")
+            if not self.test_user_registration():
+                print("❌ Both login and registration failed. Stopping tests.")
+                return {"error": "Authentication failed"}
+        
+        # PRIORITY TESTING AREAS as per review request
+        print("\n🎯 PRIORITY 1: PHASE C ADVANCED GUARDRAILS APIs")
+        phase_c_success = self.test_phase_c_advanced_guardrails_apis()
+        
+        print("\n🎯 PRIORITY 2: PHASE D ENHANCED ACTION BUTTONS APIs")
+        phase_d_success = self.test_phase_d_enhanced_action_buttons_apis()
+        
+        print("\n🎯 PRIORITY 3: PHASE E ANALYTICS INTEGRATION APIs")
+        phase_e_success = self.test_phase_e_analytics_integration_apis()
+        
+        print("\n🎯 PRIORITY 4: ENHANCED DUAL RESPONSE API (Critical)")
+        dual_response_success = self.test_enhanced_dual_response_api()
+        
+        print("\n🎯 PRIORITY 5: AUTHENTICATION & CORE APIs VERIFICATION")
+        auth_success = self.test_authentication_and_core_apis()
+        
+        # Final summary
+        print("\n" + "=" * 80)
+        print("🏁 PHASE C, D, E TESTING COMPLETED")
+        print(f"   Total Tests Run: {self.tests_run}")
+        print(f"   Tests Passed: {self.tests_passed}")
+        print(f"   Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        # Detailed results by phase
+        print(f"\n📊 DETAILED RESULTS BY PHASE:")
+        print(f"   Phase C (Guardrails): {'✅ PASS' if phase_c_success else '❌ FAIL'}")
+        print(f"   Phase D (Action Buttons): {'✅ PASS' if phase_d_success else '❌ FAIL'}")
+        print(f"   Phase E (Analytics): {'✅ PASS' if phase_e_success else '❌ FAIL'}")
+        print(f"   Enhanced Dual Response: {'✅ PASS' if dual_response_success else '❌ FAIL'}")
+        print(f"   Authentication & Core: {'✅ PASS' if auth_success else '❌ FAIL'}")
+        
+        if self.tests_passed == self.tests_run:
+            print("🎉 ALL TESTS PASSED! Phase C, D, E APIs ready for production.")
+        elif self.tests_passed >= self.tests_run * 0.9:
+            print("✅ EXCELLENT! 90%+ tests passed. Minor issues to address.")
+        elif self.tests_passed >= self.tests_run * 0.8:
+            print("👍 GOOD! 80%+ tests passed. Some issues need attention.")
+        else:
+            print("⚠️  NEEDS ATTENTION! Less than 80% tests passed.")
+        
+        print("=" * 80)
+        
+        return {
+            "phase_c": phase_c_success,
+            "phase_d": phase_d_success, 
+            "phase_e": phase_e_success,
+            "dual_response": dual_response_success,
+            "auth_core": auth_success,
+            "overall_success_rate": self.tests_passed / self.tests_run if self.tests_run > 0 else 0
+        }
+
 if __name__ == "__main__":
     import uuid
     tester = DhruvAITester()
