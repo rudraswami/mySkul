@@ -603,6 +603,63 @@ class TestResultsResponse(BaseModel):
     retake_options: List[Dict[str, str]]
     next_recommendations: List[str]
 
+# ============= PHASE B: PERSONALIZATION MODELS =============
+
+class TopicMastery(BaseModel):
+    topic_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subject: str
+    topic_name: str
+    chapter: Optional[str] = None
+    mastery_level: float = Field(default=0.0, ge=0.0, le=1.0)  # 0.0 = weak, 0.5 = medium, 1.0 = strong
+    total_attempts: int = Field(default=0)
+    correct_attempts: int = Field(default=0)
+    last_practiced: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    difficulty_level: float = Field(default=0.3, ge=0.1, le=1.0)  # Current appropriate difficulty
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ErrorPattern(BaseModel):
+    error_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subject: str
+    topic_name: str
+    error_type: str  # "conceptual", "calculation", "formula", "careless", "method"
+    error_description: str
+    frequency: int = Field(default=1)
+    first_occurred: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_occurred: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    resolution_attempts: int = Field(default=0)
+    resolved: bool = Field(default=False)
+
+class StudentProfile(BaseModel):
+    profile_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    preferred_language: str = Field(default="english")  # "english", "hindi", "hinglish"
+    learning_style: str = Field(default="balanced")  # "visual", "analytical", "practical", "balanced"
+    difficulty_preference: float = Field(default=0.5, ge=0.1, le=1.0)
+    response_length_preference: str = Field(default="medium")  # "short", "medium", "detailed"
+    weak_areas: List[str] = Field(default_factory=list)
+    strong_areas: List[str] = Field(default_factory=list)
+    total_interactions: int = Field(default=0)
+    avg_session_duration: float = Field(default=0.0)  # in minutes
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LearningInteraction(BaseModel):
+    interaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_id: str
+    subject: str
+    topic_name: Optional[str] = None
+    question_asked: str
+    ai_response: str
+    ai_mode: str  # "dual", "mentor", "professor"
+    difficulty_estimated: float = Field(ge=0.1, le=1.0)
+    user_feedback: Optional[str] = None  # "helpful", "too_easy", "too_hard", "confusing"
+    time_spent: Optional[float] = None  # seconds
+    follow_up_generated: bool = Field(default=False)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 # ============= UTILITY FUNCTIONS =============
 
 def hash_password(password: str) -> str:
