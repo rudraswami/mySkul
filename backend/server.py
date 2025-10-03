@@ -484,6 +484,12 @@ class DualAIRequest(BaseModel):
     session_id: str
     subject: str
 
+class ProfileUpdateRequest(BaseModel):
+    preferred_language: str = Field(..., pattern="^(english|hindi|hinglish)$")
+    learning_style: str = Field(..., pattern="^(visual|analytical|practical|balanced)$")
+    difficulty_preference: float = Field(..., ge=0.1, le=1.0)
+    response_length_preference: str = Field(..., pattern="^(short|medium|detailed)$")
+
 # ============= MOCK TEST ARCHITECTURE MODELS =============
 
 class Question(BaseModel):
