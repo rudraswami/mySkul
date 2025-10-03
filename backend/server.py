@@ -3661,6 +3661,148 @@ async def get_chat_messages(session_id: str, user: User = Depends(get_current_us
     
     return {"messages": messages}
 
+@api_router.post("/chat/sessions")
+async def create_chat_session(session_request: SessionCreateRequest, user: User = Depends(get_current_user)):
+    """Create new chat session"""
+    
+    session = ChatSession(
+        user_id=user.user_id,
+        **session_request.dict()
+    )
+    
+    # Convert to dict for MongoDB storage
+    session_dict = session.dict()
+    session_dict['created_at'] = session.created_at.isoformat()
+    session_dict['last_updated'] = session.last_updated.isoformat()
+    
+    # Save to database
+    result = await db.chat_sessions.insert_one(session_dict)
+    
+    if result.inserted_id:
+        return {"session_id": session.session_id, "status": "created"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+@api_router.put("/chat/{session_id}/rename")
+async def rename_chat_session(session_id: str, rename_request: SessionRenameRequest, user: User = Depends(get_current_user)):
+    """Rename chat session"""
+    
+    result = await db.chat_sessions.update_one(
+        {"session_id": session_id, "user_id": user.user_id},
+        {
+            "$set": {
+                "title": rename_request.title,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {"status": "renamed", "new_title": rename_request.title}
+
+@api_router.put("/chat/{session_id}/pin")
+async def pin_chat_session(session_id: str, pin_request: SessionPinRequest, user: User = Depends(get_current_user)):
+    """Pin/Unpin chat session"""
+    
+    result = await db.chat_sessions.update_one(
+        {"session_id": session_id, "user_id": user.user_id},
+        {
+            "$set": {
+                "pinned": pin_request.pinned,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    action = "pinned" if pin_request.pinned else "unpinned"
+    return {"status": action, "session_id": session_id}
+
+@api_router.put("/chat/{session_id}/bookmark")
+async def bookmark_chat_session(session_id: str, bookmark_request: SessionBookmarkRequest, user: User = Depends(get_current_user)):
+    """Bookmark/Unbookmark chat session"""
+    
+    result = await db.chat_sessions.update_one(
+        {"session_id": session_id, "user_id": user.user_id},
+        {
+            "$set": {
+                "bookmarked": bookmark_request.bookmarked,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    action = "bookmarked" if bookmark_request.bookmarked else "unbookmarked"
+    return {"status": action, "session_id": session_id}
+
+@api_router.delete("/chat/{session_id}")
+async def delete_chat_session(session_id: str, user: User = Depends(get_current_user)):
+    """Delete chat session and all its messages"""
+    
+    # Delete all messages in the session
+    await db.chat_messages.delete_many({
+        "session_id": session_id, 
+        "user_id": user.user_id
+    })
+    
+    # Delete the session
+    result = await db.chat_sessions.delete_one({
+        "session_id": session_id, 
+        "user_id": user.user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {"status": "deleted", "session_id": session_id}
+
+@api_router.post("/chat/{session_id}/messages")
+async def save_chat_message(session_id: str, message_request: SessionMessageRequest, user: User = Depends(get_current_user)):
+    """Save message to chat session"""
+    
+    # Verify session exists and belongs to user
+    session = await db.chat_sessions.find_one({
+        "session_id": session_id, 
+        "user_id": user.user_id
+    })
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Create message
+    message = ChatMessage(
+        session_id=session_id,
+        user_id=user.user_id,
+        message=message_request.user_message,
+        response=str(message_request.ai_response),
+        timestamp=datetime.fromisoformat(message_request.timestamp.replace('Z', '+00:00'))
+    )
+    
+    # Convert to dict for MongoDB storage
+    message_dict = message.dict()
+    message_dict['timestamp'] = message.timestamp.isoformat()
+    
+    # Save message
+    result = await db.chat_messages.insert_one(message_dict)
+    
+    if result.inserted_id:
+        # Update session last_updated
+        await db.chat_sessions.update_one(
+            {"session_id": session_id, "user_id": user.user_id},
+            {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"status": "saved", "message_id": message.message_id}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to save message")
+
 @api_router.post("/progress/update")
 async def update_progress(progress_update: StudyProgressUpdate, user: User = Depends(get_current_user)):
     """Update study progress"""
