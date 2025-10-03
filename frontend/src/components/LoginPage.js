@@ -84,26 +84,24 @@ export default function LoginPage() {
       {/* Right Panel - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <Card className="shadow-xl border-0">
-            <CardHeader className="text-center pb-8">
+          <div className="bg-white shadow-xl rounded-lg p-8 border-0">
+            <div className="text-center pb-8">
               <div className="flex justify-center mb-4 lg:hidden">
                 <Brain className="h-10 w-10 text-blue-600" />
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900">
                 Welcome Back
-              </CardTitle>
+              </h2>
               <p className="text-gray-600 mt-2">
                 Sign in to continue your learning journey
               </p>
-            </CardHeader>
+            </div>
 
-            <CardContent>
+            <div>
               {error && (
-                <Alert className="mb-6 border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-800">
-                    {error}
-                  </AlertDescription>
-                </Alert>
+                <div className="mb-6 p-4 border border-red-200 bg-red-50 rounded-md">
+                  <p className="text-red-800 text-sm">{error}</p>
+                </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
