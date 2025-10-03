@@ -198,10 +198,58 @@ export default function AITutor() {
 
   const fetchChatSessions = async () => {
     try {
-      const response = await axios.get(`${API}/chat/sessions`);
-      setSessions(response.data.sessions);
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await axios.get(`${API}/chat/sessions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setSessions(response.data.sessions || []);
     } catch (error) {
       console.error('Failed to fetch chat sessions:', error);
+      setSessions([]);
+    }
+  };
+
+  // Create new session in backend
+  const createNewSession = async (firstMessage, detectedTopic) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return null;
+
+      const sessionTitle = detectedTopic || firstMessage.substring(0, 50) + '...';
+      
+      const response = await axios.post(`${API}/chat/sessions`, {
+        title: sessionTitle,
+        subject: selectedSubject,
+        topic: detectedTopic || 'General',
+        ai_mode: aiMode
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      return response.data.session_id;
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      return null;
+    }
+  };
+
+  // Save message to session
+  const saveMessageToSession = async (sessionId, message, aiResponse) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      await axios.post(`${API}/chat/${sessionId}/messages`, {
+        user_message: message,
+        ai_response: aiResponse,
+        timestamp: new Date().toISOString()
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Failed to save message:', error);
     }
   };
 
