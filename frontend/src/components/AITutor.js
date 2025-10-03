@@ -842,25 +842,38 @@ export default function AITutor() {
     });
   };
 
+  // Group sessions by subject automatically
+  const groupedSessions = React.useMemo(() => {
+    const groups = {};
+    filteredSessions.forEach(session => {
+      const subject = session.subject || 'General';
+      if (!groups[subject]) {
+        groups[subject] = [];
+      }
+      groups[subject].push(session);
+    });
+    return groups;
+  }, [filteredSessions]);
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+    <div className="flex h-screen bg-white">
       {/* Sidebar - Chat Sessions */}
-      <div className="w-80 bg-white/95 backdrop-blur-sm border-r border-gray-200/60 flex flex-col shadow-lg">
-        <div className="p-4 border-b border-gray-200/60 bg-gradient-to-r from-gray-800 to-slate-700 text-white">
+      <div className="w-80 bg-white border-r border-gray-100 flex flex-col">
+        <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center">
                 <Brain className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-lg font-semibold">Dhruv AI</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Dhruv AI</h2>
             </div>
             <Button 
               size="sm" 
               onClick={startNewSession}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white hover:text-white transition-all duration-200"
+              className="bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-200"
               variant="outline"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               New Chat
             </Button>
           </div>
@@ -868,8 +881,8 @@ export default function AITutor() {
           <div className="space-y-3">
             <div className="relative">
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                <SelectTrigger className="bg-white/50 border-white/30 text-white placeholder:text-white/70">
-                  <BookOpen className="h-4 w-4 mr-2" />
+                <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900">
+                  <BookOpen className="h-4 w-4 mr-2 text-teal-600" />
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -882,77 +895,15 @@ export default function AITutor() {
               </Select>
             </div>
 
-            {/* Enhanced Session Search */}
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 border border-white/20 mb-3">
-              <div className="flex items-center space-x-2">
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search conversations..."
-                  className="bg-white/30 border-white/20 text-white placeholder:text-white/70 text-sm h-8"
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={exportConversation}
-                  disabled={messages.length === 0}
-                  className="text-white/80 hover:text-white hover:bg-white/20 h-8 w-8 p-0"
-                  title="Export conversation"
-                >
-                  <FileText className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Enhanced AI Mode Selection */}
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <label className="text-xs font-medium text-white/90 mb-3 block flex items-center">
-                <Sparkles className="h-3 w-3 mr-1" />
-                AI Intelligence Mode
-              </label>
-              <Select value={aiMode} onValueChange={setAiMode}>
-                <SelectTrigger className="bg-white/30 border-white/20 text-white h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dual">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-blue-600" />
-                      <div>
-                        <div className="font-medium">Dual Intelligence</div>
-                        <div className="text-xs text-gray-500">Mentor + Professor</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="mentor">
-                    <div className="flex items-center">
-                      <Heart className="h-4 w-4 mr-2 text-green-600" />
-                      <div>
-                        <div className="font-medium">Mentor Mode</div>
-                        <div className="text-xs text-gray-500">Motivational & Adaptive</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="professor">
-                    <div className="flex items-center">
-                      <GraduationCap className="h-4 w-4 mr-2 text-purple-600" />
-                      <div>
-                        <div className="font-medium">Professor Mode</div>
-                        <div className="text-xs text-gray-500">Technical & Rigorous</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {aiMode === 'dual' && (
-                <div className="mt-3 p-2 bg-white/20 rounded-lg">
-                  <div className="flex items-center text-xs text-white/90">
-                    <Target className="h-3 w-3 mr-1" />
-                    Smart routing: AI selects the best persona for your question
-                  </div>
-                </div>
-              )}
+            {/* Clean Session Search */}
+            <div className="relative">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search conversations..."
+                className="bg-gray-50 border-gray-200 text-gray-900 pl-9"
+              />
+              <MessageCircle className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
           </div>
         </div>
