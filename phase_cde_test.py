@@ -347,7 +347,12 @@ class PhaseCDETester:
         )
         
         if success:
-            notes = response.get('notes', [])
+            if isinstance(response, dict):
+                notes = response.get('notes', [])
+            elif isinstance(response, list):
+                notes = response
+            else:
+                notes = []
             print(f"   ✅ Notes retrieved: {len(notes)} notes")
             success_count += 1
         else:
