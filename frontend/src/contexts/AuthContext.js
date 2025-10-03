@@ -44,7 +44,10 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login with:', { email, API });
       const response = await axios.post(`${API}/auth/login`, { email, password });
+      console.log('Login response:', response.data);
+      
       const { token: newToken, user: userData } = response.data;
       
       setToken(newToken);
@@ -52,12 +55,14 @@ export function AuthProvider({ children }) {
       localStorage.setItem('dhruv_ai_token', newToken);
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
+      console.log('Login successful, token stored:', newToken?.substring(0, 20) + '...');
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Error response:', error.response?.data);
       return { 
         success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
+        error: error.response?.data?.detail || error.message || 'Login failed' 
       };
     }
   };
