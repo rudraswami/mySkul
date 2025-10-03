@@ -1523,6 +1523,219 @@ class DhruvAITester:
         
         return test_results['mock_test_generation']
 
+    def test_auto_note_mentor_objectid_fix(self):
+        """Test the fixed Auto-Note Mentor backend endpoints to verify ObjectId serialization fix"""
+        print("\n🎯 AUTO-NOTE MENTOR OBJECTID SERIALIZATION FIX TESTING")
+        print("   Focus: Testing fixed endpoints that were failing with 500 errors")
+        print("   Expected: All endpoints should return 200 OK instead of 500 Internal Server Error")
+        print("="*80)
+        
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor testing")
+            return False
+        
+        test_results = {
+            'authentication': False,
+            'session_creation': False,
+            'session_retrieval': False,
+            'analytics': False,
+            'class_series': False
+        }
+        
+        # 1. Authentication: Login with test@dhruvai.com/password123
+        print("\n📋 Step 1: Authentication with test@dhruvai.com/password123")
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Authentication",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and 'token' in response:
+            self.token = response['token']
+            if 'user' in response:
+                self.user_id = response['user'].get('user_id')
+            print(f"   ✅ Authentication successful - Token: {self.token[:20]}...")
+            test_results['authentication'] = True
+        else:
+            print("   ❌ Authentication failed - Cannot proceed with Auto-Note testing")
+            return False
+        
+        # 2. Session Creation: POST /api/auto-notes/start-session
+        print("\n📋 Step 2: Session Creation - POST /api/auto-notes/start-session")
+        session_data = {
+            "title": "Test Physics Class",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Session Creation",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            self.auto_note_session_id = response['session_id']
+            print(f"   ✅ Session created successfully - ID: {self.auto_note_session_id}")
+            print(f"   Session title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            test_results['session_creation'] = True
+        else:
+            print("   ❌ Session creation failed")
+            self.auto_note_session_id = None
+        
+        # 3. Session Retrieval: GET /api/auto-notes/sessions (this was failing with 500 before)
+        print("\n📋 Step 3: Session Retrieval - GET /api/auto-notes/sessions")
+        print("   This endpoint was previously failing with 500 Internal Server Error")
+        print("   Expected: 200 OK with proper ObjectId serialization")
+        
+        success, response = self.run_test(
+            "Auto-Note Sessions List",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            print(f"   ✅ Sessions retrieved successfully - Count: {len(sessions)}")
+            
+            if sessions:
+                sample_session = sessions[0]
+                print(f"   Sample session ID: {sample_session.get('session_id', 'N/A')}")
+                print(f"   Sample session title: {sample_session.get('title', 'N/A')}")
+                print(f"   Sample session created_at: {sample_session.get('created_at', 'N/A')}")
+                
+                # Check for ObjectId serialization issues
+                has_object_id_issues = any(
+                    str(value).startswith('ObjectId(') for value in sample_session.values()
+                    if isinstance(value, str)
+                )
+                
+                if has_object_id_issues:
+                    print("   ⚠️  ObjectId serialization issues detected in response")
+                else:
+                    print("   ✅ ObjectId serialization working correctly")
+            else:
+                print("   ✅ No sessions found (empty list returned correctly)")
+            
+            test_results['session_retrieval'] = True
+        else:
+            print("   ❌ Session retrieval failed - ObjectId serialization fix may not be working")
+        
+        # 4. Analytics: GET /api/auto-notes/analytics (was also failing)
+        print("\n📋 Step 4: Analytics - GET /api/auto-notes/analytics")
+        print("   This endpoint was previously failing with 500 Internal Server Error")
+        print("   Expected: 200 OK with proper datetime/ObjectId serialization")
+        
+        success, response = self.run_test(
+            "Auto-Note Analytics",
+            "GET",
+            "auto-notes/analytics",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Analytics retrieved successfully")
+            
+            # Check analytics structure
+            total_sessions = response.get('total_sessions', 0)
+            total_duration = response.get('total_duration', 0)
+            subjects_covered = response.get('subjects_covered', [])
+            recent_activity = response.get('recent_activity', [])
+            
+            print(f"   Total sessions: {total_sessions}")
+            print(f"   Total duration: {total_duration} minutes")
+            print(f"   Subjects covered: {len(subjects_covered)}")
+            print(f"   Recent activity entries: {len(recent_activity)}")
+            
+            # Check for datetime serialization issues
+            if recent_activity:
+                sample_activity = recent_activity[0]
+                created_at = sample_activity.get('created_at', '')
+                if isinstance(created_at, str) and ('T' in created_at or 'Z' in created_at):
+                    print("   ✅ Datetime serialization working correctly")
+                else:
+                    print("   ⚠️  Datetime serialization may have issues")
+            
+            test_results['analytics'] = True
+        else:
+            print("   ❌ Analytics retrieval failed - datetime/ObjectId serialization fix may not be working")
+        
+        # 5. Class Series: GET /api/auto-notes/class-series (was also failing)
+        print("\n📋 Step 5: Class Series - GET /api/auto-notes/class-series")
+        print("   This endpoint was previously failing with 500 Internal Server Error")
+        print("   Expected: 200 OK with proper ObjectId serialization")
+        
+        success, response = self.run_test(
+            "Auto-Note Class Series",
+            "GET",
+            "auto-notes/class-series",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            class_series = response.get('class_series', [])
+            print(f"   ✅ Class series retrieved successfully - Count: {len(class_series)}")
+            
+            if class_series:
+                sample_series = class_series[0]
+                print(f"   Sample series name: {sample_series.get('series_name', 'N/A')}")
+                print(f"   Sample series subject: {sample_series.get('subject', 'N/A')}")
+                print(f"   Sample series total_classes: {sample_series.get('total_classes', 0)}")
+                
+                # Check for ObjectId serialization issues
+                has_object_id_issues = any(
+                    str(value).startswith('ObjectId(') for value in sample_series.values()
+                    if isinstance(value, str)
+                )
+                
+                if has_object_id_issues:
+                    print("   ⚠️  ObjectId serialization issues detected in response")
+                else:
+                    print("   ✅ ObjectId serialization working correctly")
+            else:
+                print("   ✅ No class series found (empty list returned correctly)")
+            
+            test_results['class_series'] = True
+        else:
+            print("   ❌ Class series retrieval failed - ObjectId serialization fix may not be working")
+        
+        # Final Assessment
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 AUTO-NOTE MENTOR OBJECTID FIX SUMMARY:")
+        print(f"   ✅ Authentication: {'PASS' if test_results['authentication'] else 'FAIL'}")
+        print(f"   ✅ Session Creation: {'PASS' if test_results['session_creation'] else 'FAIL'}")
+        print(f"   ✅ Session Retrieval: {'PASS' if test_results['session_retrieval'] else 'FAIL'}")
+        print(f"   ✅ Analytics: {'PASS' if test_results['analytics'] else 'FAIL'}")
+        print(f"   ✅ Class Series: {'PASS' if test_results['class_series'] else 'FAIL'}")
+        print(f"   📊 Overall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        if success_rate == 100:
+            print("   🎉 ALL ENDPOINTS WORKING - ObjectId serialization fix successful!")
+        elif success_rate >= 80:
+            print("   ✅ Most endpoints working - ObjectId serialization mostly fixed")
+        else:
+            print("   ❌ Multiple endpoints still failing - ObjectId serialization fix needs more work")
+        
+        return success_rate >= 80.0
+
     def run_comprehensive_tests(self):
         """Run focused test for free tier access validation"""
         print("🚀 Starting Free Tier Access Validation Testing...")
