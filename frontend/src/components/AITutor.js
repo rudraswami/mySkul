@@ -71,6 +71,14 @@ export default function AITutor() {
   const [availableContexts, setAvailableContexts] = useState([]);
   const fileInputRef = useRef(null);
 
+  // Phase B: Personalization states
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [showPersonalization, setShowPersonalization] = useState(false);
+  const [topicMastery, setTopicMastery] = useState({});
+  const [errorPatterns, setErrorPatterns] = useState([]);
+  const [lastFeedback, setLastFeedback] = useState(null);
+  const [personalizedDifficulty, setPersonalizedDifficulty] = useState(0.5);
+
   const subjects = {
     'JEE': ['Mathematics', 'Physics', 'Chemistry'],
     'NEET': ['Physics', 'Chemistry', 'Biology'],
