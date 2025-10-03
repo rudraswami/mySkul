@@ -1217,8 +1217,41 @@ export default function AITutor() {
                   </div>
                 )}
                 
-                {/* Voice Input Button */}
-                <div className="absolute bottom-3 right-3 flex items-center space-x-2">
+                {/* Input Control Buttons */}
+                <div className="absolute bottom-3 right-3 flex items-center space-x-1">
+                  {/* File Upload Button */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                    title="Upload image or PDF"
+                    disabled={loading}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Context Pin Button */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={selectedContext ? "default" : "ghost"}
+                    onClick={() => {
+                      if (showContextPin) {
+                        setShowContextPin(false);
+                      } else {
+                        loadAvailableContexts();
+                        setShowContextPin(true);
+                      }
+                    }}
+                    className={`h-8 w-8 p-0 ${selectedContext ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-purple-600'}`}
+                    title="Connect with previous content"
+                    disabled={loading}
+                  >
+                    <Pin className="h-4 w-4" />
+                  </Button>
+
                   {recognition && (
                     <Button
                       type="button"
@@ -1250,6 +1283,15 @@ export default function AITutor() {
                     <Lightbulb className="h-3 w-3" />
                   </Button>
                 </div>
+
+                {/* Hidden File Input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
               </div>
               
               <Button 
