@@ -448,7 +448,8 @@ class PersonalizationTester:
                 200,
                 data={
                     "message": scenario["question"],
-                    "subject": scenario["subject"]
+                    "subject": scenario["subject"],
+                    "session_id": f"test_session_{int(time.time())}"
                 },
                 headers={'Authorization': f'Bearer {self.token}'}
             )
