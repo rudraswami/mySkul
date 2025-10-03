@@ -484,7 +484,7 @@ export default function FormattedAIResponse({
   );
 }
 
-// Helper component for dual response container
+// Helper component for dual response container with progressive disclosure
 export function DualResponseContainer({ 
   primaryResponse, 
   secondaryResponse, 
@@ -501,267 +501,353 @@ export function DualResponseContainer({
   onCreateFlashcards,
   onScheduleRevision
 }) {
+  const [expandedSections, setExpandedSections] = useState({
+    references: false,
+    actions: false,
+    progress: false,
+    insights: false
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Scenario Indicator */}
-      <div className="flex items-center justify-center">
-        <Badge variant="outline" className="text-xs px-3 py-1">
-          <Target className="h-3 w-3 mr-1" />
-          {scenarioType.replace('_', ' ')} scenario • {Math.round(confidence * 100)}% confidence
-        </Badge>
+    <div className="space-y-4 max-w-4xl">
+      {/* Clean Primary Answer */}
+      <div className="bg-white rounded-lg border border-gray-100 shadow-sm">
+        {/* Main Answer Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div className="flex items-center space-x-3">
+            {primaryResponse.persona === 'professor' ? (
+              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                <GraduationCap className="h-4 w-4 text-teal-600" />
+              </div>
+            ) : (
+              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                <Heart className="h-4 w-4 text-teal-600" />
+              </div>
+            )}
+            <div>
+              <h3 className="font-medium text-gray-900 capitalize">
+                {primaryResponse.persona} Answer
+              </h3>
+              <p className="text-xs text-gray-500">
+                {primaryResponse.persona === 'professor' ? 'Academic & Structured' : 'Adaptive & Motivational'}
+              </p>
+            </div>
+          </div>
+          
+          <Badge variant="outline" className="text-xs text-gray-600">
+            {Math.round(confidence * 100)}% confident
+          </Badge>
+        </div>
+
+        {/* Main Answer Content */}
+        <div className="p-4">
+          <div className="prose prose-sm max-w-none">
+            <div 
+              className="text-gray-800 leading-relaxed"
+              dangerouslySetInnerHTML={{
+                __html: formatMathExpressions(primaryResponse.response)
+              }}
+            />
+          </div>
+
+          {/* Basic Feedback */}
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => onFeedback && onFeedback('helpful')}
+                className="text-gray-500 hover:text-teal-600"
+              >
+                <ThumbsUp className="h-4 w-4 mr-1" />
+                Helpful
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigator.clipboard.writeText(primaryResponse.response)}
+                className="text-gray-500 hover:text-teal-600"
+              >
+                <BookOpen className="h-4 w-4 mr-1" />
+                Copy
+              </Button>
+            </div>
+            <span className="text-xs text-gray-400">{timestamp}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Primary Response */}
-      <FormattedAIResponse
-        content={primaryResponse.response}
-        persona={primaryResponse.persona}
-        isLeading={true}
-        onFeedback={onFeedback}
-        onPracticMore={onPracticMore}
-        onAddToNotes={onAddToNotes}
-      />
-
-      {/* Secondary Response (if exists) */}
-      {secondaryResponse.response && (
-        <FormattedAIResponse
-          content={secondaryResponse.response}
-          persona={secondaryResponse.persona}
-          isLeading={false}
-        />
-      )}
-
-      {/* Phase C: Guardrails & Validation */}
-      {guardrails && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
-            <Shield className="h-4 w-4 mr-2" />
-            AI Verification & Sources
-          </h4>
-          
-          {/* Math Validation */}
-          {guardrails.math_validation && (
-            <div className="mb-3 p-3 bg-white rounded border border-blue-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700 flex items-center">
-                  <Calculator className="h-4 w-4 mr-1" />
-                  Math Validation
-                </span>
-                <Badge 
-                  variant={guardrails.math_validation.is_valid ? "default" : "destructive"}
-                  className="text-xs"
-                >
-                  {guardrails.math_validation.is_valid ? "Valid" : "Check Required"}
+      {/* Progressive Disclosure Sections */}
+      <div className="space-y-2">
+        
+        {/* Additional Insights (Secondary Response) */}
+        {secondaryResponse.response && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <Button
+              variant="ghost"
+              onClick={() => toggleSection('insights')}
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
+            >
+              <div className="flex items-center space-x-2">
+                <Heart className="h-4 w-4 text-teal-600" />
+                <span className="font-medium text-gray-700">Additional Perspective</span>
+                <Badge variant="outline" className="text-xs">
+                  {secondaryResponse.persona}
                 </Badge>
               </div>
-              {guardrails.math_validation.result && (
-                <p className="text-xs text-gray-600">Result: {guardrails.math_validation.result}</p>
+              {expandedSections.insights ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               )}
-              {guardrails.math_validation.confidence_score > 0 && (
-                <p className="text-xs text-gray-500">
-                  Confidence: {Math.round(guardrails.math_validation.confidence_score * 100)}%
-                </p>
+            </Button>
+            
+            {expandedSections.insights && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50">
+                <div 
+                  className="text-gray-700 text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: formatMathExpressions(secondaryResponse.response)
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* References & Sources */}
+        {(guardrails?.citations?.length > 0 || guardrails?.math_validation) && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <Button
+              variant="ghost"
+              onClick={() => toggleSection('references')}
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
+            >
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-teal-600" />
+                <span className="font-medium text-gray-700">References & Verification</span>
+                {guardrails?.math_validation?.is_valid && (
+                  <Badge variant="default" className="text-xs bg-green-100 text-green-700">
+                    Verified
+                  </Badge>
+                )}
+              </div>
+              {expandedSections.references ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               )}
-            </div>
-          )}
-          
-          {/* Citations */}
-          {guardrails.citations && guardrails.citations.length > 0 && (
-            <div className="mb-3 p-3 bg-white rounded border border-blue-100">
-              <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                <Link2 className="h-4 w-4 mr-1" />
-                Academic References
-              </h5>
-              <div className="space-y-1">
-                {guardrails.citations.slice(0, 3).map((citation, idx) => (
-                  <div key={idx} className="text-xs text-gray-600 flex items-start">
-                    <span className="text-blue-600 font-medium mr-1">{idx + 1}.</span>
-                    <span>{citation.source_title}</span>
-                    {citation.chapter_section && (
-                      <span className="text-gray-500 ml-1">({citation.chapter_section})</span>
+            </Button>
+            
+            {expandedSections.references && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50 space-y-3">
+                {/* Math Validation */}
+                {guardrails?.math_validation && (
+                  <div className="bg-white rounded p-3 border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Math Validation</span>
+                      <Badge variant={guardrails.math_validation.is_valid ? "default" : "destructive"}>
+                        {guardrails.math_validation.is_valid ? "Valid" : "Check Required"}
+                      </Badge>
+                    </div>
+                    {guardrails.math_validation.result && (
+                      <p className="text-xs text-gray-600">Result: {guardrails.math_validation.result}</p>
                     )}
                   </div>
-                ))}
+                )}
+                
+                {/* Citations */}
+                {guardrails?.citations?.length > 0 && (
+                  <div className="bg-white rounded p-3 border">
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Academic References</h5>
+                    <div className="space-y-1">
+                      {guardrails.citations.slice(0, 3).map((citation, idx) => (
+                        <div key={idx} className="text-xs text-gray-600">
+                          <span className="font-medium">{idx + 1}.</span> {citation.source_title}
+                          {citation.chapter_section && (
+                            <span className="text-gray-500"> ({citation.chapter_section})</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Phase C: Disagreement Alert */}
-      {disagreementAlert && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-sm font-semibold text-yellow-800 mb-1">
-                Different Perspectives Detected
-              </h4>
-              <p className="text-sm text-yellow-700 mb-2">
-                Our AI tutors have slightly different approaches to this problem. This is normal and can provide richer learning!
-              </p>
-              <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
-                {disagreementAlert.conflict_type} • {disagreementAlert.severity} difference
-              </Badge>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Phase D: Enhanced Action Buttons */}
-      {actionButtons && (
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
-            <Zap className="h-4 w-4 mr-2" />
-            Take Action - Enhance Your Learning
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {actionButtons.practice_more_available && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onPracticMore}
-                className="flex flex-col items-center p-3 h-auto text-center hover:bg-blue-50 border-blue-200"
-              >
-                <Target className="h-5 w-5 mb-1 text-blue-600" />
-                <span className="text-xs font-medium">Practice More</span>
-                <span className="text-xs text-gray-500">Similar problems</span>
-              </Button>
-            )}
-            
-            {actionButtons.add_to_notes_available && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onAddToNotes}
-                className="flex flex-col items-center p-3 h-auto text-center hover:bg-green-50 border-green-200"
-              >
-                <BookOpen className="h-5 w-5 mb-1 text-green-600" />
-                <span className="text-xs font-medium">Add to Notes</span>
-                <span className="text-xs text-gray-500">Save for later</span>
-              </Button>
-            )}
-            
-            {actionButtons.create_flashcards_available && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCreateFlashcards}
-                className="flex flex-col items-center p-3 h-auto text-center hover:bg-purple-50 border-purple-200"
-              >
-                <CreditCard className="h-5 w-5 mb-1 text-purple-600" />
-                <span className="text-xs font-medium">Turn into Deck</span>
-                <span className="text-xs text-gray-500">Make flashcards</span>
-              </Button>
-            )}
-            
-            {actionButtons.schedule_revision_available && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onScheduleRevision}
-                className="flex flex-col items-center p-3 h-auto text-center hover:bg-orange-50 border-orange-200"
-              >
-                <Clock className="h-5 w-5 mb-1 text-orange-600" />
-                <span className="text-xs font-medium">Schedule Revision</span>
-                <span className="text-xs text-gray-500">Spaced learning</span>
-              </Button>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Phase E: Analytics Display */}
-      {analytics && analytics.performance_stats && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
-            <Activity className="h-4 w-4 mr-2" />
-            Your Learning Progress
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">
-                {analytics.performance_stats.study_streak}
+        {/* Action Buttons */}
+        {actionButtons && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <Button
+              variant="ghost"
+              onClick={() => toggleSection('actions')}
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
+            >
+              <div className="flex items-center space-x-2">
+                <Zap className="h-4 w-4 text-teal-600" />
+                <span className="font-medium text-gray-700">Study Actions</span>
+                <Badge variant="outline" className="text-xs">
+                  Enhance Learning
+                </Badge>
               </div>
-              <div className="text-xs text-gray-600">Day Streak</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-green-600">
-                {analytics.performance_stats.total_interactions}
+              {expandedSections.actions ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+            
+            {expandedSections.actions && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50">
+                <div className="grid grid-cols-2 gap-3">
+                  {actionButtons.practice_more_available && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onPracticMore}
+                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
+                    >
+                      <Target className="h-4 w-4 mr-2 text-teal-600" />
+                      <div>
+                        <div className="text-xs font-medium">Practice More</div>
+                        <div className="text-xs text-gray-500">Similar problems</div>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {actionButtons.add_to_notes_available && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onAddToNotes}
+                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2 text-teal-600" />
+                      <div>
+                        <div className="text-xs font-medium">Add to Notes</div>
+                        <div className="text-xs text-gray-500">Save for later</div>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {actionButtons.create_flashcards_available && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onCreateFlashcards}
+                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2 text-teal-600" />
+                      <div>
+                        <div className="text-xs font-medium">Turn into Deck</div>
+                        <div className="text-xs text-gray-500">Make flashcards</div>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {actionButtons.schedule_revision_available && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onScheduleRevision}
+                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
+                    >
+                      <Clock className="h-4 w-4 mr-2 text-teal-600" />
+                      <div>
+                        <div className="text-xs font-medium">Schedule Revision</div>
+                        <div className="text-xs text-gray-500">Spaced learning</div>
+                      </div>
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="text-xs text-gray-600">Questions Asked</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">
-                {Math.round(analytics.performance_stats.study_time_this_week * 10) / 10}h
+            )}
+          </div>
+        )}
+
+        {/* Learning Progress */}
+        {analytics?.performance_stats && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <Button
+              variant="ghost"
+              onClick={() => toggleSection('progress')}
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
+            >
+              <div className="flex items-center space-x-2">
+                <Activity className="h-4 w-4 text-teal-600" />
+                <span className="font-medium text-gray-700">Learning Progress</span>
+                <Badge variant="outline" className="text-xs">
+                  Your Stats
+                </Badge>
               </div>
-              <div className="text-xs text-gray-600">This Week</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-orange-600 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                {analytics.performance_stats.performance_trend === 'improving' ? '↗️' : 
-                 analytics.performance_stats.performance_trend === 'declining' ? '↘️' : '→'}
+              {expandedSections.progress ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+            
+            {expandedSections.progress && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-teal-600">
+                      {analytics.performance_stats.study_streak}
+                    </div>
+                    <div className="text-xs text-gray-600">Day Streak</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-teal-600">
+                      {analytics.performance_stats.total_interactions}
+                    </div>
+                    <div className="text-xs text-gray-600">Questions Asked</div>
+                  </div>
+                </div>
+                
+                {analytics.performance_stats.recommendations?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-2">💡 Recommendations:</p>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      {analytics.performance_stats.recommendations.slice(0, 2).map((rec, idx) => (
+                        <li key={idx} className="flex items-start">
+                          <span className="text-teal-500 mr-1">•</span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-gray-600 capitalize">
-                {analytics.performance_stats.performance_trend}
+            )}
+          </div>
+        )}
+
+        {/* Disagreement Alert */}
+        {disagreementAlert && (
+          <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-3">
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-yellow-800">
+                  Our AI tutors have slightly different approaches to this problem. 
+                  This provides richer learning perspectives!
+                </p>
+                <Badge variant="outline" className="text-xs text-yellow-700 mt-2">
+                  {disagreementAlert.conflict_type}
+                </Badge>
               </div>
             </div>
           </div>
-          
-          {analytics.performance_stats.recommendations && analytics.performance_stats.recommendations.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-xs font-medium text-gray-700 mb-2">💡 Personalized Recommendations:</p>
-              <ul className="text-xs text-gray-600 space-y-1">
-                {analytics.performance_stats.recommendations.slice(0, 2).map((rec, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="text-blue-500 mr-1">•</span>
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Action Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-        <div className="flex items-center space-x-4 text-xs text-gray-500">
-          <span>Dual Intelligence Response</span>
-          <span>•</span>
-          <span>{timestamp}</span>
-        </div>
-        
-        <div className="flex space-x-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs hover:text-blue-600"
-            onClick={() => navigator.clipboard.writeText(`Professor: ${primaryResponse.response}\n\nMentor: ${secondaryResponse.reasoning || secondaryResponse.response}`)}
-            title="Copy full response"
-          >
-            <BookOpen className="h-3 w-3 mr-1" />
-            Copy Response
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs hover:text-yellow-600"
-            title="Bookmark this response"
-          >
-            <Star className="h-3 w-3 mr-1" />
-            Bookmark
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs hover:text-green-600"
-            title="Ask follow-up question"
-          >
-            <ArrowRight className="h-3 w-3 mr-1" />
-            Follow Up
-          </Button>
-        </div>
+        )}
       </div>
     </div>
   );
