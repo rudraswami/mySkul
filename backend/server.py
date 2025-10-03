@@ -6543,45 +6543,6 @@ async def create_class_series(
 
 # Duplicate removed - moved earlier in file for proper routing
 
-@api_router.get("/auto-notes/analytics")
-async def get_note_analytics(user: User = Depends(get_current_user)):
-    """Get comprehensive analytics for AutoNote usage"""
-    
-    try:
-        # Get session statistics
-        total_sessions = await db.auto_note_sessions.count_documents({"user_id": user.user_id})
-        
-        # Get spaced repetition statistics
-        total_cards = await db.spaced_repetition_cards.count_documents({"user_id": user.user_id})
-        due_cards = await db.spaced_repetition_cards.count_documents({
-            "user_id": user.user_id,
-            "next_review": {"$lte": datetime.now(timezone.utc)}
-        })
-        
-        # Get subject distribution
-        subjects_pipeline = [
-            {"$match": {"user_id": user.user_id}},
-            {"$group": {"_id": "$subject", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}}
-        ]
-        subject_stats = await db.auto_note_sessions.aggregate(subjects_pipeline).to_list(length=None)
-        
-        return {
-            "total_sessions": total_sessions,
-            "total_flashcards": total_cards,
-            "due_for_review": due_cards,
-            "subject_distribution": subject_stats,
-            "learning_streak": 0,  # TODO: Calculate based on daily usage
-            "performance_trends": {
-                "this_week": {"sessions": 0, "flashcards_reviewed": 0},
-                "this_month": {"sessions": 0, "flashcards_reviewed": 0}
-            }
-        }
-        
-    except Exception as e:
-        logger.error(f"Analytics error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve analytics")
-
 # Helper functions for note analysis
 def extract_concepts_from_text(text: str) -> List[str]:
     """Extract key concepts from transcribed text"""
