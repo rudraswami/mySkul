@@ -680,6 +680,47 @@ class LearningInteraction(BaseModel):
 
 # ============= PHASE C, D, E MODELS =============
 
+# Phase C: Advanced Guardrails Request Models
+class MathValidationRequest(BaseModel):
+    expression: str
+    units: Optional[str] = None
+
+# Phase D: Enhanced Action Buttons Request Models
+class PracticeProblemsRequest(BaseModel):
+    original_question: str
+    subject: str
+    topic: str
+    education_standard: str = "JEE"
+    difficulty_level: str = "similar"
+
+class AddToNotesRequest(BaseModel):
+    title: str
+    content: str
+    subject: str
+    topic: str
+    interaction_id: Optional[str] = None
+
+class CreateFlashcardsRequest(BaseModel):
+    title: str
+    content: str
+    subject: str
+    topic: str
+    interaction_id: Optional[str] = None
+
+class ScheduleRevisionRequest(BaseModel):
+    content_id: str
+    content_type: str  # "note", "flashcard", "concept"
+    title: str
+    difficulty_level: float = 0.5
+
+# Phase E: Analytics Integration Request Models  
+class WellnessCheckRequest(BaseModel):
+    stress_level: int = Field(ge=1, le=10)
+    motivation_level: int = Field(ge=1, le=10)
+    confidence_level: int = Field(ge=1, le=10)
+    study_satisfaction: int = Field(ge=1, le=10)
+    session_id: str
+
 # Phase C: Advanced Guardrails Models
 class MathValidation(BaseModel):
     validation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
