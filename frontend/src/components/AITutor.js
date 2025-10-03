@@ -1236,36 +1236,20 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Phase B: Personalization Status Bar */}
+        {/* Clean Personalization Status */}
         {studentProfile && (
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 p-4 mx-6 rounded-lg">
+          <div className="bg-teal-50 border border-teal-100 p-3 mx-6 rounded-lg">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="bg-purple-100 rounded-full p-2">
-                  <Brain className="h-5 w-5 text-purple-600" />
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center">
+                  <Target className="h-3 w-3 text-teal-600" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-purple-800 mb-1">🎯 Personalized Learning Active</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-600">Language:</span>
-                      <span className="font-medium text-purple-700 capitalize">{studentProfile.preferred_language}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-600">Style:</span>
-                      <span className="font-medium text-purple-700 capitalize">{studentProfile.learning_style}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-600">Difficulty:</span>
-                      <span className={`font-medium flex items-center space-x-1`}>
-                        <span>{getDifficultyDisplay(personalizedDifficulty).emoji}</span>
-                        <span className="text-purple-700">{getDifficultyDisplay(personalizedDifficulty).label}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-600">Sessions:</span>
-                      <span className="font-medium text-purple-700">{studentProfile.total_interactions || 0}</span>
-                    </div>
+                  <span className="text-sm font-medium text-teal-800">Personalized Learning Active</span>
+                  <div className="flex items-center space-x-4 text-xs text-gray-600 mt-1">
+                    <span>Language: <span className="font-medium text-teal-700">{studentProfile.preferred_language}</span></span>
+                    <span>Style: <span className="font-medium text-teal-700">{studentProfile.learning_style}</span></span>
+                    <span>Level: <span className="font-medium text-teal-700">{getDifficultyDisplay(personalizedDifficulty).label}</span></span>
                   </div>
                 </div>
               </div>
