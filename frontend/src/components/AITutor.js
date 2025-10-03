@@ -1304,8 +1304,8 @@ export default function AITutor() {
                         
                         {/* Action Menu */}
                         {sessionActions.showMenu === session.session_id && (
-                          <div className="absolute right-2 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                            <div className="py-1">
+                          <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-in fade-in-0 zoom-in-95">
+                            <div className="py-2">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1315,45 +1315,48 @@ export default function AITutor() {
                                     isRenaming: session.session_id 
                                   });
                                 }}
-                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                               >
-                                <Edit className="h-4 w-4 mr-2" />
+                                <Edit className="h-4 w-4 mr-3 text-gray-500" />
                                 Rename
                               </button>
                               
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  setSessionActions({ showMenu: null, isRenaming: null });
                                   togglePinSession(session.session_id, session.pinned);
                                 }}
-                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                               >
-                                <Pin className="h-4 w-4 mr-2" />
-                                {session.pinned ? 'Unpin' : 'Pin'}
+                                <Pin className={`h-4 w-4 mr-3 ${session.pinned ? 'text-teal-600' : 'text-gray-500'}`} />
+                                {session.pinned ? 'Unpin' : 'Pin to top'}
                               </button>
                               
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  setSessionActions({ showMenu: null, isRenaming: null });
                                   toggleBookmarkSession(session.session_id, session.bookmarked);
                                 }}
-                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                               >
-                                <Star className="h-4 w-4 mr-2" />
-                                {session.bookmarked ? 'Remove Bookmark' : 'Bookmark'}
+                                <Star className={`h-4 w-4 mr-3 ${session.bookmarked ? 'text-yellow-500 fill-current' : 'text-gray-500'}`} />
+                                {session.bookmarked ? 'Remove bookmark' : 'Add bookmark'}
                               </button>
                               
-                              <hr className="my-1" />
+                              <hr className="my-1 border-gray-100" />
                               
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  setSessionActions({ showMenu: null, isRenaming: null });
                                   deleteSession(session.session_id);
                                 }}
-                                className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
+                                <Trash2 className="h-4 w-4 mr-3" />
+                                Delete conversation
                               </button>
                             </div>
                           </div>
