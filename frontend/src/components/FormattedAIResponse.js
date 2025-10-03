@@ -502,6 +502,9 @@ export function DualResponseContainer({
         content={primaryResponse.response}
         persona={primaryResponse.persona}
         isLeading={true}
+        onFeedback={onFeedback}
+        onPracticMore={onPracticMore}
+        onAddToNotes={onAddToNotes}
       />
 
       {/* Secondary Response (if exists) */}
