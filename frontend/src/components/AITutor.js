@@ -1314,6 +1314,7 @@ export default function AITutor() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log('Rename clicked for session:', session.session_id, session.title);
                                   setRenameValue(session.title);
                                   setSessionActions({ 
                                     showMenu: null, 
