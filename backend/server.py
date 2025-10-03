@@ -677,6 +677,130 @@ class LearningInteraction(BaseModel):
     time_spent: Optional[float] = None  # seconds
     follow_up_generated: bool = Field(default=False)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============= PHASE C, D, E MODELS =============
+
+# Phase C: Advanced Guardrails Models
+class MathValidation(BaseModel):
+    validation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    expression: str
+    result: Optional[str] = None
+    units_input: Optional[str] = None
+    units_output: Optional[str] = None
+    is_valid: bool = False
+    validation_errors: List[str] = Field(default_factory=list)
+    confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    validation_method: str  # "symbolic", "numerical", "unit_analysis"
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Citation(BaseModel):
+    citation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    source_type: str  # "ncert", "reference_book", "research_paper", "official_syllabus"
+    source_title: str
+    chapter_section: Optional[str] = None
+    page_number: Optional[str] = None
+    url: Optional[str] = None
+    confidence: float = Field(ge=0.0, le=1.0)
+    education_standard: str  # "JEE", "NEET", "UPSC", "CBSE"
+    subject: str
+    topic: str
+
+class DisagreementAlert(BaseModel):
+    alert_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    question: str
+    mentor_response: str
+    professor_response: str
+    conflict_type: str  # "conceptual", "methodological", "numerical", "approach"
+    severity: str  # "minor", "moderate", "major"
+    resolution_status: str = "pending"  # "pending", "clarified", "escalated"
+    user_preference: Optional[str] = None  # "mentor", "professor", "both"
+    resolved_at: Optional[datetime] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Phase D: Enhanced Action Buttons Models
+class PracticeSession(BaseModel):
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    original_question: str
+    generated_problems: List[Dict[str, Any]] = Field(default_factory=list)
+    difficulty_level: str  # "easier", "similar", "harder"
+    problem_count: int = Field(default=5)
+    education_standard: str
+    subject: str
+    topic: str
+    completion_status: str = "active"  # "active", "completed", "abandoned"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class StudyNote(BaseModel):
+    note_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    content: str
+    source_interaction_id: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    subject: str
+    topic: str
+    note_type: str = "ai_response"  # "ai_response", "manual", "flashcard_conversion"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FlashcardDeck(BaseModel):
+    deck_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    description: str
+    cards: List[Dict[str, str]] = Field(default_factory=list)  # [{"front": "Q", "back": "A"}]
+    source_interaction_id: Optional[str] = None
+    subject: str
+    topic: str
+    difficulty_level: str = "medium"
+    total_cards: int = Field(default=0)
+    study_stats: Dict[str, int] = Field(default_factory=dict)  # {"mastered": 0, "learning": 0, "new": 0}
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RevisionSchedule(BaseModel):
+    schedule_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    content_id: str  # note_id, deck_id, or interaction_id
+    content_type: str  # "note", "flashcard", "concept"
+    title: str
+    scheduled_for: datetime
+    difficulty_level: float = Field(ge=0.1, le=1.0)
+    importance_score: float = Field(ge=0.1, le=1.0)
+    repetition_interval: int = Field(default=1)  # days
+    completion_status: str = "scheduled"  # "scheduled", "completed", "skipped", "rescheduled"
+    reminder_sent: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Phase E: Analytics Integration Models
+class LearningAnalytics(BaseModel):
+    analytics_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    period_start: datetime
+    period_end: datetime
+    total_interactions: int = 0
+    subjects_studied: List[str] = Field(default_factory=list)
+    topics_mastered: Dict[str, float] = Field(default_factory=dict)  # topic: mastery_percentage
+    difficulty_progression: Dict[str, float] = Field(default_factory=dict)  # date: avg_difficulty
+    study_streak: int = 0
+    total_study_time: float = 0.0  # hours
+    performance_trend: str = "stable"  # "improving", "declining", "stable"
+    recommendations: List[str] = Field(default_factory=list)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class WellnessCheck(BaseModel):
+    check_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_id: str
+    stress_level: int = Field(ge=1, le=10)  # 1=very low, 10=very high
+    motivation_level: int = Field(ge=1, le=10)
+    confidence_level: int = Field(ge=1, le=10)
+    study_satisfaction: int = Field(ge=1, le=10)
+    break_recommendation: bool = Field(default=False)
+    motivational_content_suggested: Optional[str] = None
+    follow_up_scheduled: Optional[datetime] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 # ============= UTILITY FUNCTIONS =============
 
 def hash_password(password: str) -> str:
