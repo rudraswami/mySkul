@@ -211,8 +211,9 @@ class PhaseCDETester:
         
         if success:
             print(f"   ✅ Fact verification successful")
-            print(f"   Verification result: {response.get('is_verified', False)}")
-            print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
+            if isinstance(response, dict):
+                print(f"   Verification result: {response.get('is_verified', False)}")
+                print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
             success_count += 1
         else:
             print(f"   ❌ Fact verification failed")
