@@ -181,8 +181,8 @@ export default function LoginPage() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
