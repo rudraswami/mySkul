@@ -2920,7 +2920,7 @@ async def get_error_patterns(user: User = Depends(get_current_user)):
 async def record_user_feedback(
     session_id: str,
     subject: str,
-    feedback_type: str = Field(..., regex="^(helpful|too_easy|too_hard|confusing|perfect)$"),
+    feedback_type: str = Field(..., pattern="^(helpful|too_easy|too_hard|confusing|perfect)$"),
     topic_name: Optional[str] = None,
     user: User = Depends(get_current_user)
 ):
