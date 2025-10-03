@@ -1110,39 +1110,115 @@ export default function MockTests() {
     );
   }
 
-  // Professional test generation templates - no fake completed tests
-  const testTemplates = [
-    {
-      id: 'math_full',
-      title: 'JEE Main Mathematics - Full Length Test', 
-      examType: 'JEE',
-      subject: 'Mathematics',
-      duration: '3 hours',
-      questions: 25,
-      difficulty: 'High',
-      description: 'Comprehensive test covering all mathematics topics for JEE Main'
-    },
-    {
-      id: 'physics_mechanics',
-      title: 'Physics Mechanics - Chapter Test',
-      examType: 'JEE',
-      subject: 'Physics', 
-      duration: '1.5 hours',
-      questions: 15,
-      difficulty: 'Medium',
-      description: 'Focus test on mechanics including motion, forces, and energy'
-    },
-    {
-      id: 'chemistry_organic',
-      title: 'Organic Chemistry - Quick Assessment',
-      examType: 'JEE',
-      subject: 'Chemistry',
-      duration: '45 minutes', 
-      questions: 10,
-      difficulty: 'Easy',
-      description: 'Assessment covering basic organic chemistry concepts'
-    }
-  ];
+  // Dynamic test templates based on exam type
+  const getTestTemplates = (examType, subjects) => {
+    const examTypeTemplates = {
+      'JEE': [
+        {
+          id: 'math_full',
+          title: 'JEE Main Mathematics - Full Length Test',
+          subject: 'Mathematics',
+          duration: '3 hours',
+          questions: 25,
+          difficulty: 'High',
+          description: 'Comprehensive test covering all mathematics topics for JEE Main'
+        },
+        {
+          id: 'physics_mechanics',
+          title: 'Physics Mechanics - Chapter Test',
+          subject: 'Physics',
+          duration: '1.5 hours',
+          questions: 15,
+          difficulty: 'Medium',
+          description: 'Focus test on mechanics including motion, forces, and energy'
+        },
+        {
+          id: 'chemistry_organic',
+          title: 'Organic Chemistry - Quick Assessment',
+          subject: 'Chemistry',
+          duration: '45 minutes',
+          questions: 10,
+          difficulty: 'Easy',
+          description: 'Assessment covering basic organic chemistry concepts'
+        }
+      ],
+      'UPSC': [
+        {
+          id: 'history_ancient',
+          title: 'Ancient Indian History - Comprehensive Test',
+          subject: 'History',
+          duration: '2 hours',
+          questions: 20,
+          difficulty: 'Medium',
+          description: 'Covering ancient civilizations, dynasties, and cultural developments'
+        },
+        {
+          id: 'polity_constitution',
+          title: 'Indian Constitution & Polity - Mock Test',
+          subject: 'Polity',
+          duration: '1.5 hours',
+          questions: 15,
+          difficulty: 'High',
+          description: 'Constitutional provisions, governance, and political processes'
+        },
+        {
+          id: 'economy_basics',
+          title: 'Indian Economy - Quick Assessment',
+          subject: 'Economy',
+          duration: '1 hour',
+          questions: 12,
+          difficulty: 'Easy',
+          description: 'Economic concepts, planning, and current economic trends'
+        }
+      ],
+      'NEET': [
+        {
+          id: 'physics_mechanics',
+          title: 'NEET Physics Mechanics - Practice Test',
+          subject: 'Physics',
+          duration: '1.5 hours',
+          questions: 15,
+          difficulty: 'Medium',
+          description: 'Mechanics, waves, and thermodynamics for medical entrance'
+        },
+        {
+          id: 'chemistry_organic',
+          title: 'Organic Chemistry for NEET - Assessment',
+          subject: 'Chemistry',
+          duration: '1 hour',
+          questions: 12,
+          difficulty: 'Medium',
+          description: 'Organic reactions, mechanisms, and biomolecules'
+        },
+        {
+          id: 'biology_botany',
+          title: 'Botany - Plant Systems Test',
+          subject: 'Biology',
+          duration: '1 hour',
+          questions: 10,
+          difficulty: 'Easy',
+          description: 'Plant anatomy, physiology, and reproduction'
+        }
+      ]
+    };
+    
+    // Get templates for current exam type or default to JEE
+    const templates = examTypeTemplates[examType] || examTypeTemplates['JEE'];
+    
+    // Filter templates to only show subjects available for current exam type
+    return templates.filter(template => 
+      subjects.some(subject => 
+        subject.toLowerCase().includes(template.subject.toLowerCase()) || 
+        template.subject.toLowerCase().includes(subject.toLowerCase())
+      )
+    ).map(template => ({
+      ...template,
+      examType: examType
+    }));
+  };
+
+  // Get current test templates based on exam type
+  const testTemplates = getTestTemplates(examSubjects.exam_type, examSubjects.subjects);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
