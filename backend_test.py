@@ -3,6 +3,7 @@ import sys
 import json
 from datetime import datetime
 import time
+import io
 
 class DhruvAITester:
     def __init__(self, base_url="https://exam-genius-hub.preview.emergentagent.com/api"):
