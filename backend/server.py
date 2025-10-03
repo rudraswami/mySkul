@@ -3893,22 +3893,18 @@ async def get_disagreement_alerts(
 # Phase D: Enhanced Action Buttons Endpoints  
 @api_router.post("/actions/practice-more")
 async def generate_practice_problems_endpoint(
-    original_question: str,
-    subject: str,
-    topic: str,
-    education_standard: str = "JEE",
-    difficulty_level: str = "similar",
+    request: PracticeProblemsRequest,
     user: User = Depends(get_current_user)
 ):
     """Generate practice problems based on original question"""
     try:
         session = await ActionButtonService.generate_practice_problems(
             user_id=user.user_id,
-            original_question=original_question,
-            subject=subject,
-            topic=topic,
-            education_standard=education_standard,
-            difficulty_level=difficulty_level
+            original_question=request.original_question,
+            subject=request.subject,
+            topic=request.topic,
+            education_standard=request.education_standard,
+            difficulty_level=request.difficulty_level
         )
         return session.dict()
     except Exception as e:
