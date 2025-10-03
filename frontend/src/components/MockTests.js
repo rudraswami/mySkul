@@ -627,6 +627,18 @@ export default function MockTests() {
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleQuestionBookmark(
+                      question.question_id, 
+                      activeTest.test_id, 
+                      !bookmarkedQuestions.has(question.question_id)
+                    )}
+                    className="text-gray-600 hover:text-yellow-600"
+                  >
+                    <Star className={`h-4 w-4 ${bookmarkedQuestions.has(question.question_id) ? 'text-yellow-600 fill-yellow-600' : ''}`} />
+                  </Button>
                   <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                     {question.marks || 4} marks
                   </span>
