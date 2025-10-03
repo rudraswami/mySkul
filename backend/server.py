@@ -2307,9 +2307,10 @@ Please provide a comprehensive analysis, solve any problems shown, and explain t
             })
         elif ai_mode == 'mentor':
             mentor_service = MentorAI(EMERGENT_LLM_KEY)
-            response = await mentor_service.get_response(ai_message, subject, session_id)
+            response, reasoning = await mentor_service.get_response(ai_message, subject, session_id)
             result = {
                 'response': response,
+                'reasoning': reasoning,
                 'ai_mode': 'mentor',
                 'message': ai_message,
                 'session_id': session_id,
@@ -2319,9 +2320,10 @@ Please provide a comprehensive analysis, solve any problems shown, and explain t
             }
         else:  # professor
             professor_service = ProfessorAI(EMERGENT_LLM_KEY)
-            response = await professor_service.get_response(ai_message, subject, session_id)
+            response, reasoning = await professor_service.get_response(ai_message, subject, session_id)
             result = {
                 'response': response,
+                'reasoning': reasoning,
                 'ai_mode': 'professor',
                 'message': ai_message,
                 'session_id': session_id,
