@@ -5,7 +5,7 @@ import './App.css';
 // Components
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
-import Dashboard from './components/Dashboard';
+import StudentDashboard from './components/StudentDashboard';
 import AITutor from './components/AITutor';
 import MockTests from './components/MockTests';
 import Analytics from './components/Analytics';
