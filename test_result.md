@@ -393,22 +393,10 @@
 
 ## test_plan:
   current_focus:
-    - "Comprehensive Revenue Module Subscription System"
-    - "Enhanced Mock Test System API"
-    - "Enhanced Mock Tests UI"
-    - "Performance Analytics API"
-    - "Advanced Analytics Dashboard"
-    - "Stress Management & Motivational API"
-    - "Stress Management UI"
-    - "Dual-Layer AI System - Backend"
-    - "Dual-Layer AI System - Frontend"
-    - "Phase 2: Mock Tests Dual Feedback"
-    - "Phase 2: Study Planning Dual Intelligence"
-    - "Phase 2: Enhanced Question Analysis"
-    - "Auto-Note Mentor File Upload Feature"
+    - "Enhanced AI Tutor File Upload with Cutting-Edge Features"
   stuck_tasks:
     - "Enhanced Mock Tests UI"
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
   - task: "Comprehensive Revenue Module Subscription System"
