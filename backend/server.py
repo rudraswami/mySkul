@@ -3016,10 +3016,8 @@ class ActionButtonService:
                 api_key=EMERGENT_LLM_KEY,
                 session_id=f"practice_{uuid.uuid4()}"
             ).with_model("openai", "gpt-3.5-turbo")
-            response = await llm_client.achat(
-                messages=[{"role": "user", "content": prompt}],
-                system_message="You are an expert at creating effective study flashcards."
-            )
+            user_msg = UserMessage(text=prompt)
+            response = await llm_client.send_message(user_msg)
             
             # Parse into flashcards
             cards = ActionButtonService._parse_flashcards(response.content)
