@@ -289,6 +289,194 @@ export default function AITutor() {
     URL.revokeObjectURL(url);
   };
 
+  // Phase A: File Upload Functionality
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragOver(false);
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      setSelectedFile(file);
+    }
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const processFileUpload = async () => {
+    if (!selectedFile) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(selectedFile.type)) {
+      alert('Please upload an image (JPG, PNG, WebP) or PDF file');
+      return;
+    }
+
+    // Check file size (10MB limit for images/PDFs)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (selectedFile.size > maxSize) {
+      alert('File size too large. Please upload a file smaller than 10MB.');
+      return;
+    }
+
+    setLoading(true);
+    setUploadProgress(10);
+
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('subject', selectedSubject);
+      formData.append('ai_mode', aiMode);
+      if (selectedContext) {
+        formData.append('context_id', selectedContext.id);
+        formData.append('context_type', selectedContext.type);
+      }
+
+      setUploadProgress(50);
+
+      const response = await fetch(`${API}/ai/process-file`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      setUploadProgress(90);
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Add the AI response to messages
+        setMessages(prev => [...prev, result]);
+        
+        // Update current session if it's a new one
+        if (!currentSession && result.session_id) {
+          setCurrentSession(result.session_id);
+          fetchChatSessions();
+        }
+
+        // Clear the uploaded file
+        clearSelectedFile();
+        
+      } else {
+        const errorData = await response.json();
+        alert(errorData.detail || 'Failed to process file');
+      }
+
+      setUploadProgress(100);
+      
+    } catch (error) {
+      console.error('Error processing file:', error);
+      alert('Failed to process file. Please try again.');
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Phase A: Context Pin Functionality
+  const loadAvailableContexts = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      const [sessionsRes, notesRes, testsRes] = await Promise.all([
+        fetch(`${API}/ai/chat-sessions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API}/auto-notes/sessions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API}/mock-tests/history`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(() => ({ ok: false })) // Mock tests might not exist
+      ]);
+
+      const contexts = [];
+
+      if (sessionsRes.ok) {
+        const sessions = await sessionsRes.json();
+        contexts.push(...sessions.map(session => ({
+          id: session.session_id,
+          type: 'chat_session',
+          title: session.title,
+          subject: session.subject,
+          created_at: session.created_at,
+          icon: MessageCircle,
+          description: `Chat session with ${session.message_count || 0} messages`
+        })));
+      }
+
+      if (notesRes.ok) {
+        const notes = await notesRes.json();
+        contexts.push(...notes.map(note => ({
+          id: note.session_id,
+          type: 'note_session',
+          title: note.session_name,
+          subject: note.subject,
+          created_at: note.created_at,
+          icon: FileText,
+          description: `Auto-note session with processed content`
+        })));
+      }
+
+      if (testsRes.ok) {
+        const tests = await testsRes.json();
+        contexts.push(...tests.map(test => ({
+          id: test.test_id,
+          type: 'mock_test',
+          title: test.test_name,
+          subject: test.subject,
+          created_at: test.created_at,
+          icon: Target,
+          description: `Mock test - Score: ${test.score}/${test.total_marks}`
+        })));
+      }
+
+      // Sort by creation date (newest first)
+      contexts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      setAvailableContexts(contexts);
+      
+    } catch (error) {
+      console.error('Error loading available contexts:', error);
+    }
+  };
+
+  const selectContext = (context) => {
+    setSelectedContext(context);
+    setShowContextPin(false);
+  };
+
+  const clearContext = () => {
+    setSelectedContext(null);
+  };
+
   const getSubjectSuggestions = () => {
     const suggestions = {
       'Mathematics': [
