@@ -3020,12 +3020,23 @@ async def get_mentor_response(chat_request: ChatRequest, user: User = Depends(ge
             'user_id': user.user_id
         }
         
-        mentor_response, mentor_reasoning = await dual_ai.mentor.get_response(
-            chat_request.message,
-            chat_request.subject,
-            session_id,
-            user_context
-        )
+        # Try personalized response first, fallback to basic if needed
+        try:
+            mentor_response, mentor_reasoning = await dual_ai.mentor.get_personalized_response(
+                chat_request.message,
+                chat_request.subject,
+                session_id,
+                user.user_id,
+                None  # topic_name
+            )
+        except Exception as personalization_error:
+            logger.warning(f"Personalization failed, using fallback: {str(personalization_error)}")
+            mentor_response, mentor_reasoning = await dual_ai.mentor.get_response(
+                chat_request.message,
+                chat_request.subject,
+                session_id,
+                user_context
+            )
         
         return {
             "session_id": session_id,
