@@ -18,7 +18,16 @@ import {
   ThumbsUp,
   TrendingDown,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Calculator,
+  Link2,
+  Zap,
+  CreditCard,
+  Clock,
+  TrendingUpRight,
+  Shield,
+  Award,
+  Activity
 } from 'lucide-react';
 
 export default function FormattedAIResponse({ 
