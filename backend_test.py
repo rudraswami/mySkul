@@ -1606,6 +1606,12 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
+        # If failed, let's also try to get more detailed error information
+        if not success:
+            print(f"   🔍 Detailed error analysis:")
+            print(f"   Response status: {getattr(self, 'last_response_status', 'unknown')}")
+            print(f"   Error details: {getattr(self, 'last_error_data', {})}")
+        
         if success:
             sessions = response.get('sessions', [])
             print(f"   ✅ Sessions retrieved successfully - Count: {len(sessions)}")
