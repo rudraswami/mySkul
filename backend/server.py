@@ -3020,7 +3020,7 @@ class ActionButtonService:
             response = await llm_client.send_message(user_msg)
             
             # Parse into flashcards
-            cards = ActionButtonService._parse_flashcards(response.content)
+            cards = ActionButtonService._parse_flashcards(response)
             
             deck = FlashcardDeck(
                 user_id=user_id,
