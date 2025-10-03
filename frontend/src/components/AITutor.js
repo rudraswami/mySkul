@@ -1151,20 +1151,129 @@ export default function AITutor() {
                   {subjectSessions.map((session) => (
                     <div
                       key={session.session_id}
-                      onClick={() => loadSession(session.session_id)}
-                      className={`flex items-center justify-between px-3 py-2 ml-4 rounded-lg cursor-pointer transition-colors text-sm ${
+                      className={`flex items-center justify-between px-3 py-2 ml-4 rounded-lg transition-colors text-sm group ${
                         currentSession === session.session_id
                           ? 'bg-teal-50 text-teal-900 border border-teal-200'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <div className="flex items-center flex-1 min-w-0">
-                        <MessageCircle className="h-3 w-3 mr-2 flex-shrink-0 text-gray-400" />
-                        <span className="truncate font-medium">{session.title}</span>
+                      <div 
+                        className="flex items-center flex-1 min-w-0 cursor-pointer"
+                        onClick={() => loadSession(session.session_id)}
+                      >
+                        {/* Session Status Icons */}
+                        <div className="flex items-center mr-2">
+                          {session.pinned && <Pin className="h-3 w-3 text-teal-600 mr-1" />}
+                          {session.bookmarked && <Star className="h-3 w-3 text-yellow-500 mr-1" />}
+                          <MessageCircle className="h-3 w-3 text-gray-400" />
+                        </div>
+                        
+                        {/* Session Title - Editable */}
+                        {sessionActions.isRenaming === session.session_id ? (
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={() => {
+                              if (renameValue.trim()) {
+                                renameSession(session.session_id, renameValue.trim());
+                              } else {
+                                setSessionActions({ ...sessionActions, isRenaming: null });
+                                setRenameValue('');
+                              }
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur();
+                              }
+                            }}
+                            className="flex-1 text-sm bg-white border border-teal-200 rounded px-1 py-0.5 mr-2"
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="truncate font-medium flex-1">{session.title}</span>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                        {formatTime(session.last_updated)}
-                      </span>
+                      
+                      {/* Session Actions */}
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs text-gray-400 flex-shrink-0">
+                          {formatTime(session.last_updated)}
+                        </span>
+                        
+                        {/* Three-dot menu */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSessionActions({
+                              ...sessionActions,
+                              showMenu: sessionActions.showMenu === session.session_id ? null : session.session_id
+                            });
+                          }}
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreVertical className="h-3 w-3 text-gray-400" />
+                        </Button>
+                        
+                        {/* Action Menu */}
+                        {sessionActions.showMenu === session.session_id && (
+                          <div className="absolute right-2 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                            <div className="py-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenameValue(session.title);
+                                  setSessionActions({ 
+                                    showMenu: null, 
+                                    isRenaming: session.session_id 
+                                  });
+                                }}
+                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Rename
+                              </button>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePinSession(session.session_id, session.pinned);
+                                }}
+                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Pin className="h-4 w-4 mr-2" />
+                                {session.pinned ? 'Unpin' : 'Pin'}
+                              </button>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleBookmarkSession(session.session_id, session.bookmarked);
+                                }}
+                                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Star className="h-4 w-4 mr-2" />
+                                {session.bookmarked ? 'Remove Bookmark' : 'Bookmark'}
+                              </button>
+                              
+                              <hr className="my-1" />
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteSession(session.session_id);
+                                }}
+                                className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
