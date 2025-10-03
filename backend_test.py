@@ -1586,10 +1586,17 @@ class DhruvAITester:
         
         schedule_get_success = 1 if success else 0
         if success:
-            schedule = response.get('revision_schedule', [])
+            # Handle both dict and list response formats
+            if isinstance(response, dict):
+                schedule = response.get('revision_schedule', [])
+            elif isinstance(response, list):
+                schedule = response
+            else:
+                schedule = []
+                
             print(f"   ✅ Revision schedule retrieved: {len(schedule)} items")
             if schedule:
-                sample_item = schedule[0]
+                sample_item = schedule[0] if isinstance(schedule[0], dict) else {}
                 print(f"   Sample item: {sample_item.get('title', 'N/A')}")
                 print(f"   Scheduled for: {sample_item.get('scheduled_for', 'N/A')[:10]}")
         else:
