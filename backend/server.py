@@ -3792,9 +3792,10 @@ async def get_daily_goals(user: User = Depends(get_current_user)):
         goal_id += 1
     
     # Goal 3: AI Tutor interaction
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
     chat_count_today = await db.chat_messages.count_documents({
         "user_id": user.user_id,
-        "timestamp": {"$gte": datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)}
+        "timestamp": {"$gte": today_start}
     })
     
     ai_goal = {
