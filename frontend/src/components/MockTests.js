@@ -542,10 +542,11 @@ export default function MockTests() {
   };
 
   const showTestResults = (result) => {
-    setTestResults(result);
+    setTestResults({ ...result, test_id: activeTest.test_id });
     setShowResults(true);
     setActiveTest(null);
     loadAnalytics(); // Refresh analytics
+    loadPerformanceTrends(); // Load updated trends
   };
 
   const closeResults = () => {
