@@ -1309,7 +1309,7 @@ export default function AITutor() {
                         
                         {/* Action Menu */}
                         {sessionActions.showMenu === session.session_id && (
-                          <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-in fade-in-0 zoom-in-95">
+                          <div className="session-action-menu absolute right-0 top-8 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-in fade-in-0 zoom-in-95">
                             <div className="py-2">
                               <button
                                 onClick={(e) => {
