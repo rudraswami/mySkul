@@ -14,7 +14,9 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     console.log('Form submitted!', { email, password: password ? 'present' : 'missing' });
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setLoading(true);
     setError('');
 
