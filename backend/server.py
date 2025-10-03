@@ -2968,10 +2968,10 @@ async def record_user_feedback(
                     topic_name=request.topic_name,
                     question="User feedback session",
                     response="Feedback-based analysis",
-                    user_feedback=feedback_type
+                    user_feedback=request.feedback_type
                 )
         
-        logger.info(f"✅ Recorded feedback: {feedback_type} for {subject}/{topic_name}")
+        logger.info(f"✅ Recorded feedback: {request.feedback_type} for {request.subject}/{request.topic_name}")
         return {"message": "Feedback recorded successfully"}
         
     except Exception as e:
