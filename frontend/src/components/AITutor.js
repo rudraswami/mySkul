@@ -142,8 +142,8 @@ export default function AITutor() {
 
   // Close session action menus when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (sessionActions.showMenu) {
+    const handleClickOutside = (event) => {
+      if (sessionActions.showMenu && !event.target.closest('.session-action-menu')) {
         setSessionActions({ ...sessionActions, showMenu: null });
       }
     };
