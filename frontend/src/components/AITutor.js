@@ -1692,8 +1692,6 @@ export default function AITutor() {
             <div className="flex items-center justify-center mt-3">
               <span className="text-xs text-gray-400">Press Enter to send, Shift+Enter for new line</span>
             </div>
-            {/* Empty - cleaned up */}
-              </div>
             </div>
           </div>
         </div>
