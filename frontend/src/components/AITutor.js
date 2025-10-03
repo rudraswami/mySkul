@@ -265,8 +265,21 @@ export default function AITutor() {
         setLastScenarioType(newMessage.dual_response.scenario_type);
       }
 
+      // Add personalization info to the message
+      const enhancedMessage = {
+        ...newMessage,
+        personalized: newMessage.dual_response?.personalized || false,
+        difficulty_level: newMessage.dual_response?.user_difficulty_level || personalizedDifficulty,
+        topic_detected: newMessage.topic_detected || 'General'
+      };
+
       // Add message to current conversation
-      setMessages(prev => [...prev, newMessage]);
+      setMessages(prev => [...prev, enhancedMessage]);
+      
+      // Update personalized difficulty if provided
+      if (newMessage.dual_response?.user_difficulty_level) {
+        setPersonalizedDifficulty(newMessage.dual_response.user_difficulty_level);
+      }
       
     } catch (error) {
       console.error('Failed to send message:', error);
