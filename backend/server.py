@@ -3340,6 +3340,41 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
         logger.error(f"Dual AI response error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get dual AI response")
 
+def extract_topic_from_message(message: str, subject: str) -> str:
+    """Simple topic extraction from user message"""
+    # This is a basic implementation - can be enhanced with NLP
+    
+    topic_keywords = {
+        "Mathematics": {
+            "calculus": ["derivative", "integral", "limit", "differentiation", "integration"],
+            "algebra": ["equation", "quadratic", "polynomial", "matrix", "determinant"],
+            "geometry": ["circle", "triangle", "angle", "area", "volume", "coordinate"],
+            "trigonometry": ["sine", "cosine", "tangent", "sin", "cos", "tan"],
+            "statistics": ["probability", "mean", "median", "variance", "distribution"]
+        },
+        "Physics": {
+            "mechanics": ["force", "motion", "velocity", "acceleration", "momentum"],
+            "thermodynamics": ["heat", "temperature", "entropy", "energy", "gas"],
+            "electromagnetism": ["electric", "magnetic", "current", "voltage", "field"],
+            "optics": ["light", "reflection", "refraction", "lens", "mirror"],
+            "modern physics": ["quantum", "relativity", "atomic", "nuclear", "photon"]
+        },
+        "Chemistry": {
+            "organic": ["carbon", "hydrocarbon", "functional group", "reaction mechanism"],
+            "inorganic": ["metal", "acid", "base", "salt", "periodic table"],
+            "physical": ["thermochemistry", "kinetics", "equilibrium", "electrochemistry"]
+        }
+    }
+    
+    message_lower = message.lower()
+    
+    if subject in topic_keywords:
+        for topic, keywords in topic_keywords[subject].items():
+            if any(keyword in message_lower for keyword in keywords):
+                return topic
+    
+    return "General"
+
 @api_router.post("/ai/mentor-only")
 async def get_mentor_response(chat_request: ChatRequest, user: User = Depends(get_current_user)):
     """Get response only from Mentor AI layer"""
