@@ -1672,24 +1672,21 @@ export default function AITutor() {
               </Button>
             </div>
 
-            {/* Quick Suggestions Panel */}
+            {/* Clean Suggestions Panel */}
             {showQuickSuggestions && (
-              <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-gray-800 flex items-center">
-                    <Lightbulb className="h-4 w-4 mr-2 text-blue-600" />
-                    Quick Questions for {selectedSubject}
-                  </h4>
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Quick Questions</span>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowQuickSuggestions(false)}
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                    className="h-5 w-5 p-0 text-gray-400 hover:text-gray-600"
                   >
-                    ×
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
                   {getSubjectSuggestions().map((suggestion, index) => (
                     <button
                       key={index}
@@ -1697,7 +1694,7 @@ export default function AITutor() {
                         setCurrentMessage(suggestion);
                         setShowQuickSuggestions(false);
                       }}
-                      className="text-left text-xs p-2 bg-white rounded-lg hover:bg-blue-50 transition-colors border border-gray-200 hover:border-blue-300"
+                      className="text-left text-xs p-2 bg-white rounded hover:bg-teal-50 transition-colors border border-gray-100 hover:border-teal-200"
                       disabled={loading}
                     >
                       {suggestion}
@@ -1707,14 +1704,10 @@ export default function AITutor() {
               </div>
             )}
             
-            <div className="flex items-center justify-between mt-4 px-2">
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                  <span>Press Enter to send, Shift+Enter for new line</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
+            {/* Clean Footer */}
+            <div className="flex items-center justify-center mt-3">
+              <span className="text-xs text-gray-400">Press Enter to send, Shift+Enter for new line</span>
+            </div>
                 {aiMode === 'dual' && (
                   <div className="flex items-center text-xs text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
                     <Users className="h-3 w-3 mr-1" />
