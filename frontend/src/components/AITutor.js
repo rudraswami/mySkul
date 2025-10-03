@@ -292,38 +292,68 @@ export default function AITutor() {
 
     try {
       let response;
+      let sessionId = currentSession;
       
-      // Generate session ID if not exists
-      const sessionId = currentSession || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Create new session if this is the first message
+      if (!sessionId) {
+        // Detect topic from message (simple approach)
+        const detectedTopic = detectTopicFromMessage(messageToSend);
+        
+        // Check if user wants to continue existing session or create new one
+        if (sessions.length > 0 && messages.length === 0) {
+          const shouldCreateNew = await confirmNewSession(detectedTopic);
+          if (!shouldCreateNew) {
+            // Load the most recent session
+            const recentSession = sessions[0];
+            await loadSession(recentSession.session_id);
+            sessionId = recentSession.session_id;
+          }
+        }
+        
+        // Create new session if needed
+        if (!sessionId) {
+          sessionId = await createNewSession(messageToSend, detectedTopic);
+          if (sessionId) {
+            setCurrentSession(sessionId);
+          } else {
+            // Fallback to local session ID
+            sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            setCurrentSession(sessionId);
+          }
+        }
+      }
       
       // Choose API endpoint based on AI mode
+      const token = localStorage.getItem('dhruv_ai_token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
       if (aiMode === 'dual') {
         response = await axios.post(`${API}/ai/dual-response`, {
           message: messageToSend,
           subject: selectedSubject,
           session_id: sessionId
-        });
+        }, { headers });
       } else if (aiMode === 'mentor') {
         response = await axios.post(`${API}/ai/mentor-only`, {
           message: messageToSend,
           subject: selectedSubject,
           session_id: sessionId
-        });
+        }, { headers });
       } else { // professor
         response = await axios.post(`${API}/ai/professor-only`, {
           message: messageToSend,
           subject: selectedSubject,
           session_id: sessionId
-        });
+        }, { headers });
       }
 
       const newMessage = response.data;
       
-      // Update current session if it's a new one
-      if (!currentSession) {
-        setCurrentSession(sessionId);
-        fetchChatSessions(); // Refresh sessions list
-      }
+      // Save message to backend session
+      await saveMessageToSession(sessionId, messageToSend, newMessage);
+      
+      // Refresh sessions list to show updated chat
+      fetchChatSessions();
 
       // Track scenario type for dual mode
       if (aiMode === 'dual' && newMessage.dual_response?.scenario_type) {
@@ -333,9 +363,11 @@ export default function AITutor() {
       // Add personalization info to the message
       const enhancedMessage = {
         ...newMessage,
+        user_message: messageToSend,
         personalized: newMessage.dual_response?.personalized || false,
         difficulty_level: newMessage.dual_response?.user_difficulty_level || personalizedDifficulty,
-        topic_detected: newMessage.topic_detected || 'General'
+        topic_detected: newMessage.topic_detected || 'General',
+        timestamp: new Date().toISOString()
       };
 
       // Add message to current conversation
@@ -353,6 +385,39 @@ export default function AITutor() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to detect topic from message
+  const detectTopicFromMessage = (message) => {
+    const mathKeywords = ['derivative', 'integral', 'limit', 'equation', 'solve', 'calculate'];
+    const physicsKeywords = ['force', 'energy', 'momentum', 'wave', 'electric', 'magnetic'];
+    const chemistryKeywords = ['molecule', 'reaction', 'bond', 'element', 'compound', 'acid'];
+    
+    const lowerMessage = message.toLowerCase();
+    
+    if (mathKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Mathematics';
+    if (physicsKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Physics';
+    if (chemistryKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Chemistry';
+    
+    return 'General';
+  };
+
+  // Helper function to confirm new session creation
+  const confirmNewSession = async (detectedTopic) => {
+    return new Promise((resolve) => {
+      const currentTopic = messages.length > 0 ? messages[0].topic_detected : null;
+      
+      if (currentTopic && detectedTopic && currentTopic !== detectedTopic) {
+        // Different topic detected - suggest new session
+        const confirmed = window.confirm(
+          `Detected topic: ${detectedTopic}\nCurrent session: ${currentTopic}\n\nStart a new session for better organization?`
+        );
+        resolve(confirmed);
+      } else {
+        // Same topic or no previous topic - continue in current session
+        resolve(false);
+      }
+    });
   };
 
   const startNewSession = () => {
