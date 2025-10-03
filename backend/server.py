@@ -4052,22 +4052,18 @@ async def get_learning_analytics_endpoint(
 
 @api_router.post("/analytics/wellness-check")
 async def conduct_wellness_check_endpoint(
-    stress_level: int,
-    motivation_level: int, 
-    confidence_level: int,
-    study_satisfaction: int,
-    session_id: str,
+    request: WellnessCheckRequest,
     user: User = Depends(get_current_user)
 ):
     """Conduct wellness check and get recommendations"""
     try:
         wellness = await AnalyticsService.conduct_wellness_check(
             user_id=user.user_id,
-            session_id=session_id,
-            stress_level=stress_level,
-            motivation_level=motivation_level,
-            confidence_level=confidence_level,
-            study_satisfaction=study_satisfaction
+            session_id=request.session_id,
+            stress_level=request.stress_level,
+            motivation_level=request.motivation_level,
+            confidence_level=request.confidence_level,
+            study_satisfaction=request.study_satisfaction
         )
         return wellness.dict()
     except Exception as e:
