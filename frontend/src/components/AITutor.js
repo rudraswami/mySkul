@@ -908,44 +908,67 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Simplified Sessions List */}
+        {/* Chat History - Grouped by Subject */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-700">
               {searchQuery ? `Found ${filteredSessions.length}` : 'Chat History'}
             </h3>
             {sessions.length > 0 && (
-              <span className="text-xs text-gray-500">{sessions.length} total</span>
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <span>{sessions.length} total</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={exportConversation}
+                  disabled={messages.length === 0}
+                  className="text-gray-400 hover:text-teal-600 h-6 w-6 p-0"
+                  title="Export conversation"
+                >
+                  <FileText className="h-3 w-3" />
+                </Button>
+              </div>
             )}
           </div>
-          <div className="space-y-1">
-            {filteredSessions.length > 0 ? (
-              filteredSessions.map((session) => (
-                <div
-                  key={session.session_id}
-                  onClick={() => loadSession(session.session_id)}
-                  className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
-                    currentSession === session.session_id
-                      ? 'bg-gray-100 text-gray-900 border-l-3 border-gray-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center flex-1 min-w-0">
-                    <MessageCircle className="h-3 w-3 mr-2 flex-shrink-0 text-gray-400" />
-                    <span className="truncate font-medium">{session.title}</span>
-                    <Badge variant="outline" className="ml-2 text-xs bg-gray-50 text-gray-600 border-gray-200 flex-shrink-0">
-                      {session.subject}
-                    </Badge>
+          
+          <div className="space-y-4">
+            {Object.keys(groupedSessions).length > 0 ? (
+              Object.entries(groupedSessions).map(([subject, subjectSessions]) => (
+                <div key={subject} className="space-y-1">
+                  <div className="flex items-center space-x-2 px-2 py-1">
+                    <BookOpen className="h-3 w-3 text-teal-600" />
+                    <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      {subject}
+                    </h4>
+                    <div className="flex-1 h-px bg-gray-100"></div>
+                    <span className="text-xs text-gray-400">{subjectSessions.length}</span>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                    {formatTime(session.last_updated)}
-                  </span>
+                  
+                  {subjectSessions.map((session) => (
+                    <div
+                      key={session.session_id}
+                      onClick={() => loadSession(session.session_id)}
+                      className={`flex items-center justify-between px-3 py-2 ml-4 rounded-lg cursor-pointer transition-colors text-sm ${
+                        currentSession === session.session_id
+                          ? 'bg-teal-50 text-teal-900 border border-teal-200'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center flex-1 min-w-0">
+                        <MessageCircle className="h-3 w-3 mr-2 flex-shrink-0 text-gray-400" />
+                        <span className="truncate font-medium">{session.title}</span>
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                        {formatTime(session.last_updated)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ))
             ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No conversations yet</p>
+              <div className="text-center py-12">
+                <MessageCircle className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 mb-1">No conversations yet</p>
                 <p className="text-xs text-gray-400">Start chatting to see your history</p>
               </div>
             )}
