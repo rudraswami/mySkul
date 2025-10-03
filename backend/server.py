@@ -1931,6 +1931,60 @@ class DualLayerAI:
         self.professor = ProfessorAI(api_key)
         self.classifier = ScenarioClassifier()
     
+    async def get_personalized_coordinated_response(self, user_message: str, subject: str, session_id: str, user_id: str, topic_name: str = None, user_context: dict = None) -> dict:
+        """Get personalized coordinated response from both Mentor and Professor layers"""
+        
+        try:
+            # Classify the scenario
+            scenario = self.classifier.classify_scenario(user_message, subject)
+            
+            # Get personalized responses from both layers
+            if scenario['primary_persona'] == 'mentor':
+                primary_response, primary_reasoning = await self.mentor.get_personalized_response(
+                    user_message, subject, session_id, user_id, topic_name
+                )
+                secondary_response, secondary_reasoning = await self.professor.get_personalized_response(
+                    user_message, subject, session_id, user_id, topic_name
+                )
+            else:
+                primary_response, primary_reasoning = await self.professor.get_personalized_response(
+                    user_message, subject, session_id, user_id, topic_name
+                )
+                secondary_response, secondary_reasoning = await self.mentor.get_personalized_response(
+                    user_message, subject, session_id, user_id, topic_name
+                )
+            
+            # Record learning interaction for personalization
+            difficulty_level = await personalization_engine.get_personalized_difficulty(user_id, subject, topic_name or "General")
+            await personalization_engine.record_learning_interaction(
+                user_id=user_id,
+                session_id=session_id,
+                subject=subject,
+                topic_name=topic_name or "General",
+                question=user_message,
+                ai_response=primary_response[:500],  # Truncated
+                ai_mode="dual",
+                difficulty=difficulty_level
+            )
+            
+            return {
+                "primary_response": primary_response,
+                "primary_persona": scenario['primary_persona'],
+                "primary_reasoning": primary_reasoning,
+                "secondary_response": secondary_response,
+                "secondary_persona": scenario['secondary_persona'],
+                "secondary_reasoning": secondary_reasoning,
+                "scenario_type": scenario['scenario_type'],
+                "confidence": scenario['confidence'],
+                "personalized": True,
+                "user_difficulty_level": difficulty_level
+            }
+            
+        except Exception as e:
+            logger.error(f"Personalized dual-layer AI error: {str(e)}")
+            # Fallback to non-personalized version
+            return await self.get_coordinated_response(user_message, subject, session_id, user_context)
+
     async def get_coordinated_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> dict:
         """Get coordinated response from both Mentor and Professor layers"""
         
