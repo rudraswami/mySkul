@@ -194,6 +194,49 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+              loginBtn.addEventListener('click', function() {
+                console.log('Direct JS login button clicked');
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                  alert('Please enter email and password');
+                  return;
+                }
+                
+                console.log('Making direct login request...');
+                fetch('${process.env.REACT_APP_BACKEND_URL}/api/auth/login', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ email, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  console.log('Direct login response:', data);
+                  if (data.token) {
+                    localStorage.setItem('dhruv_ai_token', data.token);
+                    window.location.href = '/dashboard';
+                  } else {
+                    alert('Login failed: ' + (data.detail || 'Unknown error'));
+                  }
+                })
+                .catch(error => {
+                  console.error('Direct login error:', error);
+                  alert('Login error: ' + error.message);
+                });
+              });
+            }
+          });
+        `
+      }} />
     </div>
   );
 }
