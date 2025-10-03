@@ -200,7 +200,7 @@ class MockTestFixesTester:
         # Step 2: Attempt mock test generation (should allow for free tier)
         print("   Step 2: POST /api/mock-tests/generate with basic test request")
         test_data = {
-            "test_type": "JEE",
+            "exam_type": "JEE",
             "subjects": ["Mathematics"],
             "difficulty_level": 3,
             "num_questions": 10,
