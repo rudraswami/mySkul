@@ -1565,56 +1565,6 @@ export default function AutoNoteMentor() {
 
             {/* Enhanced Features Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              
-              {/* Document Upload Section */}
-              <Card className="border-0 shadow-md">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2 text-indigo-600" />
-                    Document Analysis
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Upload PDFs and images for AI analysis and note integration
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-3">Upload lecture slides, handwritten notes, or textbook pages</p>
-                      
-                      <input
-                        type="file"
-                        id="document-upload"
-                        className="hidden"
-                        accept=".pdf,image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) handleDocumentUpload(file);
-                        }}
-                      />
-                      <label
-                        htmlFor="document-upload"
-                        className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md cursor-pointer"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Document
-                      </label>
-                      
-                      <p className="text-xs text-gray-500 mt-2">PDF, JPG, PNG (Max 10MB)</p>
-                    </div>
-                    
-                    {documentUploadProgress > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${documentUploadProgress}%` }}
-                        ></div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Spaced Repetition System */}
               <Card className="border-0 shadow-md">
