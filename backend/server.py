@@ -3851,13 +3851,12 @@ async def record_user_feedback(
 # Phase C: Advanced Guardrails Endpoints
 @api_router.post("/guardrails/validate-math")
 async def validate_mathematics_endpoint(
-    expression: str,
-    units: Optional[str] = None,
+    request: MathValidationRequest,
     user: User = Depends(get_current_user)
 ):
     """Validate mathematical expressions and units"""
     try:
-        validation = await GuardrailService.validate_mathematics(expression, units)
+        validation = await GuardrailService.validate_mathematics(request.expression, request.units)
         return validation.dict()
     except Exception as e:
         logger.error(f"Math validation endpoint error: {str(e)}")
