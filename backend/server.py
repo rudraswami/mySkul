@@ -2358,7 +2358,11 @@ async def process_image_with_ocr(image_content: bytes) -> str:
     """Extract text from image using OCR"""
     try:
         # Use LLM with vision capabilities for image analysis
-        llm_chat = LlmChat(api_key=EMERGENT_LLM_KEY)
+        llm_chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=str(uuid.uuid4()),
+            system_message="You are an expert at analyzing images and extracting text content."
+        )
         
         # Convert image to base64
         import base64
