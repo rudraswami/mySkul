@@ -1,109 +1,93 @@
 <analysis>
-The AI engineer's work trajectory outlines a comprehensive development effort on the Dhruv AI EdTech platform. Initially, the focus was on core stability, UI/UX improvements for the AI Tutor, and addressing critical rendering issues. A major deliverable was the **Revenue Module**, integrating Stripe for subscriptions, including backend API endpoints, data models, and frontend UI, successfully validated. Following this, the user shifted focus to the **AI Tutor's core functionality**. The engineer completed **Phase A: Complete Input Methods**, adding Image/PDF upload (with extensive debugging for OCR/vision API integration) and a Context Pin feature, enhancing the UI with drag-and-drop. After user feedback on file upload issues, the engineer revamped the frontend for cutting-edge file handling. Most recently, the engineer completed **Phase B: Enhanced Personalization** for the AI Tutor, adding backend models and services for topic mastery, error pattern analysis, dynamic difficulty adjustment, and user feedback, alongside integrating these into the dual-AI response system and corresponding frontend UI. Backend testing for Phase B shows high success.
+The trajectory details the AI engineer's work, initially summarizing previous AI Tutor UI/UX and session management implementations. The core of this trajectory focuses on the Mock Test module, addressing multiple rounds of user feedback. The engineer systematically implemented comprehensive enhancements including retake functionality, post-test review, question bookmarking, and performance trend analysis. This involved extensive modifications to both  for new APIs and Pydantic models, and  for UI updates, state management, and API integration.
+
+Key challenges involved debugging React runtime errors stemming from improper JSX rendering of error objects, refining backend subscription access logic to correctly handle free-tier users, and ensuring dynamic subject display based on user exam types throughout the UI. The engineer successfully resolved issues of subscription blocking free-tier users, incorrect HTTP status codes, and static subject displays, culminating in a robust and user-friendly Mock Test system with proper subscription-aware access and dynamic content.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project is an Indian B2C EdTech platform for competitive exams, featuring a personalized, Neuro-Symbolic AI mentor. Key functionalities include Personalized Learning Paths, Interactive Problem Solving, 24/7 Doubt Resolution, Advanced Performance Analytics, Realistic Mock Tests, and Stress Management.
+The Dhruv AI project is an Indian B2C EdTech platform for competitive exams, offering personalized learning via a Neuro-Symbolic AI mentor. The Mock Test Module, initially featuring AI-verified tests, required significant enhancements.
 
-Core modules:
-1.  **Mock Test Module**: AI-verified tests (Full-Length/Chapter-wise) with dual-layer AI, supporting Standard, Variant, Adaptive modes, caching, database storage, question deduplication. Requires retake options, Mentor feedback, Professor solutions, bookmarking, and flashcards.
-2.  **Auto-Note Mentor Module**: Processes various inputs (audio/video, slides, PDFs, images) into verified, structured study packs, including real-time transcription, OCR, NLP, Professor-layer verification, Mentor-layer summarization, and spaced-repetition.
-3.  **Revenue Module**: Monetize via Stripe subscriptions, with defined tiers and full subscription management. This module has been successfully implemented.
-4.  **AI Tutor Module**:
-    *   **Core Modes**: Mentor, Professor, Both (Consensus summary).
-    *   **Inputs**: Text, Voice, Image/PDF upload (for problem solving), Context Pin (connect lecture notes/tests). Phase A (Image/PDF Upload, Context Pin) is now complete.
-    *   **Outputs**: Mentor Answer, Professor Answer, Consensus (summary, confidence, next actions), Action Buttons (Practice More, Add to Notes, Turn into Deck, Schedule Revision).
-    *   **Personalization Features**: Track mastery by topic, dynamic difficulty adjustment, adaptive style (multi-language: English, Hinglish, Hindi, regional), student error fingerprinting. Phase B (Enhanced Personalization) is now largely complete.
-    *   **Guardrails**: Retrieval from official syllabus, Math/Units Checker, Disagreement Alerts, Citation Chips.
-    *   **Analytics & Feedback**: Performance stats, Parent/Teacher Dashboards, student feedback.
-    *   **Wellness Layer**: Stress check-ins, smart nudges.
+The user explicitly requested the following missing functionalities for the Mock Test Module:
+*   **Retake Functionality**: Support for Exact (same questions), Variant (different set from same topic pool), and Adaptive (focus on weak areas) retake modes, integrated with the backend API.
+*   **Post-Test Review System**: Detailed question-by-question review showing correct answer, student's answer, detailed explanation (Professor AI), and hint/tip (Mentor AI).
+*   **Detailed Solution Explanations**: Step-by-step explanations with references for incorrect answers.
+*   **Question Bookmarking**: Ability to bookmark/save questions during or after a test for later review in a Bookmarked Questions section.
+*   **Performance Trend Analysis**: Extension of the dashboard to show performance trends over time (accuracy by subject, weekly improvement, weak/strong areas).
+*   **Advanced Test Mode UI**: Clear, intuitive interface for selecting test modes (Normal, Retake: Exact/Variant/Adaptive), consistent with the overall app's student-friendly, minimal aesthetic.
+*   **Persistence**: All actions (retake, bookmark, review, analytics) must persist and reflect in the backend.
+*   **Dynamic Subject Display**: Subject lists (e.g., in Generate New Test and Available Tests) must dynamically adapt based on the user's selected exam type (e.g., JEE, NEET, UPSC) rather than showing fixed subjects.
+*   **Subscription Error Handling**: Replace generic error banners with a clear, professional subscription modal detailing the reason (e.g., Free tier limit reached, Subscription expired) and a Call to Action (CTA) to upgrade or retry.
+*   **Free Tier Quota**: Free users should be allowed a limited number of test generations (e.g., 2 per day/week) before being prompted for an upgrade.
+
+The recent work focused on implementing these features and resolving subsequent issues, specifically around subscription validation, dynamic subject mapping, and UI error handling.
 </product_requirements>
 
 <key_technical_concepts>
-- Full-stack: React (frontend), FastAPI (backend), MongoDB (database).
-- AI/LLM: Emergent LLM Key, Neuro-Symbolic AI, Dual-Layer AI (Mentor/Professor), OpenAI Whisper, Emergent Integrations (for vision/LLM API calls).
-- Payment: Stripe integration (for Revenue Module).
-- Data: Pydantic models, UUIDs, datetime (timezone.utc), ISO strings.
-- UI/UX: Tailwind CSS, Lucide React icons, React hooks, Drag-and-drop.
-- Access Control: Subscription-based feature access.
+-   **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
+-   **AI/LLM**: Neuro-Symbolic AI, Dual-Layer AI (Mentor/Professor).
+-   **Payment**: Stripe integration (for subscriptions).
+-   **Data**: Pydantic models, UUIDs, datetime (timezone.utc), ISO strings, JSON serialization.
+-   **UI/UX**: Tailwind CSS, Lucide React icons, React hooks (useState, useEffect, useRef), Progressive Disclosure, Context API.
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   ****: Core FastAPI backend for API endpoints and business logic.
-    -   **Summary**: Handles AI interactions, authentication, mock tests, and analytics. It houses the AI logic for Mentor, Professor, and Dual-Layer modes, subscription management, and now personalization.
+-   ****: Core FastAPI backend, handling AI interactions, authentication, mock tests, and analytics.
+    -   **Summary**: This file defines the API endpoints, data models (Pydantic), and business logic for the application. For Mock Tests, it manages test generation, submission, retakes, and now includes new functionalities for bookmarking, detailed review, performance trends, and dynamic subject retrieval.
     -   **Changes Made**:
-        -   **Revenue Module**: Added Pydantic models (, , ), Stripe integration, , , , and endpoints (, , ). Integrated access control into AI/Mock Test endpoints.
-        -   **AI Tutor Phase A**: Added Pydantic models for  and . Created  utility. Added  and  endpoints. Updated  to handle file content. Fixed several  LLmChat API call issues (missing , , incorrect  and  arguments, incorrect response parsing).
-        -   **AI Tutor Phase B**: Added Pydantic models for , , , . Implemented , enhanced  and  with personalization logic. Updated  to use personalization. Added new API endpoints (, , , ). Updated  to integrate personalization data.
--   ****: Stores backend environment variables.
-    -   **Summary**: Configuration for external services.
-    -   **Changes Made**: Confirmed  and added .
--   ****: React component for the AI Tutor.
-    -   **Summary**: Manages AI interactions, chat history, input methods, and displays responses.
+        -   Added Pydantic models: , , .
+        -   Implemented new API endpoints: , , , .
+        -   Modified  and  Pydantic models and their corresponding API endpoints to support detailed explanations and correct retake logic.
+        -   Enhanced  logic to correctly handle free-tier subscription limits and return appropriate HTTP status codes (402 instead of 500).
+        -   Introduced  helper function for dynamic subject mapping.
+        -   Added a temporary endpoint to update a user's exam type for testing purposes.
+
+-   ****: React component for the Mock Tests section.
+    -   **Summary**: This is the primary frontend component for mock test interactions, responsible for displaying test options, managing active tests, showing results, and handling user input related to tests.
     -   **Changes Made**:
-        -   **Revenue Module**: N/A directly, but utilizes backend subscription status implicitly.
-        -   **AI Tutor Phase A**: Added states for file upload, drag-and-drop, context pinning. Implemented , , , , , . Updated UI with file input, drag-and-drop overlay, context pin dropdown, and buttons.
-        -   **AI Tutor Revamp (Post-User Feedback)**: Enhanced drag-and-drop UI, added clear supported file formats, improved error handling and success messages for file uploads.
-        -   **AI Tutor Phase B**: Added states for , , , . Implemented , , , . Updated  to send personalization data. Added UI components to display personalization and integrated feedback system.
--   ****: React component for rendering formatted AI responses.
-    -   **Summary**: Displays dual-layer AI responses with formatting and action buttons.
-    -   **Changes Made**: Enhanced with action buttons. Implemented proper mathematical formatting. **AI Tutor Phase B**: Added personalized feedback (like/dislike) buttons at the end of responses and updated  to receive and pass feedback callbacks.
--   ****: React component for application navigation.
-    -   **Summary**: Displays sidebar navigation links.
-    -   **Changes Made**: Added Subscription menu item.
--   ****: Main React application file.
-    -   **Summary**: Defines routing for the application.
-    -   **Changes Made**: Imported  component and added a new route for .
--   ****: **NEW** React component for subscription management.
-    -   **Summary**: UI for viewing subscription plans, subscribing, and managing payments via Stripe.
-    -   **Changes Made**: Created with initial structure for displaying subscription details.
+        -   Integrated new state variables (, , , , , , , , ) for comprehensive functionality.
+        -   Implemented functions for , , , .
+        -   Updated  and  to reflect new backend interactions and display options.
+        -   Redesigned UI elements:
+            -   Added action buttons (Retake, Review, Bookmark, Performance Trends) to test results modal.
+            -   Integrated modals for retake options, detailed review, and upgrade prompts.
+            -   Added a bookmark button within the active test question interface.
+            -   Added a Performance Trends button to the Quick Actions section.
+            -   Replaced hardcoded subject buttons with dynamically fetched ones based on .
+            -   Implemented robust error handling to display user-friendly messages and subscription upgrade modals instead of raw error objects or banners.
+
 -   ****: Records user problem statements, testing data, and communications.
-    -   **Summary**: Used to track progress, testing protocols, and feedback.
-    -   **Changes Made**: Updated with details on backend fixes, AI Tutor enhancements, mathematical formatting, Stripe revenue module testing, and extensive logging for AI Tutor Phase A and Phase B.
--   ****: Python dependencies for the backend.
-    -   **Summary**: Lists all required Python packages.
-    -   **Changes Made**: Added  (confirmed already installed).
+    -   **Summary**: This file serves as a development log, tracking reported issues, fixes, and testing outcomes throughout the implementation phases.
+    -   **Changes Made**: Continuously updated with details on Mock Test enhancements, debugging steps, error resolutions, and verification of fixes.
 </code_architecture>
 
 <pending_tasks>
--   **AI Tutor Module:**
-    *   **Phase C: Advanced Guardrails**: Comprehensive Math/Units Checker, Citation & Source Integration, Disagreement Alert System.
-    *   **Phase D: Enhanced Action Buttons**: Practice More, Add to Notes, Turn into Deck, Schedule Revision.
-    *   **Phase E: Analytics Integration**: Embedded Performance Stats, Real-time Wellness Integration.
--   **Mock Test Module Enhancement**: Retake functionality, Post-test review features, Advanced test modes.
--   **Auto-Note Mentor Module Completion**: Enhanced PDF/image OCR processing, Spaced-repetition scheduling, Vector store integration.
+-   **AI Tutor Module**:
+    -   Conduct comprehensive frontend automated testing for Phase C, D, E features (guardrails, actions, wellness checks).
+    -   Implement topic detection logic for auto-suggesting new sessions.
+-   **Mock Test Module Enhancement**: Run a final comprehensive frontend automated test to ensure all session management features are robust and bug-free (although this was initially stated for session management, the current context implies it for the Mock Test features).
+-   **Auto-Note Mentor Module Completion**: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was working on and has largely completed **Phase B: Enhanced Personalization** for the Dhruv AI Tutor, which aims to make the AI truly adaptive and tailored to each student.
+Immediately prior to this summary, the AI engineer was focused on resolving three critical issues related to the Mock Test module, as reported by the user:
 
-The work involved comprehensive updates to both the backend and frontend:
+1.  **Subscription Error Handling**: The previous implementation showed only a red banner (Test Generation Issue – Request validation failed) when a user hit a subscription limit. The user requested a proper pop-up/modal with a clear reason (Free tier limit reached / Subscription expired) and a Call to Action (CTA) like Upgrade Plan or Retry Later.
+    *   **Implementation**: The engineer modified  to replace the error banner with a styled . Backend logic in  was refined to ensure correct HTTP status codes (402 for subscription issues) are returned and that the frontend correctly interprets these to trigger the modal. This involved adjusting  and the mock test generation endpoint's exception handling.
+    *   **Current State**: This issue is **FIXED**. The system now displays a professional subscription modal with a clear title (Free Tier Limit), a helpful message (Request validation failed. This usually indicates a subscription issue.), upgrade benefits, and an Upgrade to Basic Plan button, alongside a Maybe Later option.
 
-**Backend Development ():**
-1.  **New Data Models**: Defined Pydantic models for , , , and  to store student-specific data.
-2.  **Personalization Service**: Implemented a  class to manage student profiles, record mastery levels by topic, analyze error patterns, and handle user feedback.
-3.  **AI Integration**: Modified  and  classes to leverage the  for dynamic difficulty adjustment, adaptive style, and error pattern identification, integrating this into their  methods. The  class was also updated to orchestrate these personalized responses.
-4.  **New API Endpoints**: Created dedicated endpoints for managing personalization data: , , , and .
-5.  **Main AI Endpoint Update**: The primary  endpoint was updated to accept and utilize personalization-related data for generating responses.
+2.  **Free Tier Limitation (Bug)**: Free users were being blocked on their first attempt to generate a test, even though the configuration allowed a limited number of tests (e.g., 2 per month).
+    *   **Implementation**: The engineer debugged , discovering that free users were sometimes being incorrectly classified with . The  function was updated to correctly identify and grant access to free-tier users based on their allocated quota.
+    *   **Current State**: This issue is **FIXED**. The free tier access now correctly displays Tests remaining: 2 and Used: 0/2, properly restricting but also guiding users with a clear upgrade path via the modal.
 
-**Frontend Development (, ):**
-1.  **State Management**: Added new React states in  to hold , , , and .
-2.  **Data Fetching**: Implemented  to retrieve user personalization details from the backend.
-3.  **User Feedback**: Integrated , , and  functions to capture explicit user feedback on AI responses.
-4.  ** Enhancement**: Updated the  function to include personalization context and feedback when communicating with the dual AI backend endpoint.
-5.  **UI Components**: Added UI elements to  to display personalization features (e.g., topic mastery, error patterns).
-6.  **Feedback Buttons**: Incorporated interactive like/dislike buttons into  to allow users to provide feedback directly on individual AI responses.
+3.  **Subject Mapping & UI Clarity**: While the Generate New Test section correctly displayed dynamic subjects based on the selected exam type (e.g., UPSC subjects for UPSC), the Available Tests section at the bottom of the  component was still showing hardcoded JEE subjects (Mathematics, Physics, Chemistry), irrespective of the user's exam type.
+    *   **Implementation**: In , the hardcoded  were replaced with a function that dynamically generates relevant test templates based on the  state. A backend function was also introduced (and temporarily used for testing) to allow updating the user's  in the profile for proper dynamic content validation.
+    *   **Current State**: This issue is **FIXED**. Both the Generate New Test and Available Tests sections now dynamically display subjects appropriate for the user's selected exam type (e.g., JEE Main Mathematics, Physics Mechanics, Organic Chemistry for a JEE user).
 
-**Testing and Verification:**
-*   Backend services were restarted.
-*    was run, confirming that **Phase B: Enhanced Personalization is working excellently with an 86.4% success rate**. All core features like Profile Management, Topic Mastery Tracking, Error Pattern Analysis, and User Feedback Recording are operational.
-*   Minor issues were noted related to AI response budget limits, not core code functionality.
-
-The engineer is currently awaiting user confirmation to proceed with frontend testing for Phase B.
+All three issues were successfully implemented and verified through screenshots and testing, resulting in a significantly improved and more robust Mock Test experience.
 </current_work>
 
 <optional_next_step>
-Conduct comprehensive frontend automated testing for Phase B: Enhanced Personalization.
+All three user-reported problems (subscription modal, free tier logic, dynamic subjects) have been successfully fixed and verified. No further immediate development steps are explicitly requested by the user.
 </optional_next_step>
