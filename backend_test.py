@@ -1717,10 +1717,17 @@ class DhruvAITester:
         
         wellness_history_success = 1 if success else 0
         if success:
-            history = response.get('wellness_history', [])
+            # Handle both dict and list response formats
+            if isinstance(response, dict):
+                history = response.get('wellness_history', [])
+            elif isinstance(response, list):
+                history = response
+            else:
+                history = []
+                
             print(f"   ✅ Wellness history retrieved: {len(history)} entries")
             if history:
-                recent_check = history[0]
+                recent_check = history[0] if isinstance(history[0], dict) else {}
                 print(f"   Recent check stress level: {recent_check.get('stress_level', 'N/A')}/10")
                 print(f"   Recent check motivation: {recent_check.get('motivation_level', 'N/A')}/10")
                 print(f"   Recent check date: {recent_check.get('timestamp', 'N/A')[:10]}")
