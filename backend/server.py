@@ -2361,18 +2361,21 @@ async def process_image_with_ocr(image_content: bytes) -> str:
         llm_chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=str(uuid.uuid4()),
-            system_message="You are an expert at analyzing images and extracting text content."
+            system_message="You are an expert at analyzing images and extracting text, mathematical expressions, and visual content. You can see and process images."
         )
         
         # Convert image to base64
         import base64
         image_base64 = base64.b64encode(image_content).decode('utf-8')
         
+        logger.info(f"Processing image OCR - Image size: {len(image_content)} bytes, Base64 size: {len(image_base64)}")
+        
         # Create message with image
         response = await llm_chat.send_message([
-            UserMessage("Please extract all text and describe any mathematical expressions, diagrams, or problems shown in this image. Be detailed and accurate.")
+            UserMessage("I can see the image you've provided. Please analyze this image and extract all text, mathematical expressions, equations, diagrams, or any educational content shown. Describe everything you see in detail, including any problems, formulas, or concepts that appear in the image.")
         ], model="gpt-4o", image_base64=image_base64)
         
+        logger.info(f"OCR response received: {len(response.content)} characters")
         return response.content
         
     except Exception as e:
