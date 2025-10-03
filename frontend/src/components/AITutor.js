@@ -235,12 +235,15 @@ export default function AITutor() {
     try {
       let response;
       
+      // Generate session ID if not exists
+      const sessionId = currentSession || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       // Choose API endpoint based on AI mode
       if (aiMode === 'dual') {
         response = await axios.post(`${API}/ai/dual-response`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: currentSession
+          session_id: sessionId
         });
       } else if (aiMode === 'mentor') {
         response = await axios.post(`${API}/ai/mentor-only`, {
