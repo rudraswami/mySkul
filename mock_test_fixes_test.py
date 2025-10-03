@@ -442,7 +442,7 @@ class MockTestFixesTester:
         print("   Testing error handling with invalid request data...")
         
         invalid_test_data = {
-            "test_type": "INVALID_EXAM",  # Invalid exam type
+            "exam_type": "INVALID_EXAM",  # Invalid exam type
             "subjects": [],  # Empty subjects
             "difficulty_level": 10,  # Invalid difficulty
             "num_questions": 0,  # Invalid question count
