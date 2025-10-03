@@ -60,6 +60,39 @@ def clean_mongodb_doc(doc: dict) -> dict:
             clean_doc[k] = v
     return clean_doc
 
+# ============= EXAM TYPE SUBJECT MAPPING =============
+
+EXAM_SUBJECTS = {
+    "JEE": {
+        "subjects": ["Mathematics", "Physics", "Chemistry"],
+        "display_name": "Joint Entrance Examination"
+    },
+    "NEET": {
+        "subjects": ["Physics", "Chemistry", "Biology", "Zoology", "Botany"],
+        "display_name": "National Eligibility cum Entrance Test"
+    },
+    "UPSC": {
+        "subjects": ["History", "Polity", "Economy", "Geography", "Current Affairs", "Science & Technology", "Environment", "Ethics"],
+        "display_name": "Union Public Service Commission"
+    },
+    "GATE": {
+        "subjects": ["Mathematics", "General Aptitude", "Computer Science", "Electronics", "Mechanical", "Civil"],
+        "display_name": "Graduate Aptitude Test in Engineering"
+    },
+    "CAT": {
+        "subjects": ["Quantitative Aptitude", "Data Interpretation", "Logical Reasoning", "Verbal Ability"],
+        "display_name": "Common Admission Test"
+    },
+    "CLAT": {
+        "subjects": ["English", "Legal Reasoning", "Logical Reasoning", "Quantitative Techniques", "General Knowledge"],
+        "display_name": "Common Law Admission Test"
+    },
+    "Banking": {
+        "subjects": ["Reasoning", "Quantitative Aptitude", "English", "General Awareness", "Computer Knowledge"],
+        "display_name": "Banking Examinations"
+    }
+}
+
 # ============= SUBSCRIPTION PLANS CONFIGURATION =============
 
 SUBSCRIPTION_PLANS = {
