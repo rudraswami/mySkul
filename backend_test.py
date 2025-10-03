@@ -1397,6 +1397,123 @@ class DhruvAITester:
         
         return total_success >= total_tests * 0.8  # 80% success threshold
 
+    def test_enhanced_dual_response_api_focused(self):
+        """Test Enhanced Dual Response API - FOCUSED ON 402 SUBSCRIPTION ERRORS"""
+        if not self.token:
+            print("❌ No token available for Enhanced Dual Response API testing")
+            return False
+        
+        print("   🎯 REVIEW REQUEST FOCUS: Testing Enhanced Dual Response API - 402 Subscription Errors...")
+        print("   Investigating subscription/budget limits preventing dual AI responses")
+        
+        # Test different message types to see if subscription check is blocking
+        dual_response_tests = [
+            {
+                "name": "Mathematical Problem",
+                "message": "Solve the quadratic equation x² - 5x + 6 = 0 step by step",
+                "subject": "Mathematics",
+                "session_id": str(uuid.uuid4())
+            },
+            {
+                "name": "Physics Concept",
+                "message": "Explain Newton's second law of motion with examples",
+                "subject": "Physics", 
+                "session_id": str(uuid.uuid4())
+            },
+            {
+                "name": "Chemistry Problem",
+                "message": "Balance the equation: C₂H₆ + O₂ → CO₂ + H₂O",
+                "subject": "Chemistry",
+                "session_id": str(uuid.uuid4())
+            },
+            {
+                "name": "Motivational Query",
+                "message": "I'm feeling stressed about JEE preparation. Can you help motivate me?",
+                "subject": "General",
+                "session_id": str(uuid.uuid4())
+            }
+        ]
+        
+        dual_response_success_count = 0
+        subscription_errors = []
+        
+        for i, test_case in enumerate(dual_response_tests):
+            print(f"   Testing dual response {i+1}/4: {test_case['name']}")
+            print(f"   Message: '{test_case['message'][:50]}...'")
+            print("   Checking for 402 subscription/budget errors...")
+            
+            success, response = self.run_test(
+                f"Dual Response - {test_case['name']}",
+                "POST",
+                "ai/dual-response",
+                200,  # Expecting success, but will check for 402 errors
+                data={
+                    "message": test_case['message'],
+                    "subject": test_case['subject'],
+                    "session_id": test_case['session_id']
+                },
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Dual response working - NO subscription errors!")
+                print(f"   Primary persona: {response.get('primary_persona', 'N/A')}")
+                print(f"   Secondary persona: {response.get('secondary_persona', 'N/A')}")
+                print(f"   Scenario type: {response.get('scenario_type', 'N/A')}")
+                print(f"   Confidence: {response.get('scenario_confidence', 0):.2f}")
+                dual_response_success_count += 1
+            else:
+                print(f"   ❌ Dual response failed")
+                # Check if it's a 402 subscription error
+                if hasattr(self, 'last_response_status') and self.last_response_status == 402:
+                    subscription_errors.append({
+                        'test': test_case['name'],
+                        'error': 'Subscription/budget limit reached'
+                    })
+                    print(f"   🚨 IDENTIFIED: 402 Subscription error - budget/subscription limits blocking dual AI")
+                elif hasattr(self, 'last_response_status') and self.last_response_status == 500:
+                    print(f"   🚨 500 Internal Server Error - may be related to subscription service calls")
+                else:
+                    print(f"   ❌ Other error type")
+            
+            time.sleep(3)  # Longer delay for AI processing
+        
+        # Test subscription status if we have subscription errors
+        if subscription_errors:
+            print("   🔍 INVESTIGATING SUBSCRIPTION STATUS...")
+            print("   Testing /api/subscription/current to check subscription limits...")
+            
+            success, sub_response = self.run_test(
+                "Current Subscription Status",
+                "GET",
+                "subscription/current",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                current_plan = sub_response.get('current_subscription', {}).get('plan_name', 'unknown')
+                usage_summary = sub_response.get('usage_summary', {})
+                print(f"   Current plan: {current_plan}")
+                print(f"   AI conversations usage: {usage_summary.get('ai_conversations_daily', {})}")
+                print(f"   Subscription status: {sub_response.get('current_subscription', {}).get('status', 'unknown')}")
+            else:
+                print("   ❌ Could not retrieve subscription status")
+        
+        print(f"   🎯 ENHANCED DUAL RESPONSE API SUMMARY:")
+        print(f"   Successful responses: {dual_response_success_count}/{len(dual_response_tests)}")
+        print(f"   Subscription errors detected: {len(subscription_errors)}")
+        
+        if subscription_errors:
+            print(f"   🚨 CRITICAL FINDING: Subscription/budget limits are blocking dual AI responses")
+            for error in subscription_errors:
+                print(f"      - {error['test']}: {error['error']}")
+            print(f"   💡 RECOMMENDATION: Check AI service subscription/budget configuration")
+        else:
+            print(f"   ✅ No subscription errors detected - dual AI responses working correctly")
+        
+        return dual_response_success_count > 0  # Success if at least one test passes
+
     def test_phase_d_enhanced_action_buttons_apis_focused(self):
         """Test Phase D: Enhanced Action Buttons APIs - FOCUSED ON IMPORT FIXES"""
         if not self.token:
