@@ -699,7 +699,7 @@ export function DualResponseContainer({
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-orange-600 flex items-center justify-center">
-                <TrendingUpRight className="h-4 w-4 mr-1" />
+                <TrendingUp className="h-4 w-4 mr-1" />
                 {analytics.performance_stats.performance_trend === 'improving' ? '↗️' : 
                  analytics.performance_stats.performance_trend === 'declining' ? '↘️' : '→'}
               </div>
