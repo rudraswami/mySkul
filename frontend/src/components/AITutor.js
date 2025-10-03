@@ -26,7 +26,14 @@ import {
   FileText,
   Star,
   Mic,
-  MicOff
+  MicOff,
+  Upload,
+  ImageIcon,
+  FileIcon,
+  X,
+  Pin,
+  Link,
+  History
 } from 'lucide-react';
 import axios from 'axios';
 
