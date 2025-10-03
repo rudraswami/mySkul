@@ -2807,10 +2807,10 @@ async def get_student_profile(user: User = Depends(get_current_user)):
 
 @api_router.post("/personalization/profile")
 async def update_student_profile(
-    preferred_language: str = Field(..., regex="^(english|hindi|hinglish)$"),
-    learning_style: str = Field(..., regex="^(visual|analytical|practical|balanced)$"),
+    preferred_language: str = Field(..., pattern="^(english|hindi|hinglish)$"),
+    learning_style: str = Field(..., pattern="^(visual|analytical|practical|balanced)$"),
     difficulty_preference: float = Field(..., ge=0.1, le=1.0),
-    response_length_preference: str = Field(..., regex="^(short|medium|detailed)$"),
+    response_length_preference: str = Field(..., pattern="^(short|medium|detailed)$"),
     user: User = Depends(get_current_user)
 ):
     """Update student personalization preferences"""
