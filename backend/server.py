@@ -1495,7 +1495,7 @@ class ScenarioClassifier:
             }
 
 class MentorAI:
-    """Adaptive, friendly, motivational AI layer"""
+    """Adaptive, friendly, motivational AI layer with personalization"""
     
     def __init__(self, api_key: str):
         self.api_key = api_key
