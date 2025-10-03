@@ -1648,8 +1648,74 @@ class ProfessorAI:
     def __init__(self, api_key: str):
         self.api_key = api_key
     
+    async def get_personalized_response(self, user_message: str, subject: str, session_id: str, 
+                                      user_id: str, topic_name: str = None) -> tuple[str, str]:
+        """Get personalized professor response with reasoning"""
+        
+        try:
+            # Get student profile and personalization data
+            profile = await personalization_engine.get_or_create_student_profile(user_id)
+            difficulty_level = await personalization_engine.get_personalized_difficulty(user_id, subject, topic_name or "General")
+            language = profile.preferred_language
+            
+            # Get language-specific instructions
+            language_instructions = language_engine.get_language_instructions(language, difficulty_level)
+            
+            # Adapt complexity based on difficulty level
+            complexity_level = "basic" if difficulty_level < 0.4 else "advanced" if difficulty_level > 0.7 else "intermediate"
+            
+            # Build personalized system message
+            personalized_system = f"""You are Dhruv AI's Professor - the rule-based, verified reasoning AI for Indian competitive exams (JEE, NEET, UPSC).
+
+STUDENT PROFILE:
+- Preferred Language: {language}
+- Learning Style: {profile.learning_style}
+- Current Difficulty Level: {difficulty_level:.1f} (0.1=beginner, 1.0=advanced)
+- Complexity Level: {complexity_level}
+- Response Preference: {profile.response_length_preference}
+
+PERSONALIZATION INSTRUCTIONS:
+{language_instructions}
+
+ADAPTIVE COMPLEXITY ({complexity_level}):
+- Mathematical rigor: {"Basic formulas and simple steps" if complexity_level == "basic" else "Full derivations and proofs" if complexity_level == "advanced" else "Moderate detail with key steps"}
+- Terminology: {"Simple, accessible terms" if complexity_level == "basic" else "Full technical vocabulary" if complexity_level == "advanced" else "Standard academic language"}
+- Problem depth: {"Core concepts only" if complexity_level == "basic" else "Multiple approaches and edge cases" if complexity_level == "advanced" else "Standard problem-solving methods"}
+
+CORE PRINCIPLES:
+- Academic rigor adapted to student level
+- Factual accuracy with verified reasoning
+- Step-by-step logical progression
+- Citations and references when applicable
+- Mathematical precision appropriate for level
+- Exam-pattern alignment for {subject}
+
+SUBJECT FOCUS: {subject}
+TOPIC FOCUS: {topic_name or 'General concept'}
+
+Maintain academic excellence while adapting complexity to the student's current level ({difficulty_level:.1f})."""
+
+            llm_chat = LlmChat(
+                api_key=self.api_key,
+                session_id=session_id,
+                system_message=personalized_system
+            )
+            
+            response = await llm_chat.send_message([
+                UserMessage(user_message)
+            ])
+            
+            reasoning = f"Professor AI: Applied systematic verification and adaptive reasoning (Language: {language}, Complexity: {complexity_level}, Difficulty: {difficulty_level:.1f}) for {subject} preparation."
+            
+            return response, reasoning
+            
+        except Exception as e:
+            logger.error(f"Personalized Professor AI error: {str(e)}")
+            # Fallback to basic response
+            return await self.get_response(user_message, subject, session_id)
+
     async def get_response(self, user_message: str, subject: str, session_id: str, user_context: dict = None) -> tuple[str, str]:
-        """Generate professor response - rule-based, verified, rigorous"""
+        """Generate professor response - rule-based, verified, rigorous (fallback method)"""
         
         system_message = f"""You are the PROFESSOR layer of Dhruv AI - the rule-based, verified reasoning intelligence.
 
