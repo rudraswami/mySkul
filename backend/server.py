@@ -7010,6 +7010,52 @@ async def get_bookmarked_questions(user: User = Depends(get_current_user)):
         logger.error(f"Get bookmarked questions error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get bookmarked questions")
 
+@api_router.get("/mock-tests/subjects")
+async def get_exam_subjects(user: User = Depends(get_current_user)):
+    """Get available subjects based on user's exam type"""
+    
+    try:
+        # Get user's exam type from their profile
+        user_profile = await db.users.find_one({"user_id": user.user_id})
+        if not user_profile:
+            # Default to JEE if no profile found
+            exam_type = "JEE"
+        else:
+            exam_type = user_profile.get("exam_type", "JEE")
+        
+        # Get subjects for the exam type
+        exam_config = EXAM_SUBJECTS.get(exam_type, EXAM_SUBJECTS["JEE"])
+        
+        # Also get user's subscription for test limits
+        access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
+        
+        return {
+            "exam_type": exam_type,
+            "exam_display_name": exam_config["display_name"],
+            "subjects": exam_config["subjects"],
+            "test_access": {
+                "has_access": access_info["has_access"],
+                "limit": access_info["limit"],
+                "used": access_info["used"],
+                "remaining": max(0, access_info["limit"] - access_info["used"]) if access_info["limit"] != -1 else -1
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Get exam subjects error: {str(e)}")
+        # Return default JEE subjects if error occurs
+        return {
+            "exam_type": "JEE",
+            "exam_display_name": "Joint Entrance Examination",
+            "subjects": ["Mathematics", "Physics", "Chemistry"],
+            "test_access": {
+                "has_access": True,
+                "limit": 2,
+                "used": 0,
+                "remaining": 2
+            }
+        }
+
 @api_router.get("/mock-tests/performance-trends")
 async def get_performance_trends(user: User = Depends(get_current_user)):
     """Get detailed performance trends over time"""
