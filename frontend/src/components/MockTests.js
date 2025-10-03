@@ -1269,20 +1269,32 @@ export default function MockTests() {
                 </div>
               )}
               
+              {/* Upgrade Benefits */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">With Basic Plan you get:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• 20 mock tests per month</li>
+                  <li>• Unlimited AI Tutor conversations</li>
+                  <li>• Advanced analytics & trends</li>
+                  <li>• Detailed performance insights</li>
+                  <li>• Priority support</li>
+                </ul>
+              </div>
+
               <div className="space-y-3">
                 <Button 
                   onClick={() => window.location.href = '/subscription'}
                   className="w-full bg-orange-600 hover:bg-orange-700"
                 >
                   <Crown className="h-4 w-4 mr-2" />
-                  Upgrade Plan
+                  Upgrade to Basic Plan
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowUpgradePrompt(null)}
                   className="w-full"
                 >
-                  Maybe Later
+                  {showUpgradePrompt.reason === 'limit_reached' ? 'Try Again Tomorrow' : 'Maybe Later'}
                 </Button>
               </div>
               
