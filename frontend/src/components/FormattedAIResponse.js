@@ -425,6 +425,11 @@ export function DualResponseContainer({
     insights: false
   });
 
+  const [buttonStates, setButtonStates] = useState({
+    helpful: false,
+    copied: false
+  });
+
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
