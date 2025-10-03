@@ -1091,6 +1091,112 @@ export default function AITutor() {
           </div>
         </div>
 
+        {/* Phase A: File Upload & Context Pin Area */}
+        {(selectedFile || selectedContext || showContextPin) && (
+          <div className="bg-gray-50 border-t border-gray-200 p-4">
+            <div className="max-w-4xl mx-auto space-y-4">
+              
+              {/* Selected File Display */}
+              {selectedFile && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {selectedFile.type.startsWith('image/') ? (
+                        <ImageIcon className="h-8 w-8 text-blue-500" />
+                      ) : (
+                        <FileIcon className="h-8 w-8 text-red-500" />
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        onClick={processFileUpload}
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {loading ? 'Processing...' : 'Analyze File'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={clearSelectedFile}
+                        disabled={loading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-3">
+                      <div className="bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">Processing file... {uploadProgress}%</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selected Context Display */}
+              {selectedContext && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <selectedContext.icon className="h-6 w-6 text-purple-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedContext.title}</p>
+                        <p className="text-sm text-gray-500">{selectedContext.description}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={clearContext}
+                      size="sm"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Context Pin Selection */}
+              {showContextPin && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4 max-h-64 overflow-y-auto">
+                  <h4 className="font-medium text-gray-900 mb-3">Connect with Previous Content</h4>
+                  <div className="space-y-2">
+                    {availableContexts.map((context) => (
+                      <div
+                        key={`${context.type}-${context.id}`}
+                        onClick={() => selectContext(context)}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                      >
+                        <context.icon className="h-5 w-5 text-gray-500" />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-gray-900">{context.title}</p>
+                          <p className="text-xs text-gray-500">{context.description}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {context.type.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  {availableContexts.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No previous content available</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Professional Input Area */}
         <div className="bg-white border-t border-gray-200 p-6 shadow-sm">
           <div className="max-w-4xl mx-auto">
