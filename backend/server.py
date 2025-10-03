@@ -3736,6 +3736,156 @@ async def get_dashboard_analytics(user: User = Depends(get_current_user)):
         "weekly_goals_progress": 75,  # Placeholder
     }
 
+@api_router.get("/dashboard/daily-goals")
+async def get_daily_goals(user: User = Depends(get_current_user)):
+    """Get user's daily study goals"""
+    
+    # Get today's date
+    today = datetime.now(timezone.utc).date()
+    
+    # Get user's recent activity to generate smart goals
+    recent_progress = await db.study_progress.find(
+        {"user_id": user.user_id}
+    ).sort("last_accessed", -1).limit(10).to_list(10)
+    
+    # Get user's weak subjects from personalization
+    try:
+        profile = await db.personalization_profiles.find_one({"user_id": user.user_id})
+        weak_areas = profile.get("weak_areas", []) if profile else []
+    except:
+        weak_areas = []
+    
+    # Generate smart daily goals based on user data
+    goals = []
+    goal_id = 1
+    
+    # Goal 1: Study time goal
+    total_study_today = sum(p.get("time_spent", 0) for p in recent_progress if p.get("last_accessed", "").startswith(str(today)))
+    study_goal = {
+        "id": goal_id,
+        "task": f"Study for {2 * 60} minutes total",
+        "duration": "120 mins",
+        "completed": total_study_today >= 120,
+        "subject": "General",
+        "progress": min(100, int((total_study_today / 120) * 100)) if total_study_today > 0 else 0
+    }
+    goals.append(study_goal)
+    goal_id += 1
+    
+    # Goal 2: Practice questions in weak area
+    if weak_areas:
+        weak_subject = weak_areas[0] if isinstance(weak_areas, list) else str(weak_areas)
+        practice_goal = {
+            "id": goal_id,
+            "task": f"Practice 10 questions in {weak_subject}",
+            "duration": "20 mins", 
+            "completed": False,
+            "subject": weak_subject,
+            "progress": 0
+        }
+        goals.append(practice_goal)
+        goal_id += 1
+    
+    # Goal 3: AI Tutor interaction
+    chat_count_today = await db.chat_messages.count_documents({
+        "user_id": user.user_id,
+        "timestamp": {"$gte": datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)}
+    })
+    
+    ai_goal = {
+        "id": goal_id,
+        "task": "Ask AI Tutor for help with doubts",
+        "duration": "10 mins",
+        "completed": chat_count_today >= 1,
+        "subject": "AI Tutor", 
+        "progress": min(100, chat_count_today * 100) if chat_count_today > 0 else 0
+    }
+    goals.append(ai_goal)
+    
+    return {
+        "goals": goals,
+        "total_progress": int(sum(g["progress"] for g in goals) / len(goals)) if goals else 0,
+        "date": str(today)
+    }
+
+@api_router.get("/dashboard/subject-progress") 
+async def get_subject_progress(user: User = Depends(get_current_user)):
+    """Get detailed subject and chapter progress"""
+    
+    # Get all study progress for the user
+    progress_docs = await db.study_progress.find({"user_id": user.user_id}).to_list(length=None)
+    
+    # Get mastery data from personalization
+    mastery_docs = await db.topic_mastery.find({"user_id": user.user_id}).to_list(length=None)
+    
+    # Define standard curriculum structure
+    curriculum = {
+        "Mathematics": {
+            "chapters": ["Algebra", "Calculus", "Geometry", "Trigonometry", "Statistics", "Probability", "Linear Algebra", "Complex Numbers", "Sequences", "Limits", "Derivatives", "Integrals", "Matrices", "Determinants", "Coordinate Geometry"],
+            "total_chapters": 15
+        },
+        "Physics": {
+            "chapters": ["Mechanics", "Thermodynamics", "Electromagnetism", "Optics", "Modern Physics", "Waves", "Sound", "Light", "Atomic Structure", "Nuclear Physics", "Electronics", "Magnetism", "Gravitation", "Kinematics", "Dynamics", "Oscillations", "Fluid Mechanics", "Heat Transfer"],
+            "total_chapters": 18
+        },
+        "Chemistry": {
+            "chapters": ["Atomic Structure", "Periodic Table", "Chemical Bonding", "Thermodynamics", "Equilibrium", "Kinetics", "Electrochemistry", "Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Solutions", "Surface Chemistry", "Polymers", "Biomolecules", "Environmental Chemistry", "Metallurgy", "Coordination Compounds", "Aldehydes Ketones", "Carboxylic Acids", "Amines"],
+            "total_chapters": 20
+        }
+    }
+    
+    subjects_progress = []
+    
+    for subject, subject_data in curriculum.items():
+        # Calculate progress for this subject
+        subject_progress = [p for p in progress_docs if p.get("subject") == subject]
+        subject_mastery = [m for m in mastery_docs if m.get("subject") == subject]
+        
+        # Calculate chapters completed (unique chapters with progress)
+        completed_chapters = len(set(p.get("chapter", "Unknown") for p in subject_progress if p.get("mastery_level", 0) >= 60))
+        
+        # Calculate average mastery
+        if subject_mastery:
+            avg_mastery = int(sum(m.get("mastery_level", 0) for m in subject_mastery) / len(subject_mastery))
+        elif subject_progress:
+            avg_mastery = int(sum(p.get("mastery_level", 0) for p in subject_progress) / len(subject_progress))
+        else:
+            avg_mastery = 0
+        
+        # Determine status
+        if avg_mastery >= 80:
+            status = "strong"
+            color = "green"
+        elif avg_mastery >= 60:
+            status = "medium" 
+            color = "yellow"
+        else:
+            status = "weak"
+            color = "red"
+        
+        subject_info = {
+            "subject": subject,
+            "chapters": subject_data["total_chapters"],
+            "completed": completed_chapters,
+            "mastery": avg_mastery,
+            "color": color,
+            "status": status,
+            "recent_chapters": [
+                {
+                    "name": p.get("chapter", "Unknown"),
+                    "mastery": p.get("mastery_level", 0),
+                    "last_studied": p.get("last_accessed")
+                } for p in subject_progress[-3:]  # Last 3 chapters
+            ]
+        }
+        
+        subjects_progress.append(subject_info)
+    
+    return {
+        "subjects": subjects_progress,
+        "overall_progress": int(sum(s["mastery"] for s in subjects_progress) / len(subjects_progress)) if subjects_progress else 0
+    }
+
 @api_router.post("/doubt/resolve")
 async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_current_user)):
     """Quick doubt resolution without chat session"""
