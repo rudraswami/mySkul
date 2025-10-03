@@ -1530,10 +1530,17 @@ class DhruvAITester:
         
         notes_get_success = 1 if success else 0
         if success:
-            notes = response.get('notes', [])
+            # Handle both dict and list response formats
+            if isinstance(response, dict):
+                notes = response.get('notes', [])
+            elif isinstance(response, list):
+                notes = response
+            else:
+                notes = []
+                
             print(f"   ✅ Notes retrieved: {len(notes)} notes")
             if notes:
-                sample_note = notes[0]
+                sample_note = notes[0] if isinstance(notes[0], dict) else {}
                 print(f"   Sample note: {sample_note.get('title', 'N/A')}")
                 print(f"   Subject: {sample_note.get('subject', 'N/A')}")
         else:
