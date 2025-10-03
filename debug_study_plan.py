@@ -8,7 +8,7 @@ login_data = {
 }
 
 login_response = requests.post(
-    "https://exam-genius-hub.preview.emergentagent.com/api/auth/login",
+    "https://mentor-ai-platform.preview.emergentagent.com/api/auth/login",
     json=login_data
 )
 
@@ -26,7 +26,7 @@ if login_response.status_code == 200:
     }
     
     response = requests.post(
-        "https://exam-genius-hub.preview.emergentagent.com/api/ai/dual-study-plan",
+        "https://mentor-ai-platform.preview.emergentagent.com/api/ai/dual-study-plan",
         json=study_plan_data,
         headers={'Authorization': f'Bearer {token}'}
     )
