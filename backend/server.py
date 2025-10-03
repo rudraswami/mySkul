@@ -1861,6 +1861,290 @@ class DualLayerAI:
             logger.error(f"Dual-layer AI error: {str(e)}")
             raise HTTPException(status_code=500, detail="Dual-layer AI system temporarily unavailable")
 
+# ============= PHASE B: PERSONALIZATION SERVICES =============
+
+class PersonalizationEngine:
+    """Advanced personalization engine for adaptive learning"""
+    
+    @staticmethod
+    async def get_or_create_student_profile(user_id: str) -> StudentProfile:
+        """Get existing student profile or create a new one"""
+        try:
+            profile_doc = await db.student_profiles.find_one({"user_id": user_id})
+            if profile_doc:
+                return StudentProfile(**clean_mongodb_doc(profile_doc))
+            
+            # Create new profile
+            new_profile = StudentProfile(user_id=user_id)
+            profile_dict = new_profile.dict()
+            profile_dict['created_at'] = profile_dict['created_at'].isoformat()
+            profile_dict['updated_at'] = profile_dict['updated_at'].isoformat()
+            
+            await db.student_profiles.insert_one(profile_dict)
+            logger.info(f"✅ Created new student profile for user: {user_id}")
+            return new_profile
+            
+        except Exception as e:
+            logger.error(f"Error managing student profile: {str(e)}")
+            # Return default profile on error
+            return StudentProfile(user_id=user_id)
+    
+    @staticmethod
+    async def update_topic_mastery(user_id: str, subject: str, topic_name: str, 
+                                 is_correct: bool, difficulty_level: float) -> TopicMastery:
+        """Update topic mastery based on student performance"""
+        try:
+            # Find existing mastery record
+            mastery_doc = await db.topic_mastery.find_one({
+                "user_id": user_id,
+                "subject": subject,
+                "topic_name": topic_name
+            })
+            
+            if mastery_doc:
+                mastery = TopicMastery(**clean_mongodb_doc(mastery_doc))
+                
+                # Update statistics
+                mastery.total_attempts += 1
+                if is_correct:
+                    mastery.correct_attempts += 1
+                
+                # Calculate new mastery level (exponential moving average)
+                accuracy = mastery.correct_attempts / mastery.total_attempts
+                previous_mastery = mastery.mastery_level
+                
+                # Weighted update: recent performance has more impact
+                weight = min(0.3, 1.0 / mastery.total_attempts)  # Adaptive weight
+                mastery.mastery_level = (1 - weight) * previous_mastery + weight * accuracy
+                
+                # Adjust difficulty based on performance
+                if is_correct and accuracy > 0.8 and mastery.difficulty_level < 0.9:
+                    mastery.difficulty_level = min(1.0, mastery.difficulty_level + 0.1)
+                elif not is_correct and accuracy < 0.6 and mastery.difficulty_level > 0.2:
+                    mastery.difficulty_level = max(0.1, mastery.difficulty_level - 0.1)
+                
+                mastery.last_practiced = datetime.now(timezone.utc)
+                mastery.updated_at = datetime.now(timezone.utc)
+                
+            else:
+                # Create new mastery record
+                mastery = TopicMastery(
+                    user_id=user_id,
+                    subject=subject,
+                    topic_name=topic_name,
+                    total_attempts=1,
+                    correct_attempts=1 if is_correct else 0,
+                    mastery_level=1.0 if is_correct else 0.0,
+                    difficulty_level=difficulty_level
+                )
+            
+            # Save to database
+            mastery_dict = mastery.dict()
+            for field in ['created_at', 'updated_at', 'last_practiced']:
+                if isinstance(mastery_dict[field], datetime):
+                    mastery_dict[field] = mastery_dict[field].isoformat()
+            
+            await db.topic_mastery.update_one(
+                {
+                    "user_id": user_id,
+                    "subject": subject,
+                    "topic_name": topic_name
+                },
+                {"$set": mastery_dict},
+                upsert=True
+            )
+            
+            logger.info(f"✅ Updated mastery for {subject}/{topic_name}: {mastery.mastery_level:.2f}")
+            return mastery
+            
+        except Exception as e:
+            logger.error(f"Error updating topic mastery: {str(e)}")
+            return TopicMastery(user_id=user_id, subject=subject, topic_name=topic_name)
+    
+    @staticmethod
+    async def analyze_and_record_errors(user_id: str, subject: str, topic_name: str, 
+                                      question: str, response: str, user_feedback: Optional[str] = None):
+        """Analyze response for error patterns and record them"""
+        try:
+            # Use AI to analyze potential errors
+            error_analysis_prompt = f"""Analyze this student interaction for error patterns:
+
+QUESTION: {question}
+AI RESPONSE: {response[:500]}...
+USER FEEDBACK: {user_feedback or "None"}
+
+Identify if there are any error patterns:
+1. Conceptual misunderstanding
+2. Calculation errors  
+3. Formula application errors
+4. Method selection errors
+5. Careless mistakes
+
+Return JSON with:
+{{
+    "has_error": true/false,
+    "error_type": "conceptual|calculation|formula|method|careless",
+    "error_description": "brief description",
+    "confidence": 0.0-1.0
+}}"""
+
+            # Simple pattern matching for now (can be enhanced with LLM analysis)
+            has_error = False
+            error_type = "conceptual"
+            error_description = "General learning area"
+            
+            # Basic pattern detection
+            if user_feedback in ["too_hard", "confusing"]:
+                has_error = True
+                error_type = "conceptual"
+                error_description = f"Difficulty understanding {topic_name} concepts"
+            
+            if has_error:
+                # Check for existing error pattern
+                existing_error = await db.error_patterns.find_one({
+                    "user_id": user_id,
+                    "subject": subject,
+                    "topic_name": topic_name,
+                    "error_type": error_type
+                })
+                
+                if existing_error:
+                    # Update frequency
+                    await db.error_patterns.update_one(
+                        {"error_id": existing_error["error_id"]},
+                        {
+                            "$inc": {"frequency": 1},
+                            "$set": {
+                                "last_occurred": datetime.now(timezone.utc).isoformat()
+                            }
+                        }
+                    )
+                else:
+                    # Create new error pattern
+                    error_pattern = ErrorPattern(
+                        user_id=user_id,
+                        subject=subject,
+                        topic_name=topic_name,
+                        error_type=error_type,
+                        error_description=error_description
+                    )
+                    
+                    error_dict = error_pattern.dict()
+                    for field in ['first_occurred', 'last_occurred']:
+                        if isinstance(error_dict[field], datetime):
+                            error_dict[field] = error_dict[field].isoformat()
+                    
+                    await db.error_patterns.insert_one(error_dict)
+                    logger.info(f"✅ Recorded new error pattern: {error_type} in {topic_name}")
+                    
+        except Exception as e:
+            logger.error(f"Error analyzing error patterns: {str(e)}")
+    
+    @staticmethod
+    async def get_personalized_difficulty(user_id: str, subject: str, topic_name: str) -> float:
+        """Get appropriate difficulty level for user on specific topic"""
+        try:
+            mastery_doc = await db.topic_mastery.find_one({
+                "user_id": user_id,
+                "subject": subject,
+                "topic_name": topic_name
+            })
+            
+            if mastery_doc:
+                return mastery_doc.get("difficulty_level", 0.5)
+            
+            # For new topics, check user's general profile
+            profile = await PersonalizationEngine.get_or_create_student_profile(user_id)
+            return profile.difficulty_preference
+            
+        except Exception as e:
+            logger.error(f"Error getting personalized difficulty: {str(e)}")
+            return 0.5  # Default medium difficulty
+    
+    @staticmethod
+    async def get_language_preference(user_id: str) -> str:
+        """Get user's preferred language for responses"""
+        try:
+            profile = await PersonalizationEngine.get_or_create_student_profile(user_id)
+            return profile.preferred_language
+        except Exception as e:
+            logger.error(f"Error getting language preference: {str(e)}")
+            return "english"
+    
+    @staticmethod
+    async def record_learning_interaction(user_id: str, session_id: str, subject: str, 
+                                        topic_name: str, question: str, ai_response: str,
+                                        ai_mode: str, difficulty: float, user_feedback: str = None,
+                                        time_spent: float = None):
+        """Record detailed learning interaction for analysis"""
+        try:
+            interaction = LearningInteraction(
+                user_id=user_id,
+                session_id=session_id,
+                subject=subject,
+                topic_name=topic_name,
+                question_asked=question,
+                ai_response=ai_response[:1000],  # Truncate for storage
+                ai_mode=ai_mode,
+                difficulty_estimated=difficulty,
+                user_feedback=user_feedback,
+                time_spent=time_spent
+            )
+            
+            interaction_dict = interaction.dict()
+            interaction_dict['timestamp'] = interaction_dict['timestamp'].isoformat()
+            
+            await db.learning_interactions.insert_one(interaction_dict)
+            
+            # Update student profile interaction count
+            await db.student_profiles.update_one(
+                {"user_id": user_id},
+                {"$inc": {"total_interactions": 1}},
+                upsert=True
+            )
+            
+        except Exception as e:
+            logger.error(f"Error recording learning interaction: {str(e)}")
+
+class LanguagePersonalizationEngine:
+    """Multi-language personalization for Hindi, Hinglish, and English"""
+    
+    @staticmethod
+    def get_language_instructions(language: str, difficulty_level: float) -> str:
+        """Get AI instructions based on language preference and difficulty"""
+        
+        base_instructions = {
+            "english": "Respond in clear, professional English suitable for competitive exam preparation.",
+            "hindi": "हिंदी में उत्तर दें। स्पष्ट और शैक्षणिक भाषा का उपयोग करें।",
+            "hinglish": "Respond in Hinglish (Hindi-English mix) that feels natural for Indian students. Use English for technical terms but Hindi for explanations."
+        }
+        
+        difficulty_instructions = {
+            "english": {
+                "easy": "Use simple language and basic concepts. Provide step-by-step explanations.",
+                "medium": "Use standard academic language with moderate complexity.",
+                "hard": "Use advanced terminology and complex problem-solving approaches."
+            },
+            "hindi": {
+                "easy": "सरल भाषा और बुनियादी अवधारणाओं का उपयोग करें। चरणबद्ध व्याख्या दें।",
+                "medium": "मानक शैक्षणिक भाषा का उपयोग करें।",
+                "hard": "उन्नत शब्दावली और जटिल समस्या समाधान का उपयोग करें।"
+            },
+            "hinglish": {
+                "easy": "Simple language mein explain kariye. Step-by-step batayiye.",
+                "medium": "Standard academic language use kariye but samjhane ke liye Hindi bhi mix kariye.",
+                "hard": "Advanced concepts ko detail mein explain kariye with proper technical terms."
+            }
+        }
+        
+        difficulty_key = "easy" if difficulty_level < 0.4 else "hard" if difficulty_level > 0.7 else "medium"
+        
+        return f"{base_instructions.get(language, base_instructions['english'])} {difficulty_instructions.get(language, difficulty_instructions['english']).get(difficulty_key, '')}"
+
+# Initialize services
+personalization_engine = PersonalizationEngine()
+language_engine = LanguagePersonalizationEngine()
+
 # Initialize dual-layer AI system
 dual_ai = DualLayerAI(EMERGENT_LLM_KEY)
 
