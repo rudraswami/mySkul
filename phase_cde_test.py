@@ -181,7 +181,12 @@ class PhaseCDETester:
         )
         
         if success:
-            alerts = response.get('disagreement_alerts', [])
+            if isinstance(response, dict):
+                alerts = response.get('disagreement_alerts', [])
+            elif isinstance(response, list):
+                alerts = response
+            else:
+                alerts = []
             print(f"   ✅ Disagreement alerts retrieved: {len(alerts)} alerts")
             success_count += 1
         else:
