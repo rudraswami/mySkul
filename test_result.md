@@ -137,6 +137,42 @@
         -agent: "testing"
         -comment: "MOCK TEST ENHANCEMENT APIS TESTING COMPLETED - MIXED RESULTS: Comprehensive testing of newly implemented enhancement APIs as per review request. WORKING APIS (2/5): ✅ /api/bookmarked-questions - Successfully retrieves user's bookmarked questions with proper data structure (question_id, question_text, options, correct_answer, explanation, subject, test_name, bookmarked_at, notes). Returns empty array when no bookmarks exist. ✅ /api/mock-tests/performance-trends - Successfully provides performance analytics with daily_performance, subject_trends, weekly_improvement, and insights (weak_areas, strong_areas, total_tests, study_days, improvement_trend). Returns empty data when no test history exists. BLOCKED APIS (3/5): ❌ /api/mock-tests/{test_id}/bookmark-question - Returns 404 'Test not found' because test validation correctly prevents operations on non-existent tests. ❌ /api/mock-tests/{test_id}/detailed-review - Returns 404 'Test not found' for same reason. ❌ /api/mock-tests/{test_id}/retake - Returns 404 'Original test not found' for same reason. ROOT CAUSE: AI service subscription limits (402 errors) prevent new test generation, so no valid test IDs exist for testing dependent APIs. CONCLUSION: All 5 enhancement APIs are correctly implemented with proper validation, authentication, and error handling. The 3 'failing' APIs are actually working correctly by rejecting invalid test IDs. Issue is environmental (AI budget limits) not code-related."
 
+  - task: "Mock Test Fix #1: Enhanced Error Handling"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: false
+        -agent: "testing"
+        -comment: "MOCK TEST FIX #1 TESTING COMPLETED - PARTIALLY WORKING: Enhanced Error Handling for subscription limits tested comprehensively. FINDINGS: ✅ Backend correctly detects subscription issues and logs proper structured error messages with required fields (message, current_plan, used, limit, action, upgrade_url). ✅ Validation errors (422) are handled correctly with proper error structure. ❌ CRITICAL ISSUE: HTTP status code mapping is incorrect - backend logs show 402 errors but API returns 500 Internal Server Error instead. The error structure is correct but status code mapping needs fixing. Backend logs show: 'Mock test generation error: 402: {message: Your subscription has expired...}' but API returns 500. This prevents frontend from properly handling subscription errors. Fix needed: Ensure 402 subscription errors are returned with correct HTTP status code, not wrapped in 500 errors."
+
+  - task: "Mock Test Fix #2: Free Tier Subscription Access"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: false
+        -agent: "testing"
+        -comment: "MOCK TEST FIX #2 TESTING COMPLETED - NOT WORKING: Free Tier Subscription Access tested with test@dhruvai.com credentials. FINDINGS: ❌ Free tier user is being blocked from accessing mock tests despite having 0/0 usage (should allow 2 tests/month). Backend logs show 'subscription: free, status: cancelled' and 'Access check: has_access: False, reason: subscription_expired'. The subscription validation logic is incorrectly treating free tier users as expired instead of allowing their allocated free tests. ROOT CAUSE: Free tier subscription logic needs to distinguish between 'cancelled paid subscription' and 'active free tier with remaining quota'. Current implementation blocks all free tier users regardless of usage. Fix needed: Update subscription validation to allow free tier users access to their allocated monthly tests (2/month limit)."
+
+  - task: "Mock Test Fix #3: Dynamic Subject Mapping"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "MOCK TEST FIX #3 TESTING COMPLETED - FULLY WORKING: Dynamic Subject Mapping tested comprehensively with exam type changes. FINDINGS: ✅ GET /api/mock-tests/subjects correctly returns current exam type and associated subjects. ✅ POST /api/user/update-exam-type successfully updates exam type from JEE to UPSC. ✅ Subject mapping works perfectly - JEE subjects [Mathematics, Physics, Chemistry] correctly change to UPSC subjects [History, Polity, Economy, Geography, Current Affairs, Science & Technology, Environment, Ethics] after exam type update. ✅ Dynamic subject retrieval confirmed - subsequent calls to /api/mock-tests/subjects return updated subject list based on new exam type. ✅ Bidirectional testing confirmed - can switch back from UPSC to JEE and subjects update correctly. This fix is working perfectly and provides proper dynamic subject mapping based on user's exam type selection."
+
   - task: "Performance Analytics API"
     implemented: true
     working: true
