@@ -1643,7 +1643,7 @@ Keep it encouraging, personal, and under 200 words."""
             return f"You're well-prepared for this {test_type} test! Trust your knowledge, stay calm, and give your best effort. Remember to read questions carefully and manage your time wisely. You've got this! 🌟"
 
 class ProfessorAI:
-    """Rule-based, verified reasoning AI layer"""
+    """Rule-based, verified reasoning AI layer with personalization"""
     
     def __init__(self, api_key: str):
         self.api_key = api_key
