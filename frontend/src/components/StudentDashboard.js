@@ -163,16 +163,33 @@ export default function StudentDashboard() {
   };
 
   const getTodayProgress = () => {
+    if (todayGoals.length === 0) return 0;
     const completed = todayGoals.filter(goal => goal.completed).length;
     return Math.round((completed / todayGoals.length) * 100);
   };
 
-  const handleGoalToggle = (goalId) => {
+  const handleGoalToggle = async (goalId) => {
+    // Optimistically update UI
     setTodayGoals(goals => 
       goals.map(goal => 
         goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
       )
     );
+    
+    // In a real app, you would save this to backend
+    // For now, we'll just update the local state
+    try {
+      // Future: POST /api/dashboard/update-goal-status
+      // await axios.post(`${API}/dashboard/update-goal-status`, { goalId, completed: !currentGoal.completed })
+    } catch (error) {
+      console.error('Failed to update goal status:', error);
+      // Revert optimistic update on error
+      setTodayGoals(goals => 
+        goals.map(goal => 
+          goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
+        )
+      );
+    }
   };
 
   const handleMoodSubmit = (mood) => {
