@@ -1227,18 +1227,19 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
-    # ============= PHASE C, D, E: COMPREHENSIVE TESTING =============
+    # ============= REVIEW REQUEST FOCUSED TESTING =============
 
-    def test_phase_c_advanced_guardrails_apis(self):
-        """Test Phase C: Advanced Guardrails APIs - Math validation, Citations, Disagreements"""
+    def test_phase_c_advanced_guardrails_apis_focused(self):
+        """Test Phase C: Advanced Guardrails APIs - FOCUSED ON REVIEW REQUEST FIXES"""
         if not self.token:
             print("❌ No token available for Phase C guardrails testing")
             return False
         
-        print("   Testing Phase C: Advanced Guardrails APIs...")
+        print("   🎯 REVIEW REQUEST FOCUS: Testing Phase C Advanced Guardrails API Fixes...")
+        print("   Testing import fixes and newly implemented fact verification endpoint")
         
-        # Test 1: Math Validation API
-        print("   Testing POST /api/guardrails/validate-math...")
+        # Test 1: Math Validation API - SHOULD NOW WORK WITH JSON BODY
+        print("   Testing POST /api/guardrails/validate-math (should now work with JSON body)...")
         math_expressions = [
             {"expression": "x^2 + 5x + 6 = 0", "units": None},
             {"expression": "F = ma", "units": "N = kg⋅m/s²"},
@@ -1260,7 +1261,7 @@ class DhruvAITester:
             )
             
             if success:
-                print(f"   ✅ Math validation successful")
+                print(f"   ✅ Math validation successful - JSON body parameter structure working")
                 print(f"   Is valid: {response.get('is_valid', False)}")
                 print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
                 print(f"   Method: {response.get('validation_method', 'N/A')}")
@@ -1268,12 +1269,12 @@ class DhruvAITester:
                     print(f"   Errors: {len(response['validation_errors'])}")
                 math_success_count += 1
             else:
-                print(f"   ❌ Math validation failed")
+                print(f"   ❌ Math validation failed - JSON body parameter issue may persist")
             
             time.sleep(1)
         
-        # Test 2: Citations API
-        print("   Testing GET /api/guardrails/citations/{subject}/{topic}...")
+        # Test 2: Citations API - SHOULD STILL WORK
+        print("   Testing GET /api/guardrails/citations/{subject}/{topic} (should still work)...")
         citation_tests = [
             {"subject": "Mathematics", "topic": "Quadratic Equations"},
             {"subject": "Physics", "topic": "Newton's Laws"},
@@ -1301,7 +1302,7 @@ class DhruvAITester:
                 else:
                     citations = []
                     
-                print(f"   ✅ Citations retrieved: {len(citations)} sources")
+                print(f"   ✅ Citations still working: {len(citations)} sources")
                 if citations:
                     sample_citation = citations[0] if isinstance(citations[0], dict) else {}
                     print(f"   Sample source: {sample_citation.get('source_title', 'N/A')}")
@@ -1313,8 +1314,8 @@ class DhruvAITester:
             
             time.sleep(1)
         
-        # Test 3: Disagreement Alerts API (requires session_id)
-        print("   Testing GET /api/guardrails/disagreements/{session_id}...")
+        # Test 3: Disagreement Alerts API - SHOULD STILL WORK (requires session_id)
+        print("   Testing GET /api/guardrails/disagreements/{session_id} (should still work)...")
         if hasattr(self, 'session_id') and self.session_id:
             success, response = self.run_test(
                 "Disagreement Alerts",
@@ -1327,7 +1328,7 @@ class DhruvAITester:
             disagreement_success = 1 if success else 0
             if success:
                 alerts = response.get('disagreement_alerts', [])
-                print(f"   ✅ Disagreement alerts retrieved: {len(alerts)} alerts")
+                print(f"   ✅ Disagreement alerts still working: {len(alerts)} alerts")
                 if alerts:
                     sample_alert = alerts[0]
                     print(f"   Sample conflict type: {sample_alert.get('conflict_type', 'N/A')}")
@@ -1338,10 +1339,62 @@ class DhruvAITester:
             print("   ⚠️  Skipping disagreement alerts - no session_id available")
             disagreement_success = 1  # Skip this test
         
-        total_tests = len(math_expressions) + len(citation_tests) + 1
-        total_success = math_success_count + citation_success_count + disagreement_success
+        # Test 4: NEW FACT VERIFICATION ENDPOINT - NEWLY IMPLEMENTED
+        print("   🆕 Testing POST /api/guardrails/fact-verification (NEWLY IMPLEMENTED)...")
+        fact_verification_tests = [
+            {
+                "statement": "The quadratic formula is x = (-b ± √(b²-4ac))/2a",
+                "subject": "Mathematics",
+                "context": "Solving quadratic equations"
+            },
+            {
+                "statement": "Newton's second law states that F = ma",
+                "subject": "Physics", 
+                "context": "Laws of motion"
+            },
+            {
+                "statement": "Water boils at 100°C at standard atmospheric pressure",
+                "subject": "Chemistry",
+                "context": "Phase transitions"
+            }
+        ]
         
-        print(f"   Phase C Summary: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        fact_verification_success_count = 0
+        for i, test_case in enumerate(fact_verification_tests):
+            print(f"   Testing fact verification {i+1}/3: {test_case['statement'][:50]}...")
+            
+            success, response = self.run_test(
+                f"Fact Verification - {test_case['subject']}",
+                "POST",
+                "guardrails/fact-verification",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ NEW fact verification endpoint working!")
+                print(f"   Is verified: {response.get('is_verified', False)}")
+                print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
+                print(f"   Verification method: {response.get('verification_method', 'N/A')}")
+                print(f"   Sources: {len(response.get('verification_sources', []))}")
+                if response.get('fact_errors'):
+                    print(f"   Fact errors: {len(response['fact_errors'])}")
+                fact_verification_success_count += 1
+            else:
+                print(f"   ❌ NEW fact verification endpoint failed")
+            
+            time.sleep(2)  # Longer delay for AI processing
+        
+        total_tests = len(math_expressions) + len(citation_tests) + 1 + len(fact_verification_tests)
+        total_success = math_success_count + citation_success_count + disagreement_success + fact_verification_success_count
+        
+        print(f"   🎯 PHASE C REVIEW FOCUS SUMMARY: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)")
+        print(f"   Math validation (JSON body): {math_success_count}/{len(math_expressions)} ✓")
+        print(f"   Citations (still working): {citation_success_count}/{len(citation_tests)} ✓")
+        print(f"   Disagreements (still working): {disagreement_success}/1 ✓")
+        print(f"   🆕 NEW Fact verification: {fact_verification_success_count}/{len(fact_verification_tests)} ✓")
+        
         return total_success >= total_tests * 0.8  # 80% success threshold
 
     def test_phase_d_enhanced_action_buttons_apis(self):
