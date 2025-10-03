@@ -1810,6 +1810,18 @@ export default function MockTests() {
                 variant="outline" 
                 className="w-full justify-start"
                 onClick={() => {
+                  loadPerformanceTrends();
+                  alert('Performance trends loaded! Check the Analytics section for detailed insights.');
+                }}
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Performance Trends
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => {
                   const tomorrow = new Date();
                   tomorrow.setDate(tomorrow.getDate() + 1);
                   alert(`Test scheduled for ${tomorrow.toLocaleDateString()} at 10:00 AM. You will receive a reminder notification.`);
