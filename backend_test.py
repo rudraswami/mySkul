@@ -1530,9 +1530,8 @@ class DhruvAITester:
         print("   Expected: All endpoints should return 200 OK instead of 500 Internal Server Error")
         print("="*80)
         
-        if not self.token:
-            print("❌ No token available for Auto-Note Mentor testing")
-            return False
+        # Initialize token as None to force fresh authentication
+        self.token = None
         
         test_results = {
             'authentication': False,
