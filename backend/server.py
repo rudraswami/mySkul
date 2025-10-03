@@ -7022,6 +7022,34 @@ async def get_bookmarked_questions(user: User = Depends(get_current_user)):
         logger.error(f"Get bookmarked questions error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get bookmarked questions")
 
+@api_router.post("/user/update-exam-type")
+async def update_user_exam_type(
+    request: dict,
+    user: User = Depends(get_current_user)
+):
+    """Update user's exam type for testing dynamic subjects"""
+    try:
+        new_exam_type = request.get("exam_type", "JEE")
+        
+        if new_exam_type not in EXAM_SUBJECTS:
+            raise HTTPException(status_code=400, detail=f"Unsupported exam type: {new_exam_type}")
+        
+        # Update user's profile
+        await db.users.update_one(
+            {"user_id": user.user_id},
+            {"$set": {"exam_type": new_exam_type, "updated_at": datetime.now(timezone.utc)}}
+        )
+        
+        return {
+            "message": f"Exam type updated to {new_exam_type}",
+            "exam_type": new_exam_type,
+            "available_subjects": EXAM_SUBJECTS[new_exam_type]["subjects"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Update exam type error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update exam type")
+
 @api_router.get("/mock-tests/subjects")
 async def get_exam_subjects(user: User = Depends(get_current_user)):
     """Get available subjects based on user's exam type"""
