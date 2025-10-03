@@ -72,6 +72,15 @@ export default function AITutor() {
     isRenaming: null // session_id of the session being renamed
   });
   const [renameValue, setRenameValue] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  
+  // Show toast notification
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   // Phase A: Complete Input Methods states
   const [selectedFile, setSelectedFile] = useState(null);
