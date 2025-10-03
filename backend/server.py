@@ -2870,7 +2870,7 @@ class ActionButtonService:
             )
             
             # Use Emergent LLM to generate practice problems
-            from emergentintegrations import LLMChat
+            # LLMChat is already imported as LlmChat at top of file
             
             difficulty_prompt = {
                 "easier": "Generate 5 easier variations of this problem with simpler numbers or concepts",
