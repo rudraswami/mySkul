@@ -212,8 +212,32 @@ class ChatSession(BaseModel):
     user_id: str
     subject: str
     title: str = "New Chat"
+    topic: Optional[str] = "General"
+    ai_mode: Optional[str] = "dual"
+    pinned: bool = False
+    bookmarked: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+class SessionCreateRequest(BaseModel):
+    title: str
+    subject: str
+    topic: Optional[str] = "General"
+    ai_mode: Optional[str] = "dual"
+
+class SessionRenameRequest(BaseModel):
+    title: str
+
+class SessionPinRequest(BaseModel):
+    pinned: bool
+
+class SessionBookmarkRequest(BaseModel):
+    bookmarked: bool
+
+class SessionMessageRequest(BaseModel):
+    user_message: str
+    ai_response: dict
+    timestamp: str
 
 class ChatMessage(BaseModel):
     message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
