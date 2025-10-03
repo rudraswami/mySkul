@@ -1132,6 +1132,9 @@ export default function AITutor() {
                           scenarioType={message.dual_response.scenario_type}
                           confidence={message.dual_response.confidence}
                           timestamp={formatTime(message.timestamp)}
+                          onFeedback={(feedback) => submitUserFeedback(message.session_id, feedback, message.topic_detected)}
+                          onPracticMore={() => generatePracticeProblems(message.topic_detected)}
+                          onAddToNotes={() => addToAutoNotes(message)}
                         />
                       ) : (
                         /* Single Response Layout (mentor-only or professor-only) */
