@@ -3933,22 +3933,18 @@ async def add_to_notes_endpoint(
 
 @api_router.post("/actions/create-flashcards") 
 async def create_flashcard_deck_endpoint(
-    title: str,
-    content: str,
-    subject: str,
-    topic: str,
-    interaction_id: Optional[str] = None,
+    request: CreateFlashcardsRequest,
     user: User = Depends(get_current_user)
 ):
     """Convert content into flashcard deck"""
     try:
         deck = await ActionButtonService.create_flashcard_deck(
             user_id=user.user_id,
-            title=title,
-            content=content,
-            subject=subject,
-            topic=topic,
-            interaction_id=interaction_id
+            title=request.title,
+            content=request.content,
+            subject=request.subject,
+            topic=request.topic,
+            interaction_id=request.interaction_id
         )
         return deck.dict()
     except Exception as e:
