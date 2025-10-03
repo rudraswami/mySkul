@@ -1015,6 +1015,249 @@ export default function MockTests() {
     return 'text-red-600';
   };
 
+  // ============= RETAKE OPTIONS MODAL =============
+  
+  if (showRetakeOptions && retakeTestId) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Choose Retake Mode</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowRetakeOptions(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Exact Retake */}
+              <div 
+                className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 cursor-pointer transition-colors"
+                onClick={() => handleRetakeTest(retakeTestId, 'exact')}
+              >
+                <div className="flex items-start">
+                  <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                    <RefreshCw className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Exact Retake</h4>
+                    <p className="text-gray-600 mb-3">Take the same test with identical questions. Perfect for measuring improvement and reinforcing concepts you've studied.</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>• Same questions</span>
+                      <span>• Same time limit</span>
+                      <span>• Compare performance</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Variant Retake */}
+              <div 
+                className="p-4 border-2 border-gray-200 rounded-lg hover:border-green-300 cursor-pointer transition-colors"
+                onClick={() => handleRetakeTest(retakeTestId, 'variant')}
+              >
+                <div className="flex items-start">
+                  <div className="bg-green-100 p-3 rounded-lg mr-4">
+                    <Sparkles className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Variant Test</h4>
+                    <p className="text-gray-600 mb-3">New questions from the same topics and difficulty level. Great for testing your understanding with fresh problems.</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>• New questions</span>
+                      <span>• Same topics</span>
+                      <span>• Same difficulty</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adaptive Retake */}
+              <div 
+                className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 cursor-pointer transition-colors"
+                onClick={() => handleRetakeTest(retakeTestId, 'adaptive')}
+              >
+                <div className="flex items-start">
+                  <div className="bg-purple-100 p-3 rounded-lg mr-4">
+                    <Target className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Adaptive Focus</h4>
+                    <p className="text-gray-600 mb-3">Shorter test focusing specifically on topics you struggled with. AI-powered question selection based on your performance.</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>• Targeted questions</span>
+                      <span>• Shorter duration</span>
+                      <span>• Weak area focus</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button variant="outline" onClick={() => setShowRetakeOptions(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============= DETAILED REVIEW MODAL =============
+  
+  if (showDetailedReview && detailedReviewData) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Question-by-Question Review</h3>
+                <p className="text-gray-600">{detailedReviewData.test_name} • {detailedReviewData.correct_answers}/{detailedReviewData.total_questions} correct ({detailedReviewData.overall_score}%)</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetailedReview(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="space-y-6">
+              {detailedReviewData.question_reviews.map((review, index) => (
+                <div key={review.question_id} className="border rounded-lg overflow-hidden">
+                  {/* Question Header */}
+                  <div className={`px-6 py-4 ${review.is_correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span className="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">
+                            Q{index + 1}
+                          </span>
+                          <Badge className={review.is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {review.is_correct ? '✓ Correct' : '✗ Incorrect'}
+                          </Badge>
+                          <span className="text-sm text-gray-500">{review.subject}</span>
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">{review.question_text}</h4>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleQuestionBookmark(
+                            review.question_id, 
+                            detailedReviewData.test_id, 
+                            !bookmarkedQuestions.has(review.question_id)
+                          )}
+                          className={bookmarkedQuestions.has(review.question_id) ? 'bg-yellow-100 border-yellow-300' : ''}
+                        >
+                          <Star className={`h-4 w-4 ${bookmarkedQuestions.has(review.question_id) ? 'text-yellow-600 fill-yellow-600' : 'text-gray-400'}`} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Question Content */}
+                  <div className="px-6 py-4">
+                    {/* Options */}
+                    <div className="mb-4">
+                      <div className="grid grid-cols-1 gap-2">
+                        {review.options.map((option, optIndex) => {
+                          const optionLetter = option.charAt(0);
+                          const isCorrect = optionLetter === review.correct_answer;
+                          const isUserAnswer = optionLetter === review.user_answer;
+                          
+                          return (
+                            <div 
+                              key={optIndex}
+                              className={`p-3 border rounded-lg ${
+                                isCorrect ? 'bg-green-50 border-green-300' : 
+                                isUserAnswer && !isCorrect ? 'bg-red-50 border-red-300' : 
+                                'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
+                                  isCorrect ? 'bg-green-500 text-white' :
+                                  isUserAnswer && !isCorrect ? 'bg-red-500 text-white' :
+                                  'bg-gray-300 text-gray-600'
+                                }`}>
+                                  {optionLetter}
+                                </span>
+                                <span className="flex-1">{option.substring(3).trim()}</span>
+                                {isCorrect && <CheckCircle className="h-5 w-5 text-green-600" />}
+                                {isUserAnswer && !isCorrect && <X className="h-5 w-5 text-red-600" />}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Answer Analysis */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Professor Solution */}
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h5 className="font-semibold text-purple-900 mb-2 flex items-center">
+                          <GraduationCap className="h-4 w-4 mr-2" />
+                          Step-by-Step Solution
+                        </h5>
+                        <div className="text-sm text-purple-800 whitespace-pre-wrap">{review.professor_solution}</div>
+                      </div>
+
+                      {/* Mentor Hint */}
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <h5 className="font-semibold text-green-900 mb-2 flex items-center">
+                          <Heart className="h-4 w-4 mr-2" />
+                          Learning Tip
+                        </h5>
+                        <div className="text-sm text-green-800 whitespace-pre-wrap">{review.mentor_hint}</div>
+                      </div>
+                    </div>
+
+                    {/* Base Explanation */}
+                    {review.explanation && (
+                      <div className="mt-4 bg-blue-50 rounded-lg p-4">
+                        <h5 className="font-semibold text-blue-900 mb-2">Explanation</h5>
+                        <div className="text-sm text-blue-800">{review.explanation}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-between">
+              <Button variant="outline" onClick={() => setShowDetailedReview(false)}>
+                Close Review
+              </Button>
+              <div className="space-x-3">
+                <Button 
+                  onClick={() => {
+                    setShowDetailedReview(false);
+                    setRetakeTestId(detailedReviewData.test_id);
+                    setShowRetakeOptions(true);
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retake Test
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
