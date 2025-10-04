@@ -3871,11 +3871,69 @@ async def get_user_profile(user: User = Depends(get_current_user)):
         "user_id": user.user_id,
         "full_name": user.full_name,
         "email": user.email,
+        "phone": getattr(user, 'phone', ''),
         "exam_type": user.exam_type,
         "grade": user.grade,
         "target_year": user.target_year,
-        "subscription_type": user.subscription_type
+        "current_standard": getattr(user, 'current_standard', ''),
+        "institution": getattr(user, 'institution', ''),
+        "subscription_type": user.subscription_type,
+        "created_at": getattr(user, 'created_at', None)
     }
+
+@api_router.put("/user/profile")
+async def update_user_profile(
+    profile_update: ProfileUpdateRequest,
+    user: User = Depends(get_current_user)
+):
+    """Update user profile"""
+    try:
+        # Prepare update data
+        update_data = {}
+        
+        if profile_update.full_name is not None:
+            update_data["full_name"] = profile_update.full_name
+        if profile_update.email is not None:
+            update_data["email"] = profile_update.email
+        if profile_update.phone is not None:
+            update_data["phone"] = profile_update.phone
+        if profile_update.exam_type is not None:
+            update_data["exam_type"] = profile_update.exam_type
+        if profile_update.target_year is not None:
+            update_data["target_year"] = profile_update.target_year
+        if profile_update.current_standard is not None:
+            update_data["current_standard"] = profile_update.current_standard
+        if profile_update.institution is not None:
+            update_data["institution"] = profile_update.institution
+        
+        # Add updated timestamp
+        update_data["updated_at"] = datetime.now(timezone.utc)
+        
+        # Update user in database
+        result = await db.users.update_one(
+            {"user_id": user.user_id},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="No changes made to profile")
+        
+        # Get updated user data
+        updated_user_doc = await db.users.find_one({"user_id": user.user_id})
+        if not updated_user_doc:
+            raise HTTPException(status_code=404, detail="User not found after update")
+        
+        # Clean and return updated user data
+        clean_user = clean_mongodb_doc(updated_user_doc)
+        
+        return {
+            "message": "Profile updated successfully",
+            "user": clean_user
+        }
+        
+    except Exception as e:
+        logger.error(f"Profile update error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update profile")
 
 @api_router.post("/chat/message")
 async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_current_user)):
