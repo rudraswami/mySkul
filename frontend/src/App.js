@@ -36,6 +36,7 @@ function App() {
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (loading) {
     return <PageLoader message="Authenticating..." />;
