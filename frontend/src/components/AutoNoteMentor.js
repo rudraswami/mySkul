@@ -1006,7 +1006,32 @@ export default function AutoNoteMentor() {
                   <CreditCard className="h-4 w-4 mr-2" />
                   Generate Flashcards
                 </Button>
-                <Button onClick={() => setSessionStatus('idle')} variant="outline">
+                <Button 
+                  onClick={() => {
+                    setSessionStatus('idle');
+                    setActiveView('home');
+                    setCurrentSession(null);
+                    setGeneratedNotes(null);
+                    setDualAnalysis(null);
+                    setSelectedNotes(null);
+                    loadUserSessions(); // Refresh the sessions list
+                  }} 
+                  variant="outline"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Back to Sessions
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setSessionStatus('idle');
+                    setActiveView('home');
+                    setCurrentSession(null);
+                    setGeneratedNotes(null);
+                    setDualAnalysis(null);
+                    setSelectedNotes(null);
+                  }} 
+                  variant="outline"
+                >
                   <FileText className="h-4 w-4 mr-2" />
                   New Session
                 </Button>
