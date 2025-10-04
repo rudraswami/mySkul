@@ -3450,6 +3450,7 @@ class ActionButtonService:
             deck = FlashcardDeck(
                 user_id=user_id,
                 title=title,
+                description=f"Basic flashcard for {topic}",
                 cards=[{"front": f"Key concept from {topic}", "back": content[:200]}],
                 subject=subject,
                 topic=topic,
