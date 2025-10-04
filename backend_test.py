@@ -8839,18 +8839,31 @@ if __name__ == "__main__":
     import uuid
     tester = DhruvAITester()
     
-    # Run only the Auto-Note Mentor recording workflow test as requested
-    print("🚀 Starting Auto-Note Mentor Recording Workflow Testing...")
-    print("   Focus: Fixed recording workflow with fallback transcription mechanism")
+    # Run AI Tutor Phase C, D, E comprehensive testing as requested
+    print("🚀 Starting AI Tutor Phase C, D, E Enhancement Features Testing...")
+    print("   Focus: Guardrails System, Action Buttons, Wellness Integration")
     print("   Testing with credentials: test@dhruvai.com / password123")
     print("="*80)
     
-    # Run the specific test requested in the review
-    success = tester.test_auto_note_mentor_complete_workflow()
+    # Step 1: Authentication
+    print("\n📋 STEP 1: Authentication")
+    auth_success = tester.test_user_login()
+    
+    if not auth_success:
+        print("❌ Authentication failed - cannot proceed with testing")
+        sys.exit(1)
+    
+    # Step 2: Create a chat session for testing (needed for some endpoints)
+    print("\n📋 STEP 2: Creating Chat Session")
+    tester.test_ai_chat_message()
+    
+    # Step 3: Run comprehensive Phase C, D, E testing
+    print("\n📋 STEP 3: AI Tutor Phase C, D, E Comprehensive Testing")
+    success = tester.test_ai_tutor_phase_cde_comprehensive()
     
     # Final summary
     print("\n" + "="*80)
-    print("🎯 AUTO-NOTE MENTOR WORKFLOW TESTING COMPLETE")
+    print("🎯 AI TUTOR PHASE C, D, E TESTING COMPLETE")
     print("="*80)
     print(f"Total tests run: {tester.tests_run}")
     print(f"Tests passed: {tester.tests_passed}")
@@ -8858,8 +8871,12 @@ if __name__ == "__main__":
     print(f"Success rate: {success_rate:.1f}%")
     
     if success:
-        print("🎉 AUTO-NOTE MENTOR WORKFLOW TESTING SUCCESSFUL!")
+        print("🎉 AI TUTOR PHASE C, D, E TESTING SUCCESSFUL!")
+        print("   ✅ Guardrails System APIs validated")
+        print("   ✅ Action Buttons APIs validated") 
+        print("   ✅ Wellness Integration APIs validated")
     else:
-        print("⚠️  AUTO-NOTE MENTOR WORKFLOW TESTING FAILED - Issues found in processing chain")
+        print("⚠️  AI TUTOR PHASE C, D, E TESTING FAILED - Issues found in enhancement features")
+        print("   Check detailed output above for specific API failures")
     
     sys.exit(0 if success else 1)
