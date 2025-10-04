@@ -11,6 +11,7 @@ import MockTests from './components/MockTests';
 // Removed: Analytics and StressManagement components - not essential for core exam preparation
 import AutoNoteMentor from './components/AutoNoteMentor';
 import Subscription from './components/Subscription';
+import ProfileSettings from './components/ProfileSettings';
 import Navigation from './components/Navigation';
 import { Toaster } from './components/ui/toaster';
 
