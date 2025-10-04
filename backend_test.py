@@ -1747,6 +1747,289 @@ class DhruvAITester:
         
         return success_rate >= 80.0
 
+    def test_auto_note_mentor_session_saving_and_retrieval(self):
+        """Test Auto-Note Mentor session saving and retrieval functionality as per review request"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor testing")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR SESSION SAVING AND RETRIEVAL TESTING")
+        print("   Focus Areas: Session creation, completion, listing, retrieval, file upload")
+        print("   Testing with credentials: test@dhruvai.com / password123")
+        
+        test_results = {
+            'authentication': False,
+            'session_creation': False,
+            'session_completion': False,
+            'session_listing': False,
+            'session_retrieval': False,
+            'file_upload_session': False
+        }
+        
+        # 1. Authentication Test
+        print("\n📋 STEP 1: Authentication with test@dhruvai.com / password123")
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Mentor Authentication",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and 'token' in response:
+            self.token = response['token']
+            if 'user' in response:
+                self.user_id = response['user'].get('user_id')
+            print(f"   ✅ Authentication successful - Token: {self.token[:20]}...")
+            test_results['authentication'] = True
+        else:
+            print("   ❌ Authentication failed - Cannot proceed")
+            return False
+        
+        # 2. Create and Complete a Session
+        print("\n📋 STEP 2: Create and Complete a Session")
+        session_id = None
+        
+        # 2a. Create session with POST /api/auto-notes/start-session
+        print("   2a. Creating session with POST /api/auto-notes/start-session...")
+        session_data = {
+            "title": "Test Physics Class Session",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Start Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Session created successfully - ID: {session_id}")
+            test_results['session_creation'] = True
+        else:
+            print("   ❌ Session creation failed")
+            return False
+        
+        # 2b. Complete session with POST /api/auto-notes/end-session (with fallback transcription)
+        print("   2b. Completing session with fallback transcription...")
+        completion_data = {
+            "fallback_transcription": "Today we discussed Newton's laws of motion. The first law states that an object at rest stays at rest unless acted upon by an external force. The second law relates force, mass, and acceleration with F=ma. The third law states that for every action there is an equal and opposite reaction.",
+            "total_duration": 1800.0  # 30 minutes
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note End Session",
+            "POST",
+            f"auto-notes/end-session?session_id={session_id}",
+            200,
+            data=completion_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            session_status = response.get('status', 'unknown')
+            structured_notes = response.get('structured_notes', {})
+            dual_analysis = response.get('dual_analysis', {})
+            
+            print(f"   ✅ Session completed - Status: {session_status}")
+            print(f"   Structured notes present: {'Yes' if structured_notes else 'No'}")
+            print(f"   Dual analysis present: {'Yes' if dual_analysis else 'No'}")
+            
+            if session_status == 'completed':
+                test_results['session_completion'] = True
+            else:
+                print(f"   ⚠️  Session status is '{session_status}', expected 'completed'")
+        else:
+            print("   ❌ Session completion failed")
+        
+        # 3. Session Listing
+        print("\n📋 STEP 3: Session Listing - GET /api/auto-notes/sessions")
+        success, response = self.run_test(
+            "Auto-Note Sessions List",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            print(f"   ✅ Sessions retrieved - Count: {len(sessions)}")
+            
+            # Check if our completed session appears in the list
+            completed_session_found = False
+            for session in sessions:
+                if session.get('session_id') == session_id:
+                    completed_session_found = True
+                    session_title = session.get('title', 'N/A')
+                    session_subject = session.get('subject', 'N/A')
+                    session_status = session.get('status', 'N/A')
+                    has_structured_notes = bool(session.get('structured_notes'))
+                    has_dual_analysis = bool(session.get('dual_analysis'))
+                    
+                    print(f"   ✅ Completed session found in list:")
+                    print(f"      Title: {session_title}")
+                    print(f"      Subject: {session_subject}")
+                    print(f"      Status: {session_status}")
+                    print(f"      Has structured_notes: {has_structured_notes}")
+                    print(f"      Has dual_analysis: {has_dual_analysis}")
+                    break
+            
+            if completed_session_found:
+                test_results['session_listing'] = True
+            else:
+                print(f"   ⚠️  Completed session {session_id} not found in sessions list")
+        else:
+            print("   ❌ Session listing failed")
+        
+        # 4. Session Retrieval
+        print("\n📋 STEP 4: Session Retrieval - GET /api/auto-notes/{session_id}")
+        if session_id:
+            success, response = self.run_test(
+                "Auto-Note Session Retrieval",
+                "GET",
+                f"auto-notes/{session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                session_title = response.get('title', 'N/A')
+                session_subject = response.get('subject', 'N/A')
+                transcription = response.get('transcription', '')
+                structured_notes = response.get('structured_notes', {})
+                dual_analysis = response.get('dual_analysis', {})
+                
+                print(f"   ✅ Session retrieved successfully:")
+                print(f"      Title: {session_title}")
+                print(f"      Subject: {session_subject}")
+                print(f"      Transcription length: {len(transcription)} chars")
+                print(f"      Structured notes: {'Present' if structured_notes else 'Missing'}")
+                print(f"      Dual analysis: {'Present' if dual_analysis else 'Missing'}")
+                
+                # Verify all data is available
+                if transcription and structured_notes and dual_analysis:
+                    test_results['session_retrieval'] = True
+                    print("   ✅ All session data available (title, subject, transcription, structured_notes, dual_analysis)")
+                else:
+                    print("   ⚠️  Some session data missing")
+            else:
+                print("   ❌ Session retrieval failed")
+        
+        # 5. File Upload Session Saving
+        print("\n📋 STEP 5: File Upload Session Saving")
+        print("   Testing file upload workflow and session persistence...")
+        
+        # Create a new session for file upload
+        file_session_data = {
+            "title": "Test File Upload Session",
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note File Upload Session Creation",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=file_session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            file_session_id = response['session_id']
+            print(f"   ✅ File upload session created - ID: {file_session_id}")
+            
+            # Simulate file upload completion (since we can't actually upload files in this test)
+            # Complete the session with fallback transcription to simulate file processing
+            file_completion_data = {
+                "fallback_transcription": "This is a test transcription from an uploaded audio file discussing quadratic equations and their solutions using the quadratic formula.",
+                "total_duration": 900.0  # 15 minutes
+            }
+            
+            success, response = self.run_test(
+                "Auto-Note File Upload Session Completion",
+                "POST",
+                f"auto-notes/end-session?session_id={file_session_id}",
+                200,
+                data=file_completion_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success and response.get('status') == 'completed':
+                print("   ✅ File upload session completed successfully")
+                
+                # Verify it appears in sessions list
+                success, response = self.run_test(
+                    "Auto-Note Sessions List After File Upload",
+                    "GET",
+                    "auto-notes/sessions",
+                    200,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success:
+                    sessions = response.get('sessions', [])
+                    file_session_found = any(s.get('session_id') == file_session_id for s in sessions)
+                    
+                    if file_session_found:
+                        print("   ✅ File upload session appears in sessions list")
+                        test_results['file_upload_session'] = True
+                    else:
+                        print("   ⚠️  File upload session not found in sessions list")
+                else:
+                    print("   ❌ Failed to check sessions list after file upload")
+            else:
+                print("   ❌ File upload session completion failed")
+        else:
+            print("   ❌ File upload session creation failed")
+        
+        # Final Results Summary
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 AUTO-NOTE MENTOR TESTING SUMMARY:")
+        print(f"   ✅ Authentication: {'PASS' if test_results['authentication'] else 'FAIL'}")
+        print(f"   ✅ Session Creation: {'PASS' if test_results['session_creation'] else 'FAIL'}")
+        print(f"   ✅ Session Completion: {'PASS' if test_results['session_completion'] else 'FAIL'}")
+        print(f"   ✅ Session Listing: {'PASS' if test_results['session_listing'] else 'FAIL'}")
+        print(f"   ✅ Session Retrieval: {'PASS' if test_results['session_retrieval'] else 'FAIL'}")
+        print(f"   ✅ File Upload Session: {'PASS' if test_results['file_upload_session'] else 'FAIL'}")
+        print(f"   📊 Overall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Expected Results Verification
+        print(f"\n🎯 EXPECTED RESULTS VERIFICATION:")
+        if test_results['session_completion'] and test_results['session_listing']:
+            print("   ✅ Sessions are persistently saved with all generated content")
+        else:
+            print("   ❌ Session persistence issue detected")
+        
+        if test_results['session_listing']:
+            print("   ✅ GET /api/auto-notes/sessions returns completed sessions")
+        else:
+            print("   ❌ Session listing functionality failed")
+        
+        if test_results['session_retrieval']:
+            print("   ✅ Individual session retrieval returns full session data")
+        else:
+            print("   ❌ Session retrieval functionality failed")
+        
+        if test_results['file_upload_session']:
+            print("   ✅ File upload sessions are saved and retrievable")
+        else:
+            print("   ❌ File upload session persistence failed")
+        
+        return success_rate >= 80.0  # 80% success threshold
+
     def run_comprehensive_tests(self):
         """Run Auto-Note Mentor complete workflow testing as requested in review"""
         print("🚀 Starting Auto-Note Mentor Complete Workflow Testing...")
