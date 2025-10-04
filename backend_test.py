@@ -6502,6 +6502,7 @@ def main():
         ("User Registration", tester.test_user_registration),
         ("User Login", tester.test_user_login),
         ("User Profile", tester.test_user_profile),
+        ("🎯 User Profile Update", tester.test_user_profile_update),
         
         # SUBSCRIPTION SYSTEM TESTS (PRIORITY FOR REVIEW REQUEST)
         ("💰 Subscription Plans API", tester.test_subscription_plans_api),
