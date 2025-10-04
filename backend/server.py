@@ -1971,10 +1971,10 @@ class ScenarioClassifier:
                 'confidence': min(mentor_score / 5.0, 1.0)
             }
         else:
-            # Default to mentor for balanced/unclear cases
+            # Default to professor for balanced/unclear cases - Professor provides verified, accurate answers
             return {
-                'primary_persona': 'mentor',
-                'secondary_persona': 'professor',
+                'primary_persona': 'professor',
+                'secondary_persona': 'mentor',
                 'scenario_type': 'general_inquiry',
                 'confidence': 0.5
             }
