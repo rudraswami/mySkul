@@ -1171,7 +1171,7 @@ export default function AITutor() {
             <div className="relative">
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                 <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900">
-                  <BookOpen className="h-4 w-4 mr-2 text-teal-600" />
+                  <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
