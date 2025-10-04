@@ -494,10 +494,18 @@ export default function MockTests() {
               currentPlan: 'Free',
               used: usageData.used,
               limit: usageData.limit,
-            remaining: testAccess.remaining || 0,
-            resetDays: 30,
-            reason: 'limit_reached'
-          });
+              remaining: usageData.remaining,
+              resetDays: 30,
+              reason: 'limit_reached'
+            });
+          } catch (error) {
+            // Fallback to error message without usage data
+            setShowUpgradePrompt({
+              message: 'Test generation limit reached. Please upgrade to continue.',
+              currentPlan: 'Free',
+              reason: 'limit_reached'
+            });
+          }
           setGenerationError(null);
           return;
         }
