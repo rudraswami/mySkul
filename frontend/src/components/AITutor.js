@@ -1225,7 +1225,7 @@ export default function AITutor() {
               Object.entries(groupedSessions).map(([subject, subjectSessions]) => (
                 <div key={subject} className="space-y-1">
                   <div className="flex items-center space-x-2 px-2 py-1">
-                    <BookOpen className="h-3 w-3 text-teal-600" />
+                    <BookOpen className="h-3 w-3 text-blue-600" />
                     <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                       {subject}
                     </h4>
