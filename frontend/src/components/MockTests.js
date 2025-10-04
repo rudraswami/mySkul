@@ -166,6 +166,16 @@ export default function MockTests() {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Refresh usage data to ensure it's current
+        const freshUsageData = await refreshUsageData();
+        if (freshUsageData && data.test_access) {
+          data.test_access.used = freshUsageData.used;
+          data.test_access.limit = freshUsageData.limit;
+          data.test_access.remaining = freshUsageData.remaining;
+          data.test_access.has_access = freshUsageData.has_access;
+        }
+        
         setExamSubjects(data);
       }
     } catch (error) {
