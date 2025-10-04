@@ -1402,20 +1402,20 @@ export default function AITutor() {
               
               {/* Trust Badges */}
               <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center text-teal-600">
-                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                <div className="flex items-center text-blue-600">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Shield className="h-3 w-3" />
                   </div>
                   <span>Verified</span>
                 </div>
-                <div className="flex items-center text-teal-600">
-                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                <div className="flex items-center text-blue-600">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Target className="h-3 w-3" />
                   </div>
                   <span>Personalized</span>
                 </div>
-                <div className="flex items-center text-teal-600">
-                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center mr-2">
+                <div className="flex items-center text-blue-600">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Lightbulb className="h-3 w-3" />
                   </div>
                   <span>Empowering</span>
