@@ -5890,7 +5890,7 @@ TRANSCRIPTION:
 {full_transcription}
 
 SUBJECT: {session_doc['subject']}
-CLASS TITLE: {session_doc['title']}
+CLASS TITLE: {session_doc.get('session_name', 'Unknown')}
 DURATION: {total_duration:.1f} seconds
 
 Create a comprehensive analysis with both Professor and Mentor perspectives for a student studying {session_doc['subject']}.
