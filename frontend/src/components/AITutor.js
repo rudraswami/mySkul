@@ -1467,7 +1467,7 @@ export default function AITutor() {
                   <div className="flex justify-end">
                     <div className="max-w-2xl bg-blue-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
                       <p className="text-sm leading-relaxed">{message.message}</p>
-                      <div className="flex items-center justify-end mt-2 text-xs text-teal-100">
+                      <div className="flex items-center justify-end mt-2 text-xs text-blue-100">
                         <Clock className="h-3 w-3 mr-1" />
                         <span>{formatTime(message.timestamp)}</span>
                       </div>
@@ -1628,7 +1628,7 @@ export default function AITutor() {
               <div className="flex justify-start">
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 max-w-sm">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <Brain className="h-4 w-4 text-blue-600 animate-pulse" />
                     </div>
                     <div className="flex-1">
@@ -1652,10 +1652,10 @@ export default function AITutor() {
 
         {/* Clean Personalization Status */}
         {studentProfile && (
-          <div className="bg-teal-50 border border-teal-100 p-3 mx-6 rounded-lg">
+          <div className="bg-teal-50 border border-blue-100 p-3 mx-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                   <Target className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
@@ -2000,7 +2000,7 @@ export default function AITutor() {
                         : loading
                           ? 'border-gray-300 bg-gray-50'
                           : 'border-gray-200 focus:border-teal-300 hover:border-gray-300'
-                  } rounded-lg focus:ring-2 focus:ring-teal-100 transition-all`}
+                  } rounded-lg focus:ring-2 focus:ring-blue-100 transition-all`}
                   rows={2}
                   disabled={loading}
                 />
