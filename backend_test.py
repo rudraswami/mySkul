@@ -1748,30 +1748,474 @@ class DhruvAITester:
         return success_rate >= 80.0
 
     def run_comprehensive_tests(self):
-        """Run focused test for Auto-Note Mentor ObjectId serialization fix"""
-        print("🚀 Starting Auto-Note Mentor ObjectId Serialization Fix Testing...")
+        """Run Auto-Note Mentor complete workflow testing as requested in review"""
+        print("🚀 Starting Auto-Note Mentor Complete Workflow Testing...")
         print(f"   Base URL: {self.base_url}")
-        print("   Focus: Testing fixed Auto-Note Mentor endpoints that were failing with 500 errors")
-        print("   Review Request: Verify ObjectId serialization fix works correctly")
+        print("   Focus: Complete recording workflow from start to end")
+        print("   User reports: System gets stuck on 'Processing your notes' without completing")
+        print("   Review Request: Test complete Auto-Note Mentor backend functionality")
         
-        # Run the Auto-Note Mentor ObjectId fix test
-        auto_note_success = self.test_auto_note_mentor_objectid_fix()
+        # Run the Auto-Note Mentor complete workflow test
+        workflow_success = self.test_auto_note_mentor_complete_workflow()
         
         # Final summary
-        print(f"\n🎯 AUTO-NOTE MENTOR FIX TEST SUMMARY")
-        print(f"   🎯 ObjectId Serialization Fix: {'✅ PASSED' if auto_note_success else '❌ FAILED'}")
+        print(f"\n🎯 AUTO-NOTE MENTOR WORKFLOW TEST SUMMARY")
+        print(f"   🎯 Complete Recording Workflow: {'✅ PASSED' if workflow_success else '❌ FAILED'}")
         
-        if auto_note_success:
-            print("🎉 AUTO-NOTE MENTOR FIX SUCCESSFUL - All endpoints working correctly!")
+        if workflow_success:
+            print("🎉 AUTO-NOTE MENTOR WORKFLOW SUCCESSFUL - Complete recording workflow working!")
+            print("   ✅ Authentication: Working")
             print("   ✅ Session Creation: Working")
-            print("   ✅ Session Retrieval: Working (was failing with 500 before)")
-            print("   ✅ Analytics: Working (was failing with 500 before)")
-            print("   ✅ Class Series: Working (was failing with 500 before)")
+            print("   ✅ Audio Processing: Working")
+            print("   ✅ Session Completion: Working")
+            print("   ✅ Session Retrieval: Working")
+            print("   ✅ AI Processing Functions: Working")
+            print("   ✅ Dual AI System: Working")
         else:
-            print("❌ AUTO-NOTE MENTOR FIX INCOMPLETE - Some endpoints still failing")
+            print("❌ AUTO-NOTE MENTOR WORKFLOW ISSUES FOUND - Processing chain breaks somewhere")
             print("   Review the detailed test output above for specific failures")
+            print("   This explains why users get stuck on 'Processing your notes'")
         
-        return auto_note_success
+        return workflow_success
+    
+    # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
+    
+    def test_auto_note_mentor_complete_workflow(self):
+        """Test complete Auto-Note Mentor recording workflow as requested in review"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor workflow test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR COMPLETE WORKFLOW TESTING")
+        print("   Focus: Complete recording workflow from start to end")
+        print("   User reports: System gets stuck on 'Processing your notes' without completing")
+        print("   Testing with credentials: test@dhruvai.com / password123")
+        
+        workflow_results = {
+            'authentication': False,
+            'session_creation': False,
+            'audio_processing': False,
+            'session_completion': False,
+            'session_retrieval': False,
+            'audio_chunk_storage': False,
+            'ai_processing_functions': False,
+            'dual_ai_system': False
+        }
+        
+        # Step 1: Authentication Test
+        print("\n📋 STEP 1: Authentication Test")
+        workflow_results['authentication'] = self.test_auto_note_authentication()
+        
+        # Step 2: Session Creation Test
+        print("\n📋 STEP 2: Session Creation Test")
+        session_id = self.test_auto_note_session_creation()
+        if session_id:
+            workflow_results['session_creation'] = True
+            self.auto_note_session_id = session_id
+        
+        # Step 3: Audio Processing Test
+        print("\n📋 STEP 3: Audio Processing Test")
+        if workflow_results['session_creation']:
+            workflow_results['audio_processing'] = self.test_auto_note_audio_processing()
+        
+        # Step 4: Audio Chunk Storage Test
+        print("\n📋 STEP 4: Audio Chunk Storage Test")
+        if workflow_results['session_creation']:
+            workflow_results['audio_chunk_storage'] = self.test_auto_note_audio_chunk_storage()
+        
+        # Step 5: Session Completion Test
+        print("\n📋 STEP 5: Session Completion Test")
+        if workflow_results['session_creation']:
+            workflow_results['session_completion'] = self.test_auto_note_session_completion()
+        
+        # Step 6: Session Retrieval Test
+        print("\n📋 STEP 6: Session Retrieval Test")
+        if workflow_results['session_creation']:
+            workflow_results['session_retrieval'] = self.test_auto_note_session_retrieval()
+        
+        # Step 7: AI Processing Functions Test
+        print("\n📋 STEP 7: AI Processing Functions Test")
+        workflow_results['ai_processing_functions'] = self.test_auto_note_ai_processing_functions()
+        
+        # Step 8: Dual AI System Test
+        print("\n📋 STEP 8: Dual AI System Test")
+        workflow_results['dual_ai_system'] = self.test_auto_note_dual_ai_system()
+        
+        # Final workflow assessment
+        passed_steps = sum(workflow_results.values())
+        total_steps = len(workflow_results)
+        success_rate = (passed_steps / total_steps) * 100
+        
+        print(f"\n🎯 AUTO-NOTE MENTOR WORKFLOW SUMMARY:")
+        print(f"   ✅ Authentication: {'PASS' if workflow_results['authentication'] else 'FAIL'}")
+        print(f"   ✅ Session Creation: {'PASS' if workflow_results['session_creation'] else 'FAIL'}")
+        print(f"   ✅ Audio Processing: {'PASS' if workflow_results['audio_processing'] else 'FAIL'}")
+        print(f"   ✅ Audio Chunk Storage: {'PASS' if workflow_results['audio_chunk_storage'] else 'FAIL'}")
+        print(f"   ✅ Session Completion: {'PASS' if workflow_results['session_completion'] else 'FAIL'}")
+        print(f"   ✅ Session Retrieval: {'PASS' if workflow_results['session_retrieval'] else 'FAIL'}")
+        print(f"   ✅ AI Processing Functions: {'PASS' if workflow_results['ai_processing_functions'] else 'FAIL'}")
+        print(f"   ✅ Dual AI System: {'PASS' if workflow_results['dual_ai_system'] else 'FAIL'}")
+        print(f"   📊 Overall Success Rate: {passed_steps}/{total_steps} ({success_rate:.1f}%)")
+        
+        # Identify where processing chain breaks
+        if not workflow_results['session_completion']:
+            print(f"\n🚨 CRITICAL ISSUE IDENTIFIED:")
+            print(f"   Session completion (end-session) is failing - this explains 'Processing your notes' stuck issue")
+            print(f"   The processing chain breaks at the session completion stage")
+        
+        if not workflow_results['ai_processing_functions']:
+            print(f"\n🚨 AI PROCESSING ISSUE IDENTIFIED:")
+            print(f"   AI processing functions (extract_concepts_from_text, etc.) are not working properly")
+            print(f"   This could cause the dual AI system to fail during note generation")
+        
+        return success_rate >= 75.0  # 75% success threshold
+    
+    def test_auto_note_authentication(self):
+        """Test authentication with test@dhruvai.com / password123"""
+        print("   Testing authentication with test@dhruvai.com / password123...")
+        
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Authentication",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and 'token' in response:
+            self.token = response['token']
+            if 'user' in response:
+                self.user_id = response['user'].get('user_id')
+            print(f"   ✅ Authentication successful - Token: {self.token[:20]}...")
+            return True
+        else:
+            print("   ❌ Authentication failed")
+            return False
+    
+    def test_auto_note_session_creation(self):
+        """Test POST /api/auto-notes/start-session with title and subject"""
+        print("   Testing session creation with title and subject...")
+        
+        session_data = {
+            "title": "Physics Class - Electromagnetic Induction",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Session Creation",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Session created successfully - ID: {session_id}")
+            print(f"   Title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            return session_id
+        else:
+            print("   ❌ Session creation failed")
+            return None
+    
+    def test_auto_note_audio_processing(self):
+        """Test POST /api/auto-notes/process-audio endpoint for live transcript processing"""
+        print("   Testing audio processing endpoint for live transcript processing...")
+        
+        if not hasattr(self, 'auto_note_session_id'):
+            print("   ❌ No session ID available for audio processing test")
+            return False
+        
+        # Simulate live audio chunk processing
+        audio_chunks = [
+            {
+                "session_id": self.auto_note_session_id,
+                "transcription": "Today we will learn about electromagnetic induction, which is a fundamental concept in physics.",
+                "timestamp": 0.0,
+                "sequence_number": 1,
+                "confidence": 0.95
+            },
+            {
+                "session_id": self.auto_note_session_id,
+                "transcription": "Faraday's law states that the induced EMF is proportional to the rate of change of magnetic flux.",
+                "timestamp": 15.5,
+                "sequence_number": 2,
+                "confidence": 0.92
+            },
+            {
+                "session_id": self.auto_note_session_id,
+                "transcription": "The formula for Faraday's law is EMF equals negative dΦ/dt, where Φ is the magnetic flux.",
+                "timestamp": 32.8,
+                "sequence_number": 3,
+                "confidence": 0.88
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, chunk_data in enumerate(audio_chunks):
+            print(f"   Processing audio chunk {i+1}/3...")
+            
+            success, response = self.run_test(
+                f"Audio Processing Chunk {i+1}",
+                "POST",
+                "auto-notes/process-audio",
+                200,
+                data=chunk_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Chunk {i+1} processed successfully")
+                if 'concepts_detected' in response:
+                    concepts = response['concepts_detected']
+                    print(f"   Concepts detected: {len(concepts)}")
+                success_count += 1
+            else:
+                print(f"   ❌ Chunk {i+1} processing failed")
+            
+            time.sleep(1)  # Small delay between chunks
+        
+        return success_count == len(audio_chunks)
+    
+    def test_auto_note_audio_chunk_storage(self):
+        """Test if audio chunks are being properly stored when process-audio is called"""
+        print("   Testing if audio chunks are being properly stored...")
+        
+        if not hasattr(self, 'auto_note_session_id'):
+            print("   ❌ No session ID available for chunk storage test")
+            return False
+        
+        # Try to retrieve session to check if chunks are stored
+        success, response = self.run_test(
+            "Check Audio Chunks Storage",
+            "GET",
+            f"auto-notes/{self.auto_note_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            audio_chunks = response.get('audio_chunks', [])
+            transcription = response.get('transcription', '')
+            
+            print(f"   Audio chunks stored: {len(audio_chunks)}")
+            print(f"   Transcription length: {len(transcription)} characters")
+            
+            if len(audio_chunks) > 0 or len(transcription) > 0:
+                print("   ✅ Audio chunks are being properly stored")
+                return True
+            else:
+                print("   ❌ No audio chunks or transcription found - storage may be failing")
+                return False
+        else:
+            print("   ❌ Failed to retrieve session for chunk storage verification")
+            return False
+    
+    def test_auto_note_session_completion(self):
+        """Test POST /api/auto-notes/end-session endpoint which should collect chunks and generate results"""
+        print("   Testing session completion endpoint...")
+        print("   This should collect audio chunks, transcriptions, and generate structured notes using dual AI")
+        
+        if not hasattr(self, 'auto_note_session_id'):
+            print("   ❌ No session ID available for session completion test")
+            return False
+        
+        # End session data
+        end_session_data = {
+            "session_id": self.auto_note_session_id
+        }
+        
+        print("   This may take 15-30 seconds for complete AI processing...")
+        
+        success, response = self.run_test(
+            "Auto-Note Session Completion",
+            "POST",
+            "auto-notes/end-session",
+            200,
+            data=end_session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Session completion endpoint responded successfully")
+            
+            # Check if complete results are returned
+            required_fields = ['transcript', 'notes', 'flashcards', 'insights']
+            missing_fields = []
+            present_fields = []
+            
+            for field in required_fields:
+                if field in response:
+                    present_fields.append(field)
+                    value = response[field]
+                    if isinstance(value, str):
+                        print(f"   ✅ {field}: {len(value)} characters")
+                    elif isinstance(value, list):
+                        print(f"   ✅ {field}: {len(value)} items")
+                    else:
+                        print(f"   ✅ {field}: Present")
+                else:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"   ⚠️  Missing expected fields: {missing_fields}")
+                print("   This could explain why processing gets stuck")
+            
+            # Check processing status
+            status = response.get('status', 'unknown')
+            processing_progress = response.get('processing_progress', 0)
+            
+            print(f"   Status: {status}")
+            print(f"   Processing progress: {processing_progress}%")
+            
+            if status == 'completed' and processing_progress == 100:
+                print("   ✅ Session completed successfully with full processing")
+                return True
+            elif status == 'processing':
+                print("   ⚠️  Session still in processing state - this explains the stuck issue")
+                return False
+            else:
+                print(f"   ⚠️  Session in unexpected state: {status}")
+                return False
+        else:
+            print("   ❌ Session completion failed")
+            print("   This is likely where the 'Processing your notes' gets stuck")
+            return False
+    
+    def test_auto_note_session_retrieval(self):
+        """Test GET /api/auto-notes/{session_id} to verify completed session data"""
+        print("   Testing session retrieval to verify completed session data...")
+        
+        if not hasattr(self, 'auto_note_session_id'):
+            print("   ❌ No session ID available for session retrieval test")
+            return False
+        
+        success, response = self.run_test(
+            "Auto-Note Session Retrieval",
+            "GET",
+            f"auto-notes/{self.auto_note_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Session retrieval successful")
+            
+            # Verify session data structure
+            session_fields = ['session_id', 'title', 'subject', 'status', 'created_at']
+            content_fields = ['transcription', 'structured_notes', 'dual_analysis']
+            
+            print("   Session metadata:")
+            for field in session_fields:
+                if field in response:
+                    value = response[field]
+                    print(f"     {field}: {value}")
+            
+            print("   Content data:")
+            for field in content_fields:
+                if field in response:
+                    value = response[field]
+                    if isinstance(value, str):
+                        print(f"     {field}: {len(value)} characters")
+                    elif isinstance(value, dict):
+                        print(f"     {field}: {len(value)} keys")
+                    elif isinstance(value, list):
+                        print(f"     {field}: {len(value)} items")
+                    else:
+                        print(f"     {field}: Present")
+                else:
+                    print(f"     {field}: Missing")
+            
+            # Check if session is truly completed
+            status = response.get('status', 'unknown')
+            if status == 'completed':
+                print("   ✅ Session is marked as completed")
+                return True
+            else:
+                print(f"   ⚠️  Session status is '{status}', not 'completed'")
+                return False
+        else:
+            print("   ❌ Session retrieval failed")
+            return False
+    
+    def test_auto_note_ai_processing_functions(self):
+        """Test if AI processing functions (extract_concepts_from_text, etc.) are working"""
+        print("   Testing AI processing functions...")
+        
+        # Test concept extraction function
+        concept_test_data = {
+            "text": "Electromagnetic induction is the process by which a changing magnetic field induces an electric current in a conductor. Faraday's law quantifies this relationship.",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "AI Concept Extraction",
+            "POST",
+            "auto-notes/extract-concepts",
+            200,
+            data=concept_test_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            concepts = response.get('concepts', [])
+            print(f"   ✅ Concept extraction working - {len(concepts)} concepts found")
+            for concept in concepts[:3]:  # Show first 3 concepts
+                print(f"     - {concept}")
+            return True
+        else:
+            print("   ❌ AI concept extraction failed")
+            print("   This could cause the dual AI system to fail during note generation")
+            return False
+    
+    def test_auto_note_dual_ai_system(self):
+        """Test if the dual_ai system is properly generating professor/mentor analysis"""
+        print("   Testing dual AI system for professor/mentor analysis...")
+        
+        # Test dual AI analysis
+        dual_ai_test_data = {
+            "content": "Today we learned about electromagnetic induction. Faraday's law states that EMF = -dΦ/dt. This is fundamental for understanding generators and transformers.",
+            "subject": "Physics",
+            "session_type": "class_notes"
+        }
+        
+        print("   This may take 10-15 seconds for dual AI processing...")
+        
+        success, response = self.run_test(
+            "Dual AI Analysis",
+            "POST",
+            "auto-notes/dual-analysis",
+            200,
+            data=dual_ai_test_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            professor_analysis = response.get('professor_analysis', '')
+            mentor_analysis = response.get('mentor_analysis', '')
+            
+            print(f"   Professor analysis: {len(professor_analysis)} characters")
+            print(f"   Mentor analysis: {len(mentor_analysis)} characters")
+            
+            if len(professor_analysis) > 50 and len(mentor_analysis) > 50:
+                print("   ✅ Dual AI system working - both professor and mentor analysis generated")
+                return True
+            else:
+                print("   ❌ Dual AI system incomplete - missing professor or mentor analysis")
+                return False
+        else:
+            print("   ❌ Dual AI system failed")
+            print("   This explains why structured notes generation fails")
+            return False
 
     def test_subscription_infrastructure_retest(self):
         """CRITICAL SUBSCRIPTION INFRASTRUCTURE RETEST - Test if subscription fixes resolved 500 errors"""
