@@ -1803,8 +1803,12 @@ class DhruvAITester:
         )
         
         if success:
-            history = response.get('wellness_history', [])
-            trends = response.get('trends', {})
+            if isinstance(response, list):
+                history = response
+                trends = {}
+            else:
+                history = response.get('wellness_history', [])
+                trends = response.get('trends', {})
             
             print(f"   ✅ Wellness history retrieved: {len(history)} entries")
             print(f"   Trends available: {len(trends)} metrics")
