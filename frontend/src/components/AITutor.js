@@ -1437,7 +1437,7 @@ export default function AITutor() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-white lg:w-auto w-full">
         {/* Clean Header */}
         <div className="bg-white border-b border-gray-100 p-6">
           <div className="flex items-center justify-between">
