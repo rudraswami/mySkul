@@ -1456,6 +1456,147 @@ class DhruvAITester:
             print("   ❌ Failed to check usage after generation")
             return False
 
+    def test_free_tier_mock_test_debug(self):
+        """DEBUG FREE TIER MOCK TEST ACCESS ISSUE - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for free tier debug test")
+            return False
+        
+        print("\n🚨 DEBUGGING FREE TIER MOCK TEST ACCESS ISSUE")
+        print("   Issue: User gets 'Free Tier Limit' popup despite showing 0/2 usage with 2 tests remaining")
+        print("   User: test@dhruvai.com/password123")
+        print("   Focus: check_feature_access function and get_current_usage logic for mock_tests_monthly")
+        
+        # Step 1: Check Subscription Data
+        print("\n📋 STEP 1: Check Subscription Data")
+        
+        # GET /api/subscription/current
+        print("   Testing GET /api/subscription/current...")
+        success_current, current_response = self.run_test(
+            "Subscription Current Status",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success_current:
+            plan = current_response.get('plan', 'unknown')
+            status = current_response.get('status', 'unknown')
+            period_end = current_response.get('period_end', 'unknown')
+            print(f"   ✅ Subscription: plan={plan}, status={status}")
+            print(f"   ✅ Period end: {period_end}")
+            
+            if plan != 'free' or status != 'active':
+                print(f"   🚨 ISSUE FOUND: Expected free/active, got {plan}/{status}")
+        else:
+            print("   ❌ Failed to get subscription current status")
+            return False
+        
+        # GET /api/subscription/usage
+        print("\n   Testing GET /api/subscription/usage...")
+        success_usage, usage_response = self.run_test(
+            "Subscription Usage Status",
+            "GET",
+            "subscription/usage",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success_usage:
+            usage_details = usage_response.get('usage_details', {})
+            mock_tests_usage = usage_details.get('mock_tests_monthly', {})
+            
+            used = mock_tests_usage.get('used', 0)
+            limit = mock_tests_usage.get('limit', 0)
+            remaining = mock_tests_usage.get('remaining', 0)
+            
+            print(f"   ✅ Mock Tests Usage: {used}/{limit} used, {remaining} remaining")
+            
+            if used == 0 and limit == 2 and remaining == 2:
+                print("   ✅ Usage shows 0/2 as expected")
+            else:
+                print(f"   🚨 USAGE ISSUE: Expected 0/2 with 2 remaining, got {used}/{limit} with {remaining} remaining")
+        else:
+            print("   ❌ Failed to get subscription usage status")
+            return False
+        
+        # Step 2: Debug Mock Test Generation
+        print("\n📋 STEP 2: Debug Mock Test Generation")
+        print("   Testing POST /api/mock-tests/generate with minimal data...")
+        
+        minimal_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "num_questions": 5,
+            "difficulty_level": 3
+        }
+        
+        print(f"   Request data: {minimal_test_data}")
+        
+        success_generate, generate_response = self.run_test(
+            "Mock Test Generation - Free Tier Debug",
+            "POST",
+            "mock-tests/generate",
+            200,  # Expecting success, not 402
+            data=minimal_test_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success_generate:
+            print("   ✅ Mock test generation succeeded")
+            test_id = generate_response.get('test_id', 'N/A')
+            print(f"   ✅ Generated test ID: {test_id}")
+            
+            # Check if usage updated
+            print("\n   Checking usage after generation...")
+            success_usage_after, usage_after_response = self.run_test(
+                "Usage After Generation",
+                "GET",
+                "subscription/usage",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success_usage_after:
+                usage_details_after = usage_after_response.get('usage_details', {})
+                mock_tests_usage_after = usage_details_after.get('mock_tests_monthly', {})
+                
+                used_after = mock_tests_usage_after.get('used', 0)
+                remaining_after = mock_tests_usage_after.get('remaining', 0)
+                
+                print(f"   Usage after generation: {used_after}/2 used, {remaining_after} remaining")
+                
+                if used_after == 1 and remaining_after == 1:
+                    print("   ✅ Usage tracking working correctly")
+                else:
+                    print(f"   🚨 USAGE TRACKING ISSUE: Expected 1/2 used, got {used_after}/2")
+            
+            return True
+        else:
+            # Analyze the specific error
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            
+            print(f"   ❌ Mock test generation FAILED")
+            print(f"   🔍 ERROR ANALYSIS:")
+            print(f"      Status Code: {error_status}")
+            print(f"      Error Data: {error_data}")
+            
+            if error_status == 402:
+                print(f"      🚨 402 PAYMENT REQUIRED - This is the 'Free Tier Limit' issue!")
+                print(f"      🔍 Root cause: Backend validation incorrectly blocking free tier user")
+                print(f"      🔍 Check: check_feature_access function logic")
+                print(f"      🔍 Check: subscription validation in mock test generation")
+            elif error_status == 500:
+                print(f"      🚨 500 INTERNAL SERVER ERROR - Backend processing issue")
+                print(f"      🔍 Check: Database connection, datetime comparison issues")
+            elif error_status == 422:
+                print(f"      🚨 422 VALIDATION ERROR - Request parameter issues")
+                print(f"      🔍 Check: API parameter validation logic")
+            
+            return False
+    
     def test_free_tier_access_validation_critical(self):
         """CRITICAL: Free Tier Access Validation - Test if free tier user can generate mock tests within 2/month allocation"""
         print("\n🎯 CRITICAL: FREE TIER ACCESS VALIDATION - REVIEW REQUEST FOCUS")
