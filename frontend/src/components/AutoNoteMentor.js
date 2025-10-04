@@ -65,10 +65,7 @@ export default function AutoNoteMentor() {
   const [explainRequest, setExplainRequest] = useState('');
   const [explanation, setExplanation] = useState(null);
   
-  // Enhanced Features State
-  const [classSeries, setClassSeries] = useState([]);
-  const [newSeries, setNewSeries] = useState({ name: '', subject: '', total_classes: 10, schedule: '' });
-  const [analytics, setAnalytics] = useState(null);
+  // Removed: Enhanced Features State (Analytics, Class Series) - not essential for core note-taking functionality
   
   // Live Recording State
   const [liveTranscript, setLiveTranscript] = useState('');
