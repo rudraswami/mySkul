@@ -35,9 +35,14 @@ class LightweightEmbeddingService:
             
         try:
             # Try to use Emergent LLM integration for embeddings
-            self.client = EmergentLLMIntegration()
-            self.initialized = True
-            logger.info("✅ Lightweight embedding service initialized with Emergent integration")
+            if EMERGENT_AVAILABLE:
+                self.client = EmergentLLMIntegration()
+                self.initialized = True
+                logger.info("✅ Lightweight embedding service initialized with Emergent integration")
+            else:
+                logger.warning("Emergent integration not available. Using fallback similarity.")
+                self.client = None
+                self.initialized = True
         except Exception as e:
             logger.warning(f"Failed to initialize embedding service: {e}. Using fallback similarity.")
             self.client = None
