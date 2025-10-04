@@ -128,7 +128,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "Auto-Note Mentor recording workflow is broken - after tapping Stop Recording, screen gets stuck on 'Processing your notes' without completing. Expected flow: User stops recording → audio uploaded → backend transcribes → AI generates results with progress states → display final transcript, notes, flashcards, insights with save/export options."
+## user_problem_statement: "Phase 2: AI Tutor Module Enhancement - Complete Phase C, D, E features testing (guardrails, actions, wellness checks) and ensure mobile compatibility. Implement enhanced topic detection logic for auto-suggesting new sessions."
 
 ## backend:
   - task: "Enhanced Mock Test System API"
