@@ -17,11 +17,10 @@ import json
 import base64
 import io
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from PyPDF2 import PdfReader
 from PIL import Image
-from sklearn.metrics.pairwise import cosine_similarity
 import math
+from lightweight_embeddings import get_embedding_service
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
