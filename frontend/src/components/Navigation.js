@@ -85,21 +85,26 @@ export default function Navigation() {
             const Icon = item.icon;
             return (
               <li key={item.name}>
-                <Link
-                  to={item.href}
-                  className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                <button
+                  onClick={() => handleNavigation(item.href, item.name)}
+                  disabled={navigating === item.name}
+                  className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
                     item.current
                       ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
+                  } ${navigating === item.name ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
-                  <Icon 
-                    className={`mr-3 h-5 w-5 ${
-                      item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                  />
+                  {navigating === item.name ? (
+                    <LoadingSpinner size="sm" className="mr-3 h-5 w-5 flex-shrink-0" />
+                  ) : (
+                    <Icon 
+                      className={`mr-3 h-5 w-5 ${
+                        item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                      }`}
+                    />
+                  )}
                   {item.name}
-                </Link>
+                </button>
               </li>
             );
           })}
