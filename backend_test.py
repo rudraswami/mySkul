@@ -7790,7 +7790,7 @@ if __name__ == "__main__":
     print("="*80)
     
     # Run the specific test requested in the review
-    success = tester.test_auto_note_mentor_recording_workflow()
+    success = tester.test_auto_note_mentor_complete_workflow()
     
     # Final summary
     print("\n" + "="*80)
