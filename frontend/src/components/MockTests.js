@@ -467,13 +467,33 @@ export default function MockTests() {
           setGenerationError(null);
           return;
         } else if (response.status === 429) {
-          // Trigger subscription modal for rate limiting with real subscription data
-          const testAccess = examSubjects?.test_access || {};
-          setShowUpgradePrompt({
-            message: 'Test generation limit reached for your current plan.',
-            currentPlan: 'Free',
-            used: testAccess.used || 0,
-            limit: testAccess.limit || 2,
+          // Trigger subscription modal for rate limiting with fresh subscription data
+          try {
+            // Fetch fresh subscription usage data
+            const token = localStorage.getItem('dhruv_ai_token');
+            const usageResponse = await fetch(`${backendUrl}/api/subscription/usage`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            let usageData = { used: 0, limit: 2, remaining: 0 };
+            if (usageResponse.ok) {
+              const usage = await usageResponse.json();
+              const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+              usageData = {
+                used: mockTestUsage.used || 0,
+                limit: mockTestUsage.limit || 2,
+                remaining: mockTestUsage.remaining || 0
+              };
+            }
+
+            setShowUpgradePrompt({
+              message: 'Test generation limit reached for your current plan.',
+              currentPlan: 'Free',
+              used: usageData.used,
+              limit: usageData.limit,
             remaining: testAccess.remaining || 0,
             resetDays: 30,
             reason: 'limit_reached'
