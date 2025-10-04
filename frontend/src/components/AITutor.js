@@ -1990,11 +1990,11 @@ export default function AITutor() {
         )}
 
         {/* Clean Input Area */}
-        <div className="bg-white border-t border-gray-100 p-6">
+        <div className="bg-white border-t border-gray-100 p-4 lg:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Mode Selection Pills */}
-            <div className="flex items-center justify-center mb-4">
-              <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
+            <div className="flex items-center justify-center mb-4 overflow-x-auto">
+              <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200 min-w-fit">
                 <Button
                   onClick={() => setAiMode('mentor')}
                   variant={aiMode === 'mentor' ? 'default' : 'ghost'}
