@@ -7468,18 +7468,329 @@ def main():
         
         return success_rate >= 80
 
+    # ============= AUTO-NOTE MENTOR RECORDING WORKFLOW TESTS =============
+    
+    def test_auto_note_mentor_recording_workflow(self):
+        """Test the fixed Auto-Note Mentor recording workflow with fallback mechanism"""
+        print("\n🎯 AUTO-NOTE MENTOR RECORDING WORKFLOW - COMPREHENSIVE TESTING")
+        print("   Focus: Fixed recording workflow with fallback transcription mechanism")
+        print("   Testing with credentials: test@dhruvai.com / password123")
+        
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor testing")
+            return False
+        
+        # Track all test results
+        test_results = {
+            'authentication': False,
+            'session_creation': False,
+            'audio_processing': False,
+            'session_completion_with_fallback': False,
+            'results_verification': False
+        }
+        
+        # 1. Authentication Test
+        print("\n📋 STEP 1: Authentication Test")
+        test_results['authentication'] = self.test_auto_note_authentication()
+        
+        # 2. Session Creation Test
+        print("\n📋 STEP 2: Session Creation Test")
+        session_id = self.test_auto_note_session_creation()
+        if session_id:
+            test_results['session_creation'] = True
+            self.auto_note_session_id = session_id
+        
+        # 3. Audio Processing Test (simulate 2-3 chunks)
+        print("\n📋 STEP 3: Audio Processing Test (2-3 chunks)")
+        if hasattr(self, 'auto_note_session_id'):
+            test_results['audio_processing'] = self.test_auto_note_audio_processing()
+        
+        # 4. Session Completion with Fallback Test
+        print("\n📋 STEP 4: Session Completion with Fallback Test")
+        if hasattr(self, 'auto_note_session_id'):
+            test_results['session_completion_with_fallback'] = self.test_auto_note_session_completion_with_fallback()
+        
+        # 5. Results Verification Test
+        print("\n📋 STEP 5: Results Verification Test")
+        if hasattr(self, 'auto_note_session_id'):
+            test_results['results_verification'] = self.test_auto_note_results_verification()
+        
+        # Final summary
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 AUTO-NOTE MENTOR WORKFLOW SUMMARY:")
+        print(f"   ✅ Authentication: {'PASS' if test_results['authentication'] else 'FAIL'}")
+        print(f"   ✅ Session Creation: {'PASS' if test_results['session_creation'] else 'FAIL'}")
+        print(f"   ✅ Audio Processing: {'PASS' if test_results['audio_processing'] else 'FAIL'}")
+        print(f"   ✅ Session Completion with Fallback: {'PASS' if test_results['session_completion_with_fallback'] else 'FAIL'}")
+        print(f"   ✅ Results Verification: {'PASS' if test_results['results_verification'] else 'FAIL'}")
+        print(f"   📊 Overall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        return success_rate >= 80.0  # 80% success threshold
+    
+    def test_auto_note_authentication(self):
+        """Test authentication with test@dhruvai.com / password123"""
+        print("   Testing authentication with test@dhruvai.com / password123...")
+        
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Authentication",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and 'token' in response:
+            self.token = response['token']
+            if 'user' in response:
+                self.user_id = response['user'].get('user_id')
+            print(f"   ✅ Authentication successful - Token: {self.token[:20]}...")
+            return True
+        else:
+            print("   ❌ Authentication failed")
+            return False
+    
+    def test_auto_note_session_creation(self):
+        """Test POST /api/auto-notes/start-session"""
+        print("   Testing session creation (POST /api/auto-notes/start-session)...")
+        
+        session_data = {
+            "title": "Physics Class - Newton's Laws",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Note Session Creation",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Session created successfully - ID: {session_id}")
+            print(f"   Title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            return session_id
+        else:
+            print("   ❌ Session creation failed")
+            return None
+    
+    def test_auto_note_audio_processing(self):
+        """Test POST /api/auto-notes/process-audio (simulate 2-3 chunks)"""
+        print("   Testing audio processing with 2-3 chunks...")
+        
+        # Simulate 3 audio chunks
+        audio_chunks = [
+            {
+                "transcription": "Today we will discuss Newton's first law of motion. An object at rest stays at rest.",
+                "timestamp": 0.0,
+                "sequence_number": 1,
+                "confidence": 0.95
+            },
+            {
+                "transcription": "Newton's second law states that force equals mass times acceleration. F = ma.",
+                "timestamp": 30.5,
+                "sequence_number": 2,
+                "confidence": 0.92
+            },
+            {
+                "transcription": "The third law says for every action there is an equal and opposite reaction.",
+                "timestamp": 65.2,
+                "sequence_number": 3,
+                "confidence": 0.88
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, chunk in enumerate(audio_chunks):
+            print(f"   Processing chunk {i+1}/3: '{chunk['transcription'][:40]}...'")
+            
+            success, response = self.run_test(
+                f"Audio Processing Chunk {i+1}",
+                "POST",
+                "auto-notes/process-audio",
+                200,
+                data=chunk,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Chunk {i+1} processed successfully")
+                if 'concepts_detected' in response:
+                    concepts = response.get('concepts_detected', [])
+                    print(f"   Concepts detected: {len(concepts)} - {concepts[:2]}")
+                success_count += 1
+            else:
+                print(f"   ❌ Chunk {i+1} processing failed")
+            
+            time.sleep(1)  # Small delay between chunks
+        
+        if success_count >= 2:  # At least 2 out of 3 chunks should succeed
+            print(f"   ✅ Audio processing successful: {success_count}/3 chunks processed")
+            return True
+        else:
+            print(f"   ❌ Audio processing failed: only {success_count}/3 chunks processed")
+            return False
+    
+    def test_auto_note_session_completion_with_fallback(self):
+        """Test POST /api/auto-notes/end-session with fallback transcription"""
+        print("   Testing session completion with fallback transcription...")
+        
+        # Test the new fallback mechanism as specified in review request
+        fallback_data = {
+            "fallback_transcription": "This is a physics class about Newton's laws of motion. The first law states that an object at rest stays at rest unless acted upon by an external force. The second law is F=ma, force equals mass times acceleration. The third law states that for every action there is an equal and opposite reaction. These laws form the foundation of classical mechanics.",
+            "total_duration": 120.5
+        }
+        
+        print(f"   Using fallback transcription: '{fallback_data['fallback_transcription'][:60]}...'")
+        print(f"   Total duration: {fallback_data['total_duration']} seconds")
+        print("   This may take 10-15 seconds for AI processing...")
+        
+        success, response = self.run_test(
+            "Session Completion with Fallback",
+            "POST",
+            "auto-notes/end-session",
+            200,
+            data=fallback_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Session completed successfully with fallback transcription")
+            
+            # Check for expected response fields
+            session_status = response.get('status', 'unknown')
+            has_structured_notes = 'structured_notes' in response
+            has_dual_analysis = 'dual_analysis' in response
+            
+            print(f"   Session status: {session_status}")
+            print(f"   Has structured_notes: {has_structured_notes}")
+            print(f"   Has dual_analysis: {has_dual_analysis}")
+            
+            if session_status == 'completed' and has_structured_notes and has_dual_analysis:
+                print("   ✅ All expected fields present in response")
+                return True
+            else:
+                print("   ⚠️  Some expected fields missing from response")
+                return False
+        else:
+            print("   ❌ Session completion with fallback failed")
+            # Check for specific error messages
+            if hasattr(self, 'last_error_data'):
+                error_msg = self.last_error_data.get('detail', 'Unknown error')
+                if "No audio data found" in error_msg:
+                    print("   ❌ CRITICAL: Still getting 'No audio data found' error - fallback mechanism not working")
+                else:
+                    print(f"   Error details: {error_msg}")
+            return False
+    
+    def test_auto_note_results_verification(self):
+        """Test results verification - check if session has structured_notes and dual_analysis"""
+        print("   Testing results verification...")
+        
+        # Get the completed session to verify results
+        success, response = self.run_test(
+            "Session Results Verification",
+            "GET",
+            f"auto-notes/{self.auto_note_session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Session retrieved successfully")
+            
+            # Verify expected results structure
+            session_status = response.get('status', 'unknown')
+            structured_notes = response.get('structured_notes', {})
+            dual_analysis = response.get('dual_analysis', {})
+            transcription = response.get('transcription', '')
+            
+            print(f"   Session status: {session_status}")
+            print(f"   Has transcription: {'Yes' if transcription else 'No'} ({len(transcription)} chars)")
+            
+            # Check structured_notes content
+            if structured_notes:
+                key_concepts = structured_notes.get('key_concepts', [])
+                important_points = structured_notes.get('important_points', [])
+                formulas = structured_notes.get('formulas', [])
+                
+                print(f"   Structured notes - Key concepts: {len(key_concepts)}")
+                print(f"   Structured notes - Important points: {len(important_points)}")
+                print(f"   Structured notes - Formulas: {len(formulas)}")
+                
+                if key_concepts:
+                    print(f"   Sample concept: {key_concepts[0][:50]}...")
+            else:
+                print("   ❌ No structured_notes found")
+            
+            # Check dual_analysis content
+            if dual_analysis:
+                professor_analysis = dual_analysis.get('professor_analysis', '')
+                mentor_guidance = dual_analysis.get('mentor_guidance', '')
+                
+                print(f"   Dual analysis - Professor analysis: {len(professor_analysis)} chars")
+                print(f"   Dual analysis - Mentor guidance: {len(mentor_guidance)} chars")
+                
+                if professor_analysis:
+                    print(f"   Professor analysis sample: {professor_analysis[:50]}...")
+                if mentor_guidance:
+                    print(f"   Mentor guidance sample: {mentor_guidance[:50]}...")
+            else:
+                print("   ❌ No dual_analysis found")
+            
+            # Final verification
+            has_all_expected = (
+                session_status == 'completed' and
+                bool(structured_notes) and
+                bool(dual_analysis) and
+                bool(transcription)
+            )
+            
+            if has_all_expected:
+                print("   ✅ All expected results verified - session completed successfully")
+                return True
+            else:
+                print("   ⚠️  Some expected results missing")
+                missing_items = []
+                if session_status != 'completed':
+                    missing_items.append(f"status (got '{session_status}', expected 'completed')")
+                if not structured_notes:
+                    missing_items.append("structured_notes")
+                if not dual_analysis:
+                    missing_items.append("dual_analysis")
+                if not transcription:
+                    missing_items.append("transcription")
+                print(f"   Missing: {', '.join(missing_items)}")
+                return False
+        else:
+            print("   ❌ Failed to retrieve session for verification")
+            return False
+
 if __name__ == "__main__":
     import uuid
     tester = DhruvAITester()
     
-    # Run the comprehensive Auto-Note Mentor workflow test as per review request
-    print("🚀 Starting Auto-Note Mentor Complete Workflow Testing...")
-    print("   Focus: Complete recording workflow from start to end")
-    print("   User reports: System gets stuck on 'Processing your notes' without completing")
+    # Run only the Auto-Note Mentor recording workflow test as requested
+    print("🚀 Starting Auto-Note Mentor Recording Workflow Testing...")
+    print("   Focus: Fixed recording workflow with fallback transcription mechanism")
+    print("   Testing with credentials: test@dhruvai.com / password123")
     print("="*80)
     
-    # Run comprehensive tests
-    success = tester.run_comprehensive_tests()
+    # Run the specific test requested in the review
+    success = tester.test_auto_note_mentor_recording_workflow()
     
     # Final summary
     print("\n" + "="*80)
