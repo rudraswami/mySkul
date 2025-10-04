@@ -900,6 +900,28 @@ export default function AutoNoteMentor() {
               Our dual-layer AI (Professor + Mentor) is analyzing your class recording...
             </p>
             
+            {/* Progress Steps */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="text-gray-700">✓ Audio uploaded</span>
+                </div>
+                <div className="flex items-center justify-center text-sm">
+                  <Loader className="h-4 w-4 animate-spin text-blue-500 mr-2" />
+                  <span className="text-gray-700">🔄 Transcribing...</span>
+                </div>
+                <div className="flex items-center justify-center text-sm text-gray-400">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>⏳ Generating notes & flashcards...</span>
+                </div>
+                <div className="flex items-center justify-center text-sm text-gray-400">
+                  <Brain className="h-4 w-4 mr-2" />
+                  <span>⏳ Creating insights...</span>
+                </div>
+              </div>
+            </div>
+            
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-center space-x-6 text-sm">
                 <div className="flex items-center">
@@ -911,6 +933,12 @@ export default function AutoNoteMentor() {
                   <span>Mentor: Personalizing insights</span>
                 </div>
               </div>
+            </div>
+            
+            {/* Timeout warning */}
+            <div className="mt-4 text-xs text-gray-500">
+              <p>This may take 30-60 seconds depending on recording length.</p>
+              <p>Please don't refresh the page while processing.</p>
             </div>
           </div>
         </div>
