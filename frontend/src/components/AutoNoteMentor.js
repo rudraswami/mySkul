@@ -15,7 +15,6 @@ import {
   GraduationCap,
   Heart,
   Clock,
-  Users,
   MessageCircle,
   CreditCard,
   Download,
@@ -24,8 +23,7 @@ import {
   CheckCircle,
   Loader,
   Upload,
-  X,
-  BarChart3
+  X
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
