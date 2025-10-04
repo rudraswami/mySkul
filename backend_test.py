@@ -1692,7 +1692,7 @@ class DhruvAITester:
         )
         
         if success:
-            decks = response.get('decks', [])
+            decks = response if isinstance(response, list) else response.get('decks', [])
             print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
             test_results['get_flashcard_decks'] = True
         else:
