@@ -5847,7 +5847,7 @@ async def end_note_session(
         # Update session status to processing
         await db.auto_note_sessions.update_one(
             {"session_id": session_id},
-            {"$set": {"status": "processing", "end_time": datetime.utcnow()}}
+            {"$set": {"status": "processing", "end_time": datetime.now(timezone.utc)}}
         )
         
         # Collect all audio chunks for this session
