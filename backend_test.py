@@ -7484,7 +7484,8 @@ if __name__ == "__main__":
     print("="*80)
     print(f"Total tests run: {tester.tests_run}")
     print(f"Tests passed: {tester.tests_passed}")
-    print(f"Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    success_rate = (tester.tests_passed/tester.tests_run)*100 if tester.tests_run > 0 else 0
+    print(f"Success rate: {success_rate:.1f}%")
     
     if success:
         print("🎉 AUTO-NOTE MENTOR WORKFLOW TESTING SUCCESSFUL!")
