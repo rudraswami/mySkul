@@ -1652,7 +1652,7 @@ export default function AITutor() {
 
         {/* Clean Personalization Status */}
         {studentProfile && (
-          <div className="bg-teal-50 border border-blue-100 p-3 mx-6 rounded-lg">
+          <div className="bg-blue-50 border border-blue-100 p-3 mx-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1994,7 +1994,7 @@ export default function AITutor() {
                   }
                   className={`resize-none border ${
                     dragOver 
-                      ? 'border-teal-300 bg-teal-50' 
+                      ? 'border-teal-300 bg-blue-50' 
                       : isListening 
                         ? 'border-red-300 bg-red-50' 
                         : loading
@@ -2092,7 +2092,7 @@ export default function AITutor() {
                         setCurrentMessage(suggestion);
                         setShowQuickSuggestions(false);
                       }}
-                      className="text-left text-xs p-2 bg-white rounded hover:bg-teal-50 transition-colors border border-gray-100 hover:border-teal-200"
+                      className="text-left text-xs p-2 bg-white rounded hover:bg-blue-50 transition-colors border border-gray-100 hover:border-teal-200"
                       disabled={loading}
                     >
                       {suggestion}
