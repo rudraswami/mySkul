@@ -207,7 +207,7 @@ class AutoNoteFallbackTester:
         success, response = self.run_test(
             "Session Completion with Fallback",
             "POST",
-            "auto-notes/end-session",
+            f"auto-notes/end-session?session_id={self.session_id}",
             200,
             data=fallback_data,
             headers={'Authorization': f'Bearer {self.token}'}
