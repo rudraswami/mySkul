@@ -547,8 +547,17 @@ export default function AutoNoteMentor() {
     
     setLoading(true);
     
+    // Set a timeout for the processing request (60 seconds)
+    const timeoutId = setTimeout(() => {
+      setError('Session processing timed out. Please try again or contact support if this persists.');
+      setSessionStatus('idle');
+      setLoading(false);
+    }, 60000);
+    
     try {
       const token = localStorage.getItem('dhruv_ai_token');
+      
+      console.log('Starting session processing for:', currentSession.session_id);
       
       const response = await fetch(`${API}/auto-notes/end-session?session_id=${currentSession.session_id}`, {
         method: 'POST',
@@ -558,8 +567,12 @@ export default function AutoNoteMentor() {
         }
       });
       
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const result = await response.json();
+        console.log('Session processing completed:', result);
+        
         setGeneratedNotes(result.structured_notes);
         setDualAnalysis(result.dual_analysis);
         setSessionStatus('completed');
@@ -567,11 +580,16 @@ export default function AutoNoteMentor() {
         // Refresh sessions list
         loadUserSessions();
       } else {
-        setError('Failed to process session. Please try again.');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Session processing failed:', response.status, errorData);
+        setError(errorData.detail || `Failed to process session (${response.status}). Please try again.`);
+        setSessionStatus('idle');
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Session processing error:', error);
-      setError('Failed to process session. Please check your connection.');
+      setError('Failed to process session. Please check your connection and try again.');
+      setSessionStatus('idle');
     } finally {
       setLoading(false);
     }
