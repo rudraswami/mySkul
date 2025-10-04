@@ -1,414 +1,388 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { LoadingSpinner } from './ui/loading';
 import { 
-  CreditCard, 
   Crown, 
-  Star, 
-  Zap, 
   Check, 
-  X, 
-  Loader2, 
-  AlertCircle,
+  CreditCard, 
+  Zap,
+  Star,
   Calendar,
-  TrendingUp,
-  Users,
-  Headphones
+  Sparkles,
+  ArrowRight,
+  Clock
 } from 'lucide-react';
 
-const Subscription = () => {
+export default function Subscription() {
+  const { user } = useAuth();
   const [currentSubscription, setCurrentSubscription] = useState(null);
-  const [availablePlans, setAvailablePlans] = useState([]);
-  const [usageSummary, setUsageSummary] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [processingPlan, setProcessingPlan] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [upgrading, setUpgrading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [billingCycle, setBillingCycle] = useState('monthly');
 
   useEffect(() => {
-    loadSubscriptionData();
+    loadCurrentSubscription();
   }, []);
 
-  const loadSubscriptionData = async () => {
+  const loadCurrentSubscription = async () => {
     try {
-      setIsLoading(true);
       const token = localStorage.getItem('dhruv_ai_token');
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
-
-      // Load current subscription
-      const subscriptionResponse = await fetch(`${backendUrl}/api/subscription/current`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      
+      const response = await fetch(`${backendUrl}/api/subscription/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (subscriptionResponse.ok) {
-        const subscriptionData = await subscriptionResponse.json();
-        setCurrentSubscription(subscriptionData);
-        setUsageSummary(subscriptionData.usage_summary || {});
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentSubscription(data);
       }
-
-      // Load available plans
-      const plansResponse = await fetch(`${backendUrl}/api/subscription/plans`);
-      if (plansResponse.ok) {
-        const plansData = await plansResponse.json();
-        setAvailablePlans(plansData.plans || []);
-      }
-
     } catch (error) {
-      console.error('Failed to load subscription data:', error);
-      setError('Failed to load subscription information');
+      console.error('Failed to load subscription:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const loadUsage = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      
+      const response = await fetch(`${backendUrl}/api/subscription/usage`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (error) {
+      console.error('Failed to load usage:', error);
+      return null;
     }
   };
 
   const handleUpgrade = async (planName, billingCycle = 'monthly') => {
+    setUpgrading(true);
+    setSelectedPlan(planName);
+    
     try {
-      setProcessingPlan(planName);
-      setError('');
-      
       const token = localStorage.getItem('dhruv_ai_token');
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      
-      // Get current URL for success/cancel redirects
-      const currentUrl = window.location.origin + '/subscription';
-      const successUrl = `${currentUrl}?session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = currentUrl;
 
-      const response = await fetch(`${backendUrl}/api/subscription/checkout`, {
+      const response = await fetch(`${backendUrl}/api/subscription/upgrade`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          plan_name: planName,
-          billing_cycle: billingCycle,
-          success_url: successUrl,
-          cancel_url: cancelUrl
-        })
+        body: JSON.stringify({ plan: planName, billing_cycle: billingCycle })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create checkout session');
-      }
-
-      const data = await response.json();
-      
-      // Redirect to Stripe Checkout
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (response.ok) {
+        // Redirect to payment or show success
+        const data = await response.json();
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+        }
       } else {
-        throw new Error('No checkout URL received');
+        const errorData = await response.json();
+        console.error('Upgrade failed:', errorData);
+        // Show error message
       }
-
     } catch (error) {
       console.error('Upgrade error:', error);
-      setError(error.message);
     } finally {
-      setProcessingPlan('');
+      setUpgrading(false);
+      setSelectedPlan(null);
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!window.confirm('Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.')) {
-      return;
+  const subscriptionPlans = [
+    {
+      name: 'Free',
+      price_monthly: 0,
+      price_yearly: 0,
+      features: [
+        '2 mock tests per month',
+        '5 AI tutor queries per day',
+        'Basic performance tracking',
+        'Access to study materials'
+      ],
+      current: currentSubscription?.plan === 'free',
+      popular: false
+    },
+    {
+      name: 'Basic',
+      price_monthly: 299,
+      price_yearly: 2990,
+      features: [
+        '20 mock tests per month',
+        'Unlimited AI tutor queries',
+        'Detailed performance analytics',
+        'Auto-note generation',
+        'Priority support'
+      ],
+      current: currentSubscription?.plan === 'basic',
+      popular: true
+    },
+    {
+      name: 'Premium',
+      price_monthly: 599,
+      price_yearly: 5990,
+      features: [
+        'Unlimited mock tests',
+        'Advanced AI tutor with dual analysis',
+        'Comprehensive analytics dashboard',
+        'Auto-note generation with OCR',
+        'Spaced repetition scheduling',
+        'Parent dashboard access',
+        'Priority support'
+      ],
+      current: currentSubscription?.plan === 'premium',
+      popular: false
     }
+  ];
 
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-
-      const response = await fetch(`${backendUrl}/api/subscription/cancel`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to cancel subscription');
-      }
-
-      await loadSubscriptionData();
-      alert('Subscription cancelled successfully');
-
-    } catch (error) {
-      console.error('Cancel error:', error);
-      setError(error.message);
-    }
-  };
-
-  const checkPaymentStatus = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    
-    if (sessionId) {
-      try {
-        const token = localStorage.getItem('dhruv_ai_token');
-        const backendUrl = process.env.REACT_APP_BACKEND_URL;
-
-        const response = await fetch(`${backendUrl}/api/subscription/payment-status/${sessionId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.payment_status === 'paid') {
-            alert('Payment successful! Your subscription has been activated.');
-            await loadSubscriptionData();
-            // Clear the session_id from URL
-            window.history.replaceState({}, document.title, '/subscription');
-          }
-        }
-      } catch (error) {
-        console.error('Payment status check error:', error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkPaymentStatus();
-  }, []);
-
-  const getPlanIcon = (planName) => {
-    const icons = {
-      free: <Users className="w-8 h-8 text-gray-500" />,
-      basic: <Star className="w-8 h-8 text-blue-500" />,
-      premium: <Crown className="w-8 h-8 text-purple-500" />,
-      pro: <Zap className="w-8 h-8 text-orange-500" />
-    };
-    return icons[planName] || <Star className="w-8 h-8" />;
-  };
-
-  const formatUsage = (featureName, usage) => {
-    if (!usage) return 'N/A';
-    
-    if (usage.unlimited) {
-      return 'Unlimited';
-    }
-    
-    return `${usage.used}/${usage.limit}`;
-  };
-
-  const getUsagePercentage = (usage) => {
-    if (!usage || usage.unlimited) return 0;
-    return usage.limit > 0 ? (usage.used / usage.limit) * 100 : 0;
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-blue-600">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="text-lg">Loading subscription details...</span>
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center">
+            <LoadingSpinner size="lg" className="text-blue-600 mb-4" />
+            <p className="text-gray-600">Loading subscription information...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
+              <Crown className="h-8 w-8 text-white" />
+            </div>
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Subscription Management
+            Choose Your Learning Plan
           </h1>
-          <p className="text-xl text-gray-600">
-            Manage your Dhruv AI subscription and unlock premium features
+          <p className="text-xl text-gray-600 mb-8">
+            Unlock your full potential with AI-powered personalized learning
           </p>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center space-x-4 p-1 bg-gray-100 rounded-lg inline-flex">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                billingCycle === 'monthly' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                billingCycle === 'yearly' 
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span className="mr-2">Yearly</span>
+              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                Save 17%
+              </Badge>
+            </button>
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Current Subscription Status */}
+        {/* Current Subscription */}
         {currentSubscription && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Current Plan</h2>
-              {currentSubscription.subscription.status === 'cancelled' && (
-                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-                  Cancelled
-                </span>
-              )}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  {getPlanIcon(currentSubscription.subscription.plan_name)}
+          <Card className="mb-8 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Crown className="h-6 w-6 text-blue-600 mr-3" />
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 capitalize">
-                      {currentSubscription.plan_details.display_name}
+                    <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                      Current Plan: {currentSubscription.plan}
                     </h3>
                     <p className="text-gray-600">
-                      ₹{currentSubscription.plan_details.price_monthly}/month
+                      {currentSubscription.plan_details ? 
+                        `₹${currentSubscription.plan_details.price_monthly}/month`
+                        : 'Free Plan'
+                      }
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="w-5 h-5" />
-                  <span>
-                    {currentSubscription.days_remaining} days remaining
-                  </span>
-                </div>
-
-                {currentSubscription.subscription.plan_name !== 'free' && 
-                 currentSubscription.subscription.status === 'active' && (
-                  <button
-                    onClick={handleCancelSubscription}
-                    className="text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Cancel Subscription
-                  </button>
-                )}
+                <Badge 
+                  variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
+                  className={
+                    currentSubscription.status === 'active' 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-blue-500'
+                  }
+                >
+                  {currentSubscription.status}
+                </Badge>
               </div>
-
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Usage Summary</h4>
-                <div className="space-y-3">
-                  {Object.entries(usageSummary).map(([feature, usage]) => (
-                    <div key={feature} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 capitalize">
-                          {feature.replace(/_/g, ' ')}
-                        </span>
-                        <span className="font-medium">
-                          {formatUsage(feature, usage)}
-                        </span>
-                      </div>
-                      {!usage.unlimited && usage.limit > 0 && (
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              getUsagePercentage(usage) > 80 
-                                ? 'bg-red-500' 
-                                : getUsagePercentage(usage) > 60
-                                ? 'bg-yellow-500'
-                                : 'bg-blue-500'
-                            }`}
-                            style={{ width: `${Math.min(getUsagePercentage(usage), 100)}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Available Plans */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Choose Your Plan
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {availablePlans.map((plan) => {
-              const isCurrentPlan = currentSubscription?.subscription.plan_name === plan.name;
-              const isPremium = plan.name !== 'free';
-              
-              return (
-                <div
-                  key={plan.name}
-                  className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${
-                    plan.name === 'premium' ? 'ring-2 ring-purple-500 scale-105' : ''
-                  }`}
-                >
-                  {plan.name === 'premium' && (
-                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-center py-2 text-sm font-medium">
-                      Most Popular
-                    </div>
+        {/* Subscription Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {subscriptionPlans.map((plan, index) => (
+            <Card 
+              key={plan.name} 
+              className={`relative border-2 transition-all hover:shadow-lg ${
+                plan.popular 
+                  ? 'border-blue-500 shadow-lg' 
+                  : plan.current 
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-blue-600 text-white px-4 py-1">
+                    <Star className="h-3 w-3 mr-1" />
+                    Most Popular
+                  </Badge>
+                </div>
+              )}
+
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  {plan.name}
+                </CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold text-gray-900">
+                    ₹{billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
+                  </span>
+                  {plan.price_monthly > 0 && (
+                    <span className="text-gray-600">
+                      /{billingCycle === 'yearly' ? 'year' : 'month'}
+                    </span>
                   )}
-                  
-                  <div className="p-6">
-                    <div className="text-center mb-6">
-                      {getPlanIcon(plan.name)}
-                      <h3 className="text-xl font-bold text-gray-900 mt-3 mb-2">
-                        {plan.display_name}
-                      </h3>
-                      <div className="text-3xl font-bold text-gray-900">
-                        ₹{plan.price_monthly}
-                        <span className="text-base font-normal text-gray-600">/month</span>
-                      </div>
-                      {plan.price_yearly > 0 && (
-                        <p className="text-sm text-green-600 mt-1">
-                          Save ₹{(plan.price_monthly * 12) - plan.price_yearly} with yearly billing
-                        </p>
-                      )}
-                    </div>
+                </div>
+                {plan.price_yearly > 0 && billingCycle === 'yearly' && (
+                  <p className="text-sm text-green-600 mt-2">
+                    Save ₹{(plan.price_monthly * 12) - plan.price_yearly} with yearly billing
+                  </p>
+                )}
+              </CardHeader>
 
-                    <div className="space-y-3 mb-6">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-600">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
+              <CardContent className="space-y-6">
+                <ul className="space-y-3">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
 
-                    <div className="space-y-2">
-                      {!isCurrentPlan && isPremium && (
+                <div className="space-y-3">
+                  {plan.current ? (
+                    <Button disabled className="w-full py-3 bg-green-100 text-green-800">
+                      <Check className="h-4 w-4 mr-2" />
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <>
+                      {plan.price_monthly > 0 && (
                         <>
-                          <button
-                            onClick={() => handleUpgrade(plan.name, 'monthly')}
-                            disabled={processingPlan === plan.name}
+                          <Button
+                            onClick={() => handleUpgrade(plan.name, billingCycle)}
+                            disabled={upgrading && selectedPlan === plan.name}
                             className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
-                            {processingPlan === plan.name ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                            {upgrading && selectedPlan === plan.name ? (
+                              <LoadingSpinner size="sm" />
                             ) : (
-                              <CreditCard className="w-4 h-4" />
+                              <Zap className="h-4 w-4" />
                             )}
-                            Upgrade Monthly
-                          </button>
-                          
-                          {plan.price_yearly > 0 && (
-                            <button
-                              onClick={() => handleUpgrade(plan.name, 'yearly')}
-                              disabled={processingPlan === plan.name}
-                              className="w-full py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                              {processingPlan === plan.name ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <TrendingUp className="w-4 h-4" />
-                              )}
-                              Upgrade Yearly
-                            </button>
-                          )}
+                            Upgrade {billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}
+                          </Button>
                         </>
                       )}
-                      
-                      {isCurrentPlan && (
-                        <div className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-center font-medium">
-                          Current Plan
-                        </div>
-                      )}
-                      
-                      {plan.name === 'free' && !isCurrentPlan && (
-                        <div className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-center font-medium">
-                          Free Plan
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Support Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-          <Headphones className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Need Help?</h3>
+        {/* Features Comparison */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Feature Comparison</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b">
+                    <th className="pb-3 pr-4">Features</th>
+                    <th className="pb-3 px-4 text-center">Free</th>
+                    <th className="pb-3 px-4 text-center">Basic</th>
+                    <th className="pb-3 px-4 text-center">Premium</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">Mock Tests per Month</td>
+                    <td className="py-3 px-4 text-center">2</td>
+                    <td className="py-3 px-4 text-center">20</td>
+                    <td className="py-3 px-4 text-center">Unlimited</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">AI Tutor Queries</td>
+                    <td className="py-3 px-4 text-center">5/day</td>
+                    <td className="py-3 px-4 text-center">Unlimited</td>
+                    <td className="py-3 px-4 text-center">Unlimited + Dual AI</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">Auto-Note Generation</td>
+                    <td className="py-3 px-4 text-center">❌</td>
+                    <td className="py-3 px-4 text-center">✅</td>
+                    <td className="py-3 px-4 text-center">✅ + OCR</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">Advanced Analytics</td>
+                    <td className="py-3 px-4 text-center">❌</td>
+                    <td className="py-3 px-4 text-center">✅</td>
+                    <td className="py-3 px-4 text-center">✅ + Parent Access</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contact Support */}
+        <div className="text-center mt-12">
           <p className="text-gray-600 mb-4">
-            Our support team is here to help you with any questions about your subscription.
+            Need help choosing the right plan? Our team is here to help!
           </p>
           <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             Contact Support
@@ -417,6 +391,4 @@ const Subscription = () => {
       </div>
     </div>
   );
-};
-
-export default Subscription;
+}

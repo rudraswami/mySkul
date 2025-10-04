@@ -2,485 +2,326 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { Progress } from './ui/progress';
 import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
 import { 
   Brain, 
-  Clock, 
-  Target, 
-  TrendingUp, 
   BookOpen, 
-  MessageCircle,
-  FileText,
+  Target, 
+  Trophy, 
+  Clock, 
+  TrendingUp,
   Calendar,
-  Award,
-  Zap,
-  ChevronRight,
-  Timer,
-  Trophy,
-  Flame,
-  CheckCircle2,
-  Star,
-  BarChart3,
   Users,
-  GraduationCap,
-  AlertCircle,
-  PlayCircle,
+  Star,
+  ChevronRight,
+  Play,
   BookMarked,
-  Lightbulb,
-  Circle,
-  Smile,
-  Meh,
-  Frown,
+  FileText,
+  MessageCircle,
+  BarChart3,
+  Zap,
+  CheckCircle,
+  AlertCircle,
   Plus,
-  ArrowRight,
-  TrendingUpIcon
+  ArrowUp,
+  ArrowDown,
+  Timer,
+  Heart,
+  Flame
 } from 'lucide-react';
-import axios from 'axios';
 
+// Import backend URL
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [todayGoals, setTodayGoals] = useState([]);
-  const [goalsLoading, setGoalsLoading] = useState(true);
-  const [subjectProgress, setSubjectProgress] = useState([]);
-  const [subjectsLoading, setSubjectsLoading] = useState(true);
-  const [moodRating, setMoodRating] = useState(null);
+  const [todayGoals, setTodayGoals] = useState([
+    { id: 1, text: 'Study for 120 minutes total', progress: 75, target: 120 },
+    { id: 2, text: 'Ask AI Tutor for help with doubts', progress: 30, target: 100 }
+  ]);
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchDailyGoals();
-    fetchSubjectProgress();
+    loadDashboardData();
   }, []);
 
-  // Performance optimization: Set minimal loading time
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) setLoading(false);
-    }, 2000); // Max 2 seconds loading
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  const fetchDashboardData = async () => {
+  const loadDashboardData = async () => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const analyticsResponse = await axios.get(`${API}/dashboard/analytics`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      setAnalytics(analyticsResponse.data);
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardData(data);
+      }
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-      
-      // Minimal fallback - only if API completely fails
-      setAnalytics({
-        total_study_time: 0,
-        current_streak: 0,
-        chat_sessions_count: 0,
-        weekly_goals_progress: 0,
-        recent_progress: []
+      console.error('Failed to load dashboard data:', error);
+      // Set some demo data if API fails
+      setDashboardData({
+        study_time_today: "0h 30m",
+        total_sessions: 6,
+        current_streak: 7,
+        weekly_progress: 75,
+        recent_subjects: [
+          { name: "Mathematics", progress: 75, topic: "Quadratic Equations" },
+          { name: "Physics", progress: 60, topic: "Newton's Laws" },
+          { name: "Chemistry", progress: 45, topic: "Chemical Bonding" }
+        ]
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDailyGoals = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) {
-        setGoalsLoading(false);
-        return;
-      }
-
-      const goalsResponse = await axios.get(`${API}/dashboard/daily-goals`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000
-      });
-
-      setTodayGoals(goalsResponse.data.goals || []);
-    } catch (error) {
-      console.error('Failed to fetch daily goals:', error);
-      setTodayGoals([]); // Empty array instead of demo data
-    } finally {
-      setGoalsLoading(false);
-    }
-  };
-
-  const fetchSubjectProgress = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) {
-        setSubjectsLoading(false);
-        return;
-      }
-
-      const progressResponse = await axios.get(`${API}/dashboard/subject-progress`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000
-      });
-
-      setSubjectProgress(progressResponse.data.subjects || []);
-    } catch (error) {
-      console.error('Failed to fetch subject progress:', error);
-      setSubjectProgress([]); // Empty array instead of demo data
-    } finally {
-      setSubjectsLoading(false);
-    }
-  };
-
-  const getStudentName = () => {
-    if (user?.email) {
-      return user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1);
-    }
-    return 'Student';
-  };
-
-  const calculateExamCountdown = () => {
-    if (!user?.target_year) return 200; // Default fallback
-    const targetDate = new Date(`${user.target_year}-05-01`);
-    const today = new Date();
-    const diffTime = targetDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 200;
-  };
-
-  const getProgressMotivation = () => {
-    const progress = analytics?.weekly_goals_progress || 78;
-    if (progress >= 90) return `🔥 You're ${progress - 75}% ahead of your weekly goal!`;
-    if (progress >= 75) return `⭐ You studied more than 70% of learners this week!`;
-    return `💪 You're on track! ${progress}% of weekly goal completed.`;
-  };
-
-  const getTodayProgress = () => {
-    if (todayGoals.length === 0) return 0;
-    const completed = todayGoals.filter(goal => goal.completed).length;
-    return Math.round((completed / todayGoals.length) * 100);
-  };
-
-  const handleGoalToggle = async (goalId) => {
-    // Optimistically update UI
-    setTodayGoals(goals => 
-      goals.map(goal => 
-        goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
-      )
-    );
-    
-    // In a real app, you would save this to backend
-    // For now, we'll just update the local state
-    try {
-      // Future: POST /api/dashboard/update-goal-status
-      // await axios.post(`${API}/dashboard/update-goal-status`, { goalId, completed: !currentGoal.completed })
-    } catch (error) {
-      console.error('Failed to update goal status:', error);
-      // Revert optimistic update on error
-      setTodayGoals(goals => 
-        goals.map(goal => 
-          goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
-        )
-      );
-    }
-  };
-
-  const handleMoodSubmit = (mood) => {
-    setMoodRating(mood);
-    // In real app, this would send to analytics API
-  };
-
-  const examCountdown = calculateExamCountdown();
-  const todayProgress = getTodayProgress();
-
   if (loading) {
     return (
-      <div className="p-6 space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-300 rounded w-1/3"></div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="h-24 bg-gray-300 rounded-lg"></div>
-          ))}
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-8">
+            <div className="bg-gray-200 rounded-lg h-48 w-full"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-gray-200 rounded-lg h-32"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header / Welcome Zone */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Welcome Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white/20 backdrop-blur-lg p-3 rounded-xl">
-                <Brain className="h-8 w-8 text-white" />
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 p-3 rounded-xl mr-4">
+                <Brain className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Welcome back, {getStudentName()}! 👋</h1>
-                <p className="text-blue-100 text-lg mt-1">{getProgressMotivation()}</p>
+                <h1 className="text-3xl font-bold mb-2">
+                  Welcome back, {user?.full_name?.split(' ')[0] || 'Student'}! 👋
+                </h1>
+                <p className="text-blue-100 text-lg">
+                  ⭐ You studied more than 70% of learners this week!
+                </p>
               </div>
             </div>
             <div className="flex space-x-2">
-              <Badge className="bg-green-500 text-white px-3 py-1">✅ Trust</Badge>
-              <Badge className="bg-purple-500 text-white px-3 py-1">🔄 Personalized</Badge>
-              <Badge className="bg-yellow-500 text-white px-3 py-1">💡 Empowerment</Badge>
+              <Badge className="bg-green-500 text-white border-0">Trust</Badge>
+              <Badge className="bg-purple-500 text-white border-0">Personalized</Badge>
+              <Badge className="bg-yellow-500 text-white border-0">Empowerment</Badge>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Today's Focus (Mini-Plan) */}
-        <Card className="border-2 border-blue-200 bg-blue-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Target className="h-5 w-5 mr-2 text-blue-600" />
-                Today's Focus
-              </div>
-              <div className="flex items-center space-x-2">
-                <Progress value={todayProgress} className="w-24 h-2" />
-                <span className="text-sm font-semibold">{todayProgress}%</span>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {goalsLoading ? (
-              <div className="space-y-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="flex items-center space-x-3 p-3 bg-gray-100 rounded-lg animate-pulse">
-                    <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : todayGoals.length > 0 ? (
-              <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Today's Focus */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center">
+                  <Target className="h-5 w-5 mr-2 text-blue-600" />
+                  Today's Focus
+                </CardTitle>
+                <span className="text-sm text-gray-500">0%</span>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {todayGoals.map((goal) => (
-                  <div key={goal.id} 
-                       className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all
-                         ${goal.completed 
-                           ? 'bg-green-50 border-green-200' 
-                           : 'bg-white border-gray-200 hover:border-blue-300'}`}
-                       onClick={() => handleGoalToggle(goal.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {goal.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-gray-400" />
-                      )}
-                      <div>
-                        <span className={`font-medium ${goal.completed ? 'line-through text-gray-600' : 'text-gray-900'}`}>
-                          {goal.task}
-                        </span>
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{goal.duration}</span>
-                          <Badge variant="outline" className="text-xs">{goal.subject}</Badge>
-                          {goal.progress !== undefined && (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-8 bg-gray-200 rounded-full h-2">
-                                <div className="bg-blue-600 h-2 rounded-full" style={{width: `${goal.progress}%`}}></div>
-                              </div>
-                              <span className="text-xs">{goal.progress}%</span>
-                            </div>
-                          )}
-                        </div>
+                  <div key={goal.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-2 text-gray-400" />
+                        <span className="text-sm">{goal.text}</span>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>120 mins</span>
+                        <span className="ml-2 font-medium">General</span>
+                        <span className="ml-2">0%</span>
                       </div>
                     </div>
+                    <Progress value={0} className="h-2" />
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Target className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">No goals set for today</p>
-                <p className="text-gray-500 text-sm">Start studying to generate smart goals!</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Progress Snapshot */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Study Time Today</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {Math.floor((analytics?.total_study_time || 45) / 60)}h {(analytics?.total_study_time || 45) % 60}m
-                  </p>
-                  <p className="text-xs text-gray-500">of 2h goal</p>
-                </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Study Streak</p>
-                  <div className="flex items-center space-x-1">
-                    <p className="text-xl font-bold text-gray-900">{analytics?.current_streak || 7}</p>
-                    <Flame className="h-4 w-4 text-orange-500" />
+                
+                {/* Second goal */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-sm">Ask AI Tutor for help with doubts</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>10 mins</span>
+                      <span className="ml-2 font-medium">AI Tutor</span>
+                      <span className="ml-2">0%</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500">days consistent</p>
+                  <Progress value={0} className="h-2" />
                 </div>
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Trophy className="h-5 w-5 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Weekly Progress</p>
-                  <p className="text-xl font-bold text-gray-900">{analytics?.weekly_goals_progress || 78}%</p>
-                  <p className="text-xs text-gray-500">vs target</p>
-                </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Performance Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="text-2xl font-bold text-blue-600">0h 30m</div>
+                  <p className="text-sm text-gray-600">of 2h goal</p>
+                  <div className="mt-2">
+                    <Clock className="h-4 w-4 inline text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="text-2xl font-bold text-yellow-600">7 🔥</div>
+                  <p className="text-sm text-gray-600">days consistent</p>
+                  <div className="mt-2">
+                    <Trophy className="h-4 w-4 inline text-yellow-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="text-2xl font-bold text-green-600">75%</div>
+                  <p className="text-sm text-gray-600">vs target</p>
+                  <div className="mt-2">
+                    <TrendingUp className="h-4 w-4 inline text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="text-2xl font-bold text-purple-600">14</div>
+                  <p className="text-sm text-gray-600">this week</p>
+                  <div className="mt-2">
+                    <Brain className="h-4 w-4 inline text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-          <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Doubts Resolved</p>
-                  <p className="text-xl font-bold text-gray-900">{analytics?.chat_sessions_count || 12}</p>
-                  <p className="text-xs text-gray-500">this week</p>
-                </div>
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Brain className="h-5 w-5 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Exam Countdown</p>
-                  <p className="text-xl font-bold text-gray-900">{examCountdown}</p>
-                  <p className="text-xs text-gray-500">days to {user?.exam_type || 'JEE'}</p>
-                </div>
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Timer className="h-5 w-5 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Subject & Chapter Progress */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="border border-gray-200">
+            {/* Study Progress */}
+            <Card className="border border-blue-200 bg-blue-50">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-                  Subject & Chapter Progress
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <BarChart3 className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Subject & Chapter Progress</h3>
+                    <p className="text-sm text-gray-600">Track your learning across different topics</p>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {subjectsLoading ? (
-                  <div className="space-y-4">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
-                            <div className="h-4 bg-gray-300 rounded w-20"></div>
-                            <div className="h-4 bg-gray-300 rounded w-16"></div>
-                          </div>
-                          <div className="h-6 bg-gray-300 rounded w-12"></div>
-                        </div>
-                        <div className="h-2 bg-gray-300 rounded w-full mb-3"></div>
-                        <div className="flex space-x-2">
-                          <div className="h-6 bg-gray-300 rounded w-20"></div>
-                          <div className="h-6 bg-gray-300 rounded w-20"></div>
-                          <div className="h-6 bg-gray-300 rounded w-24"></div>
-                        </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-100">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Mathematics</div>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          1/15 chapters
+                        </Badge>
                       </div>
-                    ))}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-gray-900">0%</div>
+                      <div className="text-sm text-gray-500">mastery</div>
+                    </div>
                   </div>
-                ) : subjectProgress.length > 0 ? (
-                  <div className="space-y-4">
-                    {subjectProgress.map((subject, index) => (
-                      <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-4 h-4 rounded-full ${
-                              subject.status === 'strong' ? 'bg-green-500' :
-                              subject.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}></div>
-                            <h4 className="font-semibold text-gray-900">{subject.subject}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {subject.completed}/{subject.chapters} chapters
-                            </Badge>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-gray-900">{subject.mastery}%</div>
-                            <div className="text-xs text-gray-500">mastery</div>
-                          </div>
-                        </div>
-                        <Progress value={subject.mastery} className="h-2 mb-3" />
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" className="text-xs">
-                            <BookMarked className="h-3 w-3 mr-1" />
-                            Revise Notes
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs">
-                            <Brain className="h-3 w-3 mr-1" />
-                            Ask Tutor
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs">
-                            <FileText className="h-3 w-3 mr-1" />
-                            Practice Quiz
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+                  
                   <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 font-medium">No subject progress data yet</p>
-                    <p className="text-gray-500 text-sm">Start studying to track your progress!</p>
+                    <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Ready to boost your learning?</p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button 
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => window.location.href = '/tutor'}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Revise Notes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.location.href = '/tutor'}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Ask Tutor
+                      </Button>
+                    </div>
                   </div>
-                )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Today's Learning Path */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-purple-600" />
+                  Today's Learning Path
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                      1
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold">Quick Warm-up</div>
+                      <div className="text-sm text-gray-600">Review yesterday's concepts</div>
+                    </div>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                      5 mins
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center p-3 bg-gray-50 rounded-lg opacity-60">
+                    <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                      2
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold">New Chapter Introduction</div>
+                      <div className="text-sm text-gray-600">Mathematics • Quadratic Equations</div>
+                    </div>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                      15 mins
+                    </Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Sidebar */}
           <div className="space-y-6">
+            
             {/* Quick Actions */}
-            <Card className="border border-gray-200">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Zap className="h-5 w-5 mr-2 text-blue-600" />
@@ -489,10 +330,11 @@ export default function StudentDashboard() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button 
-                  className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white h-12"
+                  variant="default" 
+                  className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700"
                   onClick={() => window.location.href = '/tutor'}
                 >
-                  <Brain className="h-5 w-5 mr-3" />
+                  <MessageCircle className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-semibold">Solve Doubts</div>
                     <div className="text-xs text-blue-100">Get instant AI help</div>
@@ -504,7 +346,7 @@ export default function StudentDashboard() {
                   className="w-full justify-start h-12 hover:bg-gray-50"
                   onClick={() => window.location.href = '/tests'}
                 >
-                  <FileText className="h-5 w-5 mr-3" />
+                  <Trophy className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-semibold">Practice Tests</div>
                     <div className="text-xs text-gray-600">Test your knowledge</div>
@@ -512,14 +354,13 @@ export default function StudentDashboard() {
                 </Button>
                 
                 <Button 
-                  variant="outline" 
-                  className="w-full justify-start h-12 hover:bg-gray-50"
+                  className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700"
                   onClick={() => window.location.href = '/auto-notes'}
                 >
                   <BookMarked className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-semibold">Generate Notes</div>
-                    <div className="text-xs text-gray-600">AI-powered notes</div>
+                    <div className="text-xs text-blue-100">AI-powered notes</div>
                   </div>
                 </Button>
               </CardContent>
@@ -528,114 +369,58 @@ export default function StudentDashboard() {
             {/* Wellness Widget */}
             <Card className="border border-purple-200 bg-purple-50">
               <CardHeader>
-                <CardTitle className="text-purple-900">How are you feeling today?</CardTitle>
+                <CardTitle className="flex items-center text-purple-800">
+                  <Heart className="h-5 w-5 mr-2" />
+                  Wellness Check
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {!moodRating ? (
-                  <div className="space-y-4">
-                    <div className="flex justify-center space-x-4">
-                      <button 
-                        onClick={() => handleMoodSubmit('happy')}
-                        className="p-3 rounded-full hover:bg-purple-100 transition-colors"
-                      >
-                        <Smile className="h-8 w-8 text-green-600" />
-                      </button>
-                      <button 
-                        onClick={() => handleMoodSubmit('neutral')}
-                        className="p-3 rounded-full hover:bg-purple-100 transition-colors"
-                      >
-                        <Meh className="h-8 w-8 text-yellow-600" />
-                      </button>
-                      <button 
-                        onClick={() => handleMoodSubmit('stressed')}
-                        className="p-3 rounded-full hover:bg-purple-100 transition-colors"
-                      >
-                        <Frown className="h-8 w-8 text-red-600" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="p-3 bg-purple-100 rounded-lg mb-3">
-                      <p className="text-sm text-purple-900">
-                        {moodRating === 'happy' && "Great! Keep that positive energy! 🌟"}
-                        {moodRating === 'neutral' && "That's okay. Try a 5-minute breathing exercise 🧘‍♂️"}
-                        {moodRating === 'stressed' && "Take a break! Try some deep breathing exercises 🌸"}
-                      </p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setMoodRating(null)}
-                      className="text-xs"
-                    >
-                      Update Mood
-                    </Button>
-                  </div>
-                )}
+                <div className="text-center py-4">
+                  <div className="text-2xl mb-2">😊</div>
+                  <p className="text-purple-700 font-medium mb-2">Feeling Good!</p>
+                  <p className="text-sm text-purple-600 mb-4">
+                    Great job maintaining balance
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                    onClick={() => window.location.href = '/wellness'}
+                  >
+                    Take Wellness Check
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Achievements */}
-            <Card className="border border-yellow-200 bg-yellow-50">
+            {/* Recent Activity */}
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-yellow-900">
-                  <Trophy className="h-5 w-5 mr-2" />
-                  Achievements
+                <CardTitle className="flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-green-600" />
+                  Recent Activity
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-3 p-2 bg-yellow-100 rounded-lg">
-                  <Flame className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <div className="font-semibold text-yellow-900">7 Day Streak!</div>
-                    <div className="text-xs text-yellow-700">Consistency Champion</div>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      <span>Completed Math practice</span>
+                    </div>
+                    <span className="text-gray-500">2h ago</span>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3 p-2 bg-yellow-100 rounded-lg">
-                  <Star className="h-5 w-5 text-yellow-600" />
-                  <div>
-                    <div className="font-semibold text-yellow-900">Math Mastery</div>
-                    <div className="text-xs text-yellow-700">87% in Mathematics</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                      <span>Asked AI Tutor query</span>
+                    </div>
+                    <span className="text-gray-500">4h ago</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border border-gray-200">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <Lightbulb className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Today's Reflection</p>
-                  <p className="text-sm text-gray-600">What did you find most challenging today?</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {user?.subscription_plan === 'free' && (
-            <Card className="border border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Star className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="font-medium text-blue-900">Unlock Pro Features</p>
-                      <p className="text-sm text-blue-700">Unlimited doubts + advanced analytics</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    Upgrade
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
