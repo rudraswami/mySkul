@@ -674,9 +674,12 @@ export default function AutoNoteMentor() {
 
   const loadPreviousSession = async (sessionId) => {
     setLoading(true);
+    setError(null);
     
     try {
       const token = localStorage.getItem('dhruv_ai_token');
+      
+      console.log('Loading previous session:', sessionId);
       
       const response = await fetch(`${API}/auto-notes/${sessionId}`, {
         headers: {
@@ -687,13 +690,34 @@ export default function AutoNoteMentor() {
       
       if (response.ok) {
         const sessionData = await response.json();
+        console.log('Session data loaded:', sessionData);
+        
+        // Set all necessary state for viewing the session
+        setCurrentSession(sessionData);
         setSelectedNotes(sessionData);
         setGeneratedNotes(sessionData.structured_notes);
         setDualAnalysis(sessionData.dual_analysis);
+        
+        // Set session status based on data availability
+        if (sessionData.structured_notes && sessionData.dual_analysis) {
+          setSessionStatus('completed');
+        } else if (sessionData.status === 'processing') {
+          setSessionStatus('processing');
+        } else {
+          setSessionStatus('active');
+        }
+        
+        // Switch to notes view
+        setActiveView('notes');
+        
+        console.log('Previous session loaded successfully');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.detail || `Failed to load session (${response.status})`);
       }
     } catch (error) {
       console.error('Session load error:', error);
-      setError('Failed to load session.');
+      setError('Failed to load session. Please check your connection.');
     } finally {
       setLoading(false);
     }
