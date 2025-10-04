@@ -1441,11 +1441,22 @@ export default function AITutor() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Clean Header */}
-        <div className="bg-white border-b border-gray-100 p-6">
+        <div className="bg-white border-b border-gray-100 p-4 lg:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900 mr-6">
-                AI Tutor – Mentor | Professor | Both
+              {/* Mobile Hamburger Menu */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSessionSearch(!showSessionSearch)}
+                className="lg:hidden mr-3 p-2"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
+              
+              <h1 className="text-lg lg:text-2xl font-bold text-gray-900 mr-3 lg:mr-6">
+                <span className="hidden sm:inline">AI Tutor – Mentor | Professor | Both</span>
+                <span className="sm:hidden">AI Tutor</span>
               </h1>
               
               {/* Trust Badges */}
