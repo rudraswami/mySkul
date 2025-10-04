@@ -61,6 +61,8 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
 
   const handleNavigation = (href, name) => {
     setNavigating(name);
+    // Close mobile menu when navigating
+    setMobileMenuOpen(false);
     setTimeout(() => {
       navigate(href);
       setNavigating(null);
@@ -68,36 +70,61 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white shadow-lg border-r border-gray-200">
-      {/* Logo */}
-      <div className="flex items-center justify-start px-6 py-4 border-b border-gray-200">
-        <Brain className="h-8 w-8 text-blue-600 mr-3" />
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Dhruv AI</h1>
-          <p className="text-xs text-gray-500">{user?.exam_type} Preparation</p>
-        </div>
-      </div>
+    <>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6">
-        <ul className="space-y-2">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.name}>
-                <button
-                  onClick={() => handleNavigation(item.href, item.name)}
-                  disabled={navigating === item.name}
-                  className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                    item.current
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  } ${navigating === item.name ? 'opacity-75 cursor-not-allowed' : ''}`}
-                >
-                  {navigating === item.name ? (
-                    <LoadingSpinner size="sm" className="mr-3 h-5 w-5 flex-shrink-0" />
-                  ) : (
-                    <Icon 
+      {/* Sidebar */}
+      <div className={`${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        
+        {/* Mobile Close Button */}
+        <div className="lg:hidden absolute top-0 right-0 -mr-12 pt-2">
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          >
+            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Logo */}
+        <div className="flex items-center justify-start px-6 py-4 border-b border-gray-200">
+          <Brain className="h-8 w-8 text-blue-600 mr-3" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Dhruv AI</h1>
+            <p className="text-xs text-gray-500">{user?.exam_type} Preparation</p>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6">
+          <ul className="space-y-2">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.name}>
+                  <button
+                    onClick={() => handleNavigation(item.href, item.name)}
+                    disabled={navigating === item.name}
+                    className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                      item.current
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    } ${navigating === item.name ? 'opacity-75 cursor-not-allowed' : ''}`}
+                  >
+                    {navigating === item.name ? (
+                      <LoadingSpinner size="sm" className="mr-3 h-5 w-5 flex-shrink-0" />
+                    ) : (
+                      <Icon 
                       className={`mr-3 h-5 w-5 ${
                         item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
                       }`}
