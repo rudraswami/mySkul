@@ -8,8 +8,6 @@ import {
   LayoutDashboard, 
   MessageCircle, 
   FileText, 
-  BarChart3, 
-  Heart,
   LogOut,
   User,
   Mic,
