@@ -568,13 +568,10 @@ export function DualResponseContainer({
 
         {/* Main Answer Content */}
         <div className="p-4">
-          <div className="prose prose-sm max-w-none">
-            <div 
-              className="text-gray-800 leading-relaxed"
-              dangerouslySetInnerHTML={{
-                __html: formatMathExpressions(primaryResponse.response)
-              }}
-            />
+          <div className="max-w-none">
+            <div className="text-gray-800 leading-relaxed">
+              {formatVisualResponse(primaryResponse.response)}
+            </div>
           </div>
 
           {/* Basic Feedback */}
