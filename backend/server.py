@@ -752,10 +752,13 @@ class DualAIRequest(BaseModel):
     subject: str
 
 class ProfileUpdateRequest(BaseModel):
-    preferred_language: str = Field(..., pattern="^(english|hindi|hinglish)$")
-    learning_style: str = Field(..., pattern="^(visual|analytical|practical|balanced)$")
-    difficulty_preference: float = Field(..., ge=0.1, le=1.0)
-    response_length_preference: str = Field(..., pattern="^(short|medium|detailed)$")
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    exam_type: Optional[str] = None
+    target_year: Optional[int] = None
+    current_standard: Optional[str] = None
+    institution: Optional[str] = None
 
 class FeedbackRequest(BaseModel):
     session_id: str
