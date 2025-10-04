@@ -1638,10 +1638,12 @@ export default function AutoNoteMentor() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-sm text-gray-900 truncate">
-                            {session.title}
+                            {session.title || 
+                             session.session_name ||
+                             `${session.subject || 'General'} Session - ${new Date(session.created_at).toLocaleDateString()}`}
                           </h4>
                           <Badge variant="outline" className="text-xs">
-                            {session.subject}
+                            {session.subject || 'General'}
                           </Badge>
                         </div>
                         
