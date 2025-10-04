@@ -1374,6 +1374,498 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= PHASE C, D, E: AI TUTOR ENHANCEMENT FEATURES TESTING =============
+
+    def test_phase_c_guardrails_system(self):
+        """Test Phase C: Guardrails System APIs - Mathematical validation, citations, fact verification"""
+        if not self.token:
+            print("❌ No token available for Phase C Guardrails testing")
+            return False
+        
+        print("\n🎯 PHASE C: GUARDRAILS SYSTEM TESTING")
+        print("   Testing mathematical validation, citation generation, fact verification, and disagreement alerts")
+        
+        test_results = {
+            'math_validation': False,
+            'citations': False,
+            'fact_verification': False,
+            'disagreements': False
+        }
+        
+        # 1. Test Mathematical Expression Validation
+        print("\n📋 Testing /api/guardrails/validate-math")
+        math_test_cases = [
+            {
+                "expression": "x^2 + 3x + 2 = 0",
+                "units": "dimensionless"
+            },
+            {
+                "expression": "F = ma",
+                "units": "Newton"
+            },
+            {
+                "expression": "E = mc^2",
+                "units": "Joules"
+            }
+        ]
+        
+        math_success_count = 0
+        for i, test_case in enumerate(math_test_cases):
+            print(f"   Testing math validation {i+1}/{len(math_test_cases)}: {test_case['expression']}")
+            
+            success, response = self.run_test(
+                f"Math Validation - {test_case['expression']}",
+                "POST",
+                "guardrails/validate-math",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Math validation successful")
+                print(f"   Valid: {response.get('is_valid', False)}")
+                print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
+                math_success_count += 1
+            else:
+                print(f"   ❌ Math validation failed")
+        
+        test_results['math_validation'] = math_success_count >= len(math_test_cases) * 0.7
+        
+        # 2. Test Citation Generation
+        print("\n📋 Testing /api/guardrails/citations/{subject}/{topic}")
+        citation_test_cases = [
+            {"subject": "Mathematics", "topic": "Quadratic Equations"},
+            {"subject": "Physics", "topic": "Newton's Laws"},
+            {"subject": "Chemistry", "topic": "Periodic Table"}
+        ]
+        
+        citation_success_count = 0
+        for test_case in citation_test_cases:
+            print(f"   Testing citations for {test_case['subject']}/{test_case['topic']}")
+            
+            success, response = self.run_test(
+                f"Citations - {test_case['subject']}/{test_case['topic']}",
+                "GET",
+                f"guardrails/citations/{test_case['subject']}/{test_case['topic']}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                citations = response.get('citations', [])
+                print(f"   ✅ Citations retrieved: {len(citations)} sources")
+                if citations:
+                    print(f"   Sample source: {citations[0].get('source_title', 'N/A')}")
+                citation_success_count += 1
+            else:
+                print(f"   ❌ Citation generation failed")
+        
+        test_results['citations'] = citation_success_count >= len(citation_test_cases) * 0.7
+        
+        # 3. Test Fact Verification
+        print("\n📋 Testing /api/guardrails/fact-verification")
+        fact_test_cases = [
+            {
+                "statement": "The speed of light in vacuum is approximately 3 × 10^8 m/s",
+                "subject": "Physics",
+                "context": "Basic physics constants"
+            },
+            {
+                "statement": "Water boils at 100°C at standard atmospheric pressure",
+                "subject": "Chemistry",
+                "context": "Phase transitions"
+            }
+        ]
+        
+        fact_success_count = 0
+        for i, test_case in enumerate(fact_test_cases):
+            print(f"   Testing fact verification {i+1}/{len(fact_test_cases)}")
+            
+            success, response = self.run_test(
+                f"Fact Verification - {i+1}",
+                "POST",
+                "guardrails/fact-verification",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Fact verification successful")
+                print(f"   Verified: {response.get('is_verified', False)}")
+                print(f"   Confidence: {response.get('confidence_score', 0):.2f}")
+                fact_success_count += 1
+            else:
+                print(f"   ❌ Fact verification failed")
+        
+        test_results['fact_verification'] = fact_success_count >= len(fact_test_cases) * 0.7
+        
+        # 4. Test Disagreement Alerts (requires session_id)
+        print("\n📋 Testing /api/guardrails/disagreements/{session_id}")
+        if self.session_id:
+            success, response = self.run_test(
+                "Disagreement Alerts",
+                "GET",
+                f"guardrails/disagreements/{self.session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                alerts = response.get('disagreements', [])
+                print(f"   ✅ Disagreement alerts retrieved: {len(alerts)} alerts")
+                test_results['disagreements'] = True
+            else:
+                print(f"   ❌ Disagreement alerts failed")
+        else:
+            print("   ⚠️  Skipping disagreement alerts - no session_id available")
+            test_results['disagreements'] = True  # Skip this test
+        
+        # Summary
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 PHASE C GUARDRAILS SYSTEM SUMMARY:")
+        print(f"   ✅ Math Validation: {'PASS' if test_results['math_validation'] else 'FAIL'}")
+        print(f"   ✅ Citations: {'PASS' if test_results['citations'] else 'FAIL'}")
+        print(f"   ✅ Fact Verification: {'PASS' if test_results['fact_verification'] else 'FAIL'}")
+        print(f"   ✅ Disagreement Alerts: {'PASS' if test_results['disagreements'] else 'FAIL'}")
+        print(f"   📊 Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        return success_rate >= 70.0
+
+    def test_phase_d_action_buttons(self):
+        """Test Phase D: Action Buttons System APIs - Practice problems, notes, flashcards, revision"""
+        if not self.token:
+            print("❌ No token available for Phase D Action Buttons testing")
+            return False
+        
+        print("\n🎯 PHASE D: ACTION BUTTONS SYSTEM TESTING")
+        print("   Testing practice problems, note saving, flashcard creation, and revision scheduling")
+        
+        test_results = {
+            'practice_more': False,
+            'add_to_notes': False,
+            'create_flashcards': False,
+            'schedule_revision': False,
+            'get_notes': False,
+            'get_flashcard_decks': False,
+            'get_revision_schedule': False
+        }
+        
+        # 1. Test Practice Problem Generation
+        print("\n📋 Testing /api/actions/practice-more")
+        practice_test_case = {
+            "original_question": "Solve the quadratic equation x² + 5x + 6 = 0",
+            "subject": "Mathematics",
+            "topic": "Quadratic Equations",
+            "education_standard": "JEE",
+            "difficulty_level": "similar"
+        }
+        
+        success, response = self.run_test(
+            "Practice Problem Generation",
+            "POST",
+            "actions/practice-more",
+            200,
+            data=practice_test_case,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            problems = response.get('generated_problems', [])
+            print(f"   ✅ Practice problems generated: {len(problems)} problems")
+            if problems:
+                print(f"   Sample problem: {problems[0].get('question', 'N/A')[:50]}...")
+            test_results['practice_more'] = True
+        else:
+            print(f"   ❌ Practice problem generation failed")
+        
+        # 2. Test Add to Notes
+        print("\n📋 Testing /api/actions/add-to-notes")
+        note_test_case = {
+            "title": "Quadratic Equations Summary",
+            "content": "Key concepts: discriminant, roots, factorization methods",
+            "subject": "Mathematics",
+            "topic": "Quadratic Equations",
+            "interaction_id": str(uuid.uuid4())
+        }
+        
+        success, response = self.run_test(
+            "Add to Notes",
+            "POST",
+            "actions/add-to-notes",
+            200,
+            data=note_test_case,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            note_id = response.get('note_id')
+            print(f"   ✅ Note saved successfully: {note_id}")
+            test_results['add_to_notes'] = True
+        else:
+            print(f"   ❌ Add to notes failed")
+        
+        # 3. Test Create Flashcards
+        print("\n📋 Testing /api/actions/create-flashcards")
+        flashcard_test_case = {
+            "title": "Physics Concepts Flashcards",
+            "content": "Newton's Laws: F=ma, action-reaction pairs, inertia",
+            "subject": "Physics",
+            "topic": "Newton's Laws",
+            "interaction_id": str(uuid.uuid4())
+        }
+        
+        success, response = self.run_test(
+            "Create Flashcards",
+            "POST",
+            "actions/create-flashcards",
+            200,
+            data=flashcard_test_case,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            deck_id = response.get('deck_id')
+            cards = response.get('cards', [])
+            print(f"   ✅ Flashcard deck created: {deck_id}")
+            print(f"   Cards generated: {len(cards)}")
+            test_results['create_flashcards'] = True
+        else:
+            print(f"   ❌ Create flashcards failed")
+        
+        # 4. Test Schedule Revision
+        print("\n📋 Testing /api/actions/schedule-revision")
+        revision_test_case = {
+            "content_id": str(uuid.uuid4()),
+            "content_type": "note",
+            "title": "Review Quadratic Equations",
+            "difficulty_level": 0.7
+        }
+        
+        success, response = self.run_test(
+            "Schedule Revision",
+            "POST",
+            "actions/schedule-revision",
+            200,
+            data=revision_test_case,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            schedule_id = response.get('schedule_id')
+            scheduled_for = response.get('scheduled_for')
+            print(f"   ✅ Revision scheduled: {schedule_id}")
+            print(f"   Scheduled for: {scheduled_for}")
+            test_results['schedule_revision'] = True
+        else:
+            print(f"   ❌ Schedule revision failed")
+        
+        # 5. Test Get Notes
+        print("\n📋 Testing /api/actions/notes")
+        success, response = self.run_test(
+            "Get User Notes",
+            "GET",
+            "actions/notes",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            notes = response.get('notes', [])
+            print(f"   ✅ Notes retrieved: {len(notes)} notes")
+            test_results['get_notes'] = True
+        else:
+            print(f"   ❌ Get notes failed")
+        
+        # 6. Test Get Flashcard Decks
+        print("\n📋 Testing /api/actions/flashcard-decks")
+        success, response = self.run_test(
+            "Get Flashcard Decks",
+            "GET",
+            "actions/flashcard-decks",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            decks = response.get('decks', [])
+            print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
+            test_results['get_flashcard_decks'] = True
+        else:
+            print(f"   ❌ Get flashcard decks failed")
+        
+        # 7. Test Get Revision Schedule
+        print("\n📋 Testing /api/actions/revision-schedule")
+        success, response = self.run_test(
+            "Get Revision Schedule",
+            "GET",
+            "actions/revision-schedule",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            schedule = response.get('schedule', [])
+            print(f"   ✅ Revision schedule retrieved: {len(schedule)} items")
+            test_results['get_revision_schedule'] = True
+        else:
+            print(f"   ❌ Get revision schedule failed")
+        
+        # Summary
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 PHASE D ACTION BUTTONS SYSTEM SUMMARY:")
+        print(f"   ✅ Practice More: {'PASS' if test_results['practice_more'] else 'FAIL'}")
+        print(f"   ✅ Add to Notes: {'PASS' if test_results['add_to_notes'] else 'FAIL'}")
+        print(f"   ✅ Create Flashcards: {'PASS' if test_results['create_flashcards'] else 'FAIL'}")
+        print(f"   ✅ Schedule Revision: {'PASS' if test_results['schedule_revision'] else 'FAIL'}")
+        print(f"   ✅ Get Notes: {'PASS' if test_results['get_notes'] else 'FAIL'}")
+        print(f"   ✅ Get Flashcard Decks: {'PASS' if test_results['get_flashcard_decks'] else 'FAIL'}")
+        print(f"   ✅ Get Revision Schedule: {'PASS' if test_results['get_revision_schedule'] else 'FAIL'}")
+        print(f"   📊 Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        return success_rate >= 70.0
+
+    def test_phase_e_wellness_integration(self):
+        """Test Phase E: Wellness Integration APIs - Wellness checks and history"""
+        if not self.token:
+            print("❌ No token available for Phase E Wellness testing")
+            return False
+        
+        print("\n🎯 PHASE E: WELLNESS INTEGRATION TESTING")
+        print("   Testing wellness checks and wellness history tracking")
+        
+        test_results = {
+            'wellness_check': False,
+            'wellness_history': False
+        }
+        
+        # 1. Test Wellness Check
+        print("\n📋 Testing /api/analytics/wellness-check")
+        wellness_test_cases = [
+            {
+                "stress_level": 7,
+                "motivation_level": 4,
+                "confidence_level": 5,
+                "study_satisfaction": 6,
+                "session_id": self.session_id or str(uuid.uuid4())
+            },
+            {
+                "stress_level": 3,
+                "motivation_level": 8,
+                "confidence_level": 9,
+                "study_satisfaction": 8,
+                "session_id": self.session_id or str(uuid.uuid4())
+            }
+        ]
+        
+        wellness_success_count = 0
+        for i, test_case in enumerate(wellness_test_cases):
+            print(f"   Testing wellness check {i+1}/{len(wellness_test_cases)}: Stress {test_case['stress_level']}/10")
+            
+            success, response = self.run_test(
+                f"Wellness Check - Scenario {i+1}",
+                "POST",
+                "analytics/wellness-check",
+                200,
+                data=test_case,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                check_id = response.get('check_id')
+                break_recommendation = response.get('break_recommendation', False)
+                motivational_content = response.get('motivational_content_suggested')
+                
+                print(f"   ✅ Wellness check completed: {check_id}")
+                print(f"   Break recommended: {break_recommendation}")
+                print(f"   Motivational content: {'Yes' if motivational_content else 'No'}")
+                wellness_success_count += 1
+            else:
+                print(f"   ❌ Wellness check failed")
+        
+        test_results['wellness_check'] = wellness_success_count >= len(wellness_test_cases) * 0.5
+        
+        # 2. Test Wellness History
+        print("\n📋 Testing /api/analytics/wellness-history")
+        success, response = self.run_test(
+            "Wellness History",
+            "GET",
+            "analytics/wellness-history",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            history = response.get('wellness_history', [])
+            trends = response.get('trends', {})
+            
+            print(f"   ✅ Wellness history retrieved: {len(history)} entries")
+            print(f"   Trends available: {len(trends)} metrics")
+            
+            if trends:
+                avg_stress = trends.get('average_stress_level', 0)
+                avg_motivation = trends.get('average_motivation_level', 0)
+                print(f"   Average stress: {avg_stress:.1f}/10")
+                print(f"   Average motivation: {avg_motivation:.1f}/10")
+            
+            test_results['wellness_history'] = True
+        else:
+            print(f"   ❌ Wellness history failed")
+        
+        # Summary
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"\n🎯 PHASE E WELLNESS INTEGRATION SUMMARY:")
+        print(f"   ✅ Wellness Check: {'PASS' if test_results['wellness_check'] else 'FAIL'}")
+        print(f"   ✅ Wellness History: {'PASS' if test_results['wellness_history'] else 'FAIL'}")
+        print(f"   📊 Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        return success_rate >= 70.0
+
+    def test_ai_tutor_phase_cde_comprehensive(self):
+        """Comprehensive testing of AI Tutor Phase C, D, E enhancement features"""
+        if not self.token:
+            print("❌ No token available for AI Tutor Phase C, D, E testing")
+            return False
+        
+        print("\n🎯 AI TUTOR PHASE C, D, E COMPREHENSIVE TESTING")
+        print("   Testing all enhancement features: Guardrails, Action Buttons, Wellness Integration")
+        print("   Authentication: test@dhruvai.com / password123")
+        
+        # Run all phase tests
+        phase_results = {
+            'phase_c_guardrails': self.test_phase_c_guardrails_system(),
+            'phase_d_actions': self.test_phase_d_action_buttons(),
+            'phase_e_wellness': self.test_phase_e_wellness_integration()
+        }
+        
+        # Overall summary
+        passed_phases = sum(phase_results.values())
+        total_phases = len(phase_results)
+        overall_success_rate = (passed_phases / total_phases) * 100
+        
+        print(f"\n🎯 AI TUTOR PHASE C, D, E FINAL SUMMARY:")
+        print(f"   ✅ Phase C - Guardrails System: {'PASS' if phase_results['phase_c_guardrails'] else 'FAIL'}")
+        print(f"   ✅ Phase D - Action Buttons: {'PASS' if phase_results['phase_d_actions'] else 'FAIL'}")
+        print(f"   ✅ Phase E - Wellness Integration: {'PASS' if phase_results['phase_e_wellness'] else 'FAIL'}")
+        print(f"   📊 Overall Success Rate: {passed_phases}/{total_phases} ({overall_success_rate:.1f}%)")
+        
+        if overall_success_rate >= 70.0:
+            print("   🎉 AI TUTOR PHASE C, D, E TESTING COMPLETED SUCCESSFULLY")
+        else:
+            print("   ⚠️  AI TUTOR PHASE C, D, E TESTING NEEDS ATTENTION")
+        
+        return overall_success_rate >= 70.0
+
     # ============= PHASE 1 MOCK TEST FINAL VALIDATION - COMPREHENSIVE TESTING =============
 
     def test_mock_test_phase1_final_validation(self):
