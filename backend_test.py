@@ -1709,7 +1709,7 @@ class DhruvAITester:
         )
         
         if success:
-            schedule = response.get('schedule', [])
+            schedule = response if isinstance(response, list) else response.get('schedule', [])
             print(f"   ✅ Revision schedule retrieved: {len(schedule)} items")
             test_results['get_revision_schedule'] = True
         else:
