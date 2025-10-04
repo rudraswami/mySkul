@@ -1513,7 +1513,7 @@ class DhruvAITester:
             )
             
             if success:
-                alerts = response.get('disagreements', [])
+                alerts = response if isinstance(response, list) else response.get('disagreements', [])
                 print(f"   ✅ Disagreement alerts retrieved: {len(alerts)} alerts")
                 test_results['disagreements'] = True
             else:
