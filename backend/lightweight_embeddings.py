@@ -62,21 +62,9 @@ class LightweightEmbeddingService:
             # Try using Emergent LLM integration for embeddings
             if self.client:
                 embeddings = []
-                for text in texts:
-                    try:
-                        # Use OpenAI embeddings via Emergent integration
-                        response = await self.client.create_embeddings(
-                            text=text,
-                            model="text-embedding-3-small"
-                        )
-                        if response and 'embedding' in response:
-                            embeddings.append(response['embedding'])
-                        else:
-                            # Fallback for this text
-                            embeddings.append(self._create_simple_embedding(text))
-                    except Exception as e:
-                        logger.warning(f"API embedding failed for text, using fallback: {e}")
-                        embeddings.append(self._create_simple_embedding(text))
+                # Use simple fallback for now - can be enhanced later with proper API calls
+                embeddings = [self._create_simple_embedding(text) for text in texts]
+                logger.info(f"Created {len(embeddings)} embeddings using simple method")
                 
                 return embeddings
             else:
