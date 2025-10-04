@@ -6093,7 +6093,30 @@ async def get_note_session(
             raise HTTPException(status_code=404, detail="Session not found")
         
         # Remove MongoDB ObjectId for JSON serialization and handle datetime
-        return clean_mongodb_doc(session_doc)
+        clean_session = clean_mongodb_doc(session_doc)
+        
+        # Ensure session has a proper title/name for frontend compatibility
+        session_name = clean_session.get('session_name') or clean_session.get('title')
+        if not session_name:
+            # Auto-generate name based on subject and date
+            subject = clean_session.get('subject', 'General')
+            created_date = clean_session.get('created_at', '')
+            if created_date:
+                try:
+                    # Parse date and format nicely
+                    date_obj = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
+                    date_str = date_obj.strftime('%m/%d/%Y')
+                except:
+                    date_str = 'Unknown Date'
+            else:
+                date_str = 'Unknown Date'
+            session_name = f"{subject} Session - {date_str}"
+        
+        # Add both fields for frontend compatibility  
+        clean_session['title'] = session_name
+        clean_session['session_name'] = session_name
+        
+        return clean_session
         
     except Exception as e:
         logger.error(f"Note session retrieval error: {str(e)}")
