@@ -692,16 +692,15 @@
 
 ## test_plan:
   current_focus:
-    - "Subscription Service Infrastructure Repair"
-    - "Dynamic Subject Mapping Synchronization Fix"
-    - "Mock Test Generation API Parameter Validation"
+    - "AI Tutor Phase C: Guardrails System Testing"
+    - "AI Tutor Phase D: Action Buttons System Testing" 
+    - "AI Tutor Phase E: Wellness Integration Testing"
+    - "AI Tutor Mobile Compatibility"
+    - "Enhanced Topic Detection Logic"
   stuck_tasks:
-    - "Mock Test Fix #1: Enhanced Error Handling"
-    - "Mock Test Fix #2: Free Tier Subscription Access"
-    - "Mock Test Fix #3: Dynamic Subject Mapping"
-    - "Mock Test Enhancement APIs"
+    - "AI Tutor Mobile Responsiveness"
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
   - task: "Comprehensive Revenue Module Subscription System"
     implemented: true
