@@ -1782,9 +1782,12 @@ class DhruvAITester:
     
     def test_auto_note_mentor_complete_workflow(self):
         """Test complete Auto-Note Mentor recording workflow as requested in review"""
+        # Ensure authentication first
         if not self.token:
-            print("❌ No token available for Auto-Note Mentor workflow test")
-            return False
+            print("   No token available, attempting authentication...")
+            if not self.test_auto_note_authentication():
+                print("❌ Authentication failed for Auto-Note Mentor workflow test")
+                return False
         
         print("\n🎯 AUTO-NOTE MENTOR COMPLETE WORKFLOW TESTING")
         print("   Focus: Complete recording workflow from start to end")
