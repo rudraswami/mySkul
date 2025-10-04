@@ -18,6 +18,8 @@ import {
 export default function Navigation() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [navigating, setNavigating] = useState(null);
 
   const navigation = [
     {
