@@ -1445,7 +1445,7 @@ export default function AITutor() {
                     className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
                     variant="outline"
                   >
-                    <GraduationCap className="h-4 w-4 mr-3 text-teal-600" />
+                    <GraduationCap className="h-4 w-4 mr-3 text-blue-600" />
                     Explain Limits in Calculus (Professor)
                   </Button>
                   
@@ -1454,7 +1454,7 @@ export default function AITutor() {
                     className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
                     variant="outline"
                   >
-                    <Heart className="h-4 w-4 mr-3 text-teal-600" />
+                    <Heart className="h-4 w-4 mr-3 text-blue-600" />
                     Help me plan my study routine (Mentor)
                   </Button>
                 </div>
@@ -1629,7 +1629,7 @@ export default function AITutor() {
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 max-w-sm">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                      <Brain className="h-4 w-4 text-teal-600 animate-pulse" />
+                      <Brain className="h-4 w-4 text-blue-600 animate-pulse" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
@@ -1656,7 +1656,7 @@ export default function AITutor() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center">
-                  <Target className="h-3 w-3 text-teal-600" />
+                  <Target className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
                   <span className="text-sm font-medium text-teal-800">Personalized Learning Active</span>
@@ -2013,7 +2013,7 @@ export default function AITutor() {
                       size="sm"
                       variant="ghost"
                       onClick={isListening ? stopVoiceInput : startVoiceInput}
-                      className={`h-7 w-7 p-0 ${isListening ? 'text-red-500' : 'text-gray-400 hover:text-teal-600'}`}
+                      className={`h-7 w-7 p-0 ${isListening ? 'text-red-500' : 'text-gray-400 hover:text-blue-600'}`}
                       disabled={loading}
                     >
                       {isListening ? (
@@ -2029,7 +2029,7 @@ export default function AITutor() {
                     size="sm"
                     variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-teal-600"
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600"
                     disabled={loading}
                   >
                     <Upload className="h-4 w-4" />
@@ -2040,7 +2040,7 @@ export default function AITutor() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowQuickSuggestions(!showQuickSuggestions)}
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-teal-600"
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600"
                     title="⋯ More options"
                     disabled={loading}
                   >
@@ -2060,7 +2060,7 @@ export default function AITutor() {
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-teal-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
