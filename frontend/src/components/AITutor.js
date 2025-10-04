@@ -1659,7 +1659,7 @@ export default function AITutor() {
                   <Target className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-teal-800">Personalized Learning Active</span>
+                  <span className="text-sm font-medium text-blue-800">Personalized Learning Active</span>
                   <div className="flex items-center space-x-4 text-xs text-gray-600 mt-1">
                     <span>Language: <span className="font-medium text-blue-700">{studentProfile.preferred_language}</span></span>
                     <span>Style: <span className="font-medium text-blue-700">{studentProfile.learning_style}</span></span>
