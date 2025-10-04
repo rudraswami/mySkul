@@ -3319,6 +3319,7 @@ class ActionButtonService:
                 user_id=user_id,
                 original_question=original_question,
                 generated_problems=[{"error": f"Could not generate problems: {str(e)}"}],
+                difficulty_level=difficulty_level,
                 education_standard=education_standard,
                 subject=subject,
                 topic=topic
