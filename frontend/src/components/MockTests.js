@@ -91,6 +91,35 @@ export default function MockTests() {
   // Global emergency reset button (for debugging)
   window.dhruvAI_emergencyReset = emergencyResetAllStates;
 
+  // Function to refresh usage data
+  const refreshUsageData = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return null;
+
+      const usageResponse = await fetch(`${backendUrl}/api/subscription/usage`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (usageResponse.ok) {
+        const usage = await usageResponse.json();
+        const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+        return {
+          used: mockTestUsage.used || 0,
+          limit: mockTestUsage.limit || 2,
+          remaining: mockTestUsage.remaining || 0,
+          has_access: mockTestUsage.remaining > 0 || mockTestUsage.limit === -1
+        };
+      }
+    } catch (error) {
+      console.error('Failed to refresh usage data:', error);
+    }
+    return null;
+  };
+
   useEffect(() => {
     loadAnalytics();
     loadExamSubjects(); // Load subjects first
