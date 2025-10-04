@@ -313,6 +313,9 @@ export default function AutoNoteMentor() {
         setMentorSummary(result.mentor_summary || '');
         setSessionStatus('completed');
         
+        // Refresh sessions list to show the new completed session
+        loadUserSessions();
+        
         // If we have a note_id, load the detailed processed note
         if (result.note_id) {
           await loadProcessedNote(result.note_id);
