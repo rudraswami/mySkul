@@ -7469,32 +7469,26 @@ if __name__ == "__main__":
     import uuid
     tester = DhruvAITester()
     
-    # Run only the Auto-Note Mentor routing fix test as per review request
-    print("🚀 Starting Auto-Note Mentor Routing Fix Testing...")
-    print("   Focus: Testing fixed FastAPI routing issue")
+    # Run the comprehensive Auto-Note Mentor workflow test as per review request
+    print("🚀 Starting Auto-Note Mentor Complete Workflow Testing...")
+    print("   Focus: Complete recording workflow from start to end")
+    print("   User reports: System gets stuck on 'Processing your notes' without completing")
     print("="*80)
     
-    # Authentication first
-    if not tester.test_user_login():
-        print("❌ Login failed, trying registration...")
-        if not tester.test_user_registration():
-            print("❌ Registration also failed, stopping tests")
-            sys.exit(1)
-    
-    # Run the specific routing fix test
-    success = tester.test_auto_note_mentor_routing_fix()
+    # Run comprehensive tests
+    success = tester.run_comprehensive_tests()
     
     # Final summary
     print("\n" + "="*80)
-    print("🎯 AUTO-NOTE MENTOR ROUTING FIX TESTING COMPLETE")
+    print("🎯 AUTO-NOTE MENTOR WORKFLOW TESTING COMPLETE")
     print("="*80)
     print(f"Total tests run: {tester.tests_run}")
     print(f"Tests passed: {tester.tests_passed}")
     print(f"Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
     if success:
-        print("🎉 ROUTING FIX VALIDATION SUCCESSFUL!")
+        print("🎉 AUTO-NOTE MENTOR WORKFLOW TESTING SUCCESSFUL!")
     else:
-        print("⚠️  ROUTING FIX VALIDATION FAILED - Review needed")
+        print("⚠️  AUTO-NOTE MENTOR WORKFLOW TESTING FAILED - Issues found in processing chain")
     
     sys.exit(0 if success else 1)
