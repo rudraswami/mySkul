@@ -1465,7 +1465,7 @@ export default function AITutor() {
                 <div key={index} className="space-y-4">
                   {/* Clean User Message */}
                   <div className="flex justify-end">
-                    <div className="max-w-2xl bg-teal-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
+                    <div className="max-w-2xl bg-blue-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
                       <p className="text-sm leading-relaxed">{message.message}</p>
                       <div className="flex items-center justify-end mt-2 text-xs text-teal-100">
                         <Clock className="h-3 w-3 mr-1" />
@@ -1635,9 +1635,9 @@ export default function AITutor() {
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-700">AI is thinking</span>
                         <div className="flex space-x-1">
-                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce"></div>
-                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-1 h-1 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
                       </div>
                     </div>
@@ -1941,7 +1941,7 @@ export default function AITutor() {
                   variant={aiMode === 'mentor' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'mentor' 
-                      ? 'bg-teal-500 text-white shadow-sm' 
+                      ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
@@ -1953,7 +1953,7 @@ export default function AITutor() {
                   variant={aiMode === 'professor' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'professor' 
-                      ? 'bg-teal-500 text-white shadow-sm' 
+                      ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
@@ -1965,7 +1965,7 @@ export default function AITutor() {
                   variant={aiMode === 'dual' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'dual' 
-                      ? 'bg-teal-500 text-white shadow-sm' 
+                      ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
@@ -2060,7 +2060,7 @@ export default function AITutor() {
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-teal-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
