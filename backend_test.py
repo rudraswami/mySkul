@@ -1675,7 +1675,7 @@ class DhruvAITester:
         )
         
         if success:
-            notes = response.get('notes', [])
+            notes = response if isinstance(response, list) else response.get('notes', [])
             print(f"   ✅ Notes retrieved: {len(notes)} notes")
             test_results['get_notes'] = True
         else:
