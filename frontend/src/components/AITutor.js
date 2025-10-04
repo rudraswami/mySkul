@@ -419,19 +419,65 @@ export default function AITutor() {
     }
   };
 
-  // Helper function to detect topic from message
+  // Enhanced topic detection with more sophisticated keywords
   const detectTopicFromMessage = (message) => {
-    const mathKeywords = ['derivative', 'integral', 'limit', 'equation', 'solve', 'calculate'];
-    const physicsKeywords = ['force', 'energy', 'momentum', 'wave', 'electric', 'magnetic'];
-    const chemistryKeywords = ['molecule', 'reaction', 'bond', 'element', 'compound', 'acid'];
-    
     const lowerMessage = message.toLowerCase();
     
-    if (mathKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Mathematics';
-    if (physicsKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Physics';
-    if (chemistryKeywords.some(keyword => lowerMessage.includes(keyword))) return 'Chemistry';
+    // Advanced keyword mapping with weights and context
+    const topicKeywords = {
+      'Mathematics': {
+        primary: ['algebra', 'calculus', 'geometry', 'trigonometry', 'statistics', 'probability', 'matrix', 'vector'],
+        secondary: ['derivative', 'integral', 'limit', 'equation', 'solve', 'calculate', 'function', 'graph', 'polynomial', 'quadratic', 'logarithm', 'exponential'],
+        symbols: ['x²', '∫', '∑', 'π', 'θ', '√', 'sin', 'cos', 'tan', 'log']
+      },
+      'Physics': {
+        primary: ['mechanics', 'thermodynamics', 'optics', 'electromagnetism', 'quantum', 'relativity'],
+        secondary: ['force', 'energy', 'momentum', 'wave', 'electric', 'magnetic', 'velocity', 'acceleration', 'mass', 'gravity', 'pressure', 'temperature'],
+        symbols: ['newton', 'joule', 'watt', 'volt', 'ampere', 'ohm', 'f=ma', 'v=u+at']
+      },
+      'Chemistry': {
+        primary: ['organic', 'inorganic', 'physical chemistry', 'biochemistry', 'analytical'],
+        secondary: ['molecule', 'reaction', 'bond', 'element', 'compound', 'acid', 'base', 'ph', 'oxidation', 'reduction', 'catalyst', 'equilibrium'],
+        symbols: ['h2o', 'co2', 'nacl', 'ch4', 'h+', 'oh-']
+      },
+      'Biology': {
+        primary: ['genetics', 'ecology', 'evolution', 'anatomy', 'physiology', 'botany', 'zoology'],
+        secondary: ['cell', 'dna', 'rna', 'protein', 'enzyme', 'photosynthesis', 'respiration', 'mitosis', 'meiosis'],
+        symbols: ['atp', 'dna', 'rna', 'co2', 'o2']
+      }
+    };
     
-    return 'General';
+    let topicScores = {};
+    
+    // Calculate scores for each topic
+    Object.keys(topicKeywords).forEach(topic => {
+      let score = 0;
+      const keywords = topicKeywords[topic];
+      
+      // Primary keywords (high weight)
+      keywords.primary.forEach(keyword => {
+        if (lowerMessage.includes(keyword)) score += 3;
+      });
+      
+      // Secondary keywords (medium weight)
+      keywords.secondary.forEach(keyword => {
+        if (lowerMessage.includes(keyword)) score += 2;
+      });
+      
+      // Symbols and formulas (medium weight)
+      keywords.symbols.forEach(symbol => {
+        if (lowerMessage.includes(symbol)) score += 2;
+      });
+      
+      topicScores[topic] = score;
+    });
+    
+    // Find the topic with highest score
+    const maxScore = Math.max(...Object.values(topicScores));
+    const detectedTopic = Object.keys(topicScores).find(topic => topicScores[topic] === maxScore);
+    
+    // Return detected topic if score is significant, otherwise return General
+    return maxScore >= 2 ? detectedTopic : 'General';
   };
 
   // Helper function to confirm new session creation
