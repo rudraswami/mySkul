@@ -45,18 +45,7 @@ export default function Navigation() {
       icon: Mic,
       current: location.pathname === '/auto-notes'
     },
-    {
-      name: 'Analytics',
-      href: '/analytics',
-      icon: BarChart3,
-      current: location.pathname === '/analytics'
-    },
-    {
-      name: 'Wellness',
-      href: '/wellness',
-      icon: Heart,
-      current: location.pathname === '/wellness'
-    },
+    // Removed: Analytics and Wellness - not essential for core exam preparation functionality
     {
       name: 'Subscription',
       href: '/subscription',
