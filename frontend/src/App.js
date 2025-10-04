@@ -14,6 +14,7 @@ import Subscription from './components/Subscription';
 import ProfileSettings from './components/ProfileSettings';
 import Navigation from './components/Navigation';
 import { Toaster } from './components/ui/toaster';
+import { PageLoader } from './components/ui/loading';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
