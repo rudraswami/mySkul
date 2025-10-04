@@ -249,9 +249,9 @@ class AutoNoteFallbackTester:
                 print(f"   Dual analysis - Mentor guidance: {len(mentor_guidance)} chars")
                 
                 if professor_analysis:
-                    print(f"   Professor analysis sample: {professor_analysis[:50]}...")
+                    print(f"   Professor analysis sample: {str(professor_analysis)[:50]}...")
                 if mentor_guidance:
-                    print(f"   Mentor guidance sample: {mentor_guidance[:50]}...")
+                    print(f"   Mentor guidance sample: {str(mentor_guidance)[:50]}...")
             
             # Final verification as per review requirements
             if session_status == 'completed' and has_structured_notes and has_dual_analysis:
