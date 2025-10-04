@@ -72,6 +72,7 @@ function AppContent() {
                 {/* Removed: Analytics and Wellness routes - not essential for core exam preparation */}
                 <Route path="/auto-notes" element={<AutoNoteMentor />} />
                 <Route path="/subscription" element={<Subscription />} />
+                <Route path="/profile" element={<ProfileSettings />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </Routes>
             </main>
