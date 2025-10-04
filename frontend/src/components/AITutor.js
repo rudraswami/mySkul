@@ -1238,7 +1238,7 @@ export default function AITutor() {
                       key={session.session_id}
                       className={`flex items-center justify-between px-3 py-2 ml-4 rounded-lg transition-colors text-sm group ${
                         currentSession === session.session_id
-                          ? 'bg-teal-50 text-teal-900 border border-teal-200'
+                          ? 'bg-blue-50 text-blue-900 border border-blue-200'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
