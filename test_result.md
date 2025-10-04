@@ -131,6 +131,66 @@
 ## user_problem_statement: "Phase 2: AI Tutor Module Enhancement - Complete Phase C, D, E features testing (guardrails, actions, wellness checks) and ensure mobile compatibility. Implement enhanced topic detection logic for auto-suggesting new sessions."
 
 ## backend:
+  - task: "AI Tutor Phase C: Guardrails System Testing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Phase C guardrails system includes math validation, citation generation, fact verification, and disagreement detection APIs. Backend endpoints implemented: /api/guardrails/validate-math, /api/guardrails/citations/{subject}/{topic}, /api/guardrails/disagreements/{session_id}, /api/guardrails/fact-verification. Frontend integration exists but requires comprehensive testing."
+
+  - task: "AI Tutor Phase D: Action Buttons System Testing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Phase D action buttons system includes practice problem generation, note saving, flashcard creation, and revision scheduling. Backend endpoints implemented: /api/actions/practice-more, /api/actions/add-to-notes, /api/actions/create-flashcards, /api/actions/schedule-revision. Frontend handlers exist but require comprehensive testing."
+
+  - task: "AI Tutor Phase E: Wellness Integration Testing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Phase E wellness system includes periodic wellness checks, stress monitoring, and motivational content integration. Backend endpoints implemented: /api/analytics/wellness-check, /api/analytics/wellness-history. Frontend wellness modal and periodic triggers exist but require comprehensive testing."
+
+  - task: "AI Tutor Mobile Compatibility"
+    implemented: false
+    working: false
+    file: "components/AITutor.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "Mobile compatibility testing shows layout issues on 390x844 viewport. Navigation sidebar overlaps content area, text truncation issues, and button accessibility problems on mobile devices. Requires responsive design improvements."
+
+  - task: "Enhanced Topic Detection Logic"
+    implemented: true
+    working: false
+    file: "components/AITutor.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Basic topic detection exists using keyword matching for Mathematics, Physics, Chemistry. Current implementation is simple keyword-based. Needs enhancement for better accuracy and auto-session suggestions."
+
   - task: "Enhanced Mock Test System API"
     implemented: true
     working: true
