@@ -14,6 +14,11 @@ def main():
     print("   As requested in review: Test session persistence, listing, and retrieval")
     print("="*80)
     
+    # First authenticate
+    if not tester.test_user_login():
+        print("❌ Authentication failed, cannot proceed")
+        return False
+    
     # Run the specific test
     success = tester.test_auto_note_mentor_session_saving_and_retrieval()
     
