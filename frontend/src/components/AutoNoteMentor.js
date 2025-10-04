@@ -994,7 +994,9 @@ export default function AutoNoteMentor() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  📚 {currentSession?.title} - Auto-Generated Notes
+                  📚 {currentSession?.title || 
+                      currentSession?.session_name || 
+                      `${currentSession?.subject || 'General'} Session`} - Auto-Generated Notes
                 </h1>
                 <p className="text-gray-600">
                   {currentSession?.subject} • {generatedNotes.duration_minutes?.toFixed(1)} minutes recorded
