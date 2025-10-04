@@ -145,6 +145,145 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
 
+    def test_user_profile_update(self):
+        """Test PUT /api/user/profile endpoint - CRITICAL REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for profile update test")
+            return False
+        
+        print("\n🎯 CRITICAL: PROFILE SETTINGS UPDATE API TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing PUT /api/user/profile endpoint to identify 'Failed to update profile' error")
+        print("   User: test@dhruvai.com/password123")
+        print("   Focus: 500 errors, authentication issues, database problems, response structure")
+        
+        # Test various profile field combinations as requested
+        profile_test_scenarios = [
+            {
+                "name": "Full Profile Update",
+                "data": {
+                    "full_name": "Updated Test User",
+                    "email": "test@dhruvai.com",
+                    "phone": "+91-9876543210",
+                    "exam_type": "NEET",
+                    "target_year": 2025,
+                    "current_standard": "Class 12",
+                    "institution": "Test Institute"
+                }
+            },
+            {
+                "name": "Partial Profile Update - Name Only",
+                "data": {
+                    "full_name": "Test User Updated Name"
+                }
+            },
+            {
+                "name": "Partial Profile Update - Exam Type",
+                "data": {
+                    "exam_type": "JEE"
+                }
+            },
+            {
+                "name": "Partial Profile Update - Contact Info",
+                "data": {
+                    "phone": "+91-1234567890",
+                    "institution": "New Test Institute"
+                }
+            },
+            {
+                "name": "Multiple Fields Update",
+                "data": {
+                    "full_name": "Multi Field Test User",
+                    "target_year": 2026,
+                    "current_standard": "Class 11"
+                }
+            }
+        ]
+        
+        success_count = 0
+        total_tests = len(profile_test_scenarios)
+        
+        for i, scenario in enumerate(profile_test_scenarios, 1):
+            print(f"\n   Test {i}/{total_tests}: {scenario['name']}")
+            print(f"   Data: {scenario['data']}")
+            
+            success, response = self.run_test(
+                f"Profile Update - {scenario['name']}",
+                "PUT",
+                "user/profile",
+                200,  # Expected: 200 OK, NOT 500 Internal Server Error
+                data=scenario['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {scenario['name']} - Profile updated successfully")
+                
+                # Verify response structure matches frontend expectations
+                if 'message' in response:
+                    print(f"   ✅ Response contains message: {response['message']}")
+                
+                if 'user' in response:
+                    updated_user = response['user']
+                    print(f"   ✅ Response contains updated user data")
+                    
+                    # Verify specific fields were updated
+                    for field, expected_value in scenario['data'].items():
+                        if field in updated_user:
+                            actual_value = updated_user[field]
+                            if actual_value == expected_value:
+                                print(f"   ✅ {field}: {actual_value} (updated correctly)")
+                            else:
+                                print(f"   ⚠️  {field}: Expected {expected_value}, got {actual_value}")
+                        else:
+                            print(f"   ⚠️  {field}: Not found in response")
+                else:
+                    print(f"   ⚠️  Response missing 'user' field - frontend may expect this")
+                
+                success_count += 1
+                
+            else:
+                # Analyze the specific error for debugging
+                error_status = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                
+                print(f"   ❌ {scenario['name']} - Profile update FAILED")
+                print(f"   🔍 ERROR ANALYSIS:")
+                print(f"      Status Code: {error_status}")
+                print(f"      Error Data: {error_data}")
+                
+                if error_status == 500:
+                    print(f"      🚨 500 INTERNAL SERVER ERROR - This is the reported issue!")
+                    print(f"      🔍 Likely causes: Database connection, validation logic, or server error")
+                elif error_status == 401:
+                    print(f"      🚨 401 UNAUTHORIZED - Authentication issue")
+                elif error_status == 422:
+                    print(f"      🚨 422 VALIDATION ERROR - Invalid data format")
+                elif error_status == 404:
+                    print(f"      🚨 404 NOT FOUND - Endpoint may not exist")
+                else:
+                    print(f"      🚨 UNEXPECTED ERROR - Status {error_status}")
+            
+            time.sleep(1)  # Small delay between tests
+        
+        # Final assessment
+        success_rate = (success_count / total_tests) * 100
+        print(f"\n🎯 PROFILE UPDATE API TESTING SUMMARY:")
+        print(f"   ✅ Successful Updates: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        print(f"   🔍 Authentication: {'✓' if self.token else '✗'}")
+        print(f"   🔍 Endpoint: PUT /api/user/profile")
+        
+        if success_count == 0:
+            print(f"   🚨 CRITICAL ISSUE CONFIRMED: All profile updates failed")
+            print(f"   🚨 This explains the 'Failed to update profile' error reported by user")
+            print(f"   🔧 RECOMMENDATION: Check backend logs, database connection, and validation logic")
+        elif success_count < total_tests:
+            print(f"   ⚠️  PARTIAL ISSUE: Some profile updates failed")
+            print(f"   🔧 RECOMMENDATION: Check specific field validation and error handling")
+        else:
+            print(f"   ✅ ALL TESTS PASSED: Profile update API is working correctly")
+        
+        return success_count > 0  # Return True if at least one test passed
+
     def test_ai_chat_message(self):
         """Test AI chat functionality"""
         if not self.token:
