@@ -116,6 +116,7 @@ export default function Navigation() {
             variant="ghost" 
             size="sm" 
             className="w-full justify-start text-gray-600 hover:text-gray-900"
+            onClick={() => window.location.href = '/profile'}
           >
             <User className="h-4 w-4 mr-2" />
             Profile Settings
