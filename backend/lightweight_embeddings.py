@@ -9,7 +9,12 @@ import os
 import logging
 from typing import List, Dict, Any, Optional
 import httpx
-from emergentintegrations import EmergentLLMIntegration
+try:
+    from emergentintegrations import EmergentLLMIntegration
+    EMERGENT_AVAILABLE = True
+except ImportError:
+    EmergentLLMIntegration = None
+    EMERGENT_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
