@@ -5868,9 +5868,10 @@ async def end_note_session(
                 logger.error(f"No audio chunks or transcription found for session {session_id}")
                 raise HTTPException(status_code=400, detail="No audio data found for this session")
         
-        # Combine all transcriptions
-        full_transcription = " ".join([chunk["transcription"] for chunk in chunks])
-        total_duration = max([chunk["timestamp"] for chunk in chunks]) if chunks else 0
+        else:
+            # Combine all transcriptions
+            full_transcription = " ".join([chunk["transcription"] for chunk in chunks])
+            total_duration = max([chunk["timestamp"] for chunk in chunks]) if chunks else 0
         
         # PHASE B: Dual-Layer AI Analysis
         analysis_prompt = f"""Analyze this class transcription and create structured educational notes:
