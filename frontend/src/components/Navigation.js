@@ -15,7 +15,7 @@ import {
   CreditCard
 } from 'lucide-react';
 
-export default function Navigation() {
+export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
