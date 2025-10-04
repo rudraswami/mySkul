@@ -5851,12 +5851,22 @@ async def end_note_session(
         )
         
         # Collect all audio chunks for this session
+        logger.info(f"Looking for audio chunks with session_id: {session_id}")
         chunks = await db.audio_chunks.find(
             {"session_id": session_id}
         ).sort("sequence_number", 1).to_list(1000)
         
+        logger.info(f"Found {len(chunks)} audio chunks for session {session_id}")
+        
         if not chunks:
-            raise HTTPException(status_code=400, detail="No audio data found for this session")
+            # Check if there's any data in the session itself for fallback
+            if session_doc.get('transcription'):
+                logger.info(f"Using session transcription as fallback for session {session_id}")
+                full_transcription = session_doc['transcription']
+                total_duration = session_doc.get('audio_duration', 0)
+            else:
+                logger.error(f"No audio chunks or transcription found for session {session_id}")
+                raise HTTPException(status_code=400, detail="No audio data found for this session")
         
         # Combine all transcriptions
         full_transcription = " ".join([chunk["transcription"] for chunk in chunks])
