@@ -668,6 +668,10 @@ class AudioChunkRequest(BaseModel):
     sequence_number: int
     confidence: Optional[float] = None
 
+class EndSessionRequest(BaseModel):
+    fallback_transcription: Optional[str] = None
+    total_duration: Optional[float] = None
+
 class ExplainPointRequest(BaseModel):
     session_id: str
     point_reference: str  # e.g., "point_3", "concept_1"
