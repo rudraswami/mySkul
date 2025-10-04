@@ -68,8 +68,7 @@ function AppContent() {
                 <Route path="/dashboard" element={<StudentDashboard />} />
                 <Route path="/tutor" element={<AITutor />} />
                 <Route path="/tests" element={<MockTests />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/wellness" element={<StressManagement />} />
+                {/* Removed: Analytics and Wellness routes - not essential for core exam preparation */}
                 <Route path="/auto-notes" element={<AutoNoteMentor />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="*" element={<Navigate to="/dashboard" />} />
