@@ -1248,7 +1248,7 @@ export default function AITutor() {
                       >
                         {/* Session Status Icons */}
                         <div className="flex items-center mr-2">
-                          {session.pinned && <Pin className="h-3 w-3 text-teal-600 mr-1" />}
+                          {session.pinned && <Pin className="h-3 w-3 text-blue-600 mr-1" />}
                           {session.bookmarked && <Star className="h-3 w-3 text-yellow-500 mr-1" />}
                           <MessageCircle className="h-3 w-3 text-gray-400" />
                         </div>
