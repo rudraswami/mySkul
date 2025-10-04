@@ -1447,24 +1447,24 @@ export default function AITutor() {
               </h1>
               
               {/* Trust Badges */}
-              <div className="hidden md:flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center text-blue-600">
                   <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Shield className="h-3 w-3" />
                   </div>
-                  <span className="hidden lg:inline">Verified</span>
+                  <span>Verified</span>
                 </div>
                 <div className="flex items-center text-blue-600">
                   <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Target className="h-3 w-3" />
                   </div>
-                  <span className="hidden lg:inline">Personalized</span>
+                  <span>Personalized</span>
                 </div>
                 <div className="flex items-center text-blue-600">
                   <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <Lightbulb className="h-3 w-3" />
                   </div>
-                  <span className="hidden lg:inline">Empowering</span>
+                  <span>Empowering</span>
                 </div>
               </div>
             </div>
