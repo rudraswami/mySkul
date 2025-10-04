@@ -1211,7 +1211,7 @@ export default function AITutor() {
                   variant="ghost"
                   onClick={exportConversation}
                   disabled={messages.length === 0}
-                  className="text-gray-400 hover:text-teal-600 h-6 w-6 p-0"
+                  className="text-gray-400 hover:text-blue-600 h-6 w-6 p-0"
                   title="Export conversation"
                 >
                   <FileText className="h-3 w-3" />
