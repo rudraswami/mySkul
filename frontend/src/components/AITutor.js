@@ -1442,7 +1442,7 @@ export default function AITutor() {
                 <div className="flex flex-col items-center space-y-3 max-w-md mx-auto">
                   <Button 
                     onClick={() => setCurrentMessage("Explain Limits in Calculus (Professor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-blue-700 justify-start text-left"
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-700 justify-start text-left"
                     variant="outline"
                   >
                     <GraduationCap className="h-4 w-4 mr-3 text-blue-600" />
@@ -1451,7 +1451,7 @@ export default function AITutor() {
                   
                   <Button 
                     onClick={() => setCurrentMessage("Help me plan my study routine (Mentor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-blue-700 justify-start text-left"
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-700 justify-start text-left"
                     variant="outline"
                   >
                     <Heart className="h-4 w-4 mr-3 text-blue-600" />
@@ -2092,7 +2092,7 @@ export default function AITutor() {
                         setCurrentMessage(suggestion);
                         setShowQuickSuggestions(false);
                       }}
-                      className="text-left text-xs p-2 bg-white rounded hover:bg-blue-50 transition-colors border border-gray-100 hover:border-teal-200"
+                      className="text-left text-xs p-2 bg-white rounded hover:bg-blue-50 transition-colors border border-gray-100 hover:border-blue-200"
                       disabled={loading}
                     >
                       {suggestion}
