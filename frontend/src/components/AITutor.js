@@ -1321,7 +1321,7 @@ export default function AITutor() {
                                     isRenaming: session.session_id 
                                   });
                                 }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                                 type="button"
                               >
                                 <Edit className="h-4 w-4 mr-3 text-gray-500" />
@@ -1335,7 +1335,7 @@ export default function AITutor() {
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   togglePinSession(session.session_id, session.pinned || false);
                                 }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                                 type="button"
                               >
                                 <Pin className={`h-4 w-4 mr-3 ${session.pinned ? 'text-teal-600' : 'text-gray-500'}`} />
@@ -1349,7 +1349,7 @@ export default function AITutor() {
                                   setSessionActions({ showMenu: null, isRenaming: null });
                                   toggleBookmarkSession(session.session_id, session.bookmarked || false);
                                 }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                                 type="button"
                               >
                                 <Star className={`h-4 w-4 mr-3 ${session.bookmarked ? 'text-yellow-500 fill-current' : 'text-gray-500'}`} />
