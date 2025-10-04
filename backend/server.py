@@ -5864,13 +5864,18 @@ async def end_note_session(
         logger.info(f"Found {len(chunks)} audio chunks for session {session_id}")
         
         if not chunks:
+            # Check for fallback transcription from request
+            if request and request.fallback_transcription:
+                logger.info(f"Using fallback transcription from request for session {session_id}")
+                full_transcription = request.fallback_transcription
+                total_duration = request.total_duration or 0
             # Check if there's any data in the session itself for fallback
-            if session_doc.get('transcription'):
+            elif session_doc.get('transcription'):
                 logger.info(f"Using session transcription as fallback for session {session_id}")
                 full_transcription = session_doc['transcription']
                 total_duration = session_doc.get('audio_duration', 0)
             else:
-                logger.error(f"No audio chunks or transcription found for session {session_id}")
+                logger.error(f"No audio chunks, fallback transcription, or session transcription found for session {session_id}")
                 raise HTTPException(status_code=400, detail="No audio data found for this session")
         
         else:
