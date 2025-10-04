@@ -124,58 +124,59 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
                     {navigating === item.name ? (
                       <LoadingSpinner size="sm" className="mr-3 h-5 w-5 flex-shrink-0" />
                     ) : (
-                      <Icon 
-                      className={`mr-3 h-5 w-5 ${
-                        item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                      }`}
-                    />
-                  )}
-                  {item.name}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+                        <Icon 
+                          className={`mr-3 h-5 w-5 ${
+                            item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                          }`}
+                        />
+                      )}
+                      {item.name}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
-      {/* User Profile & Logout */}
-      <div className="border-t border-gray-200 p-4">
-        {/* User Info */}
-        <div className="flex items-center mb-4">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-blue-100 text-blue-700">
-              {user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="ml-3 flex-1">
-            <p className="text-sm font-medium text-gray-700">{user?.full_name}</p>
-            <p className="text-xs text-gray-500">{user?.subscription_type || 'Free'} Plan</p>
+          {/* User Profile & Logout */}
+          <div className="border-t border-gray-200 p-4">
+            {/* User Info */}
+            <div className="flex items-center mb-4">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-blue-100 text-blue-700">
+                  {user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-gray-700">{user?.full_name}</p>
+                <p className="text-xs text-gray-500">{user?.subscription_type || 'Free'} Plan</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full justify-start text-gray-600 hover:text-gray-900"
+                onClick={() => handleNavigation('/profile', 'Profile Settings')}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profile Settings
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full justify-start text-gray-600 hover:text-red-600"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full justify-start text-gray-600 hover:text-gray-900"
-            onClick={() => window.location.href = '/profile'}
-          >
-            <User className="h-4 w-4 mr-2" />
-            Profile Settings
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full justify-start text-gray-600 hover:text-red-600"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+      </>
+    );
+  }
