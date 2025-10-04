@@ -8,8 +8,7 @@ import RegisterPage from './components/RegisterPage';
 import StudentDashboard from './components/StudentDashboard';
 import AITutor from './components/AITutor';
 import MockTests from './components/MockTests';
-import Analytics from './components/Analytics';
-import StressManagement from './components/StressManagement';
+// Removed: Analytics and StressManagement components - not essential for core exam preparation
 import AutoNoteMentor from './components/AutoNoteMentor';
 import Subscription from './components/Subscription';
 import Navigation from './components/Navigation';
