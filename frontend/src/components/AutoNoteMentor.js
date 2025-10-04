@@ -558,13 +558,24 @@ export default function AutoNoteMentor() {
       const token = localStorage.getItem('dhruv_ai_token');
       
       console.log('Starting session processing for:', currentSession.session_id);
+      console.log('Live transcript length:', liveTranscript.length);
+      
+      // If we have live transcript but no audio chunks were processed, send the transcript as fallback
+      let requestBody = {};
+      if (liveTranscript.trim()) {
+        requestBody = {
+          fallback_transcription: liveTranscript,
+          total_duration: recordingTime
+        };
+      }
       
       const response = await fetch(`${API}/auto-notes/end-session?session_id=${currentSession.session_id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
       });
       
       clearTimeout(timeoutId);
