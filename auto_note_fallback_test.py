@@ -135,18 +135,21 @@ class AutoNoteFallbackTester:
         # Simulate 3 audio chunks as requested in review
         audio_chunks = [
             {
+                "session_id": self.session_id,
                 "transcription": "Today we will discuss Newton's first law of motion. An object at rest stays at rest.",
                 "timestamp": 0.0,
                 "sequence_number": 1,
                 "confidence": 0.95
             },
             {
+                "session_id": self.session_id,
                 "transcription": "Newton's second law states that force equals mass times acceleration. F = ma.",
                 "timestamp": 30.5,
                 "sequence_number": 2,
                 "confidence": 0.92
             },
             {
+                "session_id": self.session_id,
                 "transcription": "The third law says for every action there is an equal and opposite reaction.",
                 "timestamp": 65.2,
                 "sequence_number": 3,
