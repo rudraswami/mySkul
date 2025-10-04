@@ -5982,7 +5982,32 @@ async def get_user_note_sessions(user: User = Depends(get_current_user)):
         ).sort("created_at", -1).limit(50).to_list(50)
         
         # Remove MongoDB ObjectIds and handle datetime serialization
-        clean_sessions = [clean_mongodb_doc(session) for session in sessions]
+        clean_sessions = []
+        for session in sessions:
+            clean_session = clean_mongodb_doc(session)
+            
+            # Ensure session has a proper title/name for frontend compatibility
+            session_name = clean_session.get('session_name') or clean_session.get('title')
+            if not session_name:
+                # Auto-generate name based on subject and date
+                subject = clean_session.get('subject', 'General')
+                created_date = clean_session.get('created_at', '')
+                if created_date:
+                    try:
+                        # Parse date and format nicely
+                        date_obj = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
+                        date_str = date_obj.strftime('%m/%d/%Y')
+                    except:
+                        date_str = 'Unknown Date'
+                else:
+                    date_str = 'Unknown Date'
+                session_name = f"{subject} Session - {date_str}"
+            
+            # Add both fields for frontend compatibility  
+            clean_session['title'] = session_name
+            clean_session['session_name'] = session_name
+            
+            clean_sessions.append(clean_session)
         
         return {
             "sessions": clean_sessions,
