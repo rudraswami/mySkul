@@ -1191,11 +1191,19 @@ export default function AITutor() {
   }, [filteredSessions]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-white">
+    <div className="flex flex-col lg:flex-row h-screen bg-white relative">
+      {/* Mobile Backdrop */}
+      {showSessionSearch && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setShowSessionSearch(false)}
+        />
+      )}
+      
       {/* Sidebar - Chat Sessions - Mobile: hidden by default, toggle with button */}
       <div className={`${
         showSessionSearch ? 'flex' : 'hidden'
-      } lg:flex w-full lg:w-80 bg-white border-r border-gray-100 flex-col absolute lg:relative z-50 lg:z-auto h-full lg:h-auto`}>
+      } lg:flex w-full lg:w-80 bg-white border-r border-gray-100 flex-col fixed lg:relative z-50 lg:z-auto h-full lg:h-auto`}>
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
