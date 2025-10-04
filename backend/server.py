@@ -3295,7 +3295,8 @@ class ActionButtonService:
             
             llm_client = LlmChat(
                 api_key=EMERGENT_LLM_KEY,
-                session_id=f"practice_{uuid.uuid4()}"
+                session_id=f"practice_{uuid.uuid4()}",
+                system_message="You are an expert tutor generating practice problems for students."
             ).with_model("openai", "gpt-3.5-turbo")
             user_msg = UserMessage(text=prompt)
             response = await llm_client.send_message(user_msg)
