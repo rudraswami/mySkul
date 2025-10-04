@@ -383,17 +383,45 @@ export default function MockTests() {
         if (response.status >= 500) {
           errorMessage = 'AI system is busy. Please try again in 30 seconds.';
         } else if (response.status === 422) {
-          // Trigger subscription modal for validation errors with real subscription data
-          const testAccess = examSubjects?.test_access || {};
-          setShowUpgradePrompt({
-            message: 'Request validation failed. This usually indicates a subscription issue.',
-            currentPlan: 'Free',
-            used: testAccess.used || 0,
-            limit: testAccess.limit || 2,
-            remaining: testAccess.remaining || 0,
-            resetDays: 30,
-            reason: 'validation_failed'
-          });
+          // Trigger subscription modal for validation errors with fresh subscription data
+          try {
+            // Fetch fresh subscription usage data
+            const token = localStorage.getItem('dhruv_ai_token');
+            const usageResponse = await fetch(`${backendUrl}/api/subscription/usage`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            let usageData = { used: 0, limit: 2, remaining: 2 };
+            if (usageResponse.ok) {
+              const usage = await usageResponse.json();
+              const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+              usageData = {
+                used: mockTestUsage.used || 0,
+                limit: mockTestUsage.limit || 2,
+                remaining: mockTestUsage.remaining || 0
+              };
+            }
+
+            setShowUpgradePrompt({
+              message: 'You have reached your free tier limit for mock tests this month. Upgrade to continue.',
+              currentPlan: 'Free',
+              used: usageData.used,
+              limit: usageData.limit,
+              remaining: usageData.remaining,
+              resetDays: 30,
+              reason: 'validation_failed'
+            });
+          } catch (error) {
+            // Fallback to error message without usage data
+            setShowUpgradePrompt({
+              message: 'You have reached your free tier limit. Please upgrade to continue.',
+              currentPlan: 'Free',
+              reason: 'validation_failed'
+            });
+          }
           setGenerationError(null);
           return;
         } else if (response.status === 402) {
