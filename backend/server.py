@@ -282,8 +282,8 @@ async def process_image_with_ai(image_data: bytes, user_prompt: str = "Analyze t
 async def create_embeddings(texts: List[str]) -> List[List[float]]:
     """Create embeddings for a list of texts using lightweight service"""
     try:
-        embedding_service = get_embedding_service()
-        embeddings = await embedding_service.encode_batch(texts)
+        embedding_service = await get_embedding_service()
+        embeddings = await embedding_service.create_embeddings(texts)
         return embeddings
     except Exception as e:
         logger.error(f"Embedding creation error: {e}")
