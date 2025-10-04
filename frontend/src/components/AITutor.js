@@ -1275,7 +1275,7 @@ export default function AITutor() {
                                 setRenameValue('');
                               }
                             }}
-                            className="flex-1 text-sm bg-white border-2 border-teal-300 rounded px-2 py-1 mr-2 focus:outline-none focus:border-teal-500"
+                            className="flex-1 text-sm bg-white border-2 border-blue-300 rounded px-2 py-1 mr-2 focus:outline-none focus:border-blue-500"
                             autoFocus
                             placeholder="Enter session name..."
                           />
