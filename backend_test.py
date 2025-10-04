@@ -1453,9 +1453,9 @@ class DhruvAITester:
             )
             
             if success:
-                citations = response.get('citations', [])
+                citations = response if isinstance(response, list) else response.get('citations', [])
                 print(f"   ✅ Citations retrieved: {len(citations)} sources")
-                if citations:
+                if citations and isinstance(citations[0], dict):
                     print(f"   Sample source: {citations[0].get('source_title', 'N/A')}")
                 citation_success_count += 1
             else:
