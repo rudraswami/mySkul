@@ -490,7 +490,7 @@ export default function StudentDashboard() {
               <CardContent className="space-y-3">
                 <Button 
                   className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white h-12"
-                  onClick={() => window.location.href = '/ai-tutor'}
+                  onClick={() => window.location.href = '/tutor'}
                 >
                   <Brain className="h-5 w-5 mr-3" />
                   <div className="text-left">
@@ -502,7 +502,7 @@ export default function StudentDashboard() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start h-12 hover:bg-gray-50"
-                  onClick={() => window.location.href = '/mock-tests'}
+                  onClick={() => window.location.href = '/tests'}
                 >
                   <FileText className="h-5 w-5 mr-3" />
                   <div className="text-left">
@@ -514,7 +514,7 @@ export default function StudentDashboard() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start h-12 hover:bg-gray-50"
-                  onClick={() => window.location.href = '/auto-note-mentor'}
+                  onClick={() => window.location.href = '/auto-notes'}
                 >
                   <BookMarked className="h-5 w-5 mr-3" />
                   <div className="text-left">
