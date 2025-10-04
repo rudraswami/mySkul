@@ -676,12 +676,9 @@ export function DualResponseContainer({
             
             {expandedSections.insights && (
               <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <div 
-                  className="text-gray-700 text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: formatMathExpressions(secondaryResponse.response)
-                  }}
-                />
+                <div className="text-gray-700 text-sm leading-relaxed">
+                  {formatVisualResponse(secondaryResponse.response)}
+                </div>
               </div>
             )}
           </div>
