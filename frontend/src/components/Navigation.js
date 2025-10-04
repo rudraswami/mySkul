@@ -59,6 +59,14 @@ export default function Navigation() {
     logout();
   };
 
+  const handleNavigation = (href, name) => {
+    setNavigating(name);
+    setTimeout(() => {
+      navigate(href);
+      setNavigating(null);
+    }, 300);
+  };
+
   return (
     <div className="flex h-full w-64 flex-col bg-white shadow-lg border-r border-gray-200">
       {/* Logo */}
