@@ -280,14 +280,11 @@ async def process_image_with_ai(image_data: bytes, user_prompt: str = "Analyze t
 
 # Vector Store Functions
 async def create_embeddings(texts: List[str]) -> List[List[float]]:
-    """Create embeddings for a list of texts"""
-    model = get_embedding_model()
-    if not model:
-        return []
-    
+    """Create embeddings for a list of texts using lightweight service"""
     try:
-        embeddings = model.encode(texts)
-        return embeddings.tolist()
+        embedding_service = get_embedding_service()
+        embeddings = await embedding_service.encode_batch(texts)
+        return embeddings
     except Exception as e:
         logger.error(f"Embedding creation error: {e}")
         return []
