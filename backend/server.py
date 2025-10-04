@@ -290,14 +290,13 @@ async def create_embeddings(texts: List[str]) -> List[List[float]]:
         return []
 
 async def semantic_search(query: str, user_id: str, session_ids: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, Any]]:
-    """Perform semantic search across user's notes"""
-    model = get_embedding_model()
-    if not model:
-        return []
-    
+    """Perform semantic search across user's notes using lightweight service"""
     try:
+        embedding_service = get_embedding_service()
+        
         # Create query embedding
-        query_embedding = model.encode([query])[0]
+        query_embeddings = await embedding_service.encode_batch([query])
+        query_embedding = query_embeddings[0]
         
         # Build MongoDB query
         search_filter = {"user_id": user_id}
@@ -311,11 +310,11 @@ async def semantic_search(query: str, user_id: str, session_ids: Optional[List[s
         if not embeddings_docs:
             return []
         
-        # Calculate similarities
+        # Calculate similarities using lightweight service
         similarities = []
         for doc in embeddings_docs:
             if 'embedding_vector' in doc and doc['embedding_vector']:
-                similarity = cosine_similarity([query_embedding], [doc['embedding_vector']])[0][0]
+                similarity = await embedding_service.compute_similarity(query_embedding, doc['embedding_vector'])
                 similarities.append({
                     "content": doc['content'],
                     "session_id": doc['session_id'],
