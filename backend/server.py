@@ -213,20 +213,7 @@ SUBSCRIPTION_PLANS = {
 
 # ============= ENHANCED AUTONOTE CONFIGURATION =============
 
-# Initialize embedding model (will be loaded lazily)
-embedding_model = None
-
-def get_embedding_model():
-    """Lazy loading of sentence transformer model"""
-    global embedding_model
-    if embedding_model is None:
-        try:
-            embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("✅ Sentence transformer model loaded successfully")
-        except Exception as e:
-            logger.error(f"Failed to load embedding model: {e}")
-            embedding_model = None
-    return embedding_model
+# Global variables - embedding model now handled by lightweight service
 
 # Spaced Repetition SM-2 Algorithm Implementation
 def calculate_next_review(quality: int, ease_factor: float, interval: int, repetitions: int) -> tuple:
