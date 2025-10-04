@@ -1985,41 +1985,38 @@ export default function AITutor() {
                 <Button
                   onClick={() => setAiMode('mentor')}
                   variant={aiMode === 'mentor' ? 'default' : 'ghost'}
-                  className={`rounded-full px-2 lg:px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'mentor' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
-                  <Heart className="h-4 w-4 mr-1 lg:mr-2" />
-                  <span className="hidden sm:inline">Mentor</span>
-                  <span className="sm:hidden">M</span>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Mentor
                 </Button>
                 <Button
                   onClick={() => setAiMode('professor')}
                   variant={aiMode === 'professor' ? 'default' : 'ghost'}
-                  className={`rounded-full px-2 lg:px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'professor' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
-                  <GraduationCap className="h-4 w-4 mr-1 lg:mr-2" />
-                  <span className="hidden sm:inline">Professor</span>
-                  <span className="sm:hidden">P</span>
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Professor
                 </Button>
                 <Button
                   onClick={() => setAiMode('dual')}
                   variant={aiMode === 'dual' ? 'default' : 'ghost'}
-                  className={`rounded-full px-2 lg:px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'dual' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
                   }`}
                 >
-                  <Users className="h-4 w-4 mr-1 lg:mr-2" />
-                  <span className="hidden sm:inline">Both</span>
-                  <span className="sm:hidden">B</span>
+                  <Users className="h-4 w-4 mr-2" />
+                  Both
                 </Button>
               </div>
             </div>
