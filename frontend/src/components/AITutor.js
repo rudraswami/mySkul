@@ -1442,7 +1442,7 @@ export default function AITutor() {
                 <div className="flex flex-col items-center space-y-3 max-w-md mx-auto">
                   <Button 
                     onClick={() => setCurrentMessage("Explain Limits in Calculus (Professor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-blue-700 justify-start text-left"
                     variant="outline"
                   >
                     <GraduationCap className="h-4 w-4 mr-3 text-blue-600" />
@@ -1451,7 +1451,7 @@ export default function AITutor() {
                   
                   <Button 
                     onClick={() => setCurrentMessage("Help me plan my study routine (Mentor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-teal-700 justify-start text-left"
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-teal-200 hover:text-blue-700 justify-start text-left"
                     variant="outline"
                   >
                     <Heart className="h-4 w-4 mr-3 text-blue-600" />
@@ -1661,9 +1661,9 @@ export default function AITutor() {
                 <div>
                   <span className="text-sm font-medium text-teal-800">Personalized Learning Active</span>
                   <div className="flex items-center space-x-4 text-xs text-gray-600 mt-1">
-                    <span>Language: <span className="font-medium text-teal-700">{studentProfile.preferred_language}</span></span>
-                    <span>Style: <span className="font-medium text-teal-700">{studentProfile.learning_style}</span></span>
-                    <span>Level: <span className="font-medium text-teal-700">{getDifficultyDisplay(personalizedDifficulty).label}</span></span>
+                    <span>Language: <span className="font-medium text-blue-700">{studentProfile.preferred_language}</span></span>
+                    <span>Style: <span className="font-medium text-blue-700">{studentProfile.learning_style}</span></span>
+                    <span>Level: <span className="font-medium text-blue-700">{getDifficultyDisplay(personalizedDifficulty).label}</span></span>
                   </div>
                 </div>
               </div>
