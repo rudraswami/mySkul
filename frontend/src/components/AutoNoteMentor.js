@@ -1315,9 +1315,9 @@ export default function AutoNoteMentor() {
                   <p className="text-sm text-slate-600 mt-1.5">Structured educational content and key concepts</p>
                 </CardHeader>
                 <CardContent className="pt-0 px-6 pb-6">
-                  <div className="bg-slate-50/50 rounded-lg p-5 border border-slate-200">
-                    <div className="max-w-none">
-                      {formatProfessorContent(dualAnalysis.professor_analysis.content)}
+                  <div className="bg-white rounded-md p-4 shadow-inner border border-purple-100">
+                    <div className="text-gray-800 leading-relaxed space-y-3">
+                      {formatStudentFriendlyContent(dualAnalysis.professor_analysis.content, 'purple')}
                     </div>
                   </div>
                 </CardContent>
