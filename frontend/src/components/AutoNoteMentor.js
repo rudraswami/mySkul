@@ -1959,89 +1959,121 @@ export default function AutoNoteMentor() {
                 const qualityScore = getQualityScore(session);
                 
                 return (
-                  <Card key={session.session_id} className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-0 shadow-md">
-                    <CardContent className="p-0">
-                      <div 
-                        onClick={() => loadPreviousSession(session.session_id)}
-                        className="p-6"
-                      >
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-start space-x-3 flex-1">
-                            <span className="text-2xl flex-shrink-0">
-                              {getSubjectIcon(session.subject)}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 line-clamp-2 mb-1">
-                                {session.title || session.session_name || `${session.subject || 'General'} Session`}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {session.subject || 'General'}
-                              </p>
+                  <div key={session.session_id} className="group">
+                    <Card className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-white overflow-hidden hover:scale-[1.02] transform">
+                      <CardContent className="p-0 h-full">
+                        <div 
+                          onClick={() => loadPreviousSession(session.session_id)}
+                          className="h-full flex flex-col"
+                        >
+                          {/* Enhanced Header with Gradient */}
+                          <div className="bg-gradient-to-r from-blue-50 via-white to-purple-50 p-5 border-b border-gray-100">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-start space-x-4 flex-1">
+                                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2.5 rounded-xl shadow-lg flex-shrink-0">
+                                  <span className="text-white text-xl">
+                                    {getSubjectIcon(session.subject)}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-gray-900 group-hover:text-blue-700 line-clamp-2 mb-2 text-base leading-snug">
+                                    {session.title || session.session_name || `${session.subject || 'General'} Session`}
+                                  </h3>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                      {session.subject || 'General'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <Badge className={`text-xs border flex-shrink-0 ml-2 shadow-sm ${statusBadge.color}`}>
+                                <span className="mr-1">{statusBadge.icon}</span>
+                                {statusBadge.text}
+                              </Badge>
                             </div>
                           </div>
-                          
-                          <Badge className={`text-xs border flex-shrink-0 ml-2 ${statusBadge.color}`}>
-                            <span className="mr-1">{statusBadge.icon}</span>
-                            {statusBadge.text}
-                          </Badge>
-                        </div>
 
-                        {/* Metadata */}
-                        <div className="space-y-3 mb-4">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="flex items-center text-gray-500">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {session.audio_duration ? 
-                                `${Math.round(session.audio_duration / 60)} minutes` : 
-                                'Duration unknown'
-                              }
-                            </span>
+                          {/* Enhanced Content Body */}
+                          <div className="flex-1 p-5 space-y-4">
+                            {/* Metadata Row */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                <Clock className="h-4 w-4 text-blue-500" />
+                                <span className="font-medium">
+                                  {session.audio_duration ? 
+                                    `${Math.round(session.audio_duration / 60)} min` : 
+                                    'Unknown'
+                                  }
+                                </span>
+                              </div>
+                              
+                              {session.status === 'completed' && (
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex items-center">
+                                    <Star className={`h-4 w-4 mr-1 ${
+                                      qualityScore >= 80 ? 'text-green-500' : 
+                                      qualityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                    }`} />
+                                    <span className="text-sm font-semibold text-gray-700">{qualityScore}%</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                             
-                            {session.status === 'completed' && (
-                              <div className="flex items-center">
-                                <div className={`w-2 h-2 rounded-full mr-2 ${
-                                  qualityScore >= 80 ? 'bg-green-500' : 
-                                  qualityScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}></div>
-                                <span className="text-xs text-gray-500">{qualityScore}% Quality</span>
+                            <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
+                              📅 Created {new Date(session.created_at).toLocaleDateString(undefined, {
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            
+                            {/* Enhanced Preview Content */}
+                            {session.structured_notes && (
+                              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
+                                <div className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                                  <Brain className="h-3 w-3 mr-1 text-green-600" />
+                                  AI Analysis Preview
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <div className="text-center bg-white rounded p-2 border">
+                                    <div className="font-bold text-blue-600">
+                                      {session.structured_notes.key_concepts?.length || 0}
+                                    </div>
+                                    <div className="text-gray-600">Concepts</div>
+                                  </div>
+                                  <div className="text-center bg-white rounded p-2 border">
+                                    <div className="font-bold text-green-600">
+                                      {session.structured_notes.important_points?.length || 0}
+                                    </div>
+                                    <div className="text-gray-600">Points</div>
+                                  </div>
+                                  <div className="text-center bg-white rounded p-2 border">
+                                    <div className="font-bold text-purple-600">
+                                      {session.structured_notes.formulas_mentioned?.length || 0}
+                                    </div>
+                                    <div className="text-gray-600">Formulas</div>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
-                          
-                          <div className="text-xs text-gray-500">
-                            Created on {new Date(session.created_at).toLocaleDateString(undefined, {
-                              year: 'numeric',
-                              month: 'long', 
-                              day: 'numeric'
-                            })}
-                          </div>
-                          
-                          {/* Preview Content */}
-                          {session.structured_notes && (
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <div className="text-xs text-gray-600 mb-1">Quick Preview:</div>
-                              <div className="text-xs text-gray-800">
-                                {session.structured_notes.key_concepts?.length || 0} concepts • {' '}
-                                {session.structured_notes.important_points?.length || 0} key points • {' '}
-                                {session.structured_notes.formulas_mentioned?.length || 0} formulas
-                              </div>
-                            </div>
-                          )}
-                        </div>
 
-                        {/* Action */}
-                        <div className="pt-3 border-t border-gray-100">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Click to view full notes</span>
-                            <span className="text-blue-600 group-hover:text-blue-700 font-medium text-sm">
-                              Open →
-                            </span>
+                          {/* Enhanced Action Footer */}
+                          <div className="p-4 bg-gray-50 border-t border-gray-100">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg group-hover:scale-105 transform"
+                            >
+                              <BookOpen className="h-4 w-4 mr-2" />
+                              Open Study Notes
+                              <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
                 );
               })}
             </div>
