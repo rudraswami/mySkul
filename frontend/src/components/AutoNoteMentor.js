@@ -1354,7 +1354,7 @@ export default function AutoNoteMentor() {
                   <CardContent className="pt-0 px-6 pb-6 border-t border-slate-100">
                     <div className="bg-emerald-50/30 rounded-lg p-4 border border-emerald-200">
                       <div className="text-slate-700 leading-relaxed">
-                        {formatMentorContent(dualAnalysis.mentor_guidance.content)}
+                        {formatStudentFriendlyContent(dualAnalysis.mentor_guidance.content, 'emerald')}
                       </div>
                     </div>
                   </CardContent>
