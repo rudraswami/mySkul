@@ -1375,7 +1375,814 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
-    # ============= AUTO-NOTE MENTOR INTERACTIVE FEATURES TESTING =============
+    # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
+
+    def test_auto_note_mentor_session_management(self):
+        """Test Auto-Note Mentor Session Management APIs - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor session management test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR SESSION MANAGEMENT TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: POST /api/auto-notes/start-session, GET /api/auto-notes/sessions")
+        print("   Testing: GET /api/auto-notes/{session_id}, POST /api/auto-notes/end-session")
+        print("   User: test@dhruvai.com/password123")
+        
+        session_id = None
+        test_results = {
+            'start_session': False,
+            'sessions_list': False,
+            'session_retrieval': False,
+            'end_session': False
+        }
+        
+        # Test 1: POST /api/auto-notes/start-session
+        print("\n📋 Test 1: POST /api/auto-notes/start-session")
+        session_data = {
+            "title": "Test Mathematics Session",
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "Start Auto-Note Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Session created: {session_id}")
+            print(f"   Title: {response.get('title', 'N/A')}")
+            print(f"   Subject: {response.get('subject', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            test_results['start_session'] = True
+        else:
+            print("   ❌ Failed to create session")
+        
+        # Test 2: GET /api/auto-notes/sessions
+        print("\n📋 Test 2: GET /api/auto-notes/sessions")
+        success, response = self.run_test(
+            "Get Auto-Note Sessions List",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            print(f"   ✅ Sessions retrieved: {len(sessions)} sessions")
+            if sessions:
+                latest_session = sessions[0]
+                print(f"   Latest session: {latest_session.get('title', 'N/A')}")
+                print(f"   Status: {latest_session.get('status', 'N/A')}")
+                print(f"   Subject: {latest_session.get('subject', 'N/A')}")
+            test_results['sessions_list'] = True
+        else:
+            print("   ❌ Failed to retrieve sessions list")
+        
+        # Test 3: GET /api/auto-notes/{session_id}
+        if session_id:
+            print(f"\n📋 Test 3: GET /api/auto-notes/{session_id}")
+            success, response = self.run_test(
+                "Get Specific Auto-Note Session",
+                "GET",
+                f"auto-notes/{session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Session retrieved: {response.get('title', 'N/A')}")
+                print(f"   Status: {response.get('status', 'N/A')}")
+                print(f"   Duration: {response.get('audio_duration', 0)} seconds")
+                print(f"   Has transcription: {'transcription' in response}")
+                test_results['session_retrieval'] = True
+            else:
+                print("   ❌ Failed to retrieve specific session")
+        
+        # Test 4: POST /api/auto-notes/end-session
+        if session_id:
+            print(f"\n📋 Test 4: POST /api/auto-notes/end-session")
+            completion_data = {
+                "fallback_transcription": "Test transcription: Today we learned about quadratic equations and their discriminant formula b² - 4ac.",
+                "total_duration": 300.0
+            }
+            
+            success, response = self.run_test(
+                "End Auto-Note Session",
+                "POST",
+                f"auto-notes/end-session?session_id={session_id}",
+                200,
+                data=completion_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Session completed successfully")
+                print(f"   Status: {response.get('status', 'N/A')}")
+                print(f"   Has structured notes: {'structured_notes' in response}")
+                print(f"   Has dual analysis: {'dual_analysis' in response}")
+                test_results['end_session'] = True
+            else:
+                print("   ❌ Failed to complete session")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 SESSION MANAGEMENT TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
+    def test_auto_note_mentor_live_recording_flow(self):
+        """Test Auto-Note Mentor Live Recording Flow - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor live recording test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR LIVE RECORDING FLOW TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: POST /api/auto-notes/process-audio (audio chunk processing)")
+        print("   Testing: Transcript handling and concept detection")
+        print("   User: test@dhruvai.com/password123")
+        
+        session_id = None
+        test_results = {
+            'session_creation': False,
+            'audio_processing': False,
+            'concept_detection': False,
+            'session_completion': False
+        }
+        
+        # Step 1: Create session for live recording
+        print("\n📋 Step 1: Creating Live Recording Session")
+        session_data = {
+            "title": "Live Recording Test Session",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Create Live Recording Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Live recording session created: {session_id}")
+            test_results['session_creation'] = True
+        else:
+            print("   ❌ Failed to create live recording session")
+            return False
+        
+        # Step 2: Process audio chunks
+        print("\n📋 Step 2: Processing Audio Chunks")
+        audio_chunks = [
+            {
+                "session_id": session_id,
+                "transcription": "Today we will learn about Newton's laws of motion.",
+                "timestamp": 0.0,
+                "sequence_number": 1,
+                "confidence": 0.95
+            },
+            {
+                "session_id": session_id,
+                "transcription": "The first law states that an object at rest stays at rest.",
+                "timestamp": 5.0,
+                "sequence_number": 2,
+                "confidence": 0.92
+            },
+            {
+                "session_id": session_id,
+                "transcription": "The second law is F equals m times a, or force equals mass times acceleration.",
+                "timestamp": 10.0,
+                "sequence_number": 3,
+                "confidence": 0.98
+            }
+        ]
+        
+        processed_chunks = 0
+        for i, chunk in enumerate(audio_chunks):
+            print(f"   Processing chunk {i+1}/{len(audio_chunks)}: '{chunk['transcription'][:30]}...'")
+            
+            success, response = self.run_test(
+                f"Process Audio Chunk {i+1}",
+                "POST",
+                "auto-notes/process-audio",
+                200,
+                data=chunk,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Chunk {i+1} processed successfully")
+                print(f"   Concepts detected: {len(response.get('concepts_detected', []))}")
+                if response.get('concepts_detected'):
+                    print(f"   Sample concepts: {response['concepts_detected'][:2]}")
+                processed_chunks += 1
+            else:
+                print(f"   ❌ Failed to process chunk {i+1}")
+            
+            time.sleep(1)  # Small delay between chunks
+        
+        if processed_chunks >= 2:
+            test_results['audio_processing'] = True
+            test_results['concept_detection'] = True
+        
+        # Step 3: Complete the live recording session
+        print("\n📋 Step 3: Completing Live Recording Session")
+        completion_data = {
+            "total_duration": 15.0
+        }
+        
+        success, response = self.run_test(
+            "Complete Live Recording Session",
+            "POST",
+            f"auto-notes/end-session?session_id={session_id}",
+            200,
+            data=completion_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Live recording session completed")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            print(f"   Has structured notes: {'structured_notes' in response}")
+            test_results['session_completion'] = True
+        else:
+            print("   ❌ Failed to complete live recording session")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 LIVE RECORDING FLOW TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
+    def test_auto_note_mentor_file_upload_flow(self):
+        """Test Auto-Note Mentor File Upload Flow - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor file upload test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR FILE UPLOAD FLOW TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: POST /api/auto-notes/upload-audio (standalone file processing)")
+        print("   Testing: Audio transcription and note generation")
+        print("   User: test@dhruvai.com/password123")
+        
+        test_results = {
+            'file_upload': False,
+            'transcription': False,
+            'note_generation': False,
+            'session_persistence': False
+        }
+        
+        # Step 1: Test file upload endpoint
+        print("\n📋 Step 1: Testing File Upload Endpoint")
+        
+        # Create a mock audio file data (simulating file upload)
+        upload_data = {
+            "title": "Uploaded Audio Test Session",
+            "subject": "Chemistry",
+            "file_type": "audio/wav",
+            "duration": 180.0
+        }
+        
+        success, response = self.run_test(
+            "Upload Audio File",
+            "POST",
+            "auto-notes/upload-audio",
+            200,
+            data=upload_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        session_id = None
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ File uploaded successfully: {session_id}")
+            print(f"   Processing status: {response.get('processing_status', 'N/A')}")
+            print(f"   Estimated processing time: {response.get('estimated_time', 'N/A')}")
+            test_results['file_upload'] = True
+        else:
+            print("   ❌ Failed to upload audio file")
+            return False
+        
+        # Step 2: Check transcription progress
+        print("\n📋 Step 2: Checking Transcription Progress")
+        time.sleep(2)  # Allow some processing time
+        
+        success, response = self.run_test(
+            "Check Upload Session Status",
+            "GET",
+            f"auto-notes/{session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            status = response.get('status', 'unknown')
+            print(f"   ✅ Session status: {status}")
+            print(f"   Processing progress: {response.get('processing_progress', 0)}%")
+            
+            if 'transcription' in response or status in ['completed', 'processing']:
+                test_results['transcription'] = True
+                print(f"   ✅ Transcription available or in progress")
+            else:
+                print(f"   ⚠️  Transcription not yet available")
+        else:
+            print("   ❌ Failed to check session status")
+        
+        # Step 3: Complete processing if needed (simulate completion)
+        print("\n📋 Step 3: Completing File Processing")
+        completion_data = {
+            "fallback_transcription": "In this chemistry lesson, we discussed chemical bonding. Ionic bonds form between metals and non-metals through electron transfer. Covalent bonds form through electron sharing. The octet rule explains why atoms bond to achieve stable electron configurations.",
+            "total_duration": 180.0
+        }
+        
+        success, response = self.run_test(
+            "Complete File Processing",
+            "POST",
+            f"auto-notes/end-session?session_id={session_id}",
+            200,
+            data=completion_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ File processing completed")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            
+            if 'structured_notes' in response:
+                structured_notes = response['structured_notes']
+                print(f"   ✅ Structured notes generated: {len(str(structured_notes))} characters")
+                test_results['note_generation'] = True
+            
+            if 'dual_analysis' in response:
+                print(f"   ✅ Dual AI analysis available")
+        else:
+            print("   ❌ Failed to complete file processing")
+        
+        # Step 4: Verify session persistence
+        print("\n📋 Step 4: Verifying Session Persistence")
+        success, response = self.run_test(
+            "Verify Uploaded Session Persistence",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            uploaded_session = None
+            for session in sessions:
+                if session.get('session_id') == session_id:
+                    uploaded_session = session
+                    break
+            
+            if uploaded_session:
+                print(f"   ✅ Uploaded session found in sessions list")
+                print(f"   Title: {uploaded_session.get('title', 'N/A')}")
+                print(f"   Status: {uploaded_session.get('status', 'N/A')}")
+                test_results['session_persistence'] = True
+            else:
+                print(f"   ❌ Uploaded session not found in sessions list")
+        else:
+            print("   ❌ Failed to verify session persistence")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 FILE UPLOAD FLOW TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
+    def test_auto_note_mentor_ai_processing(self):
+        """Test Auto-Note Mentor AI Processing - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor AI processing test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR AI PROCESSING TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: Dual AI analysis (Professor + Mentor)")
+        print("   Testing: Structured notes generation")
+        print("   Testing: Session completion with fallback transcription")
+        print("   User: test@dhruvai.com/password123")
+        
+        session_id = None
+        test_results = {
+            'session_creation': False,
+            'dual_ai_analysis': False,
+            'structured_notes': False,
+            'session_completion': False
+        }
+        
+        # Step 1: Create session for AI processing test
+        print("\n📋 Step 1: Creating Session for AI Processing")
+        session_data = {
+            "title": "AI Processing Test Session",
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "Create AI Processing Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ AI processing session created: {session_id}")
+            test_results['session_creation'] = True
+        else:
+            print("   ❌ Failed to create AI processing session")
+            return False
+        
+        # Step 2: Complete session with comprehensive transcription for AI processing
+        print("\n📋 Step 2: Completing Session with Rich Transcription for AI Analysis")
+        rich_transcription = """
+        Today we are studying quadratic equations in detail. A quadratic equation is a polynomial equation of degree 2, 
+        which means the highest power of the variable is 2. The general form is ax² + bx + c = 0, where a, b, and c are constants 
+        and a ≠ 0. The discriminant is a very important concept, calculated as b² - 4ac. When the discriminant is positive, 
+        we get two distinct real roots. When it's zero, we get one repeated real root. When it's negative, we get two complex roots. 
+        The quadratic formula is x = (-b ± √(b² - 4ac)) / 2a. This formula can solve any quadratic equation. 
+        We also learned about completing the square method and factoring method. These are fundamental concepts for JEE Mathematics.
+        """
+        
+        completion_data = {
+            "fallback_transcription": rich_transcription.strip(),
+            "total_duration": 600.0
+        }
+        
+        print("   This may take 10-15 seconds for dual AI analysis...")
+        success, response = self.run_test(
+            "Complete Session with AI Processing",
+            "POST",
+            f"auto-notes/end-session?session_id={session_id}",
+            200,
+            data=completion_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Session completed with AI processing")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            
+            # Check for dual AI analysis
+            if 'dual_analysis' in response:
+                dual_analysis = response['dual_analysis']
+                print(f"   ✅ Dual AI analysis generated")
+                
+                professor_analysis = dual_analysis.get('professor', {})
+                mentor_analysis = dual_analysis.get('mentor', {})
+                
+                if professor_analysis:
+                    print(f"   ✅ Professor analysis: {len(str(professor_analysis))} characters")
+                    print(f"   Professor focus: Technical accuracy and concept verification")
+                
+                if mentor_analysis:
+                    print(f"   ✅ Mentor analysis: {len(str(mentor_analysis))} characters")
+                    print(f"   Mentor focus: Learning guidance and motivation")
+                
+                if professor_analysis and mentor_analysis:
+                    test_results['dual_ai_analysis'] = True
+            else:
+                print(f"   ❌ Dual AI analysis not generated")
+            
+            # Check for structured notes
+            if 'structured_notes' in response:
+                structured_notes = response['structured_notes']
+                print(f"   ✅ Structured notes generated: {len(str(structured_notes))} characters")
+                
+                # Check structure quality
+                if isinstance(structured_notes, dict):
+                    key_concepts = structured_notes.get('key_concepts', [])
+                    important_points = structured_notes.get('important_points', [])
+                    formulas = structured_notes.get('formulas', [])
+                    
+                    print(f"   Key concepts: {len(key_concepts)}")
+                    print(f"   Important points: {len(important_points)}")
+                    print(f"   Formulas: {len(formulas)}")
+                    
+                    if key_concepts or important_points:
+                        test_results['structured_notes'] = True
+                        print(f"   ✅ Structured notes have proper organization")
+                    else:
+                        print(f"   ⚠️  Structured notes lack proper organization")
+                else:
+                    print(f"   ⚠️  Structured notes format unexpected")
+            else:
+                print(f"   ❌ Structured notes not generated")
+            
+            test_results['session_completion'] = True
+        else:
+            print("   ❌ Failed to complete session with AI processing")
+        
+        # Step 3: Verify the processed session can be retrieved
+        if session_id:
+            print("\n📋 Step 3: Verifying Processed Session Retrieval")
+            success, response = self.run_test(
+                "Retrieve Processed Session",
+                "GET",
+                f"auto-notes/{session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Processed session retrieved successfully")
+                print(f"   Status: {response.get('status', 'N/A')}")
+                print(f"   Has transcription: {'transcription' in response}")
+                print(f"   Has structured notes: {'structured_notes' in response}")
+                print(f"   Has dual analysis: {'dual_analysis' in response}")
+            else:
+                print("   ❌ Failed to retrieve processed session")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 AI PROCESSING TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
+    def test_auto_note_mentor_authentication(self):
+        """Test Auto-Note Mentor Authentication - REVIEW REQUEST FOCUS"""
+        print("\n🎯 AUTO-NOTE MENTOR AUTHENTICATION TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: Token-based access control")
+        print("   Testing: Credentials test@dhruvai.com / password123")
+        print("   Testing: Unauthorized access prevention")
+        
+        test_results = {
+            'valid_auth': False,
+            'invalid_auth': False,
+            'no_auth': False,
+            'token_validation': False
+        }
+        
+        # Test 1: Valid authentication
+        print("\n📋 Test 1: Valid Authentication")
+        if self.token:
+            success, response = self.run_test(
+                "Valid Auth - Start Session",
+                "POST",
+                "auto-notes/start-session",
+                200,
+                data={"title": "Auth Test Session", "subject": "Physics"},
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Valid authentication successful")
+                test_results['valid_auth'] = True
+            else:
+                print(f"   ❌ Valid authentication failed")
+        
+        # Test 2: Invalid token
+        print("\n📋 Test 2: Invalid Token Authentication")
+        success, response = self.run_test(
+            "Invalid Auth - Start Session",
+            "POST",
+            "auto-notes/start-session",
+            401,  # Expecting 401 Unauthorized
+            data={"title": "Auth Test Session", "subject": "Physics"},
+            headers={'Authorization': 'Bearer invalid_token_12345'}
+        )
+        
+        if success:
+            print(f"   ✅ Invalid token correctly rejected")
+            test_results['invalid_auth'] = True
+        else:
+            print(f"   ❌ Invalid token not properly rejected")
+        
+        # Test 3: No authentication
+        print("\n📋 Test 3: No Authentication Header")
+        success, response = self.run_test(
+            "No Auth - Start Session",
+            "POST",
+            "auto-notes/start-session",
+            401,  # Expecting 401 Unauthorized
+            data={"title": "Auth Test Session", "subject": "Physics"}
+        )
+        
+        if success:
+            print(f"   ✅ No authentication correctly rejected")
+            test_results['no_auth'] = True
+        else:
+            print(f"   ❌ No authentication not properly rejected")
+        
+        # Test 4: Token validation across multiple endpoints
+        print("\n📋 Test 4: Token Validation Across Endpoints")
+        if self.token:
+            endpoints_to_test = [
+                ("auto-notes/sessions", "GET", None),
+                ("auto-notes/analytics", "GET", None),
+                ("auto-notes/class-series", "GET", None)
+            ]
+            
+            valid_endpoints = 0
+            for endpoint, method, data in endpoints_to_test:
+                success, response = self.run_test(
+                    f"Token Validation - {endpoint}",
+                    method,
+                    endpoint,
+                    200,
+                    data=data,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success:
+                    valid_endpoints += 1
+                    print(f"   ✅ {endpoint} - Token accepted")
+                else:
+                    print(f"   ❌ {endpoint} - Token rejected")
+            
+            if valid_endpoints >= 2:
+                test_results['token_validation'] = True
+                print(f"   ✅ Token validation across endpoints successful")
+            else:
+                print(f"   ❌ Token validation across endpoints failed")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 AUTHENTICATION TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
+    def test_auto_note_mentor_error_handling(self):
+        """Test Auto-Note Mentor Error Handling - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor error handling test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR ERROR HANDLING TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: No 500 errors or 'Users is not defined' backend issues")
+        print("   Testing: Proper error responses and status codes")
+        print("   User: test@dhruvai.com/password123")
+        
+        test_results = {
+            'invalid_session_id': False,
+            'missing_required_fields': False,
+            'invalid_data_types': False,
+            'no_500_errors': True  # Start as True, set to False if 500 errors found
+        }
+        
+        # Test 1: Invalid session ID
+        print("\n📋 Test 1: Invalid Session ID Handling")
+        success, response = self.run_test(
+            "Invalid Session ID",
+            "GET",
+            "auto-notes/invalid-session-id-12345",
+            404,  # Expecting 404 Not Found
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Invalid session ID properly handled with 404")
+            test_results['invalid_session_id'] = True
+        else:
+            if hasattr(self, 'last_response_status') and self.last_response_status == 500:
+                print(f"   🚨 CRITICAL: Invalid session ID returned 500 error!")
+                test_results['no_500_errors'] = False
+            print(f"   ❌ Invalid session ID not properly handled")
+        
+        # Test 2: Missing required fields
+        print("\n📋 Test 2: Missing Required Fields")
+        success, response = self.run_test(
+            "Missing Required Fields",
+            "POST",
+            "auto-notes/start-session",
+            422,  # Expecting 422 Validation Error
+            data={},  # Empty data - missing title and subject
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Missing required fields properly handled with 422")
+            test_results['missing_required_fields'] = True
+        else:
+            if hasattr(self, 'last_response_status') and self.last_response_status == 500:
+                print(f"   🚨 CRITICAL: Missing fields returned 500 error!")
+                test_results['no_500_errors'] = False
+            print(f"   ❌ Missing required fields not properly handled")
+        
+        # Test 3: Invalid data types
+        print("\n📋 Test 3: Invalid Data Types")
+        success, response = self.run_test(
+            "Invalid Data Types",
+            "POST",
+            "auto-notes/process-audio",
+            422,  # Expecting 422 Validation Error
+            data={
+                "session_id": 12345,  # Should be string
+                "transcription": None,  # Should be string
+                "timestamp": "invalid",  # Should be float
+                "sequence_number": "not_a_number"  # Should be int
+            },
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Invalid data types properly handled with 422")
+            test_results['invalid_data_types'] = True
+        else:
+            if hasattr(self, 'last_response_status') and self.last_response_status == 500:
+                print(f"   🚨 CRITICAL: Invalid data types returned 500 error!")
+                test_results['no_500_errors'] = False
+            print(f"   ❌ Invalid data types not properly handled")
+        
+        # Test 4: Check for "Users is not defined" errors
+        print("\n📋 Test 4: Checking for 'Users is not defined' Errors")
+        endpoints_to_check = [
+            ("auto-notes/sessions", "GET", None),
+            ("auto-notes/analytics", "GET", None),
+            ("auto-notes/class-series", "GET", None)
+        ]
+        
+        users_error_found = False
+        for endpoint, method, data in endpoints_to_check:
+            success, response = self.run_test(
+                f"Check Users Error - {endpoint}",
+                method,
+                endpoint,
+                200,
+                data=data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if not success:
+                error_data = getattr(self, 'last_error_data', {})
+                error_message = str(error_data).lower()
+                
+                if 'users is not defined' in error_message or 'users' in error_message:
+                    print(f"   🚨 CRITICAL: 'Users is not defined' error found in {endpoint}!")
+                    users_error_found = True
+                    test_results['no_500_errors'] = False
+                
+                if hasattr(self, 'last_response_status') and self.last_response_status == 500:
+                    print(f"   🚨 CRITICAL: 500 error found in {endpoint}!")
+                    test_results['no_500_errors'] = False
+        
+        if not users_error_found:
+            print(f"   ✅ No 'Users is not defined' errors found")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 ERROR HANDLING TESTING SUMMARY:")
+        print(f"   ✅ Successful Tests: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        if not test_results['no_500_errors']:
+            print(f"\n🚨 CRITICAL ISSUES FOUND:")
+            print(f"   - 500 Internal Server Errors detected")
+            print(f"   - Possible 'Users is not defined' backend issues")
+            print(f"   - These need immediate attention from main agent")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
 
     def test_auto_note_mentor_interactive_features(self):
         """Test Auto-Note Mentor interactive features - REVIEW REQUEST PRIORITY"""

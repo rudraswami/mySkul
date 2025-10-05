@@ -23,7 +23,9 @@ import {
   CheckCircle,
   Loader,
   Upload,
-  X
+  X,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -57,6 +59,7 @@ export default function AutoNoteMentor() {
   const [loading, setLoading] = useState(false);
   const [activeView, setActiveView] = useState('home'); // home, notes, flashcards, quiz
   const [showExplanationModal, setShowExplanationModal] = useState(false);
+  const [expandMentorView, setExpandMentorView] = useState(false);
   
   // Interactive Features
   const [selectedNotes, setSelectedNotes] = useState(null);
@@ -737,6 +740,202 @@ export default function AutoNoteMentor() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Enhanced formatting function for Professor content (Academic Style)
+  const formatProfessorContent = (content) => {
+    if (!content) return null;
+    
+    // Clean the content first - remove all special characters and normalize
+    const cleanContent = content
+      .replace(/\*\*/g, '') // Remove ** markdown
+      .replace(/###\s*/g, '') // Remove ### headers
+      .replace(/^\s*[\-\*•]\s*/gm, '') // Remove bullet markers
+      .replace(/\\/g, '') // Remove backslashes
+      .replace(/^\s*\d+\.\s*/gm, '') // Remove existing numbering
+      .replace(/\n{3,}/g, '\n\n') // Normalize line breaks
+      .trim();
+    
+    // Split into logical sections
+    const sections = cleanContent.split('\n\n').filter(section => section.trim().length > 0);
+    let sectionCounter = 1;
+    let pointCounter = 1;
+    
+    return sections.map((section, sectionIdx) => {
+      const lines = section.split('\n').filter(line => line.trim().length > 0);
+      
+      return (
+        <div key={sectionIdx} className="mb-7">
+          {lines.map((line, lineIdx) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return null;
+            
+            // Main section headers (academic style)
+            if (lineIdx === 0 && (trimmedLine.length > 30 || trimmedLine.toLowerCase().includes('educational notes') || 
+                trimmedLine.toLowerCase().includes('key concepts') || trimmedLine.toLowerCase().includes('important') ||
+                trimmedLine.includes(':'))) {
+              const displayTitle = trimmedLine.replace(/:/g, '').trim();
+              const currentSection = sectionCounter++;
+              
+              return (
+                <div key={lineIdx} className="mb-5">
+                  <div className="flex items-center mb-3">
+                    <div className="w-6 h-6 bg-slate-600 text-white rounded-md flex items-center justify-center mr-3 text-sm font-semibold">
+                      {currentSection}
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800 leading-snug">
+                      {displayTitle}
+                    </h3>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Sub-concepts or definitions (refined academic style)
+            if (trimmedLine.includes(':') && trimmedLine.length < 200) {
+              const [term, ...definitionParts] = trimmedLine.split(':');
+              const definition = definitionParts.join(':').trim();
+              const currentPoint = pointCounter++;
+              
+              return (
+                <div key={lineIdx} className="mb-4 ml-6">
+                  <div className="flex items-start">
+                    <span className="inline-flex items-center justify-center w-5 h-5 bg-slate-500 text-white rounded text-xs font-medium mr-3 mt-0.5 flex-shrink-0">
+                      {currentPoint}
+                    </span>
+                    <div className="flex-1">
+                      <h4 className="text-base font-medium text-slate-700 mb-1.5 leading-relaxed">
+                        {term.trim()}
+                      </h4>
+                      {definition && (
+                        <p className="text-slate-600 leading-relaxed text-sm pl-3 border-l-2 border-slate-200">
+                          {definition}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Regular content points (clean bullet style)
+            if (trimmedLine.length > 20) {
+              return (
+                <div key={lineIdx} className="mb-3 ml-6">
+                  <div className="flex items-start">
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mt-2.5 mr-3 flex-shrink-0"></span>
+                    <p className="text-slate-700 leading-relaxed text-sm">
+                      {trimmedLine}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            
+            return null;
+          })}
+        </div>
+      );
+    });
+  };
+
+  // Enhanced formatting function for Mentor content (Refined Supportive Style)
+  const formatMentorContent = (content) => {
+    if (!content) return null;
+    
+    // Clean the mentor content - remove special characters and normalize
+    const cleanContent = content
+      .replace(/\*\*/g, '') // Remove ** markdown
+      .replace(/###\s*/g, '') // Remove ### headers
+      .replace(/^\s*[\-\*•]\s*/gm, '') // Remove bullet markers
+      .replace(/\\/g, '') // Remove backslashes
+      .replace(/^\s*\d+\.\s*/gm, '') // Remove existing numbering
+      .replace(/\n{3,}/g, '\n\n') // Normalize line breaks
+      .trim();
+    
+    // Split into logical sections for mentor guidance
+    const sections = cleanContent.split('\n\n').filter(section => section.trim().length > 0);
+    let tipCounter = 1;
+    
+    return sections.map((section, sectionIdx) => {
+      const lines = section.split('\n').filter(line => line.trim().length > 0);
+      
+      return (
+        <div key={sectionIdx} className="mb-5">
+          {lines.map((line, lineIdx) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return null;
+            
+            // Mentor section headers (subtle academic style)
+            if (lineIdx === 0 && (trimmedLine.length > 25 || trimmedLine.toLowerCase().includes('enhanced') || 
+                trimmedLine.toLowerCase().includes('encouragement') || trimmedLine.toLowerCase().includes('advice'))) {
+              const displayTitle = trimmedLine.replace(/:/g, '').trim();
+              
+              return (
+                <div key={lineIdx} className="mb-3">
+                  <div className="flex items-center mb-2">
+                    <Heart className="h-4 w-4 text-emerald-600 mr-2" />
+                    <h4 className="text-base font-medium text-emerald-700">
+                      {displayTitle}
+                    </h4>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Encouragement and motivational content (refined style)
+            if (trimmedLine.includes('!') || /\b(great|excellent|good|keep|continue|progress|kudos|perfect|amazing|wonderful)\b/i.test(trimmedLine)) {
+              return (
+                <div key={lineIdx} className="bg-emerald-50 rounded-md p-3 mb-3 border-l-3 border-emerald-300">
+                  <div className="flex items-start">
+                    <span className="text-lg mr-2 mt-0.5">💡</span>
+                    <p className="text-emerald-800 text-sm leading-relaxed">
+                      {trimmedLine}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Study tips and advice (clean numbered style)
+            if (trimmedLine.length > 30 && (trimmedLine.includes(':') || /\b(tip|advice|remember|strategy|approach)\b/i.test(trimmedLine))) {
+              const currentTip = tipCounter++;
+              
+              return (
+                <div key={lineIdx} className="mb-3">
+                  <div className="flex items-start">
+                    <span className="inline-flex items-center justify-center w-5 h-5 bg-emerald-600 text-white rounded text-xs font-medium mr-3 mt-0.5 flex-shrink-0">
+                      {currentTip}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-slate-700 leading-relaxed text-sm">
+                        {trimmedLine.replace(/:/g, ' –').trim()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Regular supportive content (minimalist bullets)
+            if (trimmedLine.length > 15) {
+              return (
+                <div key={lineIdx} className="mb-2 ml-4">
+                  <div className="flex items-start">
+                    <span className="w-1 h-1 bg-emerald-400 rounded-full mt-2.5 mr-3 flex-shrink-0"></span>
+                    <p className="text-slate-600 leading-relaxed text-sm">
+                      {trimmedLine}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            
+            return null;
+          })}
+        </div>
+      );
+    });
+  };
+
   // ============= ENHANCED FEATURES FUNCTIONS =============
 
   // Removed: Unnecessary features (Document Analysis, Spaced Repetition, Smart Search, Class Series, Analytics)
@@ -970,113 +1169,65 @@ export default function AutoNoteMentor() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Notes Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Dual AI Analysis */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Brain className="h-5 w-5 mr-2 text-blue-600" />
-                    Dual Intelligence Analysis
-                  </CardTitle>
+              {/* Professor Analysis - Primary (Academic Style) */}
+              <Card className="shadow-sm border border-slate-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center text-lg font-medium">
+                      <GraduationCap className="h-5 w-5 mr-2.5 text-slate-600" />
+                      Professor's Academic Notes
+                    </CardTitle>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 text-xs px-2.5 py-1">
+                      Primary
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-600 mt-1.5">Structured educational content and key concepts</p>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Professor Analysis */}
-                    <div className="relative overflow-hidden rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-lg">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500"></div>
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
-                              <GraduationCap className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-purple-900">Professor Analysis</h4>
-                              <p className="text-xs text-purple-600">Academic & Technical Focus</p>
-                            </div>
-                          </div>
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-300">Expert</Badge>
-                        </div>
-                        <div className="bg-white rounded-md p-4 shadow-inner border border-purple-100">
-                          <div className="text-gray-800 leading-relaxed space-y-3">
-                            {dualAnalysis.professor_analysis.content.split('\n\n').map((paragraph, idx) => (
-                              <div key={idx} className="mb-3">
-                                {paragraph.split('\n').map((line, lineIdx) => (
-                                  <p key={lineIdx} className="mb-1 text-sm">
-                                    {line.trim() && (
-                                      <span className="inline-flex items-start">
-                                        {line.startsWith('•') || line.startsWith('-') ? (
-                                          <>
-                                            <span className="text-purple-500 mr-2 mt-1">●</span>
-                                            <span>{line.replace(/^[•-]\s*/, '')}</span>
-                                          </>
-                                        ) : line.match(/^\d+\./) ? (
-                                          <>
-                                            <span className="font-semibold text-purple-600 mr-2">{line.match(/^\d+\./)[0]}</span>
-                                            <span>{line.replace(/^\d+\.\s*/, '')}</span>
-                                          </>
-                                        ) : (
-                                          <span className={line.includes(':') ? 'font-medium' : ''}>{line}</span>
-                                        )}
-                                      </span>
-                                    )}
-                                  </p>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Mentor Guidance */}
-                    <div className="relative overflow-hidden rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 via-white to-emerald-100 shadow-lg">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                              <Heart className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-green-900">Mentor Guidance</h4>
-                              <p className="text-xs text-green-600">Personalized Learning Path</p>
-                            </div>
-                          </div>
-                          <Badge className="bg-green-100 text-green-700 border-green-300">Supportive</Badge>
-                        </div>
-                        <div className="bg-white rounded-md p-4 shadow-inner border border-green-100">
-                          <div className="text-gray-800 leading-relaxed space-y-3">
-                            {dualAnalysis.mentor_guidance.content.split('\n\n').map((paragraph, idx) => (
-                              <div key={idx} className="mb-3">
-                                {paragraph.split('\n').map((line, lineIdx) => (
-                                  <p key={lineIdx} className="mb-1 text-sm">
-                                    {line.trim() && (
-                                      <span className="inline-flex items-start">
-                                        {line.startsWith('•') || line.startsWith('-') ? (
-                                          <>
-                                            <span className="text-green-500 mr-2 mt-1">●</span>
-                                            <span>{line.replace(/^[•-]\s*/, '')}</span>
-                                          </>
-                                        ) : line.match(/^\d+\./) ? (
-                                          <>
-                                            <span className="font-semibold text-green-600 mr-2">{line.match(/^\d+\./)[0]}</span>
-                                            <span>{line.replace(/^\d+\.\s*/, '')}</span>
-                                          </>
-                                        ) : (
-                                          <span className={line.includes(':') ? 'font-medium' : ''}>{line}</span>
-                                        )}
-                                      </span>
-                                    )}
-                                  </p>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                <CardContent className="pt-0 px-6 pb-6">
+                  <div className="bg-slate-50/50 rounded-lg p-5 border border-slate-200">
+                    <div className="max-w-none">
+                      {formatProfessorContent(dualAnalysis.professor_analysis.content)}
                     </div>
                   </div>
                 </CardContent>
+              </Card>
+
+              {/* Mentor Guidance - Supportive (Refined Collapsible) */}
+              <Card className="shadow-sm border border-slate-200">
+                <CardHeader 
+                  className="cursor-pointer hover:bg-slate-50 transition-colors pb-4"
+                  onClick={() => setExpandMentorView(!expandMentorView)}
+                >
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center text-base font-medium">
+                      <Heart className="h-4 w-4 mr-2.5 text-emerald-600" />
+                      Study Tips & Learning Guidance
+                    </CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-emerald-700 border-emerald-300 text-xs">
+                        Supportive
+                      </Badge>
+                      {expandMentorView ? (
+                        <ChevronUp className="h-4 w-4 text-slate-500" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-slate-500" />
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {expandMentorView ? 'Hide' : 'View'} personalized study recommendations
+                  </p>
+                </CardHeader>
+                
+                {expandMentorView && (
+                  <CardContent className="pt-0 px-6 pb-6 border-t border-slate-100">
+                    <div className="bg-emerald-50/30 rounded-lg p-4 border border-emerald-200">
+                      <div className="text-slate-700 leading-relaxed">
+                        {formatMentorContent(dualAnalysis.mentor_guidance.content)}
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
               </Card>
 
               {/* Structured Notes */}

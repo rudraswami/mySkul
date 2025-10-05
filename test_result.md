@@ -148,7 +148,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "Critical AI Tutor formatVisualResponse Error Fixed. Now Focus on Mock Test Free-Tier Logic: Fix free-tier validation so users can take both free trials (2/2) before seeing subscription popup. Core features: correct free-trial validation logic, show subscription popup only after both attempts used, usage counter updates correctly (1/2, 2/2), 'Resets in 30 days' countdown functional."
+## user_problem_statement: "AUTO NOTES UI ENHANCEMENT - Improve readability and structure by fixing inconsistent numbering, cleaning up special characters (**, #, \, etc.), and enhancing visual hierarchy for smooth, professional learning UI. Core features: Auto Numbering Fix (sequential 1,2,3 numbering) and Text Cleanup & UI Polish (remove clutter, improve spacing/typography)."
 
 ## backend:
   - task: "AI Tutor Phase C: Guardrails System Testing"
