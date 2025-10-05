@@ -10,7 +10,7 @@ import sys
 
 class DashboardTester:
     def __init__(self):
-        self.base_url = "https://mocktest-pro.preview.emergentagent.com/api"
+        self.base_url = "https://eduai-platform-20.preview.emergentagent.com/api"
         self.token = None
         self.test_email = "test@dhruvai.com"
         self.test_password = "password123"

@@ -1,84 +1,75 @@
 <analysis>
-The trajectory outlines the AI engineer's work across two main phases. Initially, it summarizes the previous work on the Mock Test module, covering implementation of retake, review, bookmarking, performance trends, dynamic subject display, and robust subscription error handling. This involved extensive modifications to  (APIs, Pydantic models, subscription logic) and  (UI, state management, API integration) to address several user-reported issues.
+The AI engineer's work primarily focused on enhancing the Dhruv AI application's stability, user experience, and core AI Tutor functionality. Initially, critical bug fixes were performed: a profile settings save error due to a missing  function in  was resolved, and a mock test free-tier limit display bug was fixed by fetching fresh usage data. UI/UX was improved by standardizing colors ( to ) across components (AI Tutor, Subscription, Dashboard) and implementing navigation loading states using a new  component. A significant deployment blocker, heavy ML dependencies, was addressed by removing them from  and  and integrating a lightweight, hash-based embedding service ().
 
-The focus then shifted to the  module. First, the engineer refactored the frontend by removing Smart Search, Document Analysis, and Spaced Repetition features from , as these functionalities were redundant with the AI Tutor. Post-refactoring, the user reported critical bugs in the Live Recording and File Upload functionalities. Investigation revealed issues with the frontend's session status transition and, more critically, several backend API failures. The backend issues were progressively diagnosed, first as potential MongoDB ObjectId serialization and datetime handling problems in , then definitively as a FastAPI route ordering conflict where a general  route was incorrectly intercepting specific routes like . This was resolved by reordering the routes in . The trajectory concludes with the successful verification of all Auto-Note Mentor backend endpoints.
+Following these foundational improvements, the engineer tackled explicit user requests. Mobile compatibility for the AI Tutor module was addressed, leading to an initial implementation of responsive styling in . User feedback highlighted issues with AI Tutor responses: incorrect primary persona (Mentor before Professor) and plain, unengaging output. These were fixed by adjusting  in  to prioritize Professor, enhancing  and  system prompts for more structured, detailed responses, and introducing  in . Throughout the process, persistent session/authentication issues were observed, leading to frequent re-logins during testing. Finally, a global mobile navigation system was implemented by rewriting  and integrating it with , providing a responsive sidebar and hamburger menu, confirmed successful via screenshots.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project, an Indian B2C EdTech platform, aims to provide personalized learning for competitive exams. The core product is a Neuro-Symbolic AI mentor.
+The Dhruv AI project is an Indian B2C EdTech platform leveraging Neuro-Symbolic AI for competitive exam preparation, offering comprehensive tools for students.
 
-**Previously, for the Mock Test Module, the user requested and the AI engineer implemented:**
-*   **Retake Functionality**: Exact, Variant, and Adaptive modes.
-*   **Post-Test Review**: Detailed question review with explanations and hints.
-*   **Detailed Solution Explanations**: For incorrect answers.
-*   **Question Bookmarking**: During or after tests.
-*   **Performance Trend Analysis**: Accuracy, improvement, weak/strong areas.
-*   **Advanced Test Mode UI**: Intuitive selection.
-*   **Persistence**: All actions saved to backend.
-*   **Dynamic Subject Display**: Based on user exam type (e.g., JEE, NEET, UPSC).
-*   **Subscription Error Handling**: Professional modal for free-tier limits/expiry with CTA.
-*   **Free Tier Quota**: Limited tests before upgrade prompt.
+**Mock Test Module**: Supports various retake options, post-test review, question bookmarking, and performance trends. It includes dynamic subject display and robust subscription handling with free-tier limits and calls to action. A bug was fixed where the free-tier limit displayed stale usage data.
 
-**More recently, for the Auto-Note Mentor Module, the user requested/reiterated and the AI engineer worked on fixing:**
-*   **Refactoring**: Removal of redundant features (Smart Search, Document Analysis, Spaced Repetition) already present in AI Tutor.
-*   **Live Recording**: User enters title/subject -> start -> mic access -> audio capture -> ASR transcription -> AI generates notes/flashcards/quiz. Auto-save, end session displays outputs, saves to Previous Sessions. Error states for mic issues.
-*   **File Upload**: Upload MP3/WAV/MP4/M4A (≤100MB) -> backend transcription -> AI notes/flashcards/quiz. Display outputs, save as Uploaded File Session, show progress/status.
-*   **Class Series**: Group sessions, allow schedule/reminders.
-*   **Persistence & Integration**: All sessions saved in DB, synced, exportable (PDF/DOCX), searchable.
+**Auto-Note Mentor Module**: Core functionalities include Live Recording (audio capture, ASR transcription, AI-generated notes/flashcards/quiz with progress states, auto-save), File Upload (MP3/WAV/MP4/M4A processing for notes/flashcards/quiz), persistence, and display of previous sessions. Redundant features like Smart Search, Document Analysis, and Spaced Repetition were removed, along with Analytics and Wellness from UI.
+
+**AI Tutor Module**: Requires comprehensive frontend automated testing for Phase C, D, E features (guardrails, actions, wellness checks). It needs enhanced topic detection logic for auto-suggesting new sessions. User feedback specified ensuring the Professor's response is primary for verified answers and improving response quality to be more visual, structured, and engaging (ChatGPT-like).
+
+**General UI/UX**: Requires a functional Profile Settings page (fixed), all interactive elements and buttons to be functional, consistent color patterns (standardized  theme), loading indicators for better UX (implemented ), and crucially, global mobile responsiveness with a collapsible sidebar and hamburger menu.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
--   **AI/LLM**: Neuro-Symbolic AI, Dual-Layer AI (Mentor/Professor), ASR (Automatic Speech Recognition) implied for live recording.
--   **Data**: Pydantic models, UUIDs, datetime (timezone.utc), ISO strings, JSON serialization, MongoDB ObjectId handling.
--   **UI/UX**: Tailwind CSS, Lucide React icons, React hooks (useState, useEffect), Context API, Modals.
--   **Backend**: FastAPI route ordering.
+-   **AI/LLM**: Neuro-Symbolic AI, Dual-Layer AI, ASR, lightweight hash-based embeddings, LLM prompt engineering.
+-   **Data**: Pydantic models, UUIDs, datetime (timezone.utc), ISO strings.
+-   **Backend**: FastAPI route ordering, , .
+-   **UI/UX**: React hooks (, ), Context API, Tailwind CSS, Lucide React, loading states, mobile responsiveness (hamburger menu, collapsible sidebar).
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Summary**: Core FastAPI backend defining API endpoints, Pydantic models, and business logic. Critical for mock tests, authentication, and the Auto-Note Mentor.
-    -   **Changes Made**:
-        -   **Mock Test**: Added/modified Pydantic models (, , , , ). Implemented , , , . Enhanced  for free-tier users and proper HTTP 402 responses. Introduced .
-        -   **Auto-Note Mentor**: Improved  to correctly handle  fields and datetime objects during MongoDB serialization. Crucially, reordered FastAPI routes (e.g., , , ) to appear *before* the general  route to prevent incorrect matching and 500 errors.
-
+    -   **Summary**: Central FastAPI backend. Handles API endpoints. Previously adapted for lightweight embeddings and basic profile/mock test logic.
+    -   **Changes Made**: Fixed  initialization (added ). Corrected  Pydantic model instantiation in exception handling (added ). Corrected  Pydantic model instantiation in exception handling (added ). Modified  to prioritize Professor AI responses for general inquiries. Enhanced system messages for  and  for richer, more structured, and conversational output.
 -   ****:
-    -   **Summary**: Primary frontend component for mock test interactions, displaying test options, managing tests, and showing results.
-    -   **Changes Made**: Integrated new state variables (, , , , , , , , ). Implemented , , , . Updated  and . Redesigned UI for action buttons, review modals, upgrade prompts, and dynamically fetched subject buttons based on .
-
+    -   **Summary**: Lists Python dependencies.
+    -   **Changes Made**: Removed heavy ML libraries, added . (No new changes in this trajectory).
 -   ****:
-    -   **Summary**: React component for the Auto-Note Mentor module, handling live recording, file uploads, and session management.
-    -   **Changes Made**:
-        -   **Refactoring**: Removed UI components, state variables, functions, and  calls related to Document Analysis, Spaced Repetition, and Smart Search. Removed unused imports (). Adjusted grid layout to a single column.
-        -   **Bug Fixes**: Modified  logic to correctly transition  to 'active' to show the recording interface. Verified  state variable exists and  function.
-
+    -   **Summary**: Lightweight hash-based embedding service. (No changes in this trajectory).
 -   ****:
-    -   **Summary**: Development log tracking user problems, fixes, and testing outcomes.
-    -   **Changes Made**: Continuously updated with details on Mock Test and Auto-Note Mentor enhancements, debugging steps, error resolutions, and verification.
+    -   **Summary**: React component for the AI Tutor. Previously had  to  color conversions.
+    -   **Changes Made**: Enhanced  for improved topic detection. Initial mobile responsiveness implemented with  for sidebar state and responsive CSS classes (later mostly removed in favor of global navigation). Responsive styling for input area, mode buttons, and trust badges.
+-   ****:
+    -   **Summary**: Main application navigation sidebar. Previously included loading states.
+    -   **Changes Made**: *Completely rewritten* to implement global mobile responsiveness, including a collapsible sidebar, hamburger menu, overlay backdrop, and integration with  state managed in .
+-   ****:
+    -   **Summary**: Defines main application structure and routing. Previously integrated  and .
+    -   **Changes Made**: Added  (, ) to manage the mobile navigation sidebar's open/close state globally, passing  to the  component.
+-   ****:
+    -   **Summary**: Manages user authentication state. Added . (No new changes in this trajectory).
+-   ****:
+    -   **Summary**: Frontend for mock test interactions. Previously fixed stale usage data. (No new changes in this trajectory).
+-   ****:
+    -   **Summary**: Component for displaying AI responses.
+    -   **Changes Made**: Implemented  function to render more structured, visual, and engaging AI responses. Updated the  to use this new formatting for both primary and secondary AI responses.
+-   ****:
+    -   **Summary**: Component for various loading indicators. (No changes in this trajectory).
 </code_architecture>
 
 <pending_tasks>
--   **AI Tutor Module**: Conduct comprehensive frontend automated testing for Phase C, D, E features (guardrails, actions, wellness checks). Implement topic detection logic for auto-suggesting new sessions.
+-   **AI Tutor Module**: Conduct comprehensive frontend automated testing for Phase C, D, E features (guardrails, actions, wellness checks) and the enhanced topic detection.
 -   **Auto-Note Mentor Module Completion**: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
+-   Run frontend automated tests to confirm end-to-end functionality for the Auto-Note Mentor module.
+-   Address persistent session/authentication issues observed during testing.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer successfully resolved critical backend issues within the Auto-Note Mentor module. The previous work involved refactoring the  component by removing the redundant Smart Search, Document Analysis, and Spaced Repetition features. After this refactoring, the user reported that the Live Recording and File Upload functionalities were not working.
+Immediately prior to this summary, the AI engineer addressed several critical UI/UX and functional issues. Backend fixes were applied in  to resolve  initialization errors by adding a  parameter and correcting Pydantic model instantiations for  and  in exception handlers to include missing fields ( and , respectively).
 
-Initial investigation on the frontend () revealed that the  function was incorrectly setting  to 'active' instead of 'ready' after creating a session, preventing the UI from transitioning to the recording interface. This was fixed. The  state and  function were verified to be correctly implemented.
+Significant effort was directed towards improving the AI Tutor module based on user feedback. The  in  was updated to ensure the  persona is prioritized for general inquiries, providing more authoritative answers. System messages for both  and  were enhanced to generate richer, more detailed, and structured responses, aiming for a ChatGPT-like conversational style. On the frontend, in , a new  function was developed and integrated into the  to visually structure AI outputs, replacing plain paragraphs with more scannable and engaging formats (e.g., headings, bullet points).
 
-Frontend automated testing () confirmed the UI changes were successful (form, upload button, UI transitions worked), but identified critical backend issues related to database collection mismatches and 500 errors for session retrieval.
-
-Further backend investigation () initially focused on MongoDB  serialization and  handling within the  function, which was improved to handle  fields more robustly and ensure timezone-aware  serialization. However, comprehensive backend testing revealed the actual root cause was a **FastAPI route ordering issue**. Specifically, the general  route was defined before more specific routes like , , and . This caused FastAPI to incorrectly match requests for specific endpoints to the general  route, leading to 500 errors.
-
-The final fix involved systematically **reordering the FastAPI routes in ** to ensure that the more specific Auto-Note Mentor endpoints are defined *before* the general  endpoint. This resolved all backend 500 errors for session listing, class series, and analytics.
-
-At this point, all backend issues for the Auto-Note Mentor, specifically regarding API routing and data retrieval, are verified as **FIXED**.
+Initially, mobile responsiveness for the AI Tutor was addressed locally within . However, recognizing the global impact of navigation, a more comprehensive solution was implemented. The  component was largely rewritten to create a mobile-responsive, collapsible sidebar accessible via a hamburger menu. This global mobile navigation state () is now managed in . This ensures a consistent mobile experience across the entire application, and screenshots verified the successful implementation of the mobile sidebar and content display. Persistent session/authentication issues were noted during testing, which caused frequent redirects to the login page.
 </current_work>
 
 <optional_next_step>
-Run frontend automated tests to confirm end-to-end functionality for the Auto-Note Mentor module.
+Investigate and resolve the persistent session/authentication issues observed during testing.
 </optional_next_step>
-
