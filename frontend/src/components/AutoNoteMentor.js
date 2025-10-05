@@ -2071,64 +2071,109 @@ export default function AutoNoteMentor() {
             </Card>
           </div>
 
-          {/* Previous Sessions */}
+          {/* Recent Notes Widget */}
           <div>
             <Card className="border-0 shadow-md">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-green-600" />
-                  Previous Sessions
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                    Recent Notes
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {sessions.length} Total
+                  </Badge>
                 </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Quick access to your latest AI-generated notes
+                </p>
               </CardHeader>
               <CardContent>
-                {sessions.length > 0 ? (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {sessions.map((session) => (
-                      <div
-                        key={session.session_id}
-                        onClick={() => loadPreviousSession(session.session_id)}
-                        className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm text-gray-900 truncate">
-                            {session.title || 
-                             session.session_name ||
-                             `${session.subject || 'General'} Session - ${new Date(session.created_at).toLocaleDateString()}`}
-                          </h4>
-                          <Badge variant="outline" className="text-xs">
-                            {session.subject || 'General'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{new Date(session.created_at).toLocaleDateString()}</span>
-                          <Badge 
-                            variant={session.status === 'completed' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {session.status}
-                          </Badge>
-                        </div>
-                        
-                        {session.audio_duration && (
-                          <div className="mt-1 text-xs text-gray-600">
-                            Duration: {Math.round(session.audio_duration / 60)} minutes
+                {getRecentSessions().length > 0 ? (
+                  <div className="space-y-3">
+                    {getRecentSessions().map((session) => {
+                      const statusBadge = getStatusBadge(session.status, session.ai_confidence);
+                      const qualityScore = getQualityScore(session);
+                      
+                      return (
+                        <div
+                          key={session.session_id}
+                          onClick={() => loadPreviousSession(session.session_id)}
+                          className="group p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 hover:shadow-md"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start space-x-3 flex-1">
+                              <span className="text-xl mt-0.5 flex-shrink-0">
+                                {getSubjectIcon(session.subject)}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm text-gray-900 truncate group-hover:text-blue-700">
+                                  {session.title || 
+                                   session.session_name ||
+                                   `${session.subject || 'General'} Session`}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {session.subject || 'General'} • {new Date(session.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col items-end space-y-1 flex-shrink-0 ml-3">
+                              <Badge className={`text-xs border ${statusBadge.color}`}>
+                                <span className="mr-1">{statusBadge.icon}</span>
+                                {statusBadge.text}
+                              </Badge>
+                              
+                              {session.status === 'completed' && (
+                                <div className="flex items-center text-xs">
+                                  <div className={`w-2 h-2 rounded-full mr-1 ${
+                                    qualityScore >= 80 ? 'bg-green-500' : 
+                                    qualityScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`}></div>
+                                  <span className="text-gray-500">{qualityScore}% Quality</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {session.audio_duration ? 
+                                `${Math.round(session.audio_duration / 60)} min` : 
+                                'Duration unknown'
+                              }
+                            </span>
+                            
+                            <span className="group-hover:text-blue-600 font-medium">
+                              View Notes →
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* View All Notes Button */}
+                    <Button 
+                      onClick={() => setActiveView('library')}
+                      variant="outline" 
+                      className="w-full mt-4 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      View All Notes ({sessions.length})
+                    </Button>
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <FileText className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No previous sessions</p>
+                    <BookOpen className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No notes created yet</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Record a session or upload a file to get started
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Removed: Enhanced Features Section (Class Series, Analytics Dashboard) - not essential for core note-taking functionality */}
-
           </div>
         </div>
       </div>
