@@ -1377,6 +1377,119 @@ class DhruvAITester:
 
     # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
 
+    def test_auto_note_mentor_runtime_error_fixes(self):
+        """Test Auto-Note Mentor Runtime Error Fixes - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor runtime error fixes test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR RUNTIME ERROR FIXES TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: Backend API endpoints to verify no runtime errors")
+        print("   Focus: GET /api/auto-notes/sessions endpoint functionality")
+        print("   User: test@dhruvai.com/password123")
+        
+        test_results = {
+            'sessions_endpoint': False,
+            'session_data_structure': False,
+            'enhanced_ui_fields': False
+        }
+        
+        # Test 1: GET /api/auto-notes/sessions - Core endpoint for Notes Library
+        print("\n📋 Test 1: GET /api/auto-notes/sessions - Notes Library Backend")
+        success, response = self.run_test(
+            "Auto-Notes Sessions Endpoint",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            sessions = response.get('sessions', [])
+            print(f"   ✅ Sessions endpoint working: {len(sessions)} sessions retrieved")
+            test_results['sessions_endpoint'] = True
+            
+            # Test 2: Verify session data structure for enhanced UI
+            if sessions:
+                sample_session = sessions[0]
+                required_fields = ['session_id', 'title', 'subject', 'status', 'created_at']
+                enhanced_fields = ['structured_notes', 'dual_analysis', 'transcription']
+                
+                print(f"\n📋 Test 2: Session Data Structure for Enhanced UI")
+                missing_required = [field for field in required_fields if field not in sample_session]
+                present_enhanced = [field for field in enhanced_fields if field in sample_session]
+                
+                if not missing_required:
+                    print(f"   ✅ All required fields present: {required_fields}")
+                    test_results['session_data_structure'] = True
+                else:
+                    print(f"   ❌ Missing required fields: {missing_required}")
+                
+                if present_enhanced:
+                    print(f"   ✅ Enhanced UI fields present: {present_enhanced}")
+                    test_results['enhanced_ui_fields'] = True
+                else:
+                    print(f"   ⚠️  No enhanced UI fields found: {enhanced_fields}")
+                
+                # Display sample session structure
+                print(f"   📊 Sample Session Structure:")
+                for key, value in sample_session.items():
+                    if isinstance(value, str) and len(value) > 50:
+                        print(f"      {key}: {value[:50]}... (length: {len(value)})")
+                    else:
+                        print(f"      {key}: {value}")
+            else:
+                print(f"   ⚠️  No sessions available for structure testing")
+        else:
+            print("   ❌ Sessions endpoint failed - this could cause Notes Library errors")
+        
+        # Test 3: Test session loading with enhanced formatting
+        print(f"\n📋 Test 3: Session Loading with Enhanced Formatting")
+        if test_results['sessions_endpoint'] and sessions:
+            session_id = sessions[0].get('session_id')
+            if session_id:
+                success, response = self.run_test(
+                    "Individual Session Loading",
+                    "GET",
+                    f"auto-notes/{session_id}",
+                    200,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success:
+                    print(f"   ✅ Individual session loading works")
+                    print(f"   Title: {response.get('title', 'N/A')}")
+                    print(f"   Subject: {response.get('subject', 'N/A')}")
+                    print(f"   Status: {response.get('status', 'N/A')}")
+                    
+                    # Check for enhanced formatting data
+                    if 'structured_notes' in response:
+                        print(f"   ✅ Structured notes available for enhanced UI")
+                    if 'dual_analysis' in response:
+                        print(f"   ✅ Dual analysis available for enhanced UI")
+                    if 'transcription' in response:
+                        print(f"   ✅ Transcription available for enhanced UI")
+                else:
+                    print(f"   ❌ Individual session loading failed")
+        
+        # Summary
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n🎯 RUNTIME ERROR FIXES TESTING SUMMARY:")
+        print(f"   ✅ Tests Passed: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        print(f"   🔍 Sessions Endpoint: {'✓' if test_results['sessions_endpoint'] else '✗'}")
+        print(f"   🔍 Data Structure: {'✓' if test_results['session_data_structure'] else '✗'}")
+        print(f"   🔍 Enhanced UI Fields: {'✓' if test_results['enhanced_ui_fields'] else '✗'}")
+        
+        if success_count == total_tests:
+            print(f"   ✅ ALL BACKEND TESTS PASSED: Auto-Note Mentor APIs ready for enhanced UI")
+        else:
+            print(f"   ⚠️  SOME ISSUES FOUND: Backend may need fixes for optimal UI experience")
+        
+        return success_count >= 2  # At least sessions endpoint and data structure should work
+
     def test_auto_note_mentor_session_management(self):
         """Test Auto-Note Mentor Session Management APIs - REVIEW REQUEST FOCUS"""
         if not self.token:
