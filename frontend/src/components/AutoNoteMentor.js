@@ -935,6 +935,137 @@ export default function AutoNoteMentor() {
       );
     });
   };
+  // Enhanced formatting function for Student-Friendly content (Beautiful & Accessible)
+  const formatStudentFriendlyContent = (content, colorTheme = 'purple') => {
+    if (!content) return null;
+    
+    // Clean the content first - remove all special characters and normalize
+    const cleanContent = content
+      .replace(/\*\*/g, '') // Remove ** markdown
+      .replace(/###\s*/g, '') // Remove ### headers
+      .replace(/^\s*[\-\*•]\s*/gm, '') // Remove bullet markers
+      .replace(/\\/g, '') // Remove backslashes
+      .replace(/^\s*\d+\.\s*/gm, '') // Remove existing numbering
+      .replace(/\n{3,}/g, '\n\n') // Normalize line breaks
+      .trim();
+    
+    // Color theme mapping
+    const themes = {
+      purple: {
+        primary: 'purple-500',
+        secondary: 'purple-600',
+        light: 'purple-50',
+        border: 'purple-200'
+      },
+      emerald: {
+        primary: 'emerald-500',
+        secondary: 'emerald-600', 
+        light: 'emerald-50',
+        border: 'emerald-200'
+      },
+      blue: {
+        primary: 'blue-500',
+        secondary: 'blue-600',
+        light: 'blue-50', 
+        border: 'blue-200'
+      }
+    };
+    
+    const theme = themes[colorTheme] || themes.purple;
+    
+    // Split into logical sections
+    const sections = cleanContent.split('\n\n').filter(section => section.trim().length > 0);
+    let pointCounter = 1;
+    
+    return sections.map((section, sectionIdx) => {
+      const lines = section.split('\n').filter(line => line.trim().length > 0);
+      
+      return (
+        <div key={sectionIdx} className="mb-6">
+          {lines.map((line, lineIdx) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return null;
+            
+            // Main section headers (student-friendly style)
+            if (lineIdx === 0 && (trimmedLine.length > 25 || trimmedLine.toLowerCase().includes('notes') || 
+                trimmedLine.toLowerCase().includes('concepts') || trimmedLine.toLowerCase().includes('important') ||
+                trimmedLine.includes(':'))) {
+              const displayTitle = trimmedLine.replace(/:/g, '').trim();
+              
+              return (
+                <div key={lineIdx} className="mb-4">
+                  <div className="flex items-center mb-3">
+                    <div className={`w-2 h-8 bg-${theme.primary} rounded-full mr-3`}></div>
+                    <h3 className="text-lg font-semibold text-gray-800 leading-snug">
+                      {displayTitle}
+                    </h3>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Key points with beautiful formatting
+            if (trimmedLine.includes(':') && trimmedLine.length < 200) {
+              const [term, ...definitionParts] = trimmedLine.split(':');
+              const definition = definitionParts.join(':').trim();
+              const currentPoint = pointCounter++;
+              
+              return (
+                <div key={lineIdx} className="mb-4">
+                  <div className={`bg-${theme.light} rounded-lg p-4 border-l-4 border-${theme.primary}`}>
+                    <div className="flex items-start">
+                      <span className={`inline-flex items-center justify-center w-6 h-6 bg-${theme.secondary} text-white rounded-full text-sm font-medium mr-3 mt-0.5 flex-shrink-0`}>
+                        {currentPoint}
+                      </span>
+                      <div className="flex-1">
+                        <h4 className="text-base font-semibold text-gray-800 mb-2 leading-relaxed">
+                          {term.trim()}
+                        </h4>
+                        {definition && (
+                          <p className="text-gray-700 leading-relaxed text-sm">
+                            {definition}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Bullet points (student-friendly style)
+            if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.match(/^\d+\./)) {
+              const cleanText = trimmedLine.replace(/^[•\-\d\.]\s*/, '').trim();
+              
+              return (
+                <div key={lineIdx} className="mb-3 ml-4">
+                  <div className="flex items-start">
+                    <span className={`w-2 h-2 bg-${theme.primary} rounded-full mt-2.5 mr-3 flex-shrink-0`}></span>
+                    <p className="text-gray-700 leading-relaxed text-sm">
+                      {cleanText}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Regular content (clean paragraph style)
+            if (trimmedLine.length > 15) {
+              return (
+                <div key={lineIdx} className="mb-3">
+                  <p className="text-gray-700 leading-relaxed text-sm pl-4 border-l-2 border-gray-200">
+                    {trimmedLine}
+                  </p>
+                </div>
+              );
+            }
+            
+            return null;
+          })}
+        </div>
+      );
+    });
+  };
 
   // ============= ENHANCED FEATURES FUNCTIONS =============
 
