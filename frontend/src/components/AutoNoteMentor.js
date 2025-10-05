@@ -57,7 +57,7 @@ export default function AutoNoteMentor() {
   // UI State
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeView, setActiveView] = useState('home'); // home, notes, flashcards, quiz
+  const [activeView, setActiveView] = useState('home'); // home, notes, library, flashcards, quiz
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [expandMentorView, setExpandMentorView] = useState(false);
   
