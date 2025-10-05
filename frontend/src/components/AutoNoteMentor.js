@@ -1816,64 +1816,102 @@ export default function AutoNoteMentor() {
               </div>
             </div>
 
-            {/* Search and Filters */}
-            <Card className="border-0 shadow-md">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Search */}
-                  <div className="md:col-span-2">
-                    <Input
-                      placeholder="Search notes by title or subject..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full"
-                    />
+            {/* Enhanced Search and Filters */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">🔍 Find Your Notes</h2>
+                  <div className="text-sm text-gray-600">
+                    Smart search & filtering powered by AI
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+                  {/* Enhanced Search */}
+                  <div className="lg:col-span-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      🔍 Search Notes
+                    </label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Type to search by title, subject, or content..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                      />
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm('')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   {/* Subject Filter */}
-                  <div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📚 Subject
+                    </label>
                     <select
                       value={selectedSubject}
                       onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition-all duration-200"
                     >
-                      <option value="all">All Subjects</option>
+                      <option value="all">All Subjects ({subjectsInSessions.length})</option>
                       {subjectsInSessions.map(subject => (
-                        <option key={subject} value={subject}>{subject}</option>
+                        <option key={subject} value={subject}>
+                          {getSubjectIcon(subject)} {subject}
+                        </option>
                       ))}
                     </select>
                   </div>
                   
                   {/* Status Filter */}
-                  <div>
+                  <div className="lg:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ⚡ Status
+                    </label>
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white transition-all duration-200"
                     >
                       <option value="all">All Status</option>
-                      <option value="completed">Completed</option>
-                      <option value="processing">Processing</option>
-                      <option value="active">Uploaded</option>
+                      <option value="completed">✅ Completed</option>
+                      <option value="processing">⏳ Processing</option>
+                      <option value="active">🟡 Uploaded</option>
                     </select>
                   </div>
                 </div>
                 
-                {/* Sort Options */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                {/* Enhanced Sort Options */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                    <span className="text-sm font-semibold text-gray-700 flex items-center">
+                      <TrendingUp className="h-4 w-4 mr-2 text-blue-600" />
+                      Sort by:
+                    </span>
                     <div className="flex space-x-2">
                       {[
-                        { value: 'newest', label: 'Newest First' },
-                        { value: 'oldest', label: 'Oldest First' },
-                        { value: 'quality', label: 'AI Quality' }
+                        { value: 'newest', label: '🕒 Newest First', icon: Clock },
+                        { value: 'oldest', label: '📅 Oldest First', icon: Clock },
+                        { value: 'quality', label: '⭐ AI Quality', icon: Star }
                       ].map(option => (
                         <Button
                           key={option.value}
                           onClick={() => setSortBy(option.value)}
-                          variant={sortBy === option.value ? 'default' : 'ghost'}
+                          variant={sortBy === option.value ? 'default' : 'outline'}
                           size="sm"
+                          className={`transition-all duration-200 ${
+                            sortBy === option.value 
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md' 
+                              : 'hover:bg-blue-50 hover:border-blue-300'
+                          }`}
                         >
                           {option.label}
                         </Button>
@@ -1881,7 +1919,7 @@ export default function AutoNoteMentor() {
                     </div>
                   </div>
                   
-                  {/* Clear Filters */}
+                  {/* Enhanced Clear Filters */}
                   {(searchTerm || selectedSubject !== 'all' || selectedStatus !== 'all') && (
                     <Button
                       onClick={() => {
@@ -1891,14 +1929,26 @@ export default function AutoNoteMentor() {
                       }}
                       variant="ghost"
                       size="sm"
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 hover:border-red-300 transition-all duration-200"
                     >
-                      Clear Filters
+                      <X className="h-4 w-4 mr-1" />
+                      Clear All Filters
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+                
+                {/* Filter Results Summary */}
+                <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <Award className="h-4 w-4 inline mr-1" />
+                    Showing <span className="font-semibold">{filteredSessions.length}</span> of <span className="font-semibold">{sessions.length}</span> notes
+                    {searchTerm && ` matching "${searchTerm}"`}
+                    {selectedSubject !== 'all' && ` in ${selectedSubject}`}
+                    {selectedStatus !== 'all' && ` with ${selectedStatus} status`}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Notes Grid */}
