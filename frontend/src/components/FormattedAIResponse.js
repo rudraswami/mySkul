@@ -29,6 +29,104 @@ import {
   Activity
 } from 'lucide-react';
 
+// Enhanced visual formatting function - moved outside component for reusability
+export const formatVisualResponse = (text) => {
+  if (!text) return text;
+  
+  // Split into sections and format visually
+  let sections = text.split('\n\n');
+  
+  return sections.map((section, index) => {
+    // Check for emoji headers (🎯, 📚, 🔍, etc.)
+    const emojiHeaderMatch = section.match(/^([🎯📚🔍⚡💡📝🏆⭐✅❗🤗💪🗺️🎯🚀✨💯🔥👏])\s*\*\*([^*]+)\*\*/);
+    
+    if (emojiHeaderMatch) {
+      const emoji = emojiHeaderMatch[1];
+      const title = emojiHeaderMatch[2];
+      const content = section.replace(emojiHeaderMatch[0], '').trim();
+      
+      return (
+        <div key={index} className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border-l-4 border-blue-500">
+          <div className="flex items-center mb-3">
+            <span className="text-2xl mr-3">{emoji}</span>
+            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+          </div>
+          <div className="ml-8 text-gray-700">
+            {formatTextContent(content)}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div key={index} className="mb-4 text-gray-700">
+        {formatTextContent(section)}
+      </div>
+    );
+  });
+};
+
+// Format text content with bullets, bold, etc. - helper function
+export const formatTextContent = (text) => {
+  if (!text) return null;
+  
+  const lines = text.split('\n');
+  
+  return lines.map((line, index) => {
+    // Handle bullet points
+    if (line.match(/^[\s]*[•\-\*]\s/)) {
+      const content = line.replace(/^[\s]*[•\-\*]\s/, '');
+      return (
+        <div key={index} className="flex items-start mb-2">
+          <span className="text-blue-500 font-bold mr-3 mt-1">•</span>
+          <span dangerouslySetInnerHTML={{ __html: formatInlineText(content) }} />
+        </div>
+      );
+    }
+    
+    // Handle numbered lists  
+    if (line.match(/^\s*\d+\.\s/)) {
+      const numberMatch = line.match(/^(\s*)(\d+)\.\s(.+)$/);
+      if (numberMatch) {
+        return (
+          <div key={index} className="flex items-start mb-2">
+            <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">
+              {numberMatch[2]}
+            </span>
+            <span dangerouslySetInnerHTML={{ __html: formatInlineText(numberMatch[3]) }} />
+          </div>
+        );
+      }
+    }
+    
+    // Regular paragraphs
+    if (line.trim()) {
+      return (
+        <p key={index} className="mb-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatInlineText(line) }} />
+      );
+    }
+    
+    return null;
+  }).filter(Boolean);
+};
+
+// Format inline text (bold, italic, math) - helper function
+export const formatInlineText = (text) => {
+  return text
+    // Bold text
+    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+    // Math expressions
+    .replace(/x\^2/g, 'x²')
+    .replace(/x\^3/g, 'x³')
+    .replace(/([a-zA-Z])\^(\d+)/g, '$1<sup>$2</sup>')
+    // Mathematical symbols
+    .replace(/\+\-/g, '±')
+    .replace(/->/g, '→')
+    .replace(/<==/g, '≤')
+    .replace(/>=/g, '≥')
+    .replace(/!=/g, '≠');
+};
+
 export default function FormattedAIResponse({ 
   content, 
   persona, 
@@ -44,104 +142,6 @@ export default function FormattedAIResponse({
       ...prev,
       [sectionIndex]: !prev[sectionIndex]
     }));
-  };
-
-  // Enhanced visual formatting function
-  const formatVisualResponse = (text) => {
-    if (!text) return text;
-    
-    // Split into sections and format visually
-    let sections = text.split('\n\n');
-    
-    return sections.map((section, index) => {
-      // Check for emoji headers (🎯, 📚, 🔍, etc.)
-      const emojiHeaderMatch = section.match(/^([🎯📚🔍⚡💡📝🏆⭐✅❗🤗💪🗺️🎯🚀✨💯🔥👏])\s*\*\*([^*]+)\*\*/);
-      
-      if (emojiHeaderMatch) {
-        const emoji = emojiHeaderMatch[1];
-        const title = emojiHeaderMatch[2];
-        const content = section.replace(emojiHeaderMatch[0], '').trim();
-        
-        return (
-          <div key={index} className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border-l-4 border-blue-500">
-            <div className="flex items-center mb-3">
-              <span className="text-2xl mr-3">{emoji}</span>
-              <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            </div>
-            <div className="ml-8 text-gray-700">
-              {formatTextContent(content)}
-            </div>
-          </div>
-        );
-      }
-      
-      return (
-        <div key={index} className="mb-4 text-gray-700">
-          {formatTextContent(section)}
-        </div>
-      );
-    });
-  };
-
-  // Format text content with bullets, bold, etc.
-  const formatTextContent = (text) => {
-    if (!text) return null;
-    
-    const lines = text.split('\n');
-    
-    return lines.map((line, index) => {
-      // Handle bullet points
-      if (line.match(/^[\s]*[•\-\*]\s/)) {
-        const content = line.replace(/^[\s]*[•\-\*]\s/, '');
-        return (
-          <div key={index} className="flex items-start mb-2">
-            <span className="text-blue-500 font-bold mr-3 mt-1">•</span>
-            <span dangerouslySetInnerHTML={{ __html: formatInlineText(content) }} />
-          </div>
-        );
-      }
-      
-      // Handle numbered lists  
-      if (line.match(/^\s*\d+\.\s/)) {
-        const numberMatch = line.match(/^(\s*)(\d+)\.\s(.+)$/);
-        if (numberMatch) {
-          return (
-            <div key={index} className="flex items-start mb-2">
-              <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">
-                {numberMatch[2]}
-              </span>
-              <span dangerouslySetInnerHTML={{ __html: formatInlineText(numberMatch[3]) }} />
-            </div>
-          );
-        }
-      }
-      
-      // Regular paragraphs
-      if (line.trim()) {
-        return (
-          <p key={index} className="mb-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatInlineText(line) }} />
-        );
-      }
-      
-      return null;
-    }).filter(Boolean);
-  };
-
-  // Format inline text (bold, italic, math)
-  const formatInlineText = (text) => {
-    return text
-      // Bold text
-      .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-      // Math expressions
-      .replace(/x\^2/g, 'x²')
-      .replace(/x\^3/g, 'x³')
-      .replace(/([a-zA-Z])\^(\d+)/g, '$1<sup>$2</sup>')
-      // Mathematical symbols
-      .replace(/\+\-/g, '±')
-      .replace(/->/g, '→')
-      .replace(/<==/g, '≤')
-      .replace(/>=/g, '≥')
-      .replace(/!=/g, '≠');
   };
 
   // Comprehensive math formatting function (keep existing for compatibility)

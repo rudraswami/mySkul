@@ -4136,12 +4136,33 @@ async def save_chat_message(session_id: str, message_request: SessionMessageRequ
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    # Create message
+    # Extract clean response text from AI response
+    clean_response = ""
+    if isinstance(message_request.ai_response, dict):
+        # Extract primary response text from dual_response structure
+        dual_response = message_request.ai_response.get('dual_response', {})
+        if dual_response and isinstance(dual_response, dict):
+            primary = dual_response.get('primary', {})
+            if primary and isinstance(primary, dict):
+                clean_response = primary.get('response', '')
+        
+        # Fallback to other response structures if dual_response not available
+        if not clean_response:
+            clean_response = message_request.ai_response.get('response', '')
+        
+        # If still no response found, use the entire AI response as string (fallback)
+        if not clean_response:
+            clean_response = str(message_request.ai_response)
+    else:
+        # If ai_response is not a dict, convert to string
+        clean_response = str(message_request.ai_response)
+    
+    # Create message with clean response text only
     message = ChatMessage(
         session_id=session_id,
         user_id=user.user_id,
         message=message_request.user_message,
-        response=str(message_request.ai_response),
+        response=clean_response,
         timestamp=datetime.fromisoformat(message_request.timestamp.replace('Z', '+00:00'))
     )
     

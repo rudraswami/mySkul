@@ -267,15 +267,34 @@ export default function AITutor() {
     }
   };
 
-  // Save message to session
+  // Save message to session - extract clean text only
   const saveMessageToSession = async (sessionId, message, aiResponse) => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
 
+      // Extract clean response text for storage
+      let cleanResponse = '';
+      if (aiResponse && typeof aiResponse === 'object') {
+        // Extract primary response from dual_response structure
+        if (aiResponse.dual_response && aiResponse.dual_response.primary) {
+          cleanResponse = aiResponse.dual_response.primary.response || '';
+        }
+        // Fallback to other response structures
+        else if (aiResponse.response) {
+          cleanResponse = aiResponse.response;
+        }
+        // If no clean text found, store the whole object (fallback)
+        else {
+          cleanResponse = aiResponse;
+        }
+      } else {
+        cleanResponse = aiResponse;
+      }
+
       await axios.post(`${API}/chat/${sessionId}/messages`, {
         user_message: message,
-        ai_response: aiResponse,
+        ai_response: cleanResponse,
         timestamp: new Date().toISOString()
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -305,10 +324,51 @@ export default function AITutor() {
     }
   };
 
+  // Helper function to parse and clean message response
+  const parseMessageResponse = (message) => {
+    try {
+      // If the response is a string that looks like JSON, try to parse it
+      if (typeof message.response === 'string' && message.response.startsWith('{')) {
+        const parsedResponse = JSON.parse(message.response);
+        
+        // If it's a parsed object with dual_response structure, use it
+        if (parsedResponse.dual_response && parsedResponse.dual_response.primary) {
+          return {
+            ...message,
+            dual_response: parsedResponse.dual_response,
+            guardrails: parsedResponse.guardrails,
+            action_buttons: parsedResponse.action_buttons,
+            analytics: parsedResponse.analytics,
+            disagreement_alert: parsedResponse.disagreement_alert,
+            response: parsedResponse.dual_response.primary.response // Clean text for fallback
+          };
+        }
+        // If it has a simple response field, use that
+        else if (parsedResponse.response) {
+          return {
+            ...message,
+            response: parsedResponse.response
+          };
+        }
+      }
+      
+      // If response is already clean text or not JSON, return as is
+      return message;
+    } catch (error) {
+      // If parsing fails, return the original message
+      console.warn('Failed to parse message response:', error);
+      return message;
+    }
+  };
+
   const loadSession = async (sessionId) => {
     try {
       const response = await axios.get(`${API}/chat/${sessionId}/messages`);
-      setMessages(response.data.messages);
+      
+      // Parse and clean all loaded messages
+      const cleanedMessages = response.data.messages.map(parseMessageResponse);
+      
+      setMessages(cleanedMessages);
       setCurrentSession(sessionId);
     } catch (error) {
       console.error('Failed to load session:', error);
@@ -326,32 +386,20 @@ export default function AITutor() {
       let response;
       let sessionId = currentSession;
       
-      // Create new session if this is the first message
+      // Create new session if this is the first message or if no current session exists
       if (!sessionId) {
         // Detect topic from message (simple approach)
         const detectedTopic = detectTopicFromMessage(messageToSend);
         
-        // Check if user wants to continue existing session or create new one
-        if (sessions.length > 0 && messages.length === 0) {
-          const shouldCreateNew = await confirmNewSession(detectedTopic);
-          if (!shouldCreateNew) {
-            // Load the most recent session
-            const recentSession = sessions[0];
-            await loadSession(recentSession.session_id);
-            sessionId = recentSession.session_id;
-          }
-        }
-        
-        // Create new session if needed
-        if (!sessionId) {
-          sessionId = await createNewSession(messageToSend, detectedTopic);
-          if (sessionId) {
-            setCurrentSession(sessionId);
-          } else {
-            // Fallback to local session ID
-            sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            setCurrentSession(sessionId);
-          }
+        // Always create a new session when starting a new conversation
+        // This ensures proper session isolation
+        sessionId = await createNewSession(messageToSend, detectedTopic);
+        if (sessionId) {
+          setCurrentSession(sessionId);
+        } else {
+          // Fallback to local session ID if backend fails
+          sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          setCurrentSession(sessionId);
         }
       }
       
@@ -480,23 +528,8 @@ export default function AITutor() {
     return maxScore >= 2 ? detectedTopic : 'General';
   };
 
-  // Helper function to confirm new session creation
-  const confirmNewSession = async (detectedTopic) => {
-    return new Promise((resolve) => {
-      const currentTopic = messages.length > 0 ? messages[0].topic_detected : null;
-      
-      if (currentTopic && detectedTopic && currentTopic !== detectedTopic) {
-        // Different topic detected - suggest new session
-        const confirmed = window.confirm(
-          `Detected topic: ${detectedTopic}\nCurrent session: ${currentTopic}\n\nStart a new session for better organization?`
-        );
-        resolve(confirmed);
-      } else {
-        // Same topic or no previous topic - continue in current session
-        resolve(false);
-      }
-    });
-  };
+  // Session isolation: Always create new session for new conversations
+  // This ensures messages don't get mixed between different chat sessions
 
   const startNewSession = () => {
     setMessages([]);
@@ -1166,25 +1199,37 @@ export default function AITutor() {
   };
 
   // Group sessions by subject automatically, with pinned sessions at top
+  // Maintain order from backend (already sorted by last_updated descending)
   const groupedSessions = React.useMemo(() => {
     const groups = {};
     
-    // Separate pinned and regular sessions
+    // Separate pinned and regular sessions while preserving order
     const pinnedSessions = filteredSessions.filter(session => session.pinned);
     const regularSessions = filteredSessions.filter(session => !session.pinned);
     
-    // Add pinned section if there are pinned sessions
+    // Add pinned section if there are pinned sessions (maintain order)
     if (pinnedSessions.length > 0) {
       groups['📌 Pinned'] = pinnedSessions;
     }
     
-    // Group regular sessions by subject
+    // Group regular sessions by subject while preserving chronological order
     regularSessions.forEach(session => {
       const subject = session.subject || 'General';
       if (!groups[subject]) {
         groups[subject] = [];
       }
       groups[subject].push(session);
+    });
+    
+    // Sort each subject group by last_updated (latest first) to ensure proper ordering
+    Object.keys(groups).forEach(subject => {
+      if (subject !== '📌 Pinned') {
+        groups[subject].sort((a, b) => {
+          const dateA = new Date(a.last_updated || a.created_at);
+          const dateB = new Date(b.last_updated || b.created_at);
+          return dateB - dateA; // Descending order (latest first)
+        });
+      }
     });
     
     return groups;
