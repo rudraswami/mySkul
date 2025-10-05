@@ -1761,37 +1761,54 @@ export default function AutoNoteMentor() {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
+          {/* Enhanced Professional Header */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <Button 
-                  onClick={() => setActiveView('home')} 
-                  variant="ghost" 
-                  size="sm"
-                  className="mr-4 hover:bg-blue-50"
-                >
-                  ← Back to Home
-                </Button>
-                <div className="flex items-center">
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
-                    <BookOpen className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                      Notes Library
-                    </h1>
-                    <p className="text-gray-600">
-                      Manage and review all your AI-generated study materials
-                    </p>
+            {/* Navigation Bar */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Button 
+                    onClick={() => setActiveView('home')} 
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-lg font-medium shadow-md transition-all duration-200 hover:shadow-lg"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    Back to Home
+                  </Button>
+                  
+                  <div className="h-8 w-px bg-gray-300"></div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-xl shadow-lg">
+                      <BookOpen className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        My Notes Library
+                      </h1>
+                      <p className="text-sm text-gray-600 font-medium">
+                        📚 Your AI-Generated Study Collection
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-sm">
-                  {filteredSessions.length} of {sessions.length} notes
-                </Badge>
+                
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {filteredSessions.length}
+                    </div>
+                    <div className="text-xs text-gray-500 font-medium">
+                      of {sessions.length} notes
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg px-4 py-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-green-700">All systems active</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
