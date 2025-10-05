@@ -2078,24 +2078,75 @@ export default function AutoNoteMentor() {
               })}
             </div>
           ) : (
-            <div className="text-center py-16">
-              <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No notes found</h3>
-              <p className="text-gray-600 mb-6">
-                {sessions.length === 0 
-                  ? "You haven't created any notes yet. Start by recording a session or uploading a file."
-                  : "No notes match your current filters. Try adjusting your search criteria."
-                }
-              </p>
-              {sessions.length === 0 && (
-                <Button 
-                  onClick={() => setActiveView('home')}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Mic className="h-4 w-4 mr-2" />
-                  Create Your First Notes
-                </Button>
-              )}
+            <div className="text-center py-20">
+              <div className="max-w-md mx-auto">
+                <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-8 shadow-lg">
+                  {sessions.length === 0 ? (
+                    <BookOpen className="h-16 w-16 text-blue-600" />
+                  ) : (
+                    <AlertCircle className="h-16 w-16 text-blue-600" />
+                  )}
+                </div>
+                
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  {sessions.length === 0 ? '📚 Welcome to Your Notes Library!' : '🔍 No Notes Found'}
+                </h3>
+                
+                <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                  {sessions.length === 0 
+                    ? "Ready to transform your learning? Create your first AI-powered notes by recording a class or uploading an audio file."
+                    : "No notes match your current search. Try adjusting your filters or search terms to find what you're looking for."
+                  }
+                </p>
+                
+                {sessions.length === 0 ? (
+                  <div className="space-y-4">
+                    <Button 
+                      onClick={() => setActiveView('home')}
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                    >
+                      <Mic className="h-5 w-5 mr-2" />
+                      Start Creating Notes
+                    </Button>
+                    
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                      <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                        <div className="text-2xl mb-2">🎤</div>
+                        <div className="text-sm font-medium text-gray-900">Live Recording</div>
+                        <div className="text-xs text-gray-600">Record classes in real-time</div>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                        <div className="text-2xl mb-2">📁</div>
+                        <div className="text-sm font-medium text-gray-900">File Upload</div>
+                        <div className="text-xs text-gray-600">Upload existing recordings</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedSubject('all');
+                        setSelectedStatus('all');
+                      }}
+                      variant="outline"
+                      className="border-blue-300 text-blue-600 hover:bg-blue-50 px-6 py-2"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Clear All Filters
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => setActiveView('home')}
+                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2 ml-4"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Create New Notes
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
