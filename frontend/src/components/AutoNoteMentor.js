@@ -746,6 +746,100 @@ export default function AutoNoteMentor() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Notes Library Functions
+  const getFilteredSessions = () => {
+    let filtered = [...sessions];
+    
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(session =>
+        session.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.subject?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Subject filter
+    if (selectedSubject !== 'all') {
+      filtered = filtered.filter(session => session.subject === selectedSubject);
+    }
+    
+    // Status filter
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(session => session.status === selectedStatus);
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'oldest':
+          return new Date(a.created_at) - new Date(b.created_at);
+        case 'quality':
+          return (b.ai_confidence || 0.8) - (a.ai_confidence || 0.8);
+        default:
+          return new Date(b.created_at) - new Date(a.created_at);
+      }
+    });
+    
+    return filtered;
+  };
+
+  const getRecentSessions = () => {
+    return sessions
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5);
+  };
+
+  const getStatusBadge = (status, aiConfidence = 0.8) => {
+    switch (status) {
+      case 'completed':
+        return {
+          icon: '✅',
+          text: 'Completed',
+          color: 'bg-green-100 text-green-800 border-green-200'
+        };
+      case 'processing':
+        return {
+          icon: '⏳',
+          text: 'Processing',
+          color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+        };
+      case 'active':
+        return {
+          icon: '🟡',
+          text: 'Uploaded',
+          color: 'bg-blue-100 text-blue-800 border-blue-200'
+        };
+      default:
+        return {
+          icon: '📝',
+          text: 'Ready',
+          color: 'bg-gray-100 text-gray-800 border-gray-200'
+        };
+    }
+  };
+
+  const getQualityScore = (session) => {
+    return Math.round((session.ai_confidence || 0.8) * 100);
+  };
+
+  const getSubjectIcon = (subject) => {
+    const icons = {
+      'Mathematics': '📐',
+      'Physics': '⚛️',
+      'Chemistry': '🧪',
+      'Biology': '🧬',
+      'General Studies': '📚',
+      'Current Affairs': '📰',
+      'History': '🏛️',
+      'Geography': '🌍',
+      'Polity': '🏛️',
+      'General': '📝'
+    };
+    return icons[subject] || '📝';
+  };
+
   // Enhanced formatting function for Professor content (Academic Style)
   const formatProfessorContent = (content) => {
     if (!content) return null;
