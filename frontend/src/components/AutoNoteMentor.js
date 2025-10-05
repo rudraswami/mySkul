@@ -1753,6 +1753,253 @@ export default function AutoNoteMentor() {
     );
   }
 
+  // Notes Library Screen
+  if (activeView === 'library') {
+    const filteredSessions = getFilteredSessions();
+    const subjectsInSessions = [...new Set(sessions.map(s => s.subject).filter(Boolean))];
+    
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <Button 
+                  onClick={() => setActiveView('home')} 
+                  variant="ghost" 
+                  size="sm"
+                  className="mr-4 hover:bg-blue-50"
+                >
+                  ← Back to Home
+                </Button>
+                <div className="flex items-center">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
+                    <BookOpen className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                      Notes Library
+                    </h1>
+                    <p className="text-gray-600">
+                      Manage and review all your AI-generated study materials
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-sm">
+                  {filteredSessions.length} of {sessions.length} notes
+                </Badge>
+              </div>
+            </div>
+
+            {/* Search and Filters */}
+            <Card className="border-0 shadow-md">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Search */}
+                  <div className="md:col-span-2">
+                    <Input
+                      placeholder="Search notes by title or subject..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* Subject Filter */}
+                  <div>
+                    <select
+                      value={selectedSubject}
+                      onChange={(e) => setSelectedSubject(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="all">All Subjects</option>
+                      {subjectsInSessions.map(subject => (
+                        <option key={subject} value={subject}>{subject}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Status Filter */}
+                  <div>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="completed">Completed</option>
+                      <option value="processing">Processing</option>
+                      <option value="active">Uploaded</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Sort Options */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                    <div className="flex space-x-2">
+                      {[
+                        { value: 'newest', label: 'Newest First' },
+                        { value: 'oldest', label: 'Oldest First' },
+                        { value: 'quality', label: 'AI Quality' }
+                      ].map(option => (
+                        <Button
+                          key={option.value}
+                          onClick={() => setSortBy(option.value)}
+                          variant={sortBy === option.value ? 'default' : 'ghost'}
+                          size="sm"
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Clear Filters */}
+                  {(searchTerm || selectedSubject !== 'all' || selectedStatus !== 'all') && (
+                    <Button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedSubject('all');
+                        setSelectedStatus('all');
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notes Grid */}
+          {filteredSessions.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredSessions.map((session) => {
+                const statusBadge = getStatusBadge(session.status, session.ai_confidence);
+                const qualityScore = getQualityScore(session);
+                
+                return (
+                  <Card key={session.session_id} className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-0 shadow-md">
+                    <CardContent className="p-0">
+                      <div 
+                        onClick={() => loadPreviousSession(session.session_id)}
+                        className="p-6"
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <span className="text-2xl flex-shrink-0">
+                              {getSubjectIcon(session.subject)}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 line-clamp-2 mb-1">
+                                {session.title || session.session_name || `${session.subject || 'General'} Session`}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {session.subject || 'General'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <Badge className={`text-xs border flex-shrink-0 ml-2 ${statusBadge.color}`}>
+                            <span className="mr-1">{statusBadge.icon}</span>
+                            {statusBadge.text}
+                          </Badge>
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="space-y-3 mb-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="flex items-center text-gray-500">
+                              <Clock className="h-4 w-4 mr-1" />
+                              {session.audio_duration ? 
+                                `${Math.round(session.audio_duration / 60)} minutes` : 
+                                'Duration unknown'
+                              }
+                            </span>
+                            
+                            {session.status === 'completed' && (
+                              <div className="flex items-center">
+                                <div className={`w-2 h-2 rounded-full mr-2 ${
+                                  qualityScore >= 80 ? 'bg-green-500' : 
+                                  qualityScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                                }`}></div>
+                                <span className="text-xs text-gray-500">{qualityScore}% Quality</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="text-xs text-gray-500">
+                            Created on {new Date(session.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'long', 
+                              day: 'numeric'
+                            })}
+                          </div>
+                          
+                          {/* Preview Content */}
+                          {session.structured_notes && (
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <div className="text-xs text-gray-600 mb-1">Quick Preview:</div>
+                              <div className="text-xs text-gray-800">
+                                {session.structured_notes.key_concepts?.length || 0} concepts • {' '}
+                                {session.structured_notes.important_points?.length || 0} key points • {' '}
+                                {session.structured_notes.formulas_mentioned?.length || 0} formulas
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action */}
+                        <div className="pt-3 border-t border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">Click to view full notes</span>
+                            <span className="text-blue-600 group-hover:text-blue-700 font-medium text-sm">
+                              Open →
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No notes found</h3>
+              <p className="text-gray-600 mb-6">
+                {sessions.length === 0 
+                  ? "You haven't created any notes yet. Start by recording a session or uploading a file."
+                  : "No notes match your current filters. Try adjusting your search criteria."
+                }
+              </p>
+              {sessions.length === 0 && (
+                <Button 
+                  onClick={() => setActiveView('home')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Mic className="h-4 w-4 mr-2" />
+                  Create Your First Notes
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Main Dashboard (Default View)
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
