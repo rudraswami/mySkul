@@ -67,6 +67,12 @@ export default function AutoNoteMentor() {
   const [explainRequest, setExplainRequest] = useState('');
   const [explanation, setExplanation] = useState(null);
   
+  // Notes Library State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, quality
+  
   // Removed: Enhanced Features State (Analytics, Class Series) - not essential for core note-taking functionality
   
   // Live Recording State
