@@ -570,7 +570,7 @@ export function DualResponseContainer({
         <div className="p-4">
           <div className="max-w-none">
             <div className="text-gray-800 leading-relaxed">
-              {formatVisualResponse(primaryResponse.response)}
+              <div dangerouslySetInnerHTML={{ __html: formatMathText(primaryResponse.response) }} />
             </div>
           </div>
 
