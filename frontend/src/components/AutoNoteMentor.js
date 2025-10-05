@@ -1630,7 +1630,7 @@ export default function AutoNoteMentor() {
                         onChange={(e) => setNewSessionSubject(e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        {subjects[user?.exam_type]?.map(subject => (
+                        {(subjects[user?.exam_type] || subjects['JEE'] || ['Mathematics', 'Physics', 'Chemistry'])?.map(subject => (
                           <option key={subject} value={subject}>
                             {subject}
                           </option>
