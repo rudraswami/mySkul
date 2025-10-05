@@ -1375,6 +1375,263 @@ class DhruvAITester:
         
         return success_count >= len(compatibility_tests)
 
+    # ============= AUTO-NOTE MENTOR INTERACTIVE FEATURES TESTING =============
+
+    def test_auto_note_mentor_interactive_features(self):
+        """Test Auto-Note Mentor interactive features - REVIEW REQUEST PRIORITY"""
+        if not self.token:
+            print("❌ No token available for Auto-Note Mentor interactive features test")
+            return False
+        
+        print("\n🎯 AUTO-NOTE MENTOR INTERACTIVE FEATURES TESTING - REVIEW REQUEST PRIORITY")
+        print("   Testing Generate Flashcards and Explain Point APIs that are not working")
+        print("   User: test@dhruvai.com/password123")
+        print("   Focus: POST /api/auto-notes/generate-flashcards and POST /api/auto-notes/explain-point")
+        
+        # First, we need to create a session and get a valid session_id
+        session_id = None
+        test_results = {
+            'session_creation': False,
+            'session_completion': False,
+            'generate_flashcards': False,
+            'explain_point': False,
+            'session_loading': False
+        }
+        
+        # Step 1: Create an auto-note session
+        print("\n📋 Step 1: Creating Auto-Note Session")
+        session_data = {
+            "title": "Test Interactive Features Session",
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "Create Auto-Note Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            print(f"   ✅ Session created: {session_id}")
+            test_results['session_creation'] = True
+        else:
+            print("   ❌ Failed to create session - cannot test interactive features")
+            return False
+        
+        # Step 2: Complete the session with some sample data
+        print("\n📋 Step 2: Completing Session with Sample Data")
+        completion_data = {
+            "fallback_transcription": "Today we learned about quadratic equations. The discriminant is b² - 4ac. When discriminant is positive, we have two real roots. When discriminant is zero, we have one repeated root. When discriminant is negative, we have complex roots. The quadratic formula is x = (-b ± √(b² - 4ac)) / 2a. This is fundamental for solving quadratic equations in JEE Mathematics.",
+            "total_duration": 300.0
+        }
+        
+        success, response = self.run_test(
+            "Complete Auto-Note Session",
+            "POST",
+            f"auto-notes/end-session?session_id={session_id}",
+            200,
+            data=completion_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Session completed successfully")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            print(f"   Has structured notes: {'structured_notes' in response}")
+            test_results['session_completion'] = True
+        else:
+            print("   ❌ Failed to complete session")
+            return False
+        
+        time.sleep(2)  # Allow processing time
+        
+        # Step 3: Test Generate Flashcards API - CRITICAL TEST
+        print("\n📋 Step 3: Testing Generate Flashcards API - CRITICAL")
+        print("   POST /api/auto-notes/generate-flashcards")
+        print("   Expected: Proper flashcard data structure with front/back/difficulty")
+        
+        flashcard_request = {
+            "session_id": session_id,
+            "specific_concepts": ["quadratic equations", "discriminant", "quadratic formula"]
+        }
+        
+        success, response = self.run_test(
+            "Generate Flashcards from Session",
+            "POST",
+            "auto-notes/generate-flashcards",
+            200,
+            data=flashcard_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Generate Flashcards API working")
+            
+            # Validate response structure
+            flashcards = response.get('flashcards', [])
+            flashcards_generated = response.get('flashcards_generated', 0)
+            
+            print(f"   Flashcards generated: {flashcards_generated}")
+            print(f"   Flashcards in response: {len(flashcards)}")
+            
+            if flashcards and len(flashcards) > 0:
+                sample_card = flashcards[0]
+                required_fields = ['question', 'answer', 'concept', 'difficulty_level']
+                missing_fields = [field for field in required_fields if field not in sample_card]
+                
+                if not missing_fields:
+                    print(f"   ✅ Flashcard structure validated")
+                    print(f"   Sample question: {sample_card.get('question', '')[:50]}...")
+                    print(f"   Sample answer: {sample_card.get('answer', '')[:50]}...")
+                    print(f"   Concept: {sample_card.get('concept', 'N/A')}")
+                    print(f"   Difficulty: {sample_card.get('difficulty_level', 'N/A')}")
+                    test_results['generate_flashcards'] = True
+                else:
+                    print(f"   ⚠️  Missing flashcard fields: {missing_fields}")
+            else:
+                print(f"   ⚠️  No flashcards returned in response")
+                
+            # Check AI insights
+            ai_insights = response.get('ai_insights', {})
+            if ai_insights:
+                print(f"   ✅ AI insights provided")
+                print(f"   Professor review: {ai_insights.get('professor_review', 'N/A')[:50]}...")
+                print(f"   Mentor encouragement: {ai_insights.get('mentor_encouragement', 'N/A')[:50]}...")
+        else:
+            print(f"   ❌ Generate Flashcards API failed")
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   Error Status: {error_status}")
+            print(f"   Error Details: {error_data}")
+        
+        time.sleep(2)
+        
+        # Step 4: Test Explain Point API - CRITICAL TEST
+        print("\n📋 Step 4: Testing Explain Point API - CRITICAL")
+        print("   POST /api/auto-notes/explain-point")
+        print("   Expected: Dual AI explanation format with professor and mentor responses")
+        
+        explain_request = {
+            "session_id": session_id,
+            "point_reference": "discriminant",
+            "additional_context": "I need help understanding when to use the discriminant"
+        }
+        
+        success, response = self.run_test(
+            "Explain Point from Session",
+            "POST",
+            "auto-notes/explain-point",
+            200,
+            data=explain_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Explain Point API working")
+            
+            # Validate response structure
+            explanation = response.get('explanation', {})
+            professor_explanation = explanation.get('professor_explanation', {})
+            mentor_guidance = explanation.get('mentor_guidance', {})
+            
+            print(f"   Point reference: {response.get('point_reference', 'N/A')}")
+            
+            if professor_explanation and mentor_guidance:
+                print(f"   ✅ Dual AI explanation structure validated")
+                
+                prof_content = professor_explanation.get('content', '')
+                mentor_content = mentor_guidance.get('content', '')
+                
+                print(f"   Professor explanation length: {len(prof_content)}")
+                print(f"   Mentor guidance length: {len(mentor_content)}")
+                print(f"   Professor focus: {professor_explanation.get('focus', 'N/A')}")
+                print(f"   Mentor focus: {mentor_guidance.get('focus', 'N/A')}")
+                
+                if len(prof_content) > 50 and len(mentor_content) > 50:
+                    print(f"   ✅ Both explanations have substantial content")
+                    test_results['explain_point'] = True
+                else:
+                    print(f"   ⚠️  Explanations may be too short or empty")
+            else:
+                print(f"   ⚠️  Missing dual AI explanation structure")
+                print(f"   Professor explanation present: {'professor_explanation' in explanation}")
+                print(f"   Mentor guidance present: {'mentor_guidance' in explanation}")
+            
+            # Check related concepts
+            related_concepts = response.get('related_concepts', [])
+            if related_concepts:
+                print(f"   ✅ Related concepts provided: {related_concepts}")
+        else:
+            print(f"   ❌ Explain Point API failed")
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   Error Status: {error_status}")
+            print(f"   Error Details: {error_data}")
+        
+        time.sleep(2)
+        
+        # Step 5: Test Session Loading/Persistence
+        print("\n📋 Step 5: Testing Session Loading and Data Persistence")
+        print("   GET /api/auto-notes/{session_id}")
+        print("   Expected: Session data available when buttons are clicked")
+        
+        success, response = self.run_test(
+            "Load Session Data",
+            "GET",
+            f"auto-notes/{session_id}",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Session loading working")
+            
+            # Check if session has the data needed for interactive features
+            session_status = response.get('status', '')
+            structured_notes = response.get('structured_notes', {})
+            dual_analysis = response.get('dual_analysis', {})
+            
+            print(f"   Session status: {session_status}")
+            print(f"   Has structured notes: {bool(structured_notes)}")
+            print(f"   Has dual analysis: {bool(dual_analysis)}")
+            
+            if session_status == 'completed' and structured_notes:
+                print(f"   ✅ Session data available for interactive features")
+                test_results['session_loading'] = True
+            else:
+                print(f"   ⚠️  Session may not have complete data for interactive features")
+        else:
+            print(f"   ❌ Session loading failed")
+        
+        # Final Assessment
+        print(f"\n🎯 AUTO-NOTE MENTOR INTERACTIVE FEATURES TEST SUMMARY:")
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"   ✅ Tests Passed: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        print(f"   🔍 Session Creation: {'✓' if test_results['session_creation'] else '✗'}")
+        print(f"   🔍 Session Completion: {'✓' if test_results['session_completion'] else '✗'}")
+        print(f"   🔍 Generate Flashcards API: {'✓' if test_results['generate_flashcards'] else '✗'}")
+        print(f"   🔍 Explain Point API: {'✓' if test_results['explain_point'] else '✗'}")
+        print(f"   🔍 Session Loading: {'✓' if test_results['session_loading'] else '✗'}")
+        
+        if not test_results['generate_flashcards'] or not test_results['explain_point']:
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
+            if not test_results['generate_flashcards']:
+                print(f"   ❌ Generate Flashcards API not working - users can't generate flashcards")
+            if not test_results['explain_point']:
+                print(f"   ❌ Explain Point API not working - users can't get explanations")
+            print(f"   🔧 RECOMMENDATION: Check backend logs, AI service integration, and session data structure")
+        else:
+            print(f"\n✅ INTERACTIVE FEATURES WORKING: Both Generate Flashcards and Explain Point APIs functional")
+        
+        return success_count >= 3  # At least 3/5 tests should pass for basic functionality
+
     # ============= AI TUTOR SESSION MANAGEMENT TESTING =============
 
     def test_ai_tutor_session_isolation_fix(self):
@@ -7958,6 +8215,7 @@ def main():
         ("🎯 Phase A: Comprehensive Integration", tester.test_phase_a_integration_comprehensive),
         
         # Auto-Note Mentor API Tests
+        ("🎯 Auto-Note Interactive Features", tester.test_auto_note_mentor_interactive_features),
         ("📝 Auto-Note Start Session", tester.test_auto_note_start_session),
         ("📝 Auto-Note Process Audio", tester.test_auto_note_process_audio),
         ("📝 Auto-Note End Session", tester.test_auto_note_end_session),

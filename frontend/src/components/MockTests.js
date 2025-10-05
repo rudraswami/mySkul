@@ -2116,36 +2116,90 @@ export default function MockTests() {
 
         {/* Recent Results & Performance */}
         <div className="space-y-6">
-          {/* Recent Results */}
+          {/* Personal Test History */}
           <Card className="border-0 shadow-md">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-                Recent Results
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                  Your Test History
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Personal Analytics
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentResults.map((result, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-sm text-gray-900 truncate">
-                        {result.testName}
-                      </p>
-                      <span className={`text-sm font-bold ${getScoreColor(result.score)}`}>
-                        {result.score}%
-                      </span>
+                {recentResults.length > 0 ? (
+                  recentResults.map((result, index) => (
+                    <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-gray-900 mb-1">
+                            {result.testName}
+                          </p>
+                          <div className="flex items-center space-x-3 text-xs text-gray-600">
+                            <span className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {result.date}
+                            </span>
+                            <span className="flex items-center">
+                              <Target className="h-3 w-3 mr-1" />
+                              {result.totalQuestions || 25} questions
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-lg font-bold ${getScoreColor(result.score)}`}>
+                            {result.score}%
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {result.score >= 90 ? 'Excellent!' : 
+                             result.score >= 75 ? 'Good Job!' : 
+                             result.score >= 60 ? 'Keep Going!' : 'Practice More'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress bar with improvement indicator */}
+                      <div className="space-y-2">
+                        <Progress 
+                          value={result.score} 
+                          className="h-2" 
+                        />
+                        
+                        {/* Show improvement trend if available */}
+                        {index < recentResults.length - 1 && (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">vs previous test:</span>
+                            {result.score > recentResults[index + 1].score ? (
+                              <span className="text-green-600 flex items-center">
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                                +{(result.score - recentResults[index + 1].score).toFixed(1)}% improved
+                              </span>
+                            ) : result.score < recentResults[index + 1].score ? (
+                              <span className="text-orange-600 flex items-center">
+                                <TrendingUp className="h-3 w-3 mr-1 rotate-180" />
+                                -{(recentResults[index + 1].score - result.score).toFixed(1)}% 
+                              </span>
+                            ) : (
+                              <span className="text-gray-600">Same score</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Rank: #{result.rank}/{result.totalStudents}</span>
-                      <span>{result.date}</span>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                      <FileText className="h-6 w-6 text-gray-500" />
                     </div>
-                    <Progress 
-                      value={result.score} 
-                      className="mt-2 h-2" 
-                    />
+                    <p className="text-gray-600 text-sm mb-2">No test history yet</p>
+                    <p className="text-gray-500 text-xs">Take your first mock test to see your progress!</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

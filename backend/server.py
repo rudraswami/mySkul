@@ -5808,55 +5808,7 @@ async def get_processed_note(
         logger.error(f"Get processed note error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve processed note")
 
-@api_router.post("/auto-notes/generate-flashcards")
-async def generate_additional_flashcards(
-    note_id: str,
-    user: User = Depends(get_current_user)
-):
-    """Generate additional flashcards from processed notes"""
-    
-    try:
-        # Get processed note
-        note_doc = await db.processed_notes.find_one({
-            "note_id": note_id,
-            "user_id": user.user_id
-        })
-        
-        if not note_doc:
-            raise HTTPException(status_code=404, detail="Note not found")
-        
-        processed_note = ProcessedNote(**{k: v for k, v in note_doc.items() if k != '_id'})
-        
-        # Generate more flashcards using Mentor AI
-        additional_flashcards = []
-        for card in processed_note.topic_cards:
-            for point in card.key_points:
-                additional_flashcards.append({
-                    "front": f"Explain: {point[:50]}...",
-                    "back": point,
-                    "topic": card.heading,
-                    "type": "detailed"
-                })
-        
-        # Update processed note with additional flashcards
-        all_flashcards = processed_note.flashcards + additional_flashcards
-        
-        await db.processed_notes.update_one(
-            {"note_id": note_id},
-            {"$set": {"flashcards": all_flashcards}}
-        )
-        
-        return {
-            "note_id": note_id,
-            "new_flashcards": len(additional_flashcards),
-            "total_flashcards": len(all_flashcards),
-            "flashcards": additional_flashcards,
-            "message": f"Generated {len(additional_flashcards)} additional flashcards for enhanced review!"
-        }
-        
-    except Exception as e:
-        logger.error(f"Additional flashcard generation error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate additional flashcards")
+# Removed duplicate endpoint - using the correct session-based flashcard generation endpoint at line 6271
 
 @api_router.post("/auto-notes/process-audio")
 async def process_audio_chunk(
@@ -6224,8 +6176,8 @@ async def explain_note_point(
         explanation_prompt = f"""A student is asking for explanation about "{request.point_reference}" from their class notes.
 
 ORIGINAL CLASS CONTEXT:
-Subject: {session_doc['subject']}
-Class: {session_doc['title']}
+Subject: {session_doc.get('subject', 'Unknown Subject')}
+Class: {session_doc.get('title', 'Class Notes')}
 
 STUDENT'S QUESTION CONTEXT:
 Point Reference: {request.point_reference}
@@ -6293,8 +6245,8 @@ async def generate_flashcards_from_notes(
         
         flashcard_prompt = f"""Generate educational flashcards from this class content:
 
-SUBJECT: {session_doc['subject']}
-CLASS: {session_doc['title']}
+SUBJECT: {session_doc.get('subject', 'Unknown Subject')}
+CLASS: {session_doc.get('title', 'Class Notes')}
 
 KEY CONCEPTS TO FOCUS ON:
 {', '.join(concepts_to_use[:10])}  # Limit to 10 concepts

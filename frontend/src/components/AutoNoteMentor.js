@@ -56,6 +56,7 @@ export default function AutoNoteMentor() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeView, setActiveView] = useState('home'); // home, notes, flashcards, quiz
+  const [showExplanationModal, setShowExplanationModal] = useState(false);
   
   // Interactive Features
   const [selectedNotes, setSelectedNotes] = useState(null);
@@ -638,9 +639,13 @@ export default function AutoNoteMentor() {
   };
 
   const explainPoint = async () => {
-    if (!currentSession || !explainRequest.trim()) return;
+    if (!currentSession || !explainRequest.trim()) {
+      setError('Please enter a question or topic to explain');
+      return;
+    }
     
     setLoading(true);
+    setError(null);
     
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -661,10 +666,15 @@ export default function AutoNoteMentor() {
       if (response.ok) {
         const result = await response.json();
         setExplanation(result);
+        setShowExplanationModal(true);
+        setExplainRequest(''); // Clear the input
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.detail || 'Failed to generate explanation. Please try again.');
       }
     } catch (error) {
       console.error('Explanation error:', error);
-      setError('Failed to generate explanation.');
+      setError('Failed to generate explanation. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -915,18 +925,16 @@ export default function AutoNoteMentor() {
               </div>
               
               <div className="flex space-x-3">
-                <Button onClick={generateFlashcards} variant="outline">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Generate Flashcards
-                </Button>
                 <Button 
                   onClick={() => {
+                    // Navigate back to sessions list view
                     setSessionStatus('idle');
                     setActiveView('home');
                     setCurrentSession(null);
                     setGeneratedNotes(null);
                     setDualAnalysis(null);
                     setSelectedNotes(null);
+                    setExplanation(null);
                     loadUserSessions(); // Refresh the sessions list
                   }} 
                   variant="outline"
@@ -936,12 +944,19 @@ export default function AutoNoteMentor() {
                 </Button>
                 <Button 
                   onClick={() => {
+                    // Start completely fresh session
                     setSessionStatus('idle');
                     setActiveView('home');
                     setCurrentSession(null);
                     setGeneratedNotes(null);
                     setDualAnalysis(null);
                     setSelectedNotes(null);
+                    setExplanation(null);
+                    setNewSessionTitle('');
+                    setNewSessionSubject('Mathematics');
+                    setSelectedFile(null);
+                    setLiveTranscript('');
+                    setConceptsDetected([]);
                   }} 
                   variant="outline"
                 >
@@ -959,37 +974,105 @@ export default function AutoNoteMentor() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Users className="h-5 w-5 mr-2 text-blue-600" />
+                    <Brain className="h-5 w-5 mr-2 text-blue-600" />
                     Dual Intelligence Analysis
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Professor Analysis */}
-                    <div className="border-l-4 border-purple-500 pl-4">
-                      <div className="flex items-center mb-2">
-                        <GraduationCap className="h-5 w-5 text-purple-600 mr-2" />
-                        <span className="font-semibold">Professor Analysis</span>
-                        <Badge variant="outline" className="ml-2 text-xs">Technical</Badge>
-                      </div>
-                      <div className="bg-purple-50 rounded-lg p-4">
-                        <p className="text-gray-800 text-sm whitespace-pre-wrap">
-                          {dualAnalysis.professor_analysis.content}
-                        </p>
+                    <div className="relative overflow-hidden rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-purple-100 shadow-lg">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500"></div>
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                              <GraduationCap className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-purple-900">Professor Analysis</h4>
+                              <p className="text-xs text-purple-600">Academic & Technical Focus</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-purple-100 text-purple-700 border-purple-300">Expert</Badge>
+                        </div>
+                        <div className="bg-white rounded-md p-4 shadow-inner border border-purple-100">
+                          <div className="text-gray-800 leading-relaxed space-y-3">
+                            {dualAnalysis.professor_analysis.content.split('\n\n').map((paragraph, idx) => (
+                              <div key={idx} className="mb-3">
+                                {paragraph.split('\n').map((line, lineIdx) => (
+                                  <p key={lineIdx} className="mb-1 text-sm">
+                                    {line.trim() && (
+                                      <span className="inline-flex items-start">
+                                        {line.startsWith('•') || line.startsWith('-') ? (
+                                          <>
+                                            <span className="text-purple-500 mr-2 mt-1">●</span>
+                                            <span>{line.replace(/^[•-]\s*/, '')}</span>
+                                          </>
+                                        ) : line.match(/^\d+\./) ? (
+                                          <>
+                                            <span className="font-semibold text-purple-600 mr-2">{line.match(/^\d+\./)[0]}</span>
+                                            <span>{line.replace(/^\d+\.\s*/, '')}</span>
+                                          </>
+                                        ) : (
+                                          <span className={line.includes(':') ? 'font-medium' : ''}>{line}</span>
+                                        )}
+                                      </span>
+                                    )}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Mentor Guidance */}
-                    <div className="border-l-4 border-green-500 pl-4">
-                      <div className="flex items-center mb-2">
-                        <Heart className="h-5 w-5 text-green-600 mr-2" />
-                        <span className="font-semibold">Mentor Guidance</span>
-                        <Badge variant="outline" className="ml-2 text-xs">Personalized</Badge>
-                      </div>
-                      <div className="bg-green-50 rounded-lg p-4">
-                        <p className="text-gray-800 text-sm whitespace-pre-wrap">
-                          {dualAnalysis.mentor_guidance.content}
-                        </p>
+                    <div className="relative overflow-hidden rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 via-white to-emerald-100 shadow-lg">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                              <Heart className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-green-900">Mentor Guidance</h4>
+                              <p className="text-xs text-green-600">Personalized Learning Path</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-100 text-green-700 border-green-300">Supportive</Badge>
+                        </div>
+                        <div className="bg-white rounded-md p-4 shadow-inner border border-green-100">
+                          <div className="text-gray-800 leading-relaxed space-y-3">
+                            {dualAnalysis.mentor_guidance.content.split('\n\n').map((paragraph, idx) => (
+                              <div key={idx} className="mb-3">
+                                {paragraph.split('\n').map((line, lineIdx) => (
+                                  <p key={lineIdx} className="mb-1 text-sm">
+                                    {line.trim() && (
+                                      <span className="inline-flex items-start">
+                                        {line.startsWith('•') || line.startsWith('-') ? (
+                                          <>
+                                            <span className="text-green-500 mr-2 mt-1">●</span>
+                                            <span>{line.replace(/^[•-]\s*/, '')}</span>
+                                          </>
+                                        ) : line.match(/^\d+\./) ? (
+                                          <>
+                                            <span className="font-semibold text-green-600 mr-2">{line.match(/^\d+\./)[0]}</span>
+                                            <span>{line.replace(/^\d+\.\s*/, '')}</span>
+                                          </>
+                                        ) : (
+                                          <span className={line.includes(':') ? 'font-medium' : ''}>{line}</span>
+                                        )}
+                                      </span>
+                                    )}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1008,13 +1091,13 @@ export default function AutoNoteMentor() {
                   <div className="space-y-4">
                     {/* Key Concepts */}
                     {generatedNotes.key_concepts?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-2">🎯 Key Concepts</h4>
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-yellow-50 rounded-lg p-4">
+                        <h4 className="font-semibold mb-3 text-gray-900">🎯 Key Concepts</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {generatedNotes.key_concepts.map((concept, index) => (
-                            <Badge key={index} variant="outline" className="justify-start">
-                              {concept}
-                            </Badge>
+                            <div key={index} className="bg-white rounded-md p-2 border border-yellow-200">
+                              <span className="text-gray-800 font-medium">{concept}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1022,13 +1105,13 @@ export default function AutoNoteMentor() {
 
                     {/* Important Points */}
                     {generatedNotes.important_points?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-2">💡 Important Points</h4>
-                        <ul className="space-y-2">
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <h4 className="font-semibold mb-3 text-gray-900">💡 Important Points</h4>
+                        <ul className="space-y-3">
                           {generatedNotes.important_points.map((point, index) => (
                             <li key={index} className="flex items-start">
-                              <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{point}</span>
+                              <CheckCircle className="h-4 w-4 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-700 leading-relaxed">{point}</span>
                             </li>
                           ))}
                         </ul>
@@ -1037,12 +1120,12 @@ export default function AutoNoteMentor() {
 
                     {/* Formulas */}
                     {generatedNotes.formulas_mentioned?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-2">📐 Formulas & Equations</h4>
-                        <div className="space-y-2">
+                      <div className="bg-indigo-50 rounded-lg p-4">
+                        <h4 className="font-semibold mb-3 text-gray-900">📐 Formulas & Equations</h4>
+                        <div className="space-y-3">
                           {generatedNotes.formulas_mentioned.map((formula, index) => (
-                            <div key={index} className="bg-gray-50 rounded p-3 font-mono text-sm">
-                              {formula}
+                            <div key={index} className="bg-white rounded-md p-4 border border-indigo-200 shadow-sm">
+                              <code className="text-gray-800 text-sm font-mono block">{formula}</code>
                             </div>
                           ))}
                         </div>
@@ -1051,13 +1134,13 @@ export default function AutoNoteMentor() {
 
                     {/* Questions Raised */}
                     {generatedNotes.questions_raised?.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-2">🤔 Questions & Doubts</h4>
-                        <ul className="space-y-2">
+                      <div className="bg-orange-50 rounded-lg p-4">
+                        <h4 className="font-semibold mb-3 text-gray-900">🤔 Questions & Doubts</h4>
+                        <ul className="space-y-3">
                           {generatedNotes.questions_raised.map((question, index) => (
                             <li key={index} className="flex items-start">
-                              <AlertCircle className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{question}</span>
+                              <AlertCircle className="h-4 w-4 text-orange-600 mr-3 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-700 leading-relaxed">{question}</span>
                             </li>
                           ))}
                         </ul>
@@ -1076,20 +1159,39 @@ export default function AutoNoteMentor() {
                   <CardTitle className="text-lg">Interactive Features</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button onClick={generateFlashcards} className="w-full" variant="outline">
+                  <Button 
+                    onClick={generateFlashcards} 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                    disabled={loading}
+                  >
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Generate Flashcards
+                    {loading ? 'Generating...' : 'Generate Flashcards'}
                   </Button>
                   
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Ask about any point... (e.g., 'Explain point #3')"
-                      value={explainRequest}
-                      onChange={(e) => setExplainRequest(e.target.value)}
-                    />
-                    <Button onClick={explainPoint} className="w-full" size="sm">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Ask AI for Explanation
+                      </label>
+                      <Input
+                        placeholder="e.g., 'Explain Newton's first law' or 'What is photosynthesis?'"
+                        value={explainRequest}
+                        onChange={(e) => setExplainRequest(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && explainRequest.trim()) {
+                            explainPoint();
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button 
+                      onClick={explainPoint} 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white" 
+                      size="sm"
+                      disabled={loading || !explainRequest.trim()}
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" />
-                      Get Explanation
+                      {loading ? 'Getting Explanation...' : 'Get Explanation'}
                     </Button>
                   </div>
                 </CardContent>
@@ -1139,36 +1241,92 @@ export default function AutoNoteMentor() {
             </div>
           </div>
 
-          {/* Explanation Display */}
-          {explanation && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>🤖 AI Explanation: {explanation.point_reference}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="border-l-4 border-purple-500 pl-4">
-                    <div className="flex items-center mb-2">
-                      <GraduationCap className="h-5 w-5 text-purple-600 mr-2" />
-                      <span className="font-semibold">Professor's Explanation</span>
+          {/* Explanation Modal */}
+          {showExplanationModal && explanation && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      🤖 AI Explanation: {explanation.point_reference}
+                    </h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowExplanationModal(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-l-4 border-purple-500 pl-4">
+                      <div className="flex items-center mb-3">
+                        <GraduationCap className="h-5 w-5 text-purple-600 mr-2" />
+                        <span className="font-semibold">Professor's Explanation</span>
+                        <Badge variant="outline" className="ml-2 text-xs">Technical</Badge>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <div className="text-gray-800 text-sm leading-relaxed space-y-2">
+                          {explanation.explanation.professor_explanation.content.split('\n\n').map((paragraph, idx) => (
+                            <p key={idx} className="mb-2">
+                              {paragraph.split('\n').map((line, lineIdx) => (
+                                <span key={lineIdx}>
+                                  {line}
+                                  {lineIdx < paragraph.split('\n').length - 1 && <br />}
+                                </span>
+                              ))}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-purple-50 rounded-lg p-4">
-                      <p className="text-sm">{explanation.explanation.professor_explanation.content}</p>
+                    
+                    <div className="border-l-4 border-green-500 pl-4">
+                      <div className="flex items-center mb-3">
+                        <Heart className="h-5 w-5 text-green-600 mr-2" />
+                        <span className="font-semibold">Mentor's Guidance</span>
+                        <Badge variant="outline" className="ml-2 text-xs">Personalized</Badge>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <div className="text-gray-800 text-sm leading-relaxed space-y-2">
+                          {explanation.explanation.mentor_guidance.content.split('\n\n').map((paragraph, idx) => (
+                            <p key={idx} className="mb-2">
+                              {paragraph.split('\n').map((line, lineIdx) => (
+                                <span key={lineIdx}>
+                                  {line}
+                                  {lineIdx < paragraph.split('\n').length - 1 && <br />}
+                                </span>
+                              ))}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <div className="flex items-center mb-2">
-                      <Heart className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="font-semibold">Mentor's Guidance</span>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <p className="text-sm">{explanation.explanation.mentor_guidance.content}</p>
-                    </div>
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowExplanationModal(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `Professor: ${explanation.explanation.professor_explanation.content}\n\nMentor: ${explanation.explanation.mentor_guidance.content}`
+                        );
+                      }}
+                      variant="default"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Copy Explanation
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Flashcards Display */}

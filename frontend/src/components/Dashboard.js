@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
@@ -28,7 +29,13 @@ import {
   PlayCircle,
   BookMarked,
   Lightbulb,
-  Circle
+  Circle,
+  Heart,
+  Smile,
+  Meh,
+  Frown,
+  X,
+  CheckCircle
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -37,11 +44,20 @@ const API = `${BACKEND_URL}/api`;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [motivationalContent, setMotivationalContent] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Wellness Modal States
+  const [showWellnessModal, setShowWellnessModal] = useState(false);
+  const [wellnessLoading, setWellnessLoading] = useState(false);
+  const [currentMood, setCurrentMood] = useState(null);
+  const [showWellnessToast, setShowWellnessToast] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -115,6 +131,74 @@ export default function Dashboard() {
       "Great students aren't made in comfort zones! 🔥"
     ];
     return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  // Wellness Check Functions
+  const moodOptions = [
+    { 
+      id: 'great', 
+      label: 'Feeling Great!', 
+      icon: Smile, 
+      color: 'bg-green-500', 
+      bgColor: 'bg-green-50', 
+      textColor: 'text-green-700',
+      description: 'Energized and ready to learn' 
+    },
+    { 
+      id: 'good', 
+      label: 'Pretty Good', 
+      icon: Heart, 
+      color: 'bg-blue-500', 
+      bgColor: 'bg-blue-50', 
+      textColor: 'text-blue-700',
+      description: 'Focused and motivated' 
+    },
+    { 
+      id: 'okay', 
+      label: 'Just Okay', 
+      icon: Meh, 
+      color: 'bg-yellow-500', 
+      bgColor: 'bg-yellow-50', 
+      textColor: 'text-yellow-700',
+      description: 'Could use some motivation' 
+    },
+    { 
+      id: 'stressed', 
+      label: 'Feeling Stressed', 
+      icon: Frown, 
+      color: 'bg-red-500', 
+      bgColor: 'bg-red-50', 
+      textColor: 'text-red-700',
+      description: 'Need to take it easy' 
+    }
+  ];
+
+  const handleWellnessCheck = async (moodId) => {
+    setWellnessLoading(true);
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      
+      // Mock wellness API call - you can replace with actual endpoint
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      const selectedMood = moodOptions.find(m => m.id === moodId);
+      setCurrentMood(selectedMood);
+      setShowWellnessModal(false);
+      setShowWellnessToast(true);
+      
+      // Hide toast after 3 seconds
+      setTimeout(() => setShowWellnessToast(false), 3000);
+      
+    } catch (error) {
+      console.error('Wellness check failed:', error);
+    } finally {
+      setWellnessLoading(false);
+    }
+  };
+
+  const isCurrentRoute = (path) => {
+    return location.pathname === path;
   };
 
   const examCountdown = calculateExamCountdown();
@@ -445,39 +529,110 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-6 space-y-3">
               <Button 
-                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white" 
-                onClick={() => window.location.href = '/tutor'}
+                className={`w-full justify-start transition-all duration-200 ${
+                  isCurrentRoute('/tutor') 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
+                    : 'bg-white hover:bg-blue-50 text-gray-900 border border-gray-300'
+                }`}
+                onClick={() => navigate('/tutor')}
               >
-                <Brain className="h-4 w-4 mr-3" />
+                <Brain className={`h-4 w-4 mr-3 ${isCurrentRoute('/tutor') ? 'text-white' : 'text-blue-600'}`} />
                 <div className="text-left">
                   <div className="font-medium">AI Tutoring</div>
-                  <div className="text-xs text-blue-100">Get personalized help</div>
+                  <div className={`text-xs ${isCurrentRoute('/tutor') ? 'text-blue-100' : 'text-gray-600'}`}>
+                    Get personalized help
+                  </div>
                 </div>
               </Button>
               
               <Button 
-                variant="outline"
-                className="w-full justify-start border-gray-300 hover:bg-gray-50" 
-                onClick={() => window.location.href = '/tests'}
+                className={`w-full justify-start transition-all duration-200 ${
+                  isCurrentRoute('/tests') 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
+                    : 'bg-white hover:bg-blue-50 text-gray-900 border border-gray-300'
+                }`}
+                onClick={() => navigate('/tests')}
               >
-                <FileText className="h-4 w-4 mr-3 text-gray-600" />
+                <FileText className={`h-4 w-4 mr-3 ${isCurrentRoute('/tests') ? 'text-white' : 'text-blue-600'}`} />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Mock Test</div>
-                  <div className="text-xs text-gray-600">Test your knowledge</div>
+                  <div className="font-medium">Mock Test</div>
+                  <div className={`text-xs ${isCurrentRoute('/tests') ? 'text-blue-100' : 'text-gray-600'}`}>
+                    Test your knowledge
+                  </div>
                 </div>
               </Button>
               
               <Button 
-                variant="outline"
-                className="w-full justify-start border-gray-300 hover:bg-gray-50"
-                onClick={() => window.location.href = '/notes'}
+                className={`w-full justify-start transition-all duration-200 ${
+                  isCurrentRoute('/auto-notes') 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
+                    : 'bg-white hover:bg-blue-50 text-gray-900 border border-gray-300'
+                }`}
+                onClick={() => navigate('/auto-notes')}
               >
-                <BookMarked className="h-4 w-4 mr-3 text-gray-600" />
+                <BookMarked className={`h-4 w-4 mr-3 ${isCurrentRoute('/auto-notes') ? 'text-white' : 'text-blue-600'}`} />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Auto Notes</div>
-                  <div className="text-xs text-gray-600">AI-powered notes</div>
+                  <div className="font-medium">Auto Notes</div>
+                  <div className={`text-xs ${isCurrentRoute('/auto-notes') ? 'text-blue-100' : 'text-gray-600'}`}>
+                    AI-powered notes
+                  </div>
                 </div>
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Daily Wellness Check */}
+          <Card className="border border-gray-200 bg-white">
+            <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <CardTitle className="flex items-center justify-between text-gray-900">
+                <div className="flex items-center">
+                  <Heart className="h-5 w-5 mr-3 text-pink-600" />
+                  Daily Wellness
+                </div>
+                {currentMood && (
+                  <Badge className={`${currentMood.bgColor} ${currentMood.textColor} border-0`}>
+                    {currentMood.label}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {currentMood ? (
+                <div className="text-center space-y-3">
+                  <div className={`mx-auto w-12 h-12 ${currentMood.color} rounded-full flex items-center justify-center`}>
+                    <currentMood.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{currentMood.label}</p>
+                    <p className="text-sm text-gray-600">{currentMood.description}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowWellnessModal(true)}
+                    className="mt-3"
+                  >
+                    Update Check-in
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center space-y-3">
+                  <div className="mx-auto w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                    <Heart className="h-6 w-6 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">How are you feeling today?</p>
+                    <p className="text-sm text-gray-600 mb-4">Take a moment to check in with yourself</p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowWellnessModal(true)}
+                    className="w-full bg-pink-600 hover:bg-pink-700 text-white"
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    Take Wellness Check
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -593,6 +748,83 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Wellness Check Modal */}
+      {showWellnessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl max-w-md w-full mx-4 shadow-2xl transform transition-all duration-300 scale-100">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-pink-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Daily Wellness Check</h3>
+                    <p className="text-sm text-gray-600">How are you feeling right now?</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowWellnessModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {moodOptions.map((mood) => (
+                  <Button
+                    key={mood.id}
+                    variant="outline"
+                    className="w-full justify-start p-4 h-auto hover:bg-gray-50 border-2 hover:border-blue-200 transition-all duration-200"
+                    onClick={() => handleWellnessCheck(mood.id)}
+                    disabled={wellnessLoading}
+                  >
+                    <div className="flex items-center space-x-4 w-full">
+                      <div className={`w-10 h-10 ${mood.color} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        <mood.icon className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="font-medium text-gray-900">{mood.label}</div>
+                        <div className="text-sm text-gray-600">{mood.description}</div>
+                      </div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+              
+              {wellnessLoading && (
+                <div className="mt-4 text-center">
+                  <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
+                    <span>Saving your check-in...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wellness Toast */}
+      {showWellnessToast && currentMood && (
+        <div className="fixed top-4 right-4 z-50 transform transition-all duration-300 animate-in slide-in-from-right">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-sm">
+            <div className="flex items-center space-x-3">
+              <div className={`w-8 h-8 ${currentMood.color} rounded-full flex items-center justify-center flex-shrink-0`}>
+                <CheckCircle className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Wellness check saved!</p>
+                <p className="text-sm text-gray-600">You're feeling {currentMood.label.toLowerCase()}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
