@@ -45,6 +45,11 @@ function AppContent() {
 
   return (
     <Routes>
+      {/* Landing Page - Public Home Route */}
+      <Route 
+        path="/" 
+        element={<LandingPage />} 
+      />
       <Route 
         path="/login" 
         element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} 
@@ -52,10 +57,6 @@ function AppContent() {
       <Route 
         path="/register" 
         element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} 
-      />
-      <Route 
-        path="/" 
-        element={!user ? <Navigate to="/login" /> : <Navigate to="/dashboard" />} 
       />
       
       {/* Protected Routes */}
