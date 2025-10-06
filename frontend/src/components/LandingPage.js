@@ -609,21 +609,42 @@ const LandingPage = () => {
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-400/30 rounded-3xl p-12 backdrop-blur-sm">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Ready to Automate Your Learning Journey?
+              Join the Hallucination-Free Learning Revolution
             </h2>
             <p className="text-xl text-blue-200 mb-8 leading-relaxed">
-              Join thousands of students who've transformed their studies with AI-powered learning
+              Experience the world's first verified AI learning platform
             </p>
             
-            <Link 
-              to="/register"
-              className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-12 py-4 rounded-xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
-            >
-              <span className="flex items-center justify-center">
-                Get Started with Dhruv AI
-                <Zap className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-              </span>
-            </Link>
+            {/* Animated verification ticks background */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute animate-float opacity-20"
+                    style={{
+                      left: `${20 + i * 12}%`,
+                      top: `${Math.random() * 100}%`,
+                      animationDelay: `${i * 0.5}s`,
+                      animationDuration: `${3 + Math.random() * 2}s`
+                    }}
+                  >
+                    <CheckCircle className="h-8 w-8 text-green-400" />
+                  </div>
+                ))}
+              </div>
+              
+              <Link 
+                to="/register"
+                className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-12 py-4 rounded-xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
+              >
+                <span className="flex items-center justify-center">
+                  <CheckCircle className="mr-3 h-6 w-6" />
+                  Start Verified Learning Today
+                  <Zap className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                </span>
+              </Link>
+            </div>
 
             <p className="text-blue-300 text-sm mt-4">
               ✓ Free forever • ✓ No credit card required • ✓ Instant access
