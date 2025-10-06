@@ -2174,6 +2174,49 @@ export default function AITutor() {
           </div>
         )}
 
+        {/* XP Gain Popup */}
+        {showXPPopup && lastXPGain && (
+          <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top-5 fade-in-0 duration-500">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg p-4 min-w-[200px] border border-white/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                    <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                  </div>
+                  <span className="font-bold">+{lastXPGain.xp_awarded} XP</span>
+                </div>
+                {lastXPGain.level_up && (
+                  <Badge className="bg-yellow-400 text-yellow-900 border-yellow-300">
+                    Level Up!
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="text-sm opacity-90 mb-2">
+                Total: {lastXPGain.total_xp} XP • Level {lastXPGain.level}
+              </div>
+              
+              {/* XP Progress Bar */}
+              <div className="w-full bg-white/20 rounded-full h-2">
+                <div 
+                  className="bg-white h-2 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${xpInfo.progress_percentage}%` }}
+                ></div>
+              </div>
+              
+              <div className="text-xs opacity-75 mt-1">
+                {lastXPGain.xp_to_next_level} XP to next level
+              </div>
+              
+              {lastXPGain.milestone_achieved && (
+                <div className="mt-2 text-xs bg-white/10 rounded px-2 py-1">
+                  🏆 {lastXPGain.milestone_achieved}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Clean Input Area */}
         <div className="bg-white border-t border-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
