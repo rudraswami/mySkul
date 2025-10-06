@@ -148,7 +148,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "AUTO NOTES UI ENHANCEMENT - Improve readability and structure by fixing inconsistent numbering, cleaning up special characters (**, #, \, etc.), and enhancing visual hierarchy for smooth, professional learning UI. Core features: Auto Numbering Fix (sequential 1,2,3 numbering) and Text Cleanup & UI Polish (remove clutter, improve spacing/typography)."
+## user_problem_statement: "PREMIUM CINEMATIC LANDING PAGE CREATION - Create a new premium, cinematic landing page for Dhruv AI as the home route (/), featuring Hero Section, Problem→Solution narrative, Core Features showcase, Demo section, Testimonials, Pricing tiers, Trust & Technology credentials, and Footer. Must have futuristic design with blue-indigo theme, smooth animations, sample testimonials, and proper navigation to login/register pages."
 
 ## backend:
   - task: "AI Tutor Phase C: Guardrails System Testing"
