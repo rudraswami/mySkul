@@ -588,6 +588,41 @@ class UsageTracking(BaseModel):
     usage_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reset_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(day=1) + timedelta(days=32))
 
+# ============= ENHANCED SUBSCRIPTION MODELS =============
+
+class DailyUsageTracker(BaseModel):
+    tracker_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    date: str  # YYYY-MM-DD format for easy daily tracking
+    timezone: str = "UTC"  # User's timezone for midnight reset
+    usage_counts: Dict[str, int] = Field(default_factory=dict)  # feature_name: count
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SubscriptionFeatureAccess(BaseModel):
+    user_id: str
+    subscription_tier: str  # FREE, PREMIUM, PRO
+    feature_name: str
+    access_granted: bool
+    daily_limit: Optional[int] = None
+    current_usage: int = 0
+    reset_time: Optional[datetime] = None
+    upgrade_prompted: bool = False
+    last_prompt_time: Optional[datetime] = None
+
+class UpsellInteraction(BaseModel):
+    interaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    trigger_feature: str  # Feature that triggered the upsell
+    current_tier: str
+    target_tier: str
+    upsell_type: str  # "limit_reached", "feature_locked", "growth_milestone"
+    mentor_message: str
+    professor_message: str
+    user_response: Optional[str] = None  # "upgraded", "dismissed", "later"
+    conversion_successful: bool = False
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class RevenueAnalytics(BaseModel):
     analytics_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     period: str  # daily, weekly, monthly
