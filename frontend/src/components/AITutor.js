@@ -2136,7 +2136,9 @@ export default function AITutor() {
           <div className="max-w-4xl mx-auto">
             {/* Mode Selection Pills */}
             <div className="flex items-center justify-center mb-4">
-              <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
+              <div className={`flex items-center bg-gray-50 rounded-full p-1 border border-gray-200 transition-all duration-300 ${
+                modeTransition ? 'ring-2 ring-blue-200 ring-opacity-50' : ''
+              }`}>
                 <Button
                   onClick={() => handleAiModeTransition('mentor')}
                   variant={aiMode === 'mentor' ? 'default' : 'ghost'}
