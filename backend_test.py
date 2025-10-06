@@ -8822,16 +8822,8 @@ class DhruvAITester:
             success, response = self.run_test(
                 "Record Upsell Interaction",
                 "POST",
-                "subscription/upsell-response",
+                "subscription/upsell-response?interaction_id=test_interaction_123&response=dismissed",
                 200,
-                data={
-                    'trigger_feature': 'ai_tutor_daily',
-                    'current_tier': 'FREE',
-                    'target_tier': 'PREMIUM',
-                    'user_response': 'dismissed',
-                    'mentor_message': mentor_message[:100],
-                    'professor_message': professor_message[:100]
-                },
                 headers={'Authorization': f'Bearer {self.token}'}
             )
             
