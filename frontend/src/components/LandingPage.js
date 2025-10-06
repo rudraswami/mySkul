@@ -143,44 +143,71 @@ const LandingPage = () => {
                 Hallucination-free, personalised learning. Turn any class into verified notes, flashcards, and adaptive tests — <span className="text-yellow-400 font-semibold">instantly.</span>
               </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <Link 
-              to="/register" 
-              className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              <span className="relative flex items-center justify-center">
-                <UserPlus className="mr-2 h-5 w-5" />
-                Try Free Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </Link>
-            
-            <Link 
-              to="/login" 
-              className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white no-underline inline-block"
-            >
-              <span className="flex items-center justify-center">
-                <LogIn className="mr-2 h-5 w-5" />
-                Sign In
-              </span>
-            </Link>
-          </div>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start mb-12">
+                <Link 
+                  to="/register" 
+                  className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block text-center"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <span className="relative flex items-center justify-center">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Try Free Now
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Link>
+                
+                <Link 
+                  to="/login" 
+                  className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white no-underline inline-block text-center"
+                >
+                  <span className="flex items-center justify-center">
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign In
+                  </span>
+                </Link>
+              </div>
 
-          {/* Trust Indicators */}
-          <div className="flex flex-wrap justify-center items-center gap-8 text-blue-200 text-sm">
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-              <span>Trusted by 50,000+ students</span>
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-6 text-blue-200 text-sm">
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>Trusted by 50,000+ students</span>
+                </div>
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 text-blue-400 mr-2" />
+                  <span>100% Privacy Protected</span>
+                </div>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-yellow-400 mr-2" />
+                  <span>4.9/5 Rating</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center">
-              <Shield className="h-4 w-4 text-blue-400 mr-2" />
-              <span>100% Privacy Protected</span>
-            </div>
-            <div className="flex items-center">
-              <Star className="h-4 w-4 text-yellow-400 mr-2" />
-              <span>4.9/5 Rating</span>
+
+            {/* Right Column - Hero Image */}
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+                <img 
+                  src="https://images.unsplash.com/photo-1541178735493-479c1a27ed24" 
+                  alt="Student learning with AI technology" 
+                  className="w-full h-96 lg:h-[500px] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/20 to-transparent"></div>
+                <div className="absolute bottom-6 left-6 right-6">
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-between text-white">
+                      <div>
+                        <p className="text-sm text-blue-200">✓ Live AI Analysis</p>
+                        <p className="font-semibold">Generating verified notes...</p>
+                      </div>
+                      <div className="animate-pulse">
+                        <Brain className="h-6 w-6 text-blue-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
