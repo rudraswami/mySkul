@@ -119,12 +119,15 @@ const LandingPage = () => {
           ))}
         </div>
 
-        <div className="relative z-10 text-center max-w-6xl mx-auto">
-          {/* Verification Badge */}
-          <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm">
-            <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-            <span className="text-green-300 text-sm font-medium">100% Hallucination-Free AI • Verified Answers</span>
-          </div>
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div className="text-center lg:text-left">
+              {/* Verification Badge */}
+              <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm">
+                <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                <span className="text-green-300 text-sm font-medium">100% Hallucination-Free AI • Verified Answers</span>
+              </div>
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
