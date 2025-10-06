@@ -417,6 +417,14 @@ export default function AITutor() {
     setTimeout(() => {
       setAiMode(newMode);
       
+      // Show mode change notification
+      const modeNames = {
+        'mentor': '💙 Mentor Mode',
+        'professor': '🎓 Professor Mode', 
+        'dual': '👥 Dual Mode'
+      };
+      showToast(`Switched to ${modeNames[newMode]}`, 'success');
+      
       // End transition animation
       setTimeout(() => {
         setModeTransition(false);
