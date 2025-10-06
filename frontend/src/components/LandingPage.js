@@ -555,7 +555,7 @@ const LandingPage = () => {
                   {plan.cta}
                 </Link>
 
-                <p className="text-center text-gray-400 text-sm mt-4">
+                <p className="text-center text-blue-300 text-sm mt-4 font-medium">
                   Start Free → Upgrade Anytime
                 </p>
               </div>
