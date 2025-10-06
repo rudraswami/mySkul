@@ -6182,6 +6182,161 @@ async def process_voice_input(
         logger.error(f"Voice processing error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process voice input")
 
+# ============= SUBSCRIPTION & UPSELL API ENDPOINTS =============
+
+@api_router.get("/subscription/info")
+async def get_subscription_info(user: User = Depends(get_current_user)):
+    """Get current user subscription information"""
+    try:
+        info = await SubscriptionService.get_user_subscription_info(user.user_id)
+        return info
+    except Exception as e:
+        logger.error(f"Get subscription info error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get subscription information")
+
+@api_router.post("/subscription/check-access")
+async def check_feature_access_endpoint(
+    feature_name: str,
+    user: User = Depends(get_current_user)
+):
+    """Check if user has access to a specific feature"""
+    try:
+        access_info = await SubscriptionService.check_feature_access(user.user_id, feature_name)
+        return access_info
+    except Exception as e:
+        logger.error(f"Feature access check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to check feature access")
+
+@api_router.post("/subscription/track-usage")
+async def track_feature_usage_endpoint(
+    feature_name: str,
+    user: User = Depends(get_current_user)
+):
+    """Track feature usage for subscription limits"""
+    try:
+        usage_result = await SubscriptionService.track_feature_usage(user.user_id, feature_name)
+        return usage_result
+    except Exception as e:
+        logger.error(f"Usage tracking error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to track feature usage")
+
+@api_router.get("/subscription/usage")
+async def get_daily_usage_endpoint(user: User = Depends(get_current_user)):
+    """Get current daily usage statistics"""
+    try:
+        usage = await SubscriptionService.get_daily_usage(user.user_id)
+        return {"daily_usage": usage}
+    except Exception as e:
+        logger.error(f"Get usage error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get usage statistics")
+
+@api_router.post("/subscription/upsell-response")
+async def handle_upsell_response(
+    interaction_id: str,
+    response: str,  # "upgraded", "dismissed", "later"
+    user: User = Depends(get_current_user)
+):
+    """Handle user response to upsell prompt"""
+    try:
+        # Update upsell interaction with user response
+        conversion_successful = response == "upgraded"
+        
+        await db.upsell_interactions.update_one(
+            {"interaction_id": interaction_id, "user_id": user.user_id},
+            {
+                "$set": {
+                    "user_response": response,
+                    "conversion_successful": conversion_successful
+                }
+            }
+        )
+        
+        # Track XP for engagement even if not upgraded
+        if response in ["dismissed", "later"]:
+            await EngagementService.record_interaction(
+                user_id=user.user_id,
+                interaction_type="upsell_engagement",
+                verified=True
+            )
+        
+        return {"response_recorded": True, "conversion": conversion_successful}
+        
+    except Exception as e:
+        logger.error(f"Upsell response handling error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to handle upsell response")
+
+@api_router.get("/subscription/plans")
+async def get_available_plans():
+    """Get all available subscription plans"""
+    try:
+        plan_config = await SubscriptionService.load_plan_config()
+        return {"plans": plan_config}
+    except Exception as e:
+        logger.error(f"Get plans error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get subscription plans")
+
+@api_router.post("/subscription/upgrade")
+async def upgrade_subscription(
+    target_tier: str,
+    billing_cycle: str = "monthly",
+    user: User = Depends(get_current_user)
+):
+    """Upgrade user subscription"""
+    try:
+        plan_config = await SubscriptionService.load_plan_config()
+        
+        if target_tier.upper() not in plan_config:
+            raise HTTPException(status_code=400, detail="Invalid subscription tier")
+        
+        target_plan = plan_config[target_tier.upper()]
+        
+        # Create or update subscription
+        current_time = datetime.now(timezone.utc)
+        end_time = current_time + timedelta(days=30 if billing_cycle == "monthly" else 365)
+        
+        # Update existing subscription or create new one
+        await db.user_subscriptions.update_one(
+            {"user_id": user.user_id},
+            {
+                "$set": {
+                    "plan_name": target_tier.upper(),
+                    "billing_cycle": billing_cycle,
+                    "status": "active",
+                    "current_period_start": current_time.isoformat(),
+                    "current_period_end": end_time.isoformat(),
+                    "updated_at": current_time.isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        # Reset daily usage after upgrade
+        date_str = current_time.strftime('%Y-%m-%d')
+        await db.daily_usage_trackers.delete_one({
+            "user_id": user.user_id,
+            "date": date_str
+        })
+        
+        # Award XP for upgrade
+        await EngagementService.record_interaction(
+            user_id=user.user_id,
+            interaction_type="subscription_upgrade",
+            verified=True
+        )
+        
+        return {
+            "upgraded": True,
+            "new_tier": target_tier.upper(),
+            "billing_cycle": billing_cycle,
+            "message": f"Successfully upgraded to {target_plan['display_name']}!"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Subscription upgrade error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upgrade subscription")
+
 # ============= DUAL-LAYER AI API ENDPOINTS =============
 
 @api_router.post("/ai/process-file")
