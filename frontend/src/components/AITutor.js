@@ -2676,6 +2676,12 @@ export default function AITutor() {
           </div>
         </div>
       )}
+
+      {/* Upsell Modal */}
+      <UpsellModal
+        isOpen={!!upsellModal}
+        onClose={() => setUpsellModal(null)}
+      />
     </div>
   );
 }
