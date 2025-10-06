@@ -947,6 +947,87 @@ export default function StudentDashboard() {
           {/* Right Sidebar */}
           <div className="space-y-6">
             
+            {/* AI Insights Widget */}
+            <Card className="border-l-4 border-l-blue-500 shadow-md animate-fade-in">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-gray-800">
+                  <div className="flex items-center">
+                    <Brain className="h-5 w-5 mr-2 text-blue-600" />
+                    AI Insights
+                  </div>
+                  <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+                    Live
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {insightsLoading ? (
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </div>
+                ) : aiInsights ? (
+                  <>
+                    {/* Mentor Tip */}
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 mb-1">Mentor Tip</p>
+                          <p className="text-sm text-blue-800 leading-relaxed">{aiInsights.mentorTip}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Performance Summary */}
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-900">Performance Summary</h4>
+                        <span className="text-xs text-gray-500">Updated {aiInsights.lastUpdated}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3">{aiInsights.performanceSummary}</p>
+                      
+                      {/* Improvement Percentage */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Weekly Improvement</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full transition-all duration-1000"
+                              style={{ width: `${Math.min(aiInsights.improvementPercentage * 4, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm font-semibold text-green-600">
+                            +{aiInsights.improvementPercentage}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Streak Status */}
+                    <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-100 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-orange-900">{aiInsights.streakStatus}</p>
+                          <p className="text-xs text-orange-700 mt-1">Keep the momentum going</p>
+                        </div>
+                        <div className="text-2xl">
+                          {aiInsights.streakStatus.includes('Champion') ? '🔥' : 
+                           aiInsights.streakStatus.includes('Momentum') ? '⭐' : '🌟'}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <Brain className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">Loading insights...</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
             {/* Quick Actions */}
             <Card>
               <CardHeader>
