@@ -467,11 +467,11 @@ const LandingPage = () => {
               {
                 name: "Free",
                 price: "₹0",
-                period: "Forever",
-                description: "Perfect for trying out Dhruv AI",
+                period: "",
+                description: "Try verified learning.",
                 features: [
-                  "5 verified answers per day",
-                  "Basic note generation",
+                  "Basic verified answers",
+                  "Sample note generation",
                   "Community support",
                   "Mobile app access"
                 ],
@@ -482,14 +482,14 @@ const LandingPage = () => {
               {
                 name: "Premium",
                 price: "₹499",
-                period: "per month",
-                description: "Best for serious students",
+                period: "/mo",
+                description: "Unlimited verified notes & tests.",
                 features: [
                   "Unlimited verified answers",
                   "Advanced note generation",
-                  "Mock tests & analytics",
+                  "Adaptive mock tests",
                   "Priority support",
-                  "Offline access"
+                  "Dual-layer AI mentor"
                 ],
                 cta: "Start Premium",
                 popular: true,
@@ -498,16 +498,16 @@ const LandingPage = () => {
               {
                 name: "Pro",
                 price: "₹999",
-                period: "per month",
-                description: "For competitive exam preparation",
+                period: "/mo",
+                description: "Your personal AI Professor with 1M context.",
                 features: [
                   "Everything in Premium",
-                  "Custom AI agent",
+                  "Personal AI Professor",
                   "1M context window",
                   "Advanced analytics",
-                  "1-on-1 mentorship calls"
+                  "Priority verification"
                 ],
-                cta: "Go Pro",
+                cta: "Start Pro",
                 popular: false,
                 color: "purple"
               }
