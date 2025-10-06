@@ -1667,8 +1667,36 @@ export default function AITutor() {
               </div>
             </div>
             
-            {/* Engagement Stats */}
+            {/* Engagement & Usage Stats */}
             <div className="flex items-center space-x-4">
+              {/* AI Tutor Usage Display */}
+              <div className="flex items-center bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                  <Brain className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-800">
+                    {isFeatureUnlimited('ai_tutor_daily') ? '∞' : getFeatureRemaining('ai_tutor_daily')}
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    {isFeatureUnlimited('ai_tutor_daily') ? 'Unlimited' : 'Remaining'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Plan Badge */}
+              <div className="flex items-center bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg px-3 py-2">
+                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center mr-2">
+                  <Crown className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-bold text-purple-800">
+                    {currentTier === 'FREE' ? '🧩' : currentTier === 'PREMIUM' ? '⚡' : '🚀'}
+                  </div>
+                  <div className="text-xs text-purple-600">{currentTier}</div>
+                </div>
+              </div>
+              
               {/* Streak Display */}
               <div className="flex items-center bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
                 <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-2">
