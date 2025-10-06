@@ -123,10 +123,15 @@ const LandingPage = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column - Text Content */}
             <div className="text-center lg:text-left">
-              {/* Verification Badge */}
-              <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm">
-                <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                <span className="text-green-300 text-sm font-medium">100% Hallucination-Free AI • Verified Answers</span>
+              {/* Enhanced Verification Badge with Pulsing Animation */}
+              <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm animate-pulse-glow">
+                <div className="relative">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 animate-pulse" />
+                  <div className="absolute inset-0 rounded-full bg-green-400/20 animate-ping"></div>
+                </div>
+                <span className="text-green-300 text-sm font-medium bg-gradient-to-r from-green-300 to-emerald-300 bg-clip-text text-transparent">
+                  ✅ World's First Hallucination-Free AI Mentor
+                </span>
               </div>
 
               {/* Main Headline */}
