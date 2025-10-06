@@ -1601,33 +1601,68 @@ export default function AITutor() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-white lg:w-auto w-full">
-        {/* Clean Header */}
-        <div className="bg-white border-b border-gray-100 p-6">
+        {/* Enhanced Header with Engagement Features */}
+        <div className="bg-gradient-to-r from-white via-blue-50 to-purple-50 border-b border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900 mr-6">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mr-6">
                 AI Tutor – Mentor | Professor | Both
               </h1>
               
-              {/* Trust Badges */}
-              <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center text-blue-600">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    <Shield className="h-3 w-3" />
+              {/* Verified Badge - Premium Style */}
+              <div className="flex items-center">
+                <div className="bg-green-100 border border-green-200 rounded-full px-3 py-1 flex items-center mr-4">
+                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mr-2 animate-pulse">
+                    <CheckCircle className="h-3 w-3 text-white" />
                   </div>
-                  <span>Verified</span>
+                  <span className="text-green-800 text-sm font-medium">{verificationBadge}</span>
                 </div>
-                <div className="flex items-center text-blue-600">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    <Target className="h-3 w-3" />
+                
+                {/* Trust Badges with Enhanced Styling */}
+                <div className="flex items-center space-x-3 text-sm">
+                  <div className="flex items-center text-blue-600 bg-blue-50 rounded-lg px-3 py-1">
+                    <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                      <Shield className="h-3 w-3 text-blue-600" />
+                    </div>
+                    <span className="font-medium">Premium AI</span>
                   </div>
-                  <span>Personalized</span>
+                  <div className="flex items-center text-purple-600 bg-purple-50 rounded-lg px-3 py-1">
+                    <div className="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2">
+                      <Target className="h-3 w-3 text-purple-600" />
+                    </div>
+                    <span className="font-medium">Personalized</span>
+                  </div>
+                  <div className="flex items-center text-yellow-600 bg-yellow-50 rounded-lg px-3 py-1">
+                    <div className="w-4 h-4 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                      <Lightbulb className="h-3 w-3 text-yellow-600" />
+                    </div>
+                    <span className="font-medium">Intelligent</span>
+                  </div>
                 </div>
-                <div className="flex items-center text-blue-600">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    <Lightbulb className="h-3 w-3" />
-                  </div>
-                  <span>Empowering</span>
+              </div>
+            </div>
+            
+            {/* Engagement Stats */}
+            <div className="flex items-center space-x-4">
+              {/* Streak Display */}
+              <div className="flex items-center bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-2">
+                  <Zap className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-orange-800">{streakInfo.current_streak}</div>
+                  <div className="text-xs text-orange-600">Day Streak</div>
+                </div>
+              </div>
+              
+              {/* XP & Level Display */}
+              <div className="flex items-center bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
+                <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center mr-2">
+                  <Star className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-indigo-800">L{xpInfo.current_level}</div>
+                  <div className="text-xs text-indigo-600">{xpInfo.total_xp} XP</div>
                 </div>
               </div>
             </div>
