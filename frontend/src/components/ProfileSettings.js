@@ -26,6 +26,14 @@ const API = `${BACKEND_URL}/api`;
 
 export default function ProfileSettings() {
   const { user, updateUser } = useAuth();
+  const { 
+    subscriptionInfo, 
+    dailyUsage, 
+    upgradeSubscription,
+    fetchSubscriptionInfo,
+    currentTier,
+    planInfo 
+  } = useSubscription();
   const [profileData, setProfileData] = useState({
     full_name: '',
     email: '',
