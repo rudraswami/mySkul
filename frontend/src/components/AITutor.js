@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import UpsellModal from './UpsellModal';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
