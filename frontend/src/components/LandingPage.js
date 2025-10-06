@@ -240,39 +240,76 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Right Column - Hero Image */}
+            {/* Right Column - Enhanced Hero with AI Hologram Effect */}
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-700 group">
                 <img 
                   src="https://images.unsplash.com/photo-1541178735493-479c1a27ed24" 
-                  alt="Student learning with AI technology" 
-                  className="w-full h-96 lg:h-[500px] object-cover"
+                  alt="Student learning with AI hologram technology" 
+                  className="w-full h-96 lg:h-[500px] object-cover group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-600/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-blue-600/30 to-transparent"></div>
+                
+                {/* AI Hologram Effect */}
+                <div className="absolute top-4 right-4 w-32 h-32 opacity-80">
+                  <div className="relative w-full h-full">
+                    {/* Hologram Brain */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/60 to-blue-500/60 rounded-full animate-pulse-slow blur-sm"></div>
+                    <div className="absolute inset-2 bg-gradient-to-br from-cyan-300/80 to-blue-400/80 rounded-full flex items-center justify-center">
+                      <Brain className="h-16 w-16 text-white animate-pulse" />
+                    </div>
+                    
+                    {/* Holographic Rings */}
+                    <div className="absolute inset-0 rounded-full border-2 border-cyan-400/40 animate-ping"></div>
+                    <div className="absolute inset-4 rounded-full border border-blue-300/30 animate-ping delay-1000"></div>
+                    
+                    {/* Floating Data Points */}
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute w-2 h-2 bg-cyan-400 rounded-full animate-bounce opacity-60"
+                        style={{
+                          left: `${20 + Math.cos(i * 60 * Math.PI / 180) * 50}%`,
+                          top: `${20 + Math.sin(i * 60 * Math.PI / 180) * 50}%`,
+                          animationDelay: `${i * 0.2}s`
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Enhanced Verification Panel */}
                 <div className="absolute bottom-6 left-6 right-6">
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                  <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-5 border border-white/30 shadow-2xl">
                     <div className="flex items-center justify-between text-white">
                       <div>
-                        <p className="text-sm text-blue-200 flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                          Verification Complete
+                        <p className="text-sm text-cyan-200 flex items-center mb-2">
+                          <CheckCircle className="h-5 w-5 text-green-400 mr-2 animate-pulse" />
+                          AI Verification Complete
                         </p>
-                        <p className="font-semibold">Structured verified notes created</p>
+                        <p className="font-bold text-lg">Structured verified notes created</p>
+                        <p className="text-xs text-blue-200 mt-1">100% Hallucination-Free • Dual-Layer Validated</p>
                       </div>
-                      <div className="flex space-x-2">
-                        <div className="animate-pulse">
-                          <CheckCircle className="h-5 w-5 text-green-400" />
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex space-x-1">
+                          <div className="animate-pulse">
+                            <CheckCircle className="h-4 w-4 text-green-400" />
+                          </div>
+                          <div className="animate-pulse delay-300">
+                            <CheckCircle className="h-4 w-4 text-green-400" />
+                          </div>
+                          <div className="animate-pulse delay-700">
+                            <CheckCircle className="h-4 w-4 text-green-400" />
+                          </div>
                         </div>
-                        <div className="animate-pulse delay-300">
-                          <CheckCircle className="h-5 w-5 text-green-400" />
-                        </div>
-                        <div className="animate-pulse delay-700">
-                          <CheckCircle className="h-5 w-5 text-green-400" />
-                        </div>
+                        <div className="text-xs text-green-300 text-center">Verified</div>
                       </div>
                     </div>
                   </div>
                 </div>
+                
+                {/* Holographic Glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </div>
