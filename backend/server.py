@@ -6237,6 +6237,20 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
             "analytics": analytics_data
         }
         
+        # Record verified interaction for streak/XP system
+        try:
+            interaction_result = await EngagementService.record_interaction(
+                user_id=user.user_id,
+                interaction_type="ai_question",
+                session_id=request.session_id,
+                subject=request.subject,
+                verified=True,
+                confidence=coordinated_response.get('confidence', 0.95)
+            )
+            response_data["engagement"] = interaction_result
+        except Exception as e:
+            logger.warning(f"Failed to record interaction: {str(e)}")
+        
         return response_data
         
     except Exception as e:
