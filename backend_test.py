@@ -8861,17 +8861,42 @@ class DhruvAITester:
         )
         
         if success:
-            plans = response.get('plans', [])
-            print(f"   ✅ {len(plans)} subscription plans retrieved")
+            # Handle different response structures
+            if isinstance(response, dict):
+                plans = response.get('plans', response)  # Could be direct dict or nested
+            else:
+                plans = response
             
-            for plan in plans:
-                plan_name = plan.get('name', 'N/A')
-                price_monthly = plan.get('price_monthly', 0)
-                features_count = len(plan.get('features', []))
-                limits = plan.get('limits', {})
+            print(f"   ✅ Subscription plans retrieved")
+            print(f"   Response type: {type(plans)}")
+            
+            # Handle if plans is a dict of plan configs
+            if isinstance(plans, dict):
+                plan_count = len(plans)
+                print(f"   Plans available: {plan_count}")
                 
-                print(f"   Plan: {plan_name} - ₹{price_monthly}/month - {features_count} features")
-                print(f"     Limits: {limits}")
+                for plan_key, plan_data in plans.items():
+                    if isinstance(plan_data, dict):
+                        plan_name = plan_data.get('display_name', plan_key)
+                        price_monthly = plan_data.get('price_monthly', 0)
+                        features = plan_data.get('features', {})
+                        features_count = len(features) if isinstance(features, dict) else 0
+                        
+                        print(f"   Plan: {plan_name} - ₹{price_monthly}/month - {features_count} features")
+                        print(f"     Key: {plan_key}")
+                    else:
+                        print(f"   Plan: {plan_key} - {plan_data}")
+            elif isinstance(plans, list):
+                print(f"   Plans available: {len(plans)}")
+                for plan in plans:
+                    if isinstance(plan, dict):
+                        plan_name = plan.get('name', plan.get('display_name', 'N/A'))
+                        price_monthly = plan.get('price_monthly', 0)
+                        features_count = len(plan.get('features', []))
+                        
+                        print(f"   Plan: {plan_name} - ₹{price_monthly}/month - {features_count} features")
+                    else:
+                        print(f"   Plan: {plan}")
             
             test_results['plan_configuration'] = True
         
