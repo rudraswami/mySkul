@@ -894,15 +894,58 @@ const LandingPage = () => {
         </div>
       </footer>
 
-      {/* Custom Styles */}
+      {/* Enhanced Custom Styles */}
       <style jsx>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(180deg); }
         }
         
+        @keyframes pulse-glow {
+          0%, 100% { 
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+            transform: scale(1.02);
+          }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        @keyframes gradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        
         .animate-float {
           animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-pulse-glow {
+          animation: pulse-glow 3s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 3s ease-in-out infinite;
+        }
+        
+        .animate-shimmer {
+          animation: shimmer 2s ease-in-out infinite;
         }
 
         .line-clamp-2 {
@@ -917,9 +960,20 @@ const LandingPage = () => {
           scroll-behavior: smooth;
         }
 
-        /* Custom gradient backgrounds */
+        /* Enhanced gradient backgrounds */
         .bg-gradient-conic {
           background: conic-gradient(from 0deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+        }
+        
+        /* Neural network effect */
+        .neural-glow {
+          filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+        }
+        
+        /* Holographic effect */
+        .hologram-effect {
+          background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
+          backdrop-filter: blur(10px);
         }
       `}</style>
     </div>
