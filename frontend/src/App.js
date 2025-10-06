@@ -26,12 +26,14 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-          <AppContent />
-          <Toaster />
-        </div>
-      </Router>
+      <SubscriptionProvider>
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            <AppContent />
+            <Toaster />
+          </div>
+        </Router>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }
