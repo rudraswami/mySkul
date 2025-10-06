@@ -412,7 +412,7 @@ export default function FormattedAIResponse({
                       {section.content.map((item, itemIndex) => (
                         <div key={itemIndex}>
                           {item.type === 'text' && (
-                            <p className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{__html: formatMathText(item.text)}}></p>
+                            <p className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{__html: formatMathExpressions(item.text)}}></p>
                           )}
                           
                           {item.type === 'highlight' && (
