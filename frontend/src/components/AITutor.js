@@ -83,6 +83,16 @@ export default function AITutor() {
     }, 3000);
   };
 
+  // ============= ENGAGEMENT & GAMIFICATION STATES =============
+  const [streakInfo, setStreakInfo] = useState({ current_streak: 0, longest_streak: 0 });
+  const [xpInfo, setXPInfo] = useState({ total_xp: 0, current_level: 1, progress_percentage: 0 });
+  const [showXPPopup, setShowXPPopup] = useState(false);
+  const [lastXPGain, setLastXPGain] = useState(null);
+  const [verificationBadge, setVerificationBadge] = useState("✓ 100% Hallucination-Free AI");
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceAnimation, setVoiceAnimation] = useState(false);
+  const [modeTransition, setModeTransition] = useState(false);
+
   // Phase A: Complete Input Methods states
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
