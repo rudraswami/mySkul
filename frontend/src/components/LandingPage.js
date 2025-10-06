@@ -155,23 +155,35 @@ const LandingPage = () => {
                 </span>
               </p>
 
-              {/* CTA Buttons */}
+              {/* Enhanced CTA Buttons with Micro-Interactions */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start mb-12">
                 <Link 
                   to="/register" 
-                  className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block text-center"
+                  className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-110 shadow-2xl hover:shadow-blue-500/40 text-white no-underline inline-block text-center overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  {/* Glowing Background Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-md"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  
+                  {/* Shimmer Effect */}
+                  <div className="absolute inset-0 -skew-x-12 translate-x-full group-hover:translate-x-[-200%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000"></div>
+                  
                   <span className="relative flex items-center justify-center">
-                    <CheckCircle className="mr-2 h-5 w-5" />
+                    <CheckCircle className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
                     Start Verified Learning
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
                   </span>
                 </Link>
                 
-                <button className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white">
-                  <span className="flex items-center justify-center">
-                    <Play className="mr-2 h-5 w-5" />
+                <button className="group relative border-2 border-blue-400/50 hover:border-blue-300 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-500 backdrop-blur-sm hover:bg-blue-500/20 text-white overflow-hidden">
+                  {/* Subtle Glow Effect */}
+                  <div className="absolute inset-0 bg-blue-400/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <span className="relative flex items-center justify-center">
+                    <div className="relative mr-3">
+                      <Play className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+                      <div className="absolute inset-0 bg-blue-400/20 rounded-full group-hover:animate-ping"></div>
+                    </div>
                     Watch Demo
                   </span>
                 </button>
