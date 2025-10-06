@@ -597,6 +597,9 @@ export default function AITutor() {
           fetchEngagementData(); // Refresh engagement data
         }
       }
+
+      // Track feature usage for subscription system
+      await trackFeatureUsage('ai_tutor_daily');
       
     } catch (error) {
       console.error('Failed to send message:', error);
