@@ -67,20 +67,27 @@ export default function ProfileSettings() {
 
   const loadSubscriptionData = async () => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const response = await fetch(`${API}/subscription/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubscriptionData(data);
-      }
+      await fetchSubscriptionInfo();
+      setSubscriptionData(subscriptionInfo);
     } catch (error) {
       console.error('Failed to load subscription data:', error);
+    }
+  };
+
+  const handleUpgrade = async (targetTier, billingCycle = 'monthly') => {
+    setUpgradingTier(targetTier);
+    try {
+      const result = await upgradeSubscription(targetTier, billingCycle);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.message || 'Upgrade failed');
+      }
+    } catch (error) {
+      setError('Failed to upgrade subscription');
+    } finally {
+      setUpgradingTier(null);
     }
   };
 
