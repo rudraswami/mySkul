@@ -677,7 +677,7 @@ export function DualResponseContainer({
             {expandedSections.insights && (
               <div className="p-4 border-t border-gray-100 bg-gray-50">
                 <div className="text-gray-700 text-sm leading-relaxed">
-                  <div dangerouslySetInnerHTML={{ __html: formatMathText(secondaryResponse.response) }} />
+                  <div dangerouslySetInnerHTML={{ __html: formatMathExpressions(secondaryResponse.response) }} />
                 </div>
               </div>
             )}
