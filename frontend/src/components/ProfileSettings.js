@@ -136,24 +136,6 @@ export default function ProfileSettings() {
     }
   };
 
-  const getSubscriptionBadge = () => {
-    if (!subscriptionData) return <Badge variant="outline">Loading...</Badge>;
-    
-    const plan = subscriptionData.plan || 'free';
-    const isActive = subscriptionData.status === 'active';
-    
-    if (plan === 'free') {
-      return <Badge variant="outline" className="text-gray-600">Free Plan</Badge>;
-    } else if (plan === 'premium' && isActive) {
-      return <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">
-        <Crown className="h-3 w-3 mr-1" />
-        Premium
-      </Badge>;
-    } else {
-      return <Badge variant="destructive">Expired</Badge>;
-    }
-  };
-
   const navigateBack = () => {
     window.history.back();
   };
