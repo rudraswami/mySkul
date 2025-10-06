@@ -581,6 +581,30 @@ export default function StudentDashboard() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out forwards;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.8s ease-out forwards;
+        }
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
+      
       <div className="max-w-7xl mx-auto">
         
         {/* Welcome Header */}
