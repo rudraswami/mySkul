@@ -942,6 +942,126 @@ export default function StudentDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Recent Notes Preview Block */}
+            <Card className="border border-green-200 bg-green-50 animate-slide-up">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <FileText className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Recent Notes</h3>
+                      <p className="text-sm text-gray-600">Your latest auto-generated notes</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/auto-notes')}
+                    className="text-green-600 border-green-300 hover:bg-green-100"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    View All
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {notesLoading ? (
+                    <div className="animate-pulse space-y-3">
+                      {[1, 2].map(i => (
+                        <div key={i} className="bg-white rounded-lg p-4 border border-green-100">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-full"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : recentNotes && recentNotes.length > 0 ? (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {recentNotes.map((note, index) => (
+                        <div
+                          key={note.id}
+                          className="bg-white rounded-lg p-4 border border-green-100 hover:border-green-300 transition-all duration-200 cursor-pointer group animate-fade-in"
+                          style={{ animationDelay: `${index * 150}ms` }}
+                          onClick={() => navigate('/auto-notes')}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-sm group-hover:text-green-700 transition-colors">
+                                {note.title}
+                              </h4>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                                  {note.subject}
+                                </Badge>
+                                <span className="text-xs text-gray-500">{note.createdAt}</span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {note.wordCount} words
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-gray-600 leading-relaxed mb-3 line-clamp-3">
+                            {note.preview}
+                          </p>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center text-xs text-gray-500">
+                                <Brain className="h-3 w-3 mr-1 text-green-500" />
+                                AI Generated
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-green-600 hover:bg-green-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/auto-notes');
+                                }}
+                              >
+                                Review
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-blue-600 hover:bg-blue-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Navigate to edit functionality
+                                  navigate('/auto-notes');
+                                }}
+                              >
+                                Edit
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-white rounded-lg border border-green-100">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-4">No notes yet. Start generating notes!</p>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => navigate('/auto-notes')}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Note
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Sidebar */}
