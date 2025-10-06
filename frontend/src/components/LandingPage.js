@@ -361,10 +361,10 @@ const LandingPage = () => {
       <section id="demo" className="py-24 px-6 relative">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-            Watch Dhruv AI in Action
+            Watch How Dhruv AI Eliminates AI Errors in Real Time
           </h2>
           <p className="text-xl text-blue-200 mb-12 max-w-3xl mx-auto">
-            See how a real lecture becomes structured, verified notes + flashcards in under 60 seconds
+            Experience verified, trustworthy AI learning.
           </p>
 
           <div className="relative group cursor-pointer">
