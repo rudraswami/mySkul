@@ -8900,12 +8900,8 @@ class DhruvAITester:
         success, response = self.run_test(
             "Subscription Upgrade",
             "POST",
-            "subscription/upgrade",
+            "subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly",
             200,
-            data={
-                'target_plan': 'PREMIUM',
-                'billing_cycle': 'monthly'
-            },
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
