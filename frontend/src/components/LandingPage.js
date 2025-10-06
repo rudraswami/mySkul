@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Play, 
   CheckCircle, 
@@ -16,7 +17,9 @@ import {
   Eye,
   Phone,
   Mail,
-  ExternalLink
+  ExternalLink,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 
 const LandingPage = () => {
