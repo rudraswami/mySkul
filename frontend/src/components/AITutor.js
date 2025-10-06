@@ -2301,16 +2301,40 @@ export default function AITutor() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={isListening ? stopVoiceInput : startVoiceInput}
-                      className={`h-7 w-7 p-0 ${isListening ? 'text-red-500' : 'text-gray-400 hover:text-blue-600'}`}
+                      onClick={isRecording ? enhancedStopVoiceInput : enhancedStartVoiceInput}
+                      className={`relative h-7 w-7 p-0 transition-all duration-300 ${
+                        isRecording
+                          ? 'text-red-500 scale-110 animate-pulse'
+                          : 'text-gray-400 hover:text-blue-600'
+                      }`}
                       disabled={loading}
+                      title={isRecording ? 'Stop recording' : 'Start voice input'}
                     >
-                      {isListening ? (
-                        <MicOff className="h-4 w-4" />
-                      ) : (
-                        <Mic className="h-4 w-4" />
+                      {/* Voice Animation Rings */}
+                      {voiceAnimation && (
+                        <>
+                          <div className="absolute inset-0 rounded-md bg-red-400 animate-ping opacity-25"></div>
+                          <div className="absolute inset-0 rounded-md bg-red-400 animate-ping opacity-20" style={{animationDelay: '0.2s'}}></div>
+                          <div className="absolute inset-0 rounded-md bg-red-400 animate-ping opacity-15" style={{animationDelay: '0.4s'}}></div>
+                        </>
                       )}
+                      
+                      <div className="relative z-10">
+                        {isRecording ? (
+                          <MicOff className="h-4 w-4" />
+                        ) : (
+                          <Mic className="h-4 w-4" />
+                        )}
+                      </div>
                     </Button>
+                  )}
+
+                  {/* Voice Status Indicator */}
+                  {isRecording && (
+                    <div className="flex items-center ml-2 text-red-600 animate-pulse">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mr-1 animate-ping"></div>
+                      <span className="text-xs font-medium">Recording...</span>
+                    </div>
                   )}
                   
                   <Button
