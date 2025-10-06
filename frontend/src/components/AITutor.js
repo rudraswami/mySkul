@@ -2150,13 +2150,13 @@ export default function AITutor() {
                   Mentor
                 </Button>
                 <Button
-                  onClick={() => setAiMode('professor')}
+                  onClick={() => handleAiModeTransition('professor')}
                   variant={aiMode === 'professor' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'professor' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-                  }`}
+                  } ${modeTransition ? 'scale-95 opacity-75' : 'scale-100 opacity-100'}`}
                 >
                   <GraduationCap className="h-4 w-4 mr-2" />
                   Professor
