@@ -293,6 +293,106 @@ export default function StudentDashboard() {
     
     return leaderboard.slice(start, end);
   };
+  // Dynamic Focus Engine Functions
+  const loadDailyFocusPlan = async () => {
+    try {
+      setFocusLoading(true);
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${BACKEND_URL}/api/focusEngine/generate`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const plan = await response.json();
+        setDailyFocusPlan(plan);
+      } else {
+        console.error('Failed to load focus plan');
+      }
+    } catch (error) {
+      console.error('Focus plan loading error:', error);
+    } finally {
+      setFocusLoading(false);
+    }
+  };
+
+  const regenerateFocusPlan = async () => {
+    try {
+      setRegenerating(true);
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(
+        `${BACKEND_URL}/api/focusEngine/generate?regenerate=true&mood=${userMood}`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.ok) {
+        const plan = await response.json();
+        setDailyFocusPlan(plan);
+      }
+    } catch (error) {
+      console.error('Focus plan regeneration error:', error);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const completeTask = async (taskId) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${BACKEND_URL}/api/focusEngine/complete-task`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ task_id: taskId })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update local state
+        setDailyFocusPlan(prev => {
+          const updatedTasks = prev.tasks.map(task =>
+            task.task_id === taskId
+              ? { ...task, completed: true, progress: 100 }
+              : task
+          );
+          return { ...prev, tasks: updatedTasks };
+        });
+
+        // Show celebration if all tasks completed
+        if (result.celebration_triggered) {
+          setCelebrationModal(true);
+          setTimeout(() => setCelebrationModal(false), 3000);
+        }
+
+        return result;
+      }
+    } catch (error) {
+      console.error('Task completion error:', error);
+    }
+  };
+
+  const calculateOverallProgress = () => {
+    if (!dailyFocusPlan?.tasks) return 0;
+    const completedTasks = dailyFocusPlan.tasks.filter(task => task.completed).length;
+    return Math.round((completedTasks / dailyFocusPlan.tasks.length) * 100);
+  };
+
+  const getTotalEarnedXP = () => {
+    if (!dailyFocusPlan?.tasks) return 0;
+    return dailyFocusPlan.tasks
+      .filter(task => task.completed)
+      .reduce((sum, task) => sum + task.completion_xp, 0);
+  };
 
   if (loading) {
     return (
