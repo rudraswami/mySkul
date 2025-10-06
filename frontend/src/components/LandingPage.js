@@ -403,25 +403,25 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                name: "Aditi Sharma",
-                role: "NEET Aspirant, Delhi",
-                quote: "Finally, an AI that explains AND verifies. My Biology scores improved 40% in 2 months!",
+                name: "Aditi",
+                role: "NEET Aspirant",
+                quote: "Finally, an AI I can trust.",
                 rating: 5,
                 image: "👩‍🎓"
               },
               {
-                name: "Rohit Patel",
-                role: "JEE Student, Mumbai",
-                quote: "It feels like a real coach guiding me. The adaptive tests know exactly where I struggle.",
+                name: "Rohit",
+                role: "JEE Student",
+                quote: "No more wrong answers.",
                 rating: 5,
                 image: "👨‍💻"
               },
               {
-                name: "Priya Gupta",
-                role: "UPSC Aspirant, Chennai",
-                quote: "Dhruv AI turned my chaotic study notes into organized, verified knowledge. Game changer!",
+                name: "Sneha",
+                role: "UPSC Candidate",
+                quote: "Feels like two teachers — one to teach, one to verify.",
                 rating: 5,
-                image: "📚"
+                image: "👩‍🏫"
               }
             ].map((testimonial, index) => (
               <div
