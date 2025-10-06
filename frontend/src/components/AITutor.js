@@ -335,6 +335,78 @@ export default function AITutor() {
     }
   };
 
+  // ============= ENGAGEMENT & GAMIFICATION FUNCTIONS =============
+  
+  const fetchEngagementData = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+      
+      const response = await axios.get(`${API}/engagement/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data) {
+        setStreakInfo(response.data.streak);
+        setXPInfo(response.data.xp);
+        setVerificationBadge(response.data.badge_status);
+      }
+    } catch (error) {
+      console.error('Failed to fetch engagement data:', error);
+    }
+  };
+
+  const handleXPGain = (xpResult) => {
+    if (xpResult && xpResult.xp_awarded > 0) {
+      setLastXPGain(xpResult);
+      setShowXPPopup(true);
+      
+      // Update XP info
+      setXPInfo(prev => ({
+        ...prev,
+        total_xp: xpResult.total_xp,
+        current_level: xpResult.level,
+        progress_percentage: ((xpResult.total_xp - getXPForLevel(xpResult.level)) / 
+          (getXPForLevel(xpResult.level + 1) - getXPForLevel(xpResult.level))) * 100
+      }));
+      
+      // Auto-hide popup after animation
+      setTimeout(() => setShowXPPopup(false), 3000);
+      
+      // Trigger celebration if level up
+      if (xpResult.level_up) {
+        showToast(`🎉 Level Up! You're now Level ${xpResult.level}!`, 'success');
+      }
+      
+      if (xpResult.milestone_achieved) {
+        showToast(`🏆 Milestone: ${xpResult.milestone_achieved}`, 'success');
+      }
+    }
+  };
+
+  const getXPForLevel = (level) => {
+    if (level <= 1) return 0;
+    return (level - 1) ** 2 * 100;
+  };
+
+  const enhancedStartVoiceInput = async () => {
+    setIsRecording(true);
+    setVoiceAnimation(true);
+    
+    if (recognition) {
+      recognition.start();
+    }
+  };
+
+  const enhancedStopVoiceInput = async () => {
+    setIsRecording(false);
+    setVoiceAnimation(false);
+    
+    if (recognition) {
+      recognition.stop();
+    }
+  };
+
   // Helper function to parse and clean message response
   const parseMessageResponse = (message) => {
     try {
