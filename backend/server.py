@@ -4439,6 +4439,430 @@ async def get_subject_progress(user: User = Depends(get_current_user)):
         "overall_progress": int(sum(s["mastery"] for s in subjects_progress) / len(subjects_progress)) if subjects_progress else 0
     }
 
+# ============= DYNAMIC AI-DRIVEN FOCUS ENGINE =============
+
+class FocusTaskModel(BaseModel):
+    task_id: str
+    title: str
+    description: str
+    estimated_time: int  # in minutes
+    subject: str
+    priority: str  # high, medium, low
+    task_type: str  # study, practice, review, break
+    completion_xp: int
+    completed: bool = False
+    progress: int = 0
+
+class DailyFocusPlan(BaseModel):
+    date: str
+    plan_id: str
+    total_xp: int
+    estimated_total_time: int
+    tasks: List[FocusTaskModel]
+    user_mood: Optional[str] = None
+    adaptation_reason: Optional[str] = None
+
+@api_router.get("/focusEngine/generate")
+async def generate_daily_focus_plan(
+    regenerate: bool = False,
+    mood: Optional[str] = None,
+    user: User = Depends(get_current_user)
+) -> DailyFocusPlan:
+    """Generate personalized daily focus plan using AI adaptation"""
+    
+    try:
+        today = datetime.now(timezone.utc).date()
+        today_str = today.isoformat()
+        
+        # Check if we already have a plan for today (unless regenerating)
+        if not regenerate:
+            existing_plan = await db.daily_focus_plans.find_one({
+                "user_id": user.user_id,
+                "date": today_str
+            })
+            if existing_plan:
+                return DailyFocusPlan(**clean_mongodb_doc(existing_plan))
+        
+        # Gather user data for AI-driven adaptation
+        user_profile = await db.personalization_profiles.find_one({"user_id": user.user_id}) or {}
+        weak_areas = user_profile.get("weak_areas", [])
+        strong_areas = user_profile.get("strong_areas", [])
+        learning_style = user_profile.get("learning_style", "balanced")
+        
+        # Get recent performance data
+        recent_progress = await db.study_progress.find(
+            {"user_id": user.user_id}
+        ).sort("last_accessed", -1).limit(7).to_list(7)
+        
+        # Get user's current streak and performance
+        current_streak = await get_user_streak(user.user_id)
+        
+        # Get exam type for subject-specific content
+        exam_type = user.exam_type or "JEE"
+        available_subjects = EXAM_SUBJECTS.get(exam_type, {}).get("subjects", ["Mathematics", "Physics", "Chemistry"])
+        
+        # AI-driven task generation prompt
+        ai_prompt = f"""
+        Generate a personalized daily learning plan for a {exam_type} student.
+        
+        Student Profile:
+        - Learning Style: {learning_style}
+        - Current Streak: {current_streak} days
+        - Weak Areas: {', '.join(weak_areas[:3]) if weak_areas else 'Not identified yet'}
+        - Strong Areas: {', '.join(strong_areas[:3]) if strong_areas else 'Not identified yet'}
+        - Current Mood: {mood or 'neutral'}
+        
+        Recent Performance Context:
+        - Total study sessions this week: {len(recent_progress)}
+        - Recent subjects studied: {', '.join(set(p.get('subject', '') for p in recent_progress[:5])) or 'None'}
+        
+        Instructions:
+        Create exactly 4-6 tasks for today that are:
+        1. Adaptive to the student's weak areas (prioritize improvement)
+        2. Balanced with confidence-building activities in strong areas
+        3. Appropriate for their current mood ({mood or 'neutral'})
+        4. Time-efficient (total 2-3 hours max)
+        5. Mix of study, practice, and review activities
+        
+        For each task, provide:
+        - A motivating title (max 50 chars)
+        - Brief description (max 100 chars)
+        - Estimated time (15-45 mins)
+        - Subject from: {', '.join(available_subjects)}
+        - Priority (high/medium/low)
+        - Task type (study/practice/review/break)
+        - XP reward (50-200 based on difficulty)
+        
+        Respond in JSON format only:
+        {{
+            "tasks": [
+                {{
+                    "title": "Master Quadratic Equations",
+                    "description": "Solve 10 practice problems focusing on discriminant method",
+                    "estimated_time": 30,
+                    "subject": "Mathematics",
+                    "priority": "high",
+                    "task_type": "practice",
+                    "completion_xp": 150
+                }}
+            ],
+            "adaptation_reason": "Focused on Mathematics weak areas while maintaining confidence with Physics review"
+        }}
+        """
+        
+        # Get AI response for task generation
+        try:
+            llm_chat = LlmChat(system_message="You are an expert AI tutor that creates personalized daily study plans. Always respond in valid JSON format only.")
+            ai_response = llm_chat.chat([UserMessage(ai_prompt)])
+            
+            # Parse AI response
+            import json
+            ai_data = json.loads(ai_response)
+            tasks_data = ai_data.get("tasks", [])
+            adaptation_reason = ai_data.get("adaptation_reason", "Personalized based on your learning profile")
+            
+        except Exception as e:
+            logger.error(f"AI generation failed: {e}")
+            # Fallback to rule-based generation
+            tasks_data, adaptation_reason = generate_fallback_tasks(
+                weak_areas, strong_areas, available_subjects, mood, current_streak
+            )
+        
+        # Create task models
+        tasks = []
+        total_xp = 0
+        total_time = 0
+        
+        for i, task_data in enumerate(tasks_data):
+            task_id = f"{today_str}_{user.user_id}_{i+1}"
+            task = FocusTaskModel(
+                task_id=task_id,
+                title=task_data.get("title", "Study Session"),
+                description=task_data.get("description", "Complete your learning goal"),
+                estimated_time=task_data.get("estimated_time", 30),
+                subject=task_data.get("subject", available_subjects[0]),
+                priority=task_data.get("priority", "medium"),
+                task_type=task_data.get("task_type", "study"),
+                completion_xp=task_data.get("completion_xp", 100),
+                completed=False,
+                progress=0
+            )
+            tasks.append(task)
+            total_xp += task.completion_xp
+            total_time += task.estimated_time
+        
+        # Create daily plan
+        plan_id = f"plan_{today_str}_{user.user_id}"
+        daily_plan = DailyFocusPlan(
+            date=today_str,
+            plan_id=plan_id,
+            total_xp=total_xp,
+            estimated_total_time=total_time,
+            tasks=tasks,
+            user_mood=mood,
+            adaptation_reason=adaptation_reason
+        )
+        
+        # Save plan to database
+        plan_dict = daily_plan.dict()
+        plan_dict["user_id"] = user.user_id
+        plan_dict["created_at"] = datetime.now(timezone.utc)
+        plan_dict["updated_at"] = datetime.now(timezone.utc)
+        
+        await db.daily_focus_plans.replace_one(
+            {"user_id": user.user_id, "date": today_str},
+            plan_dict,
+            upsert=True
+        )
+        
+        logger.info(f"Generated daily focus plan for user {user.user_id}: {len(tasks)} tasks, {total_time} mins")
+        return daily_plan
+        
+    except Exception as e:
+        logger.error(f"Focus engine error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate daily focus plan")
+
+def generate_fallback_tasks(weak_areas, strong_areas, subjects, mood, streak):
+    """Generate fallback tasks when AI fails"""
+    
+    tasks = []
+    
+    # Adjust based on mood
+    if mood == "low" or mood == "stressed":
+        # Easier, shorter tasks for low mood
+        tasks = [
+            {
+                "title": "Quick Review Session",
+                "description": "Light review of yesterday's concepts",
+                "estimated_time": 20,
+                "subject": subjects[0],
+                "priority": "medium",
+                "task_type": "review",
+                "completion_xp": 75
+            },
+            {
+                "title": "Confidence Booster",
+                "description": "Practice easy problems in your strong area",
+                "estimated_time": 25,
+                "subject": strong_areas[0] if strong_areas else subjects[1],
+                "priority": "low",
+                "task_type": "practice",
+                "completion_xp": 100
+            }
+        ]
+    else:
+        # Regular intensity for normal/good mood
+        tasks = [
+            {
+                "title": "Focus on Weak Area",
+                "description": f"Deep dive into {weak_areas[0] if weak_areas else 'challenging concepts'}",
+                "estimated_time": 40,
+                "subject": weak_areas[0] if weak_areas else subjects[0],
+                "priority": "high",
+                "task_type": "study",
+                "completion_xp": 180
+            },
+            {
+                "title": "Practice Problems",
+                "description": "Solve mixed difficulty problems",
+                "estimated_time": 35,
+                "subject": subjects[1],
+                "priority": "medium",
+                "task_type": "practice",
+                "completion_xp": 150
+            },
+            {
+                "title": "Concept Reinforcement",
+                "description": "Review and strengthen understanding",
+                "estimated_time": 25,
+                "subject": strong_areas[0] if strong_areas else subjects[2],
+                "priority": "medium",
+                "task_type": "review",
+                "completion_xp": 120
+            }
+        ]
+    
+    # Add streak bonus task for high streaks
+    if streak >= 7:
+        tasks.append({
+            "title": "Streak Champion Challenge",
+            "description": f"Special challenge for your {streak}-day streak!",
+            "estimated_time": 15,
+            "subject": subjects[0],
+            "priority": "low",
+            "task_type": "practice",
+            "completion_xp": 200
+        })
+    
+    adaptation_reason = f"Plan adapted for {mood or 'normal'} mood with focus on {'weak areas' if weak_areas else 'balanced learning'}"
+    return tasks, adaptation_reason
+
+async def get_user_streak(user_id: str) -> int:
+    """Calculate user's current study streak"""
+    try:
+        # Get recent study sessions
+        recent_sessions = await db.chat_sessions.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(30).to_list(30)
+        
+        if not recent_sessions:
+            return 0
+        
+        # Calculate consecutive days with activity
+        today = datetime.now(timezone.utc).date()
+        streak = 0
+        check_date = today
+        
+        for i in range(30):  # Check last 30 days
+            day_sessions = [
+                s for s in recent_sessions 
+                if s.get("created_at") and 
+                s.get("created_at").date() == check_date
+            ]
+            
+            if day_sessions:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+        
+        return streak
+        
+    except Exception:
+        return 0
+
+@api_router.post("/focusEngine/complete-task")
+async def complete_focus_task(
+    task_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Mark a focus task as completed and update XP/streak"""
+    
+    try:
+        today_str = datetime.now(timezone.utc).date().isoformat()
+        
+        # Find and update the task
+        plan = await db.daily_focus_plans.find_one({
+            "user_id": user.user_id,
+            "date": today_str
+        })
+        
+        if not plan:
+            raise HTTPException(status_code=404, detail="Daily plan not found")
+        
+        # Update task completion
+        tasks = plan.get("tasks", [])
+        task_found = False
+        xp_earned = 0
+        
+        for task in tasks:
+            if task.get("task_id") == task_id:
+                task["completed"] = True
+                task["progress"] = 100
+                xp_earned = task.get("completion_xp", 100)
+                task_found = True
+                break
+        
+        if not task_found:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        # Update plan in database
+        await db.daily_focus_plans.update_one(
+            {"user_id": user.user_id, "date": today_str},
+            {
+                "$set": {
+                    "tasks": tasks,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        # Update user XP and streak
+        await update_user_xp_and_streak(user.user_id, xp_earned)
+        
+        # Check if all tasks completed for celebration trigger
+        completed_tasks = sum(1 for t in tasks if t.get("completed", False))
+        total_tasks = len(tasks)
+        overall_progress = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+        
+        celebration_triggered = completed_tasks == total_tasks
+        
+        return {
+            "success": True,
+            "xp_earned": xp_earned,
+            "overall_progress": overall_progress,
+            "completed_tasks": completed_tasks,
+            "total_tasks": total_tasks,
+            "celebration_triggered": celebration_triggered,
+            "message": "🎉 Task completed! Great job!" if celebration_triggered else "Task completed successfully!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Task completion error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to complete task")
+
+async def update_user_xp_and_streak(user_id: str, xp_earned: int):
+    """Update user's XP and streak in their profile"""
+    try:
+        # Update user XP
+        await db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$inc": {"total_xp": xp_earned},
+                "$set": {"last_activity": datetime.now(timezone.utc)}
+            }
+        )
+        
+        # Update daily streak if needed
+        today = datetime.now(timezone.utc).date()
+        streak_record = await db.user_streaks.find_one({"user_id": user_id})
+        
+        if not streak_record:
+            await db.user_streaks.insert_one({
+                "user_id": user_id,
+                "current_streak": 1,
+                "last_activity_date": today.isoformat(),
+                "best_streak": 1,
+                "total_xp": xp_earned
+            })
+        else:
+            last_date = datetime.fromisoformat(streak_record["last_activity_date"]).date()
+            if last_date == today:
+                # Same day - just update XP
+                await db.user_streaks.update_one(
+                    {"user_id": user_id},
+                    {"$inc": {"total_xp": xp_earned}}
+                )
+            elif last_date == today - timedelta(days=1):
+                # Consecutive day - increase streak
+                new_streak = streak_record["current_streak"] + 1
+                await db.user_streaks.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "current_streak": new_streak,
+                            "last_activity_date": today.isoformat(),
+                            "best_streak": max(streak_record["best_streak"], new_streak)
+                        },
+                        "$inc": {"total_xp": xp_earned}
+                    }
+                )
+            else:
+                # Streak broken - reset to 1
+                await db.user_streaks.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "current_streak": 1,
+                            "last_activity_date": today.isoformat()
+                        },
+                        "$inc": {"total_xp": xp_earned}
+                    }
+                )
+        
+    except Exception as e:
+        logger.error(f"XP/Streak update error: {str(e)}")
+
 @api_router.post("/doubt/resolve")
 async def resolve_doubt(doubt_query: DoubtQuery, user: User = Depends(get_current_user)):
     """Quick doubt resolution without chat session"""
