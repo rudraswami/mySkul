@@ -237,13 +237,18 @@ const LandingPage = () => {
               <div className="bg-red-500/10 border border-red-400/20 rounded-2xl p-8 backdrop-blur-sm">
                 <h3 className="text-2xl font-bold text-red-300 mb-6 flex items-center">
                   <Target className="h-6 w-6 mr-3 text-red-400" />
-                  The Learning Crisis
+                  The Problem
                 </h3>
                 <div className="space-y-4 text-red-100">
-                  <p>• Students waste <strong className="text-red-300">hours rewriting notes</strong></p>
-                  <p>• Unreliable AI gives <strong className="text-red-300">wrong answers</strong></p>
-                  <p>• Traditional tutoring costs <strong className="text-red-300">₹50,000+ per year</strong></p>
-                  <p>• No personalized learning path</p>
+                  <p className="text-lg leading-relaxed">
+                    Most AI tutors <strong className="text-red-300">sound confident</strong> — even when they're wrong. 
+                    Students learn incorrect information without knowing it.
+                  </p>
+                  <div className="bg-red-900/20 p-4 rounded-lg border border-red-400/20">
+                    <p className="text-sm text-red-200 italic">
+                      "Chaotic, unverified AI output leads to confusion and wrong learning"
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -256,10 +261,15 @@ const LandingPage = () => {
                   Dhruv AI Solution
                 </h3>
                 <div className="space-y-4 text-green-100">
-                  <p>• <strong className="text-green-300">Verified, hallucination-free</strong> answers</p>
-                  <p>• <strong className="text-green-300">Instant note generation</strong> from any lecture</p>
-                  <p>• <strong className="text-green-300">₹499/month</strong> - 99% cost reduction</p>
-                  <p>• Adaptive learning with dual AI mentorship</p>
+                  <p className="text-lg leading-relaxed">
+                    <strong className="text-green-300">Dhruv AI verifies before teaching</strong>, so students never learn wrong. 
+                    Every answer is cross-checked and validated.
+                  </p>
+                  <div className="bg-green-900/20 p-4 rounded-lg border border-green-400/20">
+                    <p className="text-sm text-green-200 italic">
+                      "Organized, verified knowledge with confidence built on correctness"
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
