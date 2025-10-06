@@ -4194,6 +4194,340 @@ class EngagementService:
         # XP formula: xp = (level - 1)^2 * 100
         return (level - 1) ** 2 * 100
 
+# ============= SUBSCRIPTION SERVICE =============
+
+class SubscriptionService:
+    """Hybrid subscription system with AI-guided upsells following 'Pay for Progress, Not Access' philosophy"""
+    
+    # Load plan configuration
+    plan_config = None
+    
+    @staticmethod
+    async def load_plan_config():
+        """Load plan configuration from JSON file"""
+        if SubscriptionService.plan_config is None:
+            import json
+            config_path = ROOT_DIR / 'planConfig.json'
+            with open(config_path, 'r') as f:
+                SubscriptionService.plan_config = json.load(f)
+        return SubscriptionService.plan_config
+    
+    @staticmethod
+    async def get_user_subscription_info(user_id: str) -> Dict[str, Any]:
+        """Get current user subscription information"""
+        try:
+            # Get user subscription
+            subscription = await db.user_subscriptions.find_one({"user_id": user_id})
+            
+            if not subscription:
+                # Create default FREE subscription
+                await SubscriptionService.create_default_subscription(user_id)
+                subscription = await db.user_subscriptions.find_one({"user_id": user_id})
+            
+            plan_config = await SubscriptionService.load_plan_config()
+            tier = subscription.get('plan_name', 'FREE').upper()
+            
+            # Get daily usage
+            daily_usage = await SubscriptionService.get_daily_usage(user_id)
+            
+            return {
+                "subscription_tier": tier,
+                "plan_info": plan_config.get(tier, plan_config['FREE']),
+                "daily_usage": daily_usage,
+                "subscription_status": subscription.get('status', 'active'),
+                "current_period_end": subscription.get('current_period_end'),
+                "auto_renew": subscription.get('auto_renew', True)
+            }
+            
+        except Exception as e:
+            logger.error(f"Get subscription info error: {str(e)}")
+            # Return default FREE tier on error
+            plan_config = await SubscriptionService.load_plan_config()
+            return {
+                "subscription_tier": "FREE",
+                "plan_info": plan_config['FREE'],
+                "daily_usage": {},
+                "subscription_status": "active"
+            }
+    
+    @staticmethod
+    async def create_default_subscription(user_id: str):
+        """Create default FREE subscription for new users"""
+        subscription = UserSubscription(
+            user_id=user_id,
+            plan_id="free_plan",
+            plan_name="FREE"
+        )
+        
+        subscription_dict = subscription.dict()
+        subscription_dict['current_period_start'] = subscription_dict['current_period_start'].isoformat()
+        subscription_dict['current_period_end'] = subscription_dict['current_period_end'].isoformat()
+        subscription_dict['created_at'] = subscription_dict['created_at'].isoformat()
+        subscription_dict['updated_at'] = subscription_dict['updated_at'].isoformat()
+        
+        await db.user_subscriptions.insert_one(subscription_dict)
+    
+    @staticmethod
+    async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any]:
+        """Check if user has access to a specific feature and return upsell info if needed"""
+        try:
+            sub_info = await SubscriptionService.get_user_subscription_info(user_id)
+            tier = sub_info['subscription_tier']
+            plan_features = sub_info['plan_info']['features']
+            daily_usage = sub_info['daily_usage']
+            
+            # Get feature limit from plan configuration
+            feature_limit = plan_features.get(feature_name)
+            
+            if feature_limit == "unlimited":
+                return {
+                    "has_access": True,
+                    "is_unlimited": True,
+                    "current_usage": daily_usage.get(feature_name, 0),
+                    "upgrade_needed": False
+                }
+            elif feature_limit == "locked":
+                # Feature is locked, user needs to upgrade
+                upsell_info = await SubscriptionService.generate_upsell_message(
+                    user_id, feature_name, tier, "feature_locked"
+                )
+                return {
+                    "has_access": False,
+                    "reason": "feature_locked",
+                    "upgrade_needed": True,
+                    "upsell_info": upsell_info
+                }
+            elif isinstance(feature_limit, int):
+                # Feature has daily limit
+                current_usage = daily_usage.get(feature_name, 0)
+                
+                if current_usage >= feature_limit:
+                    # Limit reached, show upsell
+                    upsell_info = await SubscriptionService.generate_upsell_message(
+                        user_id, feature_name, tier, "limit_reached", current_usage, feature_limit
+                    )
+                    return {
+                        "has_access": False,
+                        "reason": "limit_reached",
+                        "current_usage": current_usage,
+                        "limit": feature_limit,
+                        "upgrade_needed": True,
+                        "upsell_info": upsell_info
+                    }
+                else:
+                    return {
+                        "has_access": True,
+                        "current_usage": current_usage,
+                        "limit": feature_limit,
+                        "remaining": feature_limit - current_usage,
+                        "upgrade_needed": False
+                    }
+            
+            # Default allow access
+            return {"has_access": True, "upgrade_needed": False}
+            
+        except Exception as e:
+            logger.error(f"Feature access check error: {str(e)}")
+            return {"has_access": True, "upgrade_needed": False}  # Fail open
+    
+    @staticmethod
+    async def track_feature_usage(user_id: str, feature_name: str) -> Dict[str, Any]:
+        """Track daily feature usage for the user"""
+        try:
+            # Get user timezone (default to UTC for now)
+            user = await db.users.find_one({"user_id": user_id})
+            user_timezone = user.get('timezone', 'UTC') if user else 'UTC'
+            
+            # Calculate user's current date
+            from datetime import datetime
+            import pytz
+            
+            if user_timezone != 'UTC':
+                try:
+                    tz = pytz.timezone(user_timezone)
+                    user_time = datetime.now(tz)
+                    date_str = user_time.strftime('%Y-%m-%d')
+                except:
+                    # Fallback to UTC
+                    date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            else:
+                date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            
+            # Update or create daily usage tracker
+            tracker = await db.daily_usage_trackers.find_one({
+                "user_id": user_id,
+                "date": date_str
+            })
+            
+            if tracker:
+                # Update existing tracker
+                usage_counts = tracker.get('usage_counts', {})
+                usage_counts[feature_name] = usage_counts.get(feature_name, 0) + 1
+                
+                await db.daily_usage_trackers.update_one(
+                    {"user_id": user_id, "date": date_str},
+                    {
+                        "$set": {
+                            "usage_counts": usage_counts,
+                            "updated_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    }
+                )
+            else:
+                # Create new tracker
+                new_tracker = DailyUsageTracker(
+                    user_id=user_id,
+                    date=date_str,
+                    timezone=user_timezone,
+                    usage_counts={feature_name: 1}
+                )
+                
+                tracker_dict = new_tracker.dict()
+                tracker_dict['created_at'] = tracker_dict['created_at'].isoformat()
+                tracker_dict['updated_at'] = tracker_dict['updated_at'].isoformat()
+                
+                await db.daily_usage_trackers.insert_one(tracker_dict)
+            
+            return {"usage_tracked": True, "feature": feature_name, "date": date_str}
+            
+        except Exception as e:
+            logger.error(f"Usage tracking error: {str(e)}")
+            return {"usage_tracked": False, "error": str(e)}
+    
+    @staticmethod
+    async def get_daily_usage(user_id: str) -> Dict[str, int]:
+        """Get current daily usage for user"""
+        try:
+            # Get user's current date
+            user = await db.users.find_one({"user_id": user_id})
+            user_timezone = user.get('timezone', 'UTC') if user else 'UTC'
+            
+            import pytz
+            if user_timezone != 'UTC':
+                try:
+                    tz = pytz.timezone(user_timezone)
+                    user_time = datetime.now(tz)
+                    date_str = user_time.strftime('%Y-%m-%d')
+                except:
+                    date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            else:
+                date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            
+            tracker = await db.daily_usage_trackers.find_one({
+                "user_id": user_id,
+                "date": date_str
+            })
+            
+            return tracker.get('usage_counts', {}) if tracker else {}
+            
+        except Exception as e:
+            logger.error(f"Get daily usage error: {str(e)}")
+            return {}
+    
+    @staticmethod
+    async def generate_upsell_message(user_id: str, feature_name: str, current_tier: str, 
+                                    trigger_type: str, current_usage: int = 0, 
+                                    limit: int = 0) -> Dict[str, Any]:
+        """Generate personalized upsell message using Mentor + Professor approach"""
+        try:
+            plan_config = await SubscriptionService.load_plan_config()
+            current_plan = plan_config.get(current_tier, plan_config['FREE'])
+            
+            # Determine target tier
+            target_tier = "PREMIUM" if current_tier == "FREE" else "PRO"
+            target_plan = plan_config.get(target_tier)
+            
+            # Get user analytics for personalization
+            user_stats = await SubscriptionService.get_user_growth_stats(user_id)
+            
+            # Generate messages based on trigger type
+            if trigger_type == "limit_reached":
+                mentor_template = current_plan['upgrade_messages']['mentor']
+                professor_template = current_plan['upgrade_messages']['professor']
+                
+                mentor_message = mentor_template.format(
+                    usage=current_usage,
+                    limit=limit,
+                    accuracy=user_stats.get('accuracy', 87)
+                )
+                professor_message = professor_template.format(
+                    accuracy=user_stats.get('accuracy', 87),
+                    efficiency=user_stats.get('efficiency', 85)
+                )
+                
+            elif trigger_type == "feature_locked":
+                mentor_message = f"Hey champ! You're curious about {feature_name.replace('_', ' ')} - that's the mindset of a top performer! Ready to unlock verified {feature_name.replace('_', ' ')}?"
+                professor_message = f"{feature_name.replace('_', ' ').title()} is available in {target_tier} plan. This feature enhances your learning efficiency by enabling deeper analytical insights."
+            
+            else:  # growth_milestone
+                mentor_message = "You've outgrown this level! Your learning velocity shows you're ready for advanced verified features."
+                professor_message = f"Your progress metrics indicate optimal readiness for {target_tier} features. Would you like to unlock enhanced capabilities?"
+            
+            # Store upsell interaction
+            upsell_interaction = UpsellInteraction(
+                user_id=user_id,
+                trigger_feature=feature_name,
+                current_tier=current_tier,
+                target_tier=target_tier,
+                upsell_type=trigger_type,
+                mentor_message=mentor_message,
+                professor_message=professor_message
+            )
+            
+            interaction_dict = upsell_interaction.dict()
+            interaction_dict['timestamp'] = interaction_dict['timestamp'].isoformat()
+            await db.upsell_interactions.insert_one(interaction_dict)
+            
+            return {
+                "mentor_message": mentor_message,
+                "professor_message": professor_message,
+                "current_tier": current_tier,
+                "target_tier": target_tier,
+                "target_plan": target_plan,
+                "growth_stats": user_stats,
+                "interaction_id": upsell_interaction.interaction_id
+            }
+            
+        except Exception as e:
+            logger.error(f"Upsell message generation error: {str(e)}")
+            return {
+                "mentor_message": "Ready to unlock more verified learning features?",
+                "professor_message": "Upgrade to access enhanced analytical capabilities.",
+                "current_tier": current_tier,
+                "target_tier": "PREMIUM" if current_tier == "FREE" else "PRO"
+            }
+    
+    @staticmethod
+    async def get_user_growth_stats(user_id: str) -> Dict[str, Any]:
+        """Get user growth statistics for personalized messaging"""
+        try:
+            # Get XP info
+            xp_info = await EngagementService.get_user_xp(user_id)
+            
+            # Get recent interactions for accuracy calculation
+            recent_interactions = await db.user_interactions.find({
+                "user_id": user_id
+            }).sort("timestamp", -1).limit(20).to_list(length=20)
+            
+            verified_count = sum(1 for i in recent_interactions if i.get('verified_interaction', True))
+            accuracy = (verified_count / len(recent_interactions) * 100) if recent_interactions else 95
+            
+            # Calculate efficiency based on XP growth
+            total_xp = xp_info.get('total_xp', 0)
+            efficiency = min(95, max(70, 70 + (total_xp / 100)))  # Scale based on XP
+            
+            return {
+                "accuracy": int(accuracy),
+                "efficiency": int(efficiency),
+                "total_xp": total_xp,
+                "current_level": xp_info.get('current_level', 1),
+                "total_interactions": len(recent_interactions)
+            }
+            
+        except Exception as e:
+            logger.error(f"Growth stats error: {str(e)}")
+            return {"accuracy": 87, "efficiency": 85, "total_xp": 0, "current_level": 1}
+
 # ============= API ENDPOINTS =============
 
 @api_router.post("/auth/register")
