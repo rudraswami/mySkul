@@ -406,6 +406,23 @@ export default function AITutor() {
       recognition.stop();
     }
   };
+  // Enhanced AI Mode Transition with Animation
+  const handleAiModeTransition = async (newMode) => {
+    if (newMode === aiMode) return; // No change needed
+    
+    // Start transition animation
+    setModeTransition(true);
+    
+    // Brief delay for visual feedback
+    setTimeout(() => {
+      setAiMode(newMode);
+      
+      // End transition animation
+      setTimeout(() => {
+        setModeTransition(false);
+      }, 300);
+    }, 150);
+  };
 
   // Helper function to parse and clean message response
   const parseMessageResponse = (message) => {
