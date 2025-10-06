@@ -151,21 +151,18 @@ const LandingPage = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                   <span className="relative flex items-center justify-center">
-                    <UserPlus className="mr-2 h-5 w-5" />
-                    Try Free Now
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Start Verified Learning
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
                 
-                <Link 
-                  to="/login" 
-                  className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white no-underline inline-block text-center"
-                >
+                <button className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white">
                   <span className="flex items-center justify-center">
-                    <LogIn className="mr-2 h-5 w-5" />
-                    Sign In
+                    <Play className="mr-2 h-5 w-5" />
+                    Watch Demo
                   </span>
-                </Link>
+                </button>
               </div>
 
               {/* Trust Indicators */}
