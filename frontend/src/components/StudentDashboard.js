@@ -82,6 +82,8 @@ export default function StudentDashboard() {
     loadDashboardData();
     initializeRanking();
     loadDailyFocusPlan();
+    loadAiInsights();
+    loadRecentNotes();
     
     // Set up auto-refresh for rankings every 12 seconds
     const rankingInterval = setInterval(() => {
