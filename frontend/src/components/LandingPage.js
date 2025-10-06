@@ -195,11 +195,22 @@ const LandingPage = () => {
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                     <div className="flex items-center justify-between text-white">
                       <div>
-                        <p className="text-sm text-blue-200">✓ Live AI Analysis</p>
-                        <p className="font-semibold">Generating verified notes...</p>
+                        <p className="text-sm text-blue-200 flex items-center">
+                          <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                          Verification Complete
+                        </p>
+                        <p className="font-semibold">Structured verified notes created</p>
                       </div>
-                      <div className="animate-pulse">
-                        <Brain className="h-6 w-6 text-blue-400" />
+                      <div className="flex space-x-2">
+                        <div className="animate-pulse">
+                          <CheckCircle className="h-5 w-5 text-green-400" />
+                        </div>
+                        <div className="animate-pulse delay-300">
+                          <CheckCircle className="h-5 w-5 text-green-400" />
+                        </div>
+                        <div className="animate-pulse delay-700">
+                          <CheckCircle className="h-5 w-5 text-green-400" />
+                        </div>
                       </div>
                     </div>
                   </div>
