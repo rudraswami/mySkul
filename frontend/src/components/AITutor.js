@@ -52,6 +52,19 @@ const API = `${BACKEND_URL}/api`;
 
 export default function AITutor() {
   const { user } = useAuth();
+  const { 
+    subscriptionInfo, 
+    dailyUsage, 
+    checkFeatureAccess, 
+    trackFeatureUsage,
+    upsellModal,
+    setUpsellModal,
+    currentTier,
+    getFeatureUsage,
+    getFeatureLimit,
+    getFeatureRemaining,
+    isFeatureUnlimited
+  } = useSubscription();
   const [currentMessage, setCurrentMessage] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [currentSession, setCurrentSession] = useState(null);
