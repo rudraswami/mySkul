@@ -302,7 +302,7 @@ const LandingPage = () => {
                 icon: Brain,
                 title: "Auto-Note Mentor",
                 emoji: "🧠",
-                description: "Record or upload. Get verified notes & flashcards in seconds.",
+                description: "Turns lectures into verified notes & flashcards.",
                 color: "from-purple-500 to-pink-500",
                 bgColor: "purple-500/10"
               },
@@ -310,7 +310,7 @@ const LandingPage = () => {
                 icon: Target,
                 title: "Adaptive Mock Tests",
                 emoji: "🧩",
-                description: "Tests that evolve with you – not against you.",
+                description: "Tests evolve with your verified progress.",
                 color: "from-blue-500 to-cyan-500",
                 bgColor: "blue-500/10"
               },
@@ -318,15 +318,15 @@ const LandingPage = () => {
                 icon: BarChart3,
                 title: "Mastery Map",
                 emoji: "📊",
-                description: "See what you've mastered and what needs attention.",
+                description: "Visualize what's verified in your mind.",
                 color: "from-green-500 to-emerald-500",
                 bgColor: "green-500/10"
               },
               {
                 icon: Heart,
-                title: "Verified Mentor",
+                title: "Dual-Layer Mentor",
                 emoji: "🤖",
-                description: "Empathy + Accuracy = Perfect Guidance.",
+                description: "Empathy meets accuracy — Mentor teaches, Professor verifies.",
                 color: "from-orange-500 to-red-500",
                 bgColor: "orange-500/10"
               }
