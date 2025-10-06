@@ -464,6 +464,50 @@ class MotivationalContent(BaseModel):
     engagement_score: Optional[float] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+# ============= ENGAGEMENT & GAMIFICATION MODELS =============
+
+class UserStreak(BaseModel):
+    streak_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_activity_date: Optional[datetime] = None
+    streak_type: str = "daily_interaction"  # daily_interaction, consecutive_days
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UserXP(BaseModel):
+    xp_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    total_xp: int = 0
+    level: int = 1
+    xp_to_next_level: int = 100
+    xp_sources: Dict[str, int] = Field(default_factory=dict)  # question_answered: 10, streak_maintained: 20, etc.
+    milestones_achieved: List[str] = Field(default_factory=list)
+    last_xp_earned: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class XPTransaction(BaseModel):
+    transaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    xp_amount: int
+    source: str  # "question_answered", "streak_bonus", "topic_mastery", "daily_goal"
+    description: str
+    session_id: Optional[str] = None
+    subject: Optional[str] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class InteractionRecord(BaseModel):
+    interaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    interaction_type: str  # "ai_question", "voice_input", "file_upload", "note_creation"
+    session_id: Optional[str] = None
+    subject: Optional[str] = None
+    verified_interaction: bool = True  # For "Hallucination-Free" verification
+    confidence_score: Optional[float] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class StudyPlan(BaseModel):
     plan_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
