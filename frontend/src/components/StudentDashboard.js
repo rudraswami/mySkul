@@ -69,6 +69,14 @@ export default function StudentDashboard() {
   const [userRank, setUserRank] = useState(5);
   const [totalUsers, setTotalUsers] = useState(20);
   const [rankingUpdating, setRankingUpdating] = useState(false);
+  
+  // AI Insights Widget States
+  const [aiInsights, setAiInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+  
+  // Recent Notes Preview States
+  const [recentNotes, setRecentNotes] = useState(null);
+  const [notesLoading, setNotesLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
