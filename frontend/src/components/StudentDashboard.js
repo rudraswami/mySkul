@@ -51,6 +51,13 @@ export default function StudentDashboard() {
     { id: 2, text: 'Ask AI Tutor for help with doubts', progress: 30, target: 100 }
   ]);
   
+  // Dynamic Focus Engine States
+  const [dailyFocusPlan, setDailyFocusPlan] = useState(null);
+  const [focusLoading, setFocusLoading] = useState(true);
+  const [celebrationModal, setCelebrationModal] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [userMood, setUserMood] = useState('neutral');
+  
   // Wellness Modal States
   const [showWellnessModal, setShowWellnessModal] = useState(false);
   const [wellnessLoading, setWellnessLoading] = useState(false);
