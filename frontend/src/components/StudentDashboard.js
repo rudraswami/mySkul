@@ -444,50 +444,195 @@ export default function StudentDashboard() {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Today's Focus */}
+            {/* AI-Driven Today's Focus */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center">
-                  <Target className="h-5 w-5 mr-2 text-blue-600" />
-                  Today's Focus
+                  <Brain className="h-5 w-5 mr-2 text-blue-600" />
+                  AI-Powered Today's Focus
+                  {dailyFocusPlan?.adaptation_reason && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      AI Adapted
+                    </Badge>
+                  )}
                 </CardTitle>
-                <span className="text-sm text-gray-500">0%</span>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {todayGoals.map((goal) => (
-                  <div key={goal.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="text-sm">{goal.text}</span>
-                      </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <span>120 mins</span>
-                        <span className="ml-2 font-medium">General</span>
-                        <span className="ml-2">0%</span>
-                      </div>
-                    </div>
-                    <Progress value={0} className="h-2" />
-                  </div>
-                ))}
-                
-                {/* Second goal */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-sm">Ask AI Tutor for help with doubts</span>
-                    </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span>10 mins</span>
-                      <span className="ml-2 font-medium">AI Tutor</span>
-                      <span className="ml-2">0%</span>
-                    </div>
-                  </div>
-                  <Progress value={0} className="h-2" />
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-500">
+                    {calculateOverallProgress()}%
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={regenerateFocusPlan}
+                    disabled={regenerating}
+                    className="text-xs"
+                  >
+                    {regenerating ? <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div> : <Zap className="h-3 w-3" />}
+                    {regenerating ? 'Regenerating...' : 'Regenerate'}
+                  </Button>
                 </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Mood Selector */}
+                <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">How are you feeling today?</span>
+                  <div className="flex space-x-1">
+                    {[
+                      { mood: 'energetic', icon: Smile, label: 'Great!', color: 'text-green-600' },
+                      { mood: 'neutral', icon: Meh, label: 'OK', color: 'text-blue-600' },
+                      { mood: 'low', icon: Frown, label: 'Tired', color: 'text-orange-600' }
+                    ].map(({ mood, icon: Icon, label, color }) => (
+                      <Button
+                        key={mood}
+                        variant={userMood === mood ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setUserMood(mood)}
+                        className={`px-2 py-1 ${userMood === mood ? 'bg-blue-600 text-white' : color}`}
+                      >
+                        <Icon className="h-4 w-4 mr-1" />
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Adaptation Message */}
+                {dailyFocusPlan?.adaptation_reason && (
+                  <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start space-x-2">
+                      <Brain className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">AI Insight</p>
+                        <p className="text-xs text-blue-700 mt-1">{dailyFocusPlan.adaptation_reason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Task List */}
+                {focusLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-2 bg-gray-200 rounded w-full"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : dailyFocusPlan?.tasks ? (
+                  <div className="space-y-4">
+                    {dailyFocusPlan.tasks.map((task, index) => {
+                      const priorityColors = {
+                        high: 'border-red-200 bg-red-50',
+                        medium: 'border-yellow-200 bg-yellow-50',
+                        low: 'border-green-200 bg-green-50'
+                      };
+                      const priorityTextColors = {
+                        high: 'text-red-700',
+                        medium: 'text-yellow-700',
+                        low: 'text-green-700'
+                      };
+
+                      return (
+                        <div
+                          key={task.task_id}
+                          className={`p-4 rounded-lg border-2 transition-all duration-300 ${
+                            task.completed 
+                              ? 'border-green-300 bg-green-50' 
+                              : priorityColors[task.priority]
+                          } ${task.completed ? 'opacity-75' : 'hover:shadow-md'}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3 flex-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => !task.completed && completeTask(task.task_id)}
+                                disabled={task.completed}
+                                className={`p-0 h-6 w-6 rounded-full ${
+                                  task.completed 
+                                    ? 'bg-green-500 text-white' 
+                                    : 'border-2 border-gray-300 hover:border-blue-500'
+                                }`}
+                              >
+                                {task.completed && <CheckCircle className="h-4 w-4" />}
+                              </Button>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <h4 className={`font-medium text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                    {task.title}
+                                  </h4>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs px-2 py-0 ${priorityTextColors[task.priority]}`}
+                                  >
+                                    {task.priority}
+                                  </Badge>
+                                </div>
+                                
+                                <p className="text-xs text-gray-600 mb-2">{task.description}</p>
+                                
+                                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                  <div className="flex items-center">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    <span>{task.estimated_time} mins</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <BookOpen className="h-3 w-3 mr-1" />
+                                    <span className="font-medium">{task.subject}</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Star className="h-3 w-3 mr-1 text-yellow-500" />
+                                    <span>{task.completion_xp} XP</span>
+                                  </div>
+                                </div>
+                                
+                                {/* Progress Bar */}
+                                <div className="mt-2">
+                                  <Progress 
+                                    value={task.completed ? 100 : task.progress} 
+                                    className="h-2"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <Brain className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">Loading your personalized focus plan...</p>
+                  </div>
+                )}
+
+                {/* Focus Plan Summary */}
+                {dailyFocusPlan && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-lg font-bold text-green-600">{getTotalEarnedXP()}</div>
+                        <div className="text-xs text-gray-600">XP Earned</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-blue-600">
+                          {dailyFocusPlan.tasks?.filter(t => t.completed).length || 0}/{dailyFocusPlan.tasks?.length || 0}
+                        </div>
+                        <div className="text-xs text-gray-600">Tasks Done</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-indigo-600">
+                          {Math.round((dailyFocusPlan.tasks?.filter(t => t.completed).reduce((sum, t) => sum + t.estimated_time, 0) || 0))}m
+                        </div>
+                        <div className="text-xs text-gray-600">Time Studied</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
