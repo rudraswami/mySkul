@@ -131,16 +131,16 @@ const LandingPage = () => {
 
               {/* Main Headline */}
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
-                Dhruv AI
+                Learn with Dhruv AI —
                 <br />
                 <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                  Your Verified AI Mentor
+                  The World's First Hallucination-Free AI Mentor
                 </span>
               </h1>
 
               {/* Sub-headline */}
               <p className="text-lg md:text-xl lg:text-2xl text-blue-100 mb-12 leading-relaxed">
-                Hallucination-free, personalised learning. Turn any class into verified notes, flashcards, and adaptive tests — <span className="text-yellow-400 font-semibold">instantly.</span>
+                Every answer verified. Every concept cross-checked. <span className="text-yellow-400 font-semibold">Confidence built on correctness.</span>
               </p>
 
               {/* CTA Buttons */}
