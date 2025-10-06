@@ -129,19 +129,19 @@ const LandingPage = () => {
                 <span className="text-green-300 text-sm font-medium">100% Hallucination-Free AI • Verified Answers</span>
               </div>
 
-          {/* Main Headline */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
-            Dhruv AI
-            <br />
-            <span className="text-4xl md:text-6xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-              Your Verified AI Mentor
-            </span>
-          </h1>
+              {/* Main Headline */}
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
+                Dhruv AI
+                <br />
+                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  Your Verified AI Mentor
+                </span>
+              </h1>
 
-          {/* Sub-headline */}
-          <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-4xl mx-auto leading-relaxed">
-            Hallucination-free, personalised learning. Turn any class into verified notes, flashcards, and adaptive tests — <span className="text-yellow-400 font-semibold">instantly.</span>
-          </p>
+              {/* Sub-headline */}
+              <p className="text-lg md:text-xl lg:text-2xl text-blue-100 mb-12 leading-relaxed">
+                Hallucination-free, personalised learning. Turn any class into verified notes, flashcards, and adaptive tests — <span className="text-yellow-400 font-semibold">instantly.</span>
+              </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
