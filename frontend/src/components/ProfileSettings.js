@@ -48,6 +48,7 @@ export default function ProfileSettings() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState(null);
+  const [upgradingTier, setUpgradingTier] = useState(null);
 
   useEffect(() => {
     if (user) {
