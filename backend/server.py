@@ -5914,6 +5914,20 @@ Please provide a comprehensive analysis, solve any problems shown, and explain t
         
         logger.info(f"✅ File processed successfully: {file.filename} ({file.content_type})")
         
+        # Record file upload interaction for streak/XP system
+        try:
+            interaction_result = await EngagementService.record_interaction(
+                user_id=user.user_id,
+                interaction_type="file_upload",
+                session_id=session_id,
+                subject=subject,
+                verified=True,
+                confidence=0.90
+            )
+            result["engagement"] = interaction_result
+        except Exception as e:
+            logger.warning(f"Failed to record file upload interaction: {str(e)}")
+        
         return result
         
     except Exception as e:
