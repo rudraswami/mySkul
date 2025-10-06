@@ -2138,13 +2138,13 @@ export default function AITutor() {
             <div className="flex items-center justify-center mb-4">
               <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
                 <Button
-                  onClick={() => setAiMode('mentor')}
+                  onClick={() => handleAiModeTransition('mentor')}
                   variant={aiMode === 'mentor' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'mentor' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-                  }`}
+                  } ${modeTransition ? 'scale-95 opacity-75' : 'scale-100 opacity-100'}`}
                 >
                   <Heart className="h-4 w-4 mr-2" />
                   Mentor
