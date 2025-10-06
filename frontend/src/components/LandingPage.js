@@ -593,12 +593,15 @@ const LandingPage = () => {
               Join thousands of students who've transformed their studies with AI-powered learning
             </p>
             
-            <button className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-12 py-4 rounded-xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25">
+            <Link 
+              to="/register"
+              className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-12 py-4 rounded-xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
+            >
               <span className="flex items-center justify-center">
                 Get Started with Dhruv AI
                 <Zap className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
               </span>
-            </button>
+            </Link>
 
             <p className="text-blue-300 text-sm mt-4">
               ✓ Free forever • ✓ No credit card required • ✓ Instant access
