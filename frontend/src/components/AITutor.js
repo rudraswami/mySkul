@@ -43,7 +43,8 @@ import {
   CheckCircle,
   Edit,
   MoreVertical,
-  Trash2
+  Trash2,
+  Crown
 } from 'lucide-react';
 import axios from 'axios';
 
