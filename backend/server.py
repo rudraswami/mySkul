@@ -3838,6 +3838,327 @@ class AnalyticsService:
             logger.error(f"Study streak calculation error: {str(e)}")
             return 0
 
+# ============= ENGAGEMENT & GAMIFICATION SERVICE =============
+
+class EngagementService:
+    """Streak tracking, XP system, and gamification features for AI Tutor"""
+    
+    @staticmethod
+    async def record_interaction(user_id: str, interaction_type: str, session_id: str = None, 
+                               subject: str = None, verified: bool = True, confidence: float = None) -> Dict[str, Any]:
+        """Record a verified interaction and update streak/XP"""
+        try:
+            # Create interaction record
+            interaction = InteractionRecord(
+                user_id=user_id,
+                interaction_type=interaction_type,
+                session_id=session_id,
+                subject=subject,
+                verified_interaction=verified,
+                confidence_score=confidence
+            )
+            
+            # Store interaction
+            interaction_dict = interaction.dict()
+            interaction_dict['timestamp'] = interaction_dict['timestamp'].isoformat()
+            await db.user_interactions.insert_one(interaction_dict)
+            
+            # Update streak
+            streak_result = await EngagementService._update_user_streak(user_id)
+            
+            # Award XP
+            xp_result = await EngagementService._award_xp(user_id, interaction_type, session_id, subject)
+            
+            return {
+                "interaction_recorded": True,
+                "streak_updated": streak_result,
+                "xp_awarded": xp_result,
+                "verification_status": "verified" if verified else "unverified"
+            }
+            
+        except Exception as e:
+            logger.error(f"Interaction recording error: {str(e)}")
+            return {"interaction_recorded": False, "error": str(e)}
+    
+    @staticmethod
+    async def get_user_streak(user_id: str) -> Dict[str, Any]:
+        """Get current user streak information"""
+        try:
+            streak_record = await db.user_streaks.find_one({"user_id": user_id})
+            
+            if not streak_record:
+                # Create new streak record
+                new_streak = UserStreak(user_id=user_id)
+                streak_dict = new_streak.dict()
+                streak_dict['created_at'] = streak_dict['created_at'].isoformat()
+                streak_dict['updated_at'] = streak_dict['updated_at'].isoformat()
+                await db.user_streaks.insert_one(streak_dict)
+                return {
+                    "current_streak": 0,
+                    "longest_streak": 0,
+                    "last_activity": None,
+                    "streak_status": "new_user"
+                }
+            
+            return {
+                "current_streak": streak_record.get('current_streak', 0),
+                "longest_streak": streak_record.get('longest_streak', 0),
+                "last_activity": streak_record.get('last_activity_date'),
+                "streak_status": "active" if streak_record.get('current_streak', 0) > 0 else "broken"
+            }
+            
+        except Exception as e:
+            logger.error(f"Get streak error: {str(e)}")
+            return {"current_streak": 0, "longest_streak": 0, "streak_status": "error"}
+    
+    @staticmethod
+    async def get_user_xp(user_id: str) -> Dict[str, Any]:
+        """Get current user XP and level information"""
+        try:
+            xp_record = await db.user_xp.find_one({"user_id": user_id})
+            
+            if not xp_record:
+                # Create new XP record
+                new_xp = UserXP(user_id=user_id)
+                xp_dict = new_xp.dict()
+                xp_dict['created_at'] = xp_dict['created_at'].isoformat()
+                xp_dict['updated_at'] = xp_dict['updated_at'].isoformat()
+                await db.user_xp.insert_one(xp_dict)
+                return {
+                    "total_xp": 0,
+                    "current_level": 1,
+                    "xp_to_next_level": 100,
+                    "progress_percentage": 0,
+                    "recent_milestones": []
+                }
+            
+            total_xp = xp_record.get('total_xp', 0)
+            level = xp_record.get('level', 1)
+            xp_to_next = xp_record.get('xp_to_next_level', 100)
+            
+            # Calculate progress percentage
+            xp_for_current_level = EngagementService._get_xp_for_level(level)
+            xp_for_next_level = EngagementService._get_xp_for_level(level + 1)
+            progress = ((total_xp - xp_for_current_level) / (xp_for_next_level - xp_for_current_level)) * 100
+            
+            return {
+                "total_xp": total_xp,
+                "current_level": level,
+                "xp_to_next_level": xp_to_next,
+                "progress_percentage": min(100, max(0, progress)),
+                "recent_milestones": xp_record.get('milestones_achieved', [])[-3:]  # Last 3 milestones
+            }
+            
+        except Exception as e:
+            logger.error(f"Get XP error: {str(e)}")
+            return {"total_xp": 0, "current_level": 1, "xp_to_next_level": 100, "progress_percentage": 0}
+    
+    @staticmethod
+    async def _update_user_streak(user_id: str) -> Dict[str, Any]:
+        """Update user's daily interaction streak"""
+        try:
+            now = datetime.now(timezone.utc)
+            today = now.date()
+            
+            streak_record = await db.user_streaks.find_one({"user_id": user_id})
+            
+            if not streak_record:
+                # Create new streak
+                new_streak = UserStreak(
+                    user_id=user_id,
+                    current_streak=1,
+                    longest_streak=1,
+                    last_activity_date=now
+                )
+                streak_dict = new_streak.dict()
+                streak_dict['created_at'] = streak_dict['created_at'].isoformat()
+                streak_dict['updated_at'] = streak_dict['updated_at'].isoformat()
+                streak_dict['last_activity_date'] = streak_dict['last_activity_date'].isoformat()
+                await db.user_streaks.insert_one(streak_dict)
+                return {"streak_updated": True, "new_streak": 1, "streak_bonus": True}
+            
+            last_activity = streak_record.get('last_activity_date')
+            if last_activity:
+                if isinstance(last_activity, str):
+                    last_activity = datetime.fromisoformat(last_activity.replace('Z', '+00:00'))
+                last_date = last_activity.date()
+            else:
+                last_date = None
+            
+            current_streak = streak_record.get('current_streak', 0)
+            longest_streak = streak_record.get('longest_streak', 0)
+            
+            if last_date == today:
+                # Already active today, no streak change
+                return {"streak_updated": False, "current_streak": current_streak, "already_active_today": True}
+            elif last_date == today - timedelta(days=1):
+                # Consecutive day, increment streak
+                current_streak += 1
+                longest_streak = max(longest_streak, current_streak)
+                
+                await db.user_streaks.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "current_streak": current_streak,
+                            "longest_streak": longest_streak,
+                            "last_activity_date": now.isoformat(),
+                            "updated_at": now.isoformat()
+                        }
+                    }
+                )
+                return {"streak_updated": True, "new_streak": current_streak, "streak_bonus": True}
+            else:
+                # Streak broken, reset to 1
+                await db.user_streaks.update_one(
+                    {"user_id": user_id},
+                    {
+                        "$set": {
+                            "current_streak": 1,
+                            "longest_streak": max(longest_streak, 1),
+                            "last_activity_date": now.isoformat(),
+                            "updated_at": now.isoformat()
+                        }
+                    }
+                )
+                return {"streak_updated": True, "new_streak": 1, "streak_reset": True}
+                
+        except Exception as e:
+            logger.error(f"Streak update error: {str(e)}")
+            return {"streak_updated": False, "error": str(e)}
+    
+    @staticmethod
+    async def _award_xp(user_id: str, interaction_type: str, session_id: str = None, subject: str = None) -> Dict[str, Any]:
+        """Award XP for user interactions"""
+        try:
+            # Define XP values for different interactions
+            xp_values = {
+                "ai_question": 10,
+                "voice_input": 15,
+                "file_upload": 20,
+                "streak_bonus": 25,
+                "topic_mastery": 50,
+                "daily_goal": 30
+            }
+            
+            xp_amount = xp_values.get(interaction_type, 5)
+            
+            # Create XP transaction
+            transaction = XPTransaction(
+                user_id=user_id,
+                xp_amount=xp_amount,
+                source=interaction_type,
+                description=f"Earned {xp_amount} XP for {interaction_type.replace('_', ' ')}",
+                session_id=session_id,
+                subject=subject
+            )
+            
+            # Store transaction
+            transaction_dict = transaction.dict()
+            transaction_dict['timestamp'] = transaction_dict['timestamp'].isoformat()
+            await db.xp_transactions.insert_one(transaction_dict)
+            
+            # Update user XP
+            xp_record = await db.user_xp.find_one({"user_id": user_id})
+            
+            if not xp_record:
+                new_xp = UserXP(
+                    user_id=user_id,
+                    total_xp=xp_amount,
+                    level=1,
+                    xp_to_next_level=100 - xp_amount
+                )
+                new_xp.xp_sources[interaction_type] = xp_amount
+                new_xp.last_xp_earned = datetime.now(timezone.utc)
+                
+                xp_dict = new_xp.dict()
+                xp_dict['created_at'] = xp_dict['created_at'].isoformat()
+                xp_dict['updated_at'] = xp_dict['updated_at'].isoformat()
+                xp_dict['last_xp_earned'] = xp_dict['last_xp_earned'].isoformat()
+                await db.user_xp.insert_one(xp_dict)
+                
+                return {
+                    "xp_awarded": xp_amount,
+                    "total_xp": xp_amount,
+                    "level": 1,
+                    "level_up": False,
+                    "milestone_achieved": None
+                }
+            
+            # Update existing XP record
+            old_total = xp_record.get('total_xp', 0)
+            new_total = old_total + xp_amount
+            old_level = xp_record.get('level', 1)
+            
+            # Calculate new level
+            new_level = EngagementService._calculate_level(new_total)
+            level_up = new_level > old_level
+            
+            # Update XP sources
+            xp_sources = xp_record.get('xp_sources', {})
+            xp_sources[interaction_type] = xp_sources.get(interaction_type, 0) + xp_amount
+            
+            # Check for milestones
+            milestone = None
+            if new_total >= 1000 and old_total < 1000:
+                milestone = "1K XP Master"
+            elif new_total >= 5000 and old_total < 5000:
+                milestone = "5K XP Expert"
+            elif new_level == 10 and old_level < 10:
+                milestone = "Level 10 Achiever"
+            
+            milestones = xp_record.get('milestones_achieved', [])
+            if milestone and milestone not in milestones:
+                milestones.append(milestone)
+            
+            # Calculate XP to next level
+            xp_to_next = EngagementService._get_xp_for_level(new_level + 1) - new_total
+            
+            await db.user_xp.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "total_xp": new_total,
+                        "level": new_level,
+                        "xp_to_next_level": xp_to_next,
+                        "xp_sources": xp_sources,
+                        "milestones_achieved": milestones,
+                        "last_xp_earned": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+            
+            return {
+                "xp_awarded": xp_amount,
+                "total_xp": new_total,
+                "level": new_level,
+                "level_up": level_up,
+                "milestone_achieved": milestone,
+                "xp_to_next_level": xp_to_next
+            }
+            
+        except Exception as e:
+            logger.error(f"XP award error: {str(e)}")
+            return {"xp_awarded": 0, "error": str(e)}
+    
+    @staticmethod
+    def _calculate_level(total_xp: int) -> int:
+        """Calculate level based on total XP using exponential curve"""
+        if total_xp < 100:
+            return 1
+        # Level formula: level = floor(sqrt(total_xp / 100)) + 1
+        import math
+        return int(math.sqrt(total_xp / 100)) + 1
+    
+    @staticmethod
+    def _get_xp_for_level(level: int) -> int:
+        """Get total XP required to reach a specific level"""
+        if level <= 1:
+            return 0
+        # XP formula: xp = (level - 1)^2 * 100
+        return (level - 1) ** 2 * 100
+
 # ============= API ENDPOINTS =============
 
 @api_router.post("/auth/register")
