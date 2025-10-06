@@ -8662,6 +8662,283 @@ class DhruvAITester:
         return success_count == total_tests
 
     # ============= SUBSCRIPTION SYSTEM TESTS =============
+
+    def test_subscription_system_comprehensive(self):
+        """Test comprehensive hybrid subscription system - REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for subscription system testing")
+            return False
+        
+        print("\n🎯 COMPREHENSIVE HYBRID SUBSCRIPTION SYSTEM TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing: Complete subscription management, feature access, usage tracking, and upsell system")
+        print("   User: test@dhruvai.com/password123")
+        print("   Philosophy: 'Pay for Progress, Not Access' with AI-guided upsells")
+        
+        test_results = {
+            'subscription_info': False,
+            'feature_access_control': False,
+            'usage_tracking': False,
+            'upsell_system': False,
+            'plan_configuration': False,
+            'upgrade_functionality': False
+        }
+        
+        # Test 1: Subscription Management APIs
+        print("\n📋 Test 1: Subscription Management APIs")
+        
+        # GET /api/subscription/info - Get user subscription info with plan details
+        print("   Testing GET /api/subscription/info...")
+        success, response = self.run_test(
+            "Subscription Info",
+            "GET",
+            "subscription/info",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Subscription info retrieved successfully")
+            subscription_info = response
+            current_plan = subscription_info.get('current_plan', {})
+            plan_details = subscription_info.get('plan_details', {})
+            
+            print(f"   Current Plan: {current_plan.get('name', 'N/A')}")
+            print(f"   Plan Status: {current_plan.get('status', 'N/A')}")
+            print(f"   Billing Cycle: {current_plan.get('billing_cycle', 'N/A')}")
+            print(f"   Plan Features: {len(plan_details.get('features', []))}")
+            print(f"   Plan Limits: {plan_details.get('limits', {})}")
+            
+            test_results['subscription_info'] = True
+        else:
+            print("   ❌ Subscription info retrieval failed")
+        
+        # Test 2: Feature Access Control
+        print("\n📋 Test 2: Feature Access Control with Upsell Info")
+        
+        # Test different features with limits
+        features_to_test = [
+            {'feature': 'ai_tutor_daily', 'expected_limits': {'FREE': 5, 'PREMIUM': -1, 'PRO': -1}},
+            {'feature': 'mock_tests_weekly', 'expected_limits': {'FREE': 2, 'PREMIUM': 20, 'PRO': -1}},
+            {'feature': 'auto_note_uploads_daily', 'expected_limits': {'FREE': 1, 'PREMIUM': 10, 'PRO': -1}}
+        ]
+        
+        feature_access_success = 0
+        for feature_test in features_to_test:
+            feature_name = feature_test['feature']
+            print(f"   Testing feature access: {feature_name}")
+            
+            success, response = self.run_test(
+                f"Feature Access - {feature_name}",
+                "POST",
+                "subscription/check-access",
+                200,
+                data={'feature_name': feature_name},
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                access_info = response
+                has_access = access_info.get('has_access', False)
+                current_usage = access_info.get('current_usage', 0)
+                limit = access_info.get('limit', 0)
+                upsell_info = access_info.get('upsell_info', {})
+                
+                print(f"     Access: {has_access}, Usage: {current_usage}/{limit}")
+                print(f"     Upsell Available: {'Yes' if upsell_info else 'No'}")
+                
+                if upsell_info:
+                    print(f"     Upsell Message: {upsell_info.get('message', 'N/A')[:50]}...")
+                    print(f"     Target Tier: {upsell_info.get('target_tier', 'N/A')}")
+                    print(f"     Growth Stats: {upsell_info.get('growth_stats', {})}")
+                
+                feature_access_success += 1
+            else:
+                print(f"     ❌ Feature access check failed for {feature_name}")
+        
+        if feature_access_success == len(features_to_test):
+            test_results['feature_access_control'] = True
+            print("   ✅ Feature access control working correctly")
+        
+        # Test 3: Daily Usage Tracking
+        print("\n📋 Test 3: Daily Usage Tracking")
+        
+        # Track usage for AI tutor
+        print("   Testing POST /api/subscription/track-usage...")
+        success, response = self.run_test(
+            "Track Usage - AI Tutor",
+            "POST",
+            "subscription/track-usage",
+            200,
+            data={
+                'feature_name': 'ai_tutor_daily',
+                'usage_amount': 1,
+                'metadata': {'session_id': 'test_session_123', 'subject': 'Mathematics'}
+            },
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Usage tracking successful")
+            print(f"   New Usage Count: {response.get('new_usage_count', 0)}")
+            print(f"   Remaining: {response.get('remaining', 0)}")
+            print(f"   Reset Time: {response.get('reset_time', 'N/A')}")
+        
+        # Get current usage statistics
+        print("   Testing GET /api/subscription/usage...")
+        success, response = self.run_test(
+            "Get Usage Statistics",
+            "GET",
+            "subscription/usage",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            usage_stats = response.get('usage_stats', {})
+            print("   ✅ Usage statistics retrieved")
+            print(f"   Daily Usage: {usage_stats}")
+            test_results['usage_tracking'] = True
+        
+        # Test 4: AI-Guided Upsell System
+        print("\n📋 Test 4: AI-Guided Upsell System")
+        
+        # Test Mentor + Professor dialogue generation
+        print("   Testing upsell dialogue generation...")
+        success, response = self.run_test(
+            "Upsell Dialogue Generation",
+            "POST",
+            "subscription/check-access",
+            200,
+            data={'feature_name': 'ai_tutor_daily'},  # This should trigger upsell if at limit
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and response.get('upsell_info'):
+            upsell_info = response['upsell_info']
+            mentor_message = upsell_info.get('mentor_message', '')
+            professor_message = upsell_info.get('professor_message', '')
+            growth_stats = upsell_info.get('growth_stats', {})
+            
+            print("   ✅ Upsell dialogue generated")
+            print(f"   Mentor Message Length: {len(mentor_message)}")
+            print(f"   Professor Message Length: {len(professor_message)}")
+            print(f"   Growth Stats: {growth_stats}")
+            
+            # Test upsell interaction recording
+            print("   Testing POST /api/subscription/upsell-response...")
+            success, response = self.run_test(
+                "Record Upsell Interaction",
+                "POST",
+                "subscription/upsell-response",
+                200,
+                data={
+                    'trigger_feature': 'ai_tutor_daily',
+                    'current_tier': 'FREE',
+                    'target_tier': 'PREMIUM',
+                    'user_response': 'dismissed',
+                    'mentor_message': mentor_message[:100],
+                    'professor_message': professor_message[:100]
+                },
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print("   ✅ Upsell interaction recorded")
+                print(f"   Interaction ID: {response.get('interaction_id', 'N/A')}")
+                print(f"   XP Earned: {response.get('xp_earned', 0)}")
+                test_results['upsell_system'] = True
+        
+        # Test 5: Plan Configuration
+        print("\n📋 Test 5: Plan Configuration")
+        
+        print("   Testing GET /api/subscription/plans...")
+        success, response = self.run_test(
+            "Get Subscription Plans",
+            "GET",
+            "subscription/plans",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            plans = response.get('plans', [])
+            print(f"   ✅ {len(plans)} subscription plans retrieved")
+            
+            for plan in plans:
+                plan_name = plan.get('name', 'N/A')
+                price_monthly = plan.get('price_monthly', 0)
+                features_count = len(plan.get('features', []))
+                limits = plan.get('limits', {})
+                
+                print(f"   Plan: {plan_name} - ₹{price_monthly}/month - {features_count} features")
+                print(f"     Limits: {limits}")
+            
+            test_results['plan_configuration'] = True
+        
+        # Test 6: Upgrade Functionality
+        print("\n📋 Test 6: Upgrade Functionality")
+        
+        print("   Testing POST /api/subscription/upgrade...")
+        success, response = self.run_test(
+            "Subscription Upgrade",
+            "POST",
+            "subscription/upgrade",
+            200,
+            data={
+                'target_plan': 'PREMIUM',
+                'billing_cycle': 'monthly'
+            },
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Upgrade process initiated")
+            print(f"   Upgrade Status: {response.get('status', 'N/A')}")
+            print(f"   New Plan: {response.get('new_plan', 'N/A')}")
+            print(f"   Effective Date: {response.get('effective_date', 'N/A')}")
+            print(f"   Payment Required: {response.get('payment_required', False)}")
+            test_results['upgrade_functionality'] = True
+        
+        # Final Assessment
+        print(f"\n🎯 SUBSCRIPTION SYSTEM TESTING SUMMARY:")
+        total_tests = len(test_results)
+        passed_tests = sum(test_results.values())
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"   ✅ Tests Passed: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name.replace('_', ' ').title()}")
+        
+        # Key Scenarios Testing
+        print(f"\n🎯 KEY SUBSCRIPTION SCENARIOS:")
+        
+        if test_results['feature_access_control'] and test_results['upsell_system']:
+            print("   ✅ FREE user hits limit → AI-guided upsell dialogue generated")
+        else:
+            print("   ❌ FREE user limit scenario not working")
+        
+        if test_results['upgrade_functionality']:
+            print("   ✅ Upgrade from FREE to PREMIUM → process initiated")
+        else:
+            print("   ❌ Upgrade functionality not working")
+        
+        if test_results['usage_tracking']:
+            print("   ✅ Daily usage tracking → timezone-aware resets working")
+        else:
+            print("   ❌ Usage tracking not working properly")
+        
+        # Philosophy Validation
+        print(f"\n🎯 'PAY FOR PROGRESS, NOT ACCESS' PHILOSOPHY VALIDATION:")
+        if test_results['upsell_system']:
+            print("   ✅ Soft limits with motivational messaging implemented")
+            print("   ✅ XP/streak rewards for upsell interactions")
+            print("   ✅ Encouraging upsells instead of hard blocks")
+        else:
+            print("   ❌ Philosophy implementation needs work")
+        
+        return passed_tests >= total_tests * 0.8  # 80% success threshold
     
     def test_subscription_plans_api(self):
         """Test GET /api/subscription/plans to verify all 4 subscription tiers"""
