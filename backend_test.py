@@ -9100,6 +9100,7 @@ def main():
         ("🎯 User Profile Update", tester.test_user_profile_update),
         
         # SUBSCRIPTION SYSTEM TESTS (PRIORITY FOR REVIEW REQUEST)
+        ("🎯 Comprehensive Hybrid Subscription System", tester.test_subscription_system_comprehensive),
         ("💰 Subscription Plans API", tester.test_subscription_plans_api),
         ("💰 Current Subscription API", tester.test_current_subscription_api),
         ("💰 Checkout Session Creation", tester.test_checkout_session_creation),
