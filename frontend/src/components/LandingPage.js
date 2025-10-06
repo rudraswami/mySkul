@@ -102,20 +102,27 @@ const LandingPage = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <button className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25">
+            <Link 
+              to="/register" 
+              className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
               <span className="relative flex items-center justify-center">
+                <UserPlus className="mr-2 h-5 w-5" />
                 Try Free Now
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </span>
-            </button>
+            </Link>
             
-            <button className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10">
+            <Link 
+              to="/login" 
+              className="group border-2 border-blue-400/50 hover:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/10 text-white no-underline inline-block"
+            >
               <span className="flex items-center justify-center">
-                <Play className="mr-2 h-5 w-5" />
-                Watch Demo
+                <LogIn className="mr-2 h-5 w-5" />
+                Sign In
               </span>
-            </button>
+            </Link>
           </div>
 
           {/* Trust Indicators */}
