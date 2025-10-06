@@ -2162,13 +2162,13 @@ export default function AITutor() {
                   Professor
                 </Button>
                 <Button
-                  onClick={() => setAiMode('dual')}
+                  onClick={() => handleAiModeTransition('dual')}
                   variant={aiMode === 'dual' ? 'default' : 'ghost'}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                     aiMode === 'dual' 
                       ? 'bg-blue-500 text-white shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-                  }`}
+                  } ${modeTransition ? 'scale-95 opacity-75' : 'scale-100 opacity-100'}`}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Both
