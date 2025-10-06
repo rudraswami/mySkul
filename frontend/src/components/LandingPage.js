@@ -526,15 +526,16 @@ const LandingPage = () => {
                   ))}
                 </div>
 
-                <button 
-                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+                <Link
+                  to="/register"
+                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 no-underline text-center inline-block ${
                     plan.popular
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg'
                       : 'border-2 border-white/20 hover:border-white/40 text-white hover:bg-white/10'
                   }`}
                 >
                   {plan.cta}
-                </button>
+                </Link>
 
                 <p className="text-center text-gray-400 text-sm mt-4">
                   Start Free → Upgrade Anytime
