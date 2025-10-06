@@ -8730,9 +8730,8 @@ class DhruvAITester:
             success, response = self.run_test(
                 f"Feature Access - {feature_name}",
                 "POST",
-                "subscription/check-access",
+                f"subscription/check-access?feature_name={feature_name}",
                 200,
-                data={'feature_name': feature_name},
                 headers={'Authorization': f'Bearer {self.token}'}
             )
             
