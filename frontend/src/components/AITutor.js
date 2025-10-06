@@ -2593,19 +2593,31 @@ export default function AITutor() {
 
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2">
-          <div className={`rounded-lg p-4 shadow-lg border ${
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in-0 duration-300">
+          <div className={`rounded-lg shadow-lg p-4 min-w-[250px] border ${
             toast.type === 'success' 
               ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              : toast.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-blue-50 border-blue-200 text-blue-800'
           }`}>
-            <div className="flex items-center space-x-2">
-              {toast.type === 'success' ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className="text-sm font-medium">{toast.message}</span>
+            <div className="flex items-center">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-3 ${
+                toast.type === 'success' 
+                  ? 'bg-green-500' 
+                  : toast.type === 'error'
+                  ? 'bg-red-500'
+                  : 'bg-blue-500'
+              }`}>
+                {toast.type === 'success' ? (
+                  <CheckCircle className="h-3 w-3 text-white" />
+                ) : toast.type === 'error' ? (
+                  <X className="h-3 w-3 text-white" />
+                ) : (
+                  <Lightbulb className="h-3 w-3 text-white" />
+                )}
+              </div>
+              <span className="font-medium">{toast.message}</span>
             </div>
           </div>
         </div>
