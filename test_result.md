@@ -535,6 +535,17 @@
     needs_retesting: false
     status_history:
         -working: true
+  - task: "Landing Page Routing Integration"
+    implemented: true
+    working: true
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "ROUTING UPDATED: Modified App.js routing structure to serve LandingPage component on home route (/) for all users (authenticated and non-authenticated). Added LandingPage import and updated route configuration. Landing page now serves as the primary entry point with navigation CTAs to /login and /register. Preserved all existing protected routes (/dashboard, /tutor, /tests, /auto-notes, /subscription, /profile) for authenticated users."
         -agent: "main"
         -comment: "Enhanced MockTests component with comprehensive test interface, real-time test taking functionality, timer, question navigation, adaptive test generation integration with backend APIs."
         -working: false
