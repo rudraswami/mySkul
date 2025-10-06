@@ -8801,9 +8801,8 @@ class DhruvAITester:
         success, response = self.run_test(
             "Upsell Dialogue Generation",
             "POST",
-            "subscription/check-access",
+            "subscription/check-access?feature_name=ai_tutor_daily",
             200,
-            data={'feature_name': 'ai_tutor_daily'},  # This should trigger upsell if at limit
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
