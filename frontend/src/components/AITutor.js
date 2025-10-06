@@ -501,6 +501,13 @@ export default function AITutor() {
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
 
+    // Check subscription access before sending message
+    const accessInfo = await checkFeatureAccess('ai_tutor_daily');
+    if (!accessInfo.has_access) {
+      // Upsell modal will be shown automatically by the context
+      return;
+    }
+
     setLoading(true);
     const messageToSend = currentMessage;
     setCurrentMessage('');
