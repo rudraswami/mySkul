@@ -6795,6 +6795,12 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
         except Exception as e:
             logger.warning(f"Failed to record interaction: {str(e)}")
         
+        # Track feature usage for subscription system
+        try:
+            await SubscriptionService.track_feature_usage(user.user_id, "ai_tutor_daily")
+        except Exception as e:
+            logger.warning(f"Failed to track AI tutor usage: {str(e)}")
+        
         return response_data
         
     except Exception as e:
