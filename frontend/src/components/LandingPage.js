@@ -100,7 +100,7 @@ const LandingPage = () => {
       </div>
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden">
+      <section id="hero" className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/20 to-slate-900/40"></div>
         
         {/* Floating Elements Animation */}
