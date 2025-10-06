@@ -8,7 +8,7 @@ import json
 import sys
 
 def test_ai_endpoint():
-    base_url = "https://eduai-platform-20.preview.emergentagent.com/api"
+    base_url = "https://ai-tutor-app-9.preview.emergentagent.com/api"
     
     # Authenticate first
     login_data = {
