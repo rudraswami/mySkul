@@ -1682,25 +1682,72 @@ export default function AITutor() {
                   Get personalized help for {selectedSubject} from our AI tutors
                 </p>
                 
-                {/* Simple Starter Buttons */}
-                <div className="flex flex-col items-center space-y-3 max-w-md mx-auto">
-                  <Button 
-                    onClick={() => setCurrentMessage("Explain Limits in Calculus (Professor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-700 justify-start text-left"
-                    variant="outline"
-                  >
-                    <GraduationCap className="h-4 w-4 mr-3 text-blue-600" />
-                    Explain Limits in Calculus (Professor)
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setCurrentMessage("Help me plan my study routine (Mentor)")}
-                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-200 hover:text-blue-700 justify-start text-left"
-                    variant="outline"
-                  >
-                    <Heart className="h-4 w-4 mr-3 text-blue-600" />
-                    Help me plan my study routine (Mentor)
-                  </Button>
+                {/* Enhanced Scrollable Prompt Cards */}
+                <div className="max-w-4xl mx-auto">
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3 text-center">
+                      Popular Questions for {selectedSubject}
+                    </h4>
+                    <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+                      {getSubjectSuggestions().map((suggestion, index) => (
+                        <div
+                          key={index}
+                          onClick={() => setCurrentMessage(suggestion)}
+                          className="flex-shrink-0 w-72 bg-white border border-gray-200 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-blue-300 hover:-translate-y-1 group"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                              <Lightbulb className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 line-clamp-3 group-hover:text-blue-700 transition-colors">
+                                {suggestion}
+                              </p>
+                              <div className="mt-2 flex items-center text-xs text-gray-500 group-hover:text-blue-500 transition-colors">
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                Click to ask
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Action Buttons */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    <Button 
+                      onClick={() => setCurrentMessage("Explain this concept step by step")}
+                      className="h-auto p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-gray-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 justify-start text-left group transition-all duration-300 hover:scale-105"
+                      variant="outline"
+                    >
+                      <div className="flex items-center w-full">
+                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-600 transition-colors">
+                          <GraduationCap className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-gray-900 group-hover:text-blue-700">Professor Mode</div>
+                          <div className="text-sm text-gray-600">Detailed explanations & theory</div>
+                        </div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => setCurrentMessage("Help me stay motivated and plan my studies")}
+                      className="h-auto p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-gray-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 justify-start text-left group transition-all duration-300 hover:scale-105"
+                      variant="outline"
+                    >
+                      <div className="flex items-center w-full">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-4 group-hover:bg-green-600 transition-colors">
+                          <Heart className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-gray-900 group-hover:text-green-700">Mentor Mode</div>
+                          <div className="text-sm text-gray-600">Motivation & study guidance</div>
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
