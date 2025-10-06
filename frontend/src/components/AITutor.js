@@ -131,6 +131,7 @@ export default function AITutor() {
     fetchChatSessions();
     loadPersonalizationData();
     initializeSpeechRecognition();
+    fetchEngagementData();
   }, []);
 
   useEffect(() => {
