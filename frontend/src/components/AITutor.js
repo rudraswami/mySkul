@@ -540,6 +540,16 @@ export default function AITutor() {
       if (newMessage.dual_response?.user_difficulty_level) {
         setPersonalizedDifficulty(newMessage.dual_response.user_difficulty_level);
       }
+
+      // Handle engagement results (XP, streak, etc.)
+      if (newMessage.engagement) {
+        if (newMessage.engagement.xp_awarded) {
+          handleXPGain(newMessage.engagement.xp_awarded);
+        }
+        if (newMessage.engagement.streak_updated) {
+          fetchEngagementData(); // Refresh engagement data
+        }
+      }
       
     } catch (error) {
       console.error('Failed to send message:', error);
