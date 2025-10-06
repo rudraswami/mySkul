@@ -567,26 +567,29 @@ const LandingPage = () => {
       {/* Trust & Tech Section */}
       <section id="trust" className="py-24 px-6 relative">
         <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-            Built on Accuracy, Privacy & AI Ethics
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            Built for Accuracy. Engineered for Trust.
           </h2>
+          <p className="text-xl text-blue-200 mb-12 max-w-3xl mx-auto">
+            Every fact double-checked before it reaches you.
+          </p>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 icon: Shield,
-                title: "Verified by Design",
-                description: "Our dual-layer AI architecture ensures 100% accurate, hallucination-free responses."
-              },
-              {
-                icon: Lock,
-                title: "Secure & Private",
-                description: "Your data is encrypted and never shared. Full compliance with Indian data protection laws."
+                title: "Symbolic Engine ✓",
+                description: "Our dual-layer AI architecture ensures 100% accurate, hallucination-free responses with symbolic reasoning."
               },
               {
                 icon: Eye,
-                title: "Transparent AI",
-                description: "We show our reasoning process. No black box - you understand how every answer is generated."
+                title: "Neural Verifier ✓", 
+                description: "Advanced verification layer cross-checks every answer before delivery. No wrong information passes through."
+              },
+              {
+                icon: Lock,
+                title: "Privacy-Protected ✓",
+                description: "Your data is encrypted and never shared. Full compliance with Indian data protection laws and AI ethics."
               }
             ].map((item, index) => (
               <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
