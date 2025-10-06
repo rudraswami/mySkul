@@ -103,17 +103,51 @@ const LandingPage = () => {
       <section id="hero" className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/20 to-slate-900/40"></div>
         
-        {/* Floating Elements Animation */}
+        {/* Enhanced Neural Network Particle Animation */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
+          {/* Neural Network Particles */}
+          {[...Array(15)].map((_, i) => (
             <div
-              key={i}
-              className={`absolute animate-float w-2 h-2 bg-blue-400/30 rounded-full`}
+              key={`particle-${i}`}
+              className="absolute animate-float rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${3 + Math.random() * 4}s`
+                animationDuration: `${4 + Math.random() * 6}s`
+              }}
+            >
+              <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-60 animate-pulse"></div>
+            </div>
+          ))}
+          
+          {/* Verification Checkmarks */}
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={`check-${i}`}
+              className="absolute animate-float opacity-20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 8}s`,
+                animationDuration: `${6 + Math.random() * 4}s`
+              }}
+            >
+              <CheckCircle className="h-4 w-4 text-green-400" />
+            </div>
+          ))}
+          
+          {/* Neural Connection Lines */}
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={`line-${i}`}
+              className="absolute bg-gradient-to-r from-blue-400/20 to-transparent h-px animate-pulse"
+              style={{
+                left: `${Math.random() * 80}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${50 + Math.random() * 100}px`,
+                animationDelay: `${Math.random() * 3}s`,
+                transform: `rotate(${Math.random() * 360}deg)`
               }}
             ></div>
           ))}
