@@ -6628,23 +6628,29 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
     """Get coordinated response from both Mentor and Professor AI layers with personalization"""
     
     try:
-        # Check subscription access for AI conversations
-        access_info = await check_feature_access(user.user_id, "ai_conversations_daily")
+        # Check subscription access for AI tutor using new hybrid system
+        access_info = await SubscriptionService.check_feature_access(user.user_id, "ai_tutor_daily")
         if not access_info["has_access"]:
-            if access_info["reason"] == "subscription_expired":
-                raise HTTPException(
-                    status_code=402, 
-                    detail="Subscription expired. Please upgrade your plan to continue using AI Tutor."
-                )
-            elif access_info["reason"] == "feature_not_available":
+            if access_info["reason"] == "feature_locked":
+                # Return upsell information instead of hard error
                 raise HTTPException(
                     status_code=402,
-                    detail="AI Tutor is not available in your current plan. Please upgrade to access this feature."
+                    detail={
+                        "message": "AI Tutor feature requires upgrade",
+                        "upsell_info": access_info.get("upsell_info", {}),
+                        "upgrade_needed": True
+                    }
                 )
-            elif access_info["reason"] == "usage_limit_reached":
+            elif access_info["reason"] == "limit_reached":
+                # Return soft limit with upsell info
                 raise HTTPException(
-                    status_code=429,
-                    detail=f"Daily AI conversation limit reached. You have used {access_info['used']}/{access_info['limit']} messages today. Please upgrade your plan or try again tomorrow."
+                    status_code=402,
+                    detail={
+                        "message": f"Daily AI Tutor limit reached ({access_info['current_usage']}/{access_info['limit']})",
+                        "upsell_info": access_info.get("upsell_info", {}),
+                        "upgrade_needed": True,
+                        "reset_time": "midnight"
+                    }
                 )
         
         # Extract topic from message (simple keyword extraction - can be enhanced)
