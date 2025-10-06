@@ -8766,13 +8766,8 @@ class DhruvAITester:
         success, response = self.run_test(
             "Track Usage - AI Tutor",
             "POST",
-            "subscription/track-usage",
+            "subscription/track-usage?feature_name=ai_tutor_daily",
             200,
-            data={
-                'feature_name': 'ai_tutor_daily',
-                'usage_amount': 1,
-                'metadata': {'session_id': 'test_session_123', 'subject': 'Mathematics'}
-            },
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
