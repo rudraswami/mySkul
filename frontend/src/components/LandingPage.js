@@ -134,18 +134,25 @@ const LandingPage = () => {
                 </span>
               </div>
 
-              {/* Main Headline */}
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
-                Learn with Dhruv AI —
+              {/* Enhanced Main Headline */}
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+                <span className="bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
+                  Learn with Confidence.
+                </span>
                 <br />
-                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                  The World's First Hallucination-Free AI Mentor
+                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
+                  Never Learn Wrong Again.
                 </span>
               </h1>
 
-              {/* Sub-headline */}
-              <p className="text-lg md:text-xl lg:text-2xl text-blue-100 mb-12 leading-relaxed">
-                Every answer verified. Every concept cross-checked. <span className="text-yellow-400 font-semibold">Confidence built on correctness.</span>
+              {/* Enhanced Sub-headline */}
+              <p className="text-lg md:text-xl lg:text-2xl text-blue-100 mb-4 leading-relaxed">
+                Every answer <span className="text-green-400 font-semibold">verified</span>. Every concept <span className="text-blue-300 font-semibold">cross-checked</span>.
+              </p>
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold mb-12 leading-relaxed">
+                <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-300 bg-clip-text text-transparent animate-pulse">
+                  Confidence built on correctness.
+                </span>
               </p>
 
               {/* CTA Buttons */}
