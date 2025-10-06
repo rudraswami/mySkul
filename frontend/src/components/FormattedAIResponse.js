@@ -429,7 +429,7 @@ export default function FormattedAIResponse({
                               {item.items.map((listItem, listIndex) => (
                                 <div key={listIndex} className="flex items-start">
                                   <CheckCircle className="h-4 w-4 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                                  <p className="text-gray-700 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: formatMathText(listItem)}}></p>
+                                  <p className="text-gray-700 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: formatMathExpressions(listItem)}}></p>
                                 </div>
                               ))}
                             </div>
