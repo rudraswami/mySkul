@@ -73,6 +73,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     loadDashboardData();
     initializeRanking();
+    loadDailyFocusPlan();
     
     // Set up auto-refresh for rankings every 12 seconds
     const rankingInterval = setInterval(() => {
