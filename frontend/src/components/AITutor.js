@@ -518,15 +518,27 @@ export default function AITutor() {
 
   const loadSession = async (sessionId) => {
     try {
-      const response = await axios.get(`${API}/chat/${sessionId}/messages`);
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
+      const response = await axios.get(`${API}/chat/${sessionId}/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
       // Parse and clean all loaded messages
       const cleanedMessages = response.data.messages.map(parseMessageResponse);
       
       setMessages(cleanedMessages);
       setCurrentSession(sessionId);
+      
+      // Show success message
+      showToast('Chat session loaded', 'success');
     } catch (error) {
       console.error('Failed to load session:', error);
+      showToast('Failed to load chat session. Please try again.', 'error');
     }
   };
 
