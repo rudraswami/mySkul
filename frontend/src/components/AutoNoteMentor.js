@@ -493,6 +493,97 @@ export default function AutoNoteMentor() {
     }
   };
 
+  // PHASE 1: Enhanced Audio Analysis Functions
+  const initializeAudioAnalysis = (stream) => {
+    try {
+      // Create Audio Context for real-time analysis
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      
+      // Configure analyser
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      streamRef.current = stream;
+      
+      // Start real-time audio analysis
+      analyzeAudioLevel();
+      
+      return { audioContext, analyser, source };
+    } catch (error) {
+      console.error('Audio analysis initialization error:', error);
+      return null;
+    }
+  };
+
+  const analyzeAudioLevel = () => {
+    if (!analyserRef.current) return;
+    
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+    
+    // Calculate audio level
+    const sum = dataArray.reduce((acc, value) => acc + value, 0);
+    const average = sum / dataArray.length;
+    const level = (average / 255) * 100;
+    
+    setAudioLevel(level);
+    
+    // Update waveform data (last 50 samples)
+    setWaveformData(prev => {
+      const newData = [...prev.slice(1), level];
+      return newData;
+    });
+    
+    // Determine audio quality
+    let quality = 'silent';
+    if (level > 40) quality = 'excellent';
+    else if (level > 20) quality = 'good';
+    else if (level > 5) quality = 'poor';
+    
+    setAudioQuality(quality);
+    
+    // Update recording stats
+    setRecordingQualityStats(prev => ({
+      avgLevel: (prev.avgLevel + level) / 2,
+      peakLevel: Math.max(prev.peakLevel, level),
+      silenceDuration: level < 5 ? prev.silenceDuration + 1 : 0,
+      noiseLevel: level > 80 ? prev.noiseLevel + 1 : Math.max(0, prev.noiseLevel - 1)
+    }));
+    
+    // Auto-pause logic
+    handleSilenceDetection(level);
+    
+    // Continue animation
+    animationFrameRef.current = requestAnimationFrame(analyzeAudioLevel);
+  };
+
+  const handleSilenceDetection = (level) => {
+    if (level < 5 && isRecording && !isAutoPaused) {
+      // Start silence timer
+      if (!silenceTimeoutRef.current) {
+        silenceTimeoutRef.current = setTimeout(() => {
+          setIsAutoPaused(true);
+          console.log('Auto-paused due to silence');
+        }, 3000); // 3 seconds of silence
+      }
+    } else if (level > 5 && isAutoPaused) {
+      // Resume from auto-pause
+      setIsAutoPaused(false);
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+      console.log('Resumed from auto-pause');
+    } else if (level > 5) {
+      // Clear silence timer
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  };
+
   const startRecording = async () => {
     // CRITICAL: Check subscription access FIRST
     const accessInfo = await checkFeatureAccess('auto_note_recordings_daily');
@@ -504,24 +595,32 @@ export default function AutoNoteMentor() {
     if (!currentSession) return;
     
     try {
+      // Enhanced audio constraints for better quality
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 44100
+          autoGainControl: true,
+          sampleRate: 44100,
+          channelCount: 1,
+          volume: 1.0
         }
       });
       
+      // Initialize enhanced audio analysis
+      const audioAnalysis = initializeAudioAnalysis(stream);
+      
       // Initialize MediaRecorder for audio capture
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
       });
       
       mediaRecorderRef.current = mediaRecorder;
       chunkCounterRef.current = 0;
       
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data.size > 0 && !isAutoPaused) {
           processAudioChunk(event.data);
         }
       };
@@ -530,6 +629,14 @@ export default function AutoNoteMentor() {
       setIsRecording(true);
       setRecordingTime(0);
       setSessionStatus('recording');
+      
+      // Reset recording stats
+      setRecordingQualityStats({
+        avgLevel: 0,
+        peakLevel: 0,
+        silenceDuration: 0,
+        noiseLevel: 0
+      });
       
       // Track feature usage for subscription (recording started successfully)
       await trackFeatureUsage('auto_note_recordings_daily');
@@ -554,7 +661,7 @@ export default function AutoNoteMentor() {
             }
           }
           
-          if (finalTranscript) {
+          if (finalTranscript && !isAutoPaused) {
             setLiveTranscript(prev => prev + ' ' + finalTranscript);
             // Send to backend for processing
             sendTranscriptChunk(finalTranscript);
