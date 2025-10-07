@@ -1417,7 +1417,9 @@ export default function AutoNoteMentor() {
 
           {/* Recording Controls */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            {/* PHASE 1: Enhanced Recording Interface with Waveform Visualization */}
             <div className="text-center">
+              {/* Recording Controls */}
               <div className="flex justify-center space-x-4 mb-6">
                 {!isRecording ? (
                   <Button 
@@ -1430,21 +1432,107 @@ export default function AutoNoteMentor() {
                     Start Recording Class
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={stopRecording}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg min-h-12 mobile-transition"
-                    aria-label="Stop recording"
-                    size="lg"
-                  >
-                    <Square className="h-6 w-6 mr-2" />
-                    Stop & Process Notes
-                  </Button>
+                  <div className="flex space-x-3">
+                    <Button 
+                      onClick={stopRecording}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg min-h-12 mobile-transition"
+                      aria-label="Stop recording"
+                      size="lg"
+                    >
+                      <Square className="h-6 w-6 mr-2" />
+                      Stop & Process Notes
+                    </Button>
+                  </div>
                 )}
               </div>
+
+              {/* Audio Quality Indicator & Waveform */}
+              {isRecording && (
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  {/* Audio Quality Status */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Mic className={`h-5 w-5 ${audioQuality === 'excellent' ? 'text-green-600' : 
+                                                    audioQuality === 'good' ? 'text-yellow-600' : 
+                                                    audioQuality === 'poor' ? 'text-orange-600' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-medium ${audioQuality === 'excellent' ? 'text-green-700' : 
+                                                               audioQuality === 'good' ? 'text-yellow-700' : 
+                                                               audioQuality === 'poor' ? 'text-orange-700' : 'text-gray-500'}`}>
+                        {audioQuality === 'excellent' ? '🟢 Excellent Audio' : 
+                         audioQuality === 'good' ? '🟡 Good Audio' : 
+                         audioQuality === 'poor' ? '🟠 Poor Audio - Move Closer' : 
+                         '🔴 No Audio Detected'}
+                      </span>
+                      {isAutoPaused && (
+                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                          Auto-Paused (Silence)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Real-time Waveform Visualization */}
+                  <div className="flex items-center justify-center h-16 mb-4">
+                    <div className="flex items-end space-x-1">
+                      {waveformData.map((level, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 bg-gradient-to-t transition-all duration-150 ${
+                            audioQuality === 'excellent' ? 'from-green-400 to-green-600' : 
+                            audioQuality === 'good' ? 'from-yellow-400 to-yellow-600' : 
+                            audioQuality === 'poor' ? 'from-orange-400 to-orange-600' : 
+                            'from-gray-300 to-gray-400'
+                          }`}
+                          style={{
+                            height: `${Math.max(4, (level / 100) * 60)}px`,
+                            opacity: index === waveformData.length - 1 ? 1 : Math.max(0.3, (49 - index) / 49)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Audio Level Meter */}
+                  <div className="w-full max-w-xs mx-auto mb-3">
+                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                      <span>Audio Level</span>
+                      <span>{Math.round(audioLevel)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-300 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-150 ${
+                          audioLevel > 40 ? 'bg-green-500' : 
+                          audioLevel > 20 ? 'bg-yellow-500' : 
+                          audioLevel > 5 ? 'bg-orange-500' : 'bg-gray-400'
+                        }`}
+                        style={{ width: `${Math.min(100, audioLevel)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Recording Stats */}
+                  <div className="flex justify-center space-x-6 text-xs text-gray-600">
+                    <div className="text-center">
+                      <div className="font-medium">Peak</div>
+                      <div>{Math.round(recordingQualityStats.peakLevel)}%</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium">Avg</div>
+                      <div>{Math.round(recordingQualityStats.avgLevel)}%</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium">Duration</div>
+                      <div>{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <p className="text-sm text-gray-600">
                 {isRecording 
-                  ? "🎤 Listening and creating notes in real-time..."
+                  ? isAutoPaused 
+                    ? "⏸️ Auto-paused - Start speaking to resume..."
+                    : "🎤 Listening and creating notes in real-time..."
                   : "Click 'Start Recording' to begin capturing your class or study session"
                 }
               </p>
