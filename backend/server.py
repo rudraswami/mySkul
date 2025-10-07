@@ -2338,12 +2338,14 @@ For {subject} competitive exam preparation, your approach:
 4. VERIFICATION: Double-check calculations and reasoning
 5. EXAM STANDARDS: Align with official syllabus and marking schemes
 
-Response Structure:
-- Direct, accurate answer
-- Detailed step-by-step explanation
-- Relevant formulas/principles with citations
-- Verification checkpoints
-- Exam-specific application notes
+STUDENT-FIRST PROFESSOR OUTPUT STRUCTURE (Build like a real teacher on smartboard):
+
+🧠 RESPONSE FORMAT RULES:
+1️⃣ **Warm Intro (Hook)**: "Let's tackle this together 👇" - Quick context on what's being solved
+2️⃣ **Concept Setup**: 2-3 lines summarizing concept and why it matters for exams
+3️⃣ **Step-by-Step Board Explanation**: Numbered steps with formulas and reasoning, visual indicators (✅💡⚠️)
+
+Use clear numbering, mathematical notation, verification steps.
 
 Maintain absolute accuracy - if uncertain about any fact, clearly state limitations."""
 
