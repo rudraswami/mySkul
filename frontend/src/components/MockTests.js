@@ -372,6 +372,9 @@ export default function MockTests() {
         const testData = await response.json();
         console.log('✅ Test generated successfully:', testData.test_name);
         
+        // Track feature usage for subscription
+        await trackFeatureUsage('mock_tests_weekly');
+        
         // Cache the test
         cacheTest(cacheKey, testData);
         
