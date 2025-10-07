@@ -12496,16 +12496,19 @@ def main():
 if __name__ == "__main__":
     tester = DhruvAITester()
     
-    # Run Review Request Focused Testing
-    print("🚨 CRITICAL: REVIEW REQUEST FOCUSED TESTING")
-    print("Testing recent fixes to MockTests component and subscription system")
-    success = tester.run_review_request_focused_tests()
+    # Run the specific 402 response fix test as requested in the review
+    print("🚨 CRITICAL VALIDATION - ISSUE 2: SUBSCRIPTION ACCESS FIX TESTING")
+    print("Testing the /api/subscription/check-access endpoint fix for proper 402 status codes")
+    success = tester.test_subscription_check_access_402_response_fix()
     
     if success:
-        print("\n✅ Review request testing completed successfully!")
-        print("Backend subscription system is working correctly")
+        print("\n🎉 ISSUE 2 FIX VALIDATION: SUCCESS")
+        print("✅ checkFeatureAccess returns proper HTTP 402 status codes")
+        print("✅ Response contains clean upsell_info without ObjectId errors")
+        print("✅ has_access=false correctly triggers 402 response")
         sys.exit(0)
     else:
-        print("\n❌ Review request testing completed with critical issues")
-        print("Backend subscription system needs attention")
+        print("\n❌ ISSUE 2 FIX VALIDATION: FAILED")
+        print("🚨 checkFeatureAccess endpoint still has issues")
+        print("🔧 Backend needs attention to fix 402 status code responses")
         sys.exit(1)
