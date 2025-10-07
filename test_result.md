@@ -176,7 +176,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "CRITICAL MOCK TESTS BUGS REPORTED BY USER: 1. Free Tier Not Honored: Despite having 2 tests available in the free tier, the system is still blocking test generation and showing the 'Upgrade Plan' prompt incorrectly. 2. Error on Generate Button: When clicking the 'Generate Test' button, an error appears: Test Generation Issue: Error: (data.message || data.detail || '').toLowerCase is not a function. This indicates a code issue in the error-handling logic. 3. Incorrect Error Handling UI: After the test limit is reached, the current static error message is not ideal. Instead, a subscription plan modal should be triggered (as discussed earlier), aligning with the expected flow and user experience standards."
+## user_problem_statement: "ISSUE 1: Slow-generation warning banner appears instantly - The red 'Taking longer than expected?' banner is keyed directly to any loadingStates flag, so it renders the moment a button enters the loading state—even before the request has actually taken longer than normal."
 
 ## backend:
   - task: "AI Tutor Phase C: Guardrails System Testing"
