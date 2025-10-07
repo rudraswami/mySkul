@@ -6274,12 +6274,12 @@ async def get_subscription_info(user: User = Depends(get_current_user)):
 
 @api_router.post("/subscription/check-access")
 async def check_feature_access_endpoint(
-    feature_name: str,
+    request: FeatureAccessRequest,
     user: User = Depends(get_current_user)
 ):
     """Check if user has access to a specific feature"""
     try:
-        access_info = await SubscriptionService.check_feature_access(user.user_id, feature_name)
+        access_info = await SubscriptionService.check_feature_access(user.user_id, request.feature_name)
         
         # Return proper HTTP status codes based on access
         if not access_info.get("has_access", True):
