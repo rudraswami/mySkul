@@ -482,6 +482,9 @@ export default function AutoNoteMentor() {
       setRecordingTime(0);
       setSessionStatus('recording');
       
+      // Track feature usage for subscription (recording started successfully)
+      await trackFeatureUsage('auto_note_recordings_daily');
+      
       // Initialize Web Speech API for real-time transcription
       if ('webkitSpeechRecognition' in window) {
         const recognition = new window.webkitSpeechRecognition();
