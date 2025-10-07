@@ -8335,7 +8335,7 @@ async def generate_mock_test(
         subscription = await get_user_subscription(user.user_id)
         logger.info(f"User {user.user_id} subscription: {subscription.plan_name}, status: {subscription.status}")
         
-        access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
+        access_info = await check_feature_access(user.user_id, "mock_tests_weekly")
         logger.info(f"Access check for user {user.user_id}: {access_info}")
         
         # Special handling for free tier - ensure first tests work
@@ -9339,7 +9339,7 @@ async def get_exam_subjects(user: User = Depends(get_current_user)):
         exam_config = EXAM_SUBJECTS.get(exam_type, EXAM_SUBJECTS["JEE"])
         
         # Also get user's subscription for test limits
-        access_info = await check_feature_access(user.user_id, "mock_tests_monthly")
+        access_info = await check_feature_access(user.user_id, "mock_tests_weekly")
         
         return {
             "exam_type": exam_type,
