@@ -687,12 +687,29 @@ export default function AutoNoteMentor() {
         mediaRecorderRef.current.speechRecognition.stop();
       }
       
+      // Stop enhanced audio analysis
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
+      // Close audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      
+      // Clear silence timeout
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
+      
       // Stop media stream
-      if (mediaRecorderRef.current.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
       
       setIsRecording(false);
+      setIsAutoPaused(false);
+      setAudioLevel(0);
       setSessionStatus('processing');
       
       // Process the complete session
