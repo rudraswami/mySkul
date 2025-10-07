@@ -26,6 +26,16 @@ from fastapi.responses import JSONResponse as FastAPIJSONResponse
 from fastapi.encoders import jsonable_encoder
 import json as json_lib
 
+# PHASE 2: Audio Processing Imports
+try:
+    from audio_processor import audio_processor
+    from celery_tasks import process_audio_async, enhance_audio_async, transcribe_audio_async
+    AUDIO_PROCESSING_ENABLED = True
+    logger.info("Audio processing modules loaded successfully")
+except ImportError as e:
+    logger.warning(f"Audio processing not available: {e}")
+    AUDIO_PROCESSING_ENABLED = False
+
 # Custom JSONResponse that handles MongoDB ObjectId serialization
 class JSONResponse(FastAPIJSONResponse):
     def render(self, content: any) -> bytes:
