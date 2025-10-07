@@ -3998,6 +3998,22 @@ class DhruvAITester:
             print(f"   ✅ Flashcard decks retrieved: {len(decks)} decks")
             test_results['get_flashcard_decks'] = True
         else:
+
+if __name__ == "__main__":
+    tester = DhruvAITester()
+    
+    # Run the specific 402 Payment Required response fix test
+    print("🚀 Starting 402 Payment Required Response Fix Testing")
+    print("="*80)
+    
+    success = tester.test_402_payment_required_response_fix()
+    
+    if success:
+        print("\n🎉 402 Payment Required fix validation completed successfully!")
+        sys.exit(0)
+    else:
+        print("\n❌ 402 Payment Required fix validation failed. Check the output above for details.")
+        sys.exit(1)
             print(f"   ❌ Get flashcard decks failed")
         
         # 7. Test Get Revision Schedule
