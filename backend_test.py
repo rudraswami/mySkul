@@ -12890,3 +12890,20 @@ if __name__ == "__main__":
             print("   🚨 500 Internal Server Error - possible ObjectId serialization issue")
         
         sys.exit(1)
+if __name__ == "__main__":
+    tester = DhruvAITester()
+    
+    # Run the specific 402 Payment Required response fix test
+    print("🚀 Starting 402 Payment Required Response Fix Testing")
+    print("="*80)
+    
+    success = tester.test_402_payment_required_response_fix()
+    
+    if success:
+        print("
+🎉 402 Payment Required fix validation completed successfully!")
+        sys.exit(0)
+    else:
+        print("
+❌ 402 Payment Required fix validation failed. Check the output above for details.")
+        sys.exit(1)
