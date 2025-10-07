@@ -318,13 +318,13 @@
         -agent: "testing"
         -comment: "CRITICAL ISSUE RESOLVED - SUBSCRIPTION INFRASTRUCTURE FIXED: Successfully identified and fixed the root cause of subscription infrastructure failures. ISSUE: Line 7302 in server.py had timezone-naive vs timezone-aware datetime comparison in get_current_subscription endpoint. FIX APPLIED: Changed datetime.utcnow() to datetime.now(timezone.utc) for consistent timezone-aware comparisons. TESTING RESULTS: ✅ /api/subscription/current now returns 200 OK with proper subscription data (plan: free, status: active), ✅ /api/subscription/usage now returns 200 OK with correct usage tracking (0/2 mock tests used, 2 remaining), ✅ Free tier user subscription infrastructure fully functional. The datetime comparison bug has been completely resolved and subscription service is now working correctly."
 
-  - task: "Mock Test Fix #2: Free Tier Subscription Access"
-    implemented: true
+  - task: "Mock Test Fix #3: Critical Runtime and Subscription Issues"
+    implemented: false
     working: false
-    file: "server.py"
-    stuck_count: 1
+    file: "components/MockTests.js"
+    stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         -working: false
         -agent: "testing"
