@@ -330,6 +330,9 @@ export default function AutoNoteMentor() {
       if (response.ok) {
         const result = await response.json();
         
+        // Track feature usage for subscription
+        await trackFeatureUsage('auto_note_uploads_daily');
+        
         setProcessingProgress(100);
         
         // Update states with processed data
