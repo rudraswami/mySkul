@@ -89,6 +89,19 @@ export default function MockTests() {
     }, 3000);
   };
   
+  // Retry last failed test generation
+  const retryLastFailedTest = async () => {
+    if (lastFailedTestParams) {
+      const { examType, subject, difficulty, numQuestions, buttonId } = lastFailedTestParams;
+      showToast('🎉 Upgrade successful! Generating your test...', 'success');
+      
+      setTimeout(async () => {
+        await generateTestWithProgress(examType, subject, difficulty, numQuestions, buttonId);
+        setLastFailedTestParams(null);
+      }, 1000);
+    }
+  };
+  
   // Difficulty mapping for consistent use
   const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
 
