@@ -317,12 +317,39 @@ class AudioProcessor:
         else:
             return "poor"
     
-    def _detect_context(self, transcript: str) -> Dict[str, Any]:
+    def _detect_context(self, transcript: str, segments: Optional[List[Dict]] = None) -> Dict[str, Any]:
         """
-        PHASE 3 Preview: Basic context detection
-        Will be enhanced with Professor Layer integration
+        PHASE 3: Advanced context detection with Professor Layer integration
         """
-        # Basic keyword-based context detection
+        try:
+            # Import here to avoid circular dependencies
+            from context_analyzer import context_analyzer
+            
+            # Perform advanced context analysis
+            analysis = context_analyzer.analyze_context(transcript, segments)
+            
+            return {
+                'primary_subject': analysis.primary_subject,
+                'secondary_subjects': analysis.secondary_subjects,
+                'confidence_score': analysis.confidence_score,
+                'key_concepts': analysis.key_concepts,
+                'difficulty_level': analysis.difficulty_level,
+                'lesson_type': analysis.lesson_type,
+                'speaker_roles': analysis.speaker_roles,
+                'topic_segments': analysis.topic_segments,
+                'important_timestamps': analysis.important_timestamps,
+                'transcript_length': len(transcript),
+                'word_count': len(transcript.split()),
+                'is_lecture': analysis.lesson_type in ['lecture', 'exam_prep']
+            }
+            
+        except ImportError:
+            logger.warning("Advanced context analyzer not available, using basic detection")
+            # Fallback to basic detection
+            return self._basic_context_detection(transcript)
+            
+    def _basic_context_detection(self, transcript: str) -> Dict[str, Any]:
+        """Fallback basic context detection"""
         subjects = {
             'mathematics': ['equation', 'integral', 'derivative', 'theorem', 'formula', 'calculate'],
             'physics': ['force', 'energy', 'momentum', 'velocity', 'acceleration', 'quantum'],
@@ -337,16 +364,22 @@ class AudioProcessor:
             if any(keyword in transcript_lower for keyword in keywords):
                 detected_subjects.append(subject)
         
-        # Detect lecture patterns
         lecture_indicators = ['today we will', 'let us discuss', 'the topic is', 'chapter']
         is_lecture = any(indicator in transcript_lower for indicator in lecture_indicators)
         
         return {
-            'detected_subjects': detected_subjects,
             'primary_subject': detected_subjects[0] if detected_subjects else 'general',
-            'is_lecture': is_lecture,
+            'secondary_subjects': detected_subjects[1:3] if len(detected_subjects) > 1 else [],
+            'confidence_score': 0.6 if detected_subjects else 0.3,
+            'key_concepts': [],
+            'difficulty_level': 'intermediate',
+            'lesson_type': 'lecture' if is_lecture else 'discussion',
+            'speaker_roles': ['professor'],
+            'topic_segments': [],
+            'important_timestamps': [],
             'transcript_length': len(transcript),
-            'word_count': len(transcript.split())
+            'word_count': len(transcript.split()),
+            'is_lecture': is_lecture
         }
 
 # Global audio processor instance
