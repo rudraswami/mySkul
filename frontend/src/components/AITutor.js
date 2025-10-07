@@ -1886,14 +1886,26 @@ export default function AITutor() {
                             )}
                           </div>
                           
-                          <div className="bg-white rounded-lg p-4 shadow-sm">
-                            <div className="prose prose-sm max-w-none">
-                              <div 
-                                className="whitespace-pre-wrap text-gray-800"
-                                dangerouslySetInnerHTML={{
-                                  __html: formatMathExpressions(message.response)
-                                }}
-                              />
+                          <div className="bg-white rounded-lg shadow-sm">
+                            <div className="max-w-none">
+                              {/* Use structured formatting for Professor and Mentor responses */}
+                              {(message.persona === 'professor' || message.persona === 'mentor') ? (
+                                <div 
+                                  className="structured-ai-response"
+                                  dangerouslySetInnerHTML={{
+                                    __html: formatProfessorMentorResponse(message.response, message.persona)
+                                  }}
+                                />
+                              ) : (
+                                <div className="p-4">
+                                  <div 
+                                    className="whitespace-pre-wrap text-gray-800"
+                                    dangerouslySetInnerHTML={{
+                                      __html: formatMathExpressions(message.response)
+                                    }}
+                                  />
+                                </div>
+                              )}
                             </div>
 
                             {message.reasoning && (
