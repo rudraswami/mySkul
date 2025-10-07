@@ -6,6 +6,7 @@ import { Progress } from './ui/progress';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
 import TestLibrary from './TestLibrary';
+import GamificationProgress from './GamificationProgress';
 import { 
   FileText, 
   Clock, 
