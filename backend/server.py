@@ -8460,10 +8460,18 @@ async def generate_mock_test(
         # Create test using new architecture
         test = await MockTestEngine.create_test_from_blueprint(blueprint, user.user_id)
         
-        # Get questions for the test - simplified to avoid serialization issues
+        # Get questions for the test - OPTIMIZED: Single batched query instead of N individual queries
+        # Fetch all questions in one database call
+        questions_cursor = db.questions.find({"question_id": {"$in": test.questions}})
+        questions_docs = await questions_cursor.to_list(length=None)
+        
+        # Create a dict for O(1) lookup by question_id
+        questions_dict = {doc.get("question_id"): doc for doc in questions_docs}
+        
+        # Preserve original blueprint order by mapping back
         questions_data = []
         for question_id in test.questions:
-            question_doc = await db.questions.find_one({"question_id": question_id})
+            question_doc = questions_dict.get(question_id)
             if question_doc:
                 # Remove MongoDB ObjectId and prepare for JSON serialization
                 clean_question = {
