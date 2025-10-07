@@ -652,8 +652,13 @@ export default function AITutor() {
         }
       }
 
-      // Track feature usage for subscription system
+      // Track feature usage for subscription system and refresh usage count
       await trackFeatureUsage('ai_tutor_daily');
+      
+      // Force refresh subscription info to update usage counter display
+      setTimeout(() => {
+        fetchSubscriptionInfo();
+      }, 500);
       
     } catch (error) {
       console.error('Failed to send message:', error);
