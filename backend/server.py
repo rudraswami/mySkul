@@ -6836,6 +6836,9 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
         
         return response_data
         
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 402 subscription errors) as-is
+        raise
     except Exception as e:
         logger.error(f"Dual AI response error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get dual AI response")
