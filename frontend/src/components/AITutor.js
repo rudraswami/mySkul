@@ -2696,6 +2696,19 @@ export default function AITutor() {
       <UpsellModal
         isOpen={!!upsellModal}
         onClose={() => setUpsellModal(null)}
+        onUpgradeSuccess={async () => {
+          // Handle successful upgrade with retry
+          if (lastFailedAction) {
+            await handlePostUpgradeRetry(lastFailedAction, showToast);
+            setLastFailedAction(null);
+          }
+          
+          // Add unlock animation to the chat container
+          const chatContainer = document.querySelector('[data-testid="chat-container"]');
+          if (chatContainer) {
+            animateSubscriptionUnlock(chatContainer);
+          }
+        }}
       />
     </div>
   );
