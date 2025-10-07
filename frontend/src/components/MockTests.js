@@ -252,20 +252,43 @@ export default function MockTests() {
       [buttonId]: loading
     }));
     
-    // Set progress tracking
     if (loading) {
+      // Set progress tracking
       setGenerationProgress(prev => ({
         ...prev,
         [buttonId]: { progress: 10, stage: 'Starting AI generation...' }
       }));
       setEstimatedTime('15-30 seconds');
+      
+      // Start timeout for slow generation warning (10 seconds)
+      const timeoutId = setTimeout(() => {
+        setSlowGenerationStates(prev => ({
+          ...prev,
+          [buttonId]: true
+        }));
+      }, 10000); // 10 seconds delay
+      
+      slowGenerationTimeouts.current[buttonId] = timeoutId;
     } else {
+      // Clear progress tracking
       setGenerationProgress(prev => {
         const newProgress = { ...prev };
         delete newProgress[buttonId];
         return newProgress;
       });
       setEstimatedTime(null);
+      
+      // Clear timeout and reset slow generation state
+      if (slowGenerationTimeouts.current[buttonId]) {
+        clearTimeout(slowGenerationTimeouts.current[buttonId]);
+        delete slowGenerationTimeouts.current[buttonId];
+      }
+      
+      setSlowGenerationStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[buttonId];
+        return newStates;
+      });
     }
   };
 
