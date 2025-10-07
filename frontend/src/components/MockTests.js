@@ -1972,6 +1972,23 @@ export default function MockTests() {
             </CardHeader>
             <CardContent>
               {/* Enhanced Quick Test Generation */}
+
+              {/* NEW: Test Generation Wizard Button */}
+              <div className="mb-6">
+                <Button
+                  onClick={handleOpenWizard}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  <PlusCircle className="w-6 h-6 mr-3" />
+                  Create Custom Mock Test (Step-by-Step)
+                  <ChevronRight className="w-5 h-5 ml-3" />
+                </Button>
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  ✨ Configure difficulty, subjects, and timer in 4 easy steps
+                </p>
+              </div>
+
+
               <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-blue-900 flex items-center">
