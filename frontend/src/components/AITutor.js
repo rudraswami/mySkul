@@ -1647,55 +1647,25 @@ export default function AITutor() {
               </div>
             </div>
             
-            {/* Engagement & Usage Stats */}
+            {/* Essential Student Stats */}
             <div className="flex items-center space-x-4">
-              {/* AI Tutor Usage Display */}
-              <div className="flex items-center bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                  <Brain className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-800">
-                    {isFeatureUnlimited('ai_tutor_daily') ? '∞' : getFeatureRemaining('ai_tutor_daily')}
-                  </div>
-                  <div className="text-xs text-blue-600">
-                    {isFeatureUnlimited('ai_tutor_daily') ? 'Unlimited' : 'Remaining'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Current Plan Badge */}
-              <div className="flex items-center bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg px-3 py-2">
-                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center mr-2">
-                  <Crown className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-bold text-purple-800">
-                    {currentTier === 'FREE' ? '🧩' : currentTier === 'PREMIUM' ? '⚡' : '🚀'}
-                  </div>
-                  <div className="text-xs text-purple-600">{currentTier}</div>
-                </div>
+              {/* Usage Remaining */}
+              <div className="flex items-center text-sm text-gray-600">
+                <Brain className="h-4 w-4 text-blue-500 mr-1" />
+                <span>
+                  {isFeatureUnlimited('ai_tutor_daily') ? 'Unlimited' : `${getFeatureRemaining('ai_tutor_daily')} left today`}
+                </span>
               </div>
               
-              {/* Streak Display */}
-              <div className="flex items-center bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-2">
-                  <Zap className="h-4 w-4 text-white" />
+              {/* Streak & XP Combined */}
+              <div className="flex items-center space-x-3 text-sm">
+                <div className="flex items-center text-orange-600">
+                  <Zap className="h-4 w-4 mr-1" />
+                  <span>{streakInfo.current_streak} day streak</span>
                 </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-orange-800">{streakInfo.current_streak}</div>
-                  <div className="text-xs text-orange-600">Day Streak</div>
-                </div>
-              </div>
-              
-              {/* XP & Level Display */}
-              <div className="flex items-center bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
-                <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center mr-2">
-                  <Star className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-indigo-800">L{xpInfo.current_level}</div>
-                  <div className="text-xs text-indigo-600">{xpInfo.total_xp} XP</div>
+                <div className="flex items-center text-purple-600">
+                  <Star className="h-4 w-4 mr-1" />
+                  <span>Level {xpInfo.current_level}</span>
                 </div>
               </div>
             </div>
