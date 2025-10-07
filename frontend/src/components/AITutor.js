@@ -611,25 +611,48 @@ export default function AITutor() {
     } catch (error) {
       console.error('Failed to send message:', error);
       
-      // Store failed action for potential retry after upgrade
-      const failedAction = () => {
-        setCurrentMessage(messageToSend);
-        setTimeout(() => sendMessage(), 100);
-      };
-      setLastFailedAction(failedAction);
+      // Check if this is a subscription-related error first
+      if (error.response?.status === 402 || error.response?.status === 429) {
+        console.log('Subscription limit reached in catch block - triggering modal');
+        
+        // Store failed action for retry after upgrade
+        const failedAction = () => {
+          setCurrentMessage(messageToSend);
+          setTimeout(() => sendMessage(), 100);
+        };
+        setLastFailedAction(failedAction);
+        
+        // Force trigger subscription check to show modal
+        const accessInfo = await checkFeatureAccess('ai_tutor_daily');
+        if (!accessInfo.has_access) {
+          showToast('Daily AI Tutor limit reached. Upgrade to continue unlimited conversations.', 'error');
+          return; // Don't add error messages to chat
+        }
+      }
       
-      // Use enhanced subscription error handling
-      const errorResult = await handleSubscriptionError(
-        error, 
-        'ai_tutor_daily', 
-        checkFeatureAccess, 
-        setMessages
-      );
-      
-      if (!errorResult.handled) {
-        // For unhandled errors (network, etc.), put message back in input
+      // For server errors, add user-friendly message but prevent duplicates
+      if (error.response?.status >= 500) {
+        // Check if we already have recent error messages to prevent spam
+        const recentErrors = messages.filter(msg => 
+          msg.type === 'system_error' && 
+          new Date() - new Date(msg.timestamp) < 5000 // 5 seconds
+        );
+        
+        if (recentErrors.length === 0) {
+          const errorMessage = {
+            type: 'system_error',
+            message: "I'm temporarily having trouble processing your message. Please try again in a moment, or contact support if the issue persists.",
+            timestamp: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
+        
+        // Don't put message back for server errors
+        showToast('Server temporarily unavailable. Please try again.', 'error');
+      } else {
+        // For other errors (network, etc.), put message back in input
         setCurrentMessage(messageToSend);
-        showToast('Failed to send message. Please try again.', 'error');
+        showToast('Failed to send message. Please check your connection.', 'error');
       }
     } finally {
       setLoading(false);
