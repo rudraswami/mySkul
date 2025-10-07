@@ -173,7 +173,27 @@ class AITutorSubscriptionTester:
         
         # Step 4: Test AI Tutor message sending when quota exhausted
         print("\n📋 Step 4: Test AI Tutor Message Sending (Should Return 402 if Quota Exhausted)")
+        
+        # First create a chat session
+        session_success, session_response = self.run_test(
+            "Create Chat Session",
+            "POST",
+            "chat/sessions",
+            200,
+            data={"title": "Test AI Tutor Session"},
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if not session_success:
+            print("   ❌ Failed to create chat session")
+            return False
+            
+        session_id = session_response.get('session_id')
+        print(f"   ✅ Created session: {session_id}")
+        
+        # Now test AI dual response (the actual AI Tutor endpoint)
         ai_message_data = {
+            "session_id": session_id,
             "message": "Explain quadratic equations",
             "subject": "Mathematics"
         }
@@ -182,9 +202,9 @@ class AITutorSubscriptionTester:
         expected_status = 402 if not has_access else 200
         
         success, response = self.run_test(
-            "AI Tutor Message - Quota Check",
+            "AI Tutor Dual Response - Quota Check",
             "POST",
-            "chat/message",
+            "ai/dual-response",
             expected_status,
             data=ai_message_data,
             headers={'Authorization': f'Bearer {self.token}'}
