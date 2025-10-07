@@ -655,6 +655,9 @@ class RevenueAnalytics(BaseModel):
 class SubscriptionRequest(BaseModel):
     plan_name: str
     billing_cycle: str = "monthly"  # monthly, yearly
+
+class FeatureAccessRequest(BaseModel):
+    feature_name: str
     
 class CheckoutRequest(BaseModel):
     plan_name: str
