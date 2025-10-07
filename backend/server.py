@@ -130,7 +130,7 @@ SUBSCRIPTION_PLANS = {
         ],
         "limits": {
             "ai_conversations_daily": 10,
-            "mock_tests_monthly": 2,
+            "mock_tests_weekly": 2,
             "audio_processing_monthly": 15,  # minutes
             "export_functionality": 0,
             "voice_input": 0,
