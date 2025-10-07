@@ -8,7 +8,7 @@
     "description": "Gives taste of verified AI learning and builds trust",
     "features": {
       "ai_tutor_daily": 5,
-      "mock_tests_weekly": 1,
+      "mock_tests_weekly": 2,
       "auto_note_uploads_daily": 1,
       "focus_engine_type": "static",
       "ai_insights": "locked",
