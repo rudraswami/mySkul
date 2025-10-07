@@ -5,6 +5,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
+import TestLibrary from './TestLibrary';
 import { 
   FileText, 
   Clock, 
@@ -24,7 +25,9 @@ import {
   Trophy,
   Zap,
   Sparkles,
-  Crown
+  Crown,
+  BookOpen,
+  PlusCircle
 } from 'lucide-react';
 
 export default function MockTests() {
