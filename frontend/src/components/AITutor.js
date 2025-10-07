@@ -2428,7 +2428,7 @@ export default function AITutor() {
                         ? 'AI is thinking...' 
                         : 'Type your doubt here...'
                   }
-                  className={`resize-none border ${
+                  className={`message-input chat-input resize-none border min-h-12 text-base md:text-sm pr-20 ${
                     dragOver 
                       ? 'border-blue-300 bg-blue-50' 
                       : isListening 
@@ -2436,7 +2436,7 @@ export default function AITutor() {
                         : loading
                           ? 'border-gray-300 bg-gray-50'
                           : 'border-gray-200 focus:border-blue-300 hover:border-gray-300'
-                  } rounded-lg focus:ring-2 focus:ring-blue-100 transition-all`}
+                  } rounded-lg focus:ring-2 focus:ring-blue-100 transition-all mobile-transition`}
                   rows={2}
                   disabled={loading}
                 />
