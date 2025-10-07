@@ -179,20 +179,29 @@
 ## user_problem_statement: "ISSUE 1: Slow-generation warning banner appears instantly - The red 'Taking longer than expected?' banner is keyed directly to any loadingStates flag, so it renders the moment a button enters the loading state—even before the request has actually taken longer than normal."
 
 ## backend:
-  - task: "AI Tutor Phase C: Guardrails System Testing"
-    implemented: true
-    working: true
-    file: "server.py"
+  - task: "ISSUE 1: Slow-generation warning banner appears instantly - The red 'Taking longer than expected?' banner is keyed directly to any loadingStates flag, so it renders the moment a button enters the loading state—even before the request has actually taken longer than normal."
+    implemented: false
+    working: false
+    file: "components/MockTests.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-        -working: "NA"
+        -working: false
         -agent: "main"
-        -comment: "Phase C guardrails system includes math validation, citation generation, fact verification, and disagreement detection APIs. Backend endpoints implemented: /api/guardrails/validate-math, /api/guardrails/citations/{subject}/{topic}, /api/guardrails/disagreements/{session_id}, /api/guardrails/fact-verification. Frontend integration exists but requires comprehensive testing."
-        -working: true
-        -agent: "testing"
-        -comment: "PHASE C GUARDRAILS SYSTEM TESTING COMPLETED - 100% SUCCESS: Comprehensive testing of all guardrails APIs completed successfully. AUTHENTICATION: ✅ Successfully authenticated with test@dhruvai.com/password123 credentials. MATH VALIDATION: ✅ /api/guardrails/validate-math working correctly - tested 3 expressions (quadratic equations, F=ma, E=mc²) with proper validation responses, confidence scores, and unit handling. CITATION GENERATION: ✅ /api/guardrails/citations/{subject}/{topic} working perfectly - tested Mathematics/Quadratic Equations, Physics/Newton's Laws, Chemistry/Periodic Table, all returning 3 NCERT sources with proper citation structure (source_title, chapter_section, page_number). FACT VERIFICATION: ✅ /api/guardrails/fact-verification working correctly - tested physics constants and chemistry facts, returning proper verification status (true/false) with confidence scores (0.85, 0.60). DISAGREEMENT ALERTS: ✅ /api/guardrails/disagreements/{session_id} working correctly - returns empty array when no disagreements exist, proper endpoint structure validated. SUCCESS RATE: 4/4 tests passed (100.0%). All Phase C Guardrails System APIs are fully functional and ready for production use."
+        -comment: "User reports that the slow generation banner appears instantly when any button is pressed, causing unnecessary alarm. Need to implement delayed warning system with useRef timeout handles and slowGenerationStates state map."
+        
+  - task: "ISSUE 2: Subscription modal never appears after hitting mock-test limit - checkFeatureAccess posts in request body but FastAPI endpoint expects feature_name as query parameter, causing 422 errors"
+    implemented: false
+    working: false
+    file: "contexts/SubscriptionContext.js, server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "User reports that subscription modal doesn't appear when hitting mock test limits. Need to investigate the checkFeatureAccess request format and ensure proper 402 status codes are returned."
 
   - task: "AI Tutor Phase D: Action Buttons System Testing"
     implemented: true
