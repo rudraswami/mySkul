@@ -1278,10 +1278,11 @@ export default function AutoNoteMentor() {
                 {!isRecording ? (
                   <Button 
                     onClick={startRecording}
-                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg"
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg min-h-12 mobile-transition"
                     size="lg"
+                    aria-label="Start recording class"
                   >
-                    <Play className="h-6 w-6 mr-2" />
+                    <Play className="h-5 w-5 md:h-6 md:w-6 mr-2" />
                     Start Recording Class
                   </Button>
                 ) : (
