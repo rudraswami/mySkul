@@ -8680,7 +8680,7 @@ async def submit_mock_test(
                 "scenario_confidence": dual_feedback.get('confidence', 0.8) if 'dual_feedback' in locals() else 0.8
             },
             "rank": None,  # TODO: Calculate rank based on other users
-            "pass_status": percentage >= (mock_test.passing_marks / mock_test.total_marks * 100)
+            "pass_status": percentage >= 40  # Default passing marks 40%
         }
         
     except Exception as e:
