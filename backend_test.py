@@ -13178,10 +13178,8 @@ if __name__ == "__main__":
     success = tester.test_402_payment_required_response_fix()
     
     if success:
-        print("
-🎉 402 Payment Required fix validation completed successfully!")
+        print("\n🎉 402 Payment Required fix validation completed successfully!")
         sys.exit(0)
     else:
-        print("
-❌ 402 Payment Required fix validation failed. Check the output above for details.")
+        print("\n❌ 402 Payment Required fix validation failed. Check the output above for details.")
         sys.exit(1)
