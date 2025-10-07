@@ -49,15 +49,30 @@ export const handleSubscriptionError = async (error, featureName, checkFeatureAc
   if (isSubscriptionLimitError(error)) {
     console.log('Subscription limit detected - triggering modal');
     
-    // Force trigger subscription check to show modal
-    try {
-      const accessInfo = await checkFeatureAccess(featureName);
-      if (!accessInfo.has_access) {
-        // Modal should appear automatically from SubscriptionContext
+    // If this is a direct 402 error with upsell_info, trigger modal directly
+    if (error.response?.status === 402 && error.response?.data?.detail?.upsell_info) {
+      console.log('Direct 402 error with upsell_info - triggering modal immediately');
+      
+      // Force trigger subscription check to show modal with the error data
+      try {
+        const accessInfo = await checkFeatureAccess(featureName);
+        return { handled: true, shouldRetry: false };
+      } catch (checkError) {
+        // If checkFeatureAccess also fails, we know the modal should appear
+        console.log('checkFeatureAccess failed as expected - modal should appear');
         return { handled: true, shouldRetry: false };
       }
-    } catch (checkError) {
-      console.error('Failed to check feature access:', checkError);
+    } else {
+      // Fallback to normal access check
+      try {
+        const accessInfo = await checkFeatureAccess(featureName);
+        if (!accessInfo.has_access) {
+          return { handled: true, shouldRetry: false };
+        }
+      } catch (checkError) {
+        console.log('Feature access check failed - treating as subscription limit');
+        return { handled: true, shouldRetry: false };
+      }
     }
     
     return { handled: true, shouldRetry: false };
