@@ -134,17 +134,12 @@ class MockTestBugFixesTester:
         print(f"   Testing: /api/subscription/check-access with feature_name='mock_tests_weekly'")
         print(f"   Expected: Proper access validation with consistent feature naming")
         
-        check_access_data = {
-            "feature_name": "mock_tests_weekly",
-            "usage_increment": 1
-        }
-        
+        # Use query parameter instead of body
         success, response = self.run_test(
             "Check Access - mock_tests_weekly",
-            "POST",
-            "subscription/check-access",
+            "GET",
+            "subscription/check-access?feature_name=mock_tests_weekly&usage_increment=1",
             [200, 402],  # Accept both for now
-            data=check_access_data,
             headers={'Authorization': f'Bearer {fresh_token}'}
         )
         
