@@ -506,8 +506,12 @@ export default function AITutor() {
 
     // Check subscription access before sending message
     const accessInfo = await checkFeatureAccess('ai_tutor_daily');
+    console.log('AI Tutor access check result:', accessInfo);
+    
     if (!accessInfo.has_access) {
       // Upsell modal will be shown automatically by the context
+      showToast('Daily AI Tutor limit reached. Please upgrade to continue.', 'error');
+      console.log('AI Tutor access denied - modal should appear');
       return;
     }
 
