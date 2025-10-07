@@ -132,7 +132,89 @@ export default function AutoNoteMentor() {
 
   useEffect(() => {
     loadUserSessions();
+    // PHASE 4: Initialize PWA features
+    initializePWAFeatures();
   }, []);
+
+  // PHASE 4: PWA and Service Worker Integration
+  const initializePWAFeatures = async () => {
+    try {
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('Service Worker registered:', registration);
+        
+        // Listen for service worker messages
+        navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+        
+        // Register background sync for offline uploads
+        if (registration.sync) {
+          await registration.sync.register('audio-upload-sync');
+        }
+      }
+      
+      // Initialize offline detection
+      window.addEventListener('online', handleOnlineStatus);
+      window.addEventListener('offline', handleOfflineStatus);
+      
+      // Check for queued uploads on load
+      checkOfflineUploadQueue();
+      
+    } catch (error) {
+      console.error('PWA initialization failed:', error);
+    }
+  };
+
+  const handleServiceWorkerMessage = (event) => {
+    const { type, message, uploadId } = event.data;
+    
+    switch (type) {
+      case 'AUDIO_QUEUED_OFFLINE':
+        showToast(`📴 ${message}`, 'info');
+        break;
+      case 'UPLOAD_SUCCESS':
+        showToast(`✅ ${message}`, 'success');
+        loadUserSessions(); // Refresh sessions
+        break;
+      case 'ONLINE':
+        showToast(`🌐 ${message}`, 'success');
+        break;
+      case 'OFFLINE':
+        showToast(`📴 ${message}`, 'warning');
+        break;
+    }
+  };
+
+  const handleOnlineStatus = () => {
+    console.log('Back online');
+    setError(null);
+    // Service worker will handle queued uploads automatically
+  };
+
+  const handleOfflineStatus = () => {
+    console.log('Gone offline');
+    setError('You\'re offline. Recordings will be saved locally and uploaded when you\'re back online.');
+  };
+
+  const checkOfflineUploadQueue = async () => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Request cache status from service worker
+      navigator.serviceWorker.controller.postMessage({ type: 'GET_CACHE_STATUS' });
+    }
+  };
+
+  // Enhanced toast system for PWA notifications
+  const [toastQueue, setToastQueue] = useState([]);
+  
+  const showToast = (message, type = 'info') => {
+    const toastId = Date.now();
+    setToastQueue(prev => [...prev, { id: toastId, message, type }]);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setToastQueue(prev => prev.filter(toast => toast.id !== toastId));
+    }, 5000);
+  };
 
   useEffect(() => {
     if (isRecording) {
