@@ -1985,6 +1985,7 @@ export default function AITutor() {
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
               ))
             )}
