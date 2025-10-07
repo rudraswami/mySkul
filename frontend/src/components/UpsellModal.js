@@ -78,27 +78,28 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
   const FeatureIcon = getFeatureIcon(featureName);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="max-w-2xl w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="max-w-2xl w-full max-h-[90vh] overflow-auto animate-in fade-in-0 zoom-in-95 duration-300">
         <Card className="overflow-hidden border-0 shadow-2xl">
           {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-6 text-white relative">
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-4 md:p-6 text-white relative">
             <button
               onClick={handleDismiss}
-              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              className="absolute top-3 right-3 md:top-4 md:right-4 text-white/80 hover:text-white transition-colors min-h-10 min-w-10 flex items-center justify-center rounded-lg mobile-transition"
+              aria-label="Close modal"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 md:h-6 md:w-6" />
             </button>
             
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                <FeatureIcon className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-3 md:space-x-4 pr-12">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <FeatureIcon className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-lg md:text-2xl font-bold">
                   {upsellModal?.title || 'Ready for the Next Level? 🚀'}
                 </h2>
-                <p className="text-blue-100">Your learning journey is accelerating!</p>
+                <p className="text-blue-100 text-sm md:text-base">Your learning journey is accelerating!</p>
               </div>
             </div>
           </div>
