@@ -876,6 +876,7 @@
 
 ## test_plan:
   current_focus:
+    - "AI Tutor Subscription Flow Testing"
     - "AI Tutor Enhanced Response Formatting"
     - "Auto-Note Mentor Interactive Features" 
     - "AI Tutor Mobile Compatibility"
