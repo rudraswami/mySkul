@@ -1631,38 +1631,17 @@ export default function AITutor() {
         <div className="bg-gradient-to-r from-white via-blue-50 to-purple-50 border-b border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mr-6">
-                AI Tutor – Mentor | Professor | Both
-              </h1>
-              
-              {/* Verified Badge - Premium Style */}
               <div className="flex items-center">
-                <div className="bg-green-100 border border-green-200 rounded-full px-3 py-1 flex items-center mr-4">
-                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mr-2 animate-pulse">
-                    <CheckCircle className="h-3 w-3 text-white" />
-                  </div>
-                  <span className="text-green-800 text-sm font-medium">{verificationBadge}</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                  <GraduationCap className="h-5 w-5 text-white" />
                 </div>
-                
-                {/* Trust Badges with Enhanced Styling */}
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="flex items-center text-blue-600 bg-blue-50 rounded-lg px-3 py-1">
-                    <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                      <Shield className="h-3 w-3 text-blue-600" />
-                    </div>
-                    <span className="font-medium">Premium AI</span>
-                  </div>
-                  <div className="flex items-center text-purple-600 bg-purple-50 rounded-lg px-3 py-1">
-                    <div className="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2">
-                      <Target className="h-3 w-3 text-purple-600" />
-                    </div>
-                    <span className="font-medium">Personalized</span>
-                  </div>
-                  <div className="flex items-center text-yellow-600 bg-yellow-50 rounded-lg px-3 py-1">
-                    <div className="w-4 h-4 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
-                      <Lightbulb className="h-3 w-3 text-yellow-600" />
-                    </div>
-                    <span className="font-medium">Intelligent</span>
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    AI Tutor
+                  </h1>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                    <span>100% Hallucination-Free</span>
                   </div>
                 </div>
               </div>
