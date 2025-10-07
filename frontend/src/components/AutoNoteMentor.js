@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
