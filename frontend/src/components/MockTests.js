@@ -1814,22 +1814,7 @@ export default function MockTests() {
                     </span>
                   </div>
                   
-                  {examSubjects.test_access && !examSubjects.test_access.has_access ? (
-                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-center">
-                      <AlertTriangle className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-                      <p className="text-sm text-orange-800 mb-2">Test limit reached</p>
-                      <p className="text-xs text-orange-600">
-                        {examSubjects.test_access.limit !== -1 ? 
-                          `You've used ${examSubjects.test_access.used}/${examSubjects.test_access.limit} tests this month` :
-                          'Upgrade to continue testing'
-                        }
-                      </p>
-                      <Button size="sm" className="mt-2" onClick={() => window.location.href = '/subscription'}>
-                        Upgrade Plan
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {examSubjects.subjects.slice(0, 3).map((subject, index) => {
                         const subjectKey = subject.toLowerCase().replace(/\s+/g, '-');
                         const quickKey = `${subjectKey}-quick`;
