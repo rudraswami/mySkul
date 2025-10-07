@@ -12450,16 +12450,62 @@ def main():
             print("❌ CRITICAL FAILURES - Mock test bug fixes not working")
             return False
 
+    def run_review_request_focused_tests(self):
+        """Run focused tests for the specific review request issues"""
+        print("🎯 FOCUSED TESTING FOR REVIEW REQUEST")
+        print("=" * 60)
+        print("Issue 1: Slow generation banner appears instantly (should delay 10s)")
+        print("Issue 2: Subscription modal not appearing (402 status codes)")
+        print("Focus: Backend API responses for subscription system")
+        print("Test credentials: test@dhruvai.com/password123")
+        print("=" * 60)
+        
+        # Ensure authentication
+        if not self.token:
+            print("🔐 Authenticating with test@dhruvai.com...")
+            auth_success = self.test_user_login()
+            if not auth_success:
+                print("❌ Authentication failed - cannot proceed")
+                return False
+        
+        # Run focused subscription tests
+        print("\n🚨 RUNNING FOCUSED SUBSCRIPTION TESTS...")
+        subscription_success = self.test_subscription_modal_and_slow_banner_fixes()
+        
+        # Summary
+        print("\n" + "=" * 60)
+        print("🎯 REVIEW REQUEST TESTING SUMMARY")
+        print("=" * 60)
+        
+        if subscription_success:
+            print("✅ SUBSCRIPTION SYSTEM: All tests passed")
+            print("   - checkFeatureAccess returns proper 402 status codes")
+            print("   - Mock test generation handles limits correctly")
+            print("   - Error responses contain proper upsell_info structure")
+        else:
+            print("❌ SUBSCRIPTION SYSTEM: Issues detected")
+            print("   - checkFeatureAccess may not return proper 402 status codes")
+            print("   - Mock test generation error handling needs review")
+            print("   - Subscription modal may not trigger correctly")
+        
+        print(f"\nNote: Slow generation banner testing requires frontend validation")
+        print(f"Backend APIs tested focus on subscription error responses")
+        
+        return subscription_success
+
 if __name__ == "__main__":
     tester = DhruvAITester()
     
-    # Run Mock Test Bug Fixes Testing (Review Request Focus)
-    print("🚨 CRITICAL: MOCK TEST BUG FIXES TESTING - REVIEW REQUEST FOCUS")
-    success = tester.run_mock_test_bug_fixes_testing()
+    # Run Review Request Focused Testing
+    print("🚨 CRITICAL: REVIEW REQUEST FOCUSED TESTING")
+    print("Testing recent fixes to MockTests component and subscription system")
+    success = tester.run_review_request_focused_tests()
     
     if success:
-        print("\n✅ Mock Test Bug Fixes testing completed successfully!")
+        print("\n✅ Review request testing completed successfully!")
+        print("Backend subscription system is working correctly")
         sys.exit(0)
     else:
-        print("\n❌ Mock Test Bug Fixes testing completed with critical issues")
+        print("\n❌ Review request testing completed with critical issues")
+        print("Backend subscription system needs attention")
         sys.exit(1)
