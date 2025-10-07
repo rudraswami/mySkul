@@ -10832,6 +10832,169 @@ def main():
         print(f"   📊 Overall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
         
         return success_rate >= 80.0  # 80% success threshold
+
+    def test_ai_tutor_subscription_limit_debug(self):
+        """Test AI Tutor subscription limit issue - CRITICAL REVIEW REQUEST FOCUS"""
+        if not self.token:
+            print("❌ No token available for AI Tutor subscription limit test")
+            return False
+        
+        print("\n🎯 AI TUTOR SUBSCRIPTION LIMIT DEBUG - CRITICAL REVIEW REQUEST FOCUS")
+        print("   Testing: AI Tutor subscription flow with test@dhruvai.com/password123")
+        print("   Issue: User shows '0 left to use' and gets error messages instead of subscription modal")
+        print("   Focus: /api/subscription/check-access endpoint for ai_tutor_daily feature")
+        print("   Expected: 402 errors with upsell_info when limits reached")
+        
+        # Step 1: Check current subscription status
+        print("\n📋 Step 1: Check Current Subscription Status")
+        success, response = self.run_test(
+            "Current Subscription Status",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            subscription = response.get('subscription', {})
+            plan = subscription.get('plan_name', 'unknown')
+            status = subscription.get('status', 'unknown')
+            print(f"   ✅ Subscription Status: Plan={plan}, Status={status}")
+        else:
+            print("   ❌ Failed to get subscription status")
+            return False
+        
+        # Step 2: Check current usage for ai_tutor_daily
+        print("\n📋 Step 2: Check Current Usage for AI Tutor Daily")
+        success, response = self.run_test(
+            "Current Usage Status",
+            "GET",
+            "subscription/usage",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            usage_details = response.get('usage_details', {})
+            ai_tutor_usage = usage_details.get('ai_tutor_daily', {})
+            used = ai_tutor_usage.get('used', 0)
+            limit = ai_tutor_usage.get('limit', 0)
+            remaining = ai_tutor_usage.get('remaining', 0)
+            has_access = ai_tutor_usage.get('has_access', True)
+            
+            print(f"   ✅ AI Tutor Usage: {used}/{limit} used, {remaining} remaining")
+            print(f"   ✅ Has Access: {has_access}")
+            
+            if used >= limit and not has_access:
+                print("   🚨 CONFIRMED: User has exhausted AI Tutor quota")
+            elif has_access:
+                print("   ⚠️  User still has access - may need to exhaust quota first")
+        else:
+            print("   ❌ Failed to get usage status")
+            return False
+        
+        # Step 3: Test /api/subscription/check-access for ai_tutor_daily
+        print("\n📋 Step 3: Test Subscription Check-Access for AI Tutor Daily")
+        check_access_data = {
+            "feature_name": "ai_tutor_daily"
+        }
+        
+        success, response = self.run_test(
+            "Check Access - AI Tutor Daily",
+            "POST",
+            "subscription/check-access",
+            200,  # Should return 200 with has_access: false if quota exhausted
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            has_access = response.get('has_access', True)
+            reason = response.get('reason', 'unknown')
+            current_usage = response.get('current_usage', {})
+            upsell_info = response.get('upsell_info', {})
+            
+            print(f"   ✅ Check Access Response: has_access={has_access}, reason={reason}")
+            print(f"   ✅ Current Usage: {current_usage}")
+            
+            if not has_access and upsell_info:
+                print(f"   ✅ EXPECTED BEHAVIOR: has_access=false with upsell_info present")
+                print(f"   ✅ Upsell Info: {upsell_info}")
+                print("   ✅ This should trigger subscription modal, not error messages")
+            elif has_access:
+                print("   ⚠️  User still has access - quota not exhausted yet")
+            else:
+                print("   ❌ ISSUE: has_access=false but no upsell_info provided")
+        else:
+            print("   ❌ Check access endpoint failed")
+            return False
+        
+        # Step 4: Test AI Tutor message sending when quota exhausted
+        print("\n📋 Step 4: Test AI Tutor Message Sending (Should Return 402 if Quota Exhausted)")
+        ai_message_data = {
+            "message": "Explain quadratic equations",
+            "subject": "Mathematics"
+        }
+        
+        # This should return 402 if quota is exhausted, or 200 if still has access
+        expected_status = 402 if not has_access else 200
+        
+        success, response = self.run_test(
+            "AI Tutor Message - Quota Check",
+            "POST",
+            "chat/message",
+            expected_status,
+            data=ai_message_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if expected_status == 402 and success:
+            print("   ✅ EXPECTED: AI Tutor correctly returned 402 when quota exhausted")
+            
+            # Check for proper 402 error structure with upsell_info
+            error_message = response.get('message', '')
+            upsell_info = response.get('upsell_info', {})
+            
+            if upsell_info:
+                print(f"   ✅ 402 Error includes upsell_info: {upsell_info}")
+                print("   ✅ This should trigger subscription modal in frontend")
+            else:
+                print("   ❌ ISSUE: 402 error missing upsell_info")
+                print("   ❌ This explains why user gets generic error instead of subscription modal")
+                
+        elif expected_status == 200 and success:
+            print("   ✅ AI Tutor working normally - user still has quota")
+            
+        else:
+            print(f"   ❌ Unexpected response - Expected {expected_status}, got different result")
+            print("   ❌ This could explain the repeated error messages issue")
+        
+        # Step 5: Summary and Diagnosis
+        print("\n🎯 AI TUTOR SUBSCRIPTION LIMIT DIAGNOSIS SUMMARY:")
+        
+        if not has_access and upsell_info:
+            print("   ✅ BACKEND WORKING CORRECTLY:")
+            print("     - User has exhausted AI Tutor quota")
+            print("     - check-access returns has_access: false")
+            print("     - Proper upsell_info provided")
+            print("     - Should trigger subscription modal")
+            print("   🔍 LIKELY FRONTEND ISSUE: Check if frontend properly handles 402 responses")
+            
+        elif has_access:
+            print("   ⚠️  USER STILL HAS QUOTA:")
+            print("     - User has not exhausted AI Tutor daily limit")
+            print("     - Backend correctly allows access")
+            print("     - Issue may be frontend display showing wrong usage")
+            print("   🔍 RECOMMENDATION: Check frontend usage display logic")
+            
+        else:
+            print("   ❌ BACKEND ISSUE IDENTIFIED:")
+            print("     - Subscription system not returning proper error structure")
+            print("     - Missing upsell_info in 402 responses")
+            print("     - This causes generic error messages instead of subscription modal")
+            print("   🔧 FIX NEEDED: Ensure 402 responses include complete upsell_info")
+        
+        return True
     
     def test_auto_note_authentication(self):
         """Test authentication with test@dhruvai.com / password123"""
