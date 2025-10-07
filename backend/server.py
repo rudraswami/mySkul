@@ -6284,27 +6284,32 @@ async def check_feature_access_endpoint(
         # Return proper HTTP status codes based on access
         if not access_info.get("has_access", True):
             # User doesn't have access - return 402 Payment Required
+            # Clean all data to prevent ObjectId serialization issues
+            clean_access_info = clean_mongodb_doc(access_info)
+            
             if access_info.get("reason") == "feature_locked":
+                error_detail = {
+                    "message": "Feature requires subscription upgrade",
+                    "upsell_info": clean_access_info.get("upsell_info", {}),
+                    "reason": "feature_locked",
+                    "upgrade_needed": True
+                }
                 raise HTTPException(
                     status_code=402,
-                    detail={
-                        "message": "Feature requires subscription upgrade",
-                        "upsell_info": access_info.get("upsell_info", {}),
-                        "reason": "feature_locked",
-                        "upgrade_needed": True
-                    }
+                    detail=clean_mongodb_doc(error_detail)
                 )
             elif access_info.get("reason") == "limit_reached":
+                error_detail = {
+                    "message": f"Daily limit reached for {request.feature_name}",
+                    "upsell_info": clean_access_info.get("upsell_info", {}),
+                    "current_usage": clean_access_info.get("current_usage"),
+                    "limit": clean_access_info.get("limit"),
+                    "reason": "limit_reached",
+                    "upgrade_needed": True
+                }
                 raise HTTPException(
                     status_code=402,
-                    detail={
-                        "message": f"Daily limit reached for {request.feature_name}",
-                        "upsell_info": access_info.get("upsell_info", {}),
-                        "current_usage": access_info.get("current_usage"),
-                        "limit": access_info.get("limit"),
-                        "reason": "limit_reached",
-                        "upgrade_needed": True
-                    }
+                    detail=clean_mongodb_doc(error_detail)
                 )
         
         # User has access - return 200 OK with access info
