@@ -468,9 +468,16 @@ export function DualResponseContainer({
         {/* Main Answer Content */}
         <div className="p-4">
           <div className="max-w-none">
-            <div className="text-gray-800 leading-relaxed">
-              <div dangerouslySetInnerHTML={{ __html: formatMathExpressions(primaryResponse.response) }} />
-            </div>
+            {/* Use structured formatting for Professor and Mentor primary responses */}
+            {(primaryResponse.persona === 'professor' || primaryResponse.persona === 'mentor') ? (
+              <div dangerouslySetInnerHTML={{ 
+                __html: formatProfessorMentorResponse(primaryResponse.response, primaryResponse.persona) 
+              }} />
+            ) : (
+              <div className="text-gray-800 leading-relaxed">
+                <div dangerouslySetInnerHTML={{ __html: formatMathExpressions(primaryResponse.response) }} />
+              </div>
+            )}
           </div>
 
           {/* Basic Feedback */}
