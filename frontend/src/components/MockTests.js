@@ -1723,18 +1723,36 @@ export default function MockTests() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Mock Tests</h1>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center text-sm text-green-600">
-                <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
-                <span>Trusted & Accurate</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center text-sm text-green-600">
+                  <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                  <span>Trusted & Accurate</span>
+                </div>
+                <div className="flex items-center text-sm text-blue-600">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                  <span>Hallucination-Free Questions</span>
+                </div>
+                <div className="flex items-center text-sm text-purple-600">
+                  <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
+                  <span>Dual AI Feedback</span>
+                </div>
               </div>
-              <div className="flex items-center text-sm text-blue-600">
-                <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
-                <span>Hallucination-Free Questions</span>
-              </div>
-              <div className="flex items-center text-sm text-purple-600">
-                <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
-                <span>Dual AI Feedback</span>
+              
+              {/* Usage Indicator */}
+              <div className="flex items-center bg-gray-50 rounded-lg px-3 py-1">
+                <Zap className="h-4 w-4 text-orange-500 mr-2" />
+                <span className="text-sm text-gray-700">
+                  {getFeatureLimit('mock_tests_weekly') === Infinity ? 
+                    'Unlimited' : 
+                    `${getFeatureRemaining('mock_tests_weekly')}/${getFeatureLimit('mock_tests_weekly')} left`
+                  }
+                </span>
+                {currentTier === 'FREE' && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {currentTier}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
