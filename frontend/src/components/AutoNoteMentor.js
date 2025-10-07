@@ -95,6 +95,19 @@ export default function AutoNoteMentor() {
   const [generatedNotes, setGeneratedNotes] = useState(null);
   const [dualAnalysis, setDualAnalysis] = useState(null);
   
+  // Enhanced Audio Recording State (Phase 1)
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [audioQuality, setAudioQuality] = useState('excellent'); // excellent, good, poor, silent
+  const [waveformData, setWaveformData] = useState(new Array(50).fill(0));
+  const [isAutoPaused, setIsAutoPaused] = useState(false);
+  const [silenceTimer, setSilenceTimer] = useState(0);
+  const [recordingQualityStats, setRecordingQualityStats] = useState({
+    avgLevel: 0,
+    peakLevel: 0,
+    silenceDuration: 0,
+    noiseLevel: 0
+  });
+  
   // Form State
   const [newSessionTitle, setNewSessionTitle] = useState('');
   const [newSessionSubject, setNewSessionSubject] = useState('Mathematics');
