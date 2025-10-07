@@ -607,6 +607,10 @@ export default function AITutor() {
     } catch (error) {
       console.error('Failed to send message:', error);
       
+      // Store failed action for potential retry after upgrade
+      const failedAction = () => sendMessage(messageToSend);
+      setLastFailedAction(failedAction);
+      
       // Use enhanced subscription error handling
       const errorResult = await handleSubscriptionError(
         error, 
