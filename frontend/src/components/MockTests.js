@@ -264,6 +264,14 @@ export default function MockTests() {
   };
 
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
+    // CRITICAL: Check subscription access FIRST
+    const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+    if (!accessInfo.has_access) {
+      // Upsell modal will be shown automatically by the context
+      console.log('Mock test access blocked - upsell modal should appear');
+      return;
+    }
+
     // CRITICAL: Prevent multiple calls
     if (loadingStates[buttonId]) {
       console.warn(`Button ${buttonId} is already loading, ignoring duplicate call`);
