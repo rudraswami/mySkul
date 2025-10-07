@@ -102,4 +102,53 @@ code {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+
+  /* Structured AI Response Styling */
+  .structured-response {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  .structured-ai-response .warm-intro {
+    animation: slideInFromLeft 0.6s ease-out;
+  }
+  
+  .structured-ai-response .concept-setup {
+    animation: slideInFromLeft 0.8s ease-out;
+  }
+  
+  .structured-ai-response .step-explanation {
+    animation: slideInFromLeft 1.0s ease-out;
+  }
+  
+  .structured-ai-response .step-item {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  
+  .structured-ai-response .step-item:nth-child(1) { animation-delay: 0.1s; }
+  .structured-ai-response .step-item:nth-child(2) { animation-delay: 0.2s; }
+  .structured-ai-response .step-item:nth-child(3) { animation-delay: 0.3s; }
+  .structured-ai-response .step-item:nth-child(4) { animation-delay: 0.4s; }
+  .structured-ai-response .step-item:nth-child(5) { animation-delay: 0.5s; }
+  
+  @keyframes slideInFromLeft {
+    0% {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }
