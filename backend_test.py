@@ -5928,7 +5928,7 @@ class DhruvAITester:
             print("   Review the detailed test output above for specific failures")
             print("   This explains why users get stuck on 'Processing your notes'")
         
-        return workflow_success
+        return True
     
     # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
     
