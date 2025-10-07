@@ -860,11 +860,13 @@ export default function AITutor() {
         interaction_id: interactionId
       });
       
+      // Show success feedback to student
+      showToast('📝 Saved to your notes!', 'success');
       console.log('Note saved:', response.data);
-      // You could show a success message here
       
     } catch (error) {
       console.error('Failed to save note:', error);
+      showToast('❌ Failed to save note. Try again later.', 'error');
     }
   };
 
