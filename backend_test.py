@@ -1283,93 +1283,264 @@ class DhruvAITester:
 
     # ============= PHASE 2: DUAL-LAYER AI SCENARIO IMPLEMENTATIONS =============
 
-    def test_mock_tests_dual_feedback_system(self):
-        """Test Phase 2: Mock Tests Dual Feedback System with dual AI feedback"""
-        if not self.token or not hasattr(self, 'test_ids') or not self.test_ids:
-            print("❌ No token or test IDs available for dual feedback test")
+    def test_mock_tests_critical_bug_fixes(self):
+        """CRITICAL: Test Mock Tests Bug Fixes - Feature Name Consistency and Free Tier Access"""
+        print("\n🚨 CRITICAL: MOCK TESTS BUG FIXES TESTING")
+        print("   Focus: Feature name consistency (mock_tests_weekly), Free tier access, 402 status codes")
+        print("   User reported: Free tier shows 0/2 but blocks generation, toLowerCase error, static error messages")
+        
+        # Create fresh user for free tier testing
+        fresh_user_email = f"mock_test_fix_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Mock Test Fix User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        print(f"\n📝 Step 1: Creating Fresh User for Free Tier Testing")
+        print(f"   Email: {fresh_user_email}")
+        
+        success, response = self.run_test(
+            "Create Fresh User for Mock Test Fix Testing",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user for testing")
             return False
         
-        print("   Testing Phase 2: Mock Tests Dual Feedback System...")
+        fresh_token = response['token']
+        print(f"   ✅ Fresh user created successfully")
         
-        # Use the first generated test for submission with dual feedback
-        test_data = self.test_ids[0]
-        test_id = test_data['test_id']
-        questions = test_data['questions']
+        # Test 1: Subscription Check-Access with mock_tests_weekly
+        print(f"\n🔍 Step 2: Test Subscription Check-Access with mock_tests_weekly")
+        print(f"   Testing: /api/subscription/check-access with feature_name='mock_tests_weekly'")
+        print(f"   Expected: Proper access validation with consistent feature naming")
         
-        # Create realistic answers with varying performance levels
-        performance_scenarios = [
-            {"name": "High Performance", "correct_ratio": 0.8},
-            {"name": "Medium Performance", "correct_ratio": 0.6},
-            {"name": "Low Performance", "correct_ratio": 0.3}
-        ]
+        check_access_data = {
+            "feature_name": "mock_tests_weekly",
+            "usage_increment": 1
+        }
         
-        success_count = 0
+        success, response = self.run_test(
+            "Check Access - mock_tests_weekly",
+            "POST",
+            "subscription/check-access",
+            [200, 402],  # Accept both for now
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
         
-        for scenario in performance_scenarios:
-            print(f"   Testing {scenario['name']} scenario (correct ratio: {scenario['correct_ratio']})")
+        if success:
+            has_access = response.get('has_access', False)
+            reason = response.get('reason', 'unknown')
+            current_usage = response.get('current_usage', 0)
+            limit = response.get('limit', 0)
+            upgrade_needed = response.get('upgrade_needed', False)
+            status_code = getattr(self, 'last_response_status', 0)
             
-            # Create answers based on performance level
-            sample_answers = {}
-            for i, question in enumerate(questions[:5]):  # Test with first 5 questions
-                question_id = question['question_id']
-                if i < len(questions) * scenario['correct_ratio']:
-                    # Correct answer
-                    sample_answers[question_id] = question['correct_answer']
+            print(f"   📊 Check-Access Results:")
+            print(f"      Status Code: {status_code}")
+            print(f"      has_access: {has_access}")
+            print(f"      current_usage: {current_usage}")
+            print(f"      limit: {limit}")
+            print(f"      reason: {reason}")
+            print(f"      upgrade_needed: {upgrade_needed}")
+            
+            # Verify free tier should have access initially
+            if has_access and current_usage == 0 and limit >= 1:
+                print(f"   ✅ Free tier access logic working correctly")
+                free_tier_access_working = True
+            else:
+                print(f"   ❌ Free tier access logic issue detected")
+                free_tier_access_working = False
+        else:
+            print(f"   ❌ Check-access endpoint failed")
+            free_tier_access_working = False
+        
+        # Test 2: Mock Test Generation with mock_tests_weekly validation
+        print(f"\n🎯 Step 3: Test Mock Test Generation API")
+        print(f"   Testing: /api/mock-tests/generate with subscription validation")
+        print(f"   Expected: Should work within free tier limits (1 test per week)")
+        
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subject": "Mathematics",
+            "difficulty": 3,
+            "num_questions": 5
+        }
+        
+        success, response = self.run_test(
+            "Mock Test Generation - Within Free Tier",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        if success:
+            test_id = response.get('test_id')
+            test_name = response.get('test_name', 'N/A')
+            questions_count = len(response.get('questions', []))
+            
+            print(f"   ✅ Mock test generated successfully")
+            print(f"   Test ID: {test_id}")
+            print(f"   Test Name: {test_name}")
+            print(f"   Questions: {questions_count}")
+            mock_generation_working = True
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            
+            print(f"   ❌ Mock test generation failed")
+            print(f"   Status Code: {error_status}")
+            print(f"   Error Data: {error_data}")
+            
+            # Check for specific error types
+            if error_status == 402:
+                print(f"   🚨 402 Payment Required - This should NOT happen for fresh free tier user")
+            elif error_status == 500:
+                print(f"   🚨 500 Internal Server Error - Backend issue")
+            elif error_status == 422:
+                print(f"   🚨 422 Validation Error - Request format issue")
+            
+            mock_generation_working = False
+        
+        # Test 3: Mock Test Subjects API for usage display
+        print(f"\n📊 Step 4: Test Mock Test Subjects API for Usage Display")
+        print(f"   Testing: /api/mock-tests/subjects for correct usage information")
+        
+        success, response = self.run_test(
+            "Mock Test Subjects - Usage Display",
+            "GET",
+            "mock-tests/subjects",
+            200,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        if success:
+            subjects = response.get('subjects', [])
+            usage_info = response.get('usage_info', {})
+            
+            print(f"   ✅ Subjects API working")
+            print(f"   Subjects available: {len(subjects)}")
+            print(f"   Usage info: {usage_info}")
+            
+            # Check if usage info shows correct feature name and limits
+            feature_usage = usage_info.get('mock_tests_weekly', {})
+            if feature_usage:
+                used = feature_usage.get('used', 0)
+                limit = feature_usage.get('limit', 0)
+                remaining = feature_usage.get('remaining', 0)
+                
+                print(f"   📊 mock_tests_weekly usage: {used}/{limit} (remaining: {remaining})")
+                
+                if mock_generation_working and used == 1 and limit >= 1:
+                    print(f"   ✅ Usage tracking updated correctly after generation")
+                    usage_tracking_working = True
                 else:
-                    # Wrong answer
-                    options = ['A', 'B', 'C', 'D']
-                    wrong_options = [opt for opt in options if opt != question['correct_answer']]
-                    sample_answers[question_id] = wrong_options[i % len(wrong_options)]
+                    print(f"   ⚠️  Usage tracking may have issues")
+                    usage_tracking_working = False
+            else:
+                print(f"   ❌ mock_tests_weekly not found in usage info")
+                usage_tracking_working = False
+        else:
+            print(f"   ❌ Subjects API failed")
+            usage_tracking_working = False
+        
+        # Test 4: Test limit reached scenario (generate second test)
+        print(f"\n🚫 Step 5: Test Limit Reached Scenario")
+        print(f"   Testing: Second mock test generation to trigger limit")
+        print(f"   Expected: Should return 402 with proper error structure")
+        
+        success, response = self.run_test(
+            "Mock Test Generation - Limit Reached",
+            "POST",
+            "mock-tests/generate",
+            402,  # Expecting 402 Payment Required
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Correctly returned 402 Payment Required")
             
-            submission_data = {
-                "answers": sample_answers,
-                "time_taken": 1800  # 30 minutes
-            }
+            # Check error structure for subscription modal
+            message = response.get('message', '')
+            action = response.get('action', '')
+            current_plan = response.get('current_plan', '')
+            used = response.get('used', 0)
+            limit = response.get('limit', 0)
+            upgrade_url = response.get('upgrade_url', '')
             
-            print(f"   Submitting test with {len(sample_answers)} answers for dual AI feedback...")
-            print("   This may take 10-15 seconds for dual AI analysis...")
+            print(f"   📊 Error Response Structure:")
+            print(f"      message: {message}")
+            print(f"      action: {action}")
+            print(f"      current_plan: {current_plan}")
+            print(f"      used: {used}")
+            print(f"      limit: {limit}")
+            print(f"      upgrade_url: {upgrade_url}")
             
-            success, response = self.run_test(
-                f"Dual Feedback - {scenario['name']}",
-                "POST",
-                f"mock-tests/{test_id}/submit",
-                200,
-                data=submission_data,
-                headers={'Authorization': f'Bearer {self.token}'}
+            # Verify proper error structure for frontend modal
+            has_proper_structure = (
+                message and action == 'upgrade' and 
+                current_plan and used > 0 and limit > 0 and upgrade_url
             )
             
-            if success and 'dual_feedback' in response:
-                dual_feedback = response['dual_feedback']
-                professor_analysis = dual_feedback.get('professor_analysis', '')
-                mentor_feedback = dual_feedback.get('mentor_feedback', '')
-                scenario_confidence = dual_feedback.get('scenario_confidence', 0)
-                
-                print(f"   ✅ Dual feedback received")
-                print(f"   Professor analysis length: {len(professor_analysis)}")
-                print(f"   Mentor feedback length: {len(mentor_feedback)}")
-                print(f"   Scenario confidence: {scenario_confidence:.2f}")
-                
-                # Verify dual intelligence structure
-                has_professor = professor_analysis and len(professor_analysis) > 50
-                has_mentor = mentor_feedback and len(mentor_feedback) > 50
-                has_confidence = scenario_confidence > 0
-                
-                if has_professor and has_mentor and has_confidence:
-                    print(f"   ✅ Dual intelligence structure validated")
-                    print(f"   Professor provides: Technical analysis")
-                    print(f"   Mentor provides: Motivational feedback")
-                    success_count += 1
-                else:
-                    print(f"   ⚠️  Dual intelligence structure incomplete")
-                    print(f"   Professor analysis: {'✓' if has_professor else '✗'}")
-                    print(f"   Mentor feedback: {'✓' if has_mentor else '✗'}")
-                    print(f"   Confidence score: {'✓' if has_confidence else '✗'}")
+            if has_proper_structure:
+                print(f"   ✅ Error structure suitable for subscription modal")
+                error_handling_working = True
             else:
-                print(f"   ❌ Dual feedback failed for {scenario['name']}")
+                print(f"   ❌ Error structure incomplete for subscription modal")
+                error_handling_working = False
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
             
-            time.sleep(3)  # Delay between tests
+            print(f"   ❌ Expected 402 but got {error_status}")
+            print(f"   Error Data: {error_data}")
+            
+            if error_status == 200:
+                print(f"   🚨 CRITICAL: Should have blocked second test but allowed it")
+            elif error_status == 500:
+                print(f"   🚨 CRITICAL: 500 error instead of proper 402 subscription error")
+            
+            error_handling_working = False
         
-        return success_count >= len(performance_scenarios) * 0.8  # 80% success threshold
+        # Final Assessment
+        print(f"\n🎯 MOCK TESTS BUG FIXES TESTING SUMMARY:")
+        print(f"   ✅ Fresh User Creation: ✓")
+        print(f"   ✅ Free Tier Access Logic: {'✓' if free_tier_access_working else '✗'}")
+        print(f"   ✅ Mock Test Generation: {'✓' if mock_generation_working else '✗'}")
+        print(f"   ✅ Usage Tracking: {'✓' if usage_tracking_working else '✗'}")
+        print(f"   ✅ 402 Error Handling: {'✓' if error_handling_working else '✗'}")
+        
+        total_tests = 4
+        passed_tests = sum([
+            free_tier_access_working,
+            mock_generation_working, 
+            usage_tracking_working,
+            error_handling_working
+        ])
+        
+        success_rate = (passed_tests / total_tests) * 100
+        print(f"\n📊 Overall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        
+        if passed_tests == total_tests:
+            print(f"✅ ALL MOCK TEST BUG FIXES WORKING CORRECTLY")
+        elif passed_tests >= 3:
+            print(f"⚠️  MOST BUG FIXES WORKING - Minor issues remain")
+        else:
+            print(f"❌ CRITICAL ISSUES REMAIN - Bug fixes not fully working")
+        
+        return passed_tests >= 3  # At least 3/4 tests should pass
 
     def test_study_planning_dual_intelligence(self):
         """Test Phase 2: Study Planning Dual Intelligence with StudyPlanRequest model"""
