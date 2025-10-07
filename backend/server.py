@@ -8546,9 +8546,18 @@ async def submit_mock_test(
         subject_analysis = {}
         difficulty_analysis = {}
         
-        for question in mock_test.questions:
-            q_id = question["question_id"]
-            correct_answer = question["correct_answer"]
+        # Fetch all questions in one batched query
+        question_ids = mock_test.questions if isinstance(mock_test.questions[0], str) else [q["question_id"] for q in mock_test.questions]
+        questions_cursor = db.questions.find({"question_id": {"$in": question_ids}})
+        questions_docs = await questions_cursor.to_list(length=None)
+        questions_dict = {doc["question_id"]: doc for doc in questions_docs}
+        
+        for q_id in question_ids:
+            question = questions_dict.get(q_id)
+            if not question:
+                continue
+                
+            correct_answer = question.get("correct_answer")
             user_answer = submission.answers.get(q_id)
             
             subject = question.get("chapter", "General")
