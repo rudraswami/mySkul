@@ -27,6 +27,14 @@ import {
 } from 'lucide-react';
 
 export default function MockTests() {
+  const { 
+    checkFeatureAccess, 
+    trackFeatureUsage, 
+    getFeatureRemaining, 
+    getFeatureLimit,
+    currentTier 
+  } = useSubscription();
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
