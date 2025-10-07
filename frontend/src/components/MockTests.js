@@ -2009,79 +2009,23 @@ export default function MockTests() {
                 </div>
               </div>
 
-              {/* Placeholder for test templates (can be removed or kept minimal) */}
-              <div className="space-y-4">
-                {testTemplates.map((template) => (
-                  <div key={template.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-gray-900">{template.title}</h3>
-                          <Badge className={getDifficultyColor(template.difficulty)}>
-                            {template.difficulty}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-3">{template.description}</p>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {template.duration}
-                          </div>
-                          <div className="flex items-center">
-                            <FileText className="h-4 w-4 mr-1" />
-                            {template.questions} questions
-                          </div>
-                          <div className="flex items-center text-green-600">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            AI Generated
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="ml-4">
-                        <Button 
-                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative min-h-11 px-4 mobile-transition"
-                          size="sm"
-                          onClick={() => {
-                            const diffLevel = difficultyMap[template.difficulty] || 3;
-                            generateMockTest(template.examType, template.subject, diffLevel, template.questions, `template-${template.id}`);
-                          }}
-                          disabled={loadingStates[`template-${template.id}`]}
-                          aria-label={`Generate ${template.subject} test`}
-                        >
-                          {loadingStates[`template-${template.id}`] ? (
-                            <>
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              Generate Test
-                              {testCache.has(getCacheKey(template.examType, template.subject, difficultyMap[template.difficulty] || 3, template.questions)) && (
-                                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
-                                  ⚡
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 text-center">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    alert('Additional test categories:\n\n• Subject-wise Tests\n• Previous Year Papers\n• Speed Tests (30 min)\n• Sectional Tests\n• Full-length Simulations\n\nSelect "Generate New Test" above to create practice tests!');
-                  }}
-                >
-                  View All Tests
-                </Button>
+              {/* Clean, minimal design - wizard is the only way to generate */}
+              <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200 text-center">
+                <Sparkles className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Ready to Test Your Knowledge?</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Click the button above to create your perfect mock test with our guided wizard
+                </p>
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>AI-Generated Questions</span>
+                  <span className="mx-2">•</span>
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Instant Results</span>
+                  <span className="mx-2">•</span>
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Detailed Feedback</span>
+                </div>
               </div>
             </CardContent>
           </Card>
