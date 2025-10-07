@@ -177,7 +177,7 @@ class MockTestBugFixesTester:
         
         mock_test_data = {
             "exam_type": "JEE",
-            "subject": "Mathematics",
+            "subjects": ["Mathematics"],  # Changed to array format
             "difficulty": 3,
             "num_questions": 5
         }
