@@ -2490,8 +2490,9 @@ export default function AITutor() {
                     size="sm"
                     variant="ghost"
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600"
+                    className="chat-action-button min-h-10 min-w-10 md:h-7 md:w-7 p-2 md:p-0 text-gray-400 hover:text-blue-600 mobile-transition"
                     disabled={loading}
+                    aria-label="Upload file"
                   >
                     <Upload className="h-4 w-4" />
                   </Button>
@@ -2501,9 +2502,10 @@ export default function AITutor() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowQuickSuggestions(!showQuickSuggestions)}
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600"
+                    className="chat-action-button min-h-10 min-w-10 md:h-7 md:w-7 p-2 md:p-0 text-gray-400 hover:text-blue-600 mobile-transition"
                     title="⋯ More options"
                     disabled={loading}
+                    aria-label="More options"
                   >
                     <AlertCircle className="h-4 w-4" />
                   </Button>
