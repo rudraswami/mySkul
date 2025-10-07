@@ -63,12 +63,22 @@ export function SubscriptionProvider({ children }) {
       if (error.response?.status === 402) {
         const errorData = error.response.data;
         if (errorData.detail?.upsell_info) {
-          setUpsellModal({
+          // Enhanced modal data with market-standard messaging
+          const modalData = {
             featureName,
             upsellInfo: errorData.detail.upsell_info,
             currentUsage: errorData.detail.current_usage,
-            limit: errorData.detail.limit
-          });
+            limit: errorData.detail.limit,
+            // Add market-standard messaging based on feature
+            title: getFeatureTitle(featureName),
+            description: getFeatureDescription(featureName),
+            benefits: getFeatureBenefits(featureName)
+          };
+          
+          setUpsellModal(modalData);
+          
+          // Track the limit hit for analytics
+          console.log(`Feature limit hit: ${featureName} (${errorData.detail.current_usage}/${errorData.detail.limit})`);
         }
         return { 
           has_access: false, 
@@ -79,6 +89,66 @@ export function SubscriptionProvider({ children }) {
       
       return { has_access: true, upgrade_needed: false }; // Fail open
     }
+  };
+
+  // Helper functions for market-standard messaging
+  const getFeatureTitle = (featureName) => {
+    const titles = {
+      'ai_tutor_daily': '🎓 Unlock Unlimited AI Tutoring',
+      'mock_tests_weekly': '🏆 Access More Mock Tests',
+      'auto_note_recordings_daily': '🎤 Record Unlimited Classes',
+      'auto_note_uploads_daily': '📁 Upload More Files'
+    };
+    return titles[featureName] || '⚡ Upgrade Your Learning';
+  };
+
+  const getFeatureDescription = (featureName) => {
+    const descriptions = {
+      'ai_tutor_daily': "You've reached your daily AI Tutor limit. Upgrade to Premium for unlimited conversations with your personal AI Professor and Mentor.",
+      'mock_tests_weekly': "You've used all your mock tests this week. Upgrade to Premium for unlimited practice tests and detailed performance analytics.",
+      'auto_note_recordings_daily': "You've reached your daily recording limit. Upgrade to Premium for unlimited live recording sessions.",
+      'auto_note_uploads_daily': "You've reached your daily upload limit. Upgrade to Premium for unlimited file uploads and processing."
+    };
+    return descriptions[featureName] || "You've reached your limit for this feature. Upgrade to Premium for unlimited access.";
+  };
+
+  const getFeatureBenefits = (featureName) => {
+    const baseBenefits = [
+      'Unlimited access to all features',
+      'Priority AI processing',
+      'Advanced analytics & insights',
+      'Download notes & test reports',
+      '24/7 premium support'
+    ];
+    
+    const featureBenefits = {
+      'ai_tutor_daily': [
+        'Unlimited AI conversations',
+        'Advanced problem-solving guidance',
+        'Personalized study recommendations',
+        ...baseBenefits.slice(1)
+      ],
+      'mock_tests_weekly': [
+        'Unlimited mock tests',
+        'Detailed performance analytics',
+        'Subject-wise improvement tracking',
+        ...baseBenefits.slice(1)
+      ],
+      'auto_note_recordings_daily': [
+        'Unlimited live recordings',
+        'Real-time transcription',
+        'Auto-generated flashcards',
+        ...baseBenefits.slice(1)
+      ],
+      'auto_note_uploads_daily': [
+        'Unlimited file uploads',
+        'Support for all file formats',
+        'Bulk processing capabilities',
+        ...baseBenefits.slice(1)
+      ]
+    };
+    
+    return featureBenefits[featureName] || baseBenefits;
   };
 
   const trackFeatureUsage = async (featureName) => {
