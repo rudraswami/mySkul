@@ -914,25 +914,37 @@ export function formatProfessorMentorResponse(text, persona) {
     }
   }
   
-  // Generate HTML structure
+  // Generate HTML structure with inline styles for better compatibility
   const personaColors = persona === 'professor' 
-    ? { primary: 'purple-600', bg: 'purple-50', border: 'purple-200' }
-    : { primary: 'green-600', bg: 'green-50', border: 'green-200' };
+    ? { 
+        primary: '#7c3aed', 
+        primaryText: 'color: #7c3aed;', 
+        bg: 'background: linear-gradient(to right, #faf5ff, #eff6ff);',
+        border: 'border-color: #d8b4fe;',
+        bgSolid: 'background-color: #faf5ff;'
+      }
+    : { 
+        primary: '#059669', 
+        primaryText: 'color: #059669;', 
+        bg: 'background: linear-gradient(to right, #ecfdf5, #eff6ff);',
+        border: 'border-color: #a7f3d0;',
+        bgSolid: 'background-color: #ecfdf5;'
+      };
     
-  let html = '<div class="structured-response space-y-6">';
+  let html = '<div class="structured-response" style="display: flex; flex-direction: column; gap: 1.5rem;">';
   
   // 1️⃣ Warm Intro (Hook)
   if (warmIntro) {
     const processedIntro = formatMathExpressions(warmIntro);
     html += `
-      <div class="warm-intro bg-gradient-to-r from-${personaColors.bg} to-blue-50 rounded-lg p-4 border-l-4 border-${personaColors.primary}">
-        <div class="flex items-center mb-2">
-          <span class="text-xl mr-2">${persona === 'professor' ? '🎓' : '💙'}</span>
-          <span class="font-semibold text-${personaColors.primary}">
+      <div class="warm-intro" style="${personaColors.bg} border-radius: 0.5rem; padding: 1rem; border-left: 4px solid ${personaColors.primary};">
+        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+          <span style="font-size: 1.25rem; margin-right: 0.5rem;">${persona === 'professor' ? '🎓' : '💙'}</span>
+          <span style="font-weight: 600; ${personaColors.primaryText}">
             ${persona === 'professor' ? 'Professor Approach' : 'Mentor Guide'}
           </span>
         </div>
-        <p class="text-gray-800 font-medium leading-relaxed">${processedIntro}</p>
+        <p style="color: #1f2937; font-weight: 500; line-height: 1.6;">${processedIntro}</p>
       </div>
     `;
   }
@@ -941,12 +953,12 @@ export function formatProfessorMentorResponse(text, persona) {
   if (conceptSetup) {
     const processedConcept = formatMathExpressions(conceptSetup);
     html += `
-      <div class="concept-setup bg-white rounded-lg p-4 border border-${personaColors.border} shadow-sm">
-        <div class="flex items-start">
-          <span class="text-lg mr-3 mt-1">📚</span>
+      <div class="concept-setup" style="background-color: white; border-radius: 0.5rem; padding: 1rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+        <div style="display: flex; align-items: flex-start;">
+          <span style="font-size: 1.125rem; margin-right: 0.75rem; margin-top: 0.25rem;">📚</span>
           <div>
-            <h4 class="font-semibold text-gray-900 mb-2">Concept Foundation</h4>
-            <p class="text-gray-700 leading-relaxed">${processedConcept}</p>
+            <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.5rem;">Concept Foundation</h4>
+            <p style="color: #374151; line-height: 1.6;">${processedConcept}</p>
           </div>
         </div>
       </div>
@@ -956,14 +968,14 @@ export function formatProfessorMentorResponse(text, persona) {
   // 3️⃣ Step-by-Step Board Explanation
   if (steps.length > 0) {
     html += `
-      <div class="step-explanation bg-white rounded-lg border border-${personaColors.border} shadow-sm overflow-hidden">
-        <div class="bg-${personaColors.bg} px-4 py-3 border-b border-${personaColors.border}">
-          <div class="flex items-center">
-            <span class="text-lg mr-2">📝</span>
-            <h4 class="font-semibold text-${personaColors.primary}">Step-by-Step Solution</h4>
+      <div class="step-explanation" style="background-color: white; border-radius: 0.5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); overflow: hidden;">
+        <div style="${personaColors.bgSolid} padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb;">
+          <div style="display: flex; align-items: center;">
+            <span style="font-size: 1.125rem; margin-right: 0.5rem;">📝</span>
+            <h4 style="font-weight: 600; ${personaColors.primaryText}">Step-by-Step Solution</h4>
           </div>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div>
     `;
     
     steps.forEach((step, index) => {
@@ -976,26 +988,26 @@ export function formatProfessorMentorResponse(text, persona) {
       const hasHint = step.content.match(/💡|hint|tip|remember|key/i);
       
       html += `
-        <div class="step-item p-4 hover:bg-gray-50 transition-colors">
-          <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-${personaColors.primary} text-white rounded-full flex items-center justify-center font-bold text-sm">
+        <div class="step-item" style="padding: 1rem; ${index > 0 ? 'border-top: 1px solid #f3f4f6;' : ''} transition: background-color 0.2s;">
+          <div style="display: flex; align-items: flex-start; gap: 1rem;">
+            <div style="flex-shrink: 0;">
+              <div style="width: 2rem; height: 2rem; background-color: ${personaColors.primary}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.875rem;">
                 ${step.number}
               </div>
             </div>
-            <div class="flex-1">
-              <div class="text-gray-800 leading-relaxed mb-2">${processedContent}</div>
+            <div style="flex: 1;">
+              <div style="color: #1f2937; line-height: 1.6; margin-bottom: 0.5rem;">${processedContent}</div>
               
               ${hasFormula ? `
-                <div class="bg-gray-50 rounded-lg p-3 mt-2 border-l-4 border-blue-400">
-                  <div class="text-sm text-blue-700 font-mono">${processedContent.match(/[^.!?]*[=+\-*\/\^√∫∑∏][^.!?]*/)?.[0] || ''}</div>
+                <div style="background-color: #f9fafb; border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; border-left: 4px solid #60a5fa;">
+                  <div style="font-size: 0.875rem; color: #1d4ed8; font-family: 'Courier New', monospace;">${processedContent.match(/[^.!?]*[=+\-*\/\^√∫∑∏][^.!?]*/)?.[0] || ''}</div>
                 </div>
               ` : ''}
               
-              <div class="flex items-center mt-2 space-x-3">
-                ${hasCheckPoint ? '<span class="inline-flex items-center text-xs text-green-600"><span class="mr-1">✅</span> Correct</span>' : ''}
-                ${hasWarning ? '<span class="inline-flex items-center text-xs text-yellow-600"><span class="mr-1">⚠️</span> Check step</span>' : ''}
-                ${hasHint ? '<span class="inline-flex items-center text-xs text-blue-600"><span class="mr-1">💡</span> Key insight</span>' : ''}
+              <div style="display: flex; align-items: center; margin-top: 0.5rem; gap: 0.75rem;">
+                ${hasCheckPoint ? '<span style="display: inline-flex; align-items: center; font-size: 0.75rem; color: #059669;"><span style="margin-right: 0.25rem;">✅</span> Correct</span>' : ''}
+                ${hasWarning ? '<span style="display: inline-flex; align-items: center; font-size: 0.75rem; color: #d97706;"><span style="margin-right: 0.25rem;">⚠️</span> Check step</span>' : ''}
+                ${hasHint ? '<span style="display: inline-flex; align-items: center; font-size: 0.75rem; color: #2563eb;"><span style="margin-right: 0.25rem;">💡</span> Key insight</span>' : ''}
               </div>
             </div>
           </div>
