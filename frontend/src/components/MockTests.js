@@ -2487,6 +2487,42 @@ export default function MockTests() {
         </div>
       </div>
       
+      {/* NEW PHASE 3 MODALS */}
+      
+      {/* Test Generation Wizard */}
+      {showWizard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+          <TestGenerationWizard
+            onGenerate={handleWizardGenerate}
+            onCancel={() => setShowWizard(false)}
+            defaultExamType={examSubjects.exam_type}
+          />
+        </div>
+      )}
+
+      {/* Exam Mode */}
+      {showExamMode && examModeTest && examModeQuestions.length > 0 && (
+        <ExamMode
+          test={examModeTest}
+          questions={examModeQuestions}
+          onSubmit={handleExamSubmit}
+          onExit={handleExamExit}
+          timerDuration={examModeTest.time_limit}
+        />
+      )}
+
+      {/* Enhanced Results Modal */}
+      {showEnhancedResults && enhancedResultsData && (
+        <EnhancedResultsModal
+          results={enhancedResultsData}
+          onClose={handleCloseResults}
+          onRetake={handleRetakeFromResults}
+          onReview={handleReviewFromResults}
+          onBackToLibrary={handleBackToLibrary}
+          gamificationRewards={enhancedResultsData.gamificationRewards}
+        />
+      )}
+      
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
