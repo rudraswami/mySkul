@@ -1981,7 +1981,7 @@ class MockTestEngine:
         await cache_test(cache_key, test_dict)
         
         # Track usage for mock test generation
-        await track_feature_usage(student_id, "mock_tests_monthly")
+        await track_feature_usage(student_id, "mock_tests_weekly")
         
         return test
     
