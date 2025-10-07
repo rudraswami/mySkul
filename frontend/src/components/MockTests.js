@@ -81,6 +81,14 @@ export default function MockTests() {
   
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   
+  // Show toast notification
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+  
   // Difficulty mapping for consistent use
   const difficultyMap = { 'Easy': 2, 'Medium': 3, 'High': 4 };
 
