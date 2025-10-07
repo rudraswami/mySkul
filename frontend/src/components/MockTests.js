@@ -1881,7 +1881,6 @@ export default function MockTests() {
                         );
                       })}
                     </div>
-                  )}
                   
                   {examSubjects.test_access && examSubjects.test_access.has_access && (
                     <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
