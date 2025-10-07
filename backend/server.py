@@ -2077,6 +2077,9 @@ class MentorAI:
             # Get language-specific instructions
             language_instructions = language_engine.get_language_instructions(language, difficulty_level)
             
+            # Adapt complexity based on difficulty level
+            complexity_level = "beginner" if difficulty_level < 0.4 else "advanced" if difficulty_level > 0.7 else "intermediate"
+            
             # Build personalized system message
             personalized_system = f"""You are Dhruv AI's Mentor - a warm, encouraging guide who helps students succeed in competitive exams through personalized support and motivation.
 
