@@ -504,7 +504,8 @@ export default function AITutor() {
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
 
-    // Check subscription access before sending message
+    // Note: We still check access but the backend will also check
+    // This prevents most cases but backend is the final authority
     const accessInfo = await checkFeatureAccess('ai_tutor_daily');
     console.log('AI Tutor access check result:', accessInfo);
     
