@@ -377,7 +377,7 @@ export default function MockTests() {
         }));
       }, 8000);
       
-      // Make the API call with a simple fetch
+      // Make the API call with correct TestGenerationRequest payload
       const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
         method: 'POST',
         headers: {
@@ -386,9 +386,13 @@ export default function MockTests() {
         },
         body: JSON.stringify({
           exam_type: examType,
-          subject: subject, // Use single subject as expected by backend
-          difficulty: difficulty,
-          num_questions: numQuestions
+          subjects: Array.isArray(subject) ? subject : [subject], // Convert to array as required by backend
+          test_type: 'full_length', // Default test type
+          difficulty_level: Math.max(1, Math.min(5, difficulty)), // Clamp to 1-5 range
+          num_questions: Math.max(3, Math.min(100, numQuestions)), // Clamp to 3-100 range
+          generation_mode: 'standard', // Default generation mode
+          chapters: [], // Optional: can be populated for chapter-wise tests
+          focus_areas: [] // Optional: for adaptive mode
         })
       });
 
