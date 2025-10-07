@@ -2286,6 +2286,8 @@ export default function MockTests() {
           </div>
         </div>
       )}
+      </>
+      )}
     </div>
   );
 }
