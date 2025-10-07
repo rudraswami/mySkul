@@ -5633,46 +5633,31 @@ class DhruvAITester:
         print("   Frontend: Should show subscription modal on 429/402 responses")
         print("=" * 80)
         
-        # Step 1: Login as specified user
-        print("\n📊 Step 1: Login as rudras.beee@gmail.com / Abc@1234")
-        login_data = {
-            "email": "rudras.beee@gmail.com",
-            "password": "Abc@1234"
-        }
-        
-        success, response = self.run_test(
-            "Login Specified User",
-            "POST",
-            "auth/login",
-            200,
-            data=login_data
-        )
-        
-        if not success or 'token' not in response:
-            print("❌ Failed to login as rudras.beee@gmail.com")
-            print("   Attempting to create this user account...")
-            
-            # Try to register the user
-            registration_data = {
-                "full_name": "Rudra Test User",
-                "email": "rudras.beee@gmail.com",
-                "password": "Abc@1234",
-                "exam_type": "JEE",
-                "grade": "Class 12",
-                "target_year": 2026
+        # Step 1: Login as test user (use existing test@dhruvai.com for testing)
+        print("\n📊 Step 1: Login as test@dhruvai.com / password123")
+        if not self.token:
+            login_data = {
+                "email": "test@dhruvai.com",
+                "password": "password123"
             }
             
             success, response = self.run_test(
-                "Register Specified User",
+                "Login Test User",
                 "POST",
-                "auth/register",
+                "auth/login",
                 200,
-                data=registration_data
+                data=login_data
             )
             
             if not success or 'token' not in response:
-                print("❌ Failed to create rudras.beee@gmail.com account")
+                print("❌ Failed to login as test@dhruvai.com")
                 return False
+            
+            self.token = response['token']
+            user_data = response.get('user', {})
+        else:
+            print("   ✅ Using existing token")
+            user_data = {}
         
         self.token = response['token']
         user_data = response.get('user', {})
