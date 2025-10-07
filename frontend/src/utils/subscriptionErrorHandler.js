@@ -14,7 +14,22 @@ export const isSubscriptionLimitError = (error) => {
   
   // Check for subscription limit keywords in error message
   if (data?.message || data?.detail) {
-    const errorMessage = (data.message || data.detail || '').toLowerCase();
+    // Ensure we have a string before calling toLowerCase
+    let errorText = '';
+    if (typeof data.message === 'string') {
+      errorText = data.message;
+    } else if (typeof data.detail === 'string') {
+      errorText = data.detail;
+    } else if (Array.isArray(data.detail)) {
+      // Handle Pydantic validation errors which come as arrays
+      errorText = data.detail.map(err => err.msg || err.message || '').join(' ');
+    } else if (data.message && typeof data.message === 'object') {
+      errorText = JSON.stringify(data.message);
+    } else if (data.detail && typeof data.detail === 'object') {
+      errorText = JSON.stringify(data.detail);
+    }
+    
+    const errorMessage = errorText.toLowerCase();
     const limitKeywords = [
       'limit reached',
       'quota exceeded',
