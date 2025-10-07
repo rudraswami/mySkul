@@ -6334,6 +6334,42 @@ async def track_feature_usage_endpoint(
         logger.error(f"Usage tracking error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to track feature usage")
 
+@api_router.post("/subscription/test-set-usage")
+async def test_set_usage_endpoint(
+    feature_name: str,
+    usage_count: int,
+    user: User = Depends(get_current_user)
+):
+    """TEST ONLY: Set a user's feature usage to specific count for testing subscription limits"""
+    try:
+        from datetime import datetime, timezone
+        
+        # Calculate user's current date  
+        date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        
+        # Update or create daily usage tracker
+        await db.daily_usage_trackers.update_one(
+            {"user_id": user.user_id, "date": date_str},
+            {
+                "$set": {
+                    f"usage_counts.{feature_name}": usage_count,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "message": f"TEST: Set {feature_name} usage to {usage_count} for user {user.user_id}",
+            "user_id": user.user_id,
+            "feature_name": feature_name,
+            "usage_count": usage_count,
+            "date": date_str
+        }
+    except Exception as e:
+        logger.error(f"Test set usage error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to set test usage")
+
 @api_router.get("/subscription/usage")
 async def get_daily_usage_endpoint(user: User = Depends(get_current_user)):
     """Get current daily usage statistics"""
