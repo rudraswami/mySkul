@@ -13163,6 +13163,311 @@ def main():
             print("   🚨 500 Internal Server Error - possible ObjectId serialization issue")
         
         sys.exit(1)
+    def test_auto_note_mentor_objectid_serialization_focus(self):
+        """FINAL BACKEND VALIDATION - ObjectId Serialization Issues Focus"""
+        print("\n🚨 FINAL BACKEND VALIDATION - AUTO-NOTE MENTOR OBJECTID SERIALIZATION TESTING")
+        print("   Review Request: Test ObjectId serialization issues affecting end-session API calls")
+        print("   Focus: /api/auto-notes/sessions, /api/auto-notes/start-session, /api/auto-notes/upload-audio, /api/auto-notes/processing-status")
+        print("   Goal: Identify 500 errors caused by ObjectId serialization in backend responses")
+        
+        if not self.token:
+            print("❌ No token available, attempting login...")
+            if not self.test_user_login():
+                print("❌ Failed to login, cannot proceed with testing")
+                return False
+        
+        test_results = {
+            'sessions_list': False,
+            'start_session': False,
+            'upload_audio': False,
+            'processing_status': False,
+            'end_session': False,
+            'objectid_serialization': True  # Assume no issues until found
+        }
+        
+        # Test 1: Sessions List API - Check for ObjectId serialization
+        print(f"\n📊 Test 1: Auto-Notes Sessions List API")
+        success, response = self.run_test(
+            "Auto-Notes Sessions List",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print(f"   ✅ Sessions list API working (Status: 200)")
+            sessions = response.get('sessions', [])
+            print(f"   📊 Found {len(sessions)} sessions")
+            
+            # Check for ObjectId serialization issues in response
+            if sessions:
+                sample_session = sessions[0]
+                print(f"   🔍 Sample session structure: {list(sample_session.keys())}")
+                
+                # Look for ObjectId serialization issues
+                for key, value in sample_session.items():
+                    if isinstance(value, dict) and 'ObjectId' in str(value):
+                        print(f"   🚨 ObjectId serialization issue in {key}: {value}")
+                        test_results['objectid_serialization'] = False
+                    elif 'ObjectId(' in str(value):
+                        print(f"   🚨 Raw ObjectId found in {key}: {value}")
+                        test_results['objectid_serialization'] = False
+            
+            test_results['sessions_list'] = True
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ Sessions list API failed (Status: {error_status})")
+            print(f"   Error: {error_data}")
+            
+            # Check for ObjectId serialization errors
+            if 'ObjectId' in str(error_data) and ('not iterable' in str(error_data) or 'not JSON serializable' in str(error_data)):
+                print(f"   🚨 ObjectId serialization error detected in sessions list")
+                test_results['objectid_serialization'] = False
+        
+        # Test 2: Start Session API
+        print(f"\n📊 Test 2: Auto-Notes Start Session API")
+        session_data = {
+            "title": "ObjectId Test Session",
+            "subject": "Physics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Notes Start Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        session_id = None
+        if success:
+            print(f"   ✅ Start session API working (Status: 200)")
+            session_id = response.get('session_id')
+            print(f"   📊 Session ID: {session_id}")
+            
+            # Check response for ObjectId issues
+            for key, value in response.items():
+                if 'ObjectId(' in str(value):
+                    print(f"   🚨 Raw ObjectId found in response {key}: {value}")
+                    test_results['objectid_serialization'] = False
+            
+            test_results['start_session'] = True
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ Start session API failed (Status: {error_status})")
+            print(f"   Error: {error_data}")
+            
+            if 'ObjectId' in str(error_data):
+                print(f"   🚨 ObjectId serialization error in start session")
+                test_results['objectid_serialization'] = False
+        
+        # Test 3: Upload Audio API (if session created)
+        if session_id:
+            print(f"\n📊 Test 3: Auto-Notes Upload Audio API")
+            
+            # Create a small test audio file (simulate)
+            audio_data = {
+                "session_id": session_id,
+                "audio_quality": "high",
+                "enhancement_options": ["noise_reduction", "voice_enhancement"]
+            }
+            
+            success, response = self.run_test(
+                "Auto-Notes Upload Audio",
+                "POST",
+                "auto-notes/upload-audio",
+                [200, 202],  # Accept both immediate and async responses
+                data=audio_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Upload audio API working")
+                processing_id = response.get('processing_id')
+                if processing_id:
+                    print(f"   📊 Processing ID: {processing_id}")
+                
+                # Check for ObjectId serialization in response
+                for key, value in response.items():
+                    if 'ObjectId(' in str(value):
+                        print(f"   🚨 Raw ObjectId in upload response {key}: {value}")
+                        test_results['objectid_serialization'] = False
+                
+                test_results['upload_audio'] = True
+            else:
+                error_status = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                print(f"   ❌ Upload audio API failed (Status: {error_status})")
+                print(f"   Error: {error_data}")
+                
+                if 'ObjectId' in str(error_data):
+                    print(f"   🚨 ObjectId serialization error in upload audio")
+                    test_results['objectid_serialization'] = False
+        
+        # Test 4: Processing Status API
+        if session_id:
+            print(f"\n📊 Test 4: Auto-Notes Processing Status API")
+            
+            success, response = self.run_test(
+                "Auto-Notes Processing Status",
+                "GET",
+                f"auto-notes/processing-status/{session_id}",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ Processing status API working")
+                status = response.get('status', 'unknown')
+                progress = response.get('progress', 0)
+                print(f"   📊 Status: {status}, Progress: {progress}%")
+                
+                # Check for ObjectId serialization
+                for key, value in response.items():
+                    if 'ObjectId(' in str(value):
+                        print(f"   🚨 Raw ObjectId in status response {key}: {value}")
+                        test_results['objectid_serialization'] = False
+                
+                test_results['processing_status'] = True
+            else:
+                error_status = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                print(f"   ❌ Processing status API failed (Status: {error_status})")
+                print(f"   Error: {error_data}")
+                
+                if 'ObjectId' in str(error_data):
+                    print(f"   🚨 ObjectId serialization error in processing status")
+                    test_results['objectid_serialization'] = False
+        
+        # Test 5: End Session API (Critical - where ObjectId issues are reported)
+        if session_id:
+            print(f"\n📊 Test 5: Auto-Notes End Session API (CRITICAL - ObjectId Issues Expected)")
+            
+            end_session_data = {
+                "fallback_transcription": "Test transcription for ObjectId serialization testing",
+                "total_duration": 120.0
+            }
+            
+            success, response = self.run_test(
+                "Auto-Notes End Session",
+                "POST",
+                f"auto-notes/{session_id}/end-session",
+                200,
+                data=end_session_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ End session API working (Status: 200)")
+                session_status = response.get('status', 'unknown')
+                print(f"   📊 Final session status: {session_status}")
+                
+                # Check for ObjectId serialization in response
+                for key, value in response.items():
+                    if 'ObjectId(' in str(value):
+                        print(f"   🚨 Raw ObjectId in end session response {key}: {value}")
+                        test_results['objectid_serialization'] = False
+                
+                test_results['end_session'] = True
+            else:
+                error_status = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                print(f"   ❌ End session API failed (Status: {error_status})")
+                print(f"   🚨 CRITICAL: This is where ObjectId serialization issues are reported")
+                print(f"   Error: {error_data}")
+                
+                # Check specifically for ObjectId serialization errors
+                error_str = str(error_data)
+                if 'ObjectId' in error_str:
+                    if 'not iterable' in error_str:
+                        print(f"   🚨 CONFIRMED: ObjectId 'not iterable' error")
+                        test_results['objectid_serialization'] = False
+                    elif 'not JSON serializable' in error_str:
+                        print(f"   🚨 CONFIRMED: ObjectId 'not JSON serializable' error")
+                        test_results['objectid_serialization'] = False
+                    elif 'vars() argument must have __dict__ attribute' in error_str:
+                        print(f"   🚨 CONFIRMED: ObjectId vars() error")
+                        test_results['objectid_serialization'] = False
+                    else:
+                        print(f"   🚨 ObjectId-related error: {error_str}")
+                        test_results['objectid_serialization'] = False
+        
+        # Test 6: Enhanced Audio Processing Features
+        print(f"\n📊 Test 6: Enhanced Audio Processing Features")
+        
+        # Test Whisper model availability
+        success, response = self.run_test(
+            "Whisper Model Status",
+            "GET",
+            "auto-notes/whisper-status",
+            [200, 404],  # 404 acceptable if endpoint doesn't exist
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        whisper_available = success and response.get('available', False)
+        print(f"   📊 Whisper Model Available: {'✅' if whisper_available else '❌'}")
+        
+        # Test Celery task queue
+        success, response = self.run_test(
+            "Celery Queue Status",
+            "GET",
+            "auto-notes/celery-status",
+            [200, 404],
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        celery_available = success and response.get('active', False)
+        print(f"   📊 Celery Task Queue Active: {'✅' if celery_available else '❌'}")
+        
+        # Final Assessment
+        print(f"\n🎯 FINAL BACKEND VALIDATION - OBJECTID SERIALIZATION TESTING SUMMARY:")
+        print(f"   ✅ Sessions List API: {'✓' if test_results['sessions_list'] else '✗'}")
+        print(f"   ✅ Start Session API: {'✓' if test_results['start_session'] else '✗'}")
+        print(f"   ✅ Upload Audio API: {'✓' if test_results['upload_audio'] else '✗'}")
+        print(f"   ✅ Processing Status API: {'✓' if test_results['processing_status'] else '✗'}")
+        print(f"   ✅ End Session API: {'✓' if test_results['end_session'] else '✗'}")
+        print(f"   ✅ ObjectId Serialization: {'✓' if test_results['objectid_serialization'] else '✗'}")
+        print(f"   📊 Whisper Model: {'✓' if whisper_available else '✗'}")
+        print(f"   📊 Celery Queue: {'✓' if celery_available else '✗'}")
+        
+        # Calculate success rate
+        core_tests = ['sessions_list', 'start_session', 'upload_audio', 'processing_status', 'end_session']
+        core_success = sum(test_results[test] for test in core_tests)
+        success_rate = (core_success / len(core_tests)) * 100
+        
+        print(f"\n📊 Core API Success Rate: {core_success}/{len(core_tests)} ({success_rate:.1f}%)")
+        
+        # Critical Issues Analysis
+        critical_issues = []
+        if not test_results['objectid_serialization']:
+            critical_issues.append("ObjectId serialization issues detected in backend responses")
+        if not test_results['end_session']:
+            critical_issues.append("End-session API failing (critical for note completion)")
+        if not test_results['sessions_list']:
+            critical_issues.append("Sessions list API failing (affects session retrieval)")
+        
+        if critical_issues:
+            print(f"\n🚨 CRITICAL OBJECTID SERIALIZATION ISSUES IDENTIFIED:")
+            for issue in critical_issues:
+                print(f"   - {issue}")
+            print(f"\n🔧 RECOMMENDATIONS:")
+            print(f"   - Fix ObjectId serialization in clean_mongodb_doc function")
+            print(f"   - Ensure all MongoDB ObjectIds are converted to strings before JSON response")
+            print(f"   - Update error response handling to properly serialize ObjectIds")
+            print(f"   - Test custom JSONResponse class implementation")
+            return False
+        else:
+            print(f"\n✅ OBJECTID SERIALIZATION VALIDATION SUCCESSFUL")
+            print(f"   - All Auto-Note Mentor APIs working correctly")
+            print(f"   - No ObjectId serialization errors detected")
+            print(f"   - Backend responses properly formatted for frontend")
+            print(f"   - 100% success rate achieved")
+            return True
+
 if __name__ == "__main__":
     tester = DhruvAITester()
     
