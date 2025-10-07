@@ -7341,15 +7341,41 @@ async def start_enhanced_note_session(
 async def upload_and_process_audio(
     session_id: str,
     file: UploadFile = File(...),
+    enhance_audio: bool = Form(True),  # PHASE 2: Audio enhancement option
     user: User = Depends(get_current_user)
 ):
-    """Upload and process audio file with Whisper transcription and AI analysis"""
+    """
+    PHASE 2: Enhanced audio upload with studio-quality processing pipeline
+    Upload and process audio file with Whisper transcription and AI analysis
+    """
     
     try:
-        # Validate file type
-        allowed_types = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'video/mp4']
-        if file.content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.content_type}")
+        # Validate file type - expanded support
+        allowed_types = [
+            'audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 
+            'video/mp4', 'audio/m4a', 'audio/webm', 'audio/ogg'
+        ]
+        allowed_extensions = ['.wav', '.mp3', '.mp4', '.m4a', '.webm', '.ogg']
+        
+        # Check both content type and file extension
+        file_extension = Path(file.filename).suffix.lower() if file.filename else ''
+        
+        if (file.content_type not in allowed_types and 
+            file_extension not in allowed_extensions):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unsupported file type. Supported: {', '.join(allowed_extensions)}"
+            )
+        
+        # Check file size (100MB limit)
+        MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+        file_content = await file.read()
+        
+        if len(file_content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail="File too large. Maximum size is 100MB."
+            )
         
         # Get session
         session_doc = await db.auto_note_sessions.find_one({
@@ -7362,38 +7388,80 @@ async def upload_and_process_audio(
         
         session = AutoNoteSession(**session_doc)
         
-        # Read file content
-        file_content = await file.read()
+        # Save uploaded file temporarily
+        import tempfile
+        temp_dir = Path(tempfile.gettempdir()) / "dhruv_ai_audio"
+        temp_dir.mkdir(exist_ok=True)
         
-        # Update session with file info
+        temp_file_path = temp_dir / f"{session_id}_{uuid.uuid4().hex}{file_extension}"
+        
+        with open(temp_file_path, 'wb') as f:
+            f.write(file_content)
+        
+        logger.info(f"Audio file saved: {temp_file_path} ({len(file_content)} bytes)")
+        
+        # Update session with upload info
         await db.auto_note_sessions.update_one(
             {"session_id": session_id},
             {"$set": {
                 "status": "processing",
                 "source_type": "uploaded",
-                "audio_duration": len(file_content) / 1000000,  # Rough estimate
-                "processing_progress": 5
+                "audio_file_path": str(temp_file_path),
+                "file_size_bytes": len(file_content),
+                "enhancement_enabled": enhance_audio,
+                "processing_progress": 10,
+                "processing_stage": "audio_uploaded"
             }}
         )
         
-        # Process audio through enhanced pipeline
-        processed_note = await auto_note_engine.process_audio_file(file_content, session)
-        
-        return {
-            "note_id": processed_note.note_id,
-            "session_id": session_id,
-            "processing_status": "completed",
-            "transcript_length": len(processed_note.transcript),
-            "topic_cards_count": len(processed_note.topic_cards),
-            "flashcards_generated": len(processed_note.flashcards),
-            "quiz_questions": len(processed_note.quiz_questions),
-            "concepts_learned": processed_note.concepts_learned,
-            "mentor_summary": processed_note.mentor_summary,
-            "message": "🎉 Audio processed successfully! Your enhanced notes are ready with topic cards, flashcards, and quizzes."
-        }
+        # PHASE 2: Process audio through enhanced pipeline
+        if AUDIO_PROCESSING_ENABLED:
+            # Use Celery for async processing
+            task = process_audio_async.delay(
+                str(temp_file_path),
+                session_id,
+                enhance_audio
+            )
+            
+            # Store task ID for progress tracking
+            await db.auto_note_sessions.update_one(
+                {"session_id": session_id},
+                {"$set": {
+                    "celery_task_id": task.id,
+                    "processing_progress": 15,
+                    "processing_stage": "audio_enhancement" if enhance_audio else "transcription"
+                }}
+            )
+            
+            return {
+                "session_id": session_id,
+                "task_id": task.id,
+                "processing_status": "queued",
+                "enhancement_enabled": enhance_audio,
+                "file_size_mb": round(len(file_content) / (1024 * 1024), 2),
+                "estimated_time_minutes": min(10, max(2, len(file_content) // (1024 * 1024))),
+                "message": f"🎵 Audio uploaded successfully! {'Enhanced processing' if enhance_audio else 'Standard processing'} has started."
+            }
+        else:
+            # Fallback to original processing if enhanced pipeline not available
+            processed_note = await auto_note_engine.process_audio_file(file_content, session)
+            
+            return {
+                "note_id": processed_note.note_id,
+                "session_id": session_id,
+                "processing_status": "completed",
+                "transcript_length": len(processed_note.transcript),
+                "message": "🎉 Audio processed successfully using standard pipeline!"
+            }
         
     except Exception as e:
         logger.error(f"Audio upload processing error: {str(e)}")
+        # Clean up temp file on error
+        try:
+            if 'temp_file_path' in locals():
+                temp_file_path.unlink(missing_ok=True)
+        except:
+            pass
         raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
 
 @api_router.get("/auto-notes/processed-note/{note_id}")
