@@ -426,11 +426,14 @@ export default function MockTests() {
         // Store failed test parameters for retry
         setLastFailedTestParams({ examType, subject, difficulty, numQuestions, buttonId });
         
+        // Get error text once
+        const errorText = await response.text().catch(() => '{}');
+        
         // Create error object for subscription handler
         const errorObj = {
           response: {
             status: response.status,
-            data: JSON.parse(await response.text().catch(() => '{}'))
+            data: JSON.parse(errorText)
           }
         };
         
@@ -443,7 +446,6 @@ export default function MockTests() {
         
         if (!errorResult.handled) {
           // Handle other error types
-          const errorText = await response.text().catch(() => '');
           let errorMessage = 'Failed to generate test. Please try again.';
           
           try {
