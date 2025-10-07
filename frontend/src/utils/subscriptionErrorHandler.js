@@ -14,22 +14,29 @@ export const isSubscriptionLimitError = (error) => {
   
   // Check for subscription limit keywords in error message
   if (data?.message || data?.detail) {
-    // Ensure we have a string before calling toLowerCase
+    // Ensure we have a string before calling toLowerCase - defensive coercion
     let errorText = '';
-    if (typeof data.message === 'string') {
-      errorText = data.message;
-    } else if (typeof data.detail === 'string') {
-      errorText = data.detail;
-    } else if (Array.isArray(data.detail)) {
-      // Handle Pydantic validation errors which come as arrays
-      errorText = data.detail.map(err => err.msg || err.message || '').join(' ');
-    } else if (data.message && typeof data.message === 'object') {
-      errorText = JSON.stringify(data.message);
-    } else if (data.detail && typeof data.detail === 'object') {
-      errorText = JSON.stringify(data.detail);
+    try {
+      if (typeof data.message === 'string') {
+        errorText = data.message;
+      } else if (typeof data.detail === 'string') {
+        errorText = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        // Handle Pydantic validation errors which come as arrays
+        errorText = data.detail.map(err => err.msg || err.message || '').join(' ');
+      } else if (data.message !== null && data.message !== undefined) {
+        // Fallback: convert any non-null/undefined to string
+        errorText = String(data.message);
+      } else if (data.detail !== null && data.detail !== undefined) {
+        // Fallback: convert any non-null/undefined to string
+        errorText = String(data.detail);
+      }
+    } catch (conversionError) {
+      console.error('Error converting message to string:', conversionError);
+      errorText = '';
     }
     
-    const errorMessage = errorText.toLowerCase();
+    const errorMessage = String(errorText || '').toLowerCase();
     const limitKeywords = [
       'limit reached',
       'quota exceeded',
