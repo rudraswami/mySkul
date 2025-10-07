@@ -189,22 +189,19 @@ export default function UpsellModal({ isOpen, onClose }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div className="flex items-center text-sm text-indigo-800">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited AI Conversations
-                </div>
-                <div className="flex items-center text-sm text-indigo-800">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  3 Mock Tests/Week
-                </div>
-                <div className="flex items-center text-sm text-indigo-800">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited Note Uploads
-                </div>
-                <div className="flex items-center text-sm text-indigo-800">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  Voice Mode (Mentor)
-                </div>
+                {(upsellModal?.benefits || [
+                  'Unlimited AI Conversations',
+                  '3 Mock Tests/Week', 
+                  'Unlimited Note Uploads',
+                  'Voice Mode (Mentor)',
+                  'Priority AI processing',
+                  'Advanced analytics'
+                ]).slice(0, 6).map((benefit, index) => (
+                  <div key={index} className="flex items-center text-sm text-indigo-800">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    {benefit}
+                  </div>
+                ))}
               </div>
 
               {/* Billing Toggle */}
