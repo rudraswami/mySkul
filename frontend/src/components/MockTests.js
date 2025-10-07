@@ -7,6 +7,9 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
 import TestLibrary from './TestLibrary';
 import GamificationProgress from './GamificationProgress';
+import TestGenerationWizard from './TestGenerationWizard';
+import ExamMode from './ExamMode';
+import EnhancedResultsModal from './EnhancedResultsModal';
 import { 
   FileText, 
   Clock, 
