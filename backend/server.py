@@ -4512,7 +4512,9 @@ class SubscriptionService:
             
             interaction_dict = upsell_interaction.dict()
             interaction_dict['timestamp'] = interaction_dict['timestamp'].isoformat()
-            await db.upsell_interactions.insert_one(interaction_dict)
+            # Clean any ObjectId data before database insertion
+            clean_interaction_dict = clean_mongodb_doc(interaction_dict)
+            await db.upsell_interactions.insert_one(clean_interaction_dict)
             
             upsell_data = {
                 "mentor_message": mentor_message,
