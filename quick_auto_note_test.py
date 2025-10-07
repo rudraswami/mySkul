@@ -7,7 +7,7 @@ import requests
 import json
 
 # Test credentials
-base_url = "https://edutech-dhruv.preview.emergentagent.com/api"
+base_url = "https://payment-required-2.preview.emergentagent.com/api"
 test_email = "test@dhruvai.com"
 test_password = "password123"
 

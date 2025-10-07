@@ -9,7 +9,7 @@ import sys
 
 def login():
     """Login with test@dhruvai.com/password123"""
-    base_url = "https://edutech-dhruv.preview.emergentagent.com/api"
+    base_url = "https://payment-required-2.preview.emergentagent.com/api"
     login_data = {
         "email": "test@dhruvai.com",
         "password": "password123"
