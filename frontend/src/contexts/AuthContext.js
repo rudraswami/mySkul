@@ -53,11 +53,8 @@ export function AuthProvider({ children }) {
       setLoading(false);
     };
 
-    // Prevent race conditions by checking if we already have a token
-    if (!loading) {
-      checkAuth();
-    }
-  }, [token, loading]);
+    checkAuth();
+  }, [token]);
 
   const login = async (email, password) => {
     try {
