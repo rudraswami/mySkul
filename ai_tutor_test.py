@@ -141,16 +141,12 @@ class AITutorSubscriptionTester:
         
         # Step 3: Test /api/subscription/check-access for ai_tutor_daily
         print("\n📋 Step 3: Test Subscription Check-Access for AI Tutor Daily")
-        check_access_data = {
-            "feature_name": "ai_tutor_daily"
-        }
         
         success, response = self.run_test(
             "Check Access - AI Tutor Daily",
             "POST",
-            "subscription/check-access",
+            "subscription/check-access?feature_name=ai_tutor_daily",
             200,  # Should return 200 with has_access: false if quota exhausted
-            data=check_access_data,
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
