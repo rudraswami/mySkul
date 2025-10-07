@@ -814,6 +814,192 @@ export function DualResponseContainer({
   );
 }
 
+// Enhanced Professor/Mentor Response Formatter
+export function formatProfessorMentorResponse(text, persona) {
+  if (!text) return text;
+  
+  const lines = text.split('\n').filter(line => line.trim());
+  
+  // Structure the response according to the specified format
+  let warmIntro = '';
+  let conceptSetup = '';
+  let steps = [];
+  let currentSection = 'intro';
+  
+  // Parse the response into sections
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Detect sections based on content patterns
+    if (line.match(/^(let's|here's how|approach|solution|answer|step)/i) && currentSection === 'intro') {
+      warmIntro = line;
+      currentSection = 'concept';
+    } else if (line.match(/^(this|concept|question|problem|topic)/i) && currentSection === 'concept') {
+      conceptSetup = conceptSetup ? `${conceptSetup} ${line}` : line;
+    } else if (line.match(/^\d+[\.\)]/)) {
+      // This is a numbered step
+      const stepMatch = line.match(/^(\d+)[\.\)]\s*(.+)/);
+      if (stepMatch) {
+        steps.push({
+          number: stepMatch[1],
+          content: stepMatch[2],
+          type: 'step'
+        });
+      }
+      currentSection = 'steps';
+    } else if (currentSection === 'steps' && line.length > 0) {
+      // Additional content for the last step
+      if (steps.length > 0) {
+        steps[steps.length - 1].content += ` ${line}`;
+      } else {
+        steps.push({
+          number: steps.length + 1,
+          content: line,
+          type: 'step'
+        });
+      }
+    } else if (currentSection === 'concept' && conceptSetup.length < 200) {
+      conceptSetup = conceptSetup ? `${conceptSetup} ${line}` : line;
+    } else if (currentSection === 'intro' && !warmIntro) {
+      warmIntro = line;
+      currentSection = 'concept';
+    } else if (!warmIntro && !conceptSetup && steps.length === 0) {
+      // If no clear structure detected, treat first line as intro
+      if (!warmIntro) {
+        warmIntro = line;
+        currentSection = 'concept';
+      } else if (!conceptSetup) {
+        conceptSetup = line;
+        currentSection = 'steps';
+      }
+    }
+  }
+  
+  // If no structure detected, create a basic structure from the text
+  if (!warmIntro && !conceptSetup && steps.length === 0) {
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    if (sentences.length >= 1) {
+      warmIntro = persona === 'professor' 
+        ? "Let's tackle this together step by step 👇" 
+        : "I'm here to guide you through this! 💙";
+      
+      if (sentences.length >= 2) {
+        conceptSetup = sentences[0].trim() + '.';
+        
+        // Convert remaining sentences to steps
+        for (let i = 1; i < sentences.length; i++) {
+          steps.push({
+            number: i,
+            content: sentences[i].trim(),
+            type: 'step'
+          });
+        }
+      } else {
+        conceptSetup = sentences[0].trim();
+      }
+    }
+  }
+  
+  // Generate HTML structure
+  const personaColors = persona === 'professor' 
+    ? { primary: 'purple-600', bg: 'purple-50', border: 'purple-200' }
+    : { primary: 'green-600', bg: 'green-50', border: 'green-200' };
+    
+  let html = '<div class="structured-response space-y-6">';
+  
+  // 1️⃣ Warm Intro (Hook)
+  if (warmIntro) {
+    const processedIntro = formatMathExpressions(warmIntro);
+    html += `
+      <div class="warm-intro bg-gradient-to-r from-${personaColors.bg} to-blue-50 rounded-lg p-4 border-l-4 border-${personaColors.primary}">
+        <div class="flex items-center mb-2">
+          <span class="text-xl mr-2">${persona === 'professor' ? '🎓' : '💙'}</span>
+          <span class="font-semibold text-${personaColors.primary}">
+            ${persona === 'professor' ? 'Professor Approach' : 'Mentor Guide'}
+          </span>
+        </div>
+        <p class="text-gray-800 font-medium leading-relaxed">${processedIntro}</p>
+      </div>
+    `;
+  }
+  
+  // 2️⃣ Concept Setup
+  if (conceptSetup) {
+    const processedConcept = formatMathExpressions(conceptSetup);
+    html += `
+      <div class="concept-setup bg-white rounded-lg p-4 border border-${personaColors.border} shadow-sm">
+        <div class="flex items-start">
+          <span class="text-lg mr-3 mt-1">📚</span>
+          <div>
+            <h4 class="font-semibold text-gray-900 mb-2">Concept Foundation</h4>
+            <p class="text-gray-700 leading-relaxed">${processedConcept}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 3️⃣ Step-by-Step Board Explanation
+  if (steps.length > 0) {
+    html += `
+      <div class="step-explanation bg-white rounded-lg border border-${personaColors.border} shadow-sm overflow-hidden">
+        <div class="bg-${personaColors.bg} px-4 py-3 border-b border-${personaColors.border}">
+          <div class="flex items-center">
+            <span class="text-lg mr-2">📝</span>
+            <h4 class="font-semibold text-${personaColors.primary}">Step-by-Step Solution</h4>
+          </div>
+        </div>
+        <div class="divide-y divide-gray-100">
+    `;
+    
+    steps.forEach((step, index) => {
+      const processedContent = formatMathExpressions(step.content);
+      
+      // Detect if step has formula/equation for special formatting
+      const hasFormula = step.content.match(/[=+\-*\/\^√∫∑∏]/);
+      const hasCheckPoint = step.content.match(/✅|correct|right|valid/i);
+      const hasWarning = step.content.match(/⚠️|check|careful|note|remember/i);
+      const hasHint = step.content.match(/💡|hint|tip|remember|key/i);
+      
+      html += `
+        <div class="step-item p-4 hover:bg-gray-50 transition-colors">
+          <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-${personaColors.primary} text-white rounded-full flex items-center justify-center font-bold text-sm">
+                ${step.number}
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="text-gray-800 leading-relaxed mb-2">${processedContent}</div>
+              
+              ${hasFormula ? `
+                <div class="bg-gray-50 rounded-lg p-3 mt-2 border-l-4 border-blue-400">
+                  <div class="text-sm text-blue-700 font-mono">${processedContent.match(/[^.!?]*[=+\-*\/\^√∫∑∏][^.!?]*/)?.[0] || ''}</div>
+                </div>
+              ` : ''}
+              
+              <div class="flex items-center mt-2 space-x-3">
+                ${hasCheckPoint ? '<span class="inline-flex items-center text-xs text-green-600"><span class="mr-1">✅</span> Correct</span>' : ''}
+                ${hasWarning ? '<span class="inline-flex items-center text-xs text-yellow-600"><span class="mr-1">⚠️</span> Check step</span>' : ''}
+                ${hasHint ? '<span class="inline-flex items-center text-xs text-blue-600"><span class="mr-1">💡</span> Key insight</span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  
+  return html;
+}
+
 // Export the math formatting function for use in other components
 export function formatMathExpressions(text) {
   if (!text) return text;
