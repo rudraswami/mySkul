@@ -141,7 +141,7 @@ export default function MockTests() {
 
       if (usageResponse.ok) {
         const usage = await usageResponse.json();
-        const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+        const mockTestUsage = usage.usage_details?.mock_tests_weekly || {};
         return {
           used: mockTestUsage.used || 0,
           limit: mockTestUsage.limit || 2,
@@ -482,7 +482,7 @@ export default function MockTests() {
             let usageData = { used: 0, limit: 2, remaining: 2 };
             if (usageResponse.ok) {
               const usage = await usageResponse.json();
-              const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+              const mockTestUsage = usage.usage_details?.mock_tests_weekly || {};
               usageData = {
                 used: mockTestUsage.used || 0,
                 limit: mockTestUsage.limit || 2,
@@ -524,7 +524,7 @@ export default function MockTests() {
             let usageData = { used: 0, limit: 2, remaining: 2 };
             if (usageResponse.ok) {
               const usage = await usageResponse.json();
-              const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+              const mockTestUsage = usage.usage_details?.mock_tests_weekly || {};
               usageData = {
                 used: mockTestUsage.used || 0,
                 limit: mockTestUsage.limit || 2,
@@ -566,7 +566,7 @@ export default function MockTests() {
             let usageData = { used: 0, limit: 2, remaining: 0 };
             if (usageResponse.ok) {
               const usage = await usageResponse.json();
-              const mockTestUsage = usage.usage_details?.mock_tests_monthly || {};
+              const mockTestUsage = usage.usage_details?.mock_tests_weekly || {};
               usageData = {
                 used: mockTestUsage.used || 0,
                 limit: mockTestUsage.limit || 2,
