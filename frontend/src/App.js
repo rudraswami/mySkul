@@ -19,7 +19,8 @@ import { PageLoader } from './components/ui/loading';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
+import UpsellModal from './components/UpsellModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
