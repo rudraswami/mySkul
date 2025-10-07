@@ -2057,6 +2057,9 @@ export default function MockTests() {
 
         {/* Recent Results & Performance */}
         <div className="space-y-6">
+          {/* Gamification Progress Widget */}
+          <GamificationProgress showFullView={false} />
+          
           {/* Personal Test History */}
           <Card className="border-0 shadow-md">
             <CardHeader>
