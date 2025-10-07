@@ -4009,13 +4009,16 @@ class EngagementService:
             xp_for_next_level = EngagementService._get_xp_for_level(level + 1)
             progress = ((total_xp - xp_for_current_level) / (xp_for_next_level - xp_for_current_level)) * 100
             
-            return {
+            xp_data = {
                 "total_xp": total_xp,
                 "current_level": level,
                 "xp_to_next_level": xp_to_next,
                 "progress_percentage": min(100, max(0, progress)),
                 "recent_milestones": xp_record.get('milestones_achieved', [])[-3:]  # Last 3 milestones
             }
+            
+            # Clean any ObjectId data to prevent serialization errors
+            return clean_mongodb_doc(xp_data)
             
         except Exception as e:
             logger.error(f"Get XP error: {str(e)}")
