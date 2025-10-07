@@ -38,6 +38,13 @@ const API = `${BACKEND_URL}/api`;
 
 export default function AutoNoteMentor() {
   const { user } = useAuth();
+  const { 
+    checkFeatureAccess, 
+    trackFeatureUsage, 
+    getFeatureRemaining, 
+    getFeatureLimit,
+    currentTier 
+  } = useSubscription();
   
   // Enhanced Session Management
   const [currentSession, setCurrentSession] = useState(null);
