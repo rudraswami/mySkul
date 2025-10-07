@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 
-export default function UpsellModal({ isOpen, onClose }) {
+export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
   const { upsellModal, handleUpsellResponse, upgradeSubscription } = useSubscription();
   const [upgrading, setUpgrading] = useState(false);
   const [billingCycle, setBillingCycle] = useState('monthly');
