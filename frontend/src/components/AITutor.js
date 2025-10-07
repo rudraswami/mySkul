@@ -91,6 +91,7 @@ export default function AITutor() {
   });
   const [renameValue, setRenameValue] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [lastFailedAction, setLastFailedAction] = useState(null);
   
   // Show toast notification
   const showToast = (message, type = 'success') => {
