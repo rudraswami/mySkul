@@ -88,7 +88,8 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
         <div className="lg:hidden absolute top-0 right-0 -mr-12 pt-2">
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            className="ml-1 flex items-center justify-center min-h-12 min-w-12 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white mobile-transition"
+            aria-label="Close navigation menu"
           >
             <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
