@@ -1707,7 +1707,7 @@ export default function AITutor() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-white">
+        <div className="flex-1 overflow-y-auto p-6 bg-white" data-testid="chat-container">
           <div className="max-w-5xl mx-auto space-y-8">
             {messages.length === 0 ? (
               // Clean Welcome State
