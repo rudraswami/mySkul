@@ -1990,206 +1990,26 @@ export default function MockTests() {
               </div>
 
 
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-blue-900 flex items-center">
-                    <Zap className="h-4 w-4 mr-2" />
-                    Generate New Test
-                  </h4>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-600">Cached: {testCache.size}</span>
-                    <button
-                      onClick={() => setQuickGeneration(!quickGeneration)}
-                      className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                        quickGeneration 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                      }`}
-                    >
-                      {quickGeneration ? '⚡ Quick' : '🧠 AI'}
-                    </button>
-                  </div>
+              {/* Benefits of using wizard */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="text-3xl mb-2">🎯</div>
+                  <h4 className="font-semibold text-gray-800 mb-1">Custom Difficulty</h4>
+                  <p className="text-sm text-gray-600">Choose from 5 difficulty levels to match your preparation stage</p>
                 </div>
-                
-                {testCache.size > 0 && (
-                  <div className="mb-3 text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
-                    💾 {testCache.size} tests cached for instant loading! Look for ⚡ indicators.
-                  </div>
-                )}
-                
-                {estimatedTime && (
-                  <div className="mb-3 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
-                    🚀 Optimized generation in progress • Estimated: {estimatedTime}
-                  </div>
-                )}
-                
-                {/* Professional Error Display */}
-                {generationError && (
-                  <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
-                    <div className="flex items-start">
-                      <AlertTriangle className="h-6 w-6 text-red-500 mr-3 mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h4 className="text-red-800 font-semibold mb-2">Test Generation Issue</h4>
-                        <div className="text-red-700 text-sm whitespace-pre-line leading-relaxed">
-                          {typeof generationError === 'string' ? generationError : 'An error occurred. Please try again.'}
-                        </div>
-                        {Object.keys(loadingStates).length === 0 && (
-                          <div className="mt-4 flex gap-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setGenerationError(null)}
-                              className="border-red-300 text-red-700 hover:bg-red-100"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-1" />
-                              Try Again
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Could open support chat or contact form
-                                window.open('mailto:support@dhruvai.com?subject=Mock Test Generation Issue', '_blank');
-                              }}
-                              className="border-red-300 text-red-700 hover:bg-red-100"
-                            >
-                              Contact Support
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Retry Status Display */}
-                {retryStatus && (
-                  <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2"></div>
-                    <p className="text-yellow-800 text-sm">{retryStatus}</p>
-                  </div>
-                )}
-                
-                {/* Slow Generation Warning - Shows after 10 second delay */}
-                {Object.values(slowGenerationStates).some(slow => slow) && (
-                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                        <div className="flex-1">
-                          <span className="text-blue-800 text-sm font-medium">
-                            Taking longer than expected? 
-                          </span>
-                          <p className="text-blue-600 text-xs mt-1">
-                            Don't worry! Our AI is carefully crafting quality questions for you. This usually takes 15-30 seconds.
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={emergencyResetAllStates}
-                        variant="outline"
-                        size="sm"
-                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
-                      >
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Cancel & Reset
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Dynamic Subject Test Generation */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-gray-700">Quick Test Generation</h4>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                      {examSubjects.exam_display_name || examSubjects.exam_type}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {examSubjects.subjects.slice(0, 3).map((subject, index) => {
-                        const subjectKey = subject.toLowerCase().replace(/\s+/g, '-');
-                        const quickKey = `${subjectKey}-quick`;
-                        
-                        // Subject-specific emojis
-                        const getSubjectEmoji = (subj) => {
-                          const lowerSubj = subj.toLowerCase();
-                          if (lowerSubj.includes('math')) return '🧮';
-                          if (lowerSubj.includes('physics')) return '⚛️';
-                          if (lowerSubj.includes('chemistry')) return '🧪';
-                          if (lowerSubj.includes('biology')) return '🧬';
-                          if (lowerSubj.includes('history')) return '📚';
-                          if (lowerSubj.includes('polity')) return '🏛️';
-                          if (lowerSubj.includes('economy')) return '💰';
-                          if (lowerSubj.includes('reasoning')) return '🧠';
-                          if (lowerSubj.includes('english')) return '📝';
-                          if (lowerSubj.includes('computer')) return '💻';
-                          return '📖';
-                        };
-                        
-                        // Color schemes for different subjects
-                        const getSubjectColor = (index) => {
-                          const colors = [
-                            'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400',
-                            'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400', 
-                            'bg-green-600 hover:bg-green-700 disabled:bg-green-400',
-                            'bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400',
-                            'bg-red-600 hover:bg-red-700 disabled:bg-red-400',
-                            'bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400'
-                          ];
-                          return colors[index % colors.length];
-                        };
-                        
-                        return (
-                          <Button 
-                            key={subject}
-                            onClick={() => generateMockTest(examSubjects.exam_type, subject, 3, 25, quickKey)}
-                            disabled={loadingStates[quickKey]}
-                            className={`${getSubjectColor(index)} relative`}
-                          >
-                            {loadingStates[quickKey] ? (
-                              <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                <div className="flex flex-col">
-                                  <span className="text-xs">Generating...</span>
-                                  {generationProgress[quickKey] && (
-                                    <span className="text-xs opacity-75">
-                                      {generationProgress[quickKey].stage}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                {getSubjectEmoji(subject)} {subject}
-                                {testCache.has(getCacheKey(examSubjects.exam_type, subject, 3, 25)) && (
-                                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full px-1">
-                                    ⚡
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  
-                  {examSubjects.test_access && examSubjects.test_access.has_access && (
-                    <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        Tests remaining: {examSubjects.test_access.remaining === -1 ? 'Unlimited' : examSubjects.test_access.remaining}
-                      </span>
-                      {examSubjects.test_access.limit !== -1 && (
-                        <span>
-                          Used: {examSubjects.test_access.used}/{examSubjects.test_access.limit}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                  <div className="text-3xl mb-2">⏱️</div>
+                  <h4 className="font-semibold text-gray-800 mb-1">Timed Practice</h4>
+                  <p className="text-sm text-gray-600">Simulate real exam conditions with customizable timers</p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+                  <div className="text-3xl mb-2">📊</div>
+                  <h4 className="font-semibold text-gray-800 mb-1">Detailed Analytics</h4>
+                  <p className="text-sm text-gray-600">Get subject-wise breakdown and AI-powered feedback</p>
                 </div>
               </div>
 
+              {/* Placeholder for test templates (can be removed or kept minimal) */}
               <div className="space-y-4">
                 {testTemplates.map((template) => (
                   <div key={template.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
