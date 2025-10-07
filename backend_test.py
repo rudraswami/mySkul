@@ -5013,17 +5013,14 @@ class DhruvAITester:
         print(f"\n🔍 Step 4: Direct Check-Access Endpoint Testing")
         print(f"   Testing /api/subscription/check-access for 402 response")
         
-        check_access_data = {
-            "feature_name": "mock_tests_weekly",
-            "usage_increment": 1
-        }
+        # Fix the check-access endpoint call - it expects query parameters
+        check_access_url = f"subscription/check-access?feature_name=mock_tests_weekly&usage_increment=1"
         
         success, response = self.run_test(
             "Check Access - Direct 402 Test",
-            "POST",
-            "subscription/check-access",
+            "GET",
+            check_access_url,
             [200, 402],
-            data=check_access_data,
             headers={'Authorization': f'Bearer {fresh_token}'}
         )
         
