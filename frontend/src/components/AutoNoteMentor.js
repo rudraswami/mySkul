@@ -1288,7 +1288,8 @@ export default function AutoNoteMentor() {
                 ) : (
                   <Button 
                     onClick={stopRecording}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 text-lg"
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg min-h-12 mobile-transition"
+                    aria-label="Stop recording"
                     size="lg"
                   >
                     <Square className="h-6 w-6 mr-2" />
