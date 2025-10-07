@@ -176,7 +176,7 @@ SUBSCRIPTION_PLANS = {
         ],
         "limits": {
             "ai_conversations_daily": -1,  # unlimited
-            "mock_tests_monthly": -1,  # unlimited
+            "mock_tests_weekly": -1,  # unlimited
             "audio_processing_monthly": -1,  # unlimited
             "export_functionality": 1,
             "voice_input": 1,
@@ -199,7 +199,7 @@ SUBSCRIPTION_PLANS = {
         ],
         "limits": {
             "ai_conversations_daily": -1,  # unlimited
-            "mock_tests_monthly": -1,  # unlimited  
+            "mock_tests_weekly": -1,  # unlimited  
             "audio_processing_monthly": -1,  # unlimited
             "export_functionality": 1,
             "voice_input": 1,
