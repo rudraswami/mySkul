@@ -445,6 +445,13 @@ export default function AutoNoteMentor() {
   };
 
   const startRecording = async () => {
+    // CRITICAL: Check subscription access FIRST
+    const accessInfo = await checkFeatureAccess('auto_note_recordings_daily');
+    if (!accessInfo.has_access) {
+      // Upsell modal will be shown automatically by the context
+      return;
+    }
+
     if (!currentSession) return;
     
     try {
