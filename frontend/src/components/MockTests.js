@@ -44,8 +44,17 @@ export default function MockTests() {
     triggerFeatureUpsell
   } = useSubscription();
   
-  // View state: 'generate' or 'library'
+  // View state: 'generate' or 'library' or 'wizard' or 'exam' or 'results'
   const [activeView, setActiveView] = useState('generate');
+  
+  // New Phase 3 states
+  const [showWizard, setShowWizard] = useState(false);
+  const [showExamMode, setShowExamMode] = useState(false);
+  const [showEnhancedResults, setShowEnhancedResults] = useState(false);
+  const [wizardConfig, setWizardConfig] = useState(null);
+  const [examModeTest, setExamModeTest] = useState(null);
+  const [examModeQuestions, setExamModeQuestions] = useState([]);
+  const [enhancedResultsData, setEnhancedResultsData] = useState(null);
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
