@@ -1539,18 +1539,29 @@ export default function AutoNoteMentor() {
             </div>
           </div>
 
-          {/* Live Transcript Display */}
+          {/* Enhanced Live Transcript Display */}
           {isRecording && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center mb-4">
-                <MessageCircle className="h-5 w-5 text-blue-600 mr-2" />
-                <h3 className="text-lg font-semibold">Live Transcript</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <MessageCircle className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-lg font-semibold">Live Transcript</h3>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className={`w-2 h-2 rounded-full ${isAutoPaused ? 'bg-yellow-400' : 'bg-green-400 animate-pulse'}`}></div>
+                  <span>{isAutoPaused ? 'Paused' : 'Live'}</span>
+                </div>
               </div>
               
               <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
                 <p className="text-gray-800 whitespace-pre-wrap">
                   {liveTranscript || "Start speaking to see real-time transcription..."}
                 </p>
+                {liveTranscript && (
+                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                    Words: {liveTranscript.split(' ').length} • Characters: {liveTranscript.length}
+                  </div>
+                )}
               </div>
               
               {conceptsDetected.length > 0 && (
@@ -1565,6 +1576,22 @@ export default function AutoNoteMentor() {
                   </div>
                 </div>
               )}
+
+              {/* Context Detection Preview */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center text-sm text-blue-700 mb-2">
+                  <Brain className="h-4 w-4 mr-1" />
+                  AI Context Analysis
+                </div>
+                <div className="text-xs text-blue-600 space-y-1">
+                  <div>Subject: {currentSession?.subject || 'Detecting...'}</div>
+                  <div>Audio Quality: {audioQuality === 'excellent' ? '✨ Crystal Clear' : 
+                                        audioQuality === 'good' ? '✅ Good' : 
+                                        audioQuality === 'poor' ? '⚠️ Needs Improvement' : 
+                                        '❌ No Audio'}</div>
+                  <div>Session: {Math.floor(recordingTime / 60)}m {recordingTime % 60}s</div>
+                </div>
+              </div>
             </div>
           )}
         </div>
