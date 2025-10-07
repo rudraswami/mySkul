@@ -8522,8 +8522,14 @@ async def submit_mock_test(
     """Submit mock test answers and get detailed analysis"""
     
     try:
-        # Get test from database
-        test_doc = await db.mock_tests.find_one({"test_id": test_id, "user_id": user.user_id})
+        # Get test from database with backward compatibility for both user_id and student_id
+        test_doc = await db.mock_tests.find_one({
+            "test_id": test_id,
+            "$or": [
+                {"student_id": user.user_id},
+                {"user_id": user.user_id}  # Backward compatibility
+            ]
+        })
         if not test_doc:
             raise HTTPException(status_code=404, detail="Test not found")
         
