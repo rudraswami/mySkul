@@ -4321,10 +4321,14 @@ class SubscriptionService:
             feature_limit = plan_features.get(feature_name)
             
             if feature_limit == "unlimited":
+                current_usage = daily_usage.get(feature_name, 0)
                 return {
                     "has_access": True,
                     "is_unlimited": True,
-                    "current_usage": daily_usage.get(feature_name, 0),
+                    "current_usage": current_usage,
+                    "used": current_usage,
+                    "limit": -1,
+                    "remaining": -1,
                     "upgrade_needed": False
                 }
             elif feature_limit == "locked":
@@ -4335,12 +4339,17 @@ class SubscriptionService:
                 return {
                     "has_access": False,
                     "reason": "feature_locked",
+                    "current_usage": 0,
+                    "used": 0,
+                    "limit": 0,
+                    "remaining": 0,
                     "upgrade_needed": True,
                     "upsell_info": upsell_info
                 }
             elif isinstance(feature_limit, int):
                 # Feature has daily limit
                 current_usage = daily_usage.get(feature_name, 0)
+                remaining = max(0, feature_limit - current_usage)
                 
                 if current_usage >= feature_limit:
                     # Limit reached, show upsell
@@ -4351,7 +4360,9 @@ class SubscriptionService:
                         "has_access": False,
                         "reason": "limit_reached",
                         "current_usage": current_usage,
+                        "used": current_usage,
                         "limit": feature_limit,
+                        "remaining": remaining,
                         "upgrade_needed": True,
                         "upsell_info": upsell_info
                     }
@@ -4359,13 +4370,20 @@ class SubscriptionService:
                     return {
                         "has_access": True,
                         "current_usage": current_usage,
+                        "used": current_usage,
                         "limit": feature_limit,
-                        "remaining": feature_limit - current_usage,
+                        "remaining": remaining,
                         "upgrade_needed": False
                     }
             
             # Default allow access
-            return {"has_access": True, "upgrade_needed": False}
+            return {
+                "has_access": True,
+                "used": 0,
+                "limit": -1,
+                "remaining": -1,
+                "upgrade_needed": False
+            }
             
         except Exception as e:
             logger.error(f"Feature access check error: {str(e)}")
