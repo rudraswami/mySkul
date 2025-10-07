@@ -6298,7 +6298,7 @@ async def check_feature_access_endpoint(
                 raise HTTPException(
                     status_code=402,
                     detail={
-                        "message": f"Daily limit reached for {feature_name}",
+                        "message": f"Daily limit reached for {request.feature_name}",
                         "upsell_info": access_info.get("upsell_info", {}),
                         "current_usage": access_info.get("current_usage"),
                         "limit": access_info.get("limit"),
