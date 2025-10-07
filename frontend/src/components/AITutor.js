@@ -604,8 +604,21 @@ export default function AITutor() {
       
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Re-add message back to input on error
-      setCurrentMessage(messageToSend);
+      
+      // Check if this is a subscription-related error
+      if (error.response?.status === 402 || error.response?.status === 429) {
+        // Don't put message back - let subscription modal handle this
+        console.log('Subscription limit reached - triggering upsell modal');
+        // Force trigger the subscription check again to show modal
+        const accessInfo = await checkFeatureAccess('ai_tutor_daily');
+        if (!accessInfo.has_access) {
+          // The upsell modal should appear automatically
+          return;
+        }
+      } else {
+        // For other errors (network, server), put message back in input
+        setCurrentMessage(messageToSend);
+      }
     } finally {
       setLoading(false);
     }
