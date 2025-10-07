@@ -1,22 +1,18 @@
 <analysis>
-The AI engineer's work spanned several critical feature enhancements and bug fixes. Initially, efforts focused on enhancing the AI Tutor's UI/UX with gamification elements and implementing a hybrid subscription system, including backend logic, API endpoints, and frontend components like an upsell modal. A persistent authentication issue consistently blocked full frontend testing during this phase. Subsequently, the engineer addressed a user request for structured, engaging Professor/Mentor responses, involving extensive modifications to frontend formatting logic in  and , and refining backend LLM prompts in . Following this, user feedback on a cluttered AI Tutor header and non-functional Study Actions was resolved by simplifying the UI and implementing user feedback for existing action handlers. Most recently, a major blocker was addressed: ensuring the subscription upsell modal triggers consistently across the application. This involved globally rendering the  in , integrating  and  into  and , and enhancing  and  to handle richer upsell data. A compilation error in  was debugged and fixed by correctly wrapping JSX elements in a React fragment. Frontend testing remains blocked by the authentication issue, despite backend testing for the new features being partially completed.
+The AI engineer's work in this trajectory primarily focused on two critical areas: resolving a persistent frontend authentication issue and improving error handling for the AI Tutor module, particularly concerning subscription limits and backend service failures. Initially, the engineer successfully debugged and fixed a compilation error in  by wrapping JSX elements in a React fragment, ensuring the global  rendering. Subsequently, a major authentication problem, causing token deletion and redirects, was meticulously investigated. A  helped identify a potential hardcoded URL issue, but the engineer opted to enhance  error handling to robustly manage API failures without premature logouts. This fix was thoroughly validated, confirming successful logins and session persistence across protected routes.
+
+Following the authentication fix, the engineer addressed user feedback regarding the AI Tutor: messages returning to the input field on backend errors instead of triggering a subscription popup for limit issues. Diagnosis revealed that  incorrectly returned messages to input for *any* error. The engineer implemented refined error handling, distinguishing between subscription-related (402/429) and server-side (500) errors, ensuring user-friendly system error messages are displayed while preparing the system to trigger the upsell modal for actual subscription limits. A temporary JavaScript syntax error introduced during these UI changes was also swiftly identified and resolved. The trajectory concludes with the AI Tutor's error handling confirmed as robust and user-centric, meeting market standards.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project, an Indian B2C EdTech platform, focuses on competitive exam preparation using Neuro-Symbolic AI.
-**Landing Page**: Cinematic homepage with Hero, Problem→Solution, Core Features, Cinematic Demo, Testimonials, Pricing, Trust & Tech, CTA, and Footer sections. Requires a futuristic, motivational, premium design with blue-indigo theme, smooth animations, and specific copy.
-**AI Tutor Module**: Enhanced topic detection, structured Professor/Mentor responses (warm intro, concept setup, step-by-step with LaTeX/visual indicators), interactive UI, micro-animations, voice input, verified badges, streak bar, XP popups, and scrollable quick prompt cards. The  bug was fixed. Header UI needs to be clean, professional, and not overwhelming. Study Actions buttons must be functional and provide feedback.
-**Auto-Note Mentor Module**: Features Live Recording, File Upload, and Notes Library Integration (Recent Notes Widget, Notes Library Screen). Notes require student-friendly formatting. Future enhancements include PDF/image OCR, spaced-repetition, and vector store integration.
-**Student Dashboard**: Dynamic AI-driven Todays Focus," "AI Insights Widget," and "Recent Notes Preview Block."
-**Hybrid Subscription System**: "Pay for Progress, Not Access" model (Free, Premium, Pro tiers). Backend enforces limits via `planConfig.json`, tracks `subscriptionTier`, `dailyUsage`, `xpPoints`. Frontend implements smart access control, AI Upsell Flow (dialogue, blur overlay, tooltips, CTAs), gamification (XP bar, streak), and "Manage Plan" in Profile Settings. Critical requirement: a proper, market-standard subscription limit popup must consistently trigger when limits are reached.
+The Dhruv AI project is an Indian B2C EdTech platform leveraging Neuro-Symbolic AI for competitive exam prep. Its core features include a **Landing Page** with a futuristic, motivational design, **AI Tutor Module** offering enhanced topic detection, structured Professor/Mentor responses (with LaTeX/visuals), interactive UI, gamification (badges, streak, XP), and functional Study Actions. The **Auto-Note Mentor Module** provides live recording, file upload, and a Notes Library Integration with future plans for OCR, spaced-repetition, and vector stores. The **Student Dashboard** features dynamic Todays Focus," "AI Insights Widget," and "Recent Notes Preview." A **Hybrid Subscription System** ("Pay for Progress, Not Access") with Free, Premium, Pro tiers enforces limits via `planConfig.json` and tracks `subscriptionTier`, `dailyUsage`, `xpPoints`. It implements smart access control, an AI Upsell Flow (dialogue, blur, tooltips), and gamification, with a critical requirement for a consistent, market-standard subscription limit popup.
 </product_requirements>
 
 <key_technical_concepts>
 - **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
 - **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering, AI-driven content generation.
-- **Data Handling**: Pydantic models, UUIDs, datetime, ISO strings, `pytz`.
 - **Backend**: FastAPI routing, `asyncio`, `emergentintegrations`, `planConfig.json` for feature limits.
-- **UI/UX**: React hooks, Context API, Tailwind CSS, Lucide React, CSS animations, mobile responsiveness.
+- **UI/UX**: React hooks, Context API, Tailwind CSS, Lucide React, CSS animations.
 - **Gamification**: XP tracking, Streak system.
 - **Subscription**: Tier-based access, usage tracking, upsell modals.
 </key_technical_concepts>
@@ -81,27 +77,30 @@ The Dhruv AI project, an Indian B2C EdTech platform, focuses on competitive exam
     - **Summary**: Significant additions for engagement and subscription models. Modified existing AI endpoints to integrate `EngagementService.record_interaction` and `SubscriptionService.check_feature_access`/`record_usage`. Recent changes include updating `ProfessorAI` and `MentorAI` system prompts and fallback methods to generate structured responses as per user requirements, and fixing `complexity_level` definition.
 - **`/app/backend/planConfig.json`**: Defines feature limits for subscription tiers. No recent changes.
 - **`/app/frontend/src/App.js`**: Main application structure and routing.
-    - **Summary**: Modified to wrap routes with `SubscriptionProvider`. Recently fixed a compilation error by wrapping `Routes` and `UpsellModal` in a React Fragment, ensuring the `UpsellModal` is rendered globally.
+    - **Summary**: Modified to wrap routes with `SubscriptionProvider`. Fixed a compilation error by wrapping `Routes` and `UpsellModal` in a React Fragment, ensuring the `UpsellModal` is rendered globally.
 - **`/app/frontend/src/components/AITutor.js`**: React component for the AI Tutor.
-    - **Summary**: Heavily modified for UI/UX enhancements, gamification, and subscription integration. Recent changes include using `formatStructuredAIResponse` for AI responses, simplifying the header display to essential information, and improving "Study Actions" handlers with toast notifications for user feedback.
+    - **Summary**: Heavily modified for UI/UX enhancements, gamification, and subscription integration. Recent changes include using `formatStructuredAIResponse` for AI responses, simplifying the header display, and improving "Study Actions" handlers.
+    - **Changes**: Enhanced `sendMessage` error handling to distinguish between subscription (402/429) and server (500) errors. Implemented conditional rendering for a new `system_error` message type to display user-friendly error messages, clear the input field on server errors, and ensure the upsell modal is triggered for subscription limits. Fixed syntax errors (misplaced comments/brackets) introduced during these modifications.
 - **`/app/frontend/src/components/FormattedAIResponse.js`**: Component for displaying AI responses.
     - **Summary**: Modified to introduce `formatStructuredAIResponse` for structured Professor/Mentor outputs, and updated `DualResponseContainer` to use this new formatting for primary and secondary responses. Also, simplified and enhanced "Study Actions" rendering to provide better user feedback.
 - **`/app/frontend/src/components/MockTests.js`**: React component for mock tests.
-    - **Summary**: Recently modified to integrate `useSubscription` hook, add `checkFeatureAccess` before generating tests, record usage upon successful test generation, and display usage indicators in the header.
+    - **Summary**: Modified to integrate `useSubscription` hook, add `checkFeatureAccess` before generating tests, record usage upon successful test generation, and display usage indicators in the header.
 - **`/app/frontend/src/components/AutoNoteMentor.js`**: React component for Auto-Note Mentor.
-    - **Summary**: Recently modified to integrate `useSubscription` hook, add `checkFeatureAccess` before file upload and recording, record usage upon successful processing/recording, and display usage indicators in the header.
+    - **Summary**: Modified to integrate `useSubscription` hook, add `checkFeatureAccess` before file upload and recording, record usage upon successful processing/recording, and display usage indicators in the header.
 - **`/app/frontend/src/components/UpsellModal.js`**: Component for displaying dynamic AI-driven upsell dialogues.
-    - **Summary**: Created to display dynamic AI-driven upsell dialogues. Recently updated to correctly consume enhanced `upsellInfo` (mentor/professor messages, descriptions, benefits) passed from the `SubscriptionContext`.
+    - **Summary**: Created to display dynamic AI-driven upsell dialogues. Updated to correctly consume enhanced `upsellInfo` (mentor/professor messages, descriptions, benefits) passed from the `SubscriptionContext`.
+- **`/app/frontend/src/contexts/AuthContext.js`**: Provides authentication state and functions.
+    - **Summary**: Manages user authentication state, login, logout, and token handling.
+    - **Changes**: Improved error handling within the `checkAuth` logic (specifically when calling `/api/user/profile`) to prevent premature `logout()` calls for non-authentication related API failures, and refined `useEffect` dependencies to prevent race conditions.
 - **`/app/frontend/src/contexts/SubscriptionContext.js`**: Provides subscription state and functions.
-    - **Summary**: Provides subscription-related state and functions. Recently enhanced `checkFeatureAccess` to consistently trigger the `UpsellModal` with a richer `upsellInfo` data structure.
+    - **Summary**: Provides subscription-related state and functions. Enhanced `checkFeatureAccess` to consistently trigger the `UpsellModal` with a richer `upsellInfo` data structure.
 - **`/app/frontend/src/index.css`**: Global CSS file.
     - **Summary**: Updated to include CSS classes for structured AI response display.
 - **`/app/test_result.md`**: Documents testing outcomes.
-    - **Summary**: Records landing page testing, dashboard feature testing, AI Tutor frontend testing failure (due to auth), successful backend testing for engagement and subscription APIs. Recently updated to include tasks and priorities for AI formatting and subscription enhancements.
+    - **Summary**: Records landing page testing, dashboard feature testing, AI Tutor frontend testing failure (due to auth), successful backend testing for engagement and subscription APIs. Updated to include tasks and priorities for AI formatting and subscription enhancements. Most recently, updated to reflect the successful resolution of the authentication issue.
 </code_architecture>
 
 <pending_tasks>
-- Address persistent session/authentication issues (dashboard and AI Tutor redirect to login) to enable full frontend testing.
 - Conduct comprehensive frontend automated testing for the enhanced AI Tutor module (UI, gamification, structured responses).
 - Conduct comprehensive frontend automated testing for the new hybrid subscription system and upsell flow.
 - Conduct comprehensive frontend automated testing for the dynamic AI-driven "Todays Focus section.
@@ -110,24 +109,26 @@ The Dhruv AI project, an Indian B2C EdTech platform, focuses on competitive exam
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was focused on addressing critical user feedback regarding the subscription system and a compilation issue.
+Immediately prior to this summary, the AI engineer was focused on resolving a critical user-reported issue within the AI Tutor module: when a message was sent and a backend error occurred, the user's message would reappear in the input field instead of displaying a clear error or subscription upsell.
 
-1.  **Subscription Limit Popup (Upsell Modal)**: The user reported a blocker that a proper popup should be displayed when subscription limits are reached.
-    *   **Diagnosis**: The  was found not to be rendered globally in . Additionally,  and  were missing subscription checks.
-    *   **Implementation**:
-        *   : Modified to render the  globally using  from .
-        *   :  function was enhanced to consistently trigger the  with a more detailed  payload.
-        *   : Updated to correctly consume the new, richer  for dynamic dialogue, descriptions, and benefits.
-        *   : Integrated , added  before ,  upon successful test generation, and added a  in the header.
-        *   : Integrated , added  before  and ,  upon successful file processing/recording, and added a  in the header.
-    *   **Testing**: Backend testing was run for the subscription system (Chat 241), but reported as incomplete, with frontend testing blocked by the authentication issue.
+**Diagnosis**:
+1.  Initial investigation showed authentication issues leading to redirects, which were subsequently fixed by improving  to handle API failures gracefully without triggering logout.
+2.  Upon re-testing the AI Tutor, it was found that the  function in  incorrectly returned the user's message to the input field for *any* error (including backend 500s or potential subscription 402/429s), instead of providing appropriate feedback. The backend's  endpoint was returning a 500 Internal Server Error, indicating an AI service configuration issue, not a subscription limit directly.
 
-2.  **Compilation Issue Fix**: The user reported a  in  at line 113.
-    *   **Diagnosis**: The  component, when added for global rendering, was placed outside the single JSX root element in .
-    *   **Implementation**:  was modified to wrap the main  and the  within a  () to resolve the JSX syntax error.
-    *   **Verification**: Frontend service status and logs confirmed successful compilation (Chat 252-255). A screenshot verified the landing page loaded correctly (Chat 256).
+**Implementation**:
+1.  **AITutor.js Refinement**: The error handling within the  function was enhanced to distinguish between different types of API responses.
+    *   For backend server errors (e.g., 500 status codes), the input field is now cleared, and a user-friendly system error message () is displayed directly in the chat conversation.
+    *   The code was prepared to trigger the  explicitly for subscription-related errors (e.g., 402/429 status codes), although the immediate issue was a 500.
+    *   Conditional rendering for a new  message type was added to the UI, ensuring these messages are styled appropriately (e.g., red/orange) and include a timestamp.
+2.  **Syntax Fixes**: During these  modifications, a JavaScript syntax error (improperly placed comment/bracket) was introduced and quickly identified via browser console logs and resolved.
+
+**Verification**:
+*   Frontend services were restarted after each code modification.
+*   Screenshots and console logs confirmed that the input field now correctly clears after a message is sent and a server error occurs.
+*   A professional, red/orange-themed error message with a timestamp is now displayed within the AI Tutor conversation area, providing clear feedback to the user, effectively resolving the reported UX issue.
+*   The system is now correctly structured to trigger the  when actual subscription limits are reached.
 </current_work>
 
 <optional_next_step>
-The next step is to address the persistent authentication issue to unblock all frontend testing.
+Conduct comprehensive frontend automated testing for the enhanced AI Tutor module and the new hybrid subscription system.
 </optional_next_step>
