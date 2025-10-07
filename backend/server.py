@@ -8351,7 +8351,215 @@ async def create_class_series(
         logger.error(f"Class series creation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create class series")
 
-# Duplicate removed - moved earlier in file for proper routing
+# PHASE 2: Enhanced Audio Processing Endpoints
+
+@api_router.get("/auto-notes/processing-status/{session_id}")
+async def get_processing_status(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get real-time processing status for audio enhancement/transcription"""
+    try:
+        # Get session with task info
+        session_doc = await db.auto_note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        task_id = session_doc.get('celery_task_id')
+        
+        if not task_id or not AUDIO_PROCESSING_ENABLED:
+            return {
+                "session_id": session_id,
+                "status": session_doc.get('status', 'unknown'),
+                "progress": session_doc.get('processing_progress', 0),
+                "stage": session_doc.get('processing_stage', 'unknown')
+            }
+        
+        # Get Celery task status
+        from celery_app import app as celery_app
+        task_result = celery_app.AsyncResult(task_id)
+        
+        status_info = {
+            "session_id": session_id,
+            "task_id": task_id,
+            "status": task_result.status,
+            "progress": 0,
+            "stage": "unknown",
+            "message": "",
+            "error": None
+        }
+        
+        if task_result.status == 'PROGRESS':
+            progress_info = task_result.info
+            status_info.update({
+                "progress": progress_info.get('percentage', 0),
+                "stage": progress_info.get('message', 'processing'),
+                "current": progress_info.get('current', 0),
+                "total": progress_info.get('total', 100)
+            })
+        elif task_result.status == 'SUCCESS':
+            result = task_result.result
+            if result['status'] == 'success':
+                # Process completed successfully, update session
+                processed_data = result['data']
+                
+                await db.auto_note_sessions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {
+                        "status": "completed",
+                        "transcription": processed_data['transcription'],
+                        "processing_progress": 100,
+                        "processing_stage": "completed",
+                        "audio_analysis": processed_data['audio_analysis'],
+                        "context_info": processed_data['context_info'],
+                        "processing_stats": processed_data['processing_stats']
+                    }}
+                )
+                
+                status_info.update({
+                    "progress": 100,
+                    "stage": "completed",
+                    "message": "Audio processing completed successfully!",
+                    "transcription_length": len(processed_data['transcription']),
+                    "quality_score": processed_data['audio_analysis'].get('quality_score', 0),
+                    "detected_subjects": processed_data['context_info'].get('detected_subjects', [])
+                })
+            else:
+                status_info.update({
+                    "status": "FAILURE",
+                    "error": result['error'],
+                    "message": f"Processing failed: {result['error']}"
+                })
+        elif task_result.status == 'FAILURE':
+            status_info.update({
+                "error": str(task_result.info),
+                "message": f"Processing failed: {task_result.info}"
+            })
+        
+        return status_info
+        
+    except Exception as e:
+        logger.error(f"Status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get processing status")
+
+@api_router.post("/auto-notes/enhance-audio-only")
+async def enhance_audio_only(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user)
+):
+    """
+    PHASE 2: Audio enhancement only (no transcription)
+    Useful for improving audio quality before manual review
+    """
+    try:
+        if not AUDIO_PROCESSING_ENABLED:
+            raise HTTPException(status_code=503, detail="Audio enhancement not available")
+        
+        # Validate and save file
+        file_content = await file.read()
+        
+        import tempfile
+        temp_dir = Path(tempfile.gettempdir()) / "dhruv_ai_audio"
+        temp_dir.mkdir(exist_ok=True)
+        
+        input_path = temp_dir / f"input_{uuid.uuid4().hex}.wav"
+        output_path = temp_dir / f"enhanced_{uuid.uuid4().hex}.wav"
+        
+        with open(input_path, 'wb') as f:
+            f.write(file_content)
+        
+        # Start enhancement task
+        task = enhance_audio_async.delay(str(input_path), str(output_path))
+        
+        return {
+            "task_id": task.id,
+            "status": "processing",
+            "message": "Audio enhancement started. Use task ID to check progress."
+        }
+        
+    except Exception as e:
+        logger.error(f"Audio enhancement error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhancement failed: {str(e)}")
+
+@api_router.get("/auto-notes/audio-quality-analysis/{session_id}")
+async def get_audio_quality_analysis(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Get detailed audio quality analysis for a processed session"""
+    try:
+        session_doc = await db.auto_note_sessions.find_one({
+            "session_id": session_id,
+            "user_id": user.user_id
+        })
+        
+        if not session_doc:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        audio_analysis = session_doc.get('audio_analysis', {})
+        processing_stats = session_doc.get('processing_stats', {})
+        
+        if not audio_analysis:
+            raise HTTPException(status_code=404, detail="Audio analysis not available")
+        
+        return {
+            "session_id": session_id,
+            "audio_quality": {
+                "overall_score": audio_analysis.get('quality_score', 0),
+                "rating": audio_analysis.get('quality_rating', 'unknown'),
+                "signal_to_noise_db": audio_analysis.get('snr_estimate_db', 0),
+                "volume_levels": {
+                    "rms_level": audio_analysis.get('rms_level', 0),
+                    "peak_level": audio_analysis.get('peak_level', 0)
+                },
+                "silence_analysis": {
+                    "silence_percentage": audio_analysis.get('silence_percentage', 0)
+                },
+                "duration_seconds": audio_analysis.get('duration_seconds', 0)
+            },
+            "processing_info": {
+                "enhancement_applied": processing_stats.get('enhancement_applied', False),
+                "original_sample_rate": processing_stats.get('original_sample_rate', 0),
+                "processed_sample_rate": processing_stats.get('processed_sample_rate', 0)
+            },
+            "recommendations": generate_audio_recommendations(audio_analysis)
+        }
+        
+    except Exception as e:
+        logger.error(f"Audio analysis retrieval error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get audio analysis")
+
+def generate_audio_recommendations(analysis: Dict[str, Any]) -> List[str]:
+    """Generate recommendations based on audio analysis"""
+    recommendations = []
+    
+    quality_score = analysis.get('quality_score', 0)
+    snr_db = analysis.get('snr_estimate_db', 0)
+    silence_pct = analysis.get('silence_percentage', 0)
+    
+    if quality_score < 40:
+        recommendations.append("🎤 Consider using an external microphone for better audio quality")
+    
+    if snr_db < 15:
+        recommendations.append("🔇 Try recording in a quieter environment to reduce background noise")
+    
+    if silence_pct > 30:
+        recommendations.append("🗣️ Speak more consistently or edit out long silent periods")
+    
+    if analysis.get('peak_level', 0) > 0.95:
+        recommendations.append("📉 Reduce input volume to prevent audio clipping")
+    
+    if analysis.get('rms_level', 0) < 0.1:
+        recommendations.append("📈 Increase microphone sensitivity or speak louder")
+    
+    if not recommendations:
+        recommendations.append("✅ Excellent audio quality! Your recording setup is optimized.")
+    
+    return recommendations
 
 # Helper functions for note analysis
 def extract_concepts_from_text(text: str) -> List[str]:
