@@ -1816,8 +1816,8 @@ export default function MockTests() {
                   </div>
                 )}
                 
-                {/* Emergency Reset Button - Shows if any buttons are stuck loading */}
-                {Object.values(loadingStates).some(loading => loading) && (
+                {/* Slow Generation Warning - Shows after 10 second delay */}
+                {Object.values(slowGenerationStates).some(slow => slow) && (
                   <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
