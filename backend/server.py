@@ -21,11 +21,22 @@ from PyPDF2 import PdfReader
 from PIL import Image
 import math
 from lightweight_embeddings import get_embedding_service
-import pydantic
 from bson.objectid import ObjectId
+from fastapi.responses import JSONResponse as FastAPIJSONResponse
+from fastapi.encoders import jsonable_encoder
+import json as json_lib
 
-# Configure Pydantic to handle MongoDB ObjectId serialization
-pydantic.json.ENCODERS_BY_TYPE[ObjectId] = str
+# Custom JSONResponse that handles MongoDB ObjectId serialization
+class JSONResponse(FastAPIJSONResponse):
+    def render(self, content: any) -> bytes:
+        return json_lib.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            default=lambda obj: str(obj) if isinstance(obj, ObjectId) else obj,
+        ).encode("utf-8")
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
