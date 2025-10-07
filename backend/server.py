@@ -6313,7 +6313,7 @@ async def check_feature_access_endpoint(
                 )
         
         # User has access - return 200 OK with access info
-        return access_info
+        return clean_mongodb_doc(access_info)
     except HTTPException:
         # Re-raise HTTPExceptions (like our 402s above)
         raise
