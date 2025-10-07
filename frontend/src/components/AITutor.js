@@ -305,6 +305,26 @@ export default function AITutor() {
     }
   };
 
+  // Update session title if topic is detected
+  const updateSessionTitleIfNeeded = async (sessionId, detectedTopic, firstMessage) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token || !detectedTopic || detectedTopic === 'General') return;
+
+      // Create a more specific title based on detected topic
+      const messageExcerpt = firstMessage.substring(0, 30).trim();
+      const newTitle = `${detectedTopic}: ${messageExcerpt}${messageExcerpt.length < 30 ? '' : '...'}`;
+
+      await axios.put(`${API}/chat/${sessionId}/rename`, {
+        title: newTitle
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Failed to update session title:', error);
+    }
+  };
+
   // Save message to session - extract clean text only
   const saveMessageToSession = async (sessionId, message, aiResponse) => {
     try {
