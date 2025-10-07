@@ -659,93 +659,52 @@ export function DualResponseContainer({
           </div>
         )}
 
-        {/* Action Buttons */}
-        {actionButtons && (
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <Button
-              variant="ghost"
-              onClick={() => toggleSection('actions')}
-              className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
-            >
-              <div className="flex items-center space-x-2">
-                <Zap className="h-4 w-4 text-teal-600" />
-                <span className="font-medium text-gray-700">Study Actions</span>
-                <Badge variant="outline" className="text-xs">
-                  Enhance Learning
-                </Badge>
-              </div>
-              {expandedSections.actions ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+        {/* Essential Actions Only - Student Focused */}
+        {actionButtons && (actionButtons.add_to_notes_available || actionButtons.practice_more_available) && (
+          <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50">
+            <h4 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
+              <Zap className="h-4 w-4 text-blue-600 mr-2" />
+              Quick Actions
+            </h4>
+            <div className="flex gap-3">
+              {actionButtons.add_to_notes_available && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onAddToNotes();
+                    // Show immediate feedback
+                    const btn = event.target.closest('button');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<span class="flex items-center"><svg class="h-4 w-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Saved!</span>';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                  }}
+                  className="flex-1 flex items-center justify-center py-2 hover:bg-blue-50 border-blue-200"
+                >
+                  <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
+                  <span className="font-medium">Save to Notes</span>
+                </Button>
               )}
-            </Button>
-            
-            {expandedSections.actions && (
-              <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <div className="grid grid-cols-2 gap-3">
-                  {actionButtons.practice_more_available && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onPracticMore}
-                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
-                    >
-                      <Target className="h-4 w-4 mr-2 text-teal-600" />
-                      <div>
-                        <div className="text-xs font-medium">Practice More</div>
-                        <div className="text-xs text-gray-500">Similar problems</div>
-                      </div>
-                    </Button>
-                  )}
-                  
-                  {actionButtons.add_to_notes_available && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onAddToNotes}
-                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
-                    >
-                      <BookOpen className="h-4 w-4 mr-2 text-teal-600" />
-                      <div>
-                        <div className="text-xs font-medium">Add to Notes</div>
-                        <div className="text-xs text-gray-500">Save for later</div>
-                      </div>
-                    </Button>
-                  )}
-                  
-                  {actionButtons.create_flashcards_available && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onCreateFlashcards}
-                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
-                    >
-                      <CreditCard className="h-4 w-4 mr-2 text-teal-600" />
-                      <div>
-                        <div className="text-xs font-medium">Turn into Deck</div>
-                        <div className="text-xs text-gray-500">Make flashcards</div>
-                      </div>
-                    </Button>
-                  )}
-                  
-                  {actionButtons.schedule_revision_available && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={onScheduleRevision}
-                      className="flex items-center justify-center p-3 text-center hover:bg-teal-50 border-teal-200"
-                    >
-                      <Clock className="h-4 w-4 mr-2 text-teal-600" />
-                      <div>
-                        <div className="text-xs font-medium">Schedule Revision</div>
-                        <div className="text-xs text-gray-500">Spaced learning</div>
-                      </div>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
+              
+              {actionButtons.practice_more_available && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onPracticMore();
+                    // Show immediate feedback
+                    const btn = event.target.closest('button');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<span class="flex items-center"><svg class="h-4 w-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Loading...</span>';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                  }}
+                  className="flex-1 flex items-center justify-center py-2 hover:bg-purple-50 border-purple-200"
+                >
+                  <Target className="h-4 w-4 mr-2 text-purple-600" />
+                  <span className="font-medium">Practice Similar</span>
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
