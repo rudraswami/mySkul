@@ -1827,8 +1827,6 @@ export default function AITutor() {
 
                   {/* Only show AI response for non-system-error messages */}
                   {message.type !== 'system_error' && (
-
-                  {/* AI Response */}
                   <div className="flex justify-start">
                     <div className="max-w-5xl w-full">
                       {message.dual_response ? (
