@@ -116,6 +116,13 @@ export default function AutoNoteMentor() {
   const mediaRecorderRef = useRef(null);
   const recordingTimerRef = useRef(null);
   const chunkCounterRef = useRef(0);
+  
+  // Enhanced Audio Analysis Refs (Phase 1)
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const streamRef = useRef(null);
+  const silenceTimeoutRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   const subjects = {
     'JEE': ['Mathematics', 'Physics', 'Chemistry'],
