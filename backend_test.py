@@ -12699,16 +12699,170 @@ if __name__ == "__main__":
     # Run the specific 402 response fix test as requested in the review
     print("🚨 CRITICAL VALIDATION - ISSUE 2: SUBSCRIPTION ACCESS FIX TESTING")
     print("Testing the /api/subscription/check-access endpoint fix for proper 402 status codes")
-    success = tester.test_subscription_check_access_402_response_fix()
     
-    if success:
-        print("\n🎉 ISSUE 2 FIX VALIDATION: SUCCESS")
-        print("✅ checkFeatureAccess returns proper HTTP 402 status codes")
-        print("✅ Response contains clean upsell_info without ObjectId errors")
-        print("✅ has_access=false correctly triggers 402 response")
-        sys.exit(0)
+    # Create fresh free tier user with mock_tests_weekly limit of 2
+    print("\n📝 Step 1: Create Fresh Free Tier User")
+    fresh_user_email = f"test_402_fix_{int(time.time())}@dhruvai.com"
+    registration_data = {
+        "full_name": "Test 402 Fix User",
+        "email": fresh_user_email,
+        "password": "password123",
+        "exam_type": "JEE",
+        "grade": "Class 12",
+        "target_year": 2026
+    }
+    
+    print(f"   Creating user: {fresh_user_email}")
+    success, response = tester.run_test(
+        "Create Fresh User for 402 Fix Test",
+        "POST",
+        "auth/register",
+        200,
+        data=registration_data
+    )
+    
+    if not success or 'token' not in response:
+        print("❌ Failed to create fresh user - cannot proceed")
+        sys.exit(1)
+    
+    fresh_token = response['token']
+    fresh_user_id = response.get('user', {}).get('user_id', 'unknown')
+    print(f"   ✅ Fresh user created: {fresh_user_id}")
+    print(f"   ✅ Token obtained: {fresh_token[:20]}...")
+    
+    # Generate 2 mock tests to exhaust quota
+    print("\n🎯 Step 2: Generate 2 Mock Tests to Exhaust Quota")
+    mock_test_data = {
+        "exam_type": "JEE",
+        "subjects": ["Mathematics"],
+        "difficulty_level": 3,
+        "num_questions": 5
+    }
+    
+    tests_generated = 0
+    
+    for i in range(2):  # Generate exactly 2 tests
+        print(f"   Generating test {i+1}/2...")
+        
+        success, response = tester.run_test(
+            f"Mock Test Generation - Test {i+1}",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        if success and 'test_id' in response:
+            tests_generated += 1
+            test_id = response['test_id']
+            print(f"   ✅ Test {i+1} generated successfully (ID: {test_id})")
+        else:
+            status_code = getattr(tester, 'last_response_status', 0)
+            print(f"   ❌ Test {i+1} failed with status {status_code}")
+            if status_code in [402, 429]:
+                print(f"   🎯 Quota exhausted early at test {i+1}")
+                break
+        
+        time.sleep(2)  # Delay between generations
+    
+    print(f"   📊 Successfully generated {tests_generated} tests")
+    
+    # Test /api/subscription/check-access endpoint and verify 402 status
+    print("\n🚨 Step 3: Test Check-Access Endpoint for 402 Status Code")
+    print("   This is the CRITICAL test - endpoint should return HTTP 402 Payment Required")
+    
+    check_access_data = {
+        "feature_name": "mock_tests_weekly"
+    }
+    
+    success, response = tester.run_test(
+        "Check Access - After Quota Exhaustion (CRITICAL TEST)",
+        "POST",
+        "subscription/check-access",
+        402,  # EXPECTING 402 Payment Required (NOT 200 OK)
+        data=check_access_data,
+        headers={'Authorization': f'Bearer {fresh_token}'}
+    )
+    
+    status_code = getattr(tester, 'last_response_status', 0)
+    
+    print(f"\n🔍 CRITICAL ANALYSIS - Check-Access Response:")
+    print(f"   Status Code: {status_code}")
+    print(f"   Expected: 402 Payment Required")
+    print(f"   Actual: {status_code}")
+    
+    if status_code == 402:
+        print("   ✅ SUCCESS: Endpoint correctly returns HTTP 402 Payment Required")
+        
+        # Verify response structure
+        has_access = response.get('has_access', True)
+        upgrade_needed = response.get('upgrade_needed', False)
+        upsell_info = response.get('upsell_info', {})
+        
+        print(f"   📊 Response Structure Validation:")
+        print(f"      has_access: {has_access} (should be false)")
+        print(f"      upgrade_needed: {upgrade_needed} (should be true)")
+        print(f"      upsell_info present: {bool(upsell_info)}")
+        
+        # Validate upsell_info structure
+        if upsell_info:
+            mentor_message = upsell_info.get('mentor_message', '')
+            professor_message = upsell_info.get('professor_message', '')
+            target_plan = upsell_info.get('target_plan', {})
+            
+            print(f"      mentor_message: {'✓' if mentor_message else '✗'}")
+            print(f"      professor_message: {'✓' if professor_message else '✗'}")
+            print(f"      target_plan: {'✓' if target_plan else '✗'}")
+            
+            if mentor_message and professor_message and target_plan:
+                print("   ✅ Complete upsell_info structure present")
+                
+                # Check for ObjectId serialization issues
+                try:
+                    import json
+                    json.dumps(response)  # Try to serialize the response
+                    print("   ✅ No ObjectId serialization errors")
+                    
+                    print("\n🎉 ISSUE 2 FIX VALIDATION: SUCCESS")
+                    print("   ✅ checkFeatureAccess returns proper HTTP 402 status codes")
+                    print("   ✅ Response contains clean upsell_info without ObjectId errors")
+                    print("   ✅ has_access=false correctly triggers 402 response")
+                    sys.exit(0)
+                except Exception as e:
+                    print(f"   ❌ ObjectId serialization error: {e}")
+                    sys.exit(1)
+            else:
+                print("   ❌ Incomplete upsell_info structure")
+                sys.exit(1)
+        else:
+            print("   ❌ Missing upsell_info in 402 response")
+            sys.exit(1)
+            
+    elif status_code == 200:
+        print("   ❌ CRITICAL ISSUE: Endpoint returns HTTP 200 OK instead of 402")
+        print("   🚨 This is the exact issue reported - fix has NOT been applied")
+        
+        # Still check response structure for debugging
+        has_access = response.get('has_access', True)
+        upgrade_needed = response.get('upgrade_needed', False)
+        
+        print(f"   📊 Response Analysis (for debugging):")
+        print(f"      has_access: {has_access}")
+        print(f"      upgrade_needed: {upgrade_needed}")
+        
+        if not has_access and upgrade_needed:
+            print("   🔧 DIAGNOSIS: Logic is correct but status code is wrong")
+            print("   🔧 RECOMMENDATION: Update endpoint to return 402 when has_access=false")
+        
+        sys.exit(1)
+        
     else:
-        print("\n❌ ISSUE 2 FIX VALIDATION: FAILED")
-        print("🚨 checkFeatureAccess endpoint still has issues")
-        print("🔧 Backend needs attention to fix 402 status code responses")
+        print(f"   ❌ UNEXPECTED STATUS: {status_code}")
+        error_data = getattr(tester, 'last_error_data', {})
+        print(f"   Error details: {error_data}")
+        
+        if status_code == 500:
+            print("   🚨 500 Internal Server Error - possible ObjectId serialization issue")
+        
         sys.exit(1)
