@@ -90,7 +90,9 @@ export default function UpsellModal({ isOpen, onClose }) {
                 <FeatureIcon className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Ready for the Next Level? 🚀</h2>
+                <h2 className="text-2xl font-bold">
+                  {upsellModal?.title || 'Ready for the Next Level? 🚀'}
+                </h2>
                 <p className="text-blue-100">Your learning journey is accelerating!</p>
               </div>
             </div>
