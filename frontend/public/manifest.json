@@ -1,0 +1,173 @@
+{
+  "name": "Dhruv AI Auto-Note Mentor",
+  "short_name": "Auto-Note Mentor",
+  "description": "AI-powered note-taking with studio-quality audio processing and contextual understanding",
+  "version": "1.0.0",
+  "start_url": "/auto-notes",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en",
+  
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png", 
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128", 
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Auto-Note Mentor Dashboard - Desktop"
+    },
+    {
+      "src": "/screenshots/mobile-recording.png", 
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Live Recording Interface - Mobile"
+    }
+  ],
+  
+  "features": [
+    "Cross-platform compatibility",
+    "Offline audio recording",
+    "Real-time transcription", 
+    "Audio enhancement",
+    "Context-aware note generation",
+    "Background sync"
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Start Recording",
+      "short_name": "Record",
+      "description": "Start a new live recording session", 
+      "url": "/auto-notes?action=record",
+      "icons": [
+        {
+          "src": "/icons/shortcut-record.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Upload Audio",
+      "short_name": "Upload", 
+      "description": "Upload and process audio file",
+      "url": "/auto-notes?action=upload",
+      "icons": [
+        {
+          "src": "/icons/shortcut-upload.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Previous Sessions",
+      "short_name": "Sessions",
+      "description": "View previous note sessions",
+      "url": "/auto-notes?view=sessions", 
+      "icons": [
+        {
+          "src": "/icons/shortcut-sessions.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  
+  "file_handlers": [
+    {
+      "action": "/auto-notes?upload=true",
+      "accept": {
+        "audio/*": [".mp3", ".wav", ".m4a", ".webm", ".ogg"],
+        "video/*": [".mp4", ".mov", ".avi"]
+      }
+    }
+  ],
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+dhruvai",
+      "url": "/auto-notes?action=%s"
+    }
+  ],
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "share_target": {
+    "action": "/auto-notes?share=true",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "audio_files",
+          "accept": ["audio/*", "video/*"]
+        }
+      ]
+    }
+  },
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "scope": "/",
+  "id": "dhruv-ai-auto-note-mentor",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}
