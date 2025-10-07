@@ -34,16 +34,30 @@ export function AuthProvider({ children }) {
         try {
           const response = await axios.get(`${API}/user/profile`);
           setUser(response.data);
+          console.log('Auth check successful:', response.data.email);
         } catch (error) {
           console.error('Auth check failed:', error);
-          logout();
+          console.error('Error status:', error.response?.status);
+          console.error('Error message:', error.response?.data?.detail || error.message);
+          
+          // Only logout for actual auth errors (401, 403), not network errors
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            console.log('Authentication failed - logging out');
+            logout();
+          } else {
+            console.log('Network error - keeping user logged in');
+            // For network errors, we'll keep the user logged in but log the error
+          }
         }
       }
       setLoading(false);
     };
 
-    checkAuth();
-  }, [token]);
+    // Prevent race conditions by checking if we already have a token
+    if (!loading) {
+      checkAuth();
+    }
+  }, [token, loading]);
 
   const login = async (email, password) => {
     try {
