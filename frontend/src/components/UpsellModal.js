@@ -288,7 +288,8 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
               <Button
                 onClick={handleLater}
                 variant="outline"
-                className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                className="border-gray-300 text-gray-600 hover:bg-gray-50 min-h-12 mobile-transition"
+                aria-label="Upgrade later"
               >
                 Maybe Later
               </Button>
