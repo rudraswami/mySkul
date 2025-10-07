@@ -853,10 +853,8 @@
 
 ## test_plan:
   current_focus:
-    - "Auto-Note Mentor Interactive Features"
-    - "AI Tutor Phase C: Guardrails System Testing"
-    - "AI Tutor Phase D: Action Buttons System Testing" 
-    - "AI Tutor Phase E: Wellness Integration Testing"
+    - "AI Tutor Enhanced Response Formatting"
+    - "Auto-Note Mentor Interactive Features" 
     - "AI Tutor Mobile Compatibility"
     - "Enhanced Topic Detection Logic"
   stuck_tasks:
