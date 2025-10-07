@@ -19,5 +19,17 @@ numpy==1.26.2
 scikit-learn==1.3.2
 requests==2.31.0
 emergentintegrations
-requests==2.31.0
 websockets==12.0
+# PHASE 2: Audio Processing Pipeline Dependencies
+openai-whisper==20231117
+torch==2.1.1
+torchaudio==2.1.1
+librosa==0.10.1
+noisereduce==3.0.0
+pydub==0.25.1
+ffmpeg-python==0.2.0
+celery==5.3.4
+redis==5.0.1
+# Audio enhancement libraries
+scipy==1.11.4
+soundfile==0.12.1
