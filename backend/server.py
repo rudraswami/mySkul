@@ -6318,12 +6318,12 @@ async def check_feature_access_endpoint(
 
 @api_router.post("/subscription/track-usage")
 async def track_feature_usage_endpoint(
-    feature_name: str,
+    request: FeatureAccessRequest,
     user: User = Depends(get_current_user)
 ):
     """Track feature usage for subscription limits"""
     try:
-        usage_result = await SubscriptionService.track_feature_usage(user.user_id, feature_name)
+        usage_result = await SubscriptionService.track_feature_usage(user.user_id, request.feature_name)
         return usage_result
     except Exception as e:
         logger.error(f"Usage tracking error: {str(e)}")
