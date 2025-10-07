@@ -1796,16 +1796,37 @@ export default function AITutor() {
               // Chat Messages
               messages.map((message, index) => (
                 <div key={index} className="space-y-4">
-                  {/* Clean User Message */}
-                  <div className="flex justify-end">
-                    <div className="max-w-2xl bg-blue-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
-                      <p className="text-sm leading-relaxed">{message.message}</p>
-                      <div className="flex items-center justify-end mt-2 text-xs text-blue-100">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <span>{formatTime(message.timestamp)}</span>
+                  {/* Handle system error messages differently */}
+                  {message.type === 'system_error' ? (
+                    <div className="flex justify-center">
+                      <div className="max-w-2xl bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 shadow-sm">
+                        <div className="flex items-center">
+                          <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
+                          <p className="text-sm leading-relaxed">{message.message}</p>
+                        </div>
+                        <div className="flex items-center justify-center mt-2 text-xs text-red-500">
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>{formatTime(message.timestamp)}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* Clean User Message */}
+                      <div className="flex justify-end">
+                        <div className="max-w-2xl bg-blue-500 text-white rounded-2xl rounded-br-md p-4 shadow-sm">
+                          <p className="text-sm leading-relaxed">{message.message}</p>
+                          <div className="flex items-center justify-end mt-2 text-xs text-blue-100">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{formatTime(message.timestamp)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Only show AI response for non-system-error messages */}
+                  {message.type !== 'system_error' && (
 
                   {/* AI Response */}
                   <div className="flex justify-start">
