@@ -1,134 +1,75 @@
 <analysis>
-The AI engineer's work in this trajectory primarily focused on two critical areas: resolving a persistent frontend authentication issue and improving error handling for the AI Tutor module, particularly concerning subscription limits and backend service failures. Initially, the engineer successfully debugged and fixed a compilation error in  by wrapping JSX elements in a React fragment, ensuring the global  rendering. Subsequently, a major authentication problem, causing token deletion and redirects, was meticulously investigated. A  helped identify a potential hardcoded URL issue, but the engineer opted to enhance  error handling to robustly manage API failures without premature logouts. This fix was thoroughly validated, confirming successful logins and session persistence across protected routes.
+The AI engineer's initial work focused on building an intelligent subscription flow, replacing generic errors with an upsell modal when quota limits are hit. This involved establishing a subscription error handler, integrating retry mechanisms into , , and , and modifying  for upgrade callbacks. Crucially, backend issues in  where 402 (Payment Required) exceptions were being converted to 500, and the  endpoint incorrectly returning 200 instead of 402 for denied access, were identified and addressed.
 
-Following the authentication fix, the engineer addressed user feedback regarding the AI Tutor: messages returning to the input field on backend errors instead of triggering a subscription popup for limit issues. Diagnosis revealed that  incorrectly returned messages to input for *any* error. The engineer implemented refined error handling, distinguishing between subscription-related (402/429) and server-side (500) errors, ensuring user-friendly system error messages are displayed while preparing the system to trigger the upsell modal for actual subscription limits. A temporary JavaScript syntax error introduced during these UI changes was also swiftly identified and resolved. The trajectory concludes with the AI Tutor's error handling confirmed as robust and user-centric, meeting market standards.
+The trajectory then shifted to user-reported API issues (login/registration errors), which were investigated and deemed not system failures. Subsequently, a critical AI Tutor error (Failed to send message upon reaching limits) resurfaced, leading to backend re-investigation confirming the  endpoint still wasn't consistently returning 402.
+
+A significant portion of the work then focused on comprehensive mobile responsiveness, optimizing , , , , , , , and  for touch targets and layout. Finally, multiple AI Tutor-specific bugs were addressed: dynamically updating chat session titles, ensuring chat history clickability after re-login by adding auth headers to , fixing the usage counter in  by calling , and confirming the Personalized Learning Active tab's functionality. The work culminated in fixing a  in .
 </analysis>
 
 <product_requirements>
-The Dhruv AI project is an Indian B2C EdTech platform leveraging Neuro-Symbolic AI for competitive exam prep. Its core features include a **Landing Page** with a futuristic, motivational design, **AI Tutor Module** offering enhanced topic detection, structured Professor/Mentor responses (with LaTeX/visuals), interactive UI, gamification (badges, streak, XP), and functional Study Actions. The **Auto-Note Mentor Module** provides live recording, file upload, and a Notes Library Integration with future plans for OCR, spaced-repetition, and vector stores. The **Student Dashboard** features dynamic Todays Focus," "AI Insights Widget," and "Recent Notes Preview." A **Hybrid Subscription System** ("Pay for Progress, Not Access") with Free, Premium, Pro tiers enforces limits via `planConfig.json` and tracks `subscriptionTier`, `dailyUsage`, `xpPoints`. It implements smart access control, an AI Upsell Flow (dialogue, blur, tooltips), and gamification, with a critical requirement for a consistent, market-standard subscription limit popup.
+The Dhruv AI project is a B2C EdTech platform for competitive exam preparation, featuring Neuro-Symbolic AI. Core functionalities include an **AI Tutor Module** with advanced topic detection, structured responses, interactive UI, and gamification, and an **Auto-Note Mentor Module** for live recording and file uploads. A **Student Dashboard** provides personalized insights. A **Hybrid Subscription System** (Free, Premium, Pro) enforces limits via , tracks , , and . A critical requirement is a consistent, market-standard subscription limit popup, triggering an upgrade modal on quota exhaustion or  failure, with animations and instant retry upon upgrade, applied across AI Tutor, Auto-Note Mentor, and Mock Test generation. Additionally, the application requires full mobile responsiveness across devices (320px-768px), addressing navigation, dashboard, AI Tutor, Auto-Note Mentor, Mock Tests, and Upsell Modal layouts and touch targets. Recent user reports highlight issues with static chat history topics, an incorrect usage counter, unclickable chat history after re-login, static AI response format, and a query regarding a Personalized Learning Active tab.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
-- **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering, AI-driven content generation.
-- **Backend**: FastAPI routing, `asyncio`, `emergentintegrations`, `planConfig.json` for feature limits.
-- **UI/UX**: React hooks, Context API, Tailwind CSS, Lucide React, CSS animations.
-- **Gamification**: XP tracking, Streak system.
-- **Subscription**: Tier-based access, usage tracking, upsell modals.
+-   **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
+-   **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering, AI-driven content generation.
+-   **Backend**: FastAPI routing, , HTTP status codes (402, 429, 500),  for limits.
+-   **Frontend**: React hooks, Context API (, ), Tailwind CSS, Mobile Responsiveness, .
+-   **Subscription**: Tier-based access, usage tracking, upsell modals.
 </key_technical_concepts>
 
 <code_architecture>
-```
-/app/
-├── backend/
-│   ├── .env
-│   ├── requirements.txt
-│   ├── server.py
-│   ├── lightweight_embeddings.py             
-│   └── planConfig.json                       
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── AITutor.js
-│   │   │   ├── Analytics.js
-│   │   │   ├── AutoNoteMentor.js
-│   │   │   ├── Dashboard.js
-│   │   │   ├── FormattedAIResponse.js
-│   │   │   ├── LandingPage.js              
-│   │   │   ├── LoginPage.js
-│   │   │   ├── MockTests.js
-│   │   │   ├── Navigation.js
-│   │   │   ├── ProfileSettings.js
-│   │   │   ├── RegisterPage.js
-│   │   │   ├── StudentDashboard.js
-│   │   │   ├── StressManagement.js
-│   │   │   ├── Subscription.js
-│   │   │   ├── UpsellModal.js                
-│   │   │   └── ui/
-│   │   │       ├── button.jsx
-│   │   │       ├── loading.jsx               
-│   │   │       ├── skeleton.jsx              
-│   │   │       ├── ... (other ui components)
-│   │   ├── hooks/
-│   │   │   └── useApiCall.js
-│   │   ├── contexts/
-│   │   │   ├── AuthContext.js
-│   │   │   └── SubscriptionContext.js        
-│   │   ├── lib/
-│   │   │   └── utils.js
-│   │   ├── App.css
-│   │   ├── App.js
-│   │   ├── index.css
-│   │   └── index.js
-│   ├── .env
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── tailwind.config.js
-│   └── yarn.lock
-├── docs/
-├── scripts/
-├── tests/
-└── README.md
-├── PENDING_TASKS.md
-└── AUTO_NOTE_MENTOR_PLAN.md
-```
-- **`/app/backend/server.py`**: Central FastAPI backend.
-    - **Summary**: Significant additions for engagement and subscription models. Modified existing AI endpoints to integrate `EngagementService.record_interaction` and `SubscriptionService.check_feature_access`/`record_usage`. Recent changes include updating `ProfessorAI` and `MentorAI` system prompts and fallback methods to generate structured responses as per user requirements, and fixing `complexity_level` definition.
-- **`/app/backend/planConfig.json`**: Defines feature limits for subscription tiers. No recent changes.
-- **`/app/frontend/src/App.js`**: Main application structure and routing.
-    - **Summary**: Modified to wrap routes with `SubscriptionProvider`. Fixed a compilation error by wrapping `Routes` and `UpsellModal` in a React Fragment, ensuring the `UpsellModal` is rendered globally.
-- **`/app/frontend/src/components/AITutor.js`**: React component for the AI Tutor.
-    - **Summary**: Heavily modified for UI/UX enhancements, gamification, and subscription integration. Recent changes include using `formatStructuredAIResponse` for AI responses, simplifying the header display, and improving "Study Actions" handlers.
-    - **Changes**: Enhanced `sendMessage` error handling to distinguish between subscription (402/429) and server (500) errors. Implemented conditional rendering for a new `system_error` message type to display user-friendly error messages, clear the input field on server errors, and ensure the upsell modal is triggered for subscription limits. Fixed syntax errors (misplaced comments/brackets) introduced during these modifications.
-- **`/app/frontend/src/components/FormattedAIResponse.js`**: Component for displaying AI responses.
-    - **Summary**: Modified to introduce `formatStructuredAIResponse` for structured Professor/Mentor outputs, and updated `DualResponseContainer` to use this new formatting for primary and secondary responses. Also, simplified and enhanced "Study Actions" rendering to provide better user feedback.
-- **`/app/frontend/src/components/MockTests.js`**: React component for mock tests.
-    - **Summary**: Modified to integrate `useSubscription` hook, add `checkFeatureAccess` before generating tests, record usage upon successful test generation, and display usage indicators in the header.
-- **`/app/frontend/src/components/AutoNoteMentor.js`**: React component for Auto-Note Mentor.
-    - **Summary**: Modified to integrate `useSubscription` hook, add `checkFeatureAccess` before file upload and recording, record usage upon successful processing/recording, and display usage indicators in the header.
-- **`/app/frontend/src/components/UpsellModal.js`**: Component for displaying dynamic AI-driven upsell dialogues.
-    - **Summary**: Created to display dynamic AI-driven upsell dialogues. Updated to correctly consume enhanced `upsellInfo` (mentor/professor messages, descriptions, benefits) passed from the `SubscriptionContext`.
-- **`/app/frontend/src/contexts/AuthContext.js`**: Provides authentication state and functions.
-    - **Summary**: Manages user authentication state, login, logout, and token handling.
-    - **Changes**: Improved error handling within the `checkAuth` logic (specifically when calling `/api/user/profile`) to prevent premature `logout()` calls for non-authentication related API failures, and refined `useEffect` dependencies to prevent race conditions.
-- **`/app/frontend/src/contexts/SubscriptionContext.js`**: Provides subscription state and functions.
-    - **Summary**: Provides subscription-related state and functions. Enhanced `checkFeatureAccess` to consistently trigger the `UpsellModal` with a richer `upsellInfo` data structure.
-- **`/app/frontend/src/index.css`**: Global CSS file.
-    - **Summary**: Updated to include CSS classes for structured AI response display.
-- **`/app/test_result.md`**: Documents testing outcomes.
-    - **Summary**: Records landing page testing, dashboard feature testing, AI Tutor frontend testing failure (due to auth), successful backend testing for engagement and subscription APIs. Updated to include tasks and priorities for AI formatting and subscription enhancements. Most recently, updated to reflect the successful resolution of the authentication issue.
+
+-   ****: Central FastAPI backend.
+    -   **Summary**: Handles API routes, AI logic, and subscription checks.
+    -   **Changes**: Investigated  and  endpoints for 402/500 issues; the trajectory indicates an ongoing issue where  might not be consistently returning 402 despite previous fixes. No explicit code changes were documented in this trajectory for  during the investigation, but previous work modified it to allow  propagation and return 402 for quota limits. Investigated  and AI prompt generation logic.
+-   ****: Main application structure and routing.
+    -   **Summary**: Wraps routes with , renders  globally.
+    -   **Changes**: Enhanced the mobile hamburger button to meet 44x44px touch target.
+-   ****: React component for the AI Tutor.
+    -   **Summary**: Handles chat interactions, error display, and personalized learning.
+    -   **Changes**: Refined error handling to interpret 402s; fixed frontend parsing errors; optimized input area and buttons for mobile; modified  and  to dynamically update session titles based on AI-detected topics; fixed  to include authentication headers for clickable chat history after re-login; modified  to call  and  to update usage counter; fixed  by adding it to  destructuring.
+-   ****: React component for Auto-Note Mentor.
+    -   **Summary**: Integrates  hook for file uploads.
+    -   **Changes**: Optimized buttons for mobile touch targets.
+-   ****: React component for mock tests.
+    -   **Summary**: Integrates  hook for test generation.
+    -   **Changes**: Optimized buttons for mobile touch targets.
+-   ****: React component for application navigation.
+    -   **Summary**: Provides main navigation, likely including a hamburger menu for mobile.
+    -   **Changes**: Optimized close button and navigation items for mobile touch targets.
+-   ****: React component for the student dashboard.
+    -   **Summary**: Displays Todays Focus", "AI Insights", and "Recent Notes".
+    -   **Changes**: Added mobile-optimized CSS classes for vertical stacking, padding, and layout.
+-   **`/app/frontend/src/components/UpsellModal.js`**: Component for displaying dynamic AI-driven upsell dialogues.
+    -   **Summary**: Displays subscription upgrade prompts.
+    -   **Changes**: Optimized layout and buttons for mobile responsiveness and touch targets.
+-   **`/app/frontend/src/contexts/SubscriptionContext.js`**: Provides subscription state and functions.
+    -   **Summary**: Manages subscription state, feature access, and usage tracking.
+    -   **Changes**: Investigated `trackFeatureUsage` and `fetchSubscriptionInfo` for correct usage counter updates. No explicit code changes within the trajectory were documented for this file, but its functions were called/expected in other components.
+-   **`/app/frontend/src/utils/subscriptionErrorHandler.js`**: (New File)
+    -   **Summary**: Centralizes subscription-related API error handling.
+    -   **Changes**: Refined to directly trigger the modal from incoming 402 responses.
+-   **`/app/frontend/src/index.css`**: Main CSS file for global styles.
+    -   **Summary**: Defines global styles and TailwindCSS imports.
+    -   **Changes**: Added global CSS for 44x44px minimum touch target requirements and other mobile-specific improvements.
 </code_architecture>
 
 <pending_tasks>
-- Conduct comprehensive frontend automated testing for the enhanced AI Tutor module (UI, gamification, structured responses).
-- Conduct comprehensive frontend automated testing for the new hybrid subscription system and upsell flow.
-- Conduct comprehensive frontend automated testing for the dynamic AI-driven "Todays Focus section.
-- Conduct comprehensive frontend automated testing for the AI Insights Widget and Recent Notes Preview Block.
-- Auto-Note Mentor Module Completion: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
+-   Conduct comprehensive frontend automated testing for the enhanced AI Tutor module.
+-   Conduct comprehensive frontend automated testing for the new hybrid subscription system and upsell flow.
+-   Conduct comprehensive frontend automated testing for the dynamic AI-driven "Todays Focus section.
+-   Conduct comprehensive frontend automated testing for the AI Insights Widget and Recent Notes Preview Block.
+-   Auto-Note Mentor Module Completion: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
+-   Verify  endpoint consistently returns  for quota limits.
+-   Re-validate mobile responsiveness across all components after recent fixes.
+-   Confirm AI response format is dynamic and human-like after backend prompt review.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was focused on resolving a critical user-reported issue within the AI Tutor module: when a message was sent and a backend error occurred, the user's message would reappear in the input field instead of displaying a clear error or subscription upsell.
-
-**Diagnosis**:
-1.  Initial investigation showed authentication issues leading to redirects, which were subsequently fixed by improving  to handle API failures gracefully without triggering logout.
-2.  Upon re-testing the AI Tutor, it was found that the  function in  incorrectly returned the user's message to the input field for *any* error (including backend 500s or potential subscription 402/429s), instead of providing appropriate feedback. The backend's  endpoint was returning a 500 Internal Server Error, indicating an AI service configuration issue, not a subscription limit directly.
-
-**Implementation**:
-1.  **AITutor.js Refinement**: The error handling within the  function was enhanced to distinguish between different types of API responses.
-    *   For backend server errors (e.g., 500 status codes), the input field is now cleared, and a user-friendly system error message () is displayed directly in the chat conversation.
-    *   The code was prepared to trigger the  explicitly for subscription-related errors (e.g., 402/429 status codes), although the immediate issue was a 500.
-    *   Conditional rendering for a new  message type was added to the UI, ensuring these messages are styled appropriately (e.g., red/orange) and include a timestamp.
-2.  **Syntax Fixes**: During these  modifications, a JavaScript syntax error (improperly placed comment/bracket) was introduced and quickly identified via browser console logs and resolved.
-
-**Verification**:
-*   Frontend services were restarted after each code modification.
-*   Screenshots and console logs confirmed that the input field now correctly clears after a message is sent and a server error occurs.
-*   A professional, red/orange-themed error message with a timestamp is now displayed within the AI Tutor conversation area, providing clear feedback to the user, effectively resolving the reported UX issue.
-*   The system is now correctly structured to trigger the  when actual subscription limits are reached.
+Immediately prior to this summary, the AI engineer was addressing a user-reported  within the  component. This error occurred because  was called without being destructured from the  hook. The engineer diagnosed this by reviewing  and . The fix involved adding  to the destructuring assignment from  in . After applying this fix, the frontend service was restarted, and the next step is to take a screenshot to verify that the  component now loads without this runtime error. This is a direct continuation of addressing the list of AI Tutor bugs reported by the user, specifically related to the usage counter.
 </current_work>
 
 <optional_next_step>
-Conduct comprehensive frontend automated testing for the enhanced AI Tutor module and the new hybrid subscription system.
+Take a screenshot to verify the AI Tutor component is loading without errors.
 </optional_next_step>
