@@ -137,12 +137,12 @@ class Test402PaymentRequiredFix:
             "usage_count": 3
         }
         
+        # Try with query parameters instead of JSON body
         success, response = self.run_test(
             "Set Usage Above Limit",
             "POST",
-            "subscription/test-set-usage",
+            "subscription/test-set-usage?feature_name=mock_tests_weekly&usage_count=3",
             200,
-            data=test_set_usage_data,
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
