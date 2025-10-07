@@ -587,15 +587,25 @@ export default function MockTests() {
       clearTimeout(fallbackTimeout);
       console.error('Mock test generation error:', error);
       
-      let errorMessage = 'Network error. Please check your connection and try again.';
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        errorMessage = 'Connection failed. Please check your internet and try again.';
-      } else if (error.message) {
-        // Ensure we only use the error message string, not the whole error object
-        errorMessage = `Error: ${error.message}`;
-      }
+      // Store failed test parameters for retry
+      setLastFailedTestParams({ examType, subject, difficulty, numQuestions, buttonId });
       
-      setGenerationError(errorMessage);
+      const errorResult = await handleSubscriptionError(
+        error, 
+        'mock_tests_weekly', 
+        checkFeatureAccess, 
+        (message) => setGenerationError(message.message)
+      );
+      
+      if (!errorResult.handled) {
+        let errorMessage = 'Network error. Please check your connection and try again.';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMessage = 'Connection failed. Please check your internet and try again.';
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+        setGenerationError(errorMessage);
+      }
     } finally {
       // ALWAYS cleanup - this is the critical part
       console.log('🧹 Cleaning up button state:', buttonId);
