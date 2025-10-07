@@ -44,8 +44,12 @@ export default function MockTests() {
   
   // Individual loading states for each button
   const [loadingStates, setLoadingStates] = useState({});
+  const [slowGenerationStates, setSlowGenerationStates] = useState({});
   const [generationError, setGenerationError] = useState(null);
   const [retryStatus, setRetryStatus] = useState(null);
+  
+  // Timeout handles for slow generation warnings
+  const slowGenerationTimeouts = useRef({});
   
   // Performance optimization states
   const [generationProgress, setGenerationProgress] = useState({});
