@@ -202,15 +202,15 @@ class SubscriptionCheckAccessTester:
         # We need to make another call to get the actual status
         print("\n🔍 STEP 4: Final verification - Testing check-access behavior")
         
-        check_access_data = {"feature_name": "ai_tutor_daily"}
-        url = f"{self.base_url}/subscription/check-access"
+        feature_name = "ai_tutor_daily"
+        url = f"{self.base_url}/subscription/check-access?feature_name={feature_name}"
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.token}'
         }
         
         try:
-            response = requests.post(url, json=check_access_data, headers=headers, timeout=30)
+            response = requests.post(url, headers=headers, timeout=30)
             actual_status = response.status_code
             actual_data = response.json() if response.status_code in [200, 402] else {}
             
