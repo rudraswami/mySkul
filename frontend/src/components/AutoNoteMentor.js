@@ -3002,6 +3002,40 @@ export default function AutoNoteMentor() {
           </div>
         </div>
       </div>
+      
+      {/* PHASE 4: PWA Toast Notifications */}
+      {toastQueue.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {toastQueue.map((toast) => (
+            <div
+              key={toast.id}
+              className={`max-w-sm bg-white rounded-lg shadow-lg border-l-4 p-4 transition-all duration-300 transform ${
+                toast.type === 'success' ? 'border-green-500' : 
+                toast.type === 'warning' ? 'border-yellow-500' : 
+                toast.type === 'error' ? 'border-red-500' : 'border-blue-500'
+              }`}
+            >
+              <div className="flex">
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${
+                    toast.type === 'success' ? 'text-green-800' : 
+                    toast.type === 'warning' ? 'text-yellow-800' : 
+                    toast.type === 'error' ? 'text-red-800' : 'text-blue-800'
+                  }`}>
+                    {toast.message}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setToastQueue(prev => prev.filter(t => t.id !== toast.id))}
+                  className="ml-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
