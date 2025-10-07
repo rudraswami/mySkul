@@ -833,20 +833,34 @@ export default function AITutor() {
   // Phase D: Enhanced Action Button Handlers
   const handlePracticeMore = async (originalQuestion, subject, topic) => {
     try {
+      showToast('🎯 Generating similar problems...', 'info');
+      
+      // Generate similar practice problems
       const response = await axios.post(`${API}/actions/practice-more`, {
         original_question: originalQuestion,
         subject: subject || selectedSubject,
         topic: topic || 'General',
-        education_standard: 'JEE', // This should come from user profile
-        difficulty_level: 'similar'
+        difficulty_level: 'medium' // You could make this dynamic based on user level
       });
       
-      // You could display the practice problems in a modal or new section
       console.log('Practice problems generated:', response.data);
-      // For now, we'll just log - you can implement a modal to show the problems
+      
+      // Add the practice problems as a new message in the chat
+      if (response.data && response.data.practice_problems) {
+        const practiceMessage = {
+          message: `Here are some similar practice problems for you:`,
+          response: response.data.practice_problems.join('\n\n'),
+          timestamp: new Date().toISOString(),
+          persona: 'mentor',
+          is_practice: true
+        };
+        setMessages(prev => [...prev, practiceMessage]);
+        showToast('✅ Practice problems ready!', 'success');
+      }
       
     } catch (error) {
       console.error('Failed to generate practice problems:', error);
+      showToast('❌ Failed to generate problems. Try again later.', 'error');
     }
   };
 
