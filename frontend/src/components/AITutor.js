@@ -2523,7 +2523,8 @@ export default function AITutor() {
               <Button 
                 onClick={sendMessage}
                 disabled={loading || !currentMessage.trim()}
-                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="send-button bg-blue-500 hover:bg-blue-600 min-h-12 min-w-12 px-4 py-3 rounded-lg mobile-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
