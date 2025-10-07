@@ -7,7 +7,7 @@ import requests
 import json
 
 # Test credentials
-base_url = "https://aisub-handler.preview.emergentagent.com/api"
+base_url = "https://quota-handler.preview.emergentagent.com/api"
 test_email = "test@dhruvai.com"
 test_password = "password123"
 

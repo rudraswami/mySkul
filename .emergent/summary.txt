@@ -1,62 +1,61 @@
 <analysis>
-The AI engineer's work initiated with establishing a robust subscription flow, transitioning from generic errors to an upsell modal for quota limits. This involved integrating error handling and retry mechanisms across key frontend components like , , and , while also addressing backend inconsistencies in  related to 402 (Payment Required) exceptions.
+The AI engineer's work began by addressing a subscription flow to display an upsell modal for quota limits, integrating error handling across frontend components (, , ) and fixing backend  402/500 issues. Mobile responsiveness was then implemented across the application. Subsequent fixes targeted AI Tutor bugs, including dynamic chat titles, persistent history, and usage counter updates, culminating in a  fix.
 
-The focus then expanded to comprehensive mobile responsiveness across the entire application, optimizing layouts and touch targets for various components. Subsequently, several AI Tutor-specific bugs were resolved, including dynamic chat session titles, persistent chat history after re-login, and accurate usage counter updates, culminating in a  fix in .
-
-The latest work concentrated on critical bugs in the  module: an incorrect Upgrade Plan prompt despite available free tests and a  error during test generation. The  error in  was diagnosed and fixed. Further investigation uncovered a major inconsistency where frontend display and backend  calls used  while  and some frontend logic used . This was systematically addressed by standardizing on . However, a persistent backend issue with MongoDB ObjectId serialization preventing 402 errors from being properly returned, instead causing 500s, remains unresolved.
+The most recent efforts focused on critical  bugs. Initially, an  error in  and an inconsistency between  and  in  and  were resolved. The persistent MongoDB  serialization issue, causing 500 errors instead of 402s, was identified and tackled, requiring Pydantic v2 specific serialization fixes. Further user feedback led to optimizing mock test generation for performance, fixing frontend payload discrepancies, removing redundant UI elements, and resolving mock test submission failures by correcting database queries and  calculations. The  and  endpoints were updated to use request models for consistency.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project is a B2C EdTech platform leveraging Neuro-Symbolic AI for competitive exam preparation. Key features include an AI Tutor Module with advanced topic detection, structured responses, interactive UI, and gamification, alongside an Auto-Note Mentor Module for live recording and file uploads. A Student Dashboard offers personalized insights. The Hybrid Subscription System (Free, Premium, Pro) enforces limits via , tracking , , and . A crucial requirement is a consistent, market-standard subscription limit popup, triggering an upgrade modal upon quota exhaustion or  failure, featuring animations and instant retry after upgrade, applicable to AI Tutor, Auto-Note Mentor, and Mock Test generation. Full mobile responsiveness (320px-768px) is also required for navigation, dashboard, AI Tutor, Auto-Note Mentor, Mock Tests, and Upsell Modal. User reports highlighted static chat history topics, an incorrect usage counter, unclickable chat history post-re-login, static AI response format, and a query about a Personalized Learning Active tab. The most recent issues include free tier limits not being honored for Mock Tests, an error  upon generation, and incorrect error handling UI.
+The Dhruv AI project is a B2C EdTech platform for competitive exam prep, featuring an AI Tutor, Auto-Note Mentor, and a Student Dashboard. It employs a Hybrid Subscription System (Free, Premium, Pro) with limits defined in , tracking , , and . A key requirement is a consistent, animated, market-standard upsell modal triggered upon quota exhaustion (402/429 status) or  failure, with instant retry functionality after upgrade. This modal should apply to the AI Tutor, Auto-Note Mentor, and Mock Test generation. Full mobile responsiveness (320px-768px) is required for all main components.
+
+Recent user reports highlighted several bugs: static chat history, incorrect usage counters, unclickable chat history after re-login, static AI response formatting, and a query about a Personalized Learning Active tab. More critically, free tier limits for Mock Tests were not honored, an  error occurred during generation, and error handling UI was incorrect. Subsequent issues included mock test generation failures due to frontend-backend schema mismatch (422 errors), timeouts during test generation (with Internal S JSON errors), a redundant Test limit reached banner, silent mock test submission failures, and the subscription modal not appearing after hitting mock-test limits.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack**: React (frontend), FastAPI (backend), MongoDB (database).
--   **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering, AI-driven content generation.
--   **Backend**: FastAPI routing, , HTTP status codes (402, 429, 500),  for limits.
--   **Frontend**: React hooks, Context API (, ), Tailwind CSS, Mobile Responsiveness, .
--   **Subscription**: Tier-based access, usage tracking, upsell modals, ObjectId serialization.
+-   **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering.
+-   **Backend**: FastAPI routing, , HTTP status codes (402, 422, 429, 500), Pydantic v2 for data validation,  for limits, MongoDB  serialization.
+-   **Frontend**: React hooks, Context API (, ), Tailwind CSS, Mobile Responsiveness, centralized , global upsell modal.
+-   **Subscription**: Tier-based access, usage tracking, / fields.
 </key_technical_concepts>
 
 <code_architecture>
 
 -   ****: Central FastAPI backend.
     -   **Summary**: Handles API routes, AI logic, and subscription checks.
-    -   **Changes**: Initially investigated for 402/500 issues in . Recent work involved identifying conflicting hardcoded plan limits () with  (). It was updated to use  consistently in subscription checks and usage tracking. Multiple attempts were made to resolve a 500 error (instead of 402) caused by MongoDB  serialization within  responses, by applying  to  in , , and  data before database insertion.
+    -   **Changes**: Multiple fixes for MongoDB  serialization using  and  for Pydantic v2.  was updated to return / fields. The  endpoint was optimized with a single batched MongoDB query for questions. The  handler was fixed to query by  with backward compatibility and corrected  calculation. New request models (, ) were introduced for  and  endpoints.
 -   ****: Main application structure and routing.
     -   **Summary**: Wraps routes with , renders  globally.
-    -   **Changes**: Enhanced the mobile hamburger button to meet 44x44px touch target.
+    -   **Changes**: Enhanced the mobile hamburger button touch target.
 -   ****: React component for the AI Tutor.
     -   **Summary**: Handles chat interactions, error display, and personalized learning.
-    -   **Changes**: Refined error handling for 402s; fixed frontend parsing errors; optimized input area and buttons for mobile; modified  and  to dynamically update session titles; fixed  to include authentication headers; modified  to call  and  for usage counter updates; fixed  by adding it to  destructuring.
+    -   **Changes**: Refined error handling; optimized for mobile; dynamic session titles; persistent chat history; usage counter updates;  fix.
 -   ****: React component for Auto-Note Mentor.
     -   **Summary**: Integrates  hook for file uploads.
     -   **Changes**: Optimized buttons for mobile touch targets.
 -   ****: React component for mock tests.
-    -   **Summary**: Integrates  hook for test generation.
-    -   **Changes**: Optimized buttons for mobile touch targets. Crucially, updated  to consistently reference  from subscription data, fixing the display discrepancy that previously showed .
+    -   **Summary**: Integrates  hook for test generation and submission.
+    -   **Changes**: Optimized buttons for mobile.  updated to use . Local  state and modal UI were removed, replaced by calls to . The  function was updated to send the correct payload matching  schema. A redundant Test limit reached banner was removed, along with associated layout fixes.
 -   ****: React component for application navigation.
-    -   **Summary**: Provides main navigation, likely including a hamburger menu for mobile.
+    -   **Summary**: Provides main navigation, including a hamburger menu for mobile.
     -   **Changes**: Optimized close button and navigation items for mobile touch targets.
 -   ****: React component for the student dashboard.
     -   **Summary**: Displays Todays Focus", "AI Insights", and "Recent Notes".
-    -   **Changes**: Added mobile-optimized CSS classes for vertical stacking, padding, and layout.
+    -   **Changes**: Added mobile-optimized CSS classes.
 -   **`/app/frontend/src/components/UpsellModal.js`**: Component for displaying dynamic AI-driven upsell dialogues.
     -   **Summary**: Displays subscription upgrade prompts.
     -   **Changes**: Optimized layout and buttons for mobile responsiveness and touch targets.
 -   **`/app/frontend/src/contexts/SubscriptionContext.js`**: Provides subscription state and functions.
     -   **Summary**: Manages subscription state, feature access, and usage tracking.
-    -   **Changes**: No direct code changes in this file were documented within the trajectory, but its functions like `trackFeatureUsage` and `fetchSubscriptionInfo` were invoked or expected by other components.
--   **`/app/frontend/src/utils/subscriptionErrorHandler.js`**: (New File)
-    -   **Summary**: Centralizes subscription-related API error handling.
-    -   **Changes**: Refined to directly trigger the upsell modal from incoming 402 responses. A critical fix was implemented to ensure that `data.message` or `data.detail` is safely converted to a string before calling `.toLowerCase()`, resolving a runtime error.
+    -   **Changes**: A `triggerFeatureUpsell` helper function was added to programmatically launch the global upsell modal. The fallback for `mock_tests_weekly` was updated to `2`. `setUpsellModal` is already exposed.
+-   **`/app/frontend/src/utils/subscriptionErrorHandler.js`**: Centralizes subscription-related API error handling.
+    -   **Summary**: Handles 402 responses and triggers upsell modal.
+    -   **Changes**: Improved error text normalization using `String(errorText ?? )` to prevent `toLowerCase()` runtime errors on non-string inputs.
 -   **`/app/frontend/src/index.css`**: Main CSS file for global styles.
     -   **Summary**: Defines global styles and TailwindCSS imports.
-    -   **Changes**: Added global CSS for 44x44px minimum touch target requirements and other mobile-specific improvements.
+    -   **Changes**: Added global CSS for 44x44px minimum touch target requirements.
 -   **`/app/backend/planConfig.json`**:
-    -   **Summary**: Configuration file defining subscription plan limits and feature names.
-    -   **Changes**: Identified as the source of truth for `mock_tests_weekly: 1`, conflicting with older hardcoded limits and frontend display logic.
-
+    -   **Summary**: Configuration file defining subscription plan limits.
+    -   **Changes**: `mock_tests_weekly` was updated to `2` for the free tier.
 </code_architecture>
 
 <pending_tasks>
@@ -67,14 +66,20 @@ The Dhruv AI project is a B2C EdTech platform leveraging Neuro-Symbolic AI for c
 -   Auto-Note Mentor Module Completion: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
 -   Re-validate mobile responsiveness across all components after recent fixes.
 -   Confirm AI response format is dynamic and human-like after backend prompt review.
--   Resolve MongoDB  serialization problem in backend, causing 500 errors instead of 402 for quota limits.
--   Fix usage tracking display: Subjects API does not show  usage information correctly.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was troubleshooting a critical backend issue: MongoDB  serialization failure. This problem manifests as a 500 Internal Server Error being returned by the backend instead of the expected 402 Payment Required status, specifically when an  with  containing  data is raised. Despite multiple attempts to use the existing  helper function within the  function (specifically when constructing ),  function (to clean ), and when inserting  data, the issue persists. The  agent confirmed that the ObjectId serialization fix is *still not working* properly, and ObjectId objects are not being converted to strings before JSON serialization in error responses. This serialization issue is also likely preventing the correct  usage information from being displayed by the Subjects API. The  error in  and the feature name inconsistency ( vs ) in  and  have been identified and fixed, but the backend 402/500 issue is the current blocking problem.
+Immediately prior to this summary, the AI engineer was addressing a user-reported issue where nothing is happening after tapping the Submit button upon completing a mock test. This was diagnosed as a backend error causing the submission to fail silently. The investigation revealed two main problems within 's  endpoint:
+1.  **Incorrect Data Access**: The code was attempting to access , which does not exist in the  model.
+2.  **String Indexing Error**: Backend logs showed string indices must be integers, not str, indicating that  was being treated as a list of question objects, when it was actually a list of  strings. This led to incorrect logic when trying to retrieve full question details for scoring.
+
+To resolve these, the AI engineer made the following fixes in :
+-   Adjusted the logic to correctly handle  as a list of  strings, fetching the full question details from the database as needed for scoring.
+-   Corrected the  calculation logic, removing the erroneous reference to  and ensuring the score comparison is done against a valid threshold.
+
+After these fixes, the backend was restarted, and the  file was updated to reflect the changes. The current state is that these submission issues should be resolved, and the system is awaiting further testing or user confirmation.
 </current_work>
 
 <optional_next_step>
-Search for a more comprehensive solution to the MongoDB  serialization problem in FastAPI.
+Summarize all fixes implemented since the last comprehensive summary and then ask the user to verify functionality.
 </optional_next_step>
