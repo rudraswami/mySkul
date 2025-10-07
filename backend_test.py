@@ -132,6 +132,219 @@ class DhruvAITester:
             return True
         return False
 
+    def test_authentication_apis_comprehensive(self):
+        """URGENT: Test authentication APIs as reported by user - login returning 429, registration failing"""
+        print("\n🚨 URGENT: AUTHENTICATION APIS COMPREHENSIVE TESTING")
+        print("   User reports: Login API returning 429, Registration APIs failing")
+        print("   Testing: /api/auth/login and /api/auth/register endpoints")
+        print("   Backend URL: https://payment-required-2.preview.emergentagent.com")
+        
+        auth_test_results = {
+            'login_valid_credentials': False,
+            'login_invalid_credentials': False,
+            'registration_new_user': False,
+            'registration_existing_user': False,
+            'rate_limiting_check': False,
+            'api_connectivity': False
+        }
+        
+        # Test 1: Basic API connectivity
+        print("\n📡 Test 1: Basic API Connectivity")
+        try:
+            import requests
+            response = requests.get(f"{self.base_url.replace('/api', '')}", timeout=10)
+            if response.status_code in [200, 404]:  # 404 is acceptable for root
+                print(f"   ✅ API server is reachable (status: {response.status_code})")
+                auth_test_results['api_connectivity'] = True
+            else:
+                print(f"   ⚠️  API server returned unexpected status: {response.status_code}")
+        except Exception as e:
+            print(f"   ❌ API server unreachable: {str(e)}")
+        
+        # Test 2: Login with valid credentials
+        print("\n🔐 Test 2: Login API with Valid Credentials")
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response = self.run_test(
+            "Login API - Valid Credentials",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success:
+            print("   ✅ Login API working with valid credentials")
+            auth_test_results['login_valid_credentials'] = True
+            if 'token' in response:
+                self.token = response['token']
+                print(f"   ✅ JWT token received: {self.token[:20]}...")
+            if 'user' in response:
+                self.user_id = response['user'].get('user_id')
+                print(f"   ✅ User data received: {response['user'].get('email')}")
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ Login API failed with status: {error_status}")
+            print(f"   ❌ Error details: {error_data}")
+            
+            if error_status == 429:
+                print("   🚨 CONFIRMED: 429 Rate Limiting error as reported by user")
+                auth_test_results['rate_limiting_check'] = True
+            elif error_status == 401:
+                print("   🚨 401 Unauthorized - credentials may be invalid")
+            elif error_status == 500:
+                print("   🚨 500 Internal Server Error - backend issue")
+        
+        # Test 3: Login with invalid credentials
+        print("\n🔐 Test 3: Login API with Invalid Credentials")
+        invalid_login_data = {
+            "email": "test@dhruvai.com",
+            "password": "wrongpassword"
+        }
+        
+        success, response = self.run_test(
+            "Login API - Invalid Credentials",
+            "POST",
+            "auth/login",
+            401,  # Expecting 401 Unauthorized
+            data=invalid_login_data
+        )
+        
+        if success:
+            print("   ✅ Login API correctly rejects invalid credentials")
+            auth_test_results['login_invalid_credentials'] = True
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            print(f"   ❌ Login API unexpected behavior with invalid credentials: {error_status}")
+        
+        # Test 4: Registration with new user
+        print("\n📝 Test 4: Registration API with New User")
+        new_user_email = f"newuser_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "New Test User",
+            "email": new_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Registration API - New User",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if success:
+            print("   ✅ Registration API working with new user")
+            auth_test_results['registration_new_user'] = True
+            if 'token' in response:
+                print(f"   ✅ Registration returns JWT token")
+            if 'user' in response:
+                print(f"   ✅ Registration returns user data")
+        else:
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ Registration API failed with status: {error_status}")
+            print(f"   ❌ Error details: {error_data}")
+            
+            if error_status == 422:
+                print("   🚨 422 Validation Error - check required fields")
+            elif error_status == 500:
+                print("   🚨 500 Internal Server Error - backend issue")
+        
+        # Test 5: Registration with existing user
+        print("\n📝 Test 5: Registration API with Existing User")
+        existing_user_data = {
+            "full_name": "Existing User",
+            "email": "test@dhruvai.com",  # This should already exist
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Registration API - Existing User",
+            "POST",
+            "auth/register",
+            409,  # Expecting 409 Conflict or 400 Bad Request
+            data=existing_user_data
+        )
+        
+        if success:
+            print("   ✅ Registration API correctly rejects existing user")
+            auth_test_results['registration_existing_user'] = True
+        else:
+            # Check if it returned 400 instead of 409
+            error_status = getattr(self, 'last_response_status', 0)
+            if error_status == 400:
+                print("   ✅ Registration API rejects existing user (400 Bad Request)")
+                auth_test_results['registration_existing_user'] = True
+            else:
+                print(f"   ❌ Registration API unexpected behavior with existing user: {error_status}")
+        
+        # Test 6: Rate limiting check (multiple rapid requests)
+        print("\n⏱️  Test 6: Rate Limiting Check")
+        print("   Sending multiple rapid login requests to check for 429 errors...")
+        
+        rate_limit_hits = 0
+        for i in range(5):  # Send 5 rapid requests
+            success, response = self.run_test(
+                f"Rate Limit Check - Request {i+1}",
+                "POST",
+                "auth/login",
+                [200, 401, 429],  # Accept any of these status codes
+                data=login_data
+            )
+            
+            error_status = getattr(self, 'last_response_status', 0)
+            if error_status == 429:
+                rate_limit_hits += 1
+                print(f"   🚨 Request {i+1}: Hit rate limit (429)")
+            elif error_status == 200:
+                print(f"   ✅ Request {i+1}: Successful (200)")
+            elif error_status == 401:
+                print(f"   ✅ Request {i+1}: Unauthorized (401)")
+            
+            time.sleep(0.5)  # Small delay between requests
+        
+        if rate_limit_hits > 0:
+            print(f"   🚨 CONFIRMED: Rate limiting active ({rate_limit_hits}/5 requests hit 429)")
+            auth_test_results['rate_limiting_check'] = True
+        else:
+            print("   ✅ No rate limiting detected in test")
+        
+        # Final Assessment
+        print(f"\n🎯 AUTHENTICATION APIS TESTING SUMMARY:")
+        print(f"   API Connectivity: {'✅' if auth_test_results['api_connectivity'] else '❌'}")
+        print(f"   Login Valid Credentials: {'✅' if auth_test_results['login_valid_credentials'] else '❌'}")
+        print(f"   Login Invalid Credentials: {'✅' if auth_test_results['login_invalid_credentials'] else '❌'}")
+        print(f"   Registration New User: {'✅' if auth_test_results['registration_new_user'] else '❌'}")
+        print(f"   Registration Existing User: {'✅' if auth_test_results['registration_existing_user'] else '❌'}")
+        print(f"   Rate Limiting Detected: {'✅' if auth_test_results['rate_limiting_check'] else '❌'}")
+        
+        success_count = sum(auth_test_results.values())
+        total_tests = len(auth_test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 Overall Success Rate: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        if not auth_test_results['login_valid_credentials']:
+            print("🚨 CRITICAL: Login API with valid credentials is failing - this confirms user report")
+        if not auth_test_results['registration_new_user']:
+            print("🚨 CRITICAL: Registration API is failing - this confirms user report")
+        if auth_test_results['rate_limiting_check']:
+            print("🚨 CONFIRMED: Rate limiting (429 errors) detected - this matches user report")
+        
+        return success_count >= 4  # At least 4/6 tests should pass
+
     def test_user_profile(self):
         """Test getting user profile"""
         if not self.token:
