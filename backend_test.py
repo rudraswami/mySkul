@@ -5624,29 +5624,30 @@ class DhruvAITester:
             return True
 
     def run_comprehensive_tests(self):
-        """Run Auto-Note Mentor complete workflow testing as requested in review"""
-        print("🚀 Starting Auto-Note Mentor Complete Workflow Testing...")
+        """Run Enhanced Auto-Note Mentor Audio Processing System Testing as requested in review"""
+        print("🚀 Starting Enhanced Auto-Note Mentor Audio Processing System Testing...")
         print(f"   Base URL: {self.base_url}")
-        print("   Focus: Complete recording workflow from start to end")
-        print("   User reports: System gets stuck on 'Processing your notes' without completing")
-        print("   Review Request: Test complete Auto-Note Mentor backend functionality")
+        print("   Focus: Final validation of enhanced audio processing pipeline")
+        print("   Review Request: Test audio dependencies, AudioProcessor, Celery, enhanced endpoints")
         
-        # Run the Auto-Note Mentor complete workflow test
-        workflow_success = self.test_auto_note_mentor_complete_workflow()
+        # Run the Enhanced Audio Processing System test
+        audio_processing_success = self.test_enhanced_auto_note_mentor_audio_processing()
         
         # Final summary
-        print(f"\n🎯 AUTO-NOTE MENTOR WORKFLOW TEST SUMMARY")
-        print(f"   🎯 Complete Recording Workflow: {'✅ PASSED' if workflow_success else '❌ FAILED'}")
+        print(f"\n🎯 ENHANCED AUTO-NOTE MENTOR AUDIO PROCESSING TEST SUMMARY")
+        print(f"   🎯 Audio Processing Pipeline: {'✅ PASSED' if audio_processing_success else '❌ FAILED'}")
         
-        if workflow_success:
-            print("🎉 AUTO-NOTE MENTOR WORKFLOW SUCCESSFUL - Complete recording workflow working!")
-            print("   ✅ Authentication: Working")
-            print("   ✅ Session Creation: Working")
-            print("   ✅ Audio Processing: Working")
-            print("   ✅ Session Completion: Working")
-            print("   ✅ Session Retrieval: Working")
-            print("   ✅ AI Processing Functions: Working")
-            print("   ✅ Dual AI System: Working")
+        if audio_processing_success:
+            print("🎉 ENHANCED AUTO-NOTE MENTOR AUDIO PROCESSING SUCCESSFUL!")
+            print("   ✅ Audio Dependencies: Available")
+            print("   ✅ AudioProcessor Initialization: Working")
+            print("   ✅ Celery Configuration: Working")
+            print("   ✅ Enhanced Upload Endpoint: Working")
+            print("   ✅ Processing Status Tracking: Working")
+            print("   ✅ Audio Enhancement: Working")
+            print("   ✅ Quality Analysis: Working")
+            print("   ✅ Context Detection: Working")
+            print("   ✅ Error Handling: Working")
         else:
             print("❌ AUTO-NOTE MENTOR WORKFLOW ISSUES FOUND - Processing chain breaks somewhere")
             print("   Review the detailed test output above for specific failures")
