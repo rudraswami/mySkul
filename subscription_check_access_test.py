@@ -61,19 +61,16 @@ class SubscriptionCheckAccessTester:
         
         print("\n🎯 STEP 2: Test subscription/check-access endpoint with ai_tutor_daily feature")
         
-        # Test data for ai_tutor_daily feature
-        check_access_data = {
-            "feature_name": "ai_tutor_daily"
-        }
-        
-        url = f"{self.base_url}/subscription/check-access"
+        # Use query parameter instead of request body
+        feature_name = "ai_tutor_daily"
+        url = f"{self.base_url}/subscription/check-access?feature_name={feature_name}"
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.token}'
         }
         
         try:
-            response = requests.post(url, json=check_access_data, headers=headers, timeout=30)
+            response = requests.post(url, headers=headers, timeout=30)
             print(f"   Status Code: {response.status_code}")
             
             if response.status_code == 200:
