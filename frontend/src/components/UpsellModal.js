@@ -33,6 +33,11 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
     try {
       const result = await upgradeSubscription(targetTier, billingCycle);
       if (result.success) {
+        // Handle upgrade success callback first (for retry logic)
+        if (onUpgradeSuccess) {
+          await onUpgradeSuccess();
+        }
+        
         // Show success message and close modal
         onClose();
         if (upsellInfo?.interaction_id) {
