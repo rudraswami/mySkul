@@ -9,7 +9,7 @@ import sys
 
 def login():
     """Login with test@dhruvai.com/password123"""
-    base_url = "https://mobile-tutor-dash.preview.emergentagent.com/api"
+    base_url = "https://aisub-handler.preview.emergentagent.com/api"
     login_data = {
         "email": "test@dhruvai.com",
         "password": "password123"

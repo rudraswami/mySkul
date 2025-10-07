@@ -1,13 +1,13 @@
 <analysis>
-The AI engineer's initial work focused on building an intelligent subscription flow, replacing generic errors with an upsell modal when quota limits are hit. This involved establishing a subscription error handler, integrating retry mechanisms into , , and , and modifying  for upgrade callbacks. Crucially, backend issues in  where 402 (Payment Required) exceptions were being converted to 500, and the  endpoint incorrectly returning 200 instead of 402 for denied access, were identified and addressed.
+The AI engineer's work initiated with establishing a robust subscription flow, transitioning from generic errors to an upsell modal for quota limits. This involved integrating error handling and retry mechanisms across key frontend components like , , and , while also addressing backend inconsistencies in  related to 402 (Payment Required) exceptions.
 
-The trajectory then shifted to user-reported API issues (login/registration errors), which were investigated and deemed not system failures. Subsequently, a critical AI Tutor error (Failed to send message upon reaching limits) resurfaced, leading to backend re-investigation confirming the  endpoint still wasn't consistently returning 402.
+The focus then expanded to comprehensive mobile responsiveness across the entire application, optimizing layouts and touch targets for various components. Subsequently, several AI Tutor-specific bugs were resolved, including dynamic chat session titles, persistent chat history after re-login, and accurate usage counter updates, culminating in a  fix in .
 
-A significant portion of the work then focused on comprehensive mobile responsiveness, optimizing , , , , , , , and  for touch targets and layout. Finally, multiple AI Tutor-specific bugs were addressed: dynamically updating chat session titles, ensuring chat history clickability after re-login by adding auth headers to , fixing the usage counter in  by calling , and confirming the Personalized Learning Active tab's functionality. The work culminated in fixing a  in .
+The latest work concentrated on critical bugs in the  module: an incorrect Upgrade Plan prompt despite available free tests and a  error during test generation. The  error in  was diagnosed and fixed. Further investigation uncovered a major inconsistency where frontend display and backend  calls used  while  and some frontend logic used . This was systematically addressed by standardizing on . However, a persistent backend issue with MongoDB ObjectId serialization preventing 402 errors from being properly returned, instead causing 500s, remains unresolved.
 </analysis>
 
 <product_requirements>
-The Dhruv AI project is a B2C EdTech platform for competitive exam preparation, featuring Neuro-Symbolic AI. Core functionalities include an **AI Tutor Module** with advanced topic detection, structured responses, interactive UI, and gamification, and an **Auto-Note Mentor Module** for live recording and file uploads. A **Student Dashboard** provides personalized insights. A **Hybrid Subscription System** (Free, Premium, Pro) enforces limits via , tracks , , and . A critical requirement is a consistent, market-standard subscription limit popup, triggering an upgrade modal on quota exhaustion or  failure, with animations and instant retry upon upgrade, applied across AI Tutor, Auto-Note Mentor, and Mock Test generation. Additionally, the application requires full mobile responsiveness across devices (320px-768px), addressing navigation, dashboard, AI Tutor, Auto-Note Mentor, Mock Tests, and Upsell Modal layouts and touch targets. Recent user reports highlight issues with static chat history topics, an incorrect usage counter, unclickable chat history after re-login, static AI response format, and a query regarding a Personalized Learning Active tab.
+The Dhruv AI project is a B2C EdTech platform leveraging Neuro-Symbolic AI for competitive exam preparation. Key features include an AI Tutor Module with advanced topic detection, structured responses, interactive UI, and gamification, alongside an Auto-Note Mentor Module for live recording and file uploads. A Student Dashboard offers personalized insights. The Hybrid Subscription System (Free, Premium, Pro) enforces limits via , tracking , , and . A crucial requirement is a consistent, market-standard subscription limit popup, triggering an upgrade modal upon quota exhaustion or  failure, featuring animations and instant retry after upgrade, applicable to AI Tutor, Auto-Note Mentor, and Mock Test generation. Full mobile responsiveness (320px-768px) is also required for navigation, dashboard, AI Tutor, Auto-Note Mentor, Mock Tests, and Upsell Modal. User reports highlighted static chat history topics, an incorrect usage counter, unclickable chat history post-re-login, static AI response format, and a query about a Personalized Learning Active tab. The most recent issues include free tier limits not being honored for Mock Tests, an error  upon generation, and incorrect error handling UI.
 </product_requirements>
 
 <key_technical_concepts>
@@ -15,26 +15,26 @@ The Dhruv AI project is a B2C EdTech platform for competitive exam preparation, 
 -   **AI/LLM**: Neuro-Symbolic AI, LLM prompt engineering, AI-driven content generation.
 -   **Backend**: FastAPI routing, , HTTP status codes (402, 429, 500),  for limits.
 -   **Frontend**: React hooks, Context API (, ), Tailwind CSS, Mobile Responsiveness, .
--   **Subscription**: Tier-based access, usage tracking, upsell modals.
+-   **Subscription**: Tier-based access, usage tracking, upsell modals, ObjectId serialization.
 </key_technical_concepts>
 
 <code_architecture>
 
 -   ****: Central FastAPI backend.
     -   **Summary**: Handles API routes, AI logic, and subscription checks.
-    -   **Changes**: Investigated  and  endpoints for 402/500 issues; the trajectory indicates an ongoing issue where  might not be consistently returning 402 despite previous fixes. No explicit code changes were documented in this trajectory for  during the investigation, but previous work modified it to allow  propagation and return 402 for quota limits. Investigated  and AI prompt generation logic.
+    -   **Changes**: Initially investigated for 402/500 issues in . Recent work involved identifying conflicting hardcoded plan limits () with  (). It was updated to use  consistently in subscription checks and usage tracking. Multiple attempts were made to resolve a 500 error (instead of 402) caused by MongoDB  serialization within  responses, by applying  to  in , , and  data before database insertion.
 -   ****: Main application structure and routing.
     -   **Summary**: Wraps routes with , renders  globally.
     -   **Changes**: Enhanced the mobile hamburger button to meet 44x44px touch target.
 -   ****: React component for the AI Tutor.
     -   **Summary**: Handles chat interactions, error display, and personalized learning.
-    -   **Changes**: Refined error handling to interpret 402s; fixed frontend parsing errors; optimized input area and buttons for mobile; modified  and  to dynamically update session titles based on AI-detected topics; fixed  to include authentication headers for clickable chat history after re-login; modified  to call  and  to update usage counter; fixed  by adding it to  destructuring.
+    -   **Changes**: Refined error handling for 402s; fixed frontend parsing errors; optimized input area and buttons for mobile; modified  and  to dynamically update session titles; fixed  to include authentication headers; modified  to call  and  for usage counter updates; fixed  by adding it to  destructuring.
 -   ****: React component for Auto-Note Mentor.
     -   **Summary**: Integrates  hook for file uploads.
     -   **Changes**: Optimized buttons for mobile touch targets.
 -   ****: React component for mock tests.
     -   **Summary**: Integrates  hook for test generation.
-    -   **Changes**: Optimized buttons for mobile touch targets.
+    -   **Changes**: Optimized buttons for mobile touch targets. Crucially, updated  to consistently reference  from subscription data, fixing the display discrepancy that previously showed .
 -   ****: React component for application navigation.
     -   **Summary**: Provides main navigation, likely including a hamburger menu for mobile.
     -   **Changes**: Optimized close button and navigation items for mobile touch targets.
@@ -46,13 +46,17 @@ The Dhruv AI project is a B2C EdTech platform for competitive exam preparation, 
     -   **Changes**: Optimized layout and buttons for mobile responsiveness and touch targets.
 -   **`/app/frontend/src/contexts/SubscriptionContext.js`**: Provides subscription state and functions.
     -   **Summary**: Manages subscription state, feature access, and usage tracking.
-    -   **Changes**: Investigated `trackFeatureUsage` and `fetchSubscriptionInfo` for correct usage counter updates. No explicit code changes within the trajectory were documented for this file, but its functions were called/expected in other components.
+    -   **Changes**: No direct code changes in this file were documented within the trajectory, but its functions like `trackFeatureUsage` and `fetchSubscriptionInfo` were invoked or expected by other components.
 -   **`/app/frontend/src/utils/subscriptionErrorHandler.js`**: (New File)
     -   **Summary**: Centralizes subscription-related API error handling.
-    -   **Changes**: Refined to directly trigger the modal from incoming 402 responses.
+    -   **Changes**: Refined to directly trigger the upsell modal from incoming 402 responses. A critical fix was implemented to ensure that `data.message` or `data.detail` is safely converted to a string before calling `.toLowerCase()`, resolving a runtime error.
 -   **`/app/frontend/src/index.css`**: Main CSS file for global styles.
     -   **Summary**: Defines global styles and TailwindCSS imports.
     -   **Changes**: Added global CSS for 44x44px minimum touch target requirements and other mobile-specific improvements.
+-   **`/app/backend/planConfig.json`**:
+    -   **Summary**: Configuration file defining subscription plan limits and feature names.
+    -   **Changes**: Identified as the source of truth for `mock_tests_weekly: 1`, conflicting with older hardcoded limits and frontend display logic.
+
 </code_architecture>
 
 <pending_tasks>
@@ -61,15 +65,16 @@ The Dhruv AI project is a B2C EdTech platform for competitive exam preparation, 
 -   Conduct comprehensive frontend automated testing for the dynamic AI-driven "Todays Focus section.
 -   Conduct comprehensive frontend automated testing for the AI Insights Widget and Recent Notes Preview Block.
 -   Auto-Note Mentor Module Completion: Enhance PDF/image OCR processing, integrate spaced-repetition scheduling, and vector store integration.
--   Verify  endpoint consistently returns  for quota limits.
 -   Re-validate mobile responsiveness across all components after recent fixes.
 -   Confirm AI response format is dynamic and human-like after backend prompt review.
+-   Resolve MongoDB  serialization problem in backend, causing 500 errors instead of 402 for quota limits.
+-   Fix usage tracking display: Subjects API does not show  usage information correctly.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was addressing a user-reported  within the  component. This error occurred because  was called without being destructured from the  hook. The engineer diagnosed this by reviewing  and . The fix involved adding  to the destructuring assignment from  in . After applying this fix, the frontend service was restarted, and the next step is to take a screenshot to verify that the  component now loads without this runtime error. This is a direct continuation of addressing the list of AI Tutor bugs reported by the user, specifically related to the usage counter.
+Immediately prior to this summary, the AI engineer was troubleshooting a critical backend issue: MongoDB  serialization failure. This problem manifests as a 500 Internal Server Error being returned by the backend instead of the expected 402 Payment Required status, specifically when an  with  containing  data is raised. Despite multiple attempts to use the existing  helper function within the  function (specifically when constructing ),  function (to clean ), and when inserting  data, the issue persists. The  agent confirmed that the ObjectId serialization fix is *still not working* properly, and ObjectId objects are not being converted to strings before JSON serialization in error responses. This serialization issue is also likely preventing the correct  usage information from being displayed by the Subjects API. The  error in  and the feature name inconsistency ( vs ) in  and  have been identified and fixed, but the backend 402/500 issue is the current blocking problem.
 </current_work>
 
 <optional_next_step>
-Take a screenshot to verify the AI Tutor component is loading without errors.
+Search for a more comprehensive solution to the MongoDB  serialization problem in FastAPI.
 </optional_next_step>
