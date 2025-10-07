@@ -11906,15 +11906,59 @@ def main():
             print("   ❌ Failed to retrieve session for verification")
             return False
 
+    def run_mock_test_bug_fixes_testing(self):
+        """CRITICAL: Run Mock Test Bug Fixes Testing - REVIEW REQUEST FOCUS"""
+        print("🚨 CRITICAL: MOCK TEST BUG FIXES TESTING - REVIEW REQUEST FOCUS")
+        print(f"   Backend URL: {self.base_url}")
+        print(f"   Focus: Feature name consistency, Free tier access, 402 status codes")
+        print("=" * 80)
+        
+        # Authentication first
+        print("\n🔐 AUTHENTICATION SETUP")
+        if not self.test_user_login():
+            if not self.test_user_registration():
+                print("❌ Authentication failed - cannot proceed with mock test testing")
+                return False
+        
+        # Critical Mock Test Bug Fixes Testing
+        print("\n🎯 CRITICAL MOCK TEST BUG FIXES TESTING")
+        mock_test_fixes_working = self.test_mock_tests_critical_bug_fixes()
+        
+        # Subscription Check-Access 402 Response Testing
+        print("\n🔍 SUBSCRIPTION CHECK-ACCESS 402 RESPONSE TESTING")
+        subscription_402_working = self.test_subscription_check_access_402_response()
+        
+        # Final Results
+        print("\n" + "=" * 80)
+        print(f"🎯 MOCK TEST BUG FIXES TESTING COMPLETED")
+        print(f"   Total Tests Run: {self.tests_run}")
+        print(f"   Tests Passed: {self.tests_passed}")
+        print(f"   Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        print(f"\n📊 CRITICAL COMPONENTS STATUS:")
+        print(f"   Mock Test Bug Fixes: {'✅ WORKING' if mock_test_fixes_working else '❌ FAILING'}")
+        print(f"   Subscription 402 Responses: {'✅ WORKING' if subscription_402_working else '❌ FAILING'}")
+        
+        if mock_test_fixes_working and subscription_402_working:
+            print("✅ ALL CRITICAL MOCK TEST BUG FIXES WORKING!")
+            return True
+        elif mock_test_fixes_working or subscription_402_working:
+            print("⚠️  PARTIAL SUCCESS - Some critical issues remain")
+            return False
+        else:
+            print("❌ CRITICAL FAILURES - Mock test bug fixes not working")
+            return False
+
 if __name__ == "__main__":
-    # Run focused AI Tutor subscription limit debug test
     tester = DhruvAITester()
     
-    # Login first
-    if not tester.test_user_login():
-        print("❌ Login failed - cannot proceed with subscription limit test")
-        sys.exit(1)
+    # Run Mock Test Bug Fixes Testing (Review Request Focus)
+    print("🚨 CRITICAL: MOCK TEST BUG FIXES TESTING - REVIEW REQUEST FOCUS")
+    success = tester.run_mock_test_bug_fixes_testing()
     
-    # Run the specific test for the review request
-    print("🎯 RUNNING FOCUSED AI TUTOR SUBSCRIPTION LIMIT DEBUG TEST")
-    tester.test_ai_tutor_subscription_limit_debug()
+    if success:
+        print("\n✅ Mock Test Bug Fixes testing completed successfully!")
+        sys.exit(0)
+    else:
+        print("\n❌ Mock Test Bug Fixes testing completed with critical issues")
+        sys.exit(1)
