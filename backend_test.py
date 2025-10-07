@@ -13171,15 +13171,15 @@ if __name__ == "__main__":
 if __name__ == "__main__":
     tester = DhruvAITester()
     
-    # Run the specific 402 Payment Required response fix test
-    print("🚀 Starting 402 Payment Required Response Fix Testing")
+    # Run the Enhanced Auto-Note Mentor Audio Processing System Testing
+    print("🚀 Starting Enhanced Auto-Note Mentor Audio Processing System Testing")
     print("="*80)
     
-    success = tester.test_402_payment_required_response_fix()
+    success = tester.run_comprehensive_tests()
     
     if success:
-        print("\n🎉 402 Payment Required fix validation completed successfully!")
+        print("\n🎉 Enhanced Auto-Note Mentor Audio Processing System validation completed successfully!")
         sys.exit(0)
     else:
-        print("\n❌ 402 Payment Required fix validation failed. Check the output above for details.")
+        print("\n❌ Enhanced Auto-Note Mentor Audio Processing System validation failed. Check the output above for details.")
         sys.exit(1)
