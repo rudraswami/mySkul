@@ -26,6 +26,10 @@ from fastapi.responses import JSONResponse as FastAPIJSONResponse
 from fastapi.encoders import jsonable_encoder
 import json as json_lib
 
+# Logging configuration (moved up to be available for imports)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 # PHASE 2: Audio Processing Imports
 try:
     from audio_processor import audio_processor
