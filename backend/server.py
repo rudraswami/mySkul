@@ -65,9 +65,7 @@ db = client[os.environ['DB_NAME']]
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dhruv-ai-secret-key-2025')
 
-# Logging configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Logging configuration already moved up
 
 # Stripe Configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
