@@ -1639,6 +1639,41 @@ export default function MockTests() {
         </p>
       </div>
 
+      {/* View Switcher */}
+      <div className="mb-8 flex gap-3">
+        <Button
+          variant={activeView === 'generate' ? 'default' : 'outline'}
+          onClick={() => setActiveView('generate')}
+          className="flex items-center gap-2"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Generate Test
+        </Button>
+        <Button
+          variant={activeView === 'library' ? 'default' : 'outline'}
+          onClick={() => setActiveView('library')}
+          className="flex items-center gap-2"
+        >
+          <BookOpen className="w-4 h-4" />
+          My Test Library
+        </Button>
+      </div>
+
+      {/* Conditional View Rendering */}
+      {activeView === 'library' ? (
+        <TestLibrary 
+          onRetakeTest={(testId) => {
+            // TODO: Implement retake functionality
+            console.log('Retake test:', testId);
+            setActiveView('generate');
+          }}
+          onReviewTest={(testId) => {
+            // TODO: Implement review functionality
+            console.log('Review test:', testId);
+          }}
+        />
+      ) : (
+        <>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="border-0 shadow-md">
