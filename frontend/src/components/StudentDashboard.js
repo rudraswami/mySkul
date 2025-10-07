@@ -580,7 +580,7 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
       {/* Custom CSS for animations */}
       <style jsx>{`
         @keyframes fade-in {
@@ -605,7 +605,7 @@ export default function StudentDashboard() {
         }
       `}</style>
       
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto mobile-spacing">
         
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
