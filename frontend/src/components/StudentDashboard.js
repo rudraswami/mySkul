@@ -608,25 +608,25 @@ export default function StudentDashboard() {
       <div className="max-w-7xl mx-auto mobile-spacing">
         
         {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 md:p-8 text-white mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center">
-              <div className="bg-white bg-opacity-20 p-3 rounded-xl mr-4">
-                <Brain className="h-8 w-8" />
+              <div className="bg-white bg-opacity-20 p-2 md:p-3 rounded-xl mr-3 md:mr-4">
+                <Brain className="h-6 w-6 md:h-8 md:w-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-2">
+                <h1 className="text-xl md:text-3xl font-bold mb-1 md:mb-2">
                   Welcome back, {user?.full_name?.split(' ')[0] || 'Student'}! 👋
                 </h1>
-                <p className="text-blue-100 text-lg">
+                <p className="text-blue-100 text-sm md:text-lg">
                   ⭐ You studied more than 70% of learners this week!
                 </p>
               </div>
             </div>
-            <div className="flex space-x-2">
-              <Badge className="bg-green-500 text-white border-0">Trust</Badge>
-              <Badge className="bg-purple-500 text-white border-0">Personalized</Badge>
-              <Badge className="bg-yellow-500 text-white border-0">Empowerment</Badge>
+            <div className="flex flex-wrap gap-1 md:gap-2">
+              <Badge className="bg-green-500 text-white border-0 text-xs md:text-sm">Trust</Badge>
+              <Badge className="bg-purple-500 text-white border-0 text-xs md:text-sm">Personalized</Badge>
+              <Badge className="bg-yellow-500 text-white border-0 text-xs md:text-sm">Empowerment</Badge>
             </div>
           </div>
         </div>
