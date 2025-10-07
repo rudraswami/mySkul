@@ -41,6 +41,7 @@ function App() {
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const { upsellModal, setUpsellModal } = useSubscription();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (loading) {
