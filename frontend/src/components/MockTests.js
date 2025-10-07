@@ -2144,13 +2144,14 @@ export default function MockTests() {
                       
                       <div className="ml-4">
                         <Button 
-                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative"
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 relative min-h-11 px-4 mobile-transition"
                           size="sm"
                           onClick={() => {
                             const diffLevel = difficultyMap[template.difficulty] || 3;
                             generateMockTest(template.examType, template.subject, diffLevel, template.questions, `template-${template.id}`);
                           }}
                           disabled={loadingStates[`template-${template.id}`]}
+                          aria-label={`Generate ${template.subject} test`}
                         >
                           {loadingStates[`template-${template.id}`] ? (
                             <>
