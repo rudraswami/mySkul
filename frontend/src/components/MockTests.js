@@ -410,37 +410,35 @@ export default function MockTests() {
         }, 1000);
 
       } else {
-        // Handle errors
-        const errorText = await response.text();
-        let errorMessage = 'Failed to generate test. Please try again.';
+        // Store failed test parameters for retry
+        setLastFailedTestParams({ examType, subject, difficulty, numQuestions, buttonId });
         
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.detail) {
-            // Handle both string details and object details (subscription errors)
-            if (typeof errorData.detail === 'string') {
-              errorMessage = errorData.detail;
-            } else if (typeof errorData.detail === 'object' && errorData.detail.message) {
-              // Handle structured subscription errors
-              const detail = errorData.detail;
-              
-              if (detail.action === 'upgrade') {
-                // Show upgrade prompt modal instead of generic error with real data
-                const testAccess = examSubjects?.test_access || {};
-                setShowUpgradePrompt({
-                  message: detail.message,
-                  currentPlan: detail.current_plan || 'Free',
-                  used: detail.used || testAccess.used || 0,
-                  limit: detail.limit || testAccess.limit || 2,
-                  remaining: detail.remaining || testAccess.remaining || 0,
-                  resetDays: detail.reset_days || 30,
-                  reason: detail.reason || 'limit_reached'
-                });
-                setGenerationError(null); // Clear banner error
-                return; // Don't show generic error
-              }
-              errorMessage = detail.message;
-            } else if (Array.isArray(errorData.detail)) {
+        // Create error object for subscription handler
+        const errorObj = {
+          response: {
+            status: response.status,
+            data: JSON.parse(await response.text().catch(() => '{}'))
+          }
+        };
+        
+        const errorResult = await handleSubscriptionError(
+          errorObj, 
+          'mock_tests_weekly', 
+          checkFeatureAccess, 
+          (message) => setGenerationError(message.message)
+        );
+        
+        if (!errorResult.handled) {
+          // Handle other error types
+          const errorText = await response.text().catch(() => '');
+          let errorMessage = 'Failed to generate test. Please try again.';
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.detail) {
+              if (typeof errorData.detail === 'string') {
+                errorMessage = errorData.detail;
+              } else if (Array.isArray(errorData.detail)) {
               // Handle Pydantic validation errors
               errorMessage = errorData.detail.map(err => err.msg || err.type || 'Validation error').join(', ');
             } else {
