@@ -342,6 +342,188 @@ export default function MockTests() {
     });
   };
 
+
+  // ============= PHASE 3: NEW WIZARD & EXAM MODE HANDLERS =============
+  
+  const handleOpenWizard = () => {
+    setShowWizard(true);
+  };
+
+  const handleWizardGenerate = async (config) => {
+    setWizardConfig(config);
+    setShowWizard(false);
+    
+    // Generate test using wizard config
+    const subjects = config.subjects.length > 0 ? config.subjects : ['Mathematics'];
+    await generateMockTestFromWizard(
+      config.examType,
+      subjects,
+      config.difficulty,
+      config.numQuestions,
+      config.timerEnabled ? config.timerDuration * 60 : null
+    );
+  };
+
+  const generateMockTestFromWizard = async (examType, subjects, difficulty, numQuestions, timerSeconds) => {
+    const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+    if (!accessInfo.has_access) {
+      return;
+    }
+
+    const token = localStorage.getItem('dhruv_ai_token');
+    if (!token) {
+      alert('Please log in again to continue');
+      return;
+    }
+
+    try {
+      showToast('Generating your test...', 'info');
+      
+      const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          exam_type: examType,
+          test_type: 'full_length',
+          subjects: subjects,
+          difficulty_level: difficulty,
+          num_questions: numQuestions,
+          generation_mode: 'standard'
+        })
+      });
+
+      if (response.status === 402 || response.status === 429) {
+        const errorData = await response.json();
+        triggerFeatureUpsell('mock_tests_weekly', errorData.detail || {});
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to generate test');
+      }
+
+      const data = await response.json();
+      
+      // Enter exam mode
+      setExamModeTest({
+        test_id: data.test_id,
+        title: data.title,
+        time_limit: timerSeconds
+      });
+      setExamModeQuestions(data.questions || []);
+      setShowExamMode(true);
+      showToast('Test generated successfully! 🎉', 'success');
+      
+      // Track usage
+      await trackFeatureUsage('mock_tests_weekly');
+      
+    } catch (error) {
+      console.error('Test generation error:', error);
+      showToast('Failed to generate test. Please try again.', 'error');
+    }
+  };
+
+  const handleExamSubmit = async (submissionData) => {
+    setShowExamMode(false);
+    
+    const token = localStorage.getItem('dhruv_ai_token');
+    if (!token || !examModeTest) {
+      showToast('Unable to submit test', 'error');
+      return;
+    }
+
+    try {
+      showToast('Submitting your test...', 'info');
+      
+      const response = await fetch(`${backendUrl}/api/mock-tests/${examModeTest.test_id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          answers: submissionData.answers,
+          time_taken: submissionData.timeTaken
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit test');
+      }
+
+      const resultsData = await response.json();
+      
+      // Fetch gamification progress for rewards display
+      const progressResponse = await fetch(`${backendUrl}/api/gamification/progress`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      let gamificationRewards = null;
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json();
+        // Calculate rewards (this would ideally come from backend)
+        gamificationRewards = {
+          xp_earned: 50 + Math.floor(resultsData.percentage / 2),
+          badges_earned: 0, // Backend would return actual new badges
+          new_level: progressData.current_level,
+          streak: progressData.current_streak
+        };
+      }
+      
+      // Show enhanced results modal
+      setEnhancedResultsData({
+        ...resultsData,
+        gamificationRewards
+      });
+      setShowEnhancedResults(true);
+      showToast('Test submitted successfully! 🎉', 'success');
+      
+      // Refresh analytics
+      loadRecentResults();
+      loadAnalytics();
+      
+    } catch (error) {
+      console.error('Test submission error:', error);
+      showToast('Failed to submit test. Please try again.', 'error');
+    }
+  };
+
+  const handleExamExit = () => {
+    if (window.confirm('Are you sure you want to exit? Your progress will be lost.')) {
+      setShowExamMode(false);
+      setExamModeTest(null);
+      setExamModeQuestions([]);
+    }
+  };
+
+  const handleCloseResults = () => {
+    setShowEnhancedResults(false);
+    setEnhancedResultsData(null);
+  };
+
+  const handleRetakeFromResults = () => {
+    setShowEnhancedResults(false);
+    // Reopen wizard for new test
+    setShowWizard(true);
+  };
+
+  const handleReviewFromResults = () => {
+    setShowEnhancedResults(false);
+    // TODO: Implement detailed review view
+    showToast('Review functionality coming soon!', 'info');
+  };
+
+  const handleBackToLibrary = () => {
+    setShowEnhancedResults(false);
+    setActiveView('library');
+  };
+
+
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
     // CRITICAL: Check subscription access FIRST
     const accessInfo = await checkFeatureAccess('mock_tests_weekly');
