@@ -263,6 +263,30 @@ export function SubscriptionProvider({ children }) {
     return subscriptionInfo.plan_info.features[featureName] === 'locked';
   };
 
+  // Helper to programmatically trigger upsell modal for a feature
+  const triggerFeatureUpsell = async (featureName) => {
+    try {
+      const accessInfo = await checkFeatureAccess(featureName);
+      if (!accessInfo.has_access && accessInfo.upsell_info) {
+        const modalData = {
+          featureName,
+          upsellInfo: accessInfo.upsell_info,
+          currentUsage: accessInfo.used || accessInfo.current_usage || 0,
+          limit: accessInfo.limit,
+          title: getFeatureTitle(featureName),
+          description: getFeatureDescription(featureName),
+          benefits: getFeatureBenefits(featureName)
+        };
+        setUpsellModal(modalData);
+        return true; // Modal triggered
+      }
+      return false; // No modal needed
+    } catch (error) {
+      console.error('Failed to trigger upsell modal:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchSubscriptionInfo();
   }, []);
@@ -282,6 +306,7 @@ export function SubscriptionProvider({ children }) {
     upgradeSubscription,
     handleUpsellResponse,
     setUpsellModal,
+    triggerFeatureUpsell,
     
     // Helper functions
     getFeatureLimit,
