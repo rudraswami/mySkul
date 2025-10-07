@@ -180,7 +180,7 @@ class AITutorSubscriptionTester:
             "POST",
             "chat/sessions",
             200,
-            data={"title": "Test AI Tutor Session"},
+            data={"title": "Test AI Tutor Session", "subject": "Mathematics"},
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
