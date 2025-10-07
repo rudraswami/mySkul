@@ -21,6 +21,11 @@ from PyPDF2 import PdfReader
 from PIL import Image
 import math
 from lightweight_embeddings import get_embedding_service
+import pydantic
+from bson.objectid import ObjectId
+
+# Configure Pydantic to handle MongoDB ObjectId serialization
+pydantic.json.ENCODERS_BY_TYPE[ObjectId] = str
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
