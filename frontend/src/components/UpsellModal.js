@@ -268,7 +268,8 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
               <Button
                 onClick={handleUpgrade}
                 disabled={upgrading}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 transition-all duration-300 hover:scale-105"
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 min-h-12 transition-all duration-300 hover:scale-105 mobile-transition"
+                aria-label="Upgrade subscription"
               >
                 {upgrading ? (
                   <div className="flex items-center">
