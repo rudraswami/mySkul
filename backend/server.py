@@ -8993,6 +8993,60 @@ async def submit_mock_test(
             }}
         )
         
+        # AUTO-SAVE TO LIBRARY: Save completed test to Test Library
+        try:
+            test_result_data = {
+                "total_score": total_score,
+                "percentage": percentage,
+                "correct_count": correct_count,
+                "total_questions": len(question_ids),
+                "time_taken": submission.time_taken,
+                "subjects": list(subject_analysis.keys()),
+                "is_retake": False
+            }
+            
+            # Determine category based on score
+            category = "recent"
+            if percentage >= 85:
+                category = "high_score"
+            elif percentage < 60:
+                category = "retakable"
+            
+            # Create library entry
+            library_entry = {
+                "library_id": str(uuid.uuid4()),
+                "user_id": user.user_id,
+                "test_id": test_id,
+                "title": mock_test.title,
+                "subjects": list(subject_analysis.keys()),
+                "exam_type": user.exam_type,
+                "score": total_score,
+                "max_score": mock_test.total_marks,
+                "accuracy": percentage,
+                "correct_answers": correct_count,
+                "total_questions": len(question_ids),
+                "time_taken": submission.time_taken,
+                "attempt_date": datetime.now(timezone.utc),
+                "status": "completed",
+                "is_retake": False,
+                "category": category,
+                "created_at": datetime.now(timezone.utc)
+            }
+            
+            await db.test_library.insert_one(prepare_for_mongo(library_entry))
+            
+            # Check and award badges
+            badges_earned = await check_and_award_badges(user.user_id, test_result_data)
+            
+            # Update gamification progress (XP, streaks)
+            await update_gamification_progress(user.user_id, test_result_data)
+            
+            logger.info(f"Test {test_id} auto-saved to library with {len(badges_earned)} new badges")
+            
+        except Exception as lib_error:
+            logger.error(f"Library auto-save error (non-critical): {str(lib_error)}")
+            # Don't fail the submission if library save fails
+        
         return {
             "result_id": result.result_id,
             "score": total_score,
