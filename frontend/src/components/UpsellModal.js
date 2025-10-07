@@ -104,7 +104,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
             </div>
           </div>
 
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             {/* AI Dialogue Section */}
             <div className="space-y-4 mb-6">
               {/* Mentor Message */}
