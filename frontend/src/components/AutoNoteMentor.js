@@ -2196,18 +2196,42 @@ export default function AutoNoteMentor() {
               <h1 className="text-3xl font-bold text-gray-900 mb-1">
                 Auto-Note Mentor
               </h1>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center text-sm text-green-600">
-                  <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
-                  <span>Hallucination-Free</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center text-sm text-green-600">
+                    <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
+                    <span>Hallucination-Free</span>
+                  </div>
+                  <div className="flex items-center text-sm text-blue-600">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
+                    <span>Verified Notes</span>
+                  </div>
+                  <div className="flex items-center text-sm text-purple-600">
+                    <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
+                    <span>Dual AI Intelligence</span>
+                  </div>
                 </div>
-                <div className="flex items-center text-sm text-blue-600">
-                  <div className="h-2 w-2 bg-blue-500 rounded-full mr-1"></div>
-                  <span>Verified Notes</span>
-                </div>
-                <div className="flex items-center text-sm text-purple-600">
-                  <div className="h-2 w-2 bg-purple-500 rounded-full mr-1"></div>
-                  <span>Dual AI Intelligence</span>
+                
+                {/* Usage Indicators */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center bg-blue-50 rounded-lg px-3 py-1">
+                    <Mic className="h-4 w-4 text-blue-500 mr-2" />
+                    <span className="text-sm text-gray-700">
+                      Recordings: {getFeatureLimit('auto_note_recordings_daily') === Infinity ? 
+                        'Unlimited' : 
+                        `${getFeatureRemaining('auto_note_recordings_daily')}/${getFeatureLimit('auto_note_recordings_daily')}`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center bg-purple-50 rounded-lg px-3 py-1">
+                    <Upload className="h-4 w-4 text-purple-500 mr-2" />
+                    <span className="text-sm text-gray-700">
+                      Uploads: {getFeatureLimit('auto_note_uploads_daily') === Infinity ? 
+                        'Unlimited' : 
+                        `${getFeatureRemaining('auto_note_uploads_daily')}/${getFeatureLimit('auto_note_uploads_daily')}`
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
