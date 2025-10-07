@@ -345,6 +345,269 @@ class DhruvAITester:
         
         return success_count >= 4  # At least 4/6 tests should pass
 
+    def test_subscription_modal_and_slow_banner_fixes(self):
+        """CRITICAL: Test recent fixes to MockTests component and subscription system"""
+        print("\n🚨 CRITICAL: MOCK TESTS COMPONENT AND SUBSCRIPTION SYSTEM FIXES TESTING")
+        print("   Issue 1: Slow generation banner appears instantly (should delay 10 seconds)")
+        print("   Issue 2: Subscription modal not appearing (checkFeatureAccess 402 status codes)")
+        print("   Focus: Backend API responses for subscription limits and mock test generation")
+        
+        # Test with existing user first
+        if not self.token:
+            print("❌ No token available, attempting login...")
+            if not self.test_user_login():
+                print("❌ Failed to login, cannot proceed with testing")
+                return False
+        
+        print(f"\n📊 Step 1: Test Current User Subscription Status")
+        success, response = self.run_test(
+            "Current Subscription Status",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            plan = response.get('plan', 'unknown')
+            status = response.get('status', 'unknown')
+            print(f"   ✅ Current plan: {plan}, status: {status}")
+        
+        # Test checkFeatureAccess endpoint specifically
+        print(f"\n🔍 Step 2: Test checkFeatureAccess Endpoint for 402 Status Codes")
+        print("   Testing: /api/subscription/check-access with mock test feature")
+        print("   Expected: Proper 402 Payment Required when limits exceeded")
+        
+        # Create fresh free tier user to test limits
+        fresh_user_email = f"subscription_test_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Subscription Test User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        print(f"   Creating fresh user: {fresh_user_email}")
+        success, response = self.run_test(
+            "Create Fresh User for Subscription Testing",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user")
+            return False
+        
+        fresh_token = response['token']
+        print(f"   ✅ Fresh user created")
+        
+        # Test initial access (should have access)
+        print(f"\n📊 Step 3: Test Initial Mock Test Access (Should Have Access)")
+        check_access_data = {
+            "feature_name": "mock_tests_weekly"
+        }
+        
+        success, response = self.run_test(
+            "Check Access - Initial State",
+            "POST",
+            "subscription/check-access",
+            [200, 402],
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        initial_has_access = False
+        if success:
+            has_access = response.get('has_access', False)
+            current_usage = response.get('current_usage', 0)
+            limit = response.get('limit', 0)
+            status_code = getattr(self, 'last_response_status', 0)
+            
+            print(f"   📊 Initial Access Check:")
+            print(f"      Status Code: {status_code}")
+            print(f"      has_access: {has_access}")
+            print(f"      current_usage: {current_usage}")
+            print(f"      limit: {limit}")
+            
+            if has_access and status_code == 200:
+                print(f"   ✅ Fresh user has initial access as expected")
+                initial_has_access = True
+            elif not has_access and status_code == 402:
+                print(f"   ⚠️  Fresh user already at limit (unexpected)")
+            else:
+                print(f"   ❌ Unexpected response for fresh user")
+        
+        # Generate mock tests to exhaust quota
+        print(f"\n🎯 Step 4: Exhaust Mock Test Quota")
+        print("   Generating mock tests to reach free tier limit (2 tests/week)")
+        
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],  # Use array format
+            "difficulty_level": 3,
+            "num_questions": 5
+        }
+        
+        tests_generated = 0
+        max_attempts = 3  # Try to generate up to 3 tests
+        
+        for i in range(max_attempts):
+            print(f"   Generating test {i+1}/{max_attempts}...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation - Attempt {i+1}",
+                "POST",
+                "mock-tests/generate",
+                [200, 402, 429],  # Accept success or quota errors
+                data=mock_test_data,
+                headers={'Authorization': f'Bearer {fresh_token}'}
+            )
+            
+            status_code = getattr(self, 'last_response_status', 0)
+            
+            if status_code == 200:
+                tests_generated += 1
+                test_id = response.get('test_id', 'unknown')
+                print(f"      ✅ Test {i+1} generated successfully (ID: {test_id})")
+            elif status_code in [402, 429]:
+                print(f"      🎯 Quota exhausted at test {i+1} (Status: {status_code})")
+                break
+            else:
+                print(f"      ❌ Test {i+1} failed with status {status_code}")
+            
+            time.sleep(2)  # Delay between generations
+        
+        print(f"   📊 Generated {tests_generated} tests before hitting limit")
+        
+        # Test checkFeatureAccess after quota exhaustion
+        print(f"\n🚨 Step 5: Test checkFeatureAccess After Quota Exhaustion")
+        print("   Expected: HTTP 402 Payment Required with upsell_info")
+        
+        success, response = self.run_test(
+            "Check Access - After Quota Exhaustion",
+            "POST",
+            "subscription/check-access",
+            402,  # Expecting 402 Payment Required
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        check_access_402_working = False
+        if success:
+            has_access = response.get('has_access', True)
+            upgrade_needed = response.get('upgrade_needed', False)
+            upsell_info = response.get('upsell_info', {})
+            
+            print(f"   ✅ checkFeatureAccess correctly returns 402")
+            print(f"   📊 Response Details:")
+            print(f"      has_access: {has_access}")
+            print(f"      upgrade_needed: {upgrade_needed}")
+            print(f"      upsell_info present: {bool(upsell_info)}")
+            
+            if upsell_info:
+                mentor_message = upsell_info.get('mentor_message', '')
+                professor_message = upsell_info.get('professor_message', '')
+                target_plan = upsell_info.get('target_plan', {})
+                
+                print(f"      mentor_message: {mentor_message[:50]}..." if mentor_message else "      mentor_message: Missing")
+                print(f"      professor_message: {professor_message[:50]}..." if professor_message else "      professor_message: Missing")
+                print(f"      target_plan: {target_plan.get('name', 'Missing')}")
+                
+                if mentor_message and professor_message and target_plan:
+                    print(f"   ✅ Complete upsell_info structure present")
+                    check_access_402_working = True
+                else:
+                    print(f"   ⚠️  Incomplete upsell_info structure")
+            else:
+                print(f"   ❌ Missing upsell_info in 402 response")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            
+            print(f"   ❌ checkFeatureAccess failed to return 402")
+            print(f"   Status Code: {status_code}")
+            print(f"   Error Data: {error_data}")
+            
+            if status_code == 200:
+                print(f"   🚨 CRITICAL: Returns 200 OK instead of 402 (this is the reported issue)")
+            elif status_code == 500:
+                print(f"   🚨 CRITICAL: 500 Internal Server Error (backend issue)")
+        
+        # Test mock test generation after quota exhaustion
+        print(f"\n🚫 Step 6: Test Mock Test Generation After Quota Exhaustion")
+        print("   Expected: Should return proper error response for subscription modal")
+        
+        success, response = self.run_test(
+            "Mock Test Generation - After Quota Exhaustion",
+            "POST",
+            "mock-tests/generate",
+            [402, 429],  # Expecting subscription error
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        mock_generation_error_handling = False
+        if success:
+            status_code = getattr(self, 'last_response_status', 0)
+            
+            print(f"   ✅ Mock test generation correctly blocked (Status: {status_code})")
+            
+            # Check error response structure
+            message = response.get('message', '')
+            action = response.get('action', '')
+            current_plan = response.get('current_plan', '')
+            upgrade_url = response.get('upgrade_url', '')
+            
+            print(f"   📊 Error Response Structure:")
+            print(f"      message: {message}")
+            print(f"      action: {action}")
+            print(f"      current_plan: {current_plan}")
+            print(f"      upgrade_url: {upgrade_url}")
+            
+            if message and action == 'upgrade' and current_plan and upgrade_url:
+                print(f"   ✅ Proper error structure for subscription modal")
+                mock_generation_error_handling = True
+            else:
+                print(f"   ⚠️  Incomplete error structure")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ❌ Mock test generation error handling failed (Status: {status_code})")
+        
+        # Final assessment
+        print(f"\n🎯 SUBSCRIPTION MODAL AND SLOW BANNER FIXES TESTING SUMMARY:")
+        print(f"   ✅ Fresh User Creation: ✓")
+        print(f"   ✅ Initial Access Check: {'✓' if initial_has_access else '✗'}")
+        print(f"   ✅ Mock Tests Generated: {tests_generated}")
+        print(f"   ✅ checkFeatureAccess 402 Response: {'✓' if check_access_402_working else '✗'}")
+        print(f"   ✅ Mock Generation Error Handling: {'✓' if mock_generation_error_handling else '✗'}")
+        
+        # Critical issues identification
+        critical_issues = []
+        if not check_access_402_working:
+            critical_issues.append("checkFeatureAccess endpoint not returning proper 402 status codes")
+        if not mock_generation_error_handling:
+            critical_issues.append("Mock test generation not returning proper error responses")
+        
+        if critical_issues:
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
+            for issue in critical_issues:
+                print(f"   - {issue}")
+            print(f"\n🔧 RECOMMENDATIONS:")
+            print(f"   - Fix checkFeatureAccess to return HTTP 402 when has_access=false")
+            print(f"   - Ensure mock test generation returns structured error responses")
+            print(f"   - Verify subscription modal triggers on proper 402 responses")
+            return False
+        else:
+            print(f"\n✅ ALL SUBSCRIPTION SYSTEM TESTS PASSED")
+            print(f"   - checkFeatureAccess returns proper 402 status codes")
+            print(f"   - Mock test generation handles limits correctly")
+            print(f"   - Error responses contain proper structure for subscription modals")
+            return True
+
     def test_subscription_check_access_402_response(self):
         """CRITICAL: Test subscription check-access endpoint returns proper 402 responses"""
         if not self.token:
