@@ -241,6 +241,13 @@ export default function AutoNoteMentor() {
   
   // Enhanced file upload and processing - STANDALONE (no session required)
   const handleFileUpload = async (file) => {
+    // CRITICAL: Check subscription access FIRST
+    const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
+    if (!accessInfo.has_access) {
+      // Upsell modal will be shown automatically by the context
+      return;
+    }
+
     if (!file) {
       setError('Please select a file to upload');
       return;
