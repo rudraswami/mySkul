@@ -113,10 +113,17 @@ export default function MockTests() {
   const emergencyResetAllStates = () => {
     console.log('EMERGENCY: Resetting all loading states');
     setLoadingStates({});
+    setSlowGenerationStates({});
     setGenerationError(null);
     setRetryStatus(null);
     setGenerationProgress({});
     setEstimatedTime(null);
+    
+    // Clear all timeout handles
+    Object.values(slowGenerationTimeouts.current).forEach(timeoutId => {
+      clearTimeout(timeoutId);
+    });
+    slowGenerationTimeouts.current = {};
   };
 
   // Cleanup on component unmount
