@@ -4511,7 +4511,7 @@ class SubscriptionService:
             interaction_dict['timestamp'] = interaction_dict['timestamp'].isoformat()
             await db.upsell_interactions.insert_one(interaction_dict)
             
-            return {
+            upsell_data = {
                 "mentor_message": mentor_message,
                 "professor_message": professor_message,
                 "current_tier": current_tier,
@@ -4520,6 +4520,9 @@ class SubscriptionService:
                 "growth_stats": user_stats,
                 "interaction_id": upsell_interaction.interaction_id
             }
+            
+            # Clean any ObjectId data to prevent serialization errors in HTTPExceptions
+            return clean_mongodb_doc(upsell_data)
             
         except Exception as e:
             logger.error(f"Upsell message generation error: {str(e)}")
