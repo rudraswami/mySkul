@@ -1818,22 +1818,27 @@ export default function MockTests() {
                 
                 {/* Slow Generation Warning - Shows after 10 second delay */}
                 {Object.values(slowGenerationStates).some(slow => slow) && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
-                        <span className="text-red-800 text-sm">
-                          Taking longer than expected? 
-                        </span>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        <div className="flex-1">
+                          <span className="text-blue-800 text-sm font-medium">
+                            Taking longer than expected? 
+                          </span>
+                          <p className="text-blue-600 text-xs mt-1">
+                            Don't worry! Our AI is carefully crafting quality questions for you. This usually takes 15-30 seconds.
+                          </p>
+                        </div>
                       </div>
                       <Button
                         onClick={emergencyResetAllStates}
                         variant="outline"
                         size="sm"
-                        className="text-red-600 border-red-300 hover:bg-red-100"
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
                       >
                         <RefreshCw className="h-4 w-4 mr-1" />
-                        Reset & Try Again
+                        Cancel & Reset
                       </Button>
                     </div>
                   </div>
