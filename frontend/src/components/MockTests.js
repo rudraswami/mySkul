@@ -10,6 +10,9 @@ import GamificationProgress from './GamificationProgress';
 import TestGenerationWizard from './TestGenerationWizard';
 import ExamMode from './ExamMode';
 import EnhancedResultsModal from './EnhancedResultsModal';
+import Leaderboard from './Leaderboard';
+import BadgeUnlockAnimation from './BadgeUnlockAnimation';
+import MotivationalPopup from './MotivationalPopup';
 import { 
   FileText, 
   Clock, 
