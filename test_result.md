@@ -327,6 +327,10 @@
     needs_retesting: true
     status_history:
         -working: false
+        -agent: "user"
+        -comment: "CRITICAL USER REPORTED BUGS: 1. Free tier shows 0/2 usage but blocks test generation with 'Upgrade Plan' button, 2. JavaScript runtime error: 'toLowerCase is not a function' when clicking Generate Test button, 3. Static error message instead of subscription modal. User provided screenshot showing contradictory UI state."
+    status_history:
+        -working: false
         -agent: "testing"
         -comment: "MOCK TEST FIX #2 TESTING COMPLETED - NOT WORKING: Free Tier Subscription Access tested with test@dhruvai.com credentials. FINDINGS: ❌ Free tier user is being blocked from accessing mock tests despite having 0/0 usage (should allow 2 tests/month). Backend logs show 'subscription: free, status: cancelled' and 'Access check: has_access: False, reason: subscription_expired'. The subscription validation logic is incorrectly treating free tier users as expired instead of allowing their allocated free tests. ROOT CAUSE: Free tier subscription logic needs to distinguish between 'cancelled paid subscription' and 'active free tier with remaining quota'. Current implementation blocks all free tier users regardless of usage. Fix needed: Update subscription validation to allow free tier users access to their allocated monthly tests (2/month limit)."
         -working: false
