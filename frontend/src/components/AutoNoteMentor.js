@@ -373,15 +373,43 @@ export default function AutoNoteMentor() {
         }
         
       } else {
-        const errorData = await response.json();
-        setError(errorData.detail || 'Failed to process audio file');
+        // Create error object for subscription handler
+        const error = {
+          response: {
+            status: response.status,
+            data: await response.json().catch(() => ({}))
+          }
+        };
+        
+        const errorResult = await handleSubscriptionError(
+          error, 
+          'auto_note_uploads_daily', 
+          checkFeatureAccess, 
+          (message) => setError(message.message)
+        );
+        
+        if (!errorResult.handled) {
+          setError('Failed to process audio file');
+        }
+        
         setSessionStatus('active');
         setProcessingProgress(0);
       }
     } catch (error) {
       clearInterval(progressInterval);
       console.error('Error uploading file:', error);
-      setError('Failed to upload and process file. Please check your connection and try again.');
+      
+      const errorResult = await handleSubscriptionError(
+        error, 
+        'auto_note_uploads_daily', 
+        checkFeatureAccess, 
+        (message) => setError(message.message)
+      );
+      
+      if (!errorResult.handled) {
+        setError('Failed to upload and process file. Please check your connection and try again.');
+      }
+      
       setSessionStatus('active');
       setProcessingProgress(0);
     } finally {
