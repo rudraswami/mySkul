@@ -278,7 +278,16 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return null;
 
-      const sessionTitle = detectedTopic || firstMessage.substring(0, 50) + '...';
+      // Create meaningful session title based on topic and message content
+      let sessionTitle;
+      if (detectedTopic && detectedTopic !== 'General') {
+        // Use topic with a short excerpt from the message
+        const messageExcerpt = firstMessage.substring(0, 30).trim();
+        sessionTitle = `${detectedTopic}: ${messageExcerpt}${messageExcerpt.length < 30 ? '' : '...'}`;
+      } else {
+        // Use just the message excerpt for General topics
+        sessionTitle = firstMessage.substring(0, 50).trim() + (firstMessage.length > 50 ? '...' : '');
+      }
       
       const response = await axios.post(`${API}/chat/sessions`, {
         title: sessionTitle,
