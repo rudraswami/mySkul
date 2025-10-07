@@ -154,7 +154,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "PREMIUM CINEMATIC LANDING PAGE CREATION - Create a new premium, cinematic landing page for Dhruv AI as the home route (/), featuring Hero Section, Problem→Solution narrative, Core Features showcase, Demo section, Testimonials, Pricing tiers, Trust & Technology credentials, and Footer. Must have futuristic design with blue-indigo theme, smooth animations, sample testimonials, and proper navigation to login/register pages."
+## user_problem_statement: "Test the enhanced AI Tutor subscription flow implementation. TESTING OBJECTIVES: 1. Verify login functionality works correctly 2. Test AI Tutor interface loads with proper authentication 3. Test the enhanced subscription error handling: - Verify intelligent error detection (subscription vs server errors) - Test subscription modal triggering on quota limits - Verify user-friendly error messages for server issues 4. Test the retry functionality after subscription upgrade 5. Verify animations and toast notifications work 6. Test consistent behavior across AI Tutor, Auto-Note Mentor, and Mock Tests"
 
 ## backend:
   - task: "AI Tutor Phase C: Guardrails System Testing"
