@@ -40,6 +40,9 @@ export default function MockTests() {
     triggerFeatureUpsell
   } = useSubscription();
   
+  // View state: 'generate' or 'library'
+  const [activeView, setActiveView] = useState('generate');
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
