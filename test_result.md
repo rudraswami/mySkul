@@ -221,6 +221,21 @@
         -agent: "testing"
         -comment: "COMPREHENSIVE HYBRID SUBSCRIPTION SYSTEM TESTING COMPLETED - 83.3% SUCCESS: Extensive testing of all subscription system components completed successfully. AUTHENTICATION: ✅ Successfully authenticated with test@dhruvai.com/password123 credentials. SUBSCRIPTION MANAGEMENT: ✅ GET /api/subscription/info working correctly - returns subscription tier (FREE), plan info with display name, pricing, persona, and features. FEATURE ACCESS CONTROL: ✅ POST /api/subscription/check-access working for all tested features (ai_tutor_daily: 0/5 usage, mock_tests_weekly: 0/1 usage, auto_note_uploads_daily: 0/1 usage) with proper access validation and remaining limits. USAGE TRACKING: ✅ POST /api/subscription/track-usage successfully tracks feature usage with proper date tracking, GET /api/subscription/usage retrieves daily usage statistics correctly. PLAN CONFIGURATION: ✅ GET /api/subscription/plans returns all 3 subscription tiers (FREE: ₹0/month, PREMIUM: ₹499/month, PRO: ₹999/month) with complete feature sets (14 features each). UPGRADE FUNCTIONALITY: ✅ POST /api/subscription/upgrade successfully processes upgrade from FREE to PREMIUM with proper response structure. UPSELL SYSTEM: ❌ AI-guided upsell dialogue generation not triggered during testing (user within limits). KEY SCENARIOS VALIDATED: ✅ Daily usage tracking with timezone-aware resets, ✅ Upgrade from FREE to PREMIUM process initiated, ❌ FREE user hitting limits scenario not tested (user had remaining quota). SUCCESS RATE: 10/10 API tests passed (100.0%), 5/6 feature areas working (83.3%). The subscription system core functionality is fully operational and ready for production use."
 
+  - task: "Subscription Check-Access Endpoint 402 Response Testing"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Review request focus: Test the subscription check-access endpoint directly to confirm it returns proper 402 responses with upsell_info when limits are reached. This will help isolate if the issue is in check-access or in dual-response endpoint."
+        -working: false
+        -agent: "testing"
+        -comment: "CRITICAL ISSUE IDENTIFIED - SUBSCRIPTION CHECK-ACCESS ENDPOINT NOT RETURNING 402 STATUS CODES: Conducted comprehensive testing of /api/subscription/check-access endpoint as specifically requested in review. AUTHENTICATION: ✅ Successfully authenticated with test@dhruvai.com/password123 (PREMIUM user with unlimited access). FRESH FREE TIER USER TESTING: ✅ Created fresh free tier user (free_tier_test_1759834983@dhruvai.com) with 5 AI messages/day limit. QUOTA EXHAUSTION: ✅ Successfully exhausted user quota by sending 6 AI messages (limit: 5). CRITICAL FINDING: ❌ Check-access endpoint returns STATUS CODE 200 OK instead of 402 Payment Required when user quota is exhausted. RESPONSE ANALYSIS: ✅ Response contains has_access: false, reason: 'limit_reached', current_usage: 5, limit: 5, upgrade_needed: true, and complete upsell_info structure with mentor_message, professor_message, target_plan details. ROOT CAUSE IDENTIFIED: The check-access endpoint is NOT returning proper HTTP 402 status codes when users have exhausted their quota. Instead, it returns 200 OK with has_access=false. This explains why the dual-response endpoint has issues - it expects 402 status codes to trigger subscription modals, but receives 200 OK responses. RECOMMENDATION: Fix the check-access endpoint to return HTTP 402 Payment Required status code when has_access=false and upgrade_needed=true."
+
   - task: "AI Tutor Mobile Compatibility"
     implemented: false
     working: false
