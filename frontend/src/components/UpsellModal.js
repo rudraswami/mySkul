@@ -114,7 +114,7 @@ export default function UpsellModal({ isOpen, onClose }) {
                     </Badge>
                   </div>
                   <p className="text-blue-800 text-sm leading-relaxed">
-                    {upsellInfo?.mentor_message || `Hey champ! You've completed ${currentUsage}/${limit} verified sessions today — that's impressive progress! Ready to unlock unlimited verified learning?`}
+                    {upsellInfo?.mentor_message || upsellModal?.description || `Hey champ! You've completed ${currentUsage}/${limit} verified sessions today — that's impressive progress! Ready to unlock unlimited verified learning?`}
                   </p>
                 </div>
               </div>
