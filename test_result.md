@@ -162,7 +162,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "Test the enhanced AI Tutor subscription flow implementation. TESTING OBJECTIVES: 1. Verify login functionality works correctly 2. Test AI Tutor interface loads with proper authentication 3. Test the enhanced subscription error handling: - Verify intelligent error detection (subscription vs server errors) - Test subscription modal triggering on quota limits - Verify user-friendly error messages for server issues 4. Test the retry functionality after subscription upgrade 5. Verify animations and toast notifications work 6. Test consistent behavior across AI Tutor, Auto-Note Mentor, and Mock Tests"
+## user_problem_statement: "CRITICAL MOCK TESTS BUGS REPORTED BY USER: 1. Free Tier Not Honored: Despite having 2 tests available in the free tier, the system is still blocking test generation and showing the 'Upgrade Plan' prompt incorrectly. 2. Error on Generate Button: When clicking the 'Generate Test' button, an error appears: Test Generation Issue: Error: (data.message || data.detail || '').toLowerCase is not a function. This indicates a code issue in the error-handling logic. 3. Incorrect Error Handling UI: After the test limit is reached, the current static error message is not ideal. Instead, a subscription plan modal should be triggered (as discussed earlier), aligning with the expected flow and user experience standards."
 
 ## backend:
   - task: "AI Tutor Phase C: Guardrails System Testing"
