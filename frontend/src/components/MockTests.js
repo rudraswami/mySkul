@@ -74,7 +74,6 @@ export default function MockTests() {
   
   // Dynamic subjects and subscription states
   const [examSubjects, setExamSubjects] = useState({ subjects: ['Mathematics', 'Physics', 'Chemistry'], exam_type: 'JEE' });
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(null);
   
   // Toast and retry states
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
