@@ -33,7 +33,8 @@ export default function MockTests() {
     trackFeatureUsage, 
     getFeatureRemaining, 
     getFeatureLimit,
-    currentTier 
+    currentTier,
+    triggerFeatureUpsell
   } = useSubscription();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
