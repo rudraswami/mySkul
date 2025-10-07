@@ -31,7 +31,8 @@ import {
   Sparkles,
   Crown,
   BookOpen,
-  PlusCircle
+  PlusCircle,
+  ChevronRight
 } from 'lucide-react';
 
 export default function MockTests() {
