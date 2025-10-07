@@ -582,9 +582,16 @@ export function DualResponseContainer({
             
             {expandedSections.insights && (
               <div className="p-4 border-t border-gray-100 bg-gray-50">
-                <div className="text-gray-700 text-sm leading-relaxed">
-                  <div dangerouslySetInnerHTML={{ __html: formatMathExpressions(secondaryResponse.response) }} />
-                </div>
+                {/* Use structured formatting for secondary responses too */}
+                {(secondaryResponse.persona === 'professor' || secondaryResponse.persona === 'mentor') ? (
+                  <div dangerouslySetInnerHTML={{ 
+                    __html: formatProfessorMentorResponse(secondaryResponse.response, secondaryResponse.persona) 
+                  }} />
+                ) : (
+                  <div className="text-gray-700 text-sm leading-relaxed">
+                    <div dangerouslySetInnerHTML={{ __html: formatMathExpressions(secondaryResponse.response) }} />
+                  </div>
+                )}
               </div>
             )}
           </div>
