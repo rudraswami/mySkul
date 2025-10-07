@@ -6235,7 +6235,38 @@ async def check_feature_access_endpoint(
     """Check if user has access to a specific feature"""
     try:
         access_info = await SubscriptionService.check_feature_access(user.user_id, feature_name)
+        
+        # Return proper HTTP status codes based on access
+        if not access_info.get("has_access", True):
+            # User doesn't have access - return 402 Payment Required
+            if access_info.get("reason") == "feature_locked":
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "message": "Feature requires subscription upgrade",
+                        "upsell_info": access_info.get("upsell_info", {}),
+                        "reason": "feature_locked",
+                        "upgrade_needed": True
+                    }
+                )
+            elif access_info.get("reason") == "limit_reached":
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "message": f"Daily limit reached for {feature_name}",
+                        "upsell_info": access_info.get("upsell_info", {}),
+                        "current_usage": access_info.get("current_usage"),
+                        "limit": access_info.get("limit"),
+                        "reason": "limit_reached",
+                        "upgrade_needed": True
+                    }
+                )
+        
+        # User has access - return 200 OK with access info
         return access_info
+    except HTTPException:
+        # Re-raise HTTPExceptions (like our 402s above)
+        raise
     except Exception as e:
         logger.error(f"Feature access check error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to check feature access")
