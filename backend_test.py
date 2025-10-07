@@ -9795,14 +9795,73 @@ class DhruvAITester:
             return False
 
 def main():
-    print("🚀 Starting Dhruv AI Backend API Tests - CRITICAL FIXES VERIFICATION")
+    """Main test runner - URGENT AUTHENTICATION FOCUS"""
+    print("🚨 URGENT: Dhruv AI Authentication APIs Testing...")
+    print("   User reports: Login API returning 429, Registration APIs failing")
+    print("   Focus: Authentication endpoints and subscription check-access")
     print("=" * 80)
     
     tester = DhruvAITester()
     
-    # CRITICAL FIXES VERIFICATION - TOP PRIORITY
-    print("\n🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING")
-    critical_fixes_success = tester.test_critical_fixes_verification()
+    # PRIORITY TESTS - Authentication Issues
+    priority_tests = [
+        ("🚨 URGENT: Authentication APIs Comprehensive", tester.test_authentication_apis_comprehensive),
+        ("🚨 CRITICAL: Subscription Check-Access 402 Response", tester.test_subscription_check_access_402_response),
+    ]
+    
+    # Core functionality tests (run after authentication is verified)
+    core_tests = [
+        ("Health Check", tester.test_health_check),
+        ("User Profile", tester.test_user_profile),
+        ("User Profile Update", tester.test_user_profile_update),
+        ("Dashboard Analytics", tester.test_dashboard_analytics),
+    ]
+    
+    # Run priority tests first
+    print("\n🎯 RUNNING PRIORITY TESTS (Authentication Issues)")
+    print("=" * 60)
+    
+    priority_results = []
+    for test_name, test_func in priority_tests:
+        print(f"\n{'='*20} {test_name} {'='*20}")
+        try:
+            result = test_func()
+            priority_results.append((test_name, result))
+            if result:
+                print(f"✅ {test_name} - PASSED")
+            else:
+                print(f"❌ {test_name} - FAILED")
+        except Exception as e:
+            print(f"💥 {test_name} - ERROR: {str(e)}")
+            priority_results.append((test_name, False))
+        
+        time.sleep(2)  # Delay between tests
+    
+    # Check if we should continue with core tests
+    auth_working = any(result for name, result in priority_results if "Authentication" in name)
+    
+    if auth_working:
+        print("\n🎯 RUNNING CORE FUNCTIONALITY TESTS")
+        print("=" * 60)
+        
+        core_results = []
+        for test_name, test_func in core_tests:
+            print(f"\n{'='*10} {test_name} {'='*10}")
+            try:
+                result = test_func()
+                core_results.append((test_name, result))
+                if result:
+                    print(f"✅ {test_name} - PASSED")
+                else:
+                    print(f"❌ {test_name} - FAILED")
+            except Exception as e:
+                print(f"💥 {test_name} - ERROR: {str(e)}")
+                core_results.append((test_name, False))
+            
+            time.sleep(1)  # Delay between tests
+    else:
+        print("\n⚠️  SKIPPING CORE TESTS - Authentication not working")
+        core_results = []
     
     # Test sequence - Core APIs first, then SUBSCRIPTION SYSTEM (Priority), then Phase 4 features, then Dual-Layer AI
     tests = [
