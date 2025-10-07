@@ -615,8 +615,18 @@ export default function AITutor() {
           // The upsell modal should appear automatically
           return;
         }
+      } else if (error.response?.status === 500) {
+        // For server errors, show user-friendly message but don't put text back
+        console.log('Server error occurred - AI service may be temporarily unavailable');
+        // Add a system message to inform the user
+        const errorMessage = {
+          type: 'system_error',
+          message: "I'm temporarily having trouble processing your message. Please try again in a moment, or contact support if the issue persists.",
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
       } else {
-        // For other errors (network, server), put message back in input
+        // For other errors (network, etc.), put message back in input
         setCurrentMessage(messageToSend);
       }
     } finally {
