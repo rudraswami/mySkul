@@ -225,6 +225,61 @@ code {
   }
 }
 
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS Safari zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Fix for iOS Safari 100vh issue */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Ensure crisp icons and text on retina displays */
+  svg, 
+  .icon {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Dark mode considerations for mobile */
+@media (prefers-color-scheme: dark) {
+  /* Ensure good contrast in dark environments */
+  .mobile-transition {
+    transition-duration: 0.3s;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-transition,
+  .animate-pulse,
+  .animate-spin,
+  .animate-ping {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Print styles for mobile */
+@media print {
+  .hamburger-menu,
+  .nav-toggle,
+  .mobile-header {
+    display: none;
+  }
+}
+
 
 
 @layer base {
