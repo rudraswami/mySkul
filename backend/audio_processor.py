@@ -82,8 +82,11 @@ class AudioProcessor:
             # Step 5: Audio analysis
             audio_analysis = self._analyze_audio_quality(audio_data, self.sample_rate)
             
-            # Step 6: Context detection (basic implementation)
-            context_info = self._detect_context(transcription_result['text'])
+            # Step 6: Enhanced context detection with segments
+            context_info = self._detect_context(
+                transcription_result['text'], 
+                transcription_result.get('segments', [])
+            )
             
             return {
                 'transcription': transcription_result['text'],
