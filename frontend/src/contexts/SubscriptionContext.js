@@ -34,7 +34,7 @@ export function SubscriptionProvider({ children }) {
           display_name: '🧩 Free - The Explorer',
           features: {
             ai_tutor_daily: 5,
-            mock_tests_weekly: 1,
+            mock_tests_weekly: 2,
             auto_note_uploads_daily: 1
           }
         },
