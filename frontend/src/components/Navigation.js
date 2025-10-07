@@ -116,7 +116,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
                   <button
                     onClick={() => handleNavigation(item.href, item.name)}
                     disabled={navigating === item.name}
-                    className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                    className={`navigation-item group flex items-center w-full min-h-12 px-3 py-3 text-sm font-medium rounded-lg mobile-transition ${
                       item.current
                         ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
