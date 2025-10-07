@@ -9916,6 +9916,441 @@ async def health_check():
 async def root():
     return {"message": "Dhruv AI API - Empowering Education with AI"}
 
+
+# ============= TEST LIBRARY & GAMIFICATION ENDPOINTS =============
+
+# New Pydantic Models for Test Library
+class TestLibraryEntry(BaseModel):
+    library_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    test_id: str
+    title: str
+    subjects: List[str]
+    exam_type: str
+    score: Optional[float] = None
+    max_score: int
+    accuracy: Optional[float] = None  # percentage
+    correct_answers: int = 0
+    total_questions: int
+    time_taken: Optional[int] = None  # seconds
+    attempt_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    status: str = "completed"  # "completed", "incomplete", "retaken"
+    is_retake: bool = False
+    original_test_id: Optional[str] = None
+    category: str = "recent"  # "recent", "high_score", "retakable"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class GamificationProgress(BaseModel):
+    user_id: str
+    total_xp: int = 0
+    current_level: int = 1
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_activity_date: Optional[datetime] = None
+    badges_earned: List[str] = []
+    total_tests_taken: int = 0
+    perfect_scores: int = 0
+    total_questions_answered: int = 0
+    average_accuracy: float = 0.0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BadgeAward(BaseModel):
+    badge_id: str
+    badge_name: str
+    badge_icon: str
+    description: str
+    earned_at: datetime
+
+# Badge definitions
+BADGES = {
+    "first_test": {"name": "Getting Started", "icon": "🎯", "description": "Completed your first mock test!"},
+    "streak_3": {"name": "Consistent Learner", "icon": "🔥", "description": "3-day practice streak!"},
+    "streak_7": {"name": "Week Warrior", "icon": "⚡", "description": "7-day practice streak!"},
+    "streak_30": {"name": "Monthly Master", "icon": "👑", "description": "30-day practice streak!"},
+    "perfect_score": {"name": "Perfect Score", "icon": "💯", "description": "Scored 100% on a test!"},
+    "speed_demon": {"name": "Speed Demon", "icon": "⚡", "description": "Completed test in under 15 minutes!"},
+    "test_10": {"name": "Practice Makes Perfect", "icon": "📚", "description": "Completed 10 tests!"},
+    "test_50": {"name": "Test Expert", "icon": "🎓", "description": "Completed 50 tests!"},
+    "test_100": {"name": "Test Legend", "icon": "🏆", "description": "Completed 100 tests!"},
+    "improvement_20": {"name": "Rising Star", "icon": "⭐", "description": "Improved by 20% from first test!"},
+    "high_scorer": {"name": "High Scorer", "icon": "🌟", "description": "Scored above 90%!"}
+}
+
+@api_router.get("/mock-tests/library")
+async def get_test_library(
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    limit: int = 50,
+    user: User = Depends(get_current_user)
+):
+    """Get all saved tests from Test Library with filtering"""
+    
+    try:
+        # Build query
+        query = {"user_id": user.user_id}
+        
+        if category and category != "all":
+            query["category"] = category
+        
+        if subject:
+            query["subjects"] = subject
+        
+        # Get tests from library
+        library_entries = await db.test_library.find(query).sort(
+            "attempt_date", -1
+        ).limit(limit).to_list(limit)
+        
+        # Clean ObjectIds
+        clean_entries = [clean_mongodb_doc(entry) for entry in library_entries]
+        
+        # Get summary stats
+        total_tests = len(clean_entries)
+        avg_score = sum(entry.get("accuracy", 0) for entry in clean_entries) / total_tests if total_tests > 0 else 0
+        
+        return {
+            "tests": clean_entries,
+            "stats": {
+                "total_tests": total_tests,
+                "average_accuracy": round(avg_score, 1),
+                "categories": {
+                    "recent": len([e for e in clean_entries if e.get("category") == "recent"]),
+                    "high_score": len([e for e in clean_entries if e.get("category") == "high_score"]),
+                    "retakable": len([e for e in clean_entries if e.get("category") == "retakable"])
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Test library fetch error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch test library")
+
+@api_router.get("/mock-tests/library/recent")
+async def get_recent_tests(limit: int = 10, user: User = Depends(get_current_user)):
+    """Get recent tests from library"""
+    
+    try:
+        recent_tests = await db.test_library.find({
+            "user_id": user.user_id
+        }).sort("attempt_date", -1).limit(limit).to_list(limit)
+        
+        return {
+            "tests": [clean_mongodb_doc(test) for test in recent_tests]
+        }
+        
+    except Exception as e:
+        logger.error(f"Recent tests fetch error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch recent tests")
+
+@api_router.get("/mock-tests/library/high-scores")
+async def get_high_score_tests(limit: int = 10, user: User = Depends(get_current_user)):
+    """Get high-scoring tests from library"""
+    
+    try:
+        high_score_tests = await db.test_library.find({
+            "user_id": user.user_id,
+            "accuracy": {"$gte": 75}  # 75% or above
+        }).sort("accuracy", -1).limit(limit).to_list(limit)
+        
+        return {
+            "tests": [clean_mongodb_doc(test) for test in high_score_tests]
+        }
+        
+    except Exception as e:
+        logger.error(f"High score tests fetch error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch high score tests")
+
+@api_router.post("/mock-tests/{test_id}/save-to-library")
+async def save_test_to_library(
+    test_id: str,
+    result: Dict[str, Any],
+    user: User = Depends(get_current_user)
+):
+    """Save completed test to library automatically"""
+    
+    try:
+        # Get test details
+        test_doc = await db.mock_tests.find_one({"test_id": test_id})
+        if not test_doc:
+            raise HTTPException(status_code=404, detail="Test not found")
+        
+        # Determine category
+        accuracy = result.get("percentage", 0)
+        category = "recent"
+        if accuracy >= 85:
+            category = "high_score"
+        elif accuracy < 60:
+            category = "retakable"
+        
+        # Create library entry
+        library_entry = TestLibraryEntry(
+            user_id=user.user_id,
+            test_id=test_id,
+            title=test_doc.get("title", "Mock Test"),
+            subjects=result.get("subjects", [test_doc.get("subject", "General")]),
+            exam_type=user.exam_type,
+            score=result.get("total_score", 0),
+            max_score=test_doc.get("total_marks", 100),
+            accuracy=accuracy,
+            correct_answers=result.get("correct_count", 0),
+            total_questions=len(test_doc.get("questions", [])),
+            time_taken=result.get("time_taken", 0),
+            category=category,
+            is_retake=result.get("is_retake", False),
+            original_test_id=result.get("original_test_id")
+        )
+        
+        # Save to database
+        await db.test_library.insert_one(prepare_for_mongo(library_entry.dict()))
+        
+        # Check and award badges
+        badges_earned = await check_and_award_badges(user.user_id, result)
+        
+        # Update gamification progress
+        await update_gamification_progress(user.user_id, result)
+        
+        return {
+            "success": True,
+            "library_id": library_entry.library_id,
+            "category": category,
+            "badges_earned": badges_earned
+        }
+        
+    except Exception as e:
+        logger.error(f"Save to library error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save test to library")
+
+@api_router.get("/gamification/progress")
+async def get_gamification_progress(user: User = Depends(get_current_user)):
+    """Get user's gamification progress (XP, level, badges, streaks)"""
+    
+    try:
+        # Get progress from database
+        progress = await db.gamification_progress.find_one({"user_id": user.user_id})
+        
+        if not progress:
+            # Initialize progress for new user
+            initial_progress = GamificationProgress(user_id=user.user_id)
+            await db.gamification_progress.insert_one(prepare_for_mongo(initial_progress.dict()))
+            progress = initial_progress.dict()
+        
+        # Calculate level from XP (100 XP per level)
+        total_xp = progress.get("total_xp", 0)
+        current_level = (total_xp // 100) + 1
+        xp_for_next_level = (current_level * 100) - total_xp
+        
+        # Get badge details
+        earned_badge_ids = progress.get("badges_earned", [])
+        earned_badges = [
+            {
+                "badge_id": badge_id,
+                **BADGES.get(badge_id, {"name": "Unknown", "icon": "🏅", "description": ""})
+            }
+            for badge_id in earned_badge_ids
+        ]
+        
+        return {
+            "total_xp": total_xp,
+            "current_level": current_level,
+            "xp_for_next_level": xp_for_next_level,
+            "current_streak": progress.get("current_streak", 0),
+            "longest_streak": progress.get("longest_streak", 0),
+            "badges_earned": earned_badges,
+            "total_badges": len(earned_badge_ids),
+            "available_badges": len(BADGES),
+            "stats": {
+                "total_tests": progress.get("total_tests_taken", 0),
+                "perfect_scores": progress.get("perfect_scores", 0),
+                "average_accuracy": round(progress.get("average_accuracy", 0), 1),
+                "total_questions": progress.get("total_questions_answered", 0)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Gamification progress error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch gamification progress")
+
+@api_router.get("/gamification/leaderboard")
+async def get_leaderboard(limit: int = 50, user: User = Depends(get_current_user)):
+    """Get global leaderboard based on XP"""
+    
+    try:
+        # Get top users by XP
+        top_users = await db.gamification_progress.find().sort(
+            "total_xp", -1
+        ).limit(limit).to_list(limit)
+        
+        # Get user details
+        leaderboard = []
+        user_rank = None
+        
+        for idx, progress in enumerate(top_users, 1):
+            user_doc = await db.users.find_one({"user_id": progress["user_id"]})
+            if not user_doc:
+                continue
+            
+            entry = {
+                "rank": idx,
+                "username": user_doc.get("name", "Anonymous"),
+                "total_xp": progress.get("total_xp", 0),
+                "level": (progress.get("total_xp", 0) // 100) + 1,
+                "badges_count": len(progress.get("badges_earned", [])),
+                "streak": progress.get("current_streak", 0),
+                "is_current_user": progress["user_id"] == user.user_id
+            }
+            
+            leaderboard.append(entry)
+            
+            if progress["user_id"] == user.user_id:
+                user_rank = idx
+        
+        return {
+            "leaderboard": leaderboard,
+            "your_rank": user_rank,
+            "total_participants": await db.gamification_progress.count_documents({})
+        }
+        
+    except Exception as e:
+        logger.error(f"Leaderboard fetch error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch leaderboard")
+
+# Helper Functions for Gamification
+async def check_and_award_badges(user_id: str, test_result: Dict[str, Any]) -> List[BadgeAward]:
+    """Check if user earned any new badges and award them"""
+    
+    try:
+        badges_earned = []
+        
+        # Get current progress
+        progress = await db.gamification_progress.find_one({"user_id": user_id})
+        if not progress:
+            return badges_earned
+        
+        current_badges = set(progress.get("badges_earned", []))
+        
+        # Check first test
+        if "first_test" not in current_badges and progress.get("total_tests_taken", 0) == 1:
+            badges_earned.append("first_test")
+        
+        # Check streak badges
+        streak = progress.get("current_streak", 0)
+        if streak >= 3 and "streak_3" not in current_badges:
+            badges_earned.append("streak_3")
+        if streak >= 7 and "streak_7" not in current_badges:
+            badges_earned.append("streak_7")
+        if streak >= 30 and "streak_30" not in current_badges:
+            badges_earned.append("streak_30")
+        
+        # Check perfect score
+        if test_result.get("percentage", 0) == 100 and "perfect_score" not in current_badges:
+            badges_earned.append("perfect_score")
+        
+        # Check speed demon (< 15 minutes)
+        if test_result.get("time_taken", 9999) < 900 and "speed_demon" not in current_badges:
+            badges_earned.append("speed_demon")
+        
+        # Check test count badges
+        total_tests = progress.get("total_tests_taken", 0)
+        if total_tests >= 10 and "test_10" not in current_badges:
+            badges_earned.append("test_10")
+        if total_tests >= 50 and "test_50" not in current_badges:
+            badges_earned.append("test_50")
+        if total_tests >= 100 and "test_100" not in current_badges:
+            badges_earned.append("test_100")
+        
+        # Check high scorer
+        if test_result.get("percentage", 0) >= 90 and "high_scorer" not in current_badges:
+            badges_earned.append("high_scorer")
+        
+        # Update badges in database
+        if badges_earned:
+            new_badges = list(current_badges) + badges_earned
+            await db.gamification_progress.update_one(
+                {"user_id": user_id},
+                {"$set": {"badges_earned": new_badges, "updated_at": datetime.now(timezone.utc)}}
+            )
+        
+        # Convert to BadgeAward objects
+        return [
+            BadgeAward(
+                badge_id=badge_id,
+                badge_name=BADGES[badge_id]["name"],
+                badge_icon=BADGES[badge_id]["icon"],
+                description=BADGES[badge_id]["description"],
+                earned_at=datetime.now(timezone.utc)
+            )
+            for badge_id in badges_earned
+        ]
+        
+    except Exception as e:
+        logger.error(f"Badge check error: {str(e)}")
+        return []
+
+async def update_gamification_progress(user_id: str, test_result: Dict[str, Any]):
+    """Update user's gamification progress after test completion"""
+    
+    try:
+        # Get current progress
+        progress = await db.gamification_progress.find_one({"user_id": user_id})
+        
+        if not progress:
+            # Initialize progress
+            progress = GamificationProgress(user_id=user_id).dict()
+            await db.gamification_progress.insert_one(prepare_for_mongo(progress))
+            progress = await db.gamification_progress.find_one({"user_id": user_id})
+        
+        # Calculate XP earned (base 50 + score bonus)
+        accuracy = test_result.get("percentage", 0)
+        xp_earned = 50 + int(accuracy / 2)  # 50-100 XP based on score
+        
+        # Update streak
+        today = datetime.now(timezone.utc).date()
+        last_activity = progress.get("last_activity_date")
+        
+        if last_activity:
+            last_date = last_activity.date() if isinstance(last_activity, datetime) else datetime.fromisoformat(last_activity).date()
+            days_diff = (today - last_date).days
+            
+            if days_diff == 1:
+                # Continue streak
+                new_streak = progress.get("current_streak", 0) + 1
+            elif days_diff == 0:
+                # Same day, don't update streak
+                new_streak = progress.get("current_streak", 0)
+            else:
+                # Streak broken
+                new_streak = 1
+        else:
+            new_streak = 1
+        
+        # Calculate new average accuracy
+        total_tests = progress.get("total_tests_taken", 0)
+        current_avg = progress.get("average_accuracy", 0)
+        new_avg = ((current_avg * total_tests) + accuracy) / (total_tests + 1)
+        
+        # Update progress
+        update_data = {
+            "total_xp": progress.get("total_xp", 0) + xp_earned,
+            "current_streak": new_streak,
+            "longest_streak": max(new_streak, progress.get("longest_streak", 0)),
+            "last_activity_date": datetime.now(timezone.utc),
+            "total_tests_taken": total_tests + 1,
+            "perfect_scores": progress.get("perfect_scores", 0) + (1 if accuracy == 100 else 0),
+            "total_questions_answered": progress.get("total_questions_answered", 0) + test_result.get("total_questions", 0),
+            "average_accuracy": round(new_avg, 2),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        await db.gamification_progress.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+        
+        logger.info(f"Updated gamification progress for user {user_id}: +{xp_earned} XP, streak: {new_streak}")
+        
+    except Exception as e:
+        logger.error(f"Gamification update error: {str(e)}")
+
+
 # ============= SUBSCRIPTION & PAYMENT ENDPOINTS =============
 
 @api_router.get("/subscription/plans")
