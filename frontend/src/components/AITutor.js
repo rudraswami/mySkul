@@ -2449,13 +2449,14 @@ export default function AITutor() {
                       size="sm"
                       variant="ghost"
                       onClick={isRecording ? enhancedStopVoiceInput : enhancedStartVoiceInput}
-                      className={`relative h-7 w-7 p-0 transition-all duration-300 ${
+                      className={`voice-button chat-action-button relative min-h-10 min-w-10 md:h-7 md:w-7 p-2 md:p-0 transition-all duration-300 mobile-transition ${
                         isRecording
                           ? 'text-red-500 scale-110 animate-pulse'
                           : 'text-gray-400 hover:text-blue-600'
                       }`}
                       disabled={loading}
                       title={isRecording ? 'Stop recording' : 'Start voice input'}
+                      aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
                     >
                       {/* Voice Animation Rings */}
                       {voiceAnimation && (
