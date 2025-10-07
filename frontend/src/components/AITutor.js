@@ -606,29 +606,18 @@ export default function AITutor() {
     } catch (error) {
       console.error('Failed to send message:', error);
       
-      // Check if this is a subscription-related error
-      if (error.response?.status === 402 || error.response?.status === 429) {
-        // Don't put message back - let subscription modal handle this
-        console.log('Subscription limit reached - triggering upsell modal');
-        // Force trigger the subscription check again to show modal
-        const accessInfo = await checkFeatureAccess('ai_tutor_daily');
-        if (!accessInfo.has_access) {
-          // The upsell modal should appear automatically
-          return;
-        }
-      } else if (error.response?.status === 500) {
-        // For server errors, show user-friendly message but don't put text back
-        console.log('Server error occurred - AI service may be temporarily unavailable');
-        // Add a system message to inform the user
-        const errorMessage = {
-          type: 'system_error',
-          message: "I'm temporarily having trouble processing your message. Please try again in a moment, or contact support if the issue persists.",
-          timestamp: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      } else {
-        // For other errors (network, etc.), put message back in input
+      // Use enhanced subscription error handling
+      const errorResult = await handleSubscriptionError(
+        error, 
+        'ai_tutor_daily', 
+        checkFeatureAccess, 
+        setMessages
+      );
+      
+      if (!errorResult.handled) {
+        // For unhandled errors (network, etc.), put message back in input
         setCurrentMessage(messageToSend);
+        showToast('Failed to send message. Please try again.', 'error');
       }
     } finally {
       setLoading(false);
