@@ -7,7 +7,7 @@ from datetime import datetime
 
 class Phase4Tester:
     def __init__(self):
-        self.base_url = "https://braingym-dashboard.preview.emergentagent.com/api"
+        self.base_url = "https://study-streak-app.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         self.test_ids = []

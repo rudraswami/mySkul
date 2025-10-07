@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 
 class PhaseCDETester:
-    def __init__(self, base_url="https://braingym-dashboard.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://study-streak-app.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

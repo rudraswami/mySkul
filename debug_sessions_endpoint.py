@@ -8,7 +8,7 @@ import json
 
 def test_sessions_endpoint():
     # Authenticate
-    login_url = 'https://braingym-dashboard.preview.emergentagent.com/api/auth/login'
+    login_url = 'https://study-streak-app.preview.emergentagent.com/api/auth/login'
     login_data = {'email': 'test@dhruvai.com', 'password': 'password123'}
     response = requests.post(login_url, json=login_data)
     
@@ -25,7 +25,7 @@ def test_sessions_endpoint():
     # Create a session first
     session_data = {'title': 'Debug Session', 'subject': 'Physics'}
     create_response = requests.post(
-        'https://braingym-dashboard.preview.emergentagent.com/api/auto-notes/start-session',
+        'https://study-streak-app.preview.emergentagent.com/api/auto-notes/start-session',
         json=session_data,
         headers=headers
     )
@@ -39,7 +39,7 @@ def test_sessions_endpoint():
     
     # Test individual session retrieval (this works)
     individual_response = requests.get(
-        f'https://braingym-dashboard.preview.emergentagent.com/api/auto-notes/{session_id}',
+        f'https://study-streak-app.preview.emergentagent.com/api/auto-notes/{session_id}',
         headers=headers
     )
     
@@ -49,7 +49,7 @@ def test_sessions_endpoint():
     
     # Test sessions list (this fails)
     sessions_response = requests.get(
-        'https://braingym-dashboard.preview.emergentagent.com/api/auto-notes/sessions',
+        'https://study-streak-app.preview.emergentagent.com/api/auto-notes/sessions',
         headers=headers
     )
     
@@ -58,7 +58,7 @@ def test_sessions_endpoint():
     
     # Test analytics endpoint (also fails)
     analytics_response = requests.get(
-        'https://braingym-dashboard.preview.emergentagent.com/api/auto-notes/analytics',
+        'https://study-streak-app.preview.emergentagent.com/api/auto-notes/analytics',
         headers=headers
     )
     
@@ -67,7 +67,7 @@ def test_sessions_endpoint():
     
     # Test class series endpoint (also fails)
     class_series_response = requests.get(
-        'https://braingym-dashboard.preview.emergentagent.com/api/auto-notes/class-series',
+        'https://study-streak-app.preview.emergentagent.com/api/auto-notes/class-series',
         headers=headers
     )
     
