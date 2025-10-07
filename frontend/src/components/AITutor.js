@@ -596,6 +596,11 @@ export default function AITutor() {
 
       const newMessage = response.data;
       
+      // Update session title if AI detected a more specific topic
+      if (newMessage.topic_detected && newMessage.topic_detected !== 'General') {
+        await updateSessionTitleIfNeeded(sessionId, newMessage.topic_detected, messageToSend);
+      }
+      
       // Save message to backend session
       await saveMessageToSession(sessionId, messageToSend, newMessage);
       
