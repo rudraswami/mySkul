@@ -12995,12 +12995,7 @@ def main():
             
             return False
 
-if __name__ == "__main__":
-    tester = DhruvAITester()
-    
-    # Run the specific 402 response fix test as requested in the review
-    print("🚨 CRITICAL VALIDATION - ISSUE 2: SUBSCRIPTION ACCESS FIX TESTING")
-    print("Testing the /api/subscription/check-access endpoint fix for proper 402 status codes")
+# Removed old main execution block
     
     # Create fresh free tier user with mock_tests_weekly limit of 2
     print("\n📝 Step 1: Create Fresh Free Tier User")
