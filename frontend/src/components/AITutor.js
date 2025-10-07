@@ -59,6 +59,7 @@ export default function AITutor() {
     dailyUsage, 
     checkFeatureAccess, 
     trackFeatureUsage,
+    fetchSubscriptionInfo,
     upsellModal,
     setUpsellModal,
     currentTier,
