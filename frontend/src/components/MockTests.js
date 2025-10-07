@@ -96,7 +96,7 @@ export default function MockTests() {
       showToast('🎉 Upgrade successful! Generating your test...', 'success');
       
       setTimeout(async () => {
-        await generateTestWithProgress(examType, subject, difficulty, numQuestions, buttonId);
+        await generateMockTest(examType, subject, difficulty, numQuestions, buttonId);
         setLastFailedTestParams(null);
       }, 1000);
     }
