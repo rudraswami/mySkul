@@ -596,6 +596,7 @@ export default function MockTests() {
         }
         
         setGenerationError(errorMessage);
+        }
       }
       
     } catch (error) {
