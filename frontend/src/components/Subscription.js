@@ -134,7 +134,7 @@ export default function Subscription() {
         'Auto-note generation',
         'Priority support'
       ],
-      current: currentSubscription?.plan === 'basic',
+      current: currentSubscription?.plan_name === 'basic',
       popular: true
     },
     {
