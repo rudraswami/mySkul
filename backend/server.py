@@ -32,12 +32,11 @@ import json as json_lib
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# PHASE 2: Audio Processing Imports
+# PHASE 2: Audio Processing Imports - Lightweight Version
 try:
-    from audio_processor import audio_processor
-    from celery_tasks import process_audio_async, enhance_audio_async, transcribe_audio_async
+    from audio_processor_lite import get_audio_processor
     AUDIO_PROCESSING_ENABLED = True
-    logger.info("Audio processing modules loaded successfully")
+    logger.info("✅ Lightweight audio processing loaded successfully")
 except ImportError as e:
     logger.warning(f"Audio processing not available: {e}")
     AUDIO_PROCESSING_ENABLED = False
