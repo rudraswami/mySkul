@@ -559,13 +559,13 @@ export default function MockTests() {
         };
       }
       
-      // Show enhanced results modal
+      // Hide loading, show enhanced results modal
+      setShowSubmitLoading(false);
       setEnhancedResultsData({
         ...resultsData,
         gamificationRewards
       });
       setShowEnhancedResults(true);
-      showToast('Test submitted successfully! 🎉', 'success');
       
       // Phase 4: Show badge unlock animation if new badges earned
       if (gamificationRewards && gamificationRewards.badges_earned > 0) {
