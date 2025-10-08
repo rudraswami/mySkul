@@ -620,6 +620,42 @@ class PaymentTransaction(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+# Razorpay Models
+class RazorpayOrderCreate(BaseModel):
+    amount: int  # Amount in paise (INR)
+    currency: str = "INR"
+    plan_name: str  # FREE, PREMIUM, PRO
+    billing_cycle: str = "monthly"  # monthly, yearly
+    user_id: str
+
+class RazorpayOrderResponse(BaseModel):
+    order_id: str
+    amount: int
+    currency: str
+    key_id: str
+    plan_name: str
+    billing_cycle: str
+
+class RazorpayPaymentSuccess(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    user_id: str
+
+class RazorpaySubscription(BaseModel):
+    subscription_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    razorpay_signature: Optional[str] = None
+    plan_name: str  # FREE, PREMIUM, PRO
+    billing_cycle: str = "monthly"
+    amount: int  # Amount in paise
+    status: str = "created"  # created, paid, failed, cancelled
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=30))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class UsageTracking(BaseModel):
     usage_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
