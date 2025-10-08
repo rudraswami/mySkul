@@ -66,7 +66,8 @@ export default function AITutor() {
     getFeatureUsage,
     getFeatureLimit,
     getFeatureRemaining,
-    isFeatureUnlimited
+    isFeatureUnlimited,
+    triggerFeatureUpsell
   } = useSubscription();
   const [currentMessage, setCurrentMessage] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
