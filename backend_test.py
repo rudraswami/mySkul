@@ -14854,7 +14854,25 @@ def main():
             return True
 
 if __name__ == "__main__":
+    import sys
     tester = DhruvAITester()
+    
+    # Check if we should run only the specific review request test
+    if len(sys.argv) > 1 and sys.argv[1] == "quota-test":
+        print("🎯 RUNNING SPECIFIC REVIEW REQUEST TEST: Mock Tests Generate Quota Validation")
+        print("=" * 60)
+        
+        try:
+            result = tester.test_mock_tests_generate_quota_validation()
+            if result:
+                print(f"✅ Mock Tests Generate Quota Validation PASSED")
+                sys.exit(0)
+            else:
+                print(f"❌ Mock Tests Generate Quota Validation FAILED")
+                sys.exit(1)
+        except Exception as e:
+            print(f"💥 Mock Tests Generate Quota Validation ERROR: {str(e)}")
+            sys.exit(1)
     
     # Run the Enhanced Auto-Note Mentor Audio Processing System Testing
     print("🚀 Starting Enhanced Auto-Note Mentor Audio Processing System Testing")
