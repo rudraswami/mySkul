@@ -8809,21 +8809,22 @@ async def generate_mock_test(
         subscription = await get_user_subscription(user.user_id)
         logger.info(f"User {user.user_id} subscription: {subscription.plan_name}, status: {subscription.status}")
         
-        access_info = await check_feature_access(user.user_id, "mock_tests_weekly")
+        # Use the new SubscriptionService for enriched upsell data
+        access_info = await SubscriptionService.check_feature_access(user.user_id, "mock_tests_weekly")
         logger.info(f"Access check for user {user.user_id}: {access_info}")
         
-        # Special handling for free tier - ensure first tests work
-        if subscription.plan_name == "free" and access_info["limit"] == 2:
-            current_usage = access_info.get("used", 0)
-            if current_usage < 2:
-                logger.info(f"Free tier user {user.user_id} allowed: {current_usage}/2 tests used")
-                access_info["has_access"] = True
-        
-        if not access_info["has_access"]:
-            subscription = await get_user_subscription(user.user_id)
-            plan_name = subscription.plan_name.title()
-            # Use universal subscription error handler
-            handle_subscription_error(access_info, "mock_tests_weekly", plan_name)
+        if not access_info.get("has_access", False):
+            # Return rich upsell payload just like AI Tutor
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "message": "Mock Tests limit reached or feature locked",
+                    "upsell_info": access_info.get("upsell_info", {}),
+                    "upgrade_needed": True,
+                    "used": access_info.get("used", access_info.get("current_usage", 0)),
+                    "limit": access_info.get("limit", 0)
+                }
+            )
         
         # Check cache first for instant loading
         cache_key = create_cache_key(user.user_id, request.test_type, request.subjects)
