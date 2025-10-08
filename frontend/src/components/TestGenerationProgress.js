@@ -87,15 +87,19 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
         clearInterval(progressInterval);
         clearTimeout(stepTimeout);
       };
-    } else if (currentStep === GENERATION_STEPS.length) {
-      // All steps complete - trigger callback after short delay
-      const completeTimeout = setTimeout(() => {
-        if (onComplete) onComplete();
-      }, 500);
-      
-      return () => clearTimeout(completeTimeout);
+    } else if (currentStep === GENERATION_STEPS.length && !showSuccessState) {
+      // All animation steps complete - wait for test data
+      // Check if test data is ready
+      if (testData) {
+        // Test is ready! Show success state
+        const successTimeout = setTimeout(() => {
+          setShowSuccessState(true);
+        }, 500);
+        return () => clearTimeout(successTimeout);
+      }
+      // If test data not ready yet, keep waiting (polling will happen via testData prop change)
     }
-  }, [currentStep, onComplete]);
+  }, [currentStep, testData, showSuccessState]);
 
   const totalProgress = ((currentStep + (progress / 100)) / GENERATION_STEPS.length) * 100;
 
