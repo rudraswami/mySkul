@@ -60,6 +60,12 @@ export default function MockTests() {
   const [examModeQuestions, setExamModeQuestions] = useState([]);
   const [enhancedResultsData, setEnhancedResultsData] = useState(null);
   
+  // Phase 4: Gamification states
+  const [showBadgeAnimation, setShowBadgeAnimation] = useState(false);
+  const [newBadges, setNewBadges] = useState([]);
+  const [showMotivationalPopup, setShowMotivationalPopup] = useState(false);
+  const [motivationalData, setMotivationalData] = useState(null);
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
