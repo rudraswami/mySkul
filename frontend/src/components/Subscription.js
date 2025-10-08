@@ -349,34 +349,46 @@ export default function Subscription() {
                   <tr className="border-b">
                     <th className="pb-3 pr-4">Features</th>
                     <th className="pb-3 px-4 text-center">Free</th>
-                    <th className="pb-3 px-4 text-center">Basic</th>
                     <th className="pb-3 px-4 text-center">Premium</th>
+                    <th className="pb-3 px-4 text-center">Pro</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
                   <tr className="border-b">
-                    <td className="py-3 pr-4">Mock Tests per Month</td>
+                    <td className="py-3 pr-4">Mock Tests per Week</td>
                     <td className="py-3 px-4 text-center">2</td>
-                    <td className="py-3 px-4 text-center">20</td>
+                    <td className="py-3 px-4 text-center">3</td>
                     <td className="py-3 px-4 text-center">Unlimited</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-3 pr-4">AI Tutor Queries</td>
                     <td className="py-3 px-4 text-center">5/day</td>
                     <td className="py-3 px-4 text-center">Unlimited</td>
-                    <td className="py-3 px-4 text-center">Unlimited + Dual AI</td>
+                    <td className="py-3 px-4 text-center">Unlimited + Emotion-Aware</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-3 pr-4">Auto-Note Generation</td>
-                    <td className="py-3 px-4 text-center">❌</td>
-                    <td className="py-3 px-4 text-center">✅</td>
-                    <td className="py-3 px-4 text-center">✅ + OCR</td>
+                    <td className="py-3 pr-4">File Uploads</td>
+                    <td className="py-3 px-4 text-center">1/day</td>
+                    <td className="py-3 px-4 text-center">Unlimited</td>
+                    <td className="py-3 px-4 text-center">Unlimited + Advanced OCR</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-3 pr-4">Advanced Analytics</td>
+                    <td className="py-3 pr-4">Analytics & Progress Tracking</td>
+                    <td className="py-3 px-4 text-center">Basic</td>
+                    <td className="py-3 px-4 text-center">Advanced + Weekly Insights</td>
+                    <td className="py-3 px-4 text-center">Advanced + Daily Personalized</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">Parent Dashboard</td>
                     <td className="py-3 px-4 text-center">❌</td>
-                    <td className="py-3 px-4 text-center">✅</td>
-                    <td className="py-3 px-4 text-center">✅ + Parent Access</td>
+                    <td className="py-3 px-4 text-center">❌</td>
+                    <td className="py-3 px-4 text-center">✅ Detailed Reports</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 pr-4">Priority Support</td>
+                    <td className="py-3 px-4 text-center">Community</td>
+                    <td className="py-3 px-4 text-center">✅ Priority</td>
+                    <td className="py-3 px-4 text-center">✅ Fastest Response</td>
                   </tr>
                 </tbody>
               </table>
