@@ -672,7 +672,7 @@ export default function AITutor() {
       
       // Check if this is a subscription-related error first
       if (error.response?.status === 402 || error.response?.status === 429) {
-        console.log('Subscription limit reached in catch block - opening modal');
+        console.log('Subscription limit reached in catch block - triggering global modal');
         
         // Store failed action for retry after upgrade
         const failedAction = () => {
@@ -681,24 +681,8 @@ export default function AITutor() {
         };
         setLastFailedAction(failedAction);
         
-        // Open modal directly from payload if available
-        const detail = error.response?.data?.detail || {};
-        const upsellInfo = detail.upsell_info || error.response?.data?.upsell_info || {};
-        setUpsellModal({
-          featureName: 'ai_tutor_daily',
-          upsellInfo,
-          currentUsage: detail.used || detail.current_usage || 0,
-          limit: detail.limit || 0,
-          title: '🎓 Unlock Unlimited AI Tutoring',
-          description: "You've reached your daily AI Tutor limit. Upgrade for unlimited conversations with Mentor + Professor AI.",
-          benefits: [
-            'Unlimited AI conversations',
-            'Advanced problem-solving guidance',
-            'Personalized study recommendations',
-            'Priority AI processing',
-            'Download notes & reports'
-          ]
-        });
+        // Trigger the shared upsell flow so UI/data is consistent
+        await triggerFeatureUpsell('ai_tutor_daily');
         return; // Don't add error messages to chat
       }
       
