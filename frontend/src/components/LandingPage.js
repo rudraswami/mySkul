@@ -324,32 +324,58 @@ const LandingPage = () => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Emotional Connection */}
-            <div className="text-center lg:text-left">
-              {/* Relatable Badge */}
-              <div className="inline-flex items-center bg-amber-500/20 border border-amber-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm">
-                <Clock className="h-5 w-5 text-amber-400 mr-3" />
-                <span className="text-amber-300 text-sm font-medium">
-                  Your 24/7 Study Companion for JEE/NEET/UPSC
+            <div className="text-center lg:text-left space-y-8">
+              {/* Animated Badge with Glow */}
+              <div className="inline-flex items-center bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/40 rounded-full px-6 py-3 mb-4 backdrop-blur-md shadow-lg shadow-amber-500/20 animate-pulse-slow">
+                <div className="relative">
+                  <Clock className="h-5 w-5 text-amber-400 mr-3 animate-spin-slow" />
+                  <div className="absolute inset-0 blur-md bg-amber-400/50 rounded-full"></div>
+                </div>
+                <span className="text-amber-200 text-sm font-semibold tracking-wide">
+                  🎯 Your 24/7 Study Companion for JEE/NEET/UPSC
                 </span>
               </div>
 
-              {/* Emotional Headline */}
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
-                <span className="bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
-                  Never Study Alone.
-                </span>
+              {/* Emotional Headline with Enhanced Styling */}
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1]">
+                <div className="relative inline-block">
+                  <span className="bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent drop-shadow-2xl">
+                    Never Study Alone.
+                  </span>
+                  <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 -z-10"></div>
+                </div>
                 <br />
-                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                  Never Feel Stuck Again.
-                </span>
+                <div className="relative inline-block mt-2">
+                  <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-gradient drop-shadow-2xl">
+                    Never Feel Stuck Again.
+                  </span>
+                  <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-cyan-500/20 -z-10"></div>
+                </div>
               </h1>
 
-              {/* Problem-Focused Sub-headline */}
-              <p className="text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">
-                <span className="text-amber-300 font-semibold">11 PM doubt?</span> We're here. <span className="text-green-400 font-semibold">Notes lost?</span> We organize them. <span className="text-blue-300 font-semibold">Exam stress?</span> We adapt to you.
-              </p>
+              {/* Enhanced Problem-Focused Sub-headline with Icons */}
+              <div className="space-y-4 text-lg md:text-xl">
+                <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-amber-500/10 to-transparent px-6 py-3 rounded-2xl backdrop-blur-sm border border-amber-500/20">
+                  <AlertCircle className="h-6 w-6 text-amber-400 flex-shrink-0 animate-pulse" />
+                  <p className="text-blue-100">
+                    <span className="text-amber-300 font-bold">11 PM doubt?</span> <span className="text-white">We're here.</span>
+                  </p>
+                </div>
+                <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-green-500/10 to-transparent px-6 py-3 rounded-2xl backdrop-blur-sm border border-green-500/20">
+                  <FileText className="h-6 w-6 text-green-400 flex-shrink-0 animate-pulse animation-delay-1000" />
+                  <p className="text-blue-100">
+                    <span className="text-green-400 font-bold">Notes lost?</span> <span className="text-white">We organize them.</span>
+                  </p>
+                </div>
+                <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-blue-500/10 to-transparent px-6 py-3 rounded-2xl backdrop-blur-sm border border-blue-500/20">
+                  <Heart className="h-6 w-6 text-blue-400 flex-shrink-0 animate-pulse animation-delay-2000" />
+                  <p className="text-blue-100">
+                    <span className="text-blue-300 font-bold">Exam stress?</span> <span className="text-white">We adapt to you.</span>
+                  </p>
+                </div>
+              </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start mb-12">
