@@ -19,7 +19,9 @@ import {
   Mail,
   ExternalLink,
   LogIn,
-  UserPlus
+  UserPlus,
+  Menu,
+  X
 } from 'lucide-react';
 
 const LandingPage = () => {
