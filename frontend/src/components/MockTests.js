@@ -2045,6 +2045,9 @@ export default function MockTests() {
           {/* Gamification Progress Widget */}
           <GamificationProgress showFullView={false} />
           
+          {/* Leaderboard Widget */}
+          <Leaderboard showFullView={false} />
+          
           {/* Personal Test History */}
           <Card className="border-0 shadow-md">
             <CardHeader>
