@@ -16,7 +16,6 @@ import uuid
 from pathlib import Path
 import bcrypt
 import jwt
-import json
 import base64
 import io
 import numpy as np
