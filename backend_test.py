@@ -8016,6 +8016,78 @@ class DhruvAITester:
         
         return success_count >= 5  # At least 5/7 tests should pass
 
+    def run_review_request_tests(self):
+        """Run CRITICAL tests based on review request requirements"""
+        print("🚨 CRITICAL: REVIEW REQUEST BACKEND TESTING")
+        print("=" * 80)
+        print("Focus Areas:")
+        print("1. JWT Authentication Endpoints (Leaderboard & Progress)")
+        print("2. Subscription Check Access 402 Status Codes")
+        print("3. Mock Test Generation 402 Status Codes")
+        print("4. Plan Upgrade API Parameter Format")
+        print("=" * 80)
+        
+        # Ensure we have authentication
+        print("\n🔐 AUTHENTICATION SETUP")
+        if not self.test_user_login():
+            print("❌ Failed to authenticate with test@dhruvai.com/password123")
+            return False
+        
+        print(f"✅ Authenticated successfully with JWT token")
+        
+        # Critical Test 1: JWT Authentication Endpoints
+        print("\n" + "="*60)
+        print("🚨 CRITICAL TEST 1: JWT AUTHENTICATION ENDPOINTS")
+        jwt_auth_success = self.test_jwt_authentication_endpoints()
+        
+        # Critical Test 2: Subscription Check Access 402 Status
+        print("\n" + "="*60)
+        print("🚨 CRITICAL TEST 2: SUBSCRIPTION CHECK ACCESS 402 STATUS")
+        check_access_success = self.test_subscription_check_access_402_status()
+        
+        # Critical Test 3: Mock Test Generation 402 Status
+        print("\n" + "="*60)
+        print("🚨 CRITICAL TEST 3: MOCK TEST GENERATION 402 STATUS")
+        mock_generation_success = self.test_mock_test_generation_402_status()
+        
+        # Critical Test 4: Plan Upgrade API Parameters
+        print("\n" + "="*60)
+        print("🚨 CRITICAL TEST 4: PLAN UPGRADE API PARAMETERS")
+        plan_upgrade_success = self.test_plan_upgrade_api_parameters()
+        
+        # Final Assessment
+        print("\n" + "="*80)
+        print("🎯 REVIEW REQUEST TESTING SUMMARY")
+        print("="*80)
+        
+        test_results = {
+            "JWT Authentication Endpoints": jwt_auth_success,
+            "Subscription Check Access 402": check_access_success,
+            "Mock Test Generation 402": mock_generation_success,
+            "Plan Upgrade API Parameters": plan_upgrade_success
+        }
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status} - {test_name}")
+        
+        print(f"\n📊 Overall Success Rate: {success_count}/{total_tests} ({(success_count/total_tests)*100:.1f}%)")
+        
+        if success_count == total_tests:
+            print("🎉 ALL CRITICAL TESTS PASSED - Review request requirements met")
+        else:
+            print("🚨 CRITICAL ISSUES IDENTIFIED - Review request requirements not fully met")
+            
+            failed_tests = [name for name, result in test_results.items() if not result]
+            print(f"🔧 Failed Tests Requiring Attention:")
+            for test_name in failed_tests:
+                print(f"   - {test_name}")
+        
+        return success_count >= 3  # At least 3/4 tests should pass
+
     def run_comprehensive_tests(self):
         """Run backend subscription flows re-testing as requested in review"""
         print("🚀 Starting Backend Subscription Flows Re-Testing...")
