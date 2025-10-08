@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 import stripe
 import razorpay
+import json
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 import os
