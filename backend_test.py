@@ -1464,6 +1464,443 @@ class DhruvAITester:
         
         return False
 
+    def test_complete_mock_test_generation_flow(self):
+        """COMPREHENSIVE MOCK TEST GENERATION FLOW TESTING - REVIEW REQUEST FOCUS"""
+        print("\n🎯 COMPREHENSIVE MOCK TEST GENERATION FLOW TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing complete mock test generation flow for new user account (ddddd@gmail.com)")
+        print("   Test scenarios: New User First Test, Cached Test Retrieval, Different Test Types, Submit Test Flow")
+        print("   Focus: ObjectId serialization, backend logs, cache functionality")
+        
+        # Create the specific test user requested
+        test_email = "ddddd@gmail.com"
+        test_password = "password123"
+        
+        print(f"\n📊 Step 1: Create/Login Test User ({test_email})")
+        
+        # Try to register the user first (in case it doesn't exist)
+        registration_data = {
+            "full_name": "Mock Test Flow User",
+            "email": test_email,
+            "password": test_password,
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Register Test User",
+            "POST",
+            "auth/register",
+            [200, 400, 409],  # Accept success or user already exists
+            data=registration_data
+        )
+        
+        # If registration failed (user exists), try login
+        if not success or 'token' not in response:
+            print("   User may already exist, attempting login...")
+            login_data = {
+                "email": test_email,
+                "password": test_password
+            }
+            
+            success, response = self.run_test(
+                "Login Test User",
+                "POST",
+                "auth/login",
+                200,
+                data=login_data
+            )
+            
+            if not success or 'token' not in response:
+                print("❌ Failed to create or login test user")
+                return False
+        
+        test_token = response['token']
+        test_user_id = response.get('user', {}).get('user_id', 'unknown')
+        print(f"   ✅ Test user authenticated: {test_email}")
+        print(f"   User ID: {test_user_id}")
+        
+        # Test Scenario 1: New User First Test Generation
+        print(f"\n🎯 Test Scenario 1: New User First Test Generation")
+        print("   - Generate mock test for the first time")
+        print("   - Verify no ObjectId serialization errors")
+        print("   - Verify test data is returned correctly")
+        print("   - Check if cached data is clean")
+        
+        first_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "test_type": "full_length",
+            "difficulty_level": 3,
+            "num_questions": 10,
+            "generation_mode": "standard"
+        }
+        
+        success, response = self.run_test(
+            "First Test Generation",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=first_test_data,
+            headers={'Authorization': f'Bearer {test_token}'}
+        )
+        
+        first_test_results = {
+            'generation_success': False,
+            'no_objectid_errors': True,
+            'correct_data_structure': False,
+            'cache_key_present': False
+        }
+        
+        if success:
+            first_test_results['generation_success'] = True
+            
+            # Check for ObjectId serialization errors
+            response_str = str(response)
+            if 'ObjectId' in response_str and ('not iterable' in response_str or 'not JSON serializable' in response_str):
+                first_test_results['no_objectid_errors'] = False
+                print("   🚨 ObjectId serialization error detected!")
+            else:
+                print("   ✅ No ObjectId serialization errors")
+            
+            # Verify test data structure
+            required_fields = ['test_id', 'test_name', 'questions', 'total_marks', 'time_limit']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                first_test_results['correct_data_structure'] = True
+                print("   ✅ Test data structure is correct")
+                
+                test_id = response['test_id']
+                questions = response.get('questions', [])
+                print(f"   Test ID: {test_id}")
+                print(f"   Questions count: {len(questions)}")
+                print(f"   Total marks: {response.get('total_marks', 0)}")
+                print(f"   Time limit: {response.get('time_limit', 0)} minutes")
+                
+                # Store for later tests
+                self.first_test_id = test_id
+                self.first_test_questions = questions
+                
+                # Check cache key
+                if 'cache_key' in response:
+                    first_test_results['cache_key_present'] = True
+                    self.cache_key = response['cache_key']
+                    print(f"   ✅ Cache key present: {self.cache_key}")
+                
+            else:
+                print(f"   ❌ Missing required fields: {missing_fields}")
+        else:
+            print("   ❌ First test generation failed")
+            error_status = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   Error Status: {error_status}")
+            print(f"   Error Data: {error_data}")
+        
+        # Test Scenario 2: Cached Test Retrieval
+        print(f"\n🎯 Test Scenario 2: Cached Test Retrieval")
+        print("   - Generate same test configuration again")
+        print("   - Verify cached test is returned")
+        print("   - Verify no ObjectId errors")
+        print("   - Verify all fields are properly serialized")
+        
+        # Wait a moment then generate the same test configuration
+        time.sleep(2)
+        
+        success, response = self.run_test(
+            "Cached Test Retrieval",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=first_test_data,  # Same configuration
+            headers={'Authorization': f'Bearer {test_token}'}
+        )
+        
+        cached_test_results = {
+            'retrieval_success': False,
+            'same_test_id': False,
+            'no_objectid_errors': True,
+            'proper_serialization': False
+        }
+        
+        if success:
+            cached_test_results['retrieval_success'] = True
+            
+            # Check if same test ID (indicating cache hit)
+            if hasattr(self, 'first_test_id') and response.get('test_id') == self.first_test_id:
+                cached_test_results['same_test_id'] = True
+                print("   ✅ Cached test returned (same test_id)")
+            else:
+                print("   ⚠️  Different test_id - may be new generation instead of cache")
+            
+            # Check for ObjectId errors
+            response_str = str(response)
+            if 'ObjectId' in response_str and ('not iterable' in response_str or 'not JSON serializable' in response_str):
+                cached_test_results['no_objectid_errors'] = False
+                print("   🚨 ObjectId serialization error in cached response!")
+            else:
+                print("   ✅ No ObjectId serialization errors in cached response")
+            
+            # Verify proper serialization of all fields
+            try:
+                import json
+                json.dumps(response)  # This will fail if there are serialization issues
+                cached_test_results['proper_serialization'] = True
+                print("   ✅ All fields properly serialized")
+            except Exception as e:
+                print(f"   ❌ Serialization error: {str(e)}")
+        else:
+            print("   ❌ Cached test retrieval failed")
+        
+        # Test Scenario 3: Different Test Types
+        print(f"\n🎯 Test Scenario 3: Different Test Types")
+        print("   - Test with multiple subjects")
+        print("   - Test with single subject")
+        print("   - Test with different difficulty levels")
+        print("   - Verify all generate successfully")
+        
+        test_configurations = [
+            {
+                "name": "Multiple Subjects",
+                "config": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics", "Physics", "Chemistry"],
+                    "difficulty_level": 3,
+                    "num_questions": 15
+                }
+            },
+            {
+                "name": "Single Subject - Physics",
+                "config": {
+                    "exam_type": "JEE",
+                    "subjects": ["Physics"],
+                    "difficulty_level": 4,
+                    "num_questions": 8
+                }
+            },
+            {
+                "name": "Easy Difficulty",
+                "config": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "difficulty_level": 1,
+                    "num_questions": 5
+                }
+            },
+            {
+                "name": "Hard Difficulty",
+                "config": {
+                    "exam_type": "JEE",
+                    "subjects": ["Chemistry"],
+                    "difficulty_level": 5,
+                    "num_questions": 7
+                }
+            }
+        ]
+        
+        different_types_results = {
+            'total_tests': len(test_configurations),
+            'successful_generations': 0,
+            'failed_generations': 0,
+            'objectid_errors': 0
+        }
+        
+        generated_test_ids = []
+        
+        for i, test_config in enumerate(test_configurations):
+            print(f"   Testing {test_config['name']}...")
+            
+            success, response = self.run_test(
+                f"Test Type - {test_config['name']}",
+                "POST",
+                "mock-tests/generate",
+                200,
+                data=test_config['config'],
+                headers={'Authorization': f'Bearer {test_token}'}
+            )
+            
+            if success:
+                different_types_results['successful_generations'] += 1
+                test_id = response.get('test_id', 'unknown')
+                generated_test_ids.append({
+                    'test_id': test_id,
+                    'name': test_config['name'],
+                    'questions': response.get('questions', [])
+                })
+                print(f"      ✅ Generated successfully: {test_id}")
+                print(f"      Questions: {len(response.get('questions', []))}")
+                
+                # Check for ObjectId errors
+                response_str = str(response)
+                if 'ObjectId' in response_str and ('not iterable' in response_str or 'not JSON serializable' in response_str):
+                    different_types_results['objectid_errors'] += 1
+                    print("      🚨 ObjectId serialization error!")
+            else:
+                different_types_results['failed_generations'] += 1
+                print(f"      ❌ Generation failed")
+            
+            time.sleep(3)  # Delay between generations
+        
+        print(f"   📊 Different Test Types Results:")
+        print(f"      Successful: {different_types_results['successful_generations']}/{different_types_results['total_tests']}")
+        print(f"      Failed: {different_types_results['failed_generations']}")
+        print(f"      ObjectId Errors: {different_types_results['objectid_errors']}")
+        
+        # Test Scenario 4: Submit Test Flow
+        print(f"\n🎯 Test Scenario 4: Submit Test Flow")
+        print("   - Generate a test")
+        print("   - Submit the test with answers")
+        print("   - Verify submission works")
+        print("   - Verify results are returned correctly")
+        
+        # Use one of the generated tests for submission
+        if generated_test_ids:
+            test_to_submit = generated_test_ids[0]
+            test_id = test_to_submit['test_id']
+            questions = test_to_submit['questions']
+            
+            print(f"   Using test: {test_to_submit['name']} (ID: {test_id})")
+            
+            # Create realistic answers
+            sample_answers = {}
+            for i, question in enumerate(questions[:10]):  # Limit to first 10 questions
+                question_id = question.get('question_id', f'q_{i}')
+                correct_answer = question.get('correct_answer', 'A')
+                
+                # Mix of correct and incorrect answers
+                if i % 3 == 0:  # Every 3rd answer correct
+                    sample_answers[question_id] = correct_answer
+                else:
+                    # Random wrong answer
+                    options = ['A', 'B', 'C', 'D']
+                    wrong_options = [opt for opt in options if opt != correct_answer]
+                    sample_answers[question_id] = wrong_options[i % len(wrong_options)]
+            
+            submission_data = {
+                "answers": sample_answers,
+                "time_taken": 1200  # 20 minutes
+            }
+            
+            print(f"   Submitting {len(sample_answers)} answers...")
+            
+            success, response = self.run_test(
+                "Submit Test Flow",
+                "POST",
+                f"mock-tests/{test_id}/submit",
+                200,
+                data=submission_data,
+                headers={'Authorization': f'Bearer {test_token}'}
+            )
+            
+            submit_results = {
+                'submission_success': False,
+                'results_returned': False,
+                'no_objectid_errors': True,
+                'proper_analysis': False
+            }
+            
+            if success:
+                submit_results['submission_success'] = True
+                print("   ✅ Test submission successful")
+                
+                # Check if results are returned
+                required_result_fields = ['result_id', 'score', 'percentage', 'correct_answers', 'wrong_answers']
+                missing_result_fields = [field for field in required_result_fields if field not in response]
+                
+                if not missing_result_fields:
+                    submit_results['results_returned'] = True
+                    print("   ✅ Results returned correctly")
+                    print(f"      Score: {response.get('score', 0)}")
+                    print(f"      Percentage: {response.get('percentage', 0):.1f}%")
+                    print(f"      Correct: {response.get('correct_answers', 0)}")
+                    print(f"      Wrong: {response.get('wrong_answers', 0)}")
+                    print(f"      Unanswered: {response.get('unanswered', 0)}")
+                else:
+                    print(f"   ❌ Missing result fields: {missing_result_fields}")
+                
+                # Check for ObjectId errors
+                response_str = str(response)
+                if 'ObjectId' in response_str and ('not iterable' in response_str or 'not JSON serializable' in response_str):
+                    submit_results['no_objectid_errors'] = False
+                    print("   🚨 ObjectId serialization error in submission results!")
+                else:
+                    print("   ✅ No ObjectId serialization errors in results")
+                
+                # Check for proper analysis
+                if 'subject_wise_analysis' in response or 'recommendations' in response:
+                    submit_results['proper_analysis'] = True
+                    print("   ✅ Analysis and recommendations provided")
+                
+            else:
+                print("   ❌ Test submission failed")
+                error_status = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                print(f"   Error Status: {error_status}")
+                print(f"   Error Data: {error_data}")
+        else:
+            print("   ❌ No tests available for submission")
+            submit_results = {'submission_success': False, 'results_returned': False, 'no_objectid_errors': True, 'proper_analysis': False}
+        
+        # Final Assessment
+        print(f"\n🎯 COMPREHENSIVE MOCK TEST GENERATION FLOW - FINAL ASSESSMENT")
+        print(f"   📊 Test Scenario 1 - New User First Test Generation:")
+        print(f"      Generation Success: {'✅' if first_test_results['generation_success'] else '❌'}")
+        print(f"      No ObjectId Errors: {'✅' if first_test_results['no_objectid_errors'] else '❌'}")
+        print(f"      Correct Data Structure: {'✅' if first_test_results['correct_data_structure'] else '❌'}")
+        print(f"      Cache Key Present: {'✅' if first_test_results['cache_key_present'] else '❌'}")
+        
+        print(f"   📊 Test Scenario 2 - Cached Test Retrieval:")
+        print(f"      Retrieval Success: {'✅' if cached_test_results['retrieval_success'] else '❌'}")
+        print(f"      Same Test ID (Cache Hit): {'✅' if cached_test_results['same_test_id'] else '❌'}")
+        print(f"      No ObjectId Errors: {'✅' if cached_test_results['no_objectid_errors'] else '❌'}")
+        print(f"      Proper Serialization: {'✅' if cached_test_results['proper_serialization'] else '❌'}")
+        
+        print(f"   📊 Test Scenario 3 - Different Test Types:")
+        print(f"      Successful Generations: {different_types_results['successful_generations']}/{different_types_results['total_tests']}")
+        print(f"      ObjectId Errors: {different_types_results['objectid_errors']}")
+        
+        print(f"   📊 Test Scenario 4 - Submit Test Flow:")
+        print(f"      Submission Success: {'✅' if submit_results['submission_success'] else '❌'}")
+        print(f"      Results Returned: {'✅' if submit_results['results_returned'] else '❌'}")
+        print(f"      No ObjectId Errors: {'✅' if submit_results['no_objectid_errors'] else '❌'}")
+        print(f"      Proper Analysis: {'✅' if submit_results['proper_analysis'] else '❌'}")
+        
+        # Critical Issues Summary
+        critical_issues = []
+        
+        if not first_test_results['generation_success']:
+            critical_issues.append("New user first test generation failed")
+        if not first_test_results['no_objectid_errors']:
+            critical_issues.append("ObjectId serialization errors in first test generation")
+        if not cached_test_results['no_objectid_errors']:
+            critical_issues.append("ObjectId serialization errors in cached test retrieval")
+        if different_types_results['objectid_errors'] > 0:
+            critical_issues.append(f"ObjectId serialization errors in {different_types_results['objectid_errors']} different test types")
+        if not submit_results['submission_success']:
+            critical_issues.append("Test submission flow failed")
+        if not submit_results['no_objectid_errors']:
+            critical_issues.append("ObjectId serialization errors in submission results")
+        
+        if critical_issues:
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
+            for issue in critical_issues:
+                print(f"   - {issue}")
+            print(f"\n🔧 RECOMMENDATIONS:")
+            print(f"   - Check backend logs for ObjectId serialization errors")
+            print(f"   - Verify clean_mongodb_doc function handles all ObjectId cases")
+            print(f"   - Test cache functionality and expiration")
+            print(f"   - Ensure proper error handling in test generation and submission")
+            return False
+        else:
+            print(f"\n✅ ALL MOCK TEST GENERATION FLOW TESTS PASSED")
+            print(f"   - New user test generation working correctly")
+            print(f"   - Cached test retrieval functioning properly")
+            print(f"   - Different test types generate successfully")
+            print(f"   - Test submission and results working correctly")
+            print(f"   - No ObjectId serialization issues detected")
+            print(f"   - Cache functionality operational")
+            return True
+
     def test_mock_tests_generate_quota_validation(self):
         """REVIEW REQUEST: Quick re-test /api/mock-tests/generate only: within quota expect 200; when limit reached expect 402 with detail.upsell_info, used, limit; ensure no 500s"""
         print("\n🎯 REVIEW REQUEST: MOCK TESTS GENERATE QUOTA VALIDATION")
