@@ -8701,13 +8701,12 @@ async def enhance_audio_only(
         with open(input_path, 'wb') as f:
             f.write(file_content)
         
-        # Start enhancement task
-        task = enhance_audio_async.delay(str(input_path), str(output_path))
-        
+        # Audio enhancement is now built into transcription
+        # Just return the file path for processing
         return {
-            "task_id": task.id,
-            "status": "processing",
-            "message": "Audio enhancement started. Use task ID to check progress."
+            "status": "completed",
+            "message": "Audio uploaded successfully. Enhancement is applied during transcription.",
+            "input_path": str(input_path)
         }
         
     except Exception as e:
