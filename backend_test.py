@@ -5883,6 +5883,455 @@ class DhruvAITester:
         
         return True
 
+    def test_subscription_flows_consistency(self):
+        """CRITICAL: Test backend subscription flows consistency as requested in review"""
+        print("\n🚨 CRITICAL: BACKEND SUBSCRIPTION FLOWS CONSISTENCY TESTING")
+        print("   Review Request Focus: Validate subscription flows consistency")
+        print("   1) /api/mock-tests/generate: 200 with test data OR 402 with upsell_info")
+        print("   2) /api/ai/dual-response: Same behavior using SubscriptionService.check_feature_access")
+        print("   3) /api/subscription/check-access: 402 (not 200) with upsell_info when exhausted")
+        print("   Expected: Payload samples and status codes for each scenario")
+        
+        # Step 1: Login with test user
+        print("\n📊 Step 1: Authentication Setup")
+        if not self.token:
+            login_success = self.test_user_login()
+            if not login_success:
+                print("❌ Failed to authenticate - cannot proceed with subscription testing")
+                return False
+        
+        print(f"   ✅ Authenticated successfully")
+        
+        # Step 2: Create fresh free user to test quota exhaustion
+        print("\n📊 Step 2: Create Fresh Free User for Quota Testing")
+        fresh_user_email = f"subscription_flow_test_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Subscription Flow Test User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Create Fresh Free User",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user for testing")
+            return False
+        
+        fresh_token = response['token']
+        fresh_user_id = response.get('user', {}).get('user_id', 'unknown')
+        print(f"   ✅ Fresh user created: {fresh_user_email}")
+        print(f"   User ID: {fresh_user_id}")
+        
+        # Step 3: Test /api/mock-tests/generate with remaining quota
+        print("\n🎯 Step 3: Test /api/mock-tests/generate - User Has Remaining Quota")
+        print("   Expected: 200 OK with test data")
+        
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "difficulty_level": 3,
+            "num_questions": 5
+        }
+        
+        success, response = self.run_test(
+            "Mock Tests Generate - With Quota",
+            "POST",
+            "mock-tests/generate",
+            200,
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        mock_generate_with_quota = False
+        if success:
+            print(f"   ✅ /api/mock-tests/generate returns 200 OK when user has quota")
+            print(f"   📊 Response Sample:")
+            print(f"      test_id: {response.get('test_id', 'N/A')}")
+            print(f"      test_name: {response.get('test_name', 'N/A')}")
+            print(f"      questions_count: {len(response.get('questions', []))}")
+            print(f"      total_marks: {response.get('total_marks', 'N/A')}")
+            print(f"      time_limit: {response.get('time_limit', 'N/A')} minutes")
+            mock_generate_with_quota = True
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ /api/mock-tests/generate failed with status {status_code}")
+            print(f"   Error: {error_data}")
+        
+        # Step 4: Exhaust quota by generating more tests
+        print("\n🎯 Step 4: Exhaust Mock Test Quota")
+        print("   Generating additional tests to reach free tier limit")
+        
+        tests_generated = 1  # Already generated one above
+        max_free_tests = 2  # Free tier limit
+        
+        for i in range(max_free_tests - 1):  # Generate remaining tests
+            print(f"   Generating test {tests_generated + 1}...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation - Test {tests_generated + 1}",
+                "POST",
+                "mock-tests/generate",
+                [200, 402, 429],
+                data=mock_test_data,
+                headers={'Authorization': f'Bearer {fresh_token}'}
+            )
+            
+            status_code = getattr(self, 'last_response_status', 0)
+            if status_code == 200:
+                tests_generated += 1
+                print(f"      ✅ Test {tests_generated} generated successfully")
+            else:
+                print(f"      🎯 Quota exhausted at test {tests_generated + 1} (Status: {status_code})")
+                break
+            
+            time.sleep(2)
+        
+        print(f"   📊 Total tests generated: {tests_generated}")
+        
+        # Step 5: Test /api/mock-tests/generate when limit reached
+        print("\n🚨 Step 5: Test /api/mock-tests/generate - Limit Reached")
+        print("   Expected: 402 Payment Required with upsell_info")
+        
+        success, response = self.run_test(
+            "Mock Tests Generate - Limit Reached",
+            "POST",
+            "mock-tests/generate",
+            402,
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        mock_generate_limit_reached = False
+        if success:
+            print(f"   ✅ /api/mock-tests/generate returns 402 Payment Required when limit reached")
+            print(f"   📊 Response Sample (402 with upsell_info):")
+            
+            # Check for upsell_info structure
+            upsell_info = response.get('upsell_info', {})
+            used = response.get('used', 'N/A')
+            limit = response.get('limit', 'N/A')
+            
+            print(f"      used: {used}")
+            print(f"      limit: {limit}")
+            print(f"      upsell_info present: {bool(upsell_info)}")
+            
+            if upsell_info:
+                mentor_message = upsell_info.get('mentor_message', '')
+                professor_message = upsell_info.get('professor_message', '')
+                target_tier = upsell_info.get('target_tier', '')
+                target_plan = upsell_info.get('target_plan', {})
+                
+                print(f"      mentor_message: {'✓' if mentor_message else '✗'}")
+                print(f"      professor_message: {'✓' if professor_message else '✗'}")
+                print(f"      target_tier: {target_tier}")
+                print(f"      target_plan: {target_plan.get('name', 'N/A')} (${target_plan.get('price_monthly', 'N/A')}/month)")
+                
+                if mentor_message and professor_message and target_tier and target_plan:
+                    mock_generate_limit_reached = True
+                    print(f"   ✅ Complete upsell_info structure present")
+                else:
+                    print(f"   ❌ Incomplete upsell_info structure")
+            else:
+                print(f"   ❌ Missing upsell_info in 402 response")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ /api/mock-tests/generate failed to return 402 (Status: {status_code})")
+            print(f"   Error: {error_data}")
+        
+        # Step 6: Test /api/ai/dual-response with remaining quota (using original test user)
+        print("\n🎯 Step 6: Test /api/ai/dual-response - User Has Remaining Quota")
+        print("   Expected: 200 OK with dual AI response")
+        
+        dual_response_data = {
+            "message": "Explain quadratic equations briefly",
+            "session_id": str(uuid.uuid4()),
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "AI Dual Response - With Quota",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=dual_response_data,
+            headers={'Authorization': f'Bearer {self.token}'}  # Use original test user
+        )
+        
+        dual_response_with_quota = False
+        if success:
+            print(f"   ✅ /api/ai/dual-response returns 200 OK when user has quota")
+            print(f"   📊 Response Sample:")
+            
+            primary = response.get('primary', {})
+            secondary = response.get('secondary', {})
+            
+            print(f"      primary.response: {'✓' if primary.get('response') else '✗'}")
+            print(f"      primary.role: {primary.get('role', 'N/A')}")
+            print(f"      secondary.response: {'✓' if secondary.get('response') else '✗'}")
+            print(f"      secondary.role: {secondary.get('role', 'N/A')}")
+            
+            if primary.get('response') and secondary.get('response'):
+                dual_response_with_quota = True
+                print(f"   ✅ Complete dual AI response structure present")
+            else:
+                print(f"   ❌ Incomplete dual AI response structure")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ /api/ai/dual-response failed with status {status_code}")
+            print(f"   Error: {error_data}")
+        
+        # Step 7: Create user with exhausted AI quota for dual-response testing
+        print("\n🎯 Step 7: Test /api/ai/dual-response - Limit Reached")
+        print("   Creating user and exhausting AI conversation quota...")
+        
+        ai_test_user_email = f"ai_quota_test_{int(time.time())}@dhruvai.com"
+        ai_registration_data = {
+            "full_name": "AI Quota Test User",
+            "email": ai_test_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Create AI Quota Test User",
+            "POST",
+            "auth/register",
+            200,
+            data=ai_registration_data
+        )
+        
+        if success and 'token' in response:
+            ai_test_token = response['token']
+            print(f"   ✅ AI quota test user created: {ai_test_user_email}")
+            
+            # Exhaust AI conversation quota (free tier: 10 messages/day)
+            print("   Exhausting AI conversation quota (10 messages/day)...")
+            
+            ai_messages_sent = 0
+            max_ai_messages = 10
+            
+            for i in range(max_ai_messages + 2):  # Send 12 messages to exceed limit
+                dual_response_test_data = {
+                    "message": f"Test message {i+1} - explain basic math concept",
+                    "session_id": str(uuid.uuid4()),
+                    "subject": "Mathematics"
+                }
+                
+                success, response = self.run_test(
+                    f"AI Message {i+1}",
+                    "POST",
+                    "ai/dual-response",
+                    [200, 402, 429],
+                    data=dual_response_test_data,
+                    headers={'Authorization': f'Bearer {ai_test_token}'}
+                )
+                
+                status_code = getattr(self, 'last_response_status', 0)
+                if status_code == 200:
+                    ai_messages_sent += 1
+                    print(f"      ✅ Message {i+1} sent successfully")
+                elif status_code in [402, 429]:
+                    print(f"      🎯 AI quota exhausted at message {i+1} (Status: {status_code})")
+                    break
+                else:
+                    print(f"      ❌ Message {i+1} failed with status {status_code}")
+                
+                time.sleep(1)  # Small delay between requests
+            
+            print(f"   📊 AI messages sent before limit: {ai_messages_sent}")
+            
+            # Test dual-response when limit reached
+            print("\n🚨 Step 8: Test /api/ai/dual-response - Limit Reached")
+            print("   Expected: 402 Payment Required with enriched upsell payload")
+            
+            success, response = self.run_test(
+                "AI Dual Response - Limit Reached",
+                "POST",
+                "ai/dual-response",
+                402,
+                data=dual_response_data,
+                headers={'Authorization': f'Bearer {ai_test_token}'}
+            )
+            
+            dual_response_limit_reached = False
+            if success:
+                print(f"   ✅ /api/ai/dual-response returns 402 Payment Required when limit reached")
+                print(f"   📊 Response Sample (402 with enriched upsell payload):")
+                
+                # Check for enriched upsell payload
+                upsell_info = response.get('upsell_info', {})
+                used = response.get('used', 'N/A')
+                limit = response.get('limit', 'N/A')
+                
+                print(f"      used: {used}")
+                print(f"      limit: {limit}")
+                print(f"      upsell_info present: {bool(upsell_info)}")
+                
+                if upsell_info:
+                    mentor_message = upsell_info.get('mentor_message', '')
+                    professor_message = upsell_info.get('professor_message', '')
+                    target_tier = upsell_info.get('target_tier', '')
+                    target_plan = upsell_info.get('target_plan', {})
+                    
+                    print(f"      mentor_message: {'✓' if mentor_message else '✗'}")
+                    print(f"      professor_message: {'✓' if professor_message else '✗'}")
+                    print(f"      target_tier: {target_tier}")
+                    print(f"      target_plan: {target_plan.get('name', 'N/A')}")
+                    
+                    if mentor_message and professor_message and target_tier and target_plan:
+                        dual_response_limit_reached = True
+                        print(f"   ✅ Complete enriched upsell payload present")
+                    else:
+                        print(f"   ❌ Incomplete enriched upsell payload")
+                else:
+                    print(f"   ❌ Missing upsell_info in 402 response")
+            else:
+                status_code = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                print(f"   ❌ /api/ai/dual-response failed to return 402 (Status: {status_code})")
+                print(f"   Error: {error_data}")
+        else:
+            print("   ❌ Failed to create AI quota test user")
+            dual_response_limit_reached = False
+        
+        # Step 9: Test /api/subscription/check-access - Within Limits
+        print("\n🎯 Step 9: Test /api/subscription/check-access - Within Limits")
+        print("   Expected: 200 OK with has_access true")
+        
+        check_access_data = {
+            "feature_name": "mock_tests_weekly"
+        }
+        
+        # Use original test user who should have access
+        success, response = self.run_test(
+            "Check Access - Within Limits",
+            "POST",
+            "subscription/check-access",
+            200,
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        check_access_within_limits = False
+        if success:
+            has_access = response.get('has_access', False)
+            reason = response.get('reason', 'N/A')
+            
+            print(f"   ✅ /api/subscription/check-access returns 200 OK when within limits")
+            print(f"   📊 Response Sample (200 with access):")
+            print(f"      has_access: {has_access}")
+            print(f"      reason: {reason}")
+            
+            if has_access:
+                check_access_within_limits = True
+                print(f"   ✅ has_access is true as expected")
+            else:
+                print(f"   ❌ has_access is false (unexpected for user within limits)")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ /api/subscription/check-access failed with status {status_code}")
+            print(f"   Error: {error_data}")
+        
+        # Step 10: Test /api/subscription/check-access - Feature Exhausted
+        print("\n🚨 Step 10: Test /api/subscription/check-access - Feature Exhausted")
+        print("   Expected: HTTP 402 (not 200) with upsell_info and reason limit_reached")
+        
+        # Use fresh user who exhausted mock test quota
+        success, response = self.run_test(
+            "Check Access - Feature Exhausted",
+            "POST",
+            "subscription/check-access",
+            402,  # EXPECTING 402, NOT 200
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        check_access_exhausted = False
+        if success:
+            has_access = response.get('has_access', True)
+            reason = response.get('reason', 'N/A')
+            upsell_info = response.get('upsell_info', {})
+            
+            print(f"   ✅ /api/subscription/check-access returns 402 Payment Required when exhausted")
+            print(f"   📊 Response Sample (402 with upsell_info):")
+            print(f"      has_access: {has_access}")
+            print(f"      reason: {reason}")
+            print(f"      upsell_info present: {bool(upsell_info)}")
+            
+            if not has_access and reason == 'limit_reached' and upsell_info:
+                check_access_exhausted = True
+                print(f"   ✅ Correct response structure: has_access=false, reason=limit_reached, upsell_info present")
+            else:
+                print(f"   ❌ Incorrect response structure")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ /api/subscription/check-access failed to return 402 (Status: {status_code})")
+            print(f"   Error: {error_data}")
+            
+            if status_code == 200:
+                print(f"   🚨 CRITICAL: Returns 200 OK instead of 402 (this is the reported issue)")
+        
+        # Final Assessment
+        print(f"\n🎯 BACKEND SUBSCRIPTION FLOWS CONSISTENCY TESTING SUMMARY:")
+        print(f"   ✅ Mock Tests Generate - With Quota (200): {'✓' if mock_generate_with_quota else '✗'}")
+        print(f"   ✅ Mock Tests Generate - Limit Reached (402): {'✓' if mock_generate_limit_reached else '✗'}")
+        print(f"   ✅ AI Dual Response - With Quota (200): {'✓' if dual_response_with_quota else '✗'}")
+        print(f"   ✅ AI Dual Response - Limit Reached (402): {'✓' if dual_response_limit_reached else '✗'}")
+        print(f"   ✅ Check Access - Within Limits (200): {'✓' if check_access_within_limits else '✗'}")
+        print(f"   ✅ Check Access - Feature Exhausted (402): {'✓' if check_access_exhausted else '✗'}")
+        
+        # Critical issues identification
+        critical_issues = []
+        if not mock_generate_limit_reached:
+            critical_issues.append("/api/mock-tests/generate not returning 402 with upsell_info when limit reached")
+        if not dual_response_limit_reached:
+            critical_issues.append("/api/ai/dual-response not returning 402 with enriched upsell payload when limit reached")
+        if not check_access_exhausted:
+            critical_issues.append("/api/subscription/check-access returning 200 instead of 402 when feature exhausted")
+        
+        success_count = sum([
+            mock_generate_with_quota,
+            mock_generate_limit_reached,
+            dual_response_with_quota,
+            dual_response_limit_reached,
+            check_access_within_limits,
+            check_access_exhausted
+        ])
+        
+        print(f"\n📊 Overall Success Rate: {success_count}/6 ({(success_count/6)*100:.1f}%)")
+        
+        if critical_issues:
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
+            for issue in critical_issues:
+                print(f"   - {issue}")
+            print(f"\n🔧 URGENT RECOMMENDATIONS:")
+            print(f"   - Fix subscription endpoints to return proper 402 status codes")
+            print(f"   - Ensure upsell_info structure is complete and consistent")
+            print(f"   - Verify SubscriptionService.check_feature_access integration")
+            return False
+        else:
+            print(f"\n✅ ALL SUBSCRIPTION FLOW TESTS PASSED")
+            print(f"   - All endpoints return correct status codes (200/402)")
+            print(f"   - Upsell payloads are enriched and consistent")
+            print(f"   - SubscriptionService.check_feature_access working correctly")
+            return True
+
     def run_comprehensive_tests(self):
         """Run Enhanced Auto-Note Mentor Audio Processing System Testing as requested in review"""
         print("🚀 Starting Enhanced Auto-Note Mentor Audio Processing System Testing...")
