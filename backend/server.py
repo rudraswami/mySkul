@@ -3023,7 +3023,7 @@ async def get_user_subscription(user_id: str) -> UserSubscription:
         return UserSubscription(
             user_id=user_id,
             plan_id="free",
-            plan_name="free",
+            plan_name="FREE",
             status="active",
             current_period_end=datetime.now(timezone.utc) + timedelta(days=365)
         )
