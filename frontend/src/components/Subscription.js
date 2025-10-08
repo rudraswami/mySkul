@@ -316,8 +316,8 @@ export default function Subscription() {
                       {plan.price_monthly > 0 && (
                         <>
                           <Button
-                            onClick={() => handleUpgrade(plan.name, billingCycle)}
-                            disabled={upgrading && selectedPlan === plan.name}
+                            onClick={() => handleUpgrade(plan.tier, billingCycle)}
+                            disabled={upgrading && selectedPlan === plan.tier}
                             className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {upgrading && selectedPlan === plan.name ? (
