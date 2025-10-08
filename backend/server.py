@@ -8908,6 +8908,9 @@ async def generate_mock_test(
             "generation_mode": blueprint.generation_mode
         }
         
+    except HTTPException as http_exc:
+        # Preserve subscription/limit errors (402/429) for frontend upsell flow
+        raise http_exc
     except Exception as e:
         logger.error(f"Mock test generation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate mock test")
