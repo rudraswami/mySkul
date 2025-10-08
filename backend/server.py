@@ -8928,6 +8928,11 @@ async def generate_mock_test(
             await cache_test(cache_key, response_data)
             logger.info(f"Cached clean test data with key: {cache_key}")
         
+        # Track feature usage for mock test generation (only for new tests, not cached)
+        if not cached_test:
+            await SubscriptionService.track_feature_usage(user.user_id, "mock_tests_weekly")
+            logger.info(f"Tracked mock test usage for user {user.user_id}")
+        
         return response_data
         
     except HTTPException as http_exc:
