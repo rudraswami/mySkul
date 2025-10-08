@@ -45,6 +45,9 @@ export default function AutoNoteMentor() {
     getFeatureRemaining, 
     getFeatureLimit,
     currentTier 
+, 
+    openUpsellModal, 
+    setUpsellModal
   } = useSubscription();
   
   // Enhanced Session Management
