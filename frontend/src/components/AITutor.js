@@ -2831,9 +2831,7 @@ export default function AITutor() {
       )}
 
 
-      {/* Global Upsell Modal is rendered in App.js; no local modal here to avoid divergence */
-
-      {/* Global Upsell Modal is rendered in App.js; removed local instance to ensure a single reusable popup */}
+      {/* Global Upsell Modal is rendered in App.js; single reusable popup */}
     </div>
   );
 }
