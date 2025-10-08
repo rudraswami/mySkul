@@ -321,6 +321,7 @@ export function SubscriptionProvider({ children }) {
     handleUpsellResponse,
     setUpsellModal,
     triggerFeatureUpsell,
+    openUpsellModal,
     
     // Helper functions
     getFeatureLimit,
