@@ -242,11 +242,39 @@ const LandingPage = () => {
 
       {/* Hero Section - Student-Centric */}
       <section id="hero" className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/20 to-slate-900/40"></div>
+        {/* Multi-Layer Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-900/30 via-transparent to-pink-900/30"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/20 via-transparent to-transparent"></div>
         
-        {/* Animated Background */}
+        {/* Animated Mesh Gradient Overlay */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute bottom-8 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-6000"></div>
+        </div>
+        
+        {/* Animated Background Particles */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(12)].map((_, i) => (
+          {/* Large Floating Circles */}
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={`circle-${i}`}
+              className="absolute rounded-full border-2 border-white/10 animate-float-slow"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${100 + Math.random() * 200}px`,
+                height: `${100 + Math.random() * 200}px`,
+                animationDelay: `${Math.random() * 8}s`,
+                animationDuration: `${15 + Math.random() * 10}s`
+              }}
+            />
+          ))}
+          
+          {/* Glowing Particles */}
+          {[...Array(20)].map((_, i) => (
             <div
               key={`particle-${i}`}
               className="absolute animate-float rounded-full"
@@ -257,8 +285,41 @@ const LandingPage = () => {
                 animationDuration: `${4 + Math.random() * 6}s`
               }}
             >
-              <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-60 animate-pulse"></div>
+              <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-70 animate-pulse shadow-lg shadow-cyan-500/50"></div>
             </div>
+          ))}
+          
+          {/* Floating Icons */}
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={`icon-${i}`}
+              className="absolute animate-float-slow opacity-20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 10}s`,
+                animationDuration: `${20 + Math.random() * 10}s`
+              }}
+            >
+              {i % 3 === 0 && <Brain className="h-12 w-12 text-purple-400" />}
+              {i % 3 === 1 && <BookOpen className="h-10 w-10 text-cyan-400" />}
+              {i % 3 === 2 && <Target className="h-11 w-11 text-pink-400" />}
+            </div>
+          ))}
+          
+          {/* Animated Lines */}
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={`line-${i}`}
+              className="absolute h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent animate-pulse"
+              style={{
+                left: '0',
+                right: '0',
+                top: `${20 + i * 15}%`,
+                animationDelay: `${i * 0.5}s`,
+                animationDuration: '3s'
+              }}
+            />
           ))}
         </div>
 
