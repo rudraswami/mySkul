@@ -97,16 +97,17 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
         clearTimeout(stepTimeout);
       };
     } else if (currentStep === GENERATION_STEPS.length && !showSuccessState) {
-      // All animation steps complete - wait for test data
-      // Check if test data is ready
+      // All animation steps complete - check if test data is ready
       if (testData) {
         // Test is ready! Show success state
         const successTimeout = setTimeout(() => {
           setShowSuccessState(true);
         }, 500);
         return () => clearTimeout(successTimeout);
+      } else {
+        // Test data not ready yet - show waiting state
+        setWaitingForData(true);
       }
-      // If test data not ready yet, keep waiting (polling will happen via testData prop change)
     }
   }, [currentStep, testData, showSuccessState]);
 
