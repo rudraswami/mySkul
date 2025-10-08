@@ -468,6 +468,8 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
           </Button>
         )}
       </div>
+      </div>
+      </div>
     </div>
   );
 }
