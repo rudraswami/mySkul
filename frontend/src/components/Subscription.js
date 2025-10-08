@@ -150,7 +150,7 @@ export default function Subscription() {
         'Parent dashboard access',
         'Priority support'
       ],
-      current: currentSubscription?.plan === 'premium',
+      current: currentSubscription?.plan_name === 'premium',
       popular: false
     }
   ];
