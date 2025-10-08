@@ -10,7 +10,7 @@ import time
 import uuid
 
 class Subscription402Tester:
-    def __init__(self, base_url="https://paywall-unity.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://mocktest-flow.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

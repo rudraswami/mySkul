@@ -10,7 +10,7 @@ import time
 
 class FinalObjectIdTester:
     def __init__(self):
-        self.base_url = "https://paywall-unity.preview.emergentagent.com/api"
+        self.base_url = "https://mocktest-flow.preview.emergentagent.com/api"
         self.token = None
         
     def login(self):
