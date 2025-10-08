@@ -459,7 +459,7 @@ export default function MockTests() {
             console.log('✅ Upsell modal opened directly from 402/429 payload');
           } else {
             console.log('🎯 Calling triggerFeatureUpsell as fallback...');
-            await triggerFeatureUpsell('mock_tests_weekly');
+            await triggerFeatureUpsell('mock_tests_weekly'); // unified global modal
           }
         } catch (parseError) {
           console.error('❌ Error parsing 402/429 response:', parseError);
