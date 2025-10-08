@@ -382,11 +382,7 @@ export default function MockTests() {
   };
 
   const generateMockTestFromWizard = async (examType, subjects, difficulty, numQuestions, timerSeconds) => {
-    const accessInfo = await checkFeatureAccess('mock_tests_weekly');
-    if (!accessInfo.has_access) {
-      return;
-    }
-
+    // Don't check access here - let the API call handle it and show proper subscription modal
     const token = localStorage.getItem('dhruv_ai_token');
     if (!token) {
       alert('Please log in again to continue');
