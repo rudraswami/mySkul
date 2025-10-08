@@ -15951,15 +15951,23 @@ if __name__ == "__main__":
             print(f"💥 Mock Tests Generate Quota Validation ERROR: {str(e)}")
             sys.exit(1)
     
-    # Run the Enhanced Auto-Note Mentor Audio Processing System Testing
-    print("🚀 Starting Enhanced Auto-Note Mentor Audio Processing System Testing")
+    # Run the CRITICAL Review Request Tests
+    print("🚨 CRITICAL: RUNNING REVIEW REQUEST BACKEND TESTING")
+    print("="*80)
+    print("Testing specific endpoints mentioned in review request:")
+    print("- JWT Authentication Endpoints (/api/gamification/leaderboard, /api/gamification/progress)")
+    print("- Subscription Check Access (/api/subscription/check-access)")
+    print("- Mock Test Generation (/api/mock-tests/generate)")
+    print("- Plan Upgrade API (/api/subscription/upgrade)")
     print("="*80)
     
-    success = tester.run_comprehensive_tests()
+    success = tester.run_review_request_tests()
     
     if success:
-        print("\n🎉 Enhanced Auto-Note Mentor Audio Processing System validation completed successfully!")
+        print("\n🎉 REVIEW REQUEST BACKEND TESTING COMPLETED SUCCESSFULLY!")
+        print("✅ Critical endpoints are working as expected")
         sys.exit(0)
     else:
-        print("\n❌ Enhanced Auto-Note Mentor Audio Processing System validation failed. Check the output above for details.")
+        print("\n❌ REVIEW REQUEST BACKEND TESTING FAILED!")
+        print("🚨 Critical issues found that need immediate attention")
         sys.exit(1)
