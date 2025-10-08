@@ -624,6 +624,12 @@ export default function AITutor() {
         }, { headers });
       }
 
+      // If any endpoint returned 402/429 via axios intercepts (unlikely here), ensure modal opens
+      if (response?.status === 402 || response?.status === 429) {
+        setUpsellModal({ featureName: 'ai_tutor_daily', upsellInfo: response.data?.detail?.upsell_info || {}, currentUsage: 0, limit: 0 });
+        return;
+      }
+
       const newMessage = response.data;
       
       // Update session title if AI detected a more specific topic
