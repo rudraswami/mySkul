@@ -8818,7 +8818,7 @@ async def generate_mock_test(
             raise HTTPException(
                 status_code=402,
                 detail={
-                    "message": "Mock Tests limit reached or feature locked",
+                    "message": f"Mock Tests limit reached ({access_info.get('used', access_info.get('current_usage', 0))}/{access_info.get('limit', 0)})",
                     "upsell_info": access_info.get("upsell_info", {}),
                     "upgrade_needed": True,
                     "used": access_info.get("used", access_info.get("current_usage", 0)),
