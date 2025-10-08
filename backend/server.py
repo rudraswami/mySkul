@@ -3013,7 +3013,7 @@ async def get_user_subscription(user_id: str) -> UserSubscription:
         else:
             subscription = UserSubscription(**clean_mongodb_doc(subscription_doc))
             # Ensure free tier is always active, never cancelled
-            if subscription.plan_name == "free":
+            if subscription.plan_name.upper() == "FREE":
                 subscription.status = "active"
                 subscription.current_period_end = datetime.now(timezone.utc) + timedelta(days=365)
             return subscription
