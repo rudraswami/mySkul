@@ -2008,8 +2008,9 @@ class MockTestEngine:
         test_dict = prepare_for_mongo(test.dict())
         await db.mock_tests.insert_one(test_dict)
         
-        # Cache the test
-        await cache_test(cache_key, test_dict)
+        # Cache the test (clean ObjectId fields first)
+        clean_test_dict = clean_mongodb_doc(test_dict)
+        await cache_test(cache_key, clean_test_dict)
         
         # Track usage for mock test generation
         await track_feature_usage(student_id, "mock_tests_weekly")
