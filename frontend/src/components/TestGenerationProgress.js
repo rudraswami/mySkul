@@ -382,6 +382,26 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
           }
         }
 
+        @keyframes bounce-subtle {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes confetti {
+          0% {
+            transform: translate(-50%, -50%) translate(0, 0) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -50%) translate(calc(var(--x, 50px) * 1), calc(var(--y, -50px) * 1)) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
         .animate-float {
           animation: float linear infinite;
         }
@@ -393,6 +413,23 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
         .animate-fade-in {
           animation: fade-in 0.5s ease-out;
         }
+
+        .animate-bounce-subtle {
+          animation: bounce-subtle 2s ease-in-out infinite;
+        }
+
+        .animate-confetti {
+          animation: confetti 1s ease-out forwards;
+        }
+
+        .animate-confetti:nth-child(1) { --x: 60px; --y: -80px; }
+        .animate-confetti:nth-child(2) { --x: -60px; --y: -80px; }
+        .animate-confetti:nth-child(3) { --x: 80px; --y: -40px; }
+        .animate-confetti:nth-child(4) { --x: -80px; --y: -40px; }
+        .animate-confetti:nth-child(5) { --x: 50px; --y: -100px; }
+        .animate-confetti:nth-child(6) { --x: -50px; --y: -100px; }
+        .animate-confetti:nth-child(7) { --x: 90px; --y: -60px; }
+        .animate-confetti:nth-child(8) { --x: -90px; --y: -60px; }
       `}</style>
     </div>
   );
