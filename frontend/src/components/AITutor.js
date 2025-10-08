@@ -555,9 +555,23 @@ export default function AITutor() {
     console.log('AI Tutor access check result:', accessInfo);
     
     if (!accessInfo.has_access) {
-      // Upsell modal will be shown automatically by the context
-      showToast('Daily AI Tutor limit reached. Please upgrade to continue.', 'error');
-      console.log('AI Tutor access denied - modal should appear');
+      // Proactively display the upsell modal with context if the backend responded earlier
+      setUpsellModal(prev => prev || {
+        featureName: 'ai_tutor_daily',
+        upsellInfo: accessInfo.upsell_info || {},
+        currentUsage: accessInfo.used || accessInfo.current_usage || 0,
+        limit: accessInfo.limit || 0,
+        title: '🎓 Unlock Unlimited AI Tutoring',
+        description: "You've reached your daily AI Tutor limit. Upgrade for unlimited conversations with Mentor + Professor AI.",
+        benefits: [
+          'Unlimited AI conversations',
+          'Advanced problem-solving guidance',
+          'Personalized study recommendations',
+          'Priority AI processing',
+          'Download notes & reports'
+        ]
+      });
+      console.log('AI Tutor access denied - modal opened');
       return;
     }
 
