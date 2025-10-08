@@ -103,6 +103,44 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-slate-900/95 backdrop-blur-md border-b border-white/10">
+            <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
+              <a 
+                href="#features" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Features
+              </a>
+              <a 
+                href="#pricing" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Pricing
+              </a>
+              <a 
+                href="#testimonials" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Testimonials
+              </a>
+              <div className="pt-2 border-t border-white/10 sm:hidden">
+                <Link 
+                  to="/login" 
+                  className="block text-gray-300 hover:text-white transition-colors py-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Animated Background Elements */}
