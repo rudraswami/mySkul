@@ -27,7 +27,7 @@ export default function Leaderboard({ showFullView = false }) {
   }, [filter, timeframe]);
 
   const fetchLeaderboard = async () => {
-    try:
+    try {
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await fetch(`${backendUrl}/api/gamification/leaderboard?limit=50`, {
