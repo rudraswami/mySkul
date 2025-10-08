@@ -551,27 +551,10 @@ export default function AITutor() {
 
     // Note: We still check access but the backend will also check
     // This prevents most cases but backend is the final authority
-    const accessInfo = await checkFeatureAccess('ai_tutor_daily');
-    console.log('AI Tutor access check result:', accessInfo);
-    
-    if (!accessInfo.has_access) {
-      // Proactively display the upsell modal with context if the backend responded earlier
-      setUpsellModal(prev => prev || {
-        featureName: 'ai_tutor_daily',
-        upsellInfo: accessInfo.upsell_info || {},
-        currentUsage: accessInfo.used || accessInfo.current_usage || 0,
-        limit: accessInfo.limit || 0,
-        title: '🎓 Unlock Unlimited AI Tutoring',
-        description: "You've reached your daily AI Tutor limit. Upgrade for unlimited conversations with Mentor + Professor AI.",
-        benefits: [
-          'Unlimited AI conversations',
-          'Advanced problem-solving guidance',
-          'Personalized study recommendations',
-          'Priority AI processing',
-          'Download notes & reports'
-        ]
-      });
-      console.log('AI Tutor access denied - modal opened');
+    // Use unified global trigger to ensure consistent modal hydration
+    const wasTriggered = await triggerFeatureUpsell('ai_tutor_daily');
+    if (wasTriggered) {
+      // Modal shown – stop flow here
       return;
     }
 
