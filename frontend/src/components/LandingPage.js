@@ -327,14 +327,15 @@ const LandingPage = () => {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Emotional Connection */}
             <div className="text-center lg:text-left space-y-8">
-              {/* Animated Badge with Glow */}
-              <div className="inline-flex items-center bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/40 rounded-full px-6 py-3 mb-4 backdrop-blur-md shadow-lg shadow-amber-500/20 animate-pulse-slow">
+              {/* HALLUCINATION-FREE Badge - Main USP */}
+              <div className="inline-flex items-center bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-2 border-green-400/60 rounded-full px-8 py-4 mb-6 backdrop-blur-md shadow-2xl shadow-green-500/30 animate-pulse-slow">
                 <div className="relative">
-                  <Clock className="h-5 w-5 text-amber-400 mr-3 animate-spin-slow" />
-                  <div className="absolute inset-0 blur-md bg-amber-400/50 rounded-full"></div>
+                  <Shield className="h-7 w-7 text-green-400 mr-3" />
+                  <div className="absolute inset-0 blur-lg bg-green-400/60 rounded-full animate-pulse"></div>
+                  <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-green-300 animate-bounce" />
                 </div>
-                <span className="text-amber-200 text-sm font-semibold tracking-wide">
-                  🎯 Your 24/7 Study Companion for JEE/NEET/UPSC
+                <span className="text-green-100 text-base md:text-lg font-black tracking-wide">
+                  🏆 World's First HALLUCINATION-FREE AI Tutor
                 </span>
               </div>
 
@@ -342,18 +343,23 @@ const LandingPage = () => {
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1]">
                 <div className="relative inline-block">
                   <span className="bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent drop-shadow-2xl">
-                    Never Study Alone.
+                    Every Answer Verified.
                   </span>
                   <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 -z-10"></div>
                 </div>
                 <br />
                 <div className="relative inline-block mt-2">
                   <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent animate-gradient drop-shadow-2xl">
-                    Never Feel Stuck Again.
+                    Learn with 100% Confidence.
                   </span>
                   <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-cyan-500/20 -z-10"></div>
                 </div>
               </h1>
+              
+              {/* Sub-headline emphasizing hallucination-free */}
+              <p className="text-xl md:text-2xl text-blue-100 mb-8 font-semibold leading-relaxed">
+                Unlike other AI tutors that make up answers, <span className="text-green-400 font-black">we verify everything</span> before teaching you.
+              </p>
 
               {/* Enhanced Problem-Focused Sub-headline with Icons */}
               <div className="space-y-4 text-lg md:text-xl">
