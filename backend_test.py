@@ -16924,23 +16924,44 @@ if __name__ == "__main__":
             print(f"💥 Mock Tests Generate Quota Validation ERROR: {str(e)}")
             sys.exit(1)
     
-    # Run the CRITICAL Review Request Tests
-    print("🚨 CRITICAL: RUNNING REVIEW REQUEST BACKEND TESTING")
+    # Check if we should run Razorpay tests specifically
+    if len(sys.argv) > 1 and sys.argv[1] == "razorpay":
+        print("🎯 RUNNING RAZORPAY PAYMENT INTEGRATION TESTS")
+        print("=" * 60)
+        
+        try:
+            result = tester.test_razorpay_comprehensive_integration()
+            if result:
+                print(f"✅ Razorpay Payment Integration Tests PASSED")
+                sys.exit(0)
+            else:
+                print(f"❌ Razorpay Payment Integration Tests FAILED")
+                sys.exit(1)
+        except Exception as e:
+            print(f"💥 Razorpay Payment Integration Tests ERROR: {str(e)}")
+            sys.exit(1)
+    
+    # Run the CRITICAL Review Request Tests - RAZORPAY PAYMENT INTEGRATION
+    print("🚨 CRITICAL: RAZORPAY PAYMENT INTEGRATION - COMPREHENSIVE BACKEND TESTING")
     print("="*80)
-    print("Testing specific endpoints mentioned in review request:")
-    print("- JWT Authentication Endpoints (/api/gamification/leaderboard, /api/gamification/progress)")
-    print("- Subscription Check Access (/api/subscription/check-access)")
-    print("- Mock Test Generation (/api/mock-tests/generate)")
-    print("- Plan Upgrade API (/api/subscription/upgrade)")
+    print("Testing Razorpay Payment Integration as per review request:")
+    print("- POST /api/razorpay/create-order (Premium Monthly & Pro Yearly)")
+    print("- POST /api/razorpay/verify-payment (Mock Payment Verification)")
+    print("- Environment Variables Check (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)")
+    print("- Subscription Integration (User subscription status retrieval)")
+    print("- Error Handling (Invalid signatures, proper 402 responses)")
+    print("- Response Structure Validation (order_id format, amount in paise)")
     print("="*80)
     
-    success = tester.run_review_request_tests()
+    success = tester.test_razorpay_comprehensive_integration()
     
     if success:
-        print("\n🎉 REVIEW REQUEST BACKEND TESTING COMPLETED SUCCESSFULLY!")
-        print("✅ Critical endpoints are working as expected")
+        print("\n🎉 RAZORPAY PAYMENT INTEGRATION TESTING COMPLETED SUCCESSFULLY!")
+        print("✅ All critical Razorpay endpoints are working as expected")
+        print("✅ Phase 1 completion requirements met for payment integration")
         sys.exit(0)
     else:
-        print("\n❌ REVIEW REQUEST BACKEND TESTING FAILED!")
+        print("\n❌ RAZORPAY PAYMENT INTEGRATION TESTING FAILED!")
         print("🚨 Critical issues found that need immediate attention")
+        print("🔧 Check environment variables, Razorpay client configuration, and API responses")
         sys.exit(1)
