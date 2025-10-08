@@ -551,6 +551,110 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Hallucination-Free Guarantee Section */}
+      <section id="hallucination-free" className="py-24 px-6 relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 bg-clip-text text-transparent">
+              Other AI Tutors vs Dhruv AI
+            </h2>
+            <p className="text-xl text-blue-200">
+              Why hallucination-free matters for your success
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Other AI - Problem */}
+            <div className="bg-gradient-to-br from-red-900/30 to-orange-900/30 border-2 border-red-400/30 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mr-4">
+                  <AlertCircle className="h-7 w-7 text-red-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-red-300">ChatGPT, Gemini & Others</h3>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start">
+                  <X className="h-5 w-5 text-red-400 mr-3 flex-shrink-0 mt-1" />
+                  <p className="text-gray-300"><strong className="text-red-400">Makes up fake answers</strong> but sounds confident</p>
+                </div>
+                <div className="flex items-start">
+                  <X className="h-5 w-5 text-red-400 mr-3 flex-shrink-0 mt-1" />
+                  <p className="text-gray-300"><strong className="text-red-400">Wrong formulas</strong> and concepts</p>
+                </div>
+                <div className="flex items-start">
+                  <X className="h-5 w-5 text-red-400 mr-3 flex-shrink-0 mt-1" />
+                  <p className="text-gray-300"><strong className="text-red-400">No verification</strong> - you learn mistakes</p>
+                </div>
+                <div className="flex items-start">
+                  <X className="h-5 w-5 text-red-400 mr-3 flex-shrink-0 mt-1" />
+                  <p className="text-gray-300"><strong className="text-red-400">Your exam score suffers</strong></p>
+                </div>
+              </div>
+
+              <div className="bg-red-900/30 border border-red-400/30 px-4 py-3 rounded-xl">
+                <p className="text-red-200 text-sm font-semibold text-center">
+                  ⚠️ Hallucinations = Learning Wrong Information
+                </p>
+              </div>
+            </div>
+
+            {/* Dhruv AI - Solution */}
+            <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-2 border-green-400/50 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden">
+              {/* Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 animate-pulse-slow"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-green-500/30 rounded-full flex items-center justify-center mr-4 relative">
+                    <Shield className="h-7 w-7 text-green-400 animate-pulse" />
+                    <CheckCircle className="absolute -top-1 -right-1 h-5 w-5 text-green-300" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-green-300">Dhruv AI</h3>
+                  <div className="ml-auto bg-green-500/20 px-3 py-1 rounded-full border border-green-400/30">
+                    <span className="text-green-300 text-xs font-bold">HALLUCINATION-FREE</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                    <p className="text-white"><strong className="text-green-400">Every answer verified</strong> before showing you</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                    <p className="text-white"><strong className="text-green-400">100% accurate</strong> formulas and concepts</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                    <p className="text-white"><strong className="text-green-400">Cross-checked</strong> against verified sources</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                    <p className="text-white"><strong className="text-green-400">Your confidence grows</strong> with correct learning</p>
+                  </div>
+                </div>
+
+                <div className="bg-green-900/30 border border-green-400/50 px-4 py-3 rounded-xl">
+                  <p className="text-green-200 text-sm font-semibold text-center">
+                    ✓ Trust Every Answer - Learn with Confidence
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center mt-12">
+            <div className="inline-block bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 px-8 py-4 rounded-2xl backdrop-blur-md">
+              <p className="text-green-200 font-semibold text-lg">
+                🎯 The only AI tutor you can trust for 100% accurate learning
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Solution Section */}
       <section id="features" className="py-24 px-6 relative">
         <div className="max-w-7xl mx-auto">
