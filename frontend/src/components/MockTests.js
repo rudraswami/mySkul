@@ -427,6 +427,10 @@ export default function MockTests() {
       // Handle subscription/limit errors FIRST
       if (response.status === 402 || response.status === 429) {
         console.log('🔒 Subscription limit reached! Status:', response.status);
+        
+        // Close progress modal before showing subscription modal
+        setShowGenerationProgress(false);
+        
         try {
           const errorData = await response.json();
           console.log('📊 Error response data:', errorData);
