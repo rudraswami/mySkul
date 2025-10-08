@@ -202,7 +202,7 @@
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -212,6 +212,9 @@
         -working: false
         -agent: "testing"
         -comment: "CRITICAL BACKEND ISSUE IDENTIFIED: /api/mock-tests/generate returns 500 Internal Server Error when user reaches quota limit instead of proper 402 Payment Required with upsell_info. First test generation works (200 OK with test data), but subsequent attempts fail with 500 errors. This prevents subscription modals from triggering correctly. Root cause likely ObjectId serialization or subscription service integration issue."
+        -working: false
+        -agent: "testing"
+        -comment: "COMPREHENSIVE RE-TESTING COMPLETED - MULTIPLE CRITICAL ISSUES CONFIRMED: Tested all three endpoints as requested in review. /api/mock-tests/generate: ✅ 200 OK within quota, ❌ 500 Internal Server Error when quota exhausted (should be 402). /api/subscription/check-access: ✅ 200 OK within limits, ❌ 200 OK when exhausted (should be 402). /api/ai/dual-response: ✅ 200 OK within limits, ❌ 200 OK when exhausted (should be 402). None of the endpoints return proper 402 status codes with upsell_info when limits are reached. This confirms why subscription modals don't trigger. Success rate: 3/7 (42.9%). All three endpoints need fixes to return proper 402 responses with consistent upsell_info structure."
 
 ## frontend:
   - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
