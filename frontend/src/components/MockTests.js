@@ -436,16 +436,37 @@ export default function MockTests() {
         try {
           const errorData = await response.json();
           console.log('📊 Error response data:', errorData);
-          console.log('🎯 Calling triggerFeatureUpsell...');
-          const modalTriggered = await triggerFeatureUpsell('mock_tests_weekly');
-          console.log('✅ Modal triggered:', modalTriggered);
+          const detail = errorData?.detail || errorData || {};
+          const upsellInfo = detail.upsell_info || errorData?.upsell_info || null;
+
+          // Prefer showing the modal immediately using backend-provided upsell info
+          if (upsellInfo && setUpsellModal) {
+            setUpsellModal({
+              featureName: 'mock_tests_weekly',
+              upsellInfo,
+              currentUsage: detail.used || detail.current_usage || 0,
+              limit: detail.limit || 0,
+              title: '🏆 Access More Mock Tests',
+              description: "You've used all your mock tests for this period. Upgrade to Premium for unlimited practice and detailed analytics.",
+              benefits: [
+                'Unlimited mock tests',
+                'Detailed performance analytics',
+                'Subject-wise improvement tracking',
+                'Priority AI processing',
+                'Download reports'
+              ]
+            });
+            console.log('✅ Upsell modal opened directly from 402/429 payload');
+          } else {
+            console.log('🎯 Calling triggerFeatureUpsell as fallback...');
+            await triggerFeatureUpsell('mock_tests_weekly');
+          }
         } catch (parseError) {
-          console.error('❌ Error parsing 429 response:', parseError);
-          // Fallback to generic subscription message
-          console.log('🔄 Triggering fallback modal...');
+          console.error('❌ Error parsing 402/429 response:', parseError);
+          // Fallback to generic subscription check which opens the modal
           await triggerFeatureUpsell('mock_tests_weekly');
         }
-        showToast('Please upgrade to continue generating tests', 'info');
+        // No toast here; the modal provides the CTA
         return;
       }
 
