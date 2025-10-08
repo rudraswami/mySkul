@@ -212,7 +212,7 @@ export default function ExamMode({
         </div>
       </div>
 
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
         {/* Main Question Area */}
         <div className="flex-1 p-6">
           <Card className="shadow-lg border-0">
