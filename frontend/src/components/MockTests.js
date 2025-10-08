@@ -2405,6 +2405,49 @@ export default function MockTests() {
         />
       )}
 
+      {/* Submission Loading Modal */}
+      {showSubmitLoading && (
+        <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <Card className="max-w-lg w-full bg-white/95 backdrop-blur-md border-0 shadow-2xl">
+            <CardContent className="p-12 text-center">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4 animate-pulse">
+                  <Brain className="w-14 h-14 text-white animate-bounce" />
+                </div>
+              </div>
+              
+              <h2 className="text-3xl font-bold text-gray-800 mb-3">
+                Analyzing Your Performance...
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Our AI is evaluating your answers and preparing personalized feedback
+              </p>
+              
+              <div className="space-y-3 text-left">
+                <div className="flex items-center gap-3 text-gray-700">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                  <span>Calculating scores...</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-700">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-ping" style={{animationDelay: '0.2s'}}></div>
+                  <span>Generating AI insights...</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-700">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-ping" style={{animationDelay: '0.4s'}}></div>
+                  <span>Preparing recommendations...</span>
+                </div>
+              </div>
+              
+              <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  ✨ <strong>Did you know?</strong> Every mistake is a learning opportunity!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Enhanced Results Modal */}
       {showEnhancedResults && enhancedResultsData && (
         <EnhancedResultsModal
