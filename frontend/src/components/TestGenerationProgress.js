@@ -72,6 +72,18 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
     return () => clearInterval(messageInterval);
   }, []);
 
+  // Watch for testData arrival when waiting
+  useEffect(() => {
+    if (waitingForData && testData && !showSuccessState) {
+      // Data just arrived! Transition to success state
+      const successTimeout = setTimeout(() => {
+        setWaitingForData(false);
+        setShowSuccessState(true);
+      }, 500);
+      return () => clearTimeout(successTimeout);
+    }
+  }, [waitingForData, testData, showSuccessState]);
+
   useEffect(() => {
     // Progress through steps automatically
     if (currentStep < GENERATION_STEPS.length) {
