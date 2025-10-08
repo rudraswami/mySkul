@@ -31,7 +31,7 @@ export default function GamificationProgress({ showFullView = false }) {
   const fetchGamificationProgress = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token');
       const response = await fetch(`${backendUrl}/api/gamification/progress`, {
         headers: {
           'Authorization': `Bearer ${token}`,
