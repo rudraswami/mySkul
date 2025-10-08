@@ -479,6 +479,7 @@ export default function MockTests() {
       
     } catch (error) {
       console.error('Test generation error:', error);
+      setShowGenerationProgress(false); // Close progress modal on error
       showToast('Failed to generate test. Please try again.', 'error');
     }
   };
