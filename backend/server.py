@@ -8598,76 +8598,18 @@ async def get_processing_status(
         if not session_doc:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        task_id = session_doc.get('celery_task_id')
-        
-        if not task_id or not AUDIO_PROCESSING_ENABLED:
-            return {
-                "session_id": session_id,
-                "status": session_doc.get('status', 'unknown'),
-                "progress": session_doc.get('processing_progress', 0),
-                "stage": session_doc.get('processing_stage', 'unknown')
-            }
-        
-        # Get Celery task status
-        from celery_app import app as celery_app
-        task_result = celery_app.AsyncResult(task_id)
-        
+        # With lightweight processing, status is directly in session document
+        # No need for Celery task tracking
         status_info = {
             "session_id": session_id,
-            "task_id": task_id,
-            "status": task_result.status,
-            "progress": 0,
-            "stage": "unknown",
-            "message": "",
-            "error": None
+            "status": session_doc.get('status', 'active'),
+            "progress": session_doc.get('processing_progress', 100),
+            "stage": session_doc.get('processing_stage', 'completed'),
+            "message": "Processing complete" if session_doc.get('status') == 'completed' else "Processing...",
+            "error": session_doc.get('error'),
+            "transcription_available": bool(session_doc.get('transcription')),
+            "key_concepts": session_doc.get('key_concepts', [])
         }
-        
-        if task_result.status == 'PROGRESS':
-            progress_info = task_result.info
-            status_info.update({
-                "progress": progress_info.get('percentage', 0),
-                "stage": progress_info.get('message', 'processing'),
-                "current": progress_info.get('current', 0),
-                "total": progress_info.get('total', 100)
-            })
-        elif task_result.status == 'SUCCESS':
-            result = task_result.result
-            if result['status'] == 'success':
-                # Process completed successfully, update session
-                processed_data = result['data']
-                
-                await db.auto_note_sessions.update_one(
-                    {"session_id": session_id},
-                    {"$set": {
-                        "status": "completed",
-                        "transcription": processed_data['transcription'],
-                        "processing_progress": 100,
-                        "processing_stage": "completed",
-                        "audio_analysis": processed_data['audio_analysis'],
-                        "context_info": processed_data['context_info'],
-                        "processing_stats": processed_data['processing_stats']
-                    }}
-                )
-                
-                status_info.update({
-                    "progress": 100,
-                    "stage": "completed",
-                    "message": "Audio processing completed successfully!",
-                    "transcription_length": len(processed_data['transcription']),
-                    "quality_score": processed_data['audio_analysis'].get('quality_score', 0),
-                    "detected_subjects": processed_data['context_info'].get('detected_subjects', [])
-                })
-            else:
-                status_info.update({
-                    "status": "FAILURE",
-                    "error": result['error'],
-                    "message": f"Processing failed: {result['error']}"
-                })
-        elif task_result.status == 'FAILURE':
-            status_info.update({
-                "error": str(task_result.info),
-                "message": f"Processing failed: {task_result.info}"
-            })
         
         return status_info
         
