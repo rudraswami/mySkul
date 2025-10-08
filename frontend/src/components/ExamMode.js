@@ -161,7 +161,7 @@ export default function ExamMode({
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
       {/* Top Bar */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
