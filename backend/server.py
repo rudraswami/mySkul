@@ -3027,6 +3027,106 @@ async def get_user_subscription(user_id: str) -> UserSubscription:
             current_period_end=datetime.now(timezone.utc) + timedelta(days=365)
         )
 
+
+def handle_subscription_error(access_info: Dict[str, Any], feature_name: str, plan_name: str):
+    """
+    UNIVERSAL subscription error handler for ALL features.
+    Converts access_info from check_feature_access into proper HTTPException.
+    
+    This ensures consistent 402/429 responses across all endpoints.
+    """
+    reason = access_info.get("reason", "unknown")
+    
+    # Map feature names to user-friendly labels
+    feature_labels = {
+        "mock_tests_weekly": "Mock Tests",
+        "ai_tutor_daily": "AI Tutor",
+        "ai_notes_daily": "AI Notes",
+        "stress_management_daily": "Stress Management",
+        "analytics_access": "Analytics"
+    }
+    feature_label = feature_labels.get(feature_name, feature_name.replace('_', ' ').title())
+    
+    # Handle subscription expired
+    if reason == "subscription_expired":
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": f"Your subscription has expired. Please renew to continue using {feature_label}.",
+                "action": "upgrade",
+                "current_plan": plan_name,
+                "feature": feature_name,
+                "upsell_info": access_info.get("upsell_info", {}),
+                "upgrade_url": "/subscription"
+            }
+        )
+    
+    # Handle feature locked/not available
+    elif reason in ["feature_not_available", "feature_locked"]:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": f"{feature_label} is not available in your {plan_name} plan. Upgrade to unlock.",
+                "action": "upgrade",
+                "current_plan": plan_name,
+                "feature": feature_name,
+                "upsell_info": access_info.get("upsell_info", {}),
+                "upgrade_url": "/subscription"
+            }
+        )
+    
+    # Handle usage limit reached - THE CRITICAL FIX
+    # Both "limit_reached" (from SubscriptionService) and "usage_limit_reached" are handled
+    elif reason in ["limit_reached", "usage_limit_reached"]:
+        used = access_info.get("used", access_info.get("current_usage", 0))
+        limit = access_info.get("limit", 0)
+        
+        # Calculate reset time based on feature type
+        if "weekly" in feature_name:
+            # Weekly reset
+            days_until_monday = (7 - datetime.now(timezone.utc).weekday()) % 7
+            if days_until_monday == 0:
+                days_until_monday = 7
+            reset_message = f"Resets in {days_until_monday} days"
+        elif "daily" in feature_name:
+            # Daily reset
+            reset_message = "Resets at midnight"
+        else:
+            # Monthly reset (default)
+            remaining_days = (datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timedelta(days=32)).replace(day=1) - datetime.utcnow()
+            reset_message = f"Resets in {remaining_days.days} days"
+        
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": f"Limit reached! You've used {used}/{limit} {feature_label}. {reset_message}.",
+                "action": "upgrade",
+                "current_plan": plan_name,
+                "feature": feature_name,
+                "used": used,
+                "limit": limit,
+                "reset_message": reset_message,
+                "upsell_info": access_info.get("upsell_info", {}),
+                "upgrade_url": "/subscription"
+            }
+        )
+    
+    # Fallback for any other reason
+    else:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": f"Access to {feature_label} is restricted. Reason: {reason}",
+                "action": "upgrade",
+                "current_plan": plan_name,
+                "feature": feature_name,
+                "reason": reason,
+                "upsell_info": access_info.get("upsell_info", {}),
+                "upgrade_url": "/subscription"
+            }
+        )
+
+
 async def check_feature_access(user_id: str, feature_name: str) -> Dict[str, Any]:
     """Check if user has access to specific feature and usage limits"""
     subscription = await get_user_subscription(user_id)
