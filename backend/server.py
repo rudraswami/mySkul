@@ -10908,6 +10908,247 @@ async def cancel_subscription(user: User = Depends(get_current_user)):
         logger.error(f"Subscription cancellation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to cancel subscription")
 
+# ============= RAZORPAY PAYMENT ENDPOINTS =============
+
+@api_router.post("/razorpay/create-order", response_model=RazorpayOrderResponse)
+async def create_razorpay_order(order_data: RazorpayOrderCreate, user: User = Depends(get_current_user)):
+    """Create Razorpay order for subscription"""
+    try:
+        if not razorpay_client:
+            raise HTTPException(status_code=500, detail="Razorpay client not configured")
+        
+        # Validate plan and calculate amount
+        plan_config = await SubscriptionService.load_plan_config()
+        if order_data.plan_name not in plan_config:
+            raise HTTPException(status_code=400, detail="Invalid plan name")
+        
+        plan_info = plan_config[order_data.plan_name]
+        if order_data.billing_cycle == "yearly":
+            amount = plan_info["price_yearly"] * 100  # Convert to paise
+        else:
+            amount = plan_info["price_monthly"] * 100  # Convert to paise
+            
+        # Add GST (18% for digital services in India)
+        gst_amount = amount * 0.18
+        total_amount = int(amount + gst_amount)
+        
+        # Create order in Razorpay
+        razorpay_order = razorpay_client.order.create({
+            "amount": total_amount,
+            "currency": "INR",
+            "payment_capture": 1,
+            "notes": {
+                "user_id": user.user_id,
+                "plan_name": order_data.plan_name,
+                "billing_cycle": order_data.billing_cycle,
+                "base_amount": amount,
+                "gst_amount": int(gst_amount)
+            }
+        })
+        
+        # Store order in database
+        subscription = RazorpaySubscription(
+            user_id=user.user_id,
+            razorpay_order_id=razorpay_order["id"],
+            plan_name=order_data.plan_name,
+            billing_cycle=order_data.billing_cycle,
+            amount=total_amount,
+            status="created"
+        )
+        
+        await db.razorpay_subscriptions.insert_one(subscription.dict())
+        
+        return RazorpayOrderResponse(
+            order_id=razorpay_order["id"],
+            amount=total_amount,
+            currency="INR",
+            key_id=RAZORPAY_KEY_ID,
+            plan_name=order_data.plan_name,
+            billing_cycle=order_data.billing_cycle
+        )
+        
+    except Exception as e:
+        logger.error(f"Create Razorpay order error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create payment order")
+
+@api_router.post("/razorpay/verify-payment")
+async def verify_razorpay_payment(payment_data: RazorpayPaymentSuccess, user: User = Depends(get_current_user)):
+    """Verify Razorpay payment and activate subscription"""
+    try:
+        if not razorpay_client:
+            raise HTTPException(status_code=500, detail="Razorpay client not configured")
+        
+        # Verify payment signature
+        params_dict = {
+            'razorpay_order_id': payment_data.razorpay_order_id,
+            'razorpay_payment_id': payment_data.razorpay_payment_id,
+            'razorpay_signature': payment_data.razorpay_signature
+        }
+        
+        try:
+            razorpay_client.utility.verify_payment_signature(params_dict)
+        except Exception as e:
+            logger.error(f"Payment signature verification failed: {str(e)}")
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+        
+        # Update subscription in database
+        subscription_update = await db.razorpay_subscriptions.find_one_and_update(
+            {
+                "user_id": user.user_id,
+                "razorpay_order_id": payment_data.razorpay_order_id
+            },
+            {
+                "$set": {
+                    "razorpay_payment_id": payment_data.razorpay_payment_id,
+                    "razorpay_signature": payment_data.razorpay_signature,
+                    "status": "paid",
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            },
+            return_document=True
+        )
+        
+        if not subscription_update:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        # Calculate subscription period
+        if subscription_update["billing_cycle"] == "yearly":
+            period_end = datetime.now(timezone.utc) + timedelta(days=365)
+        else:
+            period_end = datetime.now(timezone.utc) + timedelta(days=30)
+        
+        # Update or create user subscription
+        user_subscription = UserSubscription(
+            user_id=user.user_id,
+            plan_id=subscription_update["plan_name"].lower(),
+            plan_name=subscription_update["plan_name"],
+            status="active",
+            current_period_start=datetime.now(timezone.utc),
+            current_period_end=period_end,
+            auto_renew=True,
+            billing_cycle=subscription_update["billing_cycle"]
+        )
+        
+        await db.user_subscriptions.update_one(
+            {"user_id": user.user_id},
+            {"$set": user_subscription.dict()},
+            upsert=True
+        )
+        
+        # Update user's subscription type
+        await db.users.update_one(
+            {"user_id": user.user_id},
+            {"$set": {"subscription_type": subscription_update["plan_name"].lower()}}
+        )
+        
+        # Create payment transaction record
+        payment_transaction = PaymentTransaction(
+            user_id=user.user_id,
+            amount=subscription_update["amount"] / 100,  # Convert from paise to rupees
+            currency="INR",
+            payment_method="razorpay",
+            status="completed",
+            payment_status="paid",
+            description=f"{subscription_update['plan_name']} subscription - {subscription_update['billing_cycle']}",
+            metadata={
+                "razorpay_order_id": payment_data.razorpay_order_id,
+                "razorpay_payment_id": payment_data.razorpay_payment_id,
+                "plan_name": subscription_update["plan_name"],
+                "billing_cycle": subscription_update["billing_cycle"]
+            }
+        )
+        
+        await db.payment_transactions.insert_one(payment_transaction.dict())
+        
+        return {
+            "message": "Payment verified and subscription activated",
+            "subscription": {
+                "plan_name": subscription_update["plan_name"],
+                "billing_cycle": subscription_update["billing_cycle"],
+                "status": "active",
+                "current_period_end": period_end.isoformat()
+            },
+            "payment": {
+                "payment_id": payment_data.razorpay_payment_id,
+                "order_id": payment_data.razorpay_order_id,
+                "amount": subscription_update["amount"] / 100
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Payment verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to verify payment")
+
+@api_router.post("/razorpay/webhook")
+async def razorpay_webhook(request: Request):
+    """Handle Razorpay webhook events"""
+    try:
+        # Get the raw body and signature
+        payload = await request.body()
+        signature = request.headers.get('X-Razorpay-Signature', '')
+        
+        if not signature:
+            raise HTTPException(status_code=400, detail="Missing signature")
+        
+        # Verify webhook signature
+        try:
+            razorpay_client.utility.verify_webhook_signature(
+                payload.decode(),
+                signature,
+                RAZORPAY_WEBHOOK_SECRET
+            )
+        except Exception as e:
+            logger.error(f"Webhook signature verification failed: {str(e)}")
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+        
+        # Parse webhook data
+        webhook_data = json.loads(payload.decode())
+        event = webhook_data.get('event')
+        
+        if event == 'payment.captured':
+            # Payment successful
+            payment = webhook_data.get('payload', {}).get('payment', {}).get('entity', {})
+            order_id = payment.get('order_id')
+            payment_id = payment.get('id')
+            
+            # Update subscription status
+            await db.razorpay_subscriptions.update_one(
+                {"razorpay_order_id": order_id},
+                {
+                    "$set": {
+                        "status": "paid",
+                        "razorpay_payment_id": payment_id,
+                        "updated_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+            
+        elif event == 'payment.failed':
+            # Payment failed
+            payment = webhook_data.get('payload', {}).get('payment', {}).get('entity', {})
+            order_id = payment.get('order_id')
+            
+            # Update subscription status
+            await db.razorpay_subscriptions.update_one(
+                {"razorpay_order_id": order_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "updated_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+        
+        return {"status": "success"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Webhook processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+
 # ============= REVENUE ANALYTICS ENDPOINTS =============
 
 @api_router.get("/admin/revenue/analytics")
