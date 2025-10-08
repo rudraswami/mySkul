@@ -6,7 +6,7 @@ import time
 
 class FocusedSubscriptionTester:
     def __init__(self):
-        self.base_url = "https://voice2notes-3.preview.emergentagent.com/api"
+        self.base_url = "https://test-genflow.preview.emergentagent.com/api"
         self.token = None
         self.test_user_email = "test@dhruvai.com"
         self.test_user_password = "password123"

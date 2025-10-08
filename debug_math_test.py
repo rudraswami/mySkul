@@ -8,7 +8,7 @@ import json
 import sys
 
 def test_ai_endpoint():
-    base_url = "https://voice2notes-3.preview.emergentagent.com/api"
+    base_url = "https://test-genflow.preview.emergentagent.com/api"
     
     # Authenticate first
     login_data = {
