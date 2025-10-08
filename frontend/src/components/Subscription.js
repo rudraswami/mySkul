@@ -432,6 +432,32 @@ export default function Subscription() {
           </button>
         </div>
       </div>
+
+      {/* Razorpay Payment Modal */}
+      {showPaymentModal && paymentDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="relative w-full max-w-lg">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute -top-2 -right-2 z-60 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Payment Component */}
+            <RazorpayPayment
+              planName={paymentDetails.planName}
+              billingCycle={paymentDetails.billingCycle}
+              amount={paymentDetails.amount}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              onCancel={handlePaymentCancel}
+              userDetails={paymentDetails.userDetails}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
