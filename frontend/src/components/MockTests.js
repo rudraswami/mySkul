@@ -395,7 +395,12 @@ export default function MockTests() {
   const handleProgressComplete = () => {
     // Called when progress animation finishes
     setShowGenerationProgress(false);
-    // Exam mode will already be set by generateMockTestFromWizard
+    
+    // Open exam mode if test data is ready
+    if (examModeTest && examModeQuestions.length > 0) {
+      setShowExamMode(true);
+      showToast('Test ready! Good luck! 🎉', 'success');
+    }
   };
 
   const generateMockTestFromWizard = async (examType, subjects, difficulty, numQuestions, timerSeconds) => {
