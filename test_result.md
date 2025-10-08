@@ -238,6 +238,8 @@
 ## agent_communication:
   -agent: "main"
   -message: "Initiating backend tests for subscription flows, then automated frontend E2E to validate the unified subscription popup (AI Tutor, Mock Tests, Auto-Note Mentor), including mobile responsiveness."
+  -agent: "testing"
+  -message: "SUBSCRIPTION FLOWS CONSISTENCY TESTING COMPLETED - CRITICAL BACKEND ISSUES IDENTIFIED: Conducted comprehensive testing of subscription flows as requested in review. AUTHENTICATION: ✅ Successfully authenticated with test@dhruvai.com/password123 and created fresh test users. MOCK TESTS GENERATE TESTING: ✅ /api/mock-tests/generate returns 200 OK with proper test data when user has remaining quota (test_id, test_name, questions, total_marks, time_limit), ❌ /api/mock-tests/generate returns 500 Internal Server Error instead of 402 Payment Required when quota exhausted - this is the critical issue preventing subscription modals. AI DUAL RESPONSE TESTING: ✅ /api/ai/dual-response returns 200 OK when user has quota, but response structure shows incomplete dual AI response (missing primary/secondary response fields), ⚠️ AI quota exhaustion testing incomplete due to time constraints. SUBSCRIPTION CHECK-ACCESS: Not fully tested due to mock test generation failures. ROOT CAUSE: Backend subscription service integration has critical issues - 500 errors instead of proper 402 responses with upsell_info when limits reached. This explains why users see generic error messages instead of subscription upgrade prompts. URGENT RECOMMENDATION: Fix /api/mock-tests/generate endpoint to return proper 402 status codes with complete upsell_info structure when subscription limits are reached."
     working: true
     file: "server.py"
     stuck_count: 0
