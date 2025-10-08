@@ -56,6 +56,14 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
 
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
+  
+  // Prevent body scroll when modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   // Get available subjects for selected exam type
   const availableSubjects = EXAM_TYPES.find(e => e.id === config.examType)?.subjects || [];
