@@ -982,8 +982,23 @@ const LandingPage = () => {
           75% { transform: translateY(-25px) translateX(5px); }
         }
 
-        .animate-float {
-          animation: float linear infinite;
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+          25% { transform: translateY(-30px) translateX(20px) rotate(5deg); }
+          50% { transform: translateY(-15px) translateX(-20px) rotate(-5deg); }
+          75% { transform: translateY(-35px) translateX(10px) rotate(3deg); }
+        }
+
+        @keyframes blob {
+          0%, 100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
         }
 
         @keyframes gradient {
@@ -991,9 +1006,71 @@ const LandingPage = () => {
           50% { background-position: 100% 50%; }
         }
 
+        @keyframes progress {
+          0% { width: 0%; }
+          100% { width: 98%; }
+        }
+
+        @keyframes bounce-slow {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+          }
+        }
+
+        .animate-float {
+          animation: float linear infinite;
+        }
+
+        .animate-float-slow {
+          animation: float-slow linear infinite;
+        }
+
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+
         .animate-gradient {
           background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
+          animation: gradient 6s ease infinite;
+        }
+
+        .animate-progress {
+          animation: progress 2s ease-out;
+        }
+
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
         }
 
         .delay-300 {
@@ -1004,12 +1081,22 @@ const LandingPage = () => {
           animation-delay: 700ms;
         }
 
-        .delay-1000 {
+        .delay-1000,
+        .animation-delay-1000 {
           animation-delay: 1s;
         }
 
-        .delay-2000 {
+        .delay-2000,
+        .animation-delay-2000 {
           animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+
+        .animation-delay-6000 {
+          animation-delay: 6s;
         }
       `}</style>
     </div>
