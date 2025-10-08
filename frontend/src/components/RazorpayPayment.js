@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import useRazorpay from 'react-razorpay';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from './ui/button.jsx';
 import { LoadingSpinner } from './ui/loading.jsx';
@@ -15,15 +14,44 @@ const RazorpayPayment = ({
   onCancel,
   userDetails 
 }) => {
-  const [Razorpay] = useRazorpay();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
+  // Load Razorpay script dynamically
+  useEffect(() => {
+    const loadRazorpayScript = () => {
+      return new Promise((resolve) => {
+        // Check if Razorpay is already loaded
+        if (window.Razorpay) {
+          setRazorpayLoaded(true);
+          resolve(true);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => {
+          setRazorpayLoaded(true);
+          resolve(true);
+        };
+        script.onerror = () => {
+          console.error('Failed to load Razorpay SDK');
+          resolve(false);
+        };
+        document.body.appendChild(script);
+      });
+    };
+
+    loadRazorpayScript();
+  }, []);
+
   const handlePayment = async () => {
-    if (!Razorpay) {
-      onError?.('Razorpay SDK not loaded');
+    if (!razorpayLoaded || !window.Razorpay) {
+      onError?.('Razorpay SDK not loaded. Please refresh and try again.');
       return;
     }
 
@@ -124,7 +152,7 @@ const RazorpayPayment = ({
         }
       };
 
-      const razorpayInstance = new Razorpay(options);
+      const razorpayInstance = new window.Razorpay(options);
       razorpayInstance.open();
 
     } catch (error) {
