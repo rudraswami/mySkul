@@ -114,43 +114,49 @@ export default function Subscription() {
       price_monthly: 0,
       price_yearly: 0,
       features: [
-        '2 mock tests per month',
-        '5 AI tutor queries per day',
-        'Basic performance tracking',
-        'Access to study materials'
+        '🎯 5 AI tutor queries daily - Perfect for quick doubts',
+        '📝 2 mock tests weekly - Build exam confidence gradually',
+        '📁 1 file upload daily - Try our note generation',
+        '📊 Basic performance tracking - See your progress',
+        '💬 Community support - Learn with peers'
       ],
-      current: currentSubscription?.plan_name === 'free',
-      popular: false
-    },
-    {
-      name: 'Basic',
-      price_monthly: 299,
-      price_yearly: 2990,
-      features: [
-        '20 mock tests per month',
-        'Unlimited AI tutor queries',
-        'Detailed performance analytics',
-        'Auto-note generation',
-        'Priority support'
-      ],
-      current: currentSubscription?.plan_name === 'basic',
-      popular: true
+      current: currentSubscription?.plan_name === 'FREE',
+      popular: false,
+      tier: 'FREE'
     },
     {
       name: 'Premium',
-      price_monthly: 599,
-      price_yearly: 5990,
+      price_monthly: 499,
+      price_yearly: 4999,
       features: [
-        'Unlimited mock tests',
-        'Advanced AI tutor with dual analysis',
-        'Comprehensive analytics dashboard',
-        'Auto-note generation with OCR',
-        'Spaced repetition scheduling',
-        'Parent dashboard access',
-        'Priority support'
+        '🚀 Unlimited AI tutor queries - Ask anything, anytime',
+        '🎯 3 mock tests weekly - Adaptive difficulty matching your level',
+        '📁 Unlimited file uploads - Convert all your study material',
+        '📊 Advanced analytics - Detailed performance insights & trends',
+        '⚡ Priority support - Faster responses when you need help',
+        '🧠 Weekly AI insights - Personalized study recommendations',
+        '🔍 Smart concept tracking - See connections between topics'
       ],
-      current: currentSubscription?.plan_name === 'premium',
-      popular: false
+      current: currentSubscription?.plan_name === 'PREMIUM',
+      popular: true,
+      tier: 'PREMIUM'
+    },
+    {
+      name: 'Pro',
+      price_monthly: 999,
+      price_yearly: 9999,
+      features: [
+        '⭐ Everything in Premium - All unlimited features',
+        '🏆 Unlimited mock tests - Practice as much as you want',
+        '🤖 Emotion-aware AI - Adapts to your stress & confidence levels',
+        '📈 Daily personalized insights - AI coach tracking your progress',
+        '🔗 Advanced concept tagging - Deep topic interconnections',
+        '👨‍👩‍👧‍👦 Parent dashboard - Detailed reports for family involvement',
+        '🚅 Priority model access - Fastest AI responses available'
+      ],
+      current: currentSubscription?.plan_name === 'PRO',
+      popular: false,
+      tier: 'PRO'
     }
   ];
 
