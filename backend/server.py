@@ -8835,6 +8835,8 @@ async def generate_mock_test(
                     "limit": access_info.get("limit", 0)
                 }
             raise HTTPException(status_code=402, detail=detail_payload)
+
+            raise HTTPException(status_code=402, detail=detail_payload)
         
         # Check cache first for instant loading
         cache_key = create_cache_key(user.user_id, request.test_type, request.subjects)
