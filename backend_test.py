@@ -1464,6 +1464,574 @@ class DhruvAITester:
         
         return False
 
+    def test_jwt_authentication_endpoints(self):
+        """Test JWT Authentication Endpoints - CRITICAL REVIEW REQUEST FOCUS"""
+        print("\n🚨 CRITICAL: JWT AUTHENTICATION ENDPOINTS TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing /api/gamification/leaderboard and /api/gamification/progress endpoints")
+        print("   Expected: 200 OK with proper Authorization headers (not 401 errors)")
+        print("   User: test@dhruvai.com / password123")
+        
+        # Ensure we have a valid token
+        if not self.token:
+            print("   Attempting login to get JWT token...")
+            if not self.test_user_login():
+                print("❌ Failed to login, cannot test JWT endpoints")
+                return False
+        
+        print(f"   Using JWT token: {self.token[:20]}...")
+        
+        # Test 1: Gamification Leaderboard endpoint
+        print("\n📊 Test 1: /api/gamification/leaderboard endpoint")
+        success1, response1 = self.run_test(
+            "Gamification Leaderboard",
+            "GET",
+            "gamification/leaderboard",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success1:
+            print("   ✅ Leaderboard endpoint returns 200 OK with JWT")
+            leaderboard = response1.get('leaderboard', [])
+            user_rank = response1.get('user_rank', 0)
+            total_users = response1.get('total_users', 0)
+            print(f"   📊 Leaderboard entries: {len(leaderboard)}")
+            print(f"   📊 User rank: {user_rank}")
+            print(f"   📊 Total users: {total_users}")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            if status_code == 401:
+                print("   ❌ CRITICAL: Still returns 401 Unauthorized (JWT fix not working)")
+            else:
+                print(f"   ❌ Unexpected status code: {status_code}")
+        
+        # Test 2: Gamification Progress endpoint
+        print("\n📈 Test 2: /api/gamification/progress endpoint")
+        success2, response2 = self.run_test(
+            "Gamification Progress",
+            "GET",
+            "gamification/progress",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success2:
+            print("   ✅ Progress endpoint returns 200 OK with JWT")
+            xp_data = response2.get('xp', {})
+            streak_data = response2.get('streak', {})
+            badges = response2.get('badges', [])
+            print(f"   📊 Total XP: {xp_data.get('total_xp', 0)}")
+            print(f"   📊 Current Level: {xp_data.get('level', 1)}")
+            print(f"   📊 Current Streak: {streak_data.get('current_streak', 0)}")
+            print(f"   📊 Badges earned: {len(badges)}")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            if status_code == 401:
+                print("   ❌ CRITICAL: Still returns 401 Unauthorized (JWT fix not working)")
+            else:
+                print(f"   ❌ Unexpected status code: {status_code}")
+        
+        # Test 3: Test without Authorization header (should return 401)
+        print("\n🔒 Test 3: Endpoints without Authorization header (should return 401)")
+        success3, response3 = self.run_test(
+            "Leaderboard without Auth",
+            "GET",
+            "gamification/leaderboard",
+            401,
+            headers={}  # No Authorization header
+        )
+        
+        if success3:
+            print("   ✅ Correctly returns 401 without Authorization header")
+        else:
+            print("   ❌ Should return 401 without Authorization header")
+        
+        # Final Assessment
+        print(f"\n🎯 JWT AUTHENTICATION ENDPOINTS TESTING SUMMARY:")
+        print(f"   ✅ Leaderboard with JWT: {'✓' if success1 else '✗'}")
+        print(f"   ✅ Progress with JWT: {'✓' if success2 else '✗'}")
+        print(f"   ✅ Proper 401 without JWT: {'✓' if success3 else '✗'}")
+        
+        success_count = sum([success1, success2, success3])
+        print(f"   📊 Overall Success Rate: {success_count}/3 ({(success_count/3)*100:.1f}%)")
+        
+        if success1 and success2:
+            print("   ✅ JWT AUTHENTICATION FIX SUCCESSFUL - Both endpoints work with proper tokens")
+        else:
+            print("   ❌ JWT AUTHENTICATION FIX FAILED - Endpoints still return 401 errors")
+        
+        return success1 and success2
+
+    def test_subscription_check_access_402_status(self):
+        """Test Subscription Check Access 402 Status - CRITICAL REVIEW REQUEST FOCUS"""
+        print("\n🚨 CRITICAL: SUBSCRIPTION CHECK ACCESS 402 STATUS TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing /api/subscription/check-access endpoint")
+        print("   Expected: 402 Payment Required with upsell_info when limits exceeded (not 200 OK)")
+        print("   User: test@dhruvai.com / password123")
+        
+        # Ensure we have a valid token
+        if not self.token:
+            print("   Attempting login to get JWT token...")
+            if not self.test_user_login():
+                print("❌ Failed to login, cannot test check-access endpoint")
+                return False
+        
+        # Test 1: Check current subscription status
+        print("\n📊 Test 1: Current Subscription Status")
+        success, response = self.run_test(
+            "Current Subscription Status",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            plan = response.get('plan', 'unknown')
+            status = response.get('status', 'unknown')
+            print(f"   ✅ Current plan: {plan}, status: {status}")
+        
+        # Test 2: Check current usage
+        print("\n📊 Test 2: Current Usage Status")
+        success, response = self.run_test(
+            "Current Usage Status",
+            "GET",
+            "subscription/usage",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            mock_tests_usage = response.get('mock_tests_weekly', {})
+            used = mock_tests_usage.get('used', 0)
+            limit = mock_tests_usage.get('limit', 2)
+            remaining = mock_tests_usage.get('remaining', 0)
+            print(f"   📊 Mock tests usage: {used}/{limit} (remaining: {remaining})")
+        
+        # Test 3: Test check-access within limits (should return 200 OK)
+        print("\n✅ Test 3: Check Access Within Limits (should return 200 OK)")
+        check_access_data = {
+            "feature_name": "mock_tests_weekly"
+        }
+        
+        success, response = self.run_test(
+            "Check Access - Within Limits",
+            "POST",
+            "subscription/check-access",
+            200,
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        within_limits_working = False
+        if success:
+            has_access = response.get('has_access', False)
+            upgrade_needed = response.get('upgrade_needed', True)
+            print(f"   ✅ Within limits: has_access={has_access}, upgrade_needed={upgrade_needed}")
+            if has_access and not upgrade_needed:
+                within_limits_working = True
+        
+        # Test 4: Create fresh user to test quota exhaustion
+        print("\n🆕 Test 4: Create Fresh User for Quota Testing")
+        fresh_user_email = f"test_402_fix_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Test 402 Fix User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Create Fresh User",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user for quota testing")
+            return False
+        
+        fresh_token = response['token']
+        print(f"   ✅ Fresh user created: {fresh_user_email}")
+        
+        # Test 5: Exhaust quota by generating mock tests
+        print("\n🎯 Test 5: Exhaust Mock Test Quota")
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "difficulty_level": 3,
+            "num_questions": 5
+        }
+        
+        tests_generated = 0
+        for i in range(3):  # Try to generate 3 tests (limit is 2)
+            print(f"   Generating test {i+1}/3...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation - Attempt {i+1}",
+                "POST",
+                "mock-tests/generate",
+                [200, 402, 429, 500],  # Accept various status codes
+                data=mock_test_data,
+                headers={'Authorization': f'Bearer {fresh_token}'}
+            )
+            
+            status_code = getattr(self, 'last_response_status', 0)
+            
+            if status_code == 200:
+                tests_generated += 1
+                print(f"      ✅ Test {i+1} generated successfully")
+            elif status_code in [402, 429]:
+                print(f"      🎯 Quota exhausted at test {i+1} (Status: {status_code})")
+                break
+            elif status_code == 500:
+                print(f"      ❌ Test {i+1} failed with 500 error")
+                break
+            else:
+                print(f"      ❌ Test {i+1} failed with status {status_code}")
+            
+            time.sleep(2)  # Delay between generations
+        
+        print(f"   📊 Generated {tests_generated} tests before hitting limit")
+        
+        # Test 6: Test check-access after quota exhaustion (should return 402)
+        print("\n🚨 Test 6: Check Access After Quota Exhaustion (should return 402)")
+        success, response = self.run_test(
+            "Check Access - After Quota Exhaustion",
+            "POST",
+            "subscription/check-access",
+            402,  # EXPECTING 402 Payment Required
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        check_access_402_working = False
+        if success:
+            has_access = response.get('has_access', True)
+            upgrade_needed = response.get('upgrade_needed', False)
+            upsell_info = response.get('upsell_info', {})
+            
+            print(f"   ✅ check-access correctly returns 402 Payment Required")
+            print(f"   📊 has_access: {has_access}")
+            print(f"   📊 upgrade_needed: {upgrade_needed}")
+            print(f"   📊 upsell_info present: {bool(upsell_info)}")
+            
+            if upsell_info:
+                mentor_message = upsell_info.get('mentor_message', '')
+                professor_message = upsell_info.get('professor_message', '')
+                target_plan = upsell_info.get('target_plan', {})
+                
+                print(f"   📊 mentor_message: {'✓' if mentor_message else '✗'}")
+                print(f"   📊 professor_message: {'✓' if professor_message else '✗'}")
+                print(f"   📊 target_plan: {'✓' if target_plan else '✗'}")
+                
+                if mentor_message and professor_message and target_plan:
+                    check_access_402_working = True
+                    print("   ✅ Complete upsell_info structure present")
+                else:
+                    print("   ❌ Incomplete upsell_info structure")
+            else:
+                print("   ❌ Missing upsell_info in 402 response")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ❌ check-access failed to return 402 (Status: {status_code})")
+            
+            if status_code == 200:
+                print("   🚨 CRITICAL: Still returns 200 OK instead of 402 (this is the reported issue)")
+            elif status_code == 500:
+                print("   🚨 CRITICAL: 500 Internal Server Error (backend issue)")
+        
+        # Final Assessment
+        print(f"\n🎯 SUBSCRIPTION CHECK ACCESS 402 STATUS TESTING SUMMARY:")
+        print(f"   ✅ Fresh User Creation: ✓")
+        print(f"   ✅ Mock Tests Generated: {tests_generated}")
+        print(f"   ✅ check-access Returns 402: {'✓' if check_access_402_working else '✗'}")
+        
+        if check_access_402_working:
+            print("   ✅ SUBSCRIPTION CHECK ACCESS FIX SUCCESSFUL - Returns proper 402 with upsell_info")
+        else:
+            print("   ❌ SUBSCRIPTION CHECK ACCESS FIX FAILED - Does not return proper 402 status codes")
+        
+        return check_access_402_working
+
+    def test_mock_test_generation_402_status(self):
+        """Test Mock Test Generation 402 Status - CRITICAL REVIEW REQUEST FOCUS"""
+        print("\n🚨 CRITICAL: MOCK TEST GENERATION 402 STATUS TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing /api/mock-tests/generate endpoint")
+        print("   Expected: 402 status codes with upsell_info when quota exceeded (not 500 Internal Server Errors)")
+        print("   User: test@dhruvai.com / password123")
+        
+        # Create fresh user for testing
+        print("\n🆕 Step 1: Create Fresh User for Mock Test Generation Testing")
+        fresh_user_email = f"mock_test_402_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Mock Test 402 User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Create Fresh User for Mock Test Testing",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user for mock test testing")
+            return False
+        
+        fresh_token = response['token']
+        print(f"   ✅ Fresh user created: {fresh_user_email}")
+        
+        # Test 1: Generate mock tests within quota (should return 200 OK)
+        print("\n✅ Step 2: Generate Mock Tests Within Quota (should return 200 OK)")
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "difficulty_level": 3,
+            "num_questions": 5
+        }
+        
+        tests_generated = 0
+        test_generation_within_quota = False
+        
+        for i in range(2):  # Generate 2 tests (free tier limit)
+            print(f"   Generating test {i+1}/2...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation Within Quota - Test {i+1}",
+                "POST",
+                "mock-tests/generate",
+                200,
+                data=mock_test_data,
+                headers={'Authorization': f'Bearer {fresh_token}'}
+            )
+            
+            if success:
+                tests_generated += 1
+                test_id = response.get('test_id', 'unknown')
+                print(f"      ✅ Test {i+1} generated successfully (ID: {test_id})")
+                if i == 0:  # First test successful
+                    test_generation_within_quota = True
+            else:
+                status_code = getattr(self, 'last_response_status', 0)
+                print(f"      ❌ Test {i+1} failed with status {status_code}")
+            
+            time.sleep(2)  # Delay between generations
+        
+        print(f"   📊 Successfully generated {tests_generated}/2 tests within quota")
+        
+        # Test 2: Attempt to generate test beyond quota (should return 402)
+        print("\n🚨 Step 3: Generate Mock Test Beyond Quota (should return 402)")
+        success, response = self.run_test(
+            "Mock Test Generation Beyond Quota",
+            "POST",
+            "mock-tests/generate",
+            402,  # EXPECTING 402 Payment Required
+            data=mock_test_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        mock_generation_402_working = False
+        if success:
+            print("   ✅ Mock test generation correctly returns 402 Payment Required")
+            
+            # Verify response structure
+            message = response.get('message', '')
+            action = response.get('action', '')
+            current_plan = response.get('current_plan', '')
+            used = response.get('used', 0)
+            limit = response.get('limit', 0)
+            upgrade_url = response.get('upgrade_url', '')
+            
+            print(f"   📊 Response Structure:")
+            print(f"      message: {'✓' if message else '✗'} - {message}")
+            print(f"      action: {'✓' if action == 'upgrade' else '✗'} - {action}")
+            print(f"      current_plan: {'✓' if current_plan else '✗'} - {current_plan}")
+            print(f"      used: {used}")
+            print(f"      limit: {limit}")
+            print(f"      upgrade_url: {'✓' if upgrade_url else '✗'} - {upgrade_url}")
+            
+            if message and action == 'upgrade' and current_plan and upgrade_url:
+                mock_generation_402_working = True
+                print("   ✅ Complete error structure for subscription modal present")
+            else:
+                print("   ❌ Incomplete error structure")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            
+            print(f"   ❌ Mock test generation failed to return 402 (Status: {status_code})")
+            print(f"   📊 Error Data: {error_data}")
+            
+            if status_code == 500:
+                print("   🚨 CRITICAL: 500 Internal Server Error (this is the reported issue)")
+                error_str = str(error_data)
+                if 'ObjectId' in error_str:
+                    print("   🚨 ObjectId serialization error detected")
+            elif status_code == 200:
+                print("   🚨 CRITICAL: Still returns 200 OK (quota not enforced)")
+        
+        # Test 3: Verify no ObjectId serialization errors
+        print("\n🔍 Step 4: Verify No ObjectId Serialization Errors")
+        objectid_errors_found = False
+        if hasattr(self, 'last_error_data'):
+            error_str = str(self.last_error_data)
+            if 'ObjectId' in error_str and ('not iterable' in error_str or 'not JSON serializable' in error_str):
+                objectid_errors_found = True
+                print(f"   🚨 ObjectId serialization errors detected: {error_str}")
+        
+        if not objectid_errors_found:
+            print("   ✅ No ObjectId serialization errors detected")
+        
+        # Final Assessment
+        print(f"\n🎯 MOCK TEST GENERATION 402 STATUS TESTING SUMMARY:")
+        print(f"   ✅ Fresh User Creation: ✓")
+        print(f"   ✅ Tests Generated Within Quota: {'✓' if test_generation_within_quota else '✗'}")
+        print(f"   ✅ Mock Generation Returns 402: {'✓' if mock_generation_402_working else '✗'}")
+        print(f"   ✅ No ObjectId Errors: {'✓' if not objectid_errors_found else '✗'}")
+        
+        if test_generation_within_quota and mock_generation_402_working and not objectid_errors_found:
+            print("   ✅ MOCK TEST GENERATION FIX SUCCESSFUL - Returns proper 402 with upsell_info")
+        else:
+            print("   ❌ MOCK TEST GENERATION FIX FAILED - Issues with 402 responses or ObjectId serialization")
+        
+        return test_generation_within_quota and mock_generation_402_working and not objectid_errors_found
+
+    def test_plan_upgrade_api_parameters(self):
+        """Test Plan Upgrade API Parameters - CRITICAL REVIEW REQUEST FOCUS"""
+        print("\n🚨 CRITICAL: PLAN UPGRADE API PARAMETERS TESTING - REVIEW REQUEST FOCUS")
+        print("   Testing /api/subscription/upgrade endpoint")
+        print("   Expected: Accepts target_tier and billing_cycle parameters correctly")
+        print("   User: test@dhruvai.com / password123")
+        
+        # Ensure we have a valid token
+        if not self.token:
+            print("   Attempting login to get JWT token...")
+            if not self.test_user_login():
+                print("❌ Failed to login, cannot test upgrade endpoint")
+                return False
+        
+        # Test different upgrade scenarios
+        upgrade_scenarios = [
+            {
+                "name": "Upgrade to Basic Monthly",
+                "data": {
+                    "target_tier": "basic",
+                    "billing_cycle": "monthly"
+                }
+            },
+            {
+                "name": "Upgrade to Premium Yearly",
+                "data": {
+                    "target_tier": "premium",
+                    "billing_cycle": "yearly"
+                }
+            },
+            {
+                "name": "Upgrade to Pro Monthly",
+                "data": {
+                    "target_tier": "pro",
+                    "billing_cycle": "monthly"
+                }
+            }
+        ]
+        
+        success_count = 0
+        
+        for i, scenario in enumerate(upgrade_scenarios, 1):
+            print(f"\n📊 Test {i}/3: {scenario['name']}")
+            print(f"   Data: {scenario['data']}")
+            
+            success, response = self.run_test(
+                f"Plan Upgrade - {scenario['name']}",
+                "POST",
+                "subscription/upgrade",
+                [200, 201],  # Accept both 200 OK and 201 Created
+                data=scenario['data'],
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ {scenario['name']} - API accepts parameters correctly")
+                
+                # Verify response structure
+                if 'checkout_url' in response:
+                    print(f"   ✅ Response contains checkout_url")
+                if 'session_id' in response:
+                    print(f"   ✅ Response contains session_id")
+                if 'plan_details' in response:
+                    plan_details = response['plan_details']
+                    print(f"   ✅ Plan details: {plan_details.get('name', 'N/A')} - {plan_details.get('billing_cycle', 'N/A')}")
+                
+                success_count += 1
+            else:
+                status_code = getattr(self, 'last_response_status', 0)
+                error_data = getattr(self, 'last_error_data', {})
+                
+                print(f"   ❌ {scenario['name']} - API failed")
+                print(f"   📊 Status Code: {status_code}")
+                print(f"   📊 Error Data: {error_data}")
+                
+                if status_code == 422:
+                    print("   🚨 422 Validation Error - Parameter format issue")
+                elif status_code == 400:
+                    print("   🚨 400 Bad Request - Invalid parameters")
+                elif status_code == 500:
+                    print("   🚨 500 Internal Server Error - Backend issue")
+            
+            time.sleep(1)  # Small delay between tests
+        
+        # Test with old parameter format (should fail or be handled gracefully)
+        print(f"\n🔍 Test 4: Old Parameter Format (plan instead of target_tier)")
+        old_format_data = {
+            "plan": "premium",  # Old format
+            "billing_cycle": "monthly"
+        }
+        
+        success, response = self.run_test(
+            "Plan Upgrade - Old Format",
+            "POST",
+            "subscription/upgrade",
+            [400, 422],  # Expecting validation error
+            data=old_format_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        old_format_handled = False
+        if success:
+            print("   ✅ Old parameter format correctly rejected")
+            old_format_handled = True
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            if status_code == 200:
+                print("   ⚠️  Old parameter format still accepted (backward compatibility)")
+                old_format_handled = True
+            else:
+                print(f"   ❌ Unexpected response to old format: {status_code}")
+        
+        # Final Assessment
+        success_rate = (success_count / len(upgrade_scenarios)) * 100
+        print(f"\n🎯 PLAN UPGRADE API PARAMETERS TESTING SUMMARY:")
+        print(f"   ✅ Successful Upgrades: {success_count}/{len(upgrade_scenarios)} ({success_rate:.1f}%)")
+        print(f"   ✅ Old Format Handling: {'✓' if old_format_handled else '✗'}")
+        
+        if success_count == len(upgrade_scenarios):
+            print("   ✅ PLAN UPGRADE API FIX SUCCESSFUL - Accepts target_tier and billing_cycle parameters")
+        else:
+            print("   ❌ PLAN UPGRADE API FIX FAILED - Issues with parameter acceptance")
+        
+        return success_count == len(upgrade_scenarios)
+
     def test_complete_mock_test_generation_flow(self):
         """COMPREHENSIVE MOCK TEST GENERATION FLOW TESTING - REVIEW REQUEST FOCUS"""
         print("\n🎯 COMPREHENSIVE MOCK TEST GENERATION FLOW TESTING - REVIEW REQUEST FOCUS")
