@@ -177,8 +177,8 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
       </div>
 
       {/* Step Content */}
-      <Card className="border-0 shadow-xl">
-        <CardContent className="p-8">
+      <Card className="border-0 shadow-none">
+        <CardContent className="p-6 md:p-8">
           {/* Step 1: Exam Type Selection */}
           {currentStep === 1 && (
             <div className="space-y-6">
