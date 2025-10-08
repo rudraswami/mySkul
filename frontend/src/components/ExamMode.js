@@ -325,9 +325,9 @@ export default function ExamMode({
           </Card>
         </div>
 
-        {/* Question Palette Sidebar */}
+        {/* Question Palette Sidebar - Mobile and Desktop */}
         {showPalette && (
-          <div className="w-80 p-6 bg-white border-l border-gray-200 hidden md:block">
+          <div className="w-full md:w-80 p-4 md:p-6 bg-white md:border-l border-gray-200 md:border-t-0 border-t">
             <div className="sticky top-24">
               <h3 className="font-bold text-gray-800 mb-4">Question Palette</h3>
 
