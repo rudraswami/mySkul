@@ -593,7 +593,7 @@ export default function MockTests() {
       
     } catch (error) {
       console.error('Test submission error:', error);
-      showToast('Failed to submit test. Please try again.', 'error');
+      showToast(error.message || 'Failed to submit test. Please try again.', 'error');
     }
   };
 
