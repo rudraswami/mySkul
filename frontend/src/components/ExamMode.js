@@ -303,14 +303,23 @@ export default function ExamMode({
                   )}
                 </div>
 
-                <Button
-                  onClick={nextQuestion}
-                  disabled={currentQuestion === questions.length - 1}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                {currentQuestion === questions.length - 1 ? (
+                  <Button
+                    onClick={() => setShowSubmitConfirm(true)}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    Submit Test
+                    <CheckCircle className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={nextQuestion}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
