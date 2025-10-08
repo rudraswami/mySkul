@@ -418,36 +418,76 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Right Column - Student Success Visual */}
+            {/* Right Column - 3D Card Stack with Stats */}
             <div className="relative">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-700 group">
-                <img 
-                  src="https://images.unsplash.com/photo-1522661067900-ab829854a57f?w=800&h=600&fit=crop" 
-                  alt="Students succeeding with AI learning" 
-                  className="w-full h-96 lg:h-[500px] object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-blue-600/30 to-transparent"></div>
-                
-                {/* Success Stats Overlay */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-5 border border-white/30 shadow-2xl">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <div className="text-2xl font-bold text-green-400">98%</div>
-                        <div className="text-xs text-blue-200">Accuracy</div>
+              {/* Floating Elements Around Image */}
+              <div className="absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl rotate-12 animate-float opacity-80 shadow-2xl shadow-purple-500/50"></div>
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl -rotate-12 animate-float animation-delay-2000 opacity-80 shadow-2xl shadow-cyan-500/50"></div>
+              <div className="absolute top-1/2 -right-8 w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full animate-bounce opacity-80 shadow-2xl shadow-green-500/50"></div>
+              
+              {/* Main Image Card with 3D Effect */}
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 hover:rotate-1 transition-all duration-700 group bg-gradient-to-br from-purple-900/50 to-blue-900/50 p-1">
+                <div className="relative rounded-3xl overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1522661067900-ab829854a57f?w=800&h=600&fit=crop" 
+                    alt="Students succeeding with AI learning" 
+                    className="w-full h-96 lg:h-[500px] object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 via-blue-900/40 to-transparent"></div>
+                  
+                  {/* Floating Achievement Badges */}
+                  <div className="absolute top-6 left-6 bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 shadow-lg animate-bounce-slow">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-white" />
+                      <span className="text-white font-bold text-sm">98% Success Rate</span>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute top-20 right-6 bg-gradient-to-r from-amber-500/90 to-orange-500/90 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 shadow-lg animate-bounce-slow animation-delay-1000">
+                    <div className="flex items-center space-x-2">
+                      <Star className="h-5 w-5 text-white animate-spin-slow" />
+                      <span className="text-white font-bold text-sm">4.9★ Rating</span>
+                    </div>
+                  </div>
+                  
+                  {/* Enhanced Stats Card */}
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <div className="bg-gradient-to-r from-purple-900/80 to-blue-900/80 backdrop-blur-2xl rounded-2xl p-6 border border-white/20 shadow-2xl">
+                      <div className="grid grid-cols-3 gap-6 text-center">
+                        <div className="transform hover:scale-110 transition-transform duration-300">
+                          <div className="text-3xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-1">98%</div>
+                          <div className="text-xs text-green-300 font-semibold">Accuracy</div>
+                        </div>
+                        <div className="transform hover:scale-110 transition-transform duration-300">
+                          <div className="text-3xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mb-1">24/7</div>
+                          <div className="text-xs text-amber-300 font-semibold">Available</div>
+                        </div>
+                        <div className="transform hover:scale-110 transition-transform duration-300">
+                          <div className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1">10x</div>
+                          <div className="text-xs text-cyan-300 font-semibold">Faster</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold text-amber-400">24/7</div>
-                        <div className="text-xs text-blue-200">Available</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-cyan-400">10x</div>
-                        <div className="text-xs text-blue-200">Faster</div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mt-4 space-y-2">
+                        <div className="flex justify-between text-xs text-gray-300">
+                          <span>Student Success</span>
+                          <span>98%</span>
+                        </div>
+                        <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-progress" style={{width: '98%'}}></div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Glow Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
               </div>
+              
+              {/* Decorative Elements */}
+              <div className="absolute -z-10 inset-0 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 blur-3xl rounded-3xl"></div>
             </div>
           </div>
         </div>
