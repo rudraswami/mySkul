@@ -7598,29 +7598,74 @@ async def upload_and_process_audio(
             }}
         )
         
-        # PHASE 2: Process audio through enhanced pipeline
+        # PHASE 2: Process audio through lightweight pipeline
         if AUDIO_PROCESSING_ENABLED:
-            # Use Celery for async processing
-            task = process_audio_async.delay(
-                str(temp_file_path),
-                session_id,
-                enhance_audio
-            )
-            
-            # Store task ID for progress tracking
-            await db.auto_note_sessions.update_one(
-                {"session_id": session_id},
-                {"$set": {
-                    "celery_task_id": task.id,
-                    "processing_progress": 15,
-                    "processing_stage": "audio_enhancement" if enhance_audio else "transcription"
-                }}
-            )
+            try:
+                # Get lightweight processor
+                processor = get_audio_processor()
+                
+                # Update progress
+                await db.auto_note_sessions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {
+                        "processing_progress": 20,
+                        "processing_stage": "transcription"
+                    }}
+                )
+                
+                # Process audio synchronously (fast with external API)
+                logger.info(f"Processing audio for session {session_id}")
+                processing_result = processor.process_audio_file(
+                    str(temp_file_path),
+                    subject=session.get("subject", "General")
+                )
+                
+                if processing_result.get("success"):
+                    # Extract results
+                    transcription_text = processing_result.get("transcription", {}).get("text", "")
+                    key_concepts = processing_result.get("concepts", [])
+                    
+                    # Update session with results
+                    await db.auto_note_sessions.update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "transcription": transcription_text,
+                            "key_concepts": key_concepts,
+                            "processing_progress": 90,
+                            "processing_stage": "completed",
+                            "audio_quality": processing_result.get("quality", {}),
+                            "status": "completed"
+                        }}
+                    )
+                    
+                    logger.info(f"✅ Audio processing complete for session {session_id}")
+                else:
+                    # Processing failed
+                    error_msg = processing_result.get("error", "Unknown error")
+                    await db.auto_note_sessions.update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "processing_stage": "failed",
+                            "error": error_msg,
+                            "status": "failed"
+                        }}
+                    )
+                    logger.error(f"Audio processing failed: {error_msg}")
+                
+            except Exception as e:
+                logger.error(f"Audio processing error: {str(e)}")
+                await db.auto_note_sessions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {
+                        "processing_stage": "failed",
+                        "error": str(e),
+                        "status": "failed"
+                    }}
+                )
             
             return {
                 "session_id": session_id,
-                "task_id": task.id,
-                "processing_status": "queued",
+                "processing_status": "completed",
                 "enhancement_enabled": enhance_audio,
                 "file_size_mb": round(len(file_content) / (1024 * 1024), 2),
                 "estimated_time_minutes": min(10, max(2, len(file_content) // (1024 * 1024))),
