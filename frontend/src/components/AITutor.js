@@ -118,6 +118,7 @@ export default function AITutor() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [showContextPin, setShowContextPin] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [contextPinData, setContextPinData] = useState([]);
   const [selectedContext, setSelectedContext] = useState(null);
   const [availableContexts, setAvailableContexts] = useState([]);
