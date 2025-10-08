@@ -147,6 +147,8 @@
      -message: "ALL PHASES COMPLETED SUCCESSFULLY - AUTO-NOTE MENTOR RECORDING SYSTEM UPGRADE: ✅ PHASE 1: Enhanced Live Recording UI with real-time waveform visualization, audio quality indicators, auto-pause detection, mobile-optimized interface completed. ✅ PHASE 2: Server-side audio processing pipeline with local Whisper, RNNoise/Demucs enhancement, Celery task queue, quality analysis completed. ✅ PHASE 3: Advanced AI context detection with subject identification, topic segmentation, difficulty assessment, speaker analysis completed. ✅ PHASE 4: PWA implementation with service worker, offline capabilities, background sync, enhanced mobile experience completed. OUTCOME: Zero-cost, fully self-hosted, studio-quality audio processing system with contextual AI understanding and offline-first mobile experience. Ready for comprehensive testing."
 
 -agent: "main"
+-message: "AI Tutor Subscription UX Polished: Updated UpsellModal visuals (spacing, gradients, glow, avatars, progress milestone, improved CTA). Implemented immediate setUpsellModal when 402/429 for AI Tutor and proactive modal on access denied before request. MockTests already updated to open the same modal from 402/429 payload. Request frontend testing to validate modal visuals and trigger conditions across Tutor/Tests."
+-agent: "main"
 -message: "CRITICAL FIX APPLIED: Updated /api/mock-tests/generate to preserve subscription HTTPExceptions. Added except HTTPException re-raise before generic except to prevent 402/429 from being converted to 500. This should restore frontend subscription popup behavior when mock_tests_weekly limit is reached. Request backend re-test to confirm 429 is received by clients."
 
 # Protocol Guidelines for Main agent
