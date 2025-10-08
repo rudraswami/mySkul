@@ -483,9 +483,7 @@ export default function MockTests() {
 
       const data = await response.json();
       
-      // Wait for progress animation to complete before showing exam mode
-      // Progress modal will call handleProgressComplete which closes itself
-      // Then exam mode will appear
+      // Store test data - exam mode will open when progress animation completes
       setExamModeTest({
         test_id: data.test_id,
         title: data.title,
@@ -493,13 +491,8 @@ export default function MockTests() {
       });
       setExamModeQuestions(data.questions || []);
       
-      // Don't show exam mode immediately - let progress complete first
-      // The progress modal will automatically transition after showing "Complete"
-      setTimeout(() => {
-        setShowGenerationProgress(false);
-        setShowExamMode(true);
-        showToast('Test ready! Good luck! 🎉', 'success');
-      }, 1000); // Small delay to show completion state
+      // Progress modal will complete its animation naturally
+      // When animation finishes, handleProgressComplete() will close modal and show exam mode
       
       // Track usage
       await trackFeatureUsage('mock_tests_weekly');
