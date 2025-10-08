@@ -1769,6 +1769,16 @@ export default function AITutor() {
         <div className="bg-gradient-to-r from-white via-blue-50 to-purple-50 border-b border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
+              {/* Mobile Hamburger Menu */}
+              <Button
+                onClick={() => setShowMobileSidebar(true)}
+                className="lg:hidden mr-3 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 p-2"
+                variant="outline"
+                size="sm"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
                   <GraduationCap className="h-5 w-5 text-white" />
@@ -1779,7 +1789,7 @@ export default function AITutor() {
                   </h1>
                   <div className="flex items-center text-sm text-gray-600">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                    <span>100% Hallucination-Free</span>
+                    <span className="hidden sm:inline">100% Hallucination-Free</span>
                   </div>
                 </div>
               </div>
