@@ -6576,8 +6576,8 @@ async def get_available_plans():
 
 @api_router.post("/subscription/upgrade")
 async def upgrade_subscription(
-    target_tier: str,
-    billing_cycle: str = "monthly",
+    target_tier: str = Query(...),
+    billing_cycle: str = Query("monthly"),
     user: User = Depends(get_current_user)
 ):
     """Upgrade user subscription"""
