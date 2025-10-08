@@ -8824,6 +8824,26 @@ async def generate_mock_test(
                     "used": access_info.get("used", access_info.get("current_usage", 0)),
                     "limit": access_info.get("limit", 0)
                 }
+            # Defensive sanitization to avoid ObjectId serialization within upsell_info
+            try:
+                from bson import ObjectId
+                detail_payload = {
+                    "message": f"Mock Tests limit reached ({access_info.get('used', access_info.get('current_usage', 0))}/{access_info.get('limit', 0)})",
+                    "upsell_info": clean_mongodb_doc(access_info.get("upsell_info", {})),
+                    "upgrade_needed": True,
+                    "used": access_info.get("used", access_info.get("current_usage", 0)),
+                    "limit": access_info.get("limit", 0)
+                }
+            except Exception:
+                detail_payload = {
+                    "message": f"Mock Tests limit reached ({access_info.get('used', access_info.get('current_usage', 0))}/{access_info.get('limit', 0)})",
+                    "upsell_info": access_info.get("upsell_info", {}),
+                    "upgrade_needed": True,
+                    "used": access_info.get("used", access_info.get("current_usage", 0)),
+                    "limit": access_info.get("limit", 0)
+                }
+            raise HTTPException(status_code=402, detail=detail_payload)
+
             )
         
         # Check cache first for instant loading
