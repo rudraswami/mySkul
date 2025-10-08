@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useRazorpay } from 'react-razorpay';
+import useRazorpay from 'react-razorpay';
 import axios from 'axios';
-import { Button } from './ui/button';
-import { LoadingSpinner } from './ui/loading';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button.jsx';
+import { LoadingSpinner } from './ui/loading.jsx';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card.jsx';
 import { CheckCircle, AlertCircle, CreditCard, Smartphone, Building } from 'lucide-react';
 
 const RazorpayPayment = ({ 
