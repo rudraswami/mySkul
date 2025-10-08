@@ -250,10 +250,15 @@
 
   - task: "PLAN UPGRADE QUERY PARAMETERS"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "PLAN UPGRADE QUERY PARAMETERS - WORKING CORRECTLY: Tested /api/subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly endpoint. SUCCESS: Returns 200 OK, properly accepts query parameters without 422 validation errors. The endpoint correctly processes target_tier and billing_cycle parameters from URL query string. No more 'Field required' errors. The fix for accepting query parameters is working correctly."
     needs_retesting: false
     status_history:
         -working: false
