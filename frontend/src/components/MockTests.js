@@ -73,6 +73,9 @@ export default function MockTests() {
   const [showGenerationProgress, setShowGenerationProgress] = useState(false);
   const [generationConfig, setGenerationConfig] = useState(null);
   
+  // Submission loading state
+  const [showSubmitLoading, setShowSubmitLoading] = useState(false);
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
