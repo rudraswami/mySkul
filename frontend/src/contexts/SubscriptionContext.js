@@ -59,16 +59,18 @@ export function SubscriptionProvider({ children }) {
     } catch (error) {
       console.error('Feature access check failed:', error);
       
-      // If it's an upsell situation (402), show upsell modal
-      if (error.response?.status === 402) {
+      // Handle subscription errors (402 = payment required, 429 = rate limit)
+      if (error.response?.status === 402 || error.response?.status === 429) {
         const errorData = error.response.data;
-        if (errorData.detail?.upsell_info) {
+        console.log('🔒 Subscription limit reached:', error.response.status, errorData);
+        
+        if (errorData.detail?.upsell_info || errorData.upsell_info) {
           // Enhanced modal data with market-standard messaging
           const modalData = {
             featureName,
-            upsellInfo: errorData.detail.upsell_info,
-            currentUsage: errorData.detail.current_usage,
-            limit: errorData.detail.limit,
+            upsellInfo: errorData.detail?.upsell_info || errorData.upsell_info,
+            currentUsage: errorData.detail?.used || errorData.detail?.current_usage || 0,
+            limit: errorData.detail?.limit || errorData.limit || 0,
             // Add market-standard messaging based on feature
             title: getFeatureTitle(featureName),
             description: getFeatureDescription(featureName),
@@ -78,16 +80,25 @@ export function SubscriptionProvider({ children }) {
           setUpsellModal(modalData);
           
           // Track the limit hit for analytics
-          console.log(`Feature limit hit: ${featureName} (${errorData.detail.current_usage}/${errorData.detail.limit})`);
+          console.log(`✅ Upsell modal triggered: ${featureName} (${modalData.currentUsage}/${modalData.limit})`);
         }
         return { 
           has_access: false, 
           upgrade_needed: true,
-          upsell_info: errorData.detail?.upsell_info
+          reason: errorData.detail?.reason || 'limit_reached',
+          upsell_info: errorData.detail?.upsell_info || errorData.upsell_info
         };
       }
       
-      return { has_access: true, upgrade_needed: false }; // Fail open
+      // SECURITY FIX: Don't fail open on errors - deny access by default
+      // This prevents bypassing limits when there are network/server errors
+      console.error('❌ Feature access check error - denying access by default');
+      return { 
+        has_access: false, 
+        upgrade_needed: false,
+        error: true,
+        message: 'Unable to verify access. Please try again.'
+      };
     }
   };
 
