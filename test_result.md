@@ -220,6 +220,51 @@
         -comment: "REVIEW REQUEST FOCUSED TESTING COMPLETED - OBJECTID SERIALIZATION ISSUE IDENTIFIED: Conducted specific testing of /api/mock-tests/generate endpoint as requested. WITHIN QUOTA: ✅ Returns 200 OK with proper payload (test_id, questions, total_marks, time_limit). LIMIT REACHED: ❌ Returns 500 Internal Server Error instead of 402 Payment Required. ROOT CAUSE CONFIRMED: Backend logs show ObjectId serialization error in 402 response: ValueError: [TypeError(\"'ObjectId' object is not iterable\"), TypeError('vars() argument must have __dict__ attribute')]. The subscription service generates proper 402 responses with upsell_info, but FastAPI cannot serialize ObjectId objects in the response payload, causing 500 errors. IMPACT: Users see generic 500 errors instead of subscription modals. SUCCESS RATE: 1/3 (33.3%). URGENT FIX: Implement proper ObjectId serialization in subscription error responses to enable 402 status codes with upsell_info structure."
 
 ## frontend:
+  - task: "CRITICAL JWT AUTHENTICATION FIXES"
+    implemented: true
+    working: true
+    file: "components/Leaderboard.js, components/GamificationProgress.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "user"
+        -comment: "User reported 401 errors on Mock Tests and gamification surfaces due to missing JWT tokens on protected API calls"
+        -working: true
+        -agent: "main"
+        -comment: "FIXED: Updated both components to use correct JWT token key 'dhruv_ai_token' instead of 'token'. This resolves authentication failures for /api/gamification/leaderboard and /api/gamification/progress endpoints."
+  
+  - task: "SUBSCRIPTION PLAN HIGHLIGHTING FIX"
+    implemented: true
+    working: true
+    file: "components/Subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "user"
+        -comment: "Subscription screen never highlights learner's active plan because it compares against nonexistent currentSubscription.plan field instead of subscription.plan_name"
+        -working: true
+        -agent: "main"
+        -comment: "FIXED: Updated plan comparison logic to use 'plan_name' field instead of 'plan' field in lines 123, 137, 153. Also updated display to show plan_name properly."
+  
+  - task: "PLAN UPGRADE API PARAMETER FIX"
+    implemented: true
+    working: true
+    file: "components/Subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "user"
+        -comment: "Plan upgrade always fails because frontend posts {plan: ...} JSON while FastAPI endpoint expects target_tier/billing_cycle parameters"
+        -working: true
+        -agent: "main"
+        -comment: "FIXED: Updated handleUpgrade function to send 'target_tier' parameter instead of 'plan' parameter in API request, matching backend expectations."
+
   - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
     implemented: true
     working: false
