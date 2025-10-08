@@ -508,15 +508,17 @@ export default function MockTests() {
 
   const handleExamSubmit = async (submissionData) => {
     setShowExamMode(false);
+    setShowSubmitLoading(true); // Show loading modal
     
     const token = localStorage.getItem('dhruv_ai_token');
     if (!token || !examModeTest) {
+      setShowSubmitLoading(false);
       showToast('Unable to submit test', 'error');
       return;
     }
 
     try {
-      showToast('Submitting your test...', 'info');
+      // Don't show toast - loading modal is visible
       
       const response = await fetch(`${backendUrl}/api/mock-tests/${examModeTest.test_id}/submit`, {
         method: 'POST',
