@@ -8815,15 +8815,7 @@ async def generate_mock_test(
         
         if not access_info.get("has_access", False):
             # Return rich upsell payload just like AI Tutor
-            raise HTTPException(
-                status_code=402,
-                detail={
-                    "message": f"Mock Tests limit reached ({access_info.get('used', access_info.get('current_usage', 0))}/{access_info.get('limit', 0)})",
-                    "upsell_info": access_info.get("upsell_info", {}),
-                    "upgrade_needed": True,
-                    "used": access_info.get("used", access_info.get("current_usage", 0)),
-                    "limit": access_info.get("limit", 0)
-                }
+            # replaced by sanitized detail_payload below
             # Defensive sanitization to avoid ObjectId serialization within upsell_info
             try:
                 from bson import ObjectId
