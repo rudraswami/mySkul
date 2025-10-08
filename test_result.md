@@ -202,13 +202,16 @@
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         -working: false
         -agent: "main"
         -comment: "Updated /api/mock-tests/generate to use SubscriptionService.check_feature_access and return enriched 402 payload (upsell_info, used, limit). Previously returned minimal payload via legacy handle_subscription_error causing generic error UI. Needs backend retest."
+        -working: false
+        -agent: "testing"
+        -comment: "CRITICAL BACKEND ISSUE IDENTIFIED: /api/mock-tests/generate returns 500 Internal Server Error when user reaches quota limit instead of proper 402 Payment Required with upsell_info. First test generation works (200 OK with test data), but subsequent attempts fail with 500 errors. This prevents subscription modals from triggering correctly. Root cause likely ObjectId serialization or subscription service integration issue."
 
 ## frontend:
   - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
