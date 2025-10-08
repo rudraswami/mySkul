@@ -412,14 +412,29 @@ export default function MockTests() {
         })
       });
 
+      // Handle subscription/limit errors FIRST
       if (response.status === 402 || response.status === 429) {
-        const errorData = await response.json();
-        triggerFeatureUpsell('mock_tests_weekly', errorData.detail || {});
+        console.log('Subscription limit reached, triggering upsell modal');
+        try {
+          const errorData = await response.json();
+          console.log('Error data:', errorData);
+          triggerFeatureUpsell('mock_tests_weekly', errorData.detail || errorData);
+        } catch (parseError) {
+          console.error('Error parsing 429 response:', parseError);
+          // Fallback to generic subscription message
+          triggerFeatureUpsell('mock_tests_weekly', {
+            message: 'You have reached your test limit. Upgrade to continue.',
+            action: 'upgrade'
+          });
+        }
         return;
       }
 
       if (!response.ok) {
-        throw new Error('Failed to generate test');
+        // Log the actual error for debugging
+        const errorText = await response.text();
+        console.error('Test generation failed:', response.status, errorText);
+        throw new Error(`Failed to generate test: ${response.status}`);
       }
 
       const data = await response.json();
