@@ -45,6 +45,8 @@ export default function MockTests() {
     trackFeatureUsage, 
     getFeatureRemaining, 
     getFeatureLimit,
+    setUpsellModal,
+
     currentTier,
     triggerFeatureUpsell
   } = useSubscription();
