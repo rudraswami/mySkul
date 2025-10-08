@@ -46,11 +46,12 @@ const MOTIVATIONAL_MESSAGES = [
   "Quality questions being selected for you 🎯"
 ];
 
-export default function TestGenerationProgress({ onComplete, config }) {
+export default function TestGenerationProgress({ onComplete, onStartTest, config, testData }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [motivationalMessage, setMotivationalMessage] = useState(MOTIVATIONAL_MESSAGES[0]);
   const [progress, setProgress] = useState(0);
+  const [showSuccessState, setShowSuccessState] = useState(false);
 
   useEffect(() => {
     // Rotate motivational messages
