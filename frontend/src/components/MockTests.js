@@ -373,9 +373,13 @@ export default function MockTests() {
 
   const handleWizardGenerate = async (config) => {
     setWizardConfig(config);
+    setGenerationConfig(config);
     setShowWizard(false);
     
-    // Generate test using wizard config
+    // Show progress modal IMMEDIATELY
+    setShowGenerationProgress(true);
+    
+    // Generate test using wizard config (happens in background while progress shows)
     const subjects = config.subjects.length > 0 ? config.subjects : ['Mathematics'];
     await generateMockTestFromWizard(
       config.examType,
@@ -384,6 +388,12 @@ export default function MockTests() {
       config.numQuestions,
       config.timerEnabled ? config.timerDuration * 60 : null
     );
+  };
+  
+  const handleProgressComplete = () => {
+    // Called when progress animation finishes
+    setShowGenerationProgress(false);
+    // Exam mode will already be set by generateMockTestFromWizard
   };
 
   const generateMockTestFromWizard = async (examType, subjects, difficulty, numQuestions, timerSeconds) => {
