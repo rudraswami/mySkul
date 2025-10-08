@@ -2833,24 +2833,7 @@ export default function AITutor() {
 
       {/* Global Upsell Modal is rendered in App.js; no local modal here to avoid divergence */
 
-      {/* Upsell Modal */}
-      <UpsellModal
-        isOpen={!!upsellModal}
-        onClose={() => setUpsellModal(null)}
-        onUpgradeSuccess={async () => {
-          // Handle successful upgrade with retry
-          if (lastFailedAction) {
-            await handlePostUpgradeRetry(lastFailedAction, showToast);
-            setLastFailedAction(null);
-          }
-          
-          // Add unlock animation to the chat container
-          const chatContainer = document.querySelector('[data-testid="chat-container"]');
-          if (chatContainer) {
-            animateSubscriptionUnlock(chatContainer);
-          }
-        }}
-      />
+      {/* Global Upsell Modal is rendered in App.js; removed local instance to ensure a single reusable popup */}
     </div>
   );
 }
