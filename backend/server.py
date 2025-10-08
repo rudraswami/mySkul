@@ -8998,8 +8998,11 @@ async def submit_mock_test(
         
         percentage = (total_score / mock_test.total_marks) * 100
         
+        # Get subjects list for analysis (from subject_analysis or default)
+        test_subjects = ', '.join(subject_analysis.keys()) if subject_analysis else 'General'
+        
         # Generate AI-powered dual feedback (Professor + Mentor)
-        analysis_prompt = f"""Analyze this mock test performance for {user.exam_type} {mock_test.subject}:
+        analysis_prompt = f"""Analyze this mock test performance for {user.exam_type} - Subjects: {test_subjects}:
         
         Score: {total_score}/{mock_test.total_marks} ({percentage:.1f}%)
         Correct: {correct_count}, Wrong: {wrong_count}, Unanswered: {unanswered_count}
