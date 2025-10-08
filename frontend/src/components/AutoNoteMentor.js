@@ -350,7 +350,8 @@ export default function AutoNoteMentor() {
     // CRITICAL: Check subscription access FIRST
     const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
     if (!accessInfo.has_access) {
-      // Upsell modal will be shown automatically by the context
+      // Open the unified modal immediately
+      setUpsellModal(prev => prev || openUpsellModal('auto_note_uploads_daily', accessInfo));
       return;
     }
 
