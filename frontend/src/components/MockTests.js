@@ -463,10 +463,9 @@ export default function MockTests() {
           }
         } catch (parseError) {
           console.error('❌ Error parsing 402/429 response:', parseError);
-          // Fallback to generic subscription check which opens the modal
+          // Fallback to global helper
           await triggerFeatureUpsell('mock_tests_weekly');
         }
-        // No toast here; the modal provides the CTA
         return;
       }
 
