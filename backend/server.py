@@ -4398,7 +4398,6 @@ class EngagementService:
         if total_xp < 100:
             return 1
         # Level formula: level = floor(sqrt(total_xp / 100)) + 1
-        import math
         return int(math.sqrt(total_xp / 100)) + 1
     
     @staticmethod
