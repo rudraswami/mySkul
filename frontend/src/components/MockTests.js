@@ -2329,6 +2329,29 @@ export default function MockTests() {
         />
       )}
       
+      {/* Phase 4: Badge Unlock Animation */}
+      {showBadgeAnimation && newBadges.length > 0 && (
+        <BadgeUnlockAnimation
+          badges={newBadges}
+          onClose={() => {
+            setShowBadgeAnimation(false);
+            setNewBadges([]);
+          }}
+        />
+      )}
+      
+      {/* Phase 4: Motivational Popup */}
+      {showMotivationalPopup && motivationalData && (
+        <MotivationalPopup
+          performance={motivationalData}
+          stats={motivationalData.stats}
+          onClose={() => {
+            setShowMotivationalPopup(false);
+            setMotivationalData(null);
+          }}
+        />
+      )}
+      
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
