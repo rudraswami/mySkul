@@ -347,8 +347,8 @@ export default function ExamMode({
                 </div>
               </div>
 
-              {/* Question Grid */}
-              <div className="grid grid-cols-5 gap-2">
+              {/* Question Grid - Responsive */}
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                 {questions.map((_, idx) => {
                   const status = getQuestionStatus(idx);
                   return (
