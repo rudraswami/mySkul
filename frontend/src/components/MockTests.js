@@ -2354,6 +2354,14 @@ export default function MockTests() {
         </div>
       )}
 
+      {/* Test Generation Progress Modal */}
+      {showGenerationProgress && generationConfig && (
+        <TestGenerationProgress
+          onComplete={handleProgressComplete}
+          config={generationConfig}
+        />
+      )}
+
       {/* Exam Mode */}
       {showExamMode && examModeTest && examModeQuestions.length > 0 && (
         <ExamMode
