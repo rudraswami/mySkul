@@ -524,7 +524,9 @@ export default function MockTests() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit test');
+        const errorText = await response.text();
+        console.error('Submit test failed:', response.status, errorText);
+        throw new Error(`Failed to submit test: ${response.status}`);
       }
 
       const resultsData = await response.json();
