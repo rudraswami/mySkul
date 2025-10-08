@@ -160,8 +160,8 @@ const LandingPage = () => {
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 Dhruv AI
               </h1>
-              <span className="ml-3 text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-400/30">
-                For JEE/NEET/UPSC
+              <span className="ml-3 text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-400/30 font-semibold">
+                ✓ Hallucination-Free
               </span>
             </div>
 
