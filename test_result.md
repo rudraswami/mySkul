@@ -202,7 +202,7 @@
     implemented: true
     working: false
     file: "server.py"
-    stuck_count: 2
+    stuck_count: 3
     priority: "high"
     needs_retesting: false
     status_history:
@@ -218,6 +218,21 @@
         -working: false
         -agent: "testing"
         -comment: "REVIEW REQUEST FOCUSED TESTING COMPLETED - OBJECTID SERIALIZATION ISSUE IDENTIFIED: Conducted specific testing of /api/mock-tests/generate endpoint as requested. WITHIN QUOTA: ✅ Returns 200 OK with proper payload (test_id, questions, total_marks, time_limit). LIMIT REACHED: ❌ Returns 500 Internal Server Error instead of 402 Payment Required. ROOT CAUSE CONFIRMED: Backend logs show ObjectId serialization error in 402 response: ValueError: [TypeError(\"'ObjectId' object is not iterable\"), TypeError('vars() argument must have __dict__ attribute')]. The subscription service generates proper 402 responses with upsell_info, but FastAPI cannot serialize ObjectId objects in the response payload, causing 500 errors. IMPACT: Users see generic 500 errors instead of subscription modals. SUCCESS RATE: 1/3 (33.3%). URGENT FIX: Implement proper ObjectId serialization in subscription error responses to enable 402 status codes with upsell_info structure."
+        -working: false
+        -agent: "testing"
+        -comment: "CRITICAL REVIEW REQUEST TESTING COMPLETED - SUBSCRIPTION QUOTA ENFORCEMENT NOT WORKING: Conducted comprehensive testing of mock test generation quota enforcement. WITHIN QUOTA: ✅ Fresh user (mock_test_402_1759938753@dhruvai.com) can generate 2 tests successfully with proper test data structure. QUOTA EXCEEDED: ❌ Third test generation still returns 200 OK instead of 402 Payment Required. No ObjectId serialization errors detected, but quota enforcement is completely bypassed. Users can generate unlimited tests despite free tier limits. This explains why subscription modals never appear - the backend never enforces limits. CRITICAL ISSUE: Subscription quota validation is not working correctly."
+
+  - task: "SUBSCRIPTION CHECK ACCESS 402 STATUS CODES"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: false
+        -agent: "testing"
+        -comment: "CRITICAL ISSUE IDENTIFIED - SUBSCRIPTION CHECK ACCESS ENDPOINT NOT RETURNING 402: /api/subscription/check-access returns 200 OK instead of 402 Payment Required when users exceed quotas. Created fresh user, exhausted quota, but check-access still returns has_access=true with 200 status. Response contains proper structure (has_access, upgrade_needed, current_usage) but wrong status code. This prevents frontend subscription modals from triggering correctly. ROOT CAUSE: Backend logic issue where check-access always returns 200 OK regardless of quota status."
 
 ## frontend:
   - task: "CRITICAL JWT AUTHENTICATION FIXES"
