@@ -198,6 +198,43 @@
 ## backend:
   - task: "PHASE 1: Backend Test Library & Gamification System"
     implemented: true
+  - task: "UNIFY SUBSCRIPTION PAYLOADS FOR MOCK TESTS"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "Updated /api/mock-tests/generate to use SubscriptionService.check_feature_access and return enriched 402 payload (upsell_info, used, limit). Previously returned minimal payload via legacy handle_subscription_error causing generic error UI. Needs backend retest."
+
+## frontend:
+  - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
+    implemented: true
+    working: false
+    file: "components/AITutor.js, components/MockTests.js, contexts/SubscriptionContext.js, components/UpsellModal.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "AI Tutor now uses triggerFeatureUpsell and relies on global UpsellModal. Mock Tests continues to open modal directly from 402 payload with fallback to triggerFeatureUpsell. Fixed compile/runtime issues. Needs E2E verification on limits and UI parity."
+
+## test_plan:
+  current_focus:
+    - "Backend: verify 402 enriched payload for /api/mock-tests/generate and /api/ai/dual-response"
+    - "Frontend: unified UpsellModal across AI Tutor/Mock Tests/Auto-Notes with same content and layout"
+  stuck_tasks:
+    - "Intermittent generic error in Mock Tests when limit reached"
+  test_all: false
+  test_priority: "high_first"
+
+## agent_communication:
+  -agent: "main"
+  -message: "Initiating backend tests for subscription flows, then automated frontend E2E to validate the unified subscription popup (AI Tutor, Mock Tests, Auto-Note Mentor), including mobile responsiveness."
     working: true
     file: "server.py"
     stuck_count: 0
