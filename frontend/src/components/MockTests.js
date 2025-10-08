@@ -374,6 +374,10 @@ export default function MockTests() {
   };
 
   const handleWizardGenerate = async (config) => {
+    // Clear any previous test data to ensure fresh start
+    setExamModeTest(null);
+    setExamModeQuestions([]);
+    
     setWizardConfig(config);
     setGenerationConfig(config);
     setShowWizard(false);
