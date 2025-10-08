@@ -29,7 +29,7 @@ export default function Leaderboard({ showFullView = false }) {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('dhruv_ai_token');
       const response = await fetch(`${backendUrl}/api/gamification/leaderboard?limit=50`, {
         headers: {
           'Authorization': `Bearer ${token}`,
