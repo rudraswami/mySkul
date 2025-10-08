@@ -2372,8 +2372,13 @@ export default function MockTests() {
       {/* Test Generation Progress Modal */}
       {showGenerationProgress && generationConfig && (
         <TestGenerationProgress
-          onComplete={handleProgressComplete}
+          onStartTest={handleStartTest}
           config={generationConfig}
+          testData={examModeTest && examModeQuestions.length > 0 ? {
+            test_id: examModeTest.test_id,
+            title: examModeTest.title,
+            questions: examModeQuestions
+          } : null}
         />
       )}
 
