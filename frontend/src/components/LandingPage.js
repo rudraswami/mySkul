@@ -78,17 +78,27 @@ const LandingPage = () => {
 
             {/* Mobile Menu Button & Auth Buttons */}
             <div className="flex items-center space-x-4">
+              {/* Mobile Menu Toggle */}
+              <button
+                className="md:hidden text-gray-300 hover:text-white transition-colors p-2"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+              >
+                {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+
+              {/* Auth Buttons */}
               <Link 
                 to="/login" 
-                className="text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-white/10"
+                className="hidden sm:block text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-white/10"
               >
                 Sign In
               </Link>
               <Link 
                 to="/register" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-2 rounded-lg font-semibold transition-all duration-300"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base"
               >
-                Get Started Free
+                <span className="sm:hidden">Join</span>
+                <span className="hidden sm:inline">Get Started Free</span>
               </Link>
             </div>
           </div>
