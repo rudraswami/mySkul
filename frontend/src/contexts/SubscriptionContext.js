@@ -45,6 +45,22 @@ export function SubscriptionProvider({ children }) {
     }
   };
 
+  const openUpsellModal = (featureName, detailLike) => {
+    if (!detailLike) detailLike = {};
+    const upsellInfo = detailLike.upsell_info || detailLike;
+    const modalData = {
+      featureName,
+      upsellInfo,
+      currentUsage: detailLike.used || detailLike.current_usage || 0,
+      limit: detailLike.limit || 0,
+      title: getFeatureTitle(featureName),
+      description: getFeatureDescription(featureName),
+      benefits: getFeatureBenefits(featureName)
+    };
+    setUpsellModal(modalData);
+    return modalData;
+  };
+
   const checkFeatureAccess = async (featureName) => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -64,29 +80,16 @@ export function SubscriptionProvider({ children }) {
         const errorData = error.response.data;
         console.log('🔒 Subscription limit reached:', error.response.status, errorData);
         
-        if (errorData.detail?.upsell_info || errorData.upsell_info) {
-          // Enhanced modal data with market-standard messaging
-          const modalData = {
-            featureName,
-            upsellInfo: errorData.detail?.upsell_info || errorData.upsell_info,
-            currentUsage: errorData.detail?.used || errorData.detail?.current_usage || 0,
-            limit: errorData.detail?.limit || errorData.limit || 0,
-            // Add market-standard messaging based on feature
-            title: getFeatureTitle(featureName),
-            description: getFeatureDescription(featureName),
-            benefits: getFeatureBenefits(featureName)
-          };
-          
-          setUpsellModal(modalData);
-          
-          // Track the limit hit for analytics
-          console.log(`✅ Upsell modal triggered: ${featureName} (${modalData.currentUsage}/${modalData.limit})`);
+        const detail = errorData.detail || errorData;
+        if (detail?.upsell_info) {
+          openUpsellModal(featureName, detail);
+          console.log(`✅ Upsell modal triggered: ${featureName} (${detail.used || 0}/${detail.limit || 0})`);
         }
         return { 
           has_access: false, 
           upgrade_needed: true,
-          reason: errorData.detail?.reason || 'limit_reached',
-          upsell_info: errorData.detail?.upsell_info || errorData.upsell_info
+          reason: detail?.reason || 'limit_reached',
+          upsell_info: detail?.upsell_info
         };
       }
       
