@@ -214,7 +214,7 @@ export default function ExamMode({
 
       <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
         {/* Main Question Area */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 md:p-6">
           <Card className="shadow-lg border-0">
             <CardContent className="p-8">
               {/* Question Header */}
