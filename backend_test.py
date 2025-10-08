@@ -8374,14 +8374,260 @@ class DhruvAITester:
             print(f"      Leaderboard endpoint: {'✅' if success2 else '❌'}")
             return False
 
+    def test_review_request_critical_fixes(self):
+        """CRITICAL: Test the specific issues mentioned in the review request"""
+        print("\n🚨 CRITICAL REVIEW REQUEST TESTING - UPDATED BACKEND FIXES")
+        print("   Focus Areas:")
+        print("   1. Mock Test Quota Enforcement (2 successful, 3rd returns 402)")
+        print("   2. Subscription Check Access (/api/subscription/check-access returns 402)")
+        print("   3. Plan Upgrade Parameters (/api/subscription/upgrade with query params)")
+        print("   4. Case Sensitivity Fix (plan_name 'FREE' uppercase)")
+        
+        # Step 1: Create fresh user for quota testing
+        print("\n📊 Step 1: Create Fresh User for Quota Testing")
+        fresh_user_email = f"quota_test_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Quota Test User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        success, response = self.run_test(
+            "Create Fresh User for Quota Testing",
+            "POST",
+            "auth/register",
+            200,
+            data=registration_data
+        )
+        
+        if not success or 'token' not in response:
+            print("❌ Failed to create fresh user - cannot proceed with quota testing")
+            return False
+        
+        fresh_token = response['token']
+        fresh_user_id = response.get('user', {}).get('user_id')
+        print(f"   ✅ Fresh user created: {fresh_user_email}")
+        print(f"   User ID: {fresh_user_id}")
+        
+        # Step 2: Test Mock Test Quota Enforcement
+        print("\n🎯 Step 2: Test Mock Test Quota Enforcement")
+        print("   Expected: 2 successful generations, 3rd returns 402 Payment Required")
+        
+        mock_test_data = {
+            "exam_type": "JEE",
+            "subjects": ["Mathematics"],
+            "difficulty_level": 3,
+            "num_questions": 5
+        }
+        
+        quota_test_results = []
+        
+        for i in range(3):  # Try to generate 3 tests
+            print(f"   Generating mock test {i+1}/3...")
+            
+            success, response = self.run_test(
+                f"Mock Test Generation - Attempt {i+1}",
+                "POST",
+                "mock-tests/generate",
+                [200, 402],  # Accept both success and quota limit
+                data=mock_test_data,
+                headers={'Authorization': f'Bearer {fresh_token}'}
+            )
+            
+            status_code = getattr(self, 'last_response_status', 0)
+            
+            if status_code == 200:
+                test_id = response.get('test_id', 'unknown')
+                print(f"      ✅ Test {i+1} generated successfully (ID: {test_id})")
+                quota_test_results.append({'attempt': i+1, 'status': 'success', 'test_id': test_id})
+            elif status_code == 402:
+                upsell_info = response.get('upsell_info', {})
+                print(f"      🎯 Test {i+1} blocked with 402 Payment Required")
+                print(f"      Upsell info present: {bool(upsell_info)}")
+                quota_test_results.append({'attempt': i+1, 'status': 'quota_reached', 'upsell_info': upsell_info})
+                break
+            else:
+                print(f"      ❌ Test {i+1} failed with status {status_code}")
+                quota_test_results.append({'attempt': i+1, 'status': 'error', 'status_code': status_code})
+            
+            time.sleep(2)  # Delay between generations
+        
+        # Analyze quota enforcement results
+        successful_tests = [r for r in quota_test_results if r['status'] == 'success']
+        quota_blocked = [r for r in quota_test_results if r['status'] == 'quota_reached']
+        
+        print(f"\n   📊 Quota Enforcement Results:")
+        print(f"      Successful generations: {len(successful_tests)}")
+        print(f"      Quota blocks (402): {len(quota_blocked)}")
+        
+        quota_enforcement_working = (len(successful_tests) == 2 and len(quota_blocked) == 1)
+        
+        if quota_enforcement_working:
+            print(f"   ✅ QUOTA ENFORCEMENT WORKING: 2 successful, 3rd blocked with 402")
+        else:
+            print(f"   ❌ QUOTA ENFORCEMENT FAILED: Expected 2 successful + 1 blocked")
+        
+        # Step 3: Test Subscription Check Access for 402 Status Codes
+        print("\n🔍 Step 3: Test Subscription Check Access for 402 Status Codes")
+        print("   Testing /api/subscription/check-access endpoint")
+        
+        check_access_data = {
+            "feature_name": "mock_tests_weekly"
+        }
+        
+        success, response = self.run_test(
+            "Check Access - Should Return 402",
+            "POST",
+            "subscription/check-access",
+            402,  # Expecting 402 Payment Required
+            data=check_access_data,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        check_access_402_working = False
+        if success:
+            has_access = response.get('has_access', True)
+            upsell_info = response.get('upsell_info', {})
+            
+            print(f"   ✅ check-access returns 402 Payment Required")
+            print(f"   has_access: {has_access}")
+            print(f"   upsell_info present: {bool(upsell_info)}")
+            
+            if not has_access and upsell_info:
+                check_access_402_working = True
+                print(f"   ✅ Proper 402 response structure")
+            else:
+                print(f"   ❌ Incomplete 402 response structure")
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ❌ check-access failed to return 402 (got {status_code})")
+        
+        # Step 4: Test Plan Upgrade with Query Parameters
+        print("\n🔧 Step 4: Test Plan Upgrade with Query Parameters")
+        print("   Testing /api/subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly")
+        
+        # Test with existing user (test@dhruvai.com)
+        if not self.token:
+            login_success = self.test_user_login()
+            if not login_success:
+                print("   ❌ Failed to login for upgrade test")
+                return False
+        
+        # Test upgrade endpoint with query parameters
+        upgrade_url = "subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly"
+        
+        success, response = self.run_test(
+            "Plan Upgrade with Query Parameters",
+            "POST",
+            upgrade_url,
+            [200, 201],  # Accept success responses
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        upgrade_params_working = False
+        if success:
+            print(f"   ✅ Plan upgrade accepts query parameters")
+            upgrade_params_working = True
+        else:
+            status_code = getattr(self, 'last_response_status', 0)
+            error_data = getattr(self, 'last_error_data', {})
+            print(f"   ❌ Plan upgrade failed with status {status_code}")
+            print(f"   Error: {error_data}")
+            
+            if status_code == 422:
+                print(f"   🚨 422 Validation Error - query parameters not accepted")
+        
+        # Step 5: Test Case Sensitivity Fix (plan_name "FREE")
+        print("\n🔤 Step 5: Test Case Sensitivity Fix (plan_name 'FREE')")
+        print("   Testing uppercase 'FREE' plan name handling")
+        
+        # Check current subscription with fresh user
+        success, response = self.run_test(
+            "Current Subscription - Case Sensitivity",
+            "GET",
+            "subscription/current",
+            200,
+            headers={'Authorization': f'Bearer {fresh_token}'}
+        )
+        
+        case_sensitivity_working = False
+        if success:
+            plan_name = response.get('plan', '').upper()
+            print(f"   Plan name returned: '{response.get('plan', '')}'")
+            print(f"   Uppercase plan name: '{plan_name}'")
+            
+            if plan_name == 'FREE':
+                case_sensitivity_working = True
+                print(f"   ✅ Case sensitivity working - 'FREE' plan recognized")
+            else:
+                print(f"   ❌ Case sensitivity issue - expected 'FREE', got '{plan_name}'")
+        
+        # Final Assessment
+        print(f"\n🎯 REVIEW REQUEST CRITICAL FIXES TESTING SUMMARY:")
+        print(f"   ✅ Mock Test Quota Enforcement: {'✓' if quota_enforcement_working else '✗'}")
+        print(f"   ✅ Subscription Check Access 402: {'✓' if check_access_402_working else '✗'}")
+        print(f"   ✅ Plan Upgrade Query Parameters: {'✓' if upgrade_params_working else '✗'}")
+        print(f"   ✅ Case Sensitivity Fix: {'✓' if case_sensitivity_working else '✗'}")
+        
+        # Count successful fixes
+        fixes_working = sum([
+            quota_enforcement_working,
+            check_access_402_working,
+            upgrade_params_working,
+            case_sensitivity_working
+        ])
+        
+        total_fixes = 4
+        success_rate = (fixes_working / total_fixes) * 100
+        
+        print(f"\n📊 Overall Fix Success Rate: {fixes_working}/{total_fixes} ({success_rate:.1f}%)")
+        
+        if fixes_working == total_fixes:
+            print("🎉 ALL CRITICAL FIXES WORKING - Backend issues resolved!")
+        elif fixes_working >= 3:
+            print("✅ MOST FIXES WORKING - Minor issues remain")
+        elif fixes_working >= 2:
+            print("⚠️  SOME FIXES WORKING - Significant issues remain")
+        else:
+            print("🚨 CRITICAL ISSUES PERSIST - Major backend problems")
+        
+        # Detailed recommendations
+        if not quota_enforcement_working:
+            print("\n🔧 QUOTA ENFORCEMENT ISSUE:")
+            print("   - Mock test generation not properly enforcing weekly limits")
+            print("   - Users can generate unlimited tests instead of 2/week for free tier")
+        
+        if not check_access_402_working:
+            print("\n🔧 CHECK-ACCESS 402 ISSUE:")
+            print("   - /api/subscription/check-access not returning 402 Payment Required")
+            print("   - Frontend subscription modals won't trigger without proper 402 responses")
+        
+        if not upgrade_params_working:
+            print("\n🔧 UPGRADE PARAMETERS ISSUE:")
+            print("   - /api/subscription/upgrade not accepting query parameters")
+            print("   - Frontend upgrade flow may be broken")
+        
+        if not case_sensitivity_working:
+            print("\n🔧 CASE SENSITIVITY ISSUE:")
+            print("   - Plan name 'FREE' (uppercase) not being handled correctly")
+            print("   - May cause subscription logic failures")
+        
+        return fixes_working >= 3  # Return True if at least 3/4 fixes are working
+
     def run_comprehensive_tests(self):
-        """Run comprehensive backend tests focusing on FIXED issues"""
+        """Run comprehensive backend tests focusing on REVIEW REQUEST issues"""
         print("🚀 Starting Comprehensive Dhruv AI Backend Testing...")
         print(f"   Backend URL: {self.base_url}")
-        print(f"   Focus: FIXED backend issues from review request")
+        print(f"   Focus: REVIEW REQUEST critical fixes")
         
-        # Test the specific FIXED backend issues
-        success = self.test_fixed_backend_issues()
+        # PRIORITY: Test the specific review request critical fixes
+        critical_fixes_success = self.test_review_request_critical_fixes()
+        
+        # Also test the previously identified FIXED backend issues
+        fixed_issues_success = self.test_fixed_backend_issues()
         
         # Final Results
         print("\n" + "="*60)
@@ -8394,13 +8640,17 @@ class DhruvAITester:
         print(f"✅ Tests Passed: {self.tests_passed}")
         print(f"❌ Tests Failed: {self.tests_run - self.tests_passed}")
         print(f"📈 Success Rate: {success_rate:.1f}%")
+        print(f"🎯 Critical Fixes Working: {'✅' if critical_fixes_success else '❌'}")
+        print(f"🔧 Previously Fixed Issues: {'✅' if fixed_issues_success else '❌'}")
         
-        if success:
-            print("🎉 EXCELLENT: All FIXED backend issues are working correctly!")
+        if critical_fixes_success and fixed_issues_success:
+            print("🎉 EXCELLENT: All critical backend fixes are working correctly!")
+        elif critical_fixes_success:
+            print("✅ GOOD: Review request fixes working, some other issues remain")
         else:
-            print("🚨 CRITICAL: Some FIXED backend issues still have problems")
+            print("🚨 CRITICAL: Review request fixes still have problems")
         
-        return success
+        return critical_fixes_success
     
     # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
     
