@@ -8844,7 +8844,8 @@ async def generate_mock_test(
         
         if cached_test and request.generation_mode == "standard":
             logger.info(f"Returning cached test for user {user.user_id}")
-            return cached_test
+            # Clean MongoDB ObjectId fields before returning
+            return clean_mongodb_doc(cached_test)
         
         # Create test blueprint
         blueprint = TestBlueprint(
