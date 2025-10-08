@@ -8909,7 +8909,7 @@ async def generate_mock_test(
                 logger.warning(f"Failed to serialize expires_at: {e}")
                 expires_at_str = None
         
-        return {
+        response_data = {
             "test_id": test.test_id,
             "test_name": test.title,
             "description": test.description,
@@ -8921,6 +8921,13 @@ async def generate_mock_test(
             "expires_at": expires_at_str,
             "generation_mode": blueprint.generation_mode
         }
+        
+        # Cache the clean response data (only for standard mode)
+        if not cached_test and request.generation_mode == "standard":
+            await cache_test(cache_key, response_data)
+            logger.info(f"Cached clean test data with key: {cache_key}")
+        
+        return response_data
         
     except HTTPException as http_exc:
         # Preserve subscription/limit errors (402/429) for frontend upsell flow
