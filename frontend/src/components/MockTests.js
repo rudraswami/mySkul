@@ -405,7 +405,8 @@ export default function MockTests() {
     }
 
     try {
-      showToast('Generating your test...', 'info');
+      // Don't show toast - progress modal is already visible
+      // showToast('Generating your test...', 'info');
       
       const response = await fetch(`${backendUrl}/api/mock-tests/generate`, {
         method: 'POST',
