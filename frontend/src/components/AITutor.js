@@ -2830,6 +2830,9 @@ export default function AITutor() {
         </div>
       )}
 
+
+      {/* Global Upsell Modal is rendered in App.js; no local modal here to avoid divergence */
+
       {/* Upsell Modal */}
       <UpsellModal
         isOpen={!!upsellModal}
