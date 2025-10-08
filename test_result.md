@@ -279,6 +279,9 @@
 
 ## test_plan:
   current_focus:
+    - "Frontend: Test JWT authentication fixes for Leaderboard and GamificationProgress components"
+    - "Frontend: Test subscription plan highlighting works with plan_name field"
+    - "Frontend: Test plan upgrade functionality with target_tier parameter"
     - "Backend: verify 402 enriched payload for /api/mock-tests/generate and /api/ai/dual-response"
     - "Frontend: unified UpsellModal across AI Tutor/Mock Tests/Auto-Notes with same content and layout"
   stuck_tasks:
