@@ -36,7 +36,8 @@ import {
   Crown,
   BookOpen,
   PlusCircle,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from 'lucide-react';
 
 export default function MockTests() {
