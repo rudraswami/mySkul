@@ -64,7 +64,9 @@ db = client[os.environ['DB_NAME']]
 
 # AI Chat Configuration
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
-JWT_SECRET = os.environ.get('JWT_SECRET', 'dhruv-ai-secret-key-2025')
+JWT_SECRET = os.environ.get('JWT_SECRET')
+if not JWT_SECRET:
+    raise ValueError("JWT_SECRET environment variable must be set for security")
 
 # Logging configuration already moved up
 
