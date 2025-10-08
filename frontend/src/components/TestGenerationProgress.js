@@ -242,20 +242,45 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
                 })}
               </div>
 
+              {/* Waiting for Data State - shown when animation complete but API still processing */}
+              {waitingForData && !showSuccessState && (
+                <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-blue-900 mb-1">
+                        Finalizing Your Test...
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        Our AI is putting the finishing touches on your personalized test. This may take a few more moments.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Motivational Message */}
-              <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                <p className="text-gray-700 font-medium animate-fade-in">
-                  {motivationalMessage}
-                </p>
-              </div>
+              {!waitingForData && (
+                <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <p className="text-gray-700 font-medium animate-fade-in">
+                    {motivationalMessage}
+                  </p>
+                </div>
+              )}
 
               {/* Pro tip */}
-              <div className="mt-6 flex items-start gap-2 text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                <Sparkles className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                <p>
-                  <strong>Pro Tip:</strong> While your test is generating, take a deep breath and prepare your study space for optimal focus!
-                </p>
-              </div>
+              {!waitingForData && (
+                <div className="mt-6 flex items-start gap-2 text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                  <Sparkles className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <p>
+                    <strong>Pro Tip:</strong> While your test is generating, take a deep breath and prepare your study space for optimal focus!
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>
