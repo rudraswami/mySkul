@@ -67,6 +67,10 @@ export default function MockTests() {
   const [showMotivationalPopup, setShowMotivationalPopup] = useState(false);
   const [motivationalData, setMotivationalData] = useState(null);
   
+  // Progress modal state
+  const [showGenerationProgress, setShowGenerationProgress] = useState(false);
+  const [generationConfig, setGenerationConfig] = useState(null);
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [mockTests, setMockTests] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
