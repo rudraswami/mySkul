@@ -135,7 +135,9 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-6">
+      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-2xl">
+      <div className="p-6">
       {/* Progress Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
