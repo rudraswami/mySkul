@@ -4615,6 +4615,38 @@ class SubscriptionService:
             return {}
     
     @staticmethod
+    async def get_weekly_usage(user_id: str, feature_name: str) -> int:
+        """Get current weekly usage for a specific feature"""
+        try:
+            # Calculate start of week (Monday)
+            now = datetime.now(timezone.utc)
+            days_since_monday = now.weekday()
+            start_of_week = now - timedelta(days=days_since_monday)
+            start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            # Get all usage trackers for this week
+            trackers = await db.daily_usage_trackers.find({
+                "user_id": user_id,
+                "date": {
+                    "$gte": start_of_week.strftime('%Y-%m-%d'),
+                    "$lte": now.strftime('%Y-%m-%d')
+                }
+            }).to_list(length=None)
+            
+            # Sum up usage for this feature across all days this week
+            total_usage = 0
+            for tracker in trackers:
+                usage_counts = tracker.get('usage_counts', {})
+                total_usage += usage_counts.get(feature_name, 0)
+            
+            logger.info(f"Weekly usage for {user_id}/{feature_name}: {total_usage} (from {len(trackers)} days)")
+            return total_usage
+        
+        except Exception as e:
+            logger.error(f"Get weekly usage error: {str(e)}")
+            return 0
+    
+    @staticmethod
     async def generate_upsell_message(user_id: str, feature_name: str, current_tier: str, 
                                     trigger_type: str, current_usage: int = 0, 
                                     limit: int = 0) -> Dict[str, Any]:
