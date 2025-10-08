@@ -8,7 +8,7 @@ import json
 import sys
 
 def test_ai_endpoint():
-    base_url = "https://mocktest-flow.preview.emergentagent.com/api"
+    base_url = "https://mobile-auth-revamp.preview.emergentagent.com/api"
     
     # Authenticate first
     login_data = {
