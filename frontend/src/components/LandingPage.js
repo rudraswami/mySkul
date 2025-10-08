@@ -593,15 +593,15 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Social Proof - Testimonials */}
+      {/* Social Proof - Daily Progress Stories */}
       <section id="testimonials" className="py-24 px-6 relative bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-              Students Like You Are Already Winning
+              See How Students Progress Daily
             </h2>
             <p className="text-xl text-blue-200 max-w-3xl mx-auto">
-              Real students. Real results. Real success stories.
+              Real students. Real daily improvements. Real features helping them succeed.
             </p>
           </div>
 
@@ -609,28 +609,44 @@ const LandingPage = () => {
             {testimonials.map((testimonial, index) => (
               <div
                 key={index}
-                className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-400/20 rounded-3xl p-8 backdrop-blur-sm hover:border-amber-400/40 transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-400/20 rounded-3xl p-8 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 transform hover:scale-105"
               >
                 {/* Student Info */}
                 <div className="flex items-center mb-6">
                   <img 
                     src={testimonial.image} 
                     alt={testimonial.name}
-                    className="w-16 h-16 rounded-full border-2 border-amber-400/50 mr-4"
+                    className="w-16 h-16 rounded-full border-2 border-purple-400/50 mr-4 object-cover"
                   />
                   <div>
                     <h4 className="font-bold text-white text-lg">{testimonial.name}</h4>
-                    <p className="text-sm text-amber-300">{testimonial.exam}</p>
-                    <p className="text-xs text-green-400 font-semibold">{testimonial.score}</p>
+                    <p className="text-sm text-purple-300">{testimonial.grade}</p>
+                    <p className="text-xs text-cyan-400 font-semibold flex items-center mt-1">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {testimonial.progress}
+                    </p>
                   </div>
                 </div>
 
+                {/* Feature Badge */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-400/30 px-4 py-2 rounded-xl mb-4 inline-block">
+                  <span className="text-blue-300 font-semibold text-sm">{testimonial.feature}</span>
+                </div>
+
                 {/* Quote */}
-                <p className="text-gray-300 italic mb-4 leading-relaxed">
+                <p className="text-gray-300 mb-4 leading-relaxed">
                   "{testimonial.quote}"
                 </p>
 
-                {/* Improvement Badge */}
+                {/* Daily Activity */}
+                <div className="bg-amber-500/10 border border-amber-400/30 px-4 py-2 rounded-lg mb-3">
+                  <div className="flex items-center">
+                    <Zap className="h-4 w-4 text-amber-400 mr-2" />
+                    <span className="text-amber-300 font-semibold text-sm">{testimonial.dailyStat}</span>
+                  </div>
+                </div>
+
+                {/* Overall Improvement */}
                 <div className="bg-green-500/20 border border-green-400/30 px-4 py-2 rounded-lg inline-block">
                   <div className="flex items-center">
                     <TrendingUp className="h-4 w-4 text-green-400 mr-2" />
