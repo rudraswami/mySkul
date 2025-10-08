@@ -355,7 +355,14 @@ export default function MockTests() {
 
   // ============= PHASE 3: NEW WIZARD & EXAM MODE HANDLERS =============
   
-  const handleOpenWizard = () => {
+  const handleOpenWizard = async () => {
+    // Check subscription access BEFORE opening wizard
+    const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+    if (!accessInfo.has_access) {
+      // Subscription modal will be triggered automatically
+      console.log('Mock test access blocked - showing subscription modal');
+      return;
+    }
     setShowWizard(true);
   };
 
