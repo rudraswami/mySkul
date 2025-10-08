@@ -493,6 +493,35 @@ export default function MockTests() {
       setShowEnhancedResults(true);
       showToast('Test submitted successfully! 🎉', 'success');
       
+      // Phase 4: Show badge unlock animation if new badges earned
+      if (gamificationRewards && gamificationRewards.badges_earned > 0) {
+        // Fetch badge details (mock for now, should come from backend)
+        const mockNewBadges = [
+          {
+            badge_id: 'test_complete',
+            badge_name: 'Test Completed',
+            badge_icon: '🎯',
+            description: 'Completed your test successfully!'
+          }
+        ];
+        setNewBadges(mockNewBadges);
+        // Show badge animation after results modal closes
+        setTimeout(() => setShowBadgeAnimation(true), 1000);
+      }
+      
+      // Phase 4: Show motivational popup after a delay
+      setTimeout(() => {
+        setMotivationalData({
+          percentage: resultsData.percentage,
+          stats: {
+            xp_earned: gamificationRewards?.xp_earned || 0,
+            streak: gamificationRewards?.streak || 0,
+            improvement: 15 // Mock improvement, should calculate from history
+          }
+        });
+        setShowMotivationalPopup(true);
+      }, 3000);
+      
       // Refresh analytics
       loadRecentResults();
       loadAnalytics();
