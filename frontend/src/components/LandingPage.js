@@ -955,11 +955,11 @@ const LandingPage = () => {
                 </h3>
               </div>
               <p className="text-gray-400 mb-4">
-                Your 24/7 AI study companion for JEE, NEET, and UPSC. Learn verified, study smart, succeed faster.
+                Your 24/7 AI study companion for every student. From school to competitive exams - learn verified, study smart, succeed faster.
               </p>
               <div className="flex space-x-4">
                 <Shield className="h-5 w-5 text-green-400" />
-                <span className="text-sm text-gray-400">Hallucination-Free AI</span>
+                <span className="text-sm text-gray-400">World's First Hallucination-Free AI</span>
               </div>
             </div>
 
