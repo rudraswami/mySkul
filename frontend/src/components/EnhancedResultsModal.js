@@ -79,7 +79,7 @@ export default function EnhancedResultsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4 overflow-y-auto">
       <div className="max-w-4xl w-full my-8">
         <Card className="shadow-2xl border-0 relative overflow-hidden">
           {/* Animated Background */}
