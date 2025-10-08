@@ -410,19 +410,20 @@ export default function MockTests() {
 
       // Handle subscription/limit errors FIRST
       if (response.status === 402 || response.status === 429) {
-        console.log('Subscription limit reached, triggering upsell modal');
+        console.log('🔒 Subscription limit reached! Status:', response.status);
         try {
           const errorData = await response.json();
-          console.log('Error data:', errorData);
-          triggerFeatureUpsell('mock_tests_weekly', errorData.detail || errorData);
+          console.log('📊 Error response data:', errorData);
+          console.log('🎯 Calling triggerFeatureUpsell...');
+          const modalTriggered = await triggerFeatureUpsell('mock_tests_weekly');
+          console.log('✅ Modal triggered:', modalTriggered);
         } catch (parseError) {
-          console.error('Error parsing 429 response:', parseError);
+          console.error('❌ Error parsing 429 response:', parseError);
           // Fallback to generic subscription message
-          triggerFeatureUpsell('mock_tests_weekly', {
-            message: 'You have reached your test limit. Upgrade to continue.',
-            action: 'upgrade'
-          });
+          console.log('🔄 Triggering fallback modal...');
+          await triggerFeatureUpsell('mock_tests_weekly');
         }
+        showToast('Please upgrade to continue generating tests', 'info');
         return;
       }
 
