@@ -240,6 +240,18 @@
         -agent: "testing"
         -comment: "FIXED BACKEND ISSUES TESTING COMPLETED - CHECK ACCESS 402 STILL NOT WORKING: Tested /api/subscription/check-access endpoint specifically. ISSUE CONFIRMED: Endpoint still returns 200 OK instead of 402 Payment Required when users exceed quotas. Test with existing user (test@dhruvai.com) shows has_access=false but status code is 200 not 402. Fresh user testing shows quota enforcement is completely bypassed - users can generate unlimited tests. The fix for returning proper 402 status codes is NOT working. This explains why subscription modals don't trigger correctly in the frontend."
 
+  - task: "PLAN UPGRADE QUERY PARAMETERS"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: false
+        -agent: "testing"
+        -comment: "PLAN UPGRADE QUERY PARAMETERS TESTING COMPLETED - API PARAMETER FORMAT ISSUES: Tested /api/subscription/upgrade endpoint with query parameters ?target_tier=PREMIUM&billing_cycle=monthly as specified in review request. ISSUE CONFIRMED: All upgrade attempts return 422 validation errors with 'Field required' for target_tier parameter. Error indicates endpoint expects query parameters but validation is failing. Tested multiple scenarios (basic/monthly, premium/yearly, pro/monthly) - all return same 422 error. The fix for accepting query parameters instead of JSON body is NOT working correctly. API still has parameter format issues preventing proper upgrade flow."
+
 ## frontend:
   - task: "CRITICAL JWT AUTHENTICATION FIXES"
     implemented: true
