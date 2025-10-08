@@ -116,28 +116,34 @@ const LandingPage = () => {
 
   const testimonials = [
     {
-      name: "Priya S.",
-      exam: "JEE Main 2024",
-      score: "98.2 Percentile",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-      quote: "Dhruv AI helped me crack JEE at 10% of coaching center costs. The AI tutor was available 24/7 when I was stuck!",
-      improvement: "+23% in 3 months"
+      name: "Priya Sharma",
+      grade: "Class 12, Mumbai",
+      progress: "Day 47 of preparation",
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
+      quote: "Today I solved 15 chemistry doubts at midnight using the AI Tutor. No fake answers like ChatGPT - everything is verified! My confidence is growing daily.",
+      feature: "🤖 AI Tutor",
+      dailyStat: "Solved 15 doubts today",
+      improvement: "87% → 92% in mock tests"
     },
     {
-      name: "Rahul K.",
-      exam: "NEET 2024",
-      score: "AIR 1247",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-      quote: "Mock tests adapted to my level perfectly. I could practice exactly what I was weak in. Game changer!",
-      improvement: "+31% accuracy"
+      name: "Arjun Patel",
+      grade: "Class 11, Ahmedabad",
+      progress: "Week 6 of using Dhruv AI",
+      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
+      quote: "Uploaded my 3-hour physics lecture yesterday. Got organized notes in 10 minutes! Now I can actually find formulas when I need them. Game changer!",
+      feature: "📝 Auto-Note Mentor",
+      dailyStat: "3 lectures converted today",
+      improvement: "2+ hours saved daily"
     },
     {
-      name: "Ananya M.",
-      exam: "UPSC Prelims 2024",
-      score: "Qualified",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-      quote: "Auto-Note Mentor saved me during revision. All my 6 months of notes organized and searchable!",
-      improvement: "Saved 15+ hours/week"
+      name: "Ananya Reddy",
+      grade: "Class 10, Hyderabad",
+      progress: "Daily streak: 28 days",
+      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop",
+      quote: "Mock tests adapt to my level perfectly. Started easy, now they're challenging me just right. My mom can see my daily progress on the parent dashboard!",
+      feature: "🎯 Smart Mock Tests",
+      dailyStat: "Completed 2 tests today",
+      improvement: "65% → 78% accuracy"
     }
   ];
 
