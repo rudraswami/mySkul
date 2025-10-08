@@ -87,7 +87,7 @@ export default function Subscription() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ plan: planName, billing_cycle: billingCycle })
+        body: JSON.stringify({ target_tier: planName, billing_cycle: billingCycle })
       });
 
       if (response.ok) {
