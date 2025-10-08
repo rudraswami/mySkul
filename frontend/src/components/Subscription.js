@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { LoadingSpinner } from './ui/loading';
+import RazorpayPayment from './RazorpayPayment';
 import { 
   Crown, 
   Check, 
@@ -13,7 +14,8 @@ import {
   Calendar,
   Sparkles,
   ArrowRight,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 
 export default function Subscription() {
