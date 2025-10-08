@@ -1476,13 +1476,28 @@ export default function AITutor() {
       groups['📌 Pinned'] = pinnedSessions;
     }
     
-    // Group regular sessions by subject while preserving chronological order
+    // Group regular sessions by intelligent subject detection
     regularSessions.forEach(session => {
-      const subject = session.subject || 'General';
-      if (!groups[subject]) {
-        groups[subject] = [];
+      // Priority: Use topic if meaningful, fallback to subject, then General
+      let displaySubject = 'General';
+      
+      if (session.topic && session.topic !== 'General' && session.topic.trim() !== '') {
+        displaySubject = session.topic;
+      } else if (session.subject && session.subject !== 'Mathematics' && session.subject.trim() !== '') {
+        // Only use subject if it's not the default "Mathematics"
+        displaySubject = session.subject;
+      } else {
+        // Extract subject from title if it starts with a subject name
+        const titleSubject = session.title?.split(':')[0]?.trim();
+        if (titleSubject && titleSubject.length < 30) {
+          displaySubject = titleSubject;
+        }
       }
-      groups[subject].push(session);
+      
+      if (!groups[displaySubject]) {
+        groups[displaySubject] = [];
+      }
+      groups[displaySubject].push(session);
     });
     
     // Sort each subject group by last_updated (latest first) to ensure proper ordering
