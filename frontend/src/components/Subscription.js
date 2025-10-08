@@ -222,7 +222,7 @@ export default function Subscription() {
                   <Crown className="h-6 w-6 text-blue-600 mr-3" />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 capitalize">
-                      Current Plan: {currentSubscription.plan}
+                      Current Plan: {currentSubscription.plan_name || currentSubscription.plan}
                     </h3>
                     <p className="text-gray-600">
                       {currentSubscription.plan_details ? 
