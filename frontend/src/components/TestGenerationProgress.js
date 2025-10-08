@@ -60,6 +60,7 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
   const [motivationalMessage, setMotivationalMessage] = useState(MOTIVATIONAL_MESSAGES[0]);
   const [progress, setProgress] = useState(0);
   const [showSuccessState, setShowSuccessState] = useState(false);
+  const [waitingForData, setWaitingForData] = useState(false);
 
   useEffect(() => {
     // Rotate motivational messages
