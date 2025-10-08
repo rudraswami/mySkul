@@ -4442,7 +4442,13 @@ class SubscriptionService:
             sub_info = await SubscriptionService.get_user_subscription_info(user_id)
             tier = sub_info['subscription_tier']
             plan_features = sub_info['plan_info']['features']
-            daily_usage = sub_info['daily_usage']
+            
+            # Get appropriate usage based on feature type
+            if "weekly" in feature_name:
+                current_usage = await SubscriptionService.get_weekly_usage(user_id, feature_name)
+            else:
+                daily_usage = sub_info['daily_usage']
+                current_usage = daily_usage.get(feature_name, 0)
             
             # Get feature limit from plan configuration
             feature_limit = plan_features.get(feature_name)
