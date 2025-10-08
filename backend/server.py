@@ -9023,8 +9023,10 @@ async def submit_mock_test(
         
         # Get dual-layer AI feedback
         try:
+            # Use first subject from analysis or default
+            primary_subject = list(subject_analysis.keys())[0] if subject_analysis else "General"
             dual_feedback = await dual_ai.get_coordinated_response(
-                analysis_prompt, mock_test.subject, session_id, user_context
+                analysis_prompt, primary_subject, session_id, user_context
             )
             
             # Extract structured feedback
