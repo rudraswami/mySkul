@@ -230,9 +230,21 @@
         -agent: "testing"
         -comment: "REVIEW REQUEST CRITICAL FIXES TESTING COMPLETED - MIXED RESULTS WITH KEY FINDINGS: Conducted focused testing of the specific issues mentioned in review request. AUTHENTICATION: ✅ Successfully authenticated with test@dhruvai.com/password123. CRITICAL FINDINGS: 1) Mock Test Quota Enforcement: ❌ FAILED - Mock test generation times out due to heavy AI processing, cannot complete quota testing. 2) Subscription Check Access 402: ❌ PARTIALLY WORKING - Endpoint returns 402 Payment Required but for wrong reason (user already at limit 3/3, not fresh user testing). Response structure is correct with proper upsell_info. 3) Plan Upgrade Query Parameters: ✅ WORKING - /api/subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly returns 200 OK, accepts query parameters correctly. 4) Case Sensitivity Fix: ❌ FAILED - Current subscription returns plan='unknown' instead of 'FREE', case sensitivity cannot be verified. SUCCESS RATE: 1/4 (25%). KEY ISSUE: User test@dhruvai.com has already exhausted quota (3/3 used), preventing proper fresh user quota testing. The check-access endpoint IS returning 402 responses with proper upsell_info structure when limits are reached."
 
-  - task: "SUBSCRIPTION CHECK ACCESS 402 STATUS CODES"
+  - task: "CASE SENSITIVITY FIX FOR PLAN NAMES"
     implemented: true
     working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        -working: false
+        -agent: "testing"
+        -comment: "CASE SENSITIVITY FIX - NOT WORKING: Tested plan name case sensitivity with /api/subscription/current endpoint. ISSUE: Returns plan='unknown' instead of expected 'FREE' for free tier users. Cannot verify if uppercase 'FREE' handling is working because the endpoint doesn't return proper plan names. Expected 'FREE' (uppercase) but got 'UNKNOWN'. This suggests the subscription current endpoint has issues with plan name retrieval or the user's subscription data is not properly set."
+
+  - task: "SUBSCRIPTION CHECK ACCESS 402 STATUS CODES"
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 1
     priority: "high"
