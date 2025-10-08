@@ -4454,7 +4454,6 @@ class SubscriptionService:
             feature_limit = plan_features.get(feature_name)
             
             if feature_limit == "unlimited":
-                current_usage = daily_usage.get(feature_name, 0)
                 return {
                     "has_access": True,
                     "is_unlimited": True,
@@ -4480,8 +4479,7 @@ class SubscriptionService:
                     "upsell_info": upsell_info
                 }
             elif isinstance(feature_limit, int):
-                # Feature has daily limit
-                current_usage = daily_usage.get(feature_name, 0)
+                # Feature has daily/weekly limit
                 remaining = max(0, feature_limit - current_usage)
                 
                 if current_usage >= feature_limit:
