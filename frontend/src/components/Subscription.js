@@ -120,7 +120,7 @@ export default function Subscription() {
         'Basic performance tracking',
         'Access to study materials'
       ],
-      current: currentSubscription?.plan === 'free',
+      current: currentSubscription?.plan_name === 'free',
       popular: false
     },
     {
