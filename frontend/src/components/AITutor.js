@@ -1763,6 +1763,153 @@ export default function AITutor() {
         </div>
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {showMobileSidebar && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowMobileSidebar(false)}
+          />
+          
+          {/* Sidebar */}
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[80vw] bg-white shadow-xl flex flex-col">
+            {/* Header with close button */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <Brain className="h-5 w-5 text-white" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">Dhruv AI</h2>
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowMobileSidebar(false)}
+                  className="bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200"
+                  variant="outline"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {/* New Chat Button */}
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    startNewSession();
+                    setShowMobileSidebar(false);
+                  }}
+                  className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Chat
+                </Button>
+                
+                {/* Subject Selector */}
+                <div className="relative">
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900">
+                      <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects[user?.exam_type]?.map(subject => (
+                        <SelectItem key={subject} value={subject}>
+                          {subject}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Search */}
+                <div className="relative">
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search conversations..."
+                    className="bg-gray-50 border-gray-200 text-gray-900 pl-9"
+                  />
+                  <MessageCircle className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Chat History - Same as desktop but scrollable */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-700">
+                  {searchQuery ? `Found ${filteredSessions.length}` : 'Chat History'}
+                </h3>
+                {sessions.length > 0 && (
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <span>{sessions.length} total</span>
+                  </div>
+                )}
+              </div>
+
+              {Object.keys(groupedSessions).length > 0 ? (
+                Object.entries(groupedSessions).map(([subject, sessionGroup]) => (
+                  <div key={subject} className="mb-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h4 className="text-xs font-medium text-gray-600">{subject}</h4>
+                      <div className="flex-1 h-px bg-gray-200"></div>
+                      <span className="text-xs text-gray-400">{sessionGroup.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {sessionGroup.map((session) => (
+                        <div
+                          key={session.session_id}
+                          onClick={() => {
+                            loadSession(session.session_id);
+                            setShowMobileSidebar(false);
+                          }}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            currentSession?.session_id === session.session_id
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                {session.is_pinned && (
+                                  <Pin className="h-3 w-3 text-blue-500" />
+                                )}
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {session.title || 'New conversation'}
+                                </p>
+                              </div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                {session.created_at ? formatDate(session.created_at) : 'No date'}
+                              </p>
+                              {session.last_message_preview && (
+                                <p className="text-xs text-gray-600 line-clamp-2">
+                                  {session.last_message_preview}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <MessageCircle className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 mb-1">No conversations yet</p>
+                  <p className="text-xs text-gray-400">Start chatting to see your history</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-white lg:w-auto w-full">
         {/* Enhanced Header with Engagement Features */}
