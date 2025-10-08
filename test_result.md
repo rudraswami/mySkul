@@ -258,11 +258,11 @@
   
   - task: "PLAN UPGRADE API PARAMETER FIX"
     implemented: true
-    working: true
+    working: false
     file: "components/Subscription.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         -working: false
         -agent: "user"
@@ -270,6 +270,9 @@
         -working: true
         -agent: "main"
         -comment: "FIXED: Updated handleUpgrade function to send 'target_tier' parameter instead of 'plan' parameter in API request, matching backend expectations."
+        -working: false
+        -agent: "testing"
+        -comment: "TESTING FAILED - PARAMETER FORMAT MISMATCH: /api/subscription/upgrade endpoint expects target_tier as query parameter, not in JSON body. All upgrade attempts fail with 422 validation error: 'Field required' for target_tier in query location. The backend expects query parameters (?target_tier=basic&billing_cycle=monthly) but frontend sends JSON body. This is a backend API design vs frontend implementation mismatch requiring clarification."
 
   - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
     implemented: true
