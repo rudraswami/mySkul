@@ -215,6 +215,9 @@
         -working: false
         -agent: "testing"
         -comment: "COMPREHENSIVE RE-TESTING COMPLETED - MULTIPLE CRITICAL ISSUES CONFIRMED: Tested all three endpoints as requested in review. /api/mock-tests/generate: ✅ 200 OK within quota, ❌ 500 Internal Server Error when quota exhausted (should be 402). /api/subscription/check-access: ✅ 200 OK within limits, ❌ 200 OK when exhausted (should be 402). /api/ai/dual-response: ✅ 200 OK within limits, ❌ 200 OK when exhausted (should be 402). None of the endpoints return proper 402 status codes with upsell_info when limits are reached. This confirms why subscription modals don't trigger. Success rate: 3/7 (42.9%). All three endpoints need fixes to return proper 402 responses with consistent upsell_info structure."
+        -working: false
+        -agent: "testing"
+        -comment: "REVIEW REQUEST FOCUSED TESTING COMPLETED - OBJECTID SERIALIZATION ISSUE IDENTIFIED: Conducted specific testing of /api/mock-tests/generate endpoint as requested. WITHIN QUOTA: ✅ Returns 200 OK with proper payload (test_id, questions, total_marks, time_limit). LIMIT REACHED: ❌ Returns 500 Internal Server Error instead of 402 Payment Required. ROOT CAUSE CONFIRMED: Backend logs show ObjectId serialization error in 402 response: ValueError: [TypeError(\"'ObjectId' object is not iterable\"), TypeError('vars() argument must have __dict__ attribute')]. The subscription service generates proper 402 responses with upsell_info, but FastAPI cannot serialize ObjectId objects in the response payload, causing 500 errors. IMPACT: Users see generic 500 errors instead of subscription modals. SUCCESS RATE: 1/3 (33.3%). URGENT FIX: Implement proper ObjectId serialization in subscription error responses to enable 402 status codes with upsell_info structure."
 
 ## frontend:
   - task: "GLOBAL UPSALE MODAL CONSISTENCY (AI Tutor + Mock Tests + Auto-Notes)"
