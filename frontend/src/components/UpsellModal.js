@@ -78,11 +78,11 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
   const FeatureIcon = getFeatureIcon(featureName);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <div className="max-w-2xl w-full max-h-[90vh] overflow-auto animate-in fade-in-0 zoom-in-95 duration-300">
-        <Card className="overflow-hidden border-0 shadow-2xl">
+        <Card className="overflow-hidden border-0 shadow-2xl rounded-2xl">
           {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-4 md:p-6 text-white relative">
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 pt-9 pb-6 px-4 md:px-6 text-white relative shadow-[0_10px_30px_rgba(99,102,241,0.35)]">
             <button
               onClick={handleDismiss}
               className="absolute top-3 right-3 md:top-4 md:right-4 text-white/80 hover:text-white transition-colors min-h-10 min-w-10 flex items-center justify-center rounded-lg mobile-transition"
@@ -99,7 +99,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                 <h2 className="text-lg md:text-2xl font-bold">
                   {upsellModal?.title || 'Ready for the Next Level? 🚀'}
                 </h2>
-                <p className="text-blue-100 text-sm md:text-base">Your learning journey is accelerating!</p>
+                <p className="text-blue-100 text-sm md:text-base font-semibold">Your learning journey is accelerating!</p>
               </div>
             </div>
           </div>
@@ -108,11 +108,11 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
             {/* AI Dialogue Section */}
             <div className="space-y-4 mb-6">
               {/* Mentor Message */}
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Heart className="h-5 w-5 text-blue-600" />
+              <div className="flex items-start space-x-3 group">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🎓</span>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 flex-1">
+                <div className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100 rounded-xl p-4 flex-1 transition-shadow group-hover:shadow-[0_0_8px_rgba(59,130,246,0.2)]">
                   <div className="flex items-center mb-2">
                     <span className="font-medium text-blue-900">Mentor AI</span>
                     <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
@@ -120,17 +120,17 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                     </Badge>
                   </div>
                   <p className="text-blue-800 text-sm leading-relaxed">
-                    {upsellInfo?.mentor_message || upsellModal?.description || `Hey champ! You've completed ${currentUsage}/${limit} verified sessions today — that's impressive progress! Ready to unlock unlimited verified learning?`}
+                    {upsellInfo?.mentor_message || `Hey champ! You’ve crushed ${currentUsage || 0}/${limit || 0} verified sessions today 🚀 — ready for unlimited progress?`}
                   </p>
                 </div>
               </div>
 
               {/* Professor Message */}
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <GraduationCap className="h-5 w-5 text-purple-600" />
+              <div className="flex items-start space-x-3 group">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🧠</span>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4 flex-1">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex-1 transition-shadow group-hover:shadow-[0_0_8px_rgba(139,92,246,0.2)]">
                   <div className="flex items-center mb-2">
                     <span className="font-medium text-purple-900">Professor AI</span>
                     <Badge className="ml-2 bg-purple-100 text-purple-800 border-purple-200">
@@ -138,7 +138,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                     </Badge>
                   </div>
                   <p className="text-purple-800 text-sm leading-relaxed">
-                    {upsellInfo?.professor_message || "Your analytical skills are developing excellently. Premium access would unlock adaptive insights for accelerated mastery."}
+                    {upsellInfo?.professor_message || "Your analytical skills are developing excellently. Premium access unlocks adaptive insights for accelerated mastery."}
                   </p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
 
             {/* Growth Stats */}
             {upsellInfo?.growth_stats && (
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 mb-6">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-emerald-100">
                 <div className="flex items-center mb-3">
                   <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
                   <span className="font-medium text-green-900">Your Verified Progress</span>
@@ -156,32 +156,36 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                     <div className="text-2xl font-bold text-green-700">
                       {upsellInfo.growth_stats.accuracy || 87}%
                     </div>
-                    <div className="text-xs text-green-600">Accuracy</div>
+                    <div className="text-xs text-green-700/80">Accuracy</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-green-700">
-                      Level {upsellInfo.growth_stats.current_level || 1}
+                    <div className="text-2xl font-bold text-green-700 flex items-center justify-center space-x-1">
+                      <span>Level {upsellInfo.growth_stats.current_level || 1}</span>
+                      <TrendingUp className="h-4 w-4 text-green-600" />
                     </div>
-                    <div className="text-xs text-green-600">XP Level</div>
+                    <div className="text-xs text-green-700/80">XP Level</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-green-700">
                       {upsellInfo.growth_stats.total_xp || 0}
                     </div>
-                    <div className="text-xs text-green-600">Total XP</div>
+                    <div className="text-xs text-green-700/80">Total XP</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-green-700">
+                    <div className="text-2xl font-bold text-emerald-800">
                       {upsellInfo.growth_stats.efficiency || 85}%
                     </div>
-                    <div className="text-xs text-green-600">Efficiency</div>
+                    <div className="text-xs text-emerald-700">Efficiency</div>
                   </div>
+                </div>
+                <div className="mt-3 text-center text-xs text-emerald-800">
+                  Next milestone: Level {(upsellInfo.growth_stats.current_level || 1) + 1} in {Math.max(0, (upsellInfo.growth_stats.next_xp || 20))} XP
                 </div>
               </div>
             )}
 
             {/* Plan Upgrade Preview */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 mb-6">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-6 border border-indigo-100">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <Crown className="h-5 w-5 text-indigo-600 mr-2" />
@@ -189,7 +193,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                     {targetPlan.display_name || '⚡ Premium - The Achiever'}
                   </span>
                 </div>
-                <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0 shadow-sm">
                   Recommended
                 </Badge>
               </div>
@@ -203,7 +207,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                   'Priority AI processing',
                   'Advanced analytics'
                 ]).slice(0, 6).map((benefit, index) => (
-                  <div key={index} className="flex items-center text-sm text-indigo-800">
+                  <div key={index} className={`flex items-center text-sm ${index < 3 ? 'text-indigo-900 font-semibold' : 'text-indigo-800'}`}>
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                     {benefit}
                   </div>
@@ -217,12 +221,12 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                 </span>
                 <button
                   onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
                     billingCycle === 'yearly' ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
                   <div
-                    className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform ${
+                    className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform duration-300 ${
                       billingCycle === 'yearly' ? 'translate-x-6' : 'translate-x-0.5'
                     }`}
                   />
@@ -238,7 +242,7 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
               </div>
 
               <div className="text-center">
-                <div className="text-3xl font-bold text-indigo-900">
+                <div className="text-4xl font-extrabold text-indigo-900">
                   ₹{billingCycle === 'monthly' ? 
                     (targetPlan.price_monthly || 499) : 
                     Math.round((targetPlan.price_yearly || 4999) / 12)
@@ -264,11 +268,11 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
               <Button
                 onClick={handleUpgrade}
                 disabled={upgrading}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 min-h-12 transition-all duration-300 hover:scale-105 mobile-transition"
+                className="group flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 min-h-12 transition-all duration-300 hover:scale-105 mobile-transition rounded-xl"
                 aria-label="Upgrade subscription"
               >
                 {upgrading ? (
@@ -277,22 +281,25 @@ export default function UpsellModal({ isOpen, onClose, onUpgradeSuccess }) {
                     Upgrading...
                   </div>
                 ) : (
-                  <div className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Unlock Verified Growth
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                  <div className="flex flex-col items-center w-full">
+                    <div className="flex items-center">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Unlock Verified Growth
+                      <ArrowRight className="h-4 w-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
+                    <span className="text-xs text-white/80 mt-1">Start your 7-day trial today — cancel anytime.</span>
                   </div>
                 )}
               </Button>
               
-              <Button
+              <button
                 onClick={handleLater}
-                variant="outline"
-                className="border-gray-300 text-gray-600 hover:bg-gray-50 min-h-12 mobile-transition"
+                className="text-gray-500 hover:text-gray-700 min-h-12 px-4 py-3 rounded-xl"
                 aria-label="Upgrade later"
+                type="button"
               >
                 Maybe Later
-              </Button>
+              </button>
             </div>
 
             {/* Trust Message */}
