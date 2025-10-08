@@ -614,12 +614,13 @@ const LandingPage = () => {
                 name: "Free",
                 price: "₹0",
                 period: "",
-                description: "Try verified learning.",
+                description: "Perfect for trying out verified AI learning",
                 features: [
-                  "Basic verified answers",
-                  "Sample note generation",
-                  "Community support",
-                  "Mobile app access"
+                  "5 AI tutor queries daily",
+                  "2 mock tests weekly",
+                  "1 file upload daily",
+                  "Basic performance tracking",
+                  "Community support"
                 ],
                 cta: "Start Free",
                 popular: false,
@@ -629,13 +630,14 @@ const LandingPage = () => {
                 name: "Premium",
                 price: "₹499",
                 period: "/mo",
-                description: "Unlimited verified notes & tests.",
+                description: "Best for serious JEE/NEET/UPSC preparation",
                 features: [
-                  "Unlimited verified answers",
-                  "Advanced note generation",
-                  "Adaptive mock tests",
-                  "Priority support",
-                  "Dual-layer AI mentor"
+                  "Unlimited AI tutor queries",
+                  "3 mock tests weekly + adaptive difficulty",
+                  "Unlimited file uploads & OCR",
+                  "Detailed analytics & progress tracking",
+                  "Priority support & faster responses",
+                  "Weekly AI insights & study planning"
                 ],
                 cta: "Start Premium",
                 popular: true,
@@ -645,13 +647,14 @@ const LandingPage = () => {
                 name: "Pro",
                 price: "₹999",
                 period: "/mo",
-                description: "Your personal AI Professor with 1M context.",
+                description: "For top rankers who demand excellence",
                 features: [
                   "Everything in Premium",
-                  "Personal AI Professor",
-                  "1M context window",
-                  "Advanced analytics",
-                  "Priority verification"
+                  "Unlimited mock tests with emotion-aware AI",
+                  "Daily personalized AI insights",
+                  "Advanced concept tagging & cross-connections",
+                  "Parent dashboard with detailed reports",
+                  "Priority model access (fastest responses)"
                 ],
                 cta: "Start Pro",
                 popular: false,
