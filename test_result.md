@@ -303,13 +303,14 @@
 
 ## test_plan:
   current_focus:
-    - "Frontend: Test JWT authentication fixes for Leaderboard and GamificationProgress components"
-    - "Frontend: Test subscription plan highlighting works with plan_name field"
-    - "Frontend: Test plan upgrade functionality with target_tier parameter"
-    - "Backend: verify 402 enriched payload for /api/mock-tests/generate and /api/ai/dual-response"
-    - "Frontend: unified UpsellModal across AI Tutor/Mock Tests/Auto-Notes with same content and layout"
+    - "Backend: Fix /api/subscription/check-access to return 402 Payment Required when has_access=false"
+    - "Backend: Fix /api/mock-tests/generate to return 402 Payment Required when quota exceeded"
+    - "Backend: Fix /api/subscription/upgrade parameter format (query params vs JSON body)"
+    - "Backend: Implement proper subscription quota enforcement"
   stuck_tasks:
-    - "Intermittent generic error in Mock Tests when limit reached"
+    - "Subscription Check Access 402 Status Codes"
+    - "Mock Test Generation 402 Status Codes"
+    - "Plan Upgrade API Parameter Format"
   test_all: false
   test_priority: "high_first"
 
