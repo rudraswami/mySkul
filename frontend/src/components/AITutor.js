@@ -279,6 +279,9 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return null;
 
+      // Determine the subject from detected topic or use 'General'
+      const topicSubject = detectedTopic && detectedTopic !== 'General' ? detectedTopic : 'General';
+      
       // Create meaningful session title based on topic and message content
       let sessionTitle;
       if (detectedTopic && detectedTopic !== 'General') {
@@ -292,7 +295,7 @@ export default function AITutor() {
       
       const response = await axios.post(`${API}/chat/sessions`, {
         title: sessionTitle,
-        subject: selectedSubject,
+        subject: topicSubject, // Use detected topic as subject, not dropdown value
         topic: detectedTopic || 'General',
         ai_mode: aiMode
       }, {
