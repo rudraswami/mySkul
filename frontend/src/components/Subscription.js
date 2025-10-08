@@ -77,39 +77,61 @@ export default function Subscription() {
     }
   };
 
-  const handleUpgrade = async (planName, billingCycle = 'monthly') => {
+  const handleUpgrade = async (planTier, cycle = 'monthly') => {
     setUpgrading(true);
-    setSelectedPlan(planName);
+    setSelectedPlan(planTier);
     
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-
-      const response = await fetch(`${backendUrl}/api/subscription/upgrade?target_tier=${planName}&billing_cycle=${billingCycle}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        // Redirect to payment or show success
-        const data = await response.json();
-        if (data.redirect_url) {
-          window.location.href = data.redirect_url;
-        }
-      } else {
-        const errorData = await response.json();
-        console.error('Upgrade failed:', errorData);
-        // Show error message
-      }
-    } catch (error) {
-      console.error('Upgrade error:', error);
-    } finally {
+    // Find the plan details
+    const plan = subscriptionPlans.find(p => p.tier === planTier);
+    if (!plan) {
+      console.error('Plan not found');
       setUpgrading(false);
       setSelectedPlan(null);
+      return;
     }
+
+    // Calculate amount based on billing cycle
+    const amount = cycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
+    
+    // Set payment details and show modal
+    setPaymentDetails({
+      planName: plan.name,
+      planTier: planTier,
+      billingCycle: cycle,
+      amount: amount,
+      userDetails: {
+        user_id: user?.user_id,
+        name: user?.name,
+        email: user?.email,
+        phone: user?.phone
+      }
+    });
+    
+    setShowPaymentModal(true);
+    setUpgrading(false);
+  };
+
+  const handlePaymentSuccess = (paymentData) => {
+    console.log('Payment successful:', paymentData);
+    setShowPaymentModal(false);
+    setPaymentDetails(null);
+    
+    // Refresh subscription data
+    loadCurrentSubscription();
+    
+    // Show success message or redirect
+    alert('Subscription upgraded successfully!');
+  };
+
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    alert(`Payment failed: ${error}`);
+  };
+
+  const handlePaymentCancel = () => {
+    console.log('Payment cancelled by user');
+    setShowPaymentModal(false);
+    setPaymentDetails(null);
   };
 
   const subscriptionPlans = [
