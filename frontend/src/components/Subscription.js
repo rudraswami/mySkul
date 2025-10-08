@@ -81,13 +81,12 @@ export default function Subscription() {
       const token = localStorage.getItem('dhruv_ai_token');
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
-      const response = await fetch(`${backendUrl}/api/subscription/upgrade`, {
+      const response = await fetch(`${backendUrl}/api/subscription/upgrade?target_tier=${planName}&billing_cycle=${billingCycle}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ target_tier: planName, billing_cycle: billingCycle })
+        }
       });
 
       if (response.ok) {
