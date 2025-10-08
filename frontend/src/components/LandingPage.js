@@ -15,13 +15,16 @@ import {
   Heart,
   Lock,
   Eye,
-  Phone,
-  Mail,
-  ExternalLink,
-  LogIn,
-  UserPlus,
+  Clock,
+  TrendingUp,
+  BookOpen,
+  MessageCircle,
+  FileText,
   Menu,
-  X
+  X,
+  AlertCircle,
+  Coffee,
+  Sparkles
 } from 'lucide-react';
 
 const LandingPage = () => {
@@ -53,6 +56,98 @@ const LandingPage = () => {
     return () => observer.disconnect();
   }, []);
 
+  const painPoints = [
+    {
+      emoji: "😰",
+      title: "Stuck at 11 PM?",
+      description: "That physics problem isn't solving itself, and your coaching teacher is unavailable",
+      stat: "87% students struggle after coaching hours"
+    },
+    {
+      emoji: "📚",
+      title: "Drowning in Notes?",
+      description: "3 months of coaching notes, but you can't find that one formula when you need it",
+      stat: "Students waste 2+ hours daily searching notes"
+    },
+    {
+      emoji: "😓",
+      title: "Exam Anxiety?",
+      description: "Mock tests feel overwhelming, and you're not sure which topics need more attention",
+      stat: "68% students experience high exam stress"
+    },
+    {
+      emoji: "⏰",
+      title: "Running Out of Time?",
+      description: "Syllabus is huge, time is short, and you don't know what to prioritize",
+      stat: "Only 23% students complete full revision"
+    }
+  ];
+
+  const solutions = [
+    {
+      icon: MessageCircle,
+      title: "24/7 AI Tutor - Your Midnight Study Buddy",
+      description: "Stuck at 11 PM? Get instant, verified answers to any doubt - Physics, Chemistry, Math - anytime.",
+      benefit: "Never feel alone in your preparation",
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      icon: FileText,
+      title: "Auto-Note Mentor - From Chaos to Clarity",
+      description: "Upload lecture recordings, get organized, searchable notes in minutes. Find that formula instantly.",
+      benefit: "Save 2+ hours daily in note searching",
+      color: "from-purple-500 to-pink-500"
+    },
+    {
+      icon: Target,
+      title: "Smart Mock Tests - Practice That Adapts to YOU",
+      description: "Tests that match your level. Too easy? Gets harder. Too hard? Adjusts to build confidence.",
+      benefit: "Build confidence, not overwhelm",
+      color: "from-green-500 to-emerald-500"
+    },
+    {
+      icon: TrendingUp,
+      title: "AI Progress Tracking - Know Exactly What to Study",
+      description: "See your weak areas, track improvement, get personalized study recommendations daily.",
+      benefit: "Study smart, not just hard",
+      color: "from-orange-500 to-red-500"
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: "Priya S.",
+      exam: "JEE Main 2024",
+      score: "98.2 Percentile",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+      quote: "Dhruv AI helped me crack JEE at 10% of coaching center costs. The AI tutor was available 24/7 when I was stuck!",
+      improvement: "+23% in 3 months"
+    },
+    {
+      name: "Rahul K.",
+      exam: "NEET 2024",
+      score: "AIR 1247",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+      quote: "Mock tests adapted to my level perfectly. I could practice exactly what I was weak in. Game changer!",
+      improvement: "+31% accuracy"
+    },
+    {
+      name: "Ananya M.",
+      exam: "UPSC Prelims 2024",
+      score: "Qualified",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+      quote: "Auto-Note Mentor saved me during revision. All my 6 months of notes organized and searchable!",
+      improvement: "Saved 15+ hours/week"
+    }
+  ];
+
+  const stats = [
+    { number: "50,000+", label: "Students Trust Us" },
+    { number: "98%", label: "Accuracy Rate" },
+    { number: "24/7", label: "Always Available" },
+    { number: "10x", label: "Faster Learning" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-x-hidden">
       {/* Navigation Header */}
@@ -61,19 +156,20 @@ const LandingPage = () => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <svg className="h-8 w-8 text-blue-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
+              <Brain className="h-8 w-8 text-blue-400 mr-3" />
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 Dhruv AI
               </h1>
+              <span className="ml-3 text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-400/30">
+                For JEE/NEET/UPSC
+              </span>
             </div>
 
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
-              <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Testimonials</a>
+              <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Success Stories</a>
+              <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">How It Works</a>
             </div>
 
             {/* Mobile Menu Button & Auth Buttons */}
@@ -95,10 +191,11 @@ const LandingPage = () => {
               </Link>
               <Link 
                 to="/register" 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base flex items-center"
               >
-                <span className="sm:hidden">Join</span>
-                <span className="hidden sm:inline">Get Started Free</span>
+                <Sparkles className="h-4 w-4 mr-2" />
+                <span className="sm:hidden">Start Free</span>
+                <span className="hidden sm:inline">Start Free Today</span>
               </Link>
             </div>
           </div>
@@ -116,18 +213,18 @@ const LandingPage = () => {
                 Features
               </a>
               <a 
-                href="#pricing" 
-                className="block text-gray-300 hover:text-white transition-colors py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Pricing
-              </a>
-              <a 
                 href="#testimonials" 
                 className="block text-gray-300 hover:text-white transition-colors py-2"
                 onClick={() => setShowMobileMenu(false)}
               >
-                Testimonials
+                Success Stories
+              </a>
+              <a 
+                href="#how-it-works" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                How It Works
               </a>
               <div className="pt-2 border-t border-white/10 sm:hidden">
                 <Link 
@@ -143,21 +240,13 @@ const LandingPage = () => {
         )}
       </nav>
 
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-4 -right-4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/3 -left-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute bottom-20 right-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
-      </div>
-
-      {/* Hero Section */}
+      {/* Hero Section - Student-Centric */}
       <section id="hero" className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/20 to-slate-900/40"></div>
         
-        {/* Enhanced Neural Network Particle Animation */}
+        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Neural Network Particles */}
-          {[...Array(15)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div
               key={`particle-${i}`}
               className="absolute animate-float rounded-full"
@@ -171,196 +260,106 @@ const LandingPage = () => {
               <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-60 animate-pulse"></div>
             </div>
           ))}
-          
-          {/* Verification Checkmarks */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`check-${i}`}
-              className="absolute animate-float opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 8}s`,
-                animationDuration: `${6 + Math.random() * 4}s`
-              }}
-            >
-              <CheckCircle className="h-4 w-4 text-green-400" />
-            </div>
-          ))}
-          
-          {/* Neural Connection Lines */}
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={`line-${i}`}
-              className="absolute bg-gradient-to-r from-blue-400/20 to-transparent h-px animate-pulse"
-              style={{
-                left: `${Math.random() * 80}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${50 + Math.random() * 100}px`,
-                animationDelay: `${Math.random() * 3}s`,
-                transform: `rotate(${Math.random() * 360}deg)`
-              }}
-            ></div>
-          ))}
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Text Content */}
+            {/* Left Column - Emotional Connection */}
             <div className="text-center lg:text-left">
-              {/* Enhanced Verification Badge with Pulsing Animation */}
-              <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm animate-pulse-glow">
-                <div className="relative">
-                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 animate-pulse" />
-                  <div className="absolute inset-0 rounded-full bg-green-400/20 animate-ping"></div>
-                </div>
-                <span className="text-green-300 text-sm font-medium bg-gradient-to-r from-green-300 to-emerald-300 bg-clip-text text-transparent">
-                  ✅ World's First Hallucination-Free AI Mentor
+              {/* Relatable Badge */}
+              <div className="inline-flex items-center bg-amber-500/20 border border-amber-400/30 rounded-full px-6 py-2 mb-8 backdrop-blur-sm">
+                <Clock className="h-5 w-5 text-amber-400 mr-3" />
+                <span className="text-amber-300 text-sm font-medium">
+                  Your 24/7 Study Companion for JEE/NEET/UPSC
                 </span>
               </div>
 
-              {/* Enhanced Main Headline */}
+              {/* Emotional Headline */}
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
                 <span className="bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
-                  Learn with Confidence.
+                  Never Study Alone.
                 </span>
                 <br />
-                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
-                  Never Learn Wrong Again.
+                <span className="text-3xl md:text-5xl lg:text-6xl bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  Never Feel Stuck Again.
                 </span>
               </h1>
 
-              {/* Enhanced Sub-headline */}
-              <p className="text-lg md:text-xl lg:text-2xl text-blue-100 mb-4 leading-relaxed">
-                Every answer <span className="text-green-400 font-semibold">verified</span>. Every concept <span className="text-blue-300 font-semibold">cross-checked</span>.
-              </p>
-              <p className="text-xl md:text-2xl lg:text-3xl font-bold mb-12 leading-relaxed">
-                <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-300 bg-clip-text text-transparent animate-pulse">
-                  Confidence built on correctness.
-                </span>
+              {/* Problem-Focused Sub-headline */}
+              <p className="text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">
+                <span className="text-amber-300 font-semibold">11 PM doubt?</span> We're here. <span className="text-green-400 font-semibold">Notes lost?</span> We organize them. <span className="text-blue-300 font-semibold">Exam stress?</span> We adapt to you.
               </p>
 
-              {/* Enhanced CTA Buttons with Micro-Interactions */}
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start mb-12">
                 <Link 
                   to="/register" 
-                  className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-110 shadow-2xl hover:shadow-blue-500/40 text-white no-underline inline-block text-center overflow-hidden"
+                  className="group relative bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-500 transform hover:scale-110 shadow-2xl hover:shadow-green-500/40 text-white no-underline inline-block text-center overflow-hidden"
                 >
-                  {/* Glowing Background Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-md"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                  
-                  {/* Shimmer Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 rounded-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-md"></div>
                   <div className="absolute inset-0 -skew-x-12 translate-x-full group-hover:translate-x-[-200%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000"></div>
                   
                   <span className="relative flex items-center justify-center">
-                    <CheckCircle className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
-                    Start Verified Learning
+                    <Sparkles className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
+                    Start Free - No Credit Card
                     <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
                   </span>
                 </Link>
                 
                 <button className="group relative border-2 border-blue-400/50 hover:border-blue-300 px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-500 backdrop-blur-sm hover:bg-blue-500/20 text-white overflow-hidden">
-                  {/* Subtle Glow Effect */}
-                  <div className="absolute inset-0 bg-blue-400/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
                   <span className="relative flex items-center justify-center">
-                    <div className="relative mr-3">
-                      <Play className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-                      <div className="absolute inset-0 bg-blue-400/20 rounded-full group-hover:animate-ping"></div>
-                    </div>
-                    Watch Demo
+                    <Play className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
+                    See How It Works
                   </span>
                 </button>
               </div>
 
-              {/* Trust Indicators */}
+              {/* Trust Indicators - Student Focused */}
               <div className="flex flex-wrap justify-center lg:justify-start items-center gap-6 text-blue-200 text-sm">
                 <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                  <span>Trusted by 50,000+ students</span>
+                  <Users className="h-4 w-4 text-green-400 mr-2" />
+                  <span>50,000+ students like you</span>
                 </div>
                 <div className="flex items-center">
-                  <Shield className="h-4 w-4 text-blue-400 mr-2" />
-                  <span>100% Privacy Protected</span>
+                  <CheckCircle className="h-4 w-4 text-blue-400 mr-2" />
+                  <span>100% Free to start</span>
                 </div>
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-400 mr-2" />
-                  <span>4.9/5 Rating</span>
+                  <span>4.9/5 rating</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Column - Enhanced Hero with AI Hologram Effect */}
+            {/* Right Column - Student Success Visual */}
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-700 group">
                 <img 
-                  src="https://images.unsplash.com/photo-1541178735493-479c1a27ed24" 
-                  alt="Student learning with AI hologram technology" 
+                  src="https://images.unsplash.com/photo-1522661067900-ab829854a57f?w=800&h=600&fit=crop" 
+                  alt="Students succeeding with AI learning" 
                   className="w-full h-96 lg:h-[500px] object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-blue-600/30 to-transparent"></div>
                 
-                {/* AI Hologram Effect */}
-                <div className="absolute top-4 right-4 w-32 h-32 opacity-80">
-                  <div className="relative w-full h-full">
-                    {/* Hologram Brain */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/60 to-blue-500/60 rounded-full animate-pulse-slow blur-sm"></div>
-                    <div className="absolute inset-2 bg-gradient-to-br from-cyan-300/80 to-blue-400/80 rounded-full flex items-center justify-center">
-                      <Brain className="h-16 w-16 text-white animate-pulse" />
-                    </div>
-                    
-                    {/* Holographic Rings */}
-                    <div className="absolute inset-0 rounded-full border-2 border-cyan-400/40 animate-ping"></div>
-                    <div className="absolute inset-4 rounded-full border border-blue-300/30 animate-ping delay-1000"></div>
-                    
-                    {/* Floating Data Points */}
-                    {[...Array(6)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute w-2 h-2 bg-cyan-400 rounded-full animate-bounce opacity-60"
-                        style={{
-                          left: `${20 + Math.cos(i * 60 * Math.PI / 180) * 50}%`,
-                          top: `${20 + Math.sin(i * 60 * Math.PI / 180) * 50}%`,
-                          animationDelay: `${i * 0.2}s`
-                        }}
-                      ></div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Enhanced Verification Panel */}
+                {/* Success Stats Overlay */}
                 <div className="absolute bottom-6 left-6 right-6">
                   <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-5 border border-white/30 shadow-2xl">
-                    <div className="flex items-center justify-between text-white">
+                    <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
-                        <p className="text-sm text-cyan-200 flex items-center mb-2">
-                          <CheckCircle className="h-5 w-5 text-green-400 mr-2 animate-pulse" />
-                          AI Verification Complete
-                        </p>
-                        <p className="font-bold text-lg">Structured verified notes created</p>
-                        <p className="text-xs text-blue-200 mt-1">100% Hallucination-Free • Dual-Layer Validated</p>
+                        <div className="text-2xl font-bold text-green-400">98%</div>
+                        <div className="text-xs text-blue-200">Accuracy</div>
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <div className="flex space-x-1">
-                          <div className="animate-pulse">
-                            <CheckCircle className="h-4 w-4 text-green-400" />
-                          </div>
-                          <div className="animate-pulse delay-300">
-                            <CheckCircle className="h-4 w-4 text-green-400" />
-                          </div>
-                          <div className="animate-pulse delay-700">
-                            <CheckCircle className="h-4 w-4 text-green-400" />
-                          </div>
-                        </div>
-                        <div className="text-xs text-green-300 text-center">Verified</div>
+                      <div>
+                        <div className="text-2xl font-bold text-amber-400">24/7</div>
+                        <div className="text-xs text-blue-200">Available</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-cyan-400">10x</div>
+                        <div className="text-xs text-blue-200">Faster</div>
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                {/* Holographic Glow */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </div>
@@ -374,664 +373,526 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Problem → Solution Section */}
-      <section id="problem-solution" className="py-24 px-6 relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            {/* Problem Side */}
-            <div className={`transform transition-all duration-1000 ${isVisible['problem-solution'] ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
-              <div className="bg-red-500/10 border border-red-400/20 rounded-2xl p-8 backdrop-blur-sm">
-                <h3 className="text-2xl font-bold text-red-300 mb-6 flex items-center">
-                  <Target className="h-6 w-6 mr-3 text-red-400" />
-                  The Problem
-                </h3>
-                <div className="space-y-4 text-red-100">
-                  <p className="text-lg leading-relaxed">
-                    Most AI tutors <strong className="text-red-300">sound confident</strong> — even when they're wrong. 
-                    Students learn incorrect information without knowing it.
-                  </p>
-                  <div className="bg-red-900/20 p-4 rounded-lg border border-red-400/20">
-                    <p className="text-sm text-red-200 italic">
-                      "Chaotic, unverified AI output leads to confusion and wrong learning"
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Solution Side */}
-            <div className={`transform transition-all duration-1000 delay-300 ${isVisible['problem-solution'] ? 'translate-x-0 opacity-100' : 'translate-x-20 opacity-0'}`}>
-              <div className="bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-400/20 rounded-2xl p-8 backdrop-blur-sm">
-                <h3 className="text-2xl font-bold text-green-300 mb-6 flex items-center">
-                  <CheckCircle className="h-6 w-6 mr-3 text-green-400" />
-                  Dhruv AI Solution
-                </h3>
-                <div className="space-y-4 text-green-100">
-                  <p className="text-lg leading-relaxed">
-                    <strong className="text-green-300">Dhruv AI verifies before teaching</strong>, so students never learn wrong. 
-                    Every answer is cross-checked and validated.
-                  </p>
-                  <div className="bg-green-900/20 p-4 rounded-lg border border-green-400/20">
-                    <p className="text-sm text-green-200 italic">
-                      "Organized, verified knowledge with confidence built on correctness"
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Transform Arrow */}
-          <div className="text-center my-12">
-            <div className="inline-block bg-gradient-to-r from-yellow-400 to-orange-400 text-black px-8 py-3 rounded-full font-bold text-lg animate-pulse">
-              AI-Powered Transformation →
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Core Features Section */}
-      <section id="features" className="py-24 px-6 relative">
+      {/* Pain Points Section */}
+      <section id="pain-points" className="py-24 px-6 relative bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Everything You Need to Learn Smarter
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+              Sound Familiar?
             </h2>
             <p className="text-xl text-blue-200 max-w-3xl mx-auto">
-              Four powerful AI tools working together to transform your learning experience
+              You're not alone. Every serious student faces these challenges.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: Brain,
-                title: "Auto-Note Mentor",
-                emoji: "🧠",
-                description: "Turns lectures into verified notes & flashcards.",
-                color: "from-purple-500 to-pink-500",
-                bgColor: "purple-500/10"
-              },
-              {
-                icon: Target,
-                title: "Adaptive Mock Tests",
-                emoji: "🧩",
-                description: "Tests evolve with your verified progress.",
-                color: "from-blue-500 to-cyan-500",
-                bgColor: "blue-500/10"
-              },
-              {
-                icon: BarChart3,
-                title: "Mastery Map",
-                emoji: "📊",
-                description: "Visualize what's verified in your mind.",
-                color: "from-green-500 to-emerald-500",
-                bgColor: "green-500/10"
-              },
-              {
-                icon: Heart,
-                title: "Dual-Layer Mentor",
-                emoji: "🤖",
-                description: "Empathy meets accuracy — Mentor teaches, Professor verifies.",
-                color: "from-orange-500 to-red-500",
-                bgColor: "orange-500/10"
-              }
-            ].map((feature, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {painPoints.map((point, index) => (
               <div
                 key={index}
-                className={`group relative bg-${feature.bgColor} border border-white/10 rounded-2xl p-8 backdrop-blur-sm hover:bg-white/5 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl cursor-pointer`}
+                className="bg-gradient-to-br from-red-900/20 to-orange-900/20 border border-red-400/20 rounded-2xl p-6 backdrop-blur-sm hover:border-red-400/40 transition-all duration-300 transform hover:scale-105"
               >
-                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-20 rounded-2xl transition-opacity duration-500" 
-                     style={{backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))`}}></div>
-                
-                <div className="relative z-10">
-                  <div className="text-4xl mb-4">{feature.emoji}</div>
-                  <feature.icon className={`h-8 w-8 mb-4 bg-gradient-to-r ${feature.color} rounded-lg p-1.5`} />
-                  <h3 className="text-xl font-bold mb-4 text-white group-hover:text-blue-200 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-300 leading-relaxed">
-                    {feature.description}
-                  </p>
+                <div className="text-5xl mb-4">{point.emoji}</div>
+                <h3 className="text-xl font-bold text-red-300 mb-3">{point.title}</h3>
+                <p className="text-gray-300 mb-4 leading-relaxed">{point.description}</p>
+                <div className="bg-red-900/30 px-3 py-2 rounded-lg border border-red-400/20">
+                  <p className="text-xs text-red-200">{point.stat}</p>
                 </div>
-
-                {/* Hover Glow Effect */}
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r ${feature.color} blur-xl -z-10 transition-opacity duration-500`}></div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Demo Section */}
-      <section id="demo" className="py-24 px-6 relative">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-            Watch How Dhruv AI Eliminates AI Errors in Real Time
-          </h2>
-          <p className="text-xl text-blue-200 mb-12 max-w-3xl mx-auto">
-            Experience verified, trustworthy AI learning.
-          </p>
-
-          <div className="relative group cursor-pointer">
-            <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-400/30 rounded-2xl p-8 backdrop-blur-sm hover:border-blue-400/50 transition-all duration-300">
-              <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden">
-                {/* Play Button */}
-                <div className="bg-blue-600 hover:bg-blue-700 rounded-full p-6 transition-all duration-300 transform group-hover:scale-110 shadow-2xl">
-                  <Play className="h-12 w-12 text-white ml-1" />
-                </div>
-                
-                {/* Demo Preview Elements */}
-                <div className="absolute inset-4 border-2 border-dashed border-blue-400/30 rounded-lg"></div>
-                <div className="absolute top-8 left-8 bg-green-500/20 border border-green-400 rounded-lg px-3 py-1 text-green-300 text-sm">
-                  ✓ Live Demo
-                </div>
-              </div>
-              
-              <div className="mt-6 text-blue-200">
-                <p className="text-sm">🎥 3:24 min • Full Product Walkthrough</p>
-              </div>
+          {/* Emotional Connection */}
+          <div className="text-center mt-12">
+            <div className="inline-block bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/30 px-8 py-4 rounded-2xl backdrop-blur-sm">
+              <p className="text-lg text-red-200 font-semibold">
+                We built Dhruv AI because we've been there. We understand.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-24 px-6 relative">
+      {/* Solution Section */}
+      <section id="features" className="py-24 px-6 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Loved by Students, Trusted by Parents
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+              Here's How We Help You Win
             </h2>
-            <p className="text-xl text-blue-200">Real results from real students across India</p>
+            <p className="text-xl text-blue-200 max-w-3xl mx-auto">
+              Four AI-powered tools designed specifically for serious students like you
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Aditi",
-                role: "NEET Aspirant",
-                quote: "Finally, an AI I can trust.",
-                rating: 5,
-                image: "👩‍🎓"
-              },
-              {
-                name: "Rohit",
-                role: "JEE Student",
-                quote: "No more wrong answers.",
-                rating: 5,
-                image: "👨‍💻"
-              },
-              {
-                name: "Sneha",
-                role: "UPSC Candidate",
-                quote: "Feels like two teachers — one to teach, one to verify.",
-                rating: 5,
-                image: "👩‍🏫"
-              }
-            ].map((testimonial, index) => (
+          <div className="grid md:grid-cols-2 gap-8">
+            {solutions.map((solution, index) => (
               <div
                 key={index}
-                className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
+                className="group relative bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-400/20 rounded-3xl p-8 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-500 transform hover:scale-105"
               >
-                <div className="flex items-center mb-6">
-                  <div className="text-4xl mr-4">{testimonial.image}</div>
-                  <div>
-                    <h4 className="font-bold text-white">{testimonial.name}</h4>
-                    <p className="text-blue-300 text-sm">{testimonial.role}</p>
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${solution.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <solution.icon className="h-8 w-8 text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-blue-200 transition-colors">
+                  {solution.title}
+                </h3>
+                
+                <p className="text-gray-300 mb-6 leading-relaxed">
+                  {solution.description}
+                </p>
+
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 px-4 py-3 rounded-xl">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
+                    <p className="text-green-300 font-semibold text-sm">{solution.benefit}</p>
                   </div>
                 </div>
-
-                {/* Star Rating */}
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-
-                <p className="text-gray-200 leading-relaxed italic">
-                  "{testimonial.quote}"
-                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Social Proof - Testimonials */}
+      <section id="testimonials" className="py-24 px-6 relative bg-slate-900/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+              Students Like You Are Already Winning
+            </h2>
+            <p className="text-xl text-blue-200 max-w-3xl mx-auto">
+              Real students. Real results. Real success stories.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-400/20 rounded-3xl p-8 backdrop-blur-sm hover:border-amber-400/40 transition-all duration-300 transform hover:scale-105"
+              >
+                {/* Student Info */}
+                <div className="flex items-center mb-6">
+                  <img 
+                    src={testimonial.image} 
+                    alt={testimonial.name}
+                    className="w-16 h-16 rounded-full border-2 border-amber-400/50 mr-4"
+                  />
+                  <div>
+                    <h4 className="font-bold text-white text-lg">{testimonial.name}</h4>
+                    <p className="text-sm text-amber-300">{testimonial.exam}</p>
+                    <p className="text-xs text-green-400 font-semibold">{testimonial.score}</p>
+                  </div>
+                </div>
+
+                {/* Quote */}
+                <p className="text-gray-300 italic mb-4 leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+
+                {/* Improvement Badge */}
+                <div className="bg-green-500/20 border border-green-400/30 px-4 py-2 rounded-lg inline-block">
+                  <div className="flex items-center">
+                    <TrendingUp className="h-4 w-4 text-green-400 mr-2" />
+                    <span className="text-green-300 font-semibold text-sm">{testimonial.improvement}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats Bar */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-blue-200">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-24 px-6 relative">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+              Get Started in 3 Simple Steps
+            </h2>
+            <p className="text-xl text-blue-200">
+              No complicated setup. Start learning in under 2 minutes.
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            {[
+              {
+                step: "1",
+                title: "Sign Up Free",
+                description: "No credit card needed. Start with our free plan and explore all features.",
+                icon: UserPlus,
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                step: "2",
+                title: "Ask Your First Question or Upload Notes",
+                description: "Have a doubt? Ask the AI tutor. Need organized notes? Upload your lecture recordings.",
+                icon: MessageCircle,
+                color: "from-purple-500 to-pink-500"
+              },
+              {
+                step: "3",
+                title: "Watch Your Performance Improve",
+                description: "Track your progress, take adaptive mock tests, and see real improvement in weeks.",
+                icon: TrendingUp,
+                color: "from-green-500 to-emerald-500"
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-col md:flex-row items-center gap-8 bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-400/20 rounded-3xl p-8 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300"
+              >
+                <div className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-r ${item.color} flex items-center justify-center text-3xl font-bold text-white`}>
+                  {item.step}
+                </div>
+                <div className="flex-grow text-center md:text-left">
+                  <h3 className="text-2xl font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-gray-300 leading-relaxed">{item.description}</p>
+                </div>
+                <item.icon className="h-12 w-12 text-blue-400 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link 
+              to="/register"
+              className="inline-block bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-green-500/40 text-white no-underline"
+            >
+              Start Your Free Journey Now →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Indicators */}
+      <section className="py-16 px-6 relative bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="bg-green-500/10 border border-green-400/20 rounded-2xl p-6 backdrop-blur-sm">
+              <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">Hallucination-Free AI</h3>
+              <p className="text-gray-300">Every answer is verified. No fake information.</p>
+            </div>
+            <div className="bg-blue-500/10 border border-blue-400/20 rounded-2xl p-6 backdrop-blur-sm">
+              <Shield className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">NCERT-Aligned Content</h3>
+              <p className="text-gray-300">All content verified against official syllabus.</p>
+            </div>
+            <div className="bg-purple-500/10 border border-purple-400/20 rounded-2xl p-6 backdrop-blur-sm">
+              <Lock className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">100% Private & Secure</h3>
+              <p className="text-gray-300">Your data is encrypted and never shared.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - Repositioned at Bottom with Better Framing */}
       <section id="pricing" className="py-24 px-6 relative">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Simple Plans. Maximum Value.
+              Choose Your Learning Journey
             </h2>
-            <p className="text-xl text-blue-200">Choose the perfect plan for your learning journey</p>
+            <p className="text-xl text-blue-200 max-w-3xl mx-auto mb-4">
+              Start free. Upgrade only when you're ready.
+            </p>
+            <div className="inline-flex items-center bg-green-500/20 border border-green-400/30 px-6 py-3 rounded-full">
+              <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+              <span className="text-green-300 font-semibold">No credit card required to start</span>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Free",
-                price: "₹0",
-                period: "",
-                description: "Perfect for trying out verified AI learning",
-                features: [
-                  "5 AI tutor queries daily",
-                  "2 mock tests weekly",
-                  "1 file upload daily",
-                  "Basic performance tracking",
-                  "Community support"
-                ],
-                cta: "Start Free",
-                popular: false,
-                color: "gray"
-              },
-              {
-                name: "Premium",
-                price: "₹499",
-                period: "/mo",
-                description: "Best for serious JEE/NEET/UPSC preparation",
-                features: [
-                  "Unlimited AI tutor queries",
-                  "3 mock tests weekly + adaptive difficulty",
-                  "Unlimited file uploads & OCR",
-                  "Detailed analytics & progress tracking",
-                  "Priority support & faster responses",
-                  "Weekly AI insights & study planning"
-                ],
-                cta: "Start Premium",
-                popular: true,
-                color: "blue"
-              },
-              {
-                name: "Pro",
-                price: "₹999",
-                period: "/mo",
-                description: "For top rankers who demand excellence",
-                features: [
-                  "Everything in Premium",
-                  "Unlimited mock tests with emotion-aware AI",
-                  "Daily personalized AI insights",
-                  "Advanced concept tagging & cross-connections",
-                  "Parent dashboard with detailed reports",
-                  "Priority model access (fastest responses)"
-                ],
-                cta: "Start Pro",
-                popular: false,
-                color: "purple"
-              }
-            ].map((plan, index) => (
-              <div
-                key={index}
-                className={`relative bg-white/5 border-2 rounded-2xl p-8 backdrop-blur-sm transition-all duration-300 transform hover:scale-105 ${
-                  plan.popular 
-                    ? 'border-blue-400 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 shadow-2xl shadow-blue-500/20' 
-                    : 'border-white/10 hover:border-white/20'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full text-sm font-bold">
-                    Most Popular
-                  </div>
-                )}
-
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
-                    <span className="text-blue-200 text-lg">/{plan.period}</span>
-                  </div>
-                  <p className="text-gray-300">{plan.description}</p>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center">
-                      <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
-                      <span className="text-gray-200">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  to="/register"
-                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 no-underline text-center inline-block ${
-                    plan.popular
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg'
-                      : 'border-2 border-white/20 hover:border-white/40 text-white hover:bg-white/10'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-
-                <p className="text-center text-blue-300 text-sm mt-4 font-medium">
-                  Start Free → Upgrade Anytime
-                </p>
+            {/* Free Plan */}
+            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-gray-600/30 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-4">Free</h3>
+                <div className="text-5xl font-bold text-white mb-2">₹0</div>
+                <p className="text-gray-400">Perfect for trying out</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Trust & Credibility Section */}
-      <section id="trust" className="py-24 px-6 relative overflow-hidden">
-        {/* Animated Background with Pulsing Tick Marks */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-blue-800/30 to-indigo-900/40"></div>
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Pulsing Tick Marks Background */}
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute opacity-10 animate-pulse"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 4}s`,
-                animationDuration: `${2 + Math.random() * 3}s`
-              }}
-            >
-              <CheckCircle className="h-6 w-6 text-green-400" />
-            </div>
-          ))}
-          
-          {/* Floating Verification Lines */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`line-${i}`}
-              className="absolute bg-gradient-to-r from-green-400/20 via-blue-400/10 to-transparent h-px animate-pulse"
-              style={{
-                left: `${Math.random() * 80}%`,
-                top: `${Math.random() * 100}%`,
-                width: `${100 + Math.random() * 200}px`,
-                animationDelay: `${Math.random() * 3}s`,
-                transform: `rotate(${Math.random() * 180}deg)`
-              }}
-            ></div>
-          ))}
-        </div>
-
-        <div className={`relative max-w-6xl mx-auto text-center transform transition-all duration-1000 ${isVisible['trust'] ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white via-green-100 to-blue-200 bg-clip-text text-transparent">
-            Built for Accuracy. Engineered for Trust.
-          </h2>
-          <p className="text-xl md:text-2xl text-blue-200 mb-16 max-w-4xl mx-auto leading-relaxed">
-            Every answer verified by Dhruv's symbolic reasoning core. <span className="text-green-400 font-semibold">Data encrypted, accuracy guaranteed.</span>
-          </p>
-
-          {/* Trust Badges Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {[
-              {
-                icon: Shield,
-                title: "Verified Symbolic Engine",
-                badge: "✓",
-                description: "Dual-layer reasoning prevents AI hallucinations with 100% verification coverage."
-              },
-              {
-                icon: Brain,
-                title: "AI Hallucination-Free Core",
-                badge: "✓",
-                description: "Every response cross-validated by our proprietary verification algorithms."
-              },
-              {
-                icon: Lock,
-                title: "100% Privacy Protected",
-                badge: "✓",
-                description: "End-to-end encryption with full compliance to Indian data protection standards."
-              },
-              {
-                icon: Star,
-                title: "Rated 4.9★ by Learners",
-                badge: "✓",
-                description: "Trusted by 50,000+ students across JEE, NEET, and UPSC preparation."
-              }
-            ].map((item, index) => (
-              <div 
-                key={index} 
-                className="group bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/20"
-              >
-                {/* Icon with Glow */}
-                <div className="relative mb-6">
-                  <div className="bg-gradient-to-br from-green-500/20 to-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto group-hover:from-green-400/30 group-hover:to-blue-400/30 transition-all duration-300">
-                    <item.icon className="h-8 w-8 text-green-400 group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  {/* Verification Badge */}
-                  <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold animate-pulse">
-                    {item.badge}
-                  </div>
-                </div>
-                
-                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-green-100 transition-colors">
-                  {item.title}
-                </h3>
-                <p className="text-gray-300 text-sm leading-relaxed group-hover:text-gray-200 transition-colors">
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Enhanced Final CTA */}
-          <div className="relative">
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-blue-500/10 to-indigo-500/10 rounded-3xl blur-xl"></div>
-            
-            <div className="relative bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-400/20 rounded-3xl p-8 backdrop-blur-sm">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 bg-gradient-to-r from-green-300 to-blue-300 bg-clip-text text-transparent">
-                Join the Hallucination-Free Learning Revolution
-              </h3>
               
-              <Link 
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-gray-300">5 AI tutor queries daily</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-gray-300">2 mock tests weekly</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-gray-300">1 file upload daily</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-gray-300">Basic progress tracking</span>
+                </div>
+              </div>
+
+              <Link
                 to="/register"
-                className="group inline-flex items-center bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all duration-500 transform hover:scale-110 shadow-2xl hover:shadow-green-500/30 no-underline"
+                className="block w-full text-center bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 no-underline"
               >
-                <CheckCircle className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
-                Start Verified Learning
-                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
-                
-                {/* Shimmer Effect */}
-                <div className="absolute inset-0 -skew-x-12 translate-x-full group-hover:translate-x-[-200%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000"></div>
+                Start Free
               </Link>
+              <p className="text-center text-xs text-gray-400 mt-3">No credit card needed</p>
             </div>
+
+            {/* Premium Plan - Most Popular */}
+            <div className="relative bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-2 border-blue-400 rounded-3xl p-8 backdrop-blur-sm transform scale-105 shadow-2xl">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 rounded-full border border-blue-400 shadow-lg">
+                  <span className="text-white font-bold text-sm">⭐ Most Popular</span>
+                </div>
+              </div>
+
+              <div className="text-center mb-8 mt-4">
+                <h3 className="text-2xl font-bold text-white mb-4">Premium</h3>
+                <div className="text-5xl font-bold text-white mb-2">₹499<span className="text-lg text-blue-300">/month</span></div>
+                <p className="text-blue-300">Best for serious JEE/NEET prep</p>
+                <p className="text-xs text-green-400 mt-2">Less than ₹17/day - cheaper than a coffee!</p>
+              </div>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white font-semibold">Unlimited AI tutor queries</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">3 mock tests weekly (adaptive difficulty)</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Unlimited file uploads & OCR</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Advanced analytics & progress tracking</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Priority support</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Weekly AI insights</span>
+                </div>
+              </div>
+
+              <Link
+                to="/register"
+                className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 no-underline"
+              >
+                Start Premium
+              </Link>
+              <p className="text-center text-xs text-blue-300 mt-3">Start free → Upgrade anytime</p>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border border-purple-400/30 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-4">Pro</h3>
+                <div className="text-5xl font-bold text-white mb-2">₹999<span className="text-lg text-purple-300">/month</span></div>
+                <p className="text-purple-300">For top rankers</p>
+              </div>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start">
+                  <Star className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white font-semibold">Everything in Premium</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Unlimited mock tests</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Emotion-aware AI (adapts to stress)</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Daily personalized AI insights</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Advanced concept tagging</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Parent dashboard with reports</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">Priority AI model access</span>
+                </div>
+              </div>
+
+              <Link
+                to="/register"
+                className="block w-full text-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 no-underline"
+              >
+                Start Pro
+              </Link>
+              <p className="text-center text-xs text-purple-300 mt-3">Start free → Upgrade anytime</p>
+            </div>
+          </div>
+
+          {/* Pricing Note */}
+          <div className="text-center mt-12">
+            <p className="text-blue-200 text-sm">
+              💡 All plans include our hallucination-free AI guarantee and 100% verified content
+            </p>
           </div>
         </div>
       </section>
 
       {/* Final CTA Section */}
-      <section id="final-cta" className="py-24 px-6 relative">
+      <section className="py-24 px-6 relative">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-400/30 rounded-3xl p-12 backdrop-blur-sm">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              Join the Hallucination-Free Learning Revolution
-            </h2>
-            <p className="text-xl text-blue-200 mb-8 leading-relaxed">
-              Experience the world's first verified AI learning platform
-            </p>
-            
-            {/* Animated verification ticks background */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute animate-float opacity-20"
-                    style={{
-                      left: `${20 + i * 12}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${i * 0.5}s`,
-                      animationDuration: `${3 + Math.random() * 2}s`
-                    }}
-                  >
-                    <CheckCircle className="h-8 w-8 text-green-400" />
-                  </div>
-                ))}
-              </div>
-              
-              <Link 
-                to="/register"
-                className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-12 py-4 rounded-xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-white no-underline inline-block"
-              >
-                <span className="flex items-center justify-center">
-                  <CheckCircle className="mr-3 h-6 w-6" />
-                  Start Verified Learning Today
-                  <Zap className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                </span>
-              </Link>
-            </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            Join 50,000+ Students Crushing Their Goals
+          </h2>
+          <p className="text-xl text-blue-200 mb-12">
+            Start free. No credit card required. Cancel anytime.
+          </p>
 
-            <p className="text-blue-300 text-sm mt-4">
-              ✓ Free forever • ✓ No credit card required • ✓ Instant access
-            </p>
-          </div>
+          <Link
+            to="/register"
+            className="inline-block bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-16 py-6 rounded-2xl font-bold text-2xl transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-green-500/40 text-white no-underline"
+          >
+            Start Your Free Journey Now →
+          </Link>
+
+          <p className="text-blue-300 mt-8 text-sm">
+            Takes less than 2 minutes. No credit card needed.
+          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900/50 border-t border-white/10 py-16 px-6">
+      <footer className="border-t border-white/10 py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-4">
-                Dhruv AI
-              </h3>
-              <p className="text-gray-300 mb-6 max-w-md">
-                Your verified AI mentor for competitive exam success. Transforming learning through hallucination-free artificial intelligence.
+              <div className="flex items-center mb-4">
+                <Brain className="h-8 w-8 text-blue-400 mr-3" />
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  Dhruv AI
+                </h3>
+              </div>
+              <p className="text-gray-400 mb-4">
+                Your 24/7 AI study companion for JEE, NEET, and UPSC. Learn verified, study smart, succeed faster.
               </p>
               <div className="flex space-x-4">
-                {/* Social Links */}
-                <div className="bg-white/10 hover:bg-white/20 p-2 rounded-lg cursor-pointer transition-colors">
-                  <Users className="h-5 w-5 text-blue-400" />
-                </div>
-                <div className="bg-white/10 hover:bg-white/20 p-2 rounded-lg cursor-pointer transition-colors">
-                  <Mail className="h-5 w-5 text-blue-400" />
-                </div>
-                <div className="bg-white/10 hover:bg-white/20 p-2 rounded-lg cursor-pointer transition-colors">
-                  <Phone className="h-5 w-5 text-blue-400" />
-                </div>
+                <Shield className="h-5 w-5 text-green-400" />
+                <span className="text-sm text-gray-400">Hallucination-Free AI</span>
               </div>
             </div>
 
-            {/* Links */}
+            {/* Quick Links */}
             <div>
               <h4 className="font-bold text-white mb-4">Product</h4>
               <div className="space-y-2">
-                {['Features', 'Pricing', 'Demo', 'API'].map(link => (
-                  <a key={link} href={`#${link.toLowerCase()}`} className="block text-gray-300 hover:text-blue-400 transition-colors">
-                    {link}
-                  </a>
-                ))}
+                <a href="#features" className="block text-gray-300 hover:text-blue-400 transition-colors">Features</a>
+                <a href="#testimonials" className="block text-gray-300 hover:text-blue-400 transition-colors">Success Stories</a>
+                <a href="#pricing" className="block text-gray-300 hover:text-blue-400 transition-colors">Pricing</a>
+                <a href="#how-it-works" className="block text-gray-300 hover:text-blue-400 transition-colors">How It Works</a>
               </div>
             </div>
 
+            {/* Support */}
             <div>
               <h4 className="font-bold text-white mb-4">Support</h4>
               <div className="space-y-2">
-                {['Help Center', 'Contact', 'Privacy Policy', 'Terms'].map(link => (
-                  <a key={link} href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">
-                    {link}
-                  </a>
-                ))}
+                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Help Center</a>
+                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Contact Us</a>
+                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Privacy Policy</a>
+                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>
 
-          {/* Bottom */}
-          <div className="border-t border-white/10 pt-8 text-center">
-            <p className="text-gray-400">
-              Made with <Heart className="h-4 w-4 text-red-400 inline mx-1" /> in India for Students Everywhere
+          {/* Bottom Bar */}
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm mb-4 md:mb-0">
+              © 2024 Dhruv AI. Built for students, by educators who care.
             </p>
-            <p className="text-gray-500 text-sm mt-2">
-              © 2024 Dhruv AI. All rights reserved. • Transforming Education Through AI
-            </p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center text-sm text-gray-400">
+                <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                <span>Trusted by 50,000+ students</span>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Enhanced Custom Styles */}
+      {/* Custom CSS for Animations */}
       <style jsx>{`
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          25% { transform: translateY(-20px) translateX(10px); }
+          50% { transform: translateY(-10px) translateX(-10px); }
+          75% { transform: translateY(-25px) translateX(5px); }
         }
-        
-        @keyframes pulse-glow {
-          0%, 100% { 
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
-            transform: scale(1);
-          }
-          50% { 
-            box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
-            transform: scale(1.02);
-          }
+
+        .animate-float {
+          animation: float linear infinite;
         }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-        
+
         @keyframes gradient {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .animate-pulse-glow {
-          animation: pulse-glow 3s ease-in-out infinite;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-        
+
         .animate-gradient {
           background-size: 200% 200%;
-          animation: gradient 3s ease-in-out infinite;
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s ease-in-out infinite;
+          animation: gradient 3s ease infinite;
         }
 
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
+        .delay-300 {
+          animation-delay: 300ms;
         }
 
-        /* Smooth scrolling */
-        html {
-          scroll-behavior: smooth;
+        .delay-700 {
+          animation-delay: 700ms;
         }
 
-        /* Enhanced gradient backgrounds */
-        .bg-gradient-conic {
-          background: conic-gradient(from 0deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+        .delay-1000 {
+          animation-delay: 1s;
         }
-        
-        /* Neural network effect */
-        .neural-glow {
-          filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
-        }
-        
-        /* Holographic effect */
-        .hologram-effect {
-          background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
-          backdrop-filter: blur(10px);
+
+        .delay-2000 {
+          animation-delay: 2s;
         }
       `}</style>
     </div>
   );
 };
+
+const UserPlus = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+  </svg>
+);
 
 export default LandingPage;
