@@ -1341,7 +1341,6 @@ async def get_current_user(authorization: str = Header(None)):
 # ============= CACHING & MOCK TEST UTILITIES =============
 
 import hashlib
-import json
 from typing import Set
 
 # In-memory cache for development (replace with Redis in production)
