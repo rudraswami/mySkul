@@ -34,6 +34,14 @@ const GENERATION_STEPS = [
     duration: 2000,
     icon: '✨',
     color: 'text-green-600'
+  },
+  {
+    id: 5,
+    label: 'Ready for Testing',
+    description: 'Your personalized test is ready to begin',
+    duration: 1500,
+    icon: '🎉',
+    color: 'text-emerald-600'
   }
 ];
 
