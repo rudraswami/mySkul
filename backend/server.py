@@ -11360,6 +11360,7 @@ if MODULAR_COMPONENTS_AVAILABLE:
     # These routers provide the same functionality as the endpoints above but with modular architecture
     app.include_router(auth_router_new, prefix="/api", tags=["modular-auth"])
     app.include_router(user_router_new, prefix="/api", tags=["modular-user"])
+    app.include_router(subscription_router_new, prefix="/api", tags=["modular-subscription"])
     logger.info("✅ Modular routers registered")
 
 # Shutdown event
