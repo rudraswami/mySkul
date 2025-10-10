@@ -118,9 +118,10 @@ CSRF_SECRET = os.environ['CSRF_SECRET']
 # Initialize modular auth service if available
 if MODULAR_COMPONENTS_AVAILABLE:
     modular_auth_service = AuthService(db, JWT_SECRET)
+    modular_subscription_service = SubscriptionService(db)
     deps.db = db
     deps.auth_service = modular_auth_service
-    logger.info("✅ Modular auth service initialized")
+    logger.info("✅ Modular auth and subscription services initialized")
 
 # Logging configuration already moved up
 
