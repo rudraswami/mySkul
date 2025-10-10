@@ -11353,17 +11353,6 @@ if MODULAR_COMPONENTS_AVAILABLE:
     app.include_router(user_router_new, prefix="/api", tags=["modular-user"])
     logger.info("✅ Modular routers registered")
 
-# Health check endpoint for monitoring
-@api_router.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring"""
-    return {
-        "status": "healthy", 
-        "service": "dhruv-ai-backend",
-        "modular_architecture": MODULAR_COMPONENTS_AVAILABLE,
-        "audio_processing": AUDIO_PROCESSING_ENABLED
-    }
-
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_db_client():
