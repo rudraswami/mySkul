@@ -10700,14 +10700,15 @@ async def update_gamification_progress(user_id: str, test_result: Dict[str, Any]
 
 # ============= SUBSCRIPTION & PAYMENT ENDPOINTS =============
 
-@api_router.get("/subscription/plans")
-async def get_subscription_plans():
-    """Get all available subscription plans"""
-    return {
-        "plans": list(SUBSCRIPTION_PLANS.values()),
-        "currency": "INR",
-        "billing_cycles": ["monthly", "yearly"]
-    }
+# DUPLICATE ENDPOINT REMOVED - Using modular subscription router instead
+# @api_router.get("/subscription/plans")
+# async def get_subscription_plans():
+#     """Get all available subscription plans"""
+#     return {
+#         "plans": list(SUBSCRIPTION_PLANS.values()),
+#         "currency": "INR",
+#         "billing_cycles": ["monthly", "yearly"]
+#     }
 
 @api_router.get("/subscription/current")
 async def get_current_subscription(user: User = Depends(get_current_user)):
