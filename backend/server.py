@@ -1359,11 +1359,16 @@ def verify_jwt_token(token: str) -> Dict[str, Any]:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def get_current_user(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith('Bearer '):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+async def get_current_user(request: Request):
+    """
+    Secure cookie-based authentication
+    Extracts JWT token from httpOnly cookie instead of Authorization header
+    """
+    token = request.cookies.get("dhruv_ai_auth")
     
-    token = authorization.split(' ')[1]
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required - no session cookie")
+    
     payload = verify_jwt_token(token)
     user = await db.users.find_one({"user_id": payload['user_id']})
     
@@ -1371,6 +1376,13 @@ async def get_current_user(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="User not found")
     
     return User(**user)
+
+async def get_current_user_optional(request: Request) -> Optional[User]:
+    """Optional authentication - returns None if no valid token"""
+    try:
+        return await get_current_user(request)
+    except HTTPException:
+        return None
 
 # ============= CACHING & MOCK TEST UTILITIES =============
 
