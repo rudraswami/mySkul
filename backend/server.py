@@ -74,6 +74,13 @@ def validate_critical_env_vars():
         if not os.environ.get(var):
             missing_vars.append(f"{var}: {description}")
     
+    # Generate CSRF secret if not provided
+    if not os.environ.get('CSRF_SECRET'):
+        csrf_secret = secrets.token_hex(32)
+        os.environ['CSRF_SECRET'] = csrf_secret
+        logger.warning(f"CSRF_SECRET not found - generated temporary secret: {csrf_secret[:16]}...")
+        logger.warning("Add CSRF_SECRET to your .env file for production use")
+    
     if missing_vars:
         logger.error("CRITICAL: Missing required environment variables:")
         for var in missing_vars:
