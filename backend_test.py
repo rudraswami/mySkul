@@ -543,53 +543,98 @@ class DhruvAITester:
         # At least Bearer token should work for basic functionality
         return bearer_auth_success
 
-    def test_stage2_modular_authentication_comprehensive(self):
-        """Test Stage 2: Comprehensive Modular Authentication System Testing"""
-        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR AUTHENTICATION SYSTEM TESTING")
+    def test_stage2_modular_router_implementation(self):
+        """Test Stage 2: Comprehensive Modular Router Implementation - REVIEW REQUEST FOCUS"""
+        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR ROUTER IMPLEMENTATION TESTING")
         print("=" * 80)
+        print("   TESTING SCOPE - MODULAR ROUTERS IMPLEMENTED:")
+        print("   1. Auth Router (api/auth.py): Registration, login, logout, CSRF token")
+        print("   2. User Router (api/user.py): Profile GET/PUT operations")
+        print("   3. Subscription Router (api/subscription.py): Plans, access check, usage tracking")
+        print("   4. Service Layer: AuthService and SubscriptionService with dependency injection")
+        print("   5. Health Monitoring: Enhanced health endpoint showing modular architecture status")
         
         test_results = {
             'modular_architecture_health': False,
-            'modular_auth_registration': False,
-            'modular_auth_login': False,
-            'modular_user_profile': False,
+            'auth_router_registration': False,
+            'auth_router_login': False,
+            'auth_router_logout': False,
+            'user_router_profile_get': False,
+            'user_router_profile_put': False,
+            'subscription_router_plans': False,
+            'subscription_router_access_check': False,
+            'subscription_router_usage_tracking': False,
+            'subscription_router_current': False,
+            'service_layer_dependency_injection': False,
+            'duplicate_route_resolution': False,
             'backward_compatibility': False,
-            'dependency_injection': False,
-            'hybrid_authentication': False
+            'database_integration': False,
+            'security_maintained': False
         }
         
-        # Test 1: Modular Architecture Health
+        # Test 1: Modular Architecture Health Check
         print("\n1️⃣ MODULAR ARCHITECTURE HEALTH CHECK")
-        test_results['modular_architecture_health'] = self.test_modular_architecture_health()
+        test_results['modular_architecture_health'] = self.test_modular_architecture_health_comprehensive()
         
-        # Test 2: Modular Auth Registration
-        print("\n2️⃣ MODULAR AUTH REGISTRATION")
-        reg_success, reg_token, reg_user_id = self.test_modular_auth_registration()
-        test_results['modular_auth_registration'] = reg_success
+        # Test 2: Auth Router - Registration
+        print("\n2️⃣ AUTH ROUTER - REGISTRATION ENDPOINT")
+        test_results['auth_router_registration'] = self.test_auth_router_registration()
         
-        # Test 3: Modular Auth Login
-        print("\n3️⃣ MODULAR AUTH LOGIN")
-        test_results['modular_auth_login'] = self.test_modular_auth_login()
+        # Test 3: Auth Router - Login
+        print("\n3️⃣ AUTH ROUTER - LOGIN ENDPOINT")
+        test_results['auth_router_login'] = self.test_auth_router_login()
         
-        # Test 4: Modular User Profile Endpoints
-        print("\n4️⃣ MODULAR USER PROFILE ENDPOINTS")
-        test_results['modular_user_profile'] = self.test_modular_user_profile_endpoints()
+        # Test 4: Auth Router - Logout
+        print("\n4️⃣ AUTH ROUTER - LOGOUT ENDPOINT")
+        test_results['auth_router_logout'] = self.test_auth_router_logout()
         
-        # Test 5: Backward Compatibility
-        print("\n5️⃣ BACKWARD COMPATIBILITY")
-        test_results['backward_compatibility'] = self.test_backward_compatibility()
+        # Test 5: User Router - Profile GET
+        print("\n5️⃣ USER ROUTER - PROFILE GET ENDPOINT")
+        test_results['user_router_profile_get'] = self.test_user_router_profile_get()
         
-        # Test 6: Dependency Injection
-        print("\n6️⃣ DEPENDENCY INJECTION")
-        test_results['dependency_injection'] = self.test_dependency_injection()
+        # Test 6: User Router - Profile PUT
+        print("\n6️⃣ USER ROUTER - PROFILE PUT ENDPOINT")
+        test_results['user_router_profile_put'] = self.test_user_router_profile_put()
         
-        # Test 7: Hybrid Authentication
-        print("\n7️⃣ HYBRID AUTHENTICATION")
-        test_results['hybrid_authentication'] = self.test_hybrid_authentication_methods()
+        # Test 7: Subscription Router - Plans
+        print("\n7️⃣ SUBSCRIPTION ROUTER - PLANS ENDPOINT")
+        test_results['subscription_router_plans'] = self.test_subscription_router_plans()
+        
+        # Test 8: Subscription Router - Access Check
+        print("\n8️⃣ SUBSCRIPTION ROUTER - ACCESS CHECK ENDPOINT")
+        test_results['subscription_router_access_check'] = self.test_subscription_router_access_check()
+        
+        # Test 9: Subscription Router - Usage Tracking
+        print("\n9️⃣ SUBSCRIPTION ROUTER - USAGE TRACKING ENDPOINT")
+        test_results['subscription_router_usage_tracking'] = self.test_subscription_router_usage_tracking()
+        
+        # Test 10: Subscription Router - Current Subscription
+        print("\n🔟 SUBSCRIPTION ROUTER - CURRENT SUBSCRIPTION ENDPOINT")
+        test_results['subscription_router_current'] = self.test_subscription_router_current()
+        
+        # Test 11: Service Layer Dependency Injection
+        print("\n1️⃣1️⃣ SERVICE LAYER - DEPENDENCY INJECTION")
+        test_results['service_layer_dependency_injection'] = self.test_service_layer_dependency_injection()
+        
+        # Test 12: Duplicate Route Resolution
+        print("\n1️⃣2️⃣ DUPLICATE ROUTE RESOLUTION")
+        test_results['duplicate_route_resolution'] = self.test_duplicate_route_resolution()
+        
+        # Test 13: Backward Compatibility
+        print("\n1️⃣3️⃣ BACKWARD COMPATIBILITY")
+        test_results['backward_compatibility'] = self.test_backward_compatibility_comprehensive()
+        
+        # Test 14: Database Integration
+        print("\n1️⃣4️⃣ DATABASE INTEGRATION VIA SERVICES")
+        test_results['database_integration'] = self.test_database_integration_via_services()
+        
+        # Test 15: Security Maintained
+        print("\n1️⃣5️⃣ SECURITY MAINTAINED")
+        test_results['security_maintained'] = self.test_security_maintained()
         
         # Final Assessment
         print("\n" + "=" * 80)
-        print("🎯 STAGE 2 MODULAR AUTHENTICATION SYSTEM - FINAL RESULTS")
+        print("🎯 STAGE 2 MODULAR ROUTER IMPLEMENTATION - FINAL RESULTS")
         print("=" * 80)
         
         success_count = sum(test_results.values())
@@ -606,9 +651,13 @@ class DhruvAITester:
         # Critical Success Criteria Assessment
         critical_tests = [
             'modular_architecture_health',
-            'modular_auth_registration', 
-            'modular_auth_login',
-            'modular_user_profile',
+            'auth_router_registration', 
+            'auth_router_login',
+            'user_router_profile_get',
+            'user_router_profile_put',
+            'subscription_router_plans',
+            'subscription_router_access_check',
+            'service_layer_dependency_injection',
             'backward_compatibility'
         ]
         
@@ -620,31 +669,41 @@ class DhruvAITester:
         
         # Determine overall status
         if critical_success_rate >= 80:
-            print("\n✅ STAGE 2 MODULAR AUTHENTICATION SYSTEM: SUCCESS")
-            print("   Core foundation of Stage 2 modularization is working correctly")
+            print("\n✅ STAGE 2 MODULAR ROUTER IMPLEMENTATION: SUCCESS")
+            print("   Modular foundation is production-ready for additional router implementation")
         elif critical_success_rate >= 60:
-            print("\n⚠️ STAGE 2 MODULAR AUTHENTICATION SYSTEM: PARTIAL SUCCESS")
+            print("\n⚠️ STAGE 2 MODULAR ROUTER IMPLEMENTATION: PARTIAL SUCCESS")
             print("   Most core functionality working, some issues need attention")
         else:
-            print("\n❌ STAGE 2 MODULAR AUTHENTICATION SYSTEM: NEEDS WORK")
-            print("   Critical issues prevent proper modular authentication functionality")
+            print("\n❌ STAGE 2 MODULAR ROUTER IMPLEMENTATION: NEEDS WORK")
+            print("   Critical issues prevent proper modular router functionality")
         
         # Specific recommendations
         print(f"\n🔧 RECOMMENDATIONS:")
         if not test_results['modular_architecture_health']:
             print("   - Fix modular architecture loading and health endpoint")
-        if not test_results['modular_auth_registration']:
-            print("   - Implement or fix modular registration endpoint")
-        if not test_results['modular_auth_login']:
-            print("   - Implement or fix modular login endpoint with hybrid auth")
-        if not test_results['modular_user_profile']:
-            print("   - Implement or fix modular user profile GET/PUT endpoints")
+        if not test_results['auth_router_registration']:
+            print("   - Implement or fix auth router registration endpoint")
+        if not test_results['auth_router_login']:
+            print("   - Implement or fix auth router login endpoint")
+        if not test_results['user_router_profile_get']:
+            print("   - Implement or fix user router profile GET endpoint")
+        if not test_results['user_router_profile_put']:
+            print("   - Implement or fix user router profile PUT endpoint")
+        if not test_results['subscription_router_plans']:
+            print("   - Implement or fix subscription router plans endpoint")
+        if not test_results['subscription_router_access_check']:
+            print("   - Implement or fix subscription router access check endpoint")
+        if not test_results['service_layer_dependency_injection']:
+            print("   - Fix AuthService and SubscriptionService dependency injection")
+        if not test_results['duplicate_route_resolution']:
+            print("   - Resolve duplicate /subscription/plans routes")
         if not test_results['backward_compatibility']:
             print("   - Ensure legacy endpoints continue working alongside modular ones")
-        if not test_results['dependency_injection']:
-            print("   - Fix AuthService and database dependency injection")
-        if not test_results['hybrid_authentication']:
-            print("   - Implement proper cookie-based and Bearer token hybrid authentication")
+        if not test_results['database_integration']:
+            print("   - Fix MongoDB operations via services")
+        if not test_results['security_maintained']:
+            print("   - Ensure httpOnly cookies, JWT tokens, CORS restrictions are maintained")
         
         return success_rate >= 70  # 70% success rate for overall pass
         """Test user registration"""
