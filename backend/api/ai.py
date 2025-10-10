@@ -1,6 +1,7 @@
 """
 AI router for chat sessions, dual AI responses, guardrails, and AI-powered features
 """
+import os
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from typing import Dict, Any, List, Optional
 
