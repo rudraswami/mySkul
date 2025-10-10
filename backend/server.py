@@ -1359,15 +1359,20 @@ def verify_jwt_token(token: str) -> Dict[str, Any]:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def get_current_user(request: Request):
+async def get_current_user(request: Request, authorization: str = Header(None)):
     """
-    Secure cookie-based authentication
-    Extracts JWT token from httpOnly cookie instead of Authorization header
+    Hybrid authentication: Secure cookie-based OR Bearer token authentication
+    Prioritizes cookies (more secure) but falls back to Bearer tokens for compatibility
     """
+    # Try cookie-based authentication first (more secure)
     token = request.cookies.get("dhruv_ai_auth")
     
+    # Fall back to Bearer token for backward compatibility
+    if not token and authorization and authorization.startswith('Bearer '):
+        token = authorization.split(' ')[1]
+    
     if not token:
-        raise HTTPException(status_code=401, detail="Authentication required - no session cookie")
+        raise HTTPException(status_code=401, detail="Authentication required - no session cookie or Bearer token")
     
     payload = verify_jwt_token(token)
     user = await db.users.find_one({"user_id": payload['user_id']})
