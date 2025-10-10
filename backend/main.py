@@ -89,8 +89,10 @@ def create_app() -> FastAPI:
     
     # Initialize services
     jwt_secret = os.environ['JWT_SECRET']
+    emergent_llm_key = os.environ['EMERGENT_LLM_KEY']
     auth_service = AuthService(db, jwt_secret)
     subscription_service = SubscriptionService(db)
+    ai_service = AIService(db, emergent_llm_key)
     
     # Set dependencies
     dependencies.db = db
