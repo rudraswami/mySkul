@@ -104,3 +104,20 @@ class UsageTracking(BaseModel):
     usage_count: int = 0
     usage_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reset_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(day=1) + timedelta(days=32))
+
+
+# Request/Response Models
+class SubscriptionRequest(BaseModel):
+    plan_name: str
+    billing_cycle: str = "monthly"  # monthly, yearly
+
+
+class FeatureAccessRequest(BaseModel):
+    feature_name: str
+
+
+class CheckoutRequest(BaseModel):
+    plan_name: str
+    billing_cycle: str = "monthly"
+    success_url: str
+    cancel_url: str
