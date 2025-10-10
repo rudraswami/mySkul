@@ -1,0 +1,54 @@
+"""
+AI and Chat-related models for Dhruv AI application
+"""
+from datetime import datetime
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+import uuid
+
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+    subject: str
+
+
+class DualAIRequest(BaseModel):
+    message: str
+    session_id: str
+    subject: str
+
+
+class MathValidationRequest(BaseModel):
+    expression: str
+    units: Optional[str] = None
+
+
+class FactVerificationRequest(BaseModel):
+    statement: str
+    subject: str
+    context: Optional[str] = None
+
+
+class StudyPlanRequest(BaseModel):
+    target_exam_date: str  # ISO date string
+    daily_study_hours: int = Field(ge=1, le=16)
+    weak_subjects: List[str] = []
+    strong_subjects: List[str] = []
+    preferred_study_times: List[str] = []  # morning, afternoon, evening, night
+    stress_level: int = Field(ge=1, le=10, default=5)
+
+
+class PracticeProblemsRequest(BaseModel):
+    original_question: str
+    subject: str
+    topic: str
+    education_standard: str = "JEE"
+
+
+class WellnessCheckRequest(BaseModel):
+    stress_level: int = Field(ge=1, le=10)
+    motivation_level: int = Field(ge=1, le=10)
+    confidence_level: int = Field(ge=1, le=10)
+    study_satisfaction: int = Field(ge=1, le=10)
+    session_id: str
