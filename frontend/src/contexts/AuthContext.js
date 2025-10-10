@@ -63,12 +63,15 @@ export function AuthProvider({ children }) {
       // SECURITY: Remove sensitive login data from logs
       const response = await axios.post(`${API}/auth/login`, { email, password });
       
-      const { user: userData } = response.data;
+      const { token: newToken, user: userData } = response.data;
       
+      // Set both token (for Bearer auth fallback) and user state
+      setToken(newToken);
       setUser(userData);
+      localStorage.setItem('dhruv_ai_token', newToken);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
-      // SECURITY: Remove token logging - cookies are httpOnly
-      // console.log('Login successful, cookie set automatically');
+      // SECURITY: httpOnly cookie is also set automatically by backend
       return { success: true };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -84,9 +87,13 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     try {
       const response = await axios.post(`${API}/auth/register`, userData);
-      const { user: newUser } = response.data;
+      const { token: newToken, user: newUser } = response.data;
       
+      // Set both token (for Bearer auth fallback) and user state
+      setToken(newToken);
       setUser(newUser);
+      localStorage.setItem('dhruv_ai_token', newToken);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
       return { success: true };
     } catch (error) {
@@ -110,7 +117,11 @@ export function AuthProvider({ children }) {
         console.error('Logout API error:', error.response?.status);
       }
     } finally {
+      // Clear both token and user state
       setUser(null);
+      setToken(null);
+      localStorage.removeItem('dhruv_ai_token');
+      delete axios.defaults.headers.common['Authorization'];
     }
   };
 
