@@ -4939,10 +4939,11 @@ async def login_user(login_data: UserLogin, response: Response):
 @api_router.post("/auth/logout")
 async def logout_user(response: Response):
     """Logout user by clearing the authentication cookie"""
+    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
     response.delete_cookie(
         key="dhruv_ai_auth",
         httponly=True,
-        secure=True,
+        secure=is_production,
         samesite="lax"
     )
     return {"message": "Logout successful"}
