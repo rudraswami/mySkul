@@ -97,15 +97,13 @@ class AIService:
             # Initialize LLM chat with Emergent LLM key
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                provider="openai",
-                model="gpt-4o",
+                session_id=f"professor_{user_id}",
                 system_message="You are a knowledgeable professor providing accurate, detailed explanations for competitive exam preparation."
             )
             
             mentor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                provider="openai", 
-                model="gpt-4o",
+                session_id=f"mentor_{user_id}",
                 system_message="You are a supportive mentor providing encouragement and study strategies for exam preparation."
             )
             
