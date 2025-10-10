@@ -4883,8 +4883,8 @@ async def register_user(user_data: UserCreate):
     }
 
 @api_router.post("/auth/login")
-async def login_user(login_data: UserLogin):
-    """Login user"""
+async def login_user(login_data: UserLogin, response: Response):
+    """Login user with secure httpOnly cookie authentication"""
     
     # Find user
     user_doc = await db.users.find_one({"email": login_data.email})
@@ -4900,9 +4900,19 @@ async def login_user(login_data: UserLogin):
     # Create JWT token
     token = create_jwt_token(user.user_id, user.email)
     
+    # Set secure httpOnly cookie
+    response.set_cookie(
+        key="dhruv_ai_auth",
+        value=token,
+        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
+        expires=7 * 24 * 60 * 60,  # 7 days in seconds
+        httponly=True,
+        secure=True,  # HTTPS only in production
+        samesite="lax"  # CSRF protection
+    )
+    
     return {
         "message": "Login successful",
-        "token": token,
         "user": {
             "user_id": user.user_id,
             "full_name": user.full_name,
