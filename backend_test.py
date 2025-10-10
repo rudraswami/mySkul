@@ -17639,6 +17639,7 @@ def main():
     
     success = tester.test_razorpay_comprehensive_integration()
     
+    # Add the Stage 2 method inside the class
     def run_stage2_modular_authentication_tests(self):
         """Run Stage 2 FastAPI Modularization - MODULAR AUTHENTICATION SYSTEM Tests"""
         print("🚀 STARTING STAGE 2 FASTAPI MODULARIZATION - MODULAR AUTHENTICATION SYSTEM TESTING")
@@ -17660,6 +17661,7 @@ def main():
         print(f"📊 Final Status: {'✅ SUCCESS' if overall_success else '❌ NEEDS ATTENTION'}")
         
         return overall_success
+
 
 if __name__ == "__main__":
     tester = DhruvAITester()
