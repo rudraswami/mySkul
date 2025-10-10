@@ -17502,7 +17502,92 @@ def main():
             print(f"   - 100% success rate achieved")
             return True
 
-if __name__ == "__main__":
+    def run_stage2_modular_authentication_tests(self):
+        """Run Stage 2 FastAPI Modularization - MODULAR AUTHENTICATION SYSTEM Tests"""
+        print("🚀 STARTING STAGE 2 FASTAPI MODULARIZATION - MODULAR AUTHENTICATION SYSTEM TESTING")
+        print("=" * 100)
+        print("CRITICAL TESTING SCOPE:")
+        print("1. **Modular Architecture Health**: Verify /api/health shows modular_architecture: true")
+        print("2. **Modular Auth Registration**: Test new modular auth registration endpoint works correctly")
+        print("3. **Modular Auth Login**: Test new modular login endpoint with hybrid auth (cookies + Bearer tokens)")
+        print("4. **Modular User Profile**: Test new modular user profile GET/PUT endpoints")
+        print("5. **Backward Compatibility**: Ensure existing auth endpoints still work alongside new modular ones")
+        print("6. **Dependency Injection**: Verify AuthService and database dependencies work correctly")
+        print("7. **Hybrid Authentication**: Test both cookie-based and Bearer token authentication methods")
+        print("=" * 100)
+        
+        # Run comprehensive Stage 2 testing
+        overall_success = self.test_stage2_modular_authentication_comprehensive()
+        
+        print(f"\n🏁 STAGE 2 TESTING COMPLETED")
+        print(f"📊 Final Status: {'✅ SUCCESS' if overall_success else '❌ NEEDS ATTENTION'}")
+        
+        return overall_success
+
+    def run_all_tests(self):
+        """Run all backend API tests"""
+        print("🚀 STARTING COMPREHENSIVE BACKEND API TESTING")
+        print("=" * 80)
+        
+        # Stage 2 Modular Authentication System Tests (Priority)
+        print("\n🎯 PRIORITY: STAGE 2 MODULAR AUTHENTICATION SYSTEM")
+        stage2_success = self.run_stage2_modular_authentication_tests()
+        
+        # Basic API Tests
+        print("\n🔧 BASIC API FUNCTIONALITY TESTS")
+        basic_tests = [
+            ("Health Check", self.test_health_check),
+            ("Root Endpoint", self.test_root_endpoint),
+        ]
+        
+        basic_success_count = 0
+        for test_name, test_func in basic_tests:
+            try:
+                if test_func():
+                    basic_success_count += 1
+                    print(f"✅ {test_name}: PASSED")
+                else:
+                    print(f"❌ {test_name}: FAILED")
+            except Exception as e:
+                print(f"❌ {test_name}: ERROR - {str(e)}")
+        
+        # Authentication Tests (Legacy)
+        print("\n🔐 LEGACY AUTHENTICATION TESTS")
+        auth_tests = [
+            ("User Registration", self.test_user_registration),
+            ("User Login", self.test_user_login),
+            ("User Profile", self.test_user_profile),
+        ]
+        
+        auth_success_count = 0
+        for test_name, test_func in auth_tests:
+            try:
+                if test_func():
+                    auth_success_count += 1
+                    print(f"✅ {test_name}: PASSED")
+                else:
+                    print(f"❌ {test_name}: FAILED")
+            except Exception as e:
+                print(f"❌ {test_name}: ERROR - {str(e)}")
+        
+        # Final Summary
+        print("\n" + "=" * 80)
+        print("🎯 COMPREHENSIVE TESTING SUMMARY")
+        print("=" * 80)
+        
+        print(f"\n📊 STAGE 2 MODULAR AUTHENTICATION: {'✅ SUCCESS' if stage2_success else '❌ NEEDS WORK'}")
+        print(f"📊 Basic API Tests: {basic_success_count}/{len(basic_tests)} passed")
+        print(f"📊 Legacy Auth Tests: {auth_success_count}/{len(auth_tests)} passed")
+        
+        print(f"\n🎯 OVERALL TESTING STATUS:")
+        if stage2_success:
+            print("✅ STAGE 2 MODULAR AUTHENTICATION SYSTEM IS WORKING")
+            print("   Core foundation of Stage 2 modularization validated successfully")
+        else:
+            print("❌ STAGE 2 MODULAR AUTHENTICATION SYSTEM NEEDS ATTENTION")
+            print("   Critical issues prevent proper modular authentication functionality")
+        
+        return stage2_success
     import sys
     tester = DhruvAITester()
     
