@@ -18442,15 +18442,46 @@ def main():
 
 
 if __name__ == "__main__":
+    print("🚀 DHRUV AI BACKEND API TESTING - STAGE 2 MODULAR ROUTER IMPLEMENTATION")
+    print("=" * 80)
+    print("Backend URL: https://ai-education-app.preview.emergentagent.com/api")
+    print("Focus: Comprehensive Stage 2 Router Implementation Testing")
+    print("=" * 80)
+    
     tester = DhruvAITester()
     
-    # Run Stage 2 Modular Authentication System Tests
-    print("🎯 EXECUTING STAGE 2 FASTAPI MODULARIZATION - MODULAR AUTHENTICATION SYSTEM TESTS")
-    success = tester.run_stage2_modular_authentication_tests()
-    
-    if success:
-        print("\n🎉 STAGE 2 MODULAR AUTHENTICATION SYSTEM TESTING COMPLETED SUCCESSFULLY")
-        sys.exit(0)
-    else:
-        print("\n⚠️ STAGE 2 MODULAR AUTHENTICATION SYSTEM TESTING COMPLETED WITH ISSUES")
+    try:
+        # Run Stage 2 Modular Router Implementation Testing
+        print("\n🎯 STARTING STAGE 2 MODULAR ROUTER IMPLEMENTATION TESTING")
+        success = tester.test_stage2_modular_router_implementation()
+        
+        # Final Summary
+        print(f"\n" + "=" * 80)
+        print(f"🎯 FINAL TESTING SUMMARY")
+        print(f"=" * 80)
+        print(f"📊 Tests Run: {tester.tests_run}")
+        print(f"✅ Tests Passed: {tester.tests_passed}")
+        print(f"❌ Tests Failed: {tester.tests_run - tester.tests_passed}")
+        print(f"📈 Success Rate: {(tester.tests_passed / tester.tests_run * 100):.1f}%")
+        
+        if success:
+            print(f"\n✅ STAGE 2 MODULAR ROUTER IMPLEMENTATION: VALIDATION SUCCESSFUL")
+            print(f"   The Stage 2 modular foundation is production-ready")
+            print(f"   Ready for additional router implementation")
+        else:
+            print(f"\n❌ STAGE 2 MODULAR ROUTER IMPLEMENTATION: VALIDATION FAILED")
+            print(f"   Critical issues prevent proper modular functionality")
+            print(f"   Review recommendations above for fixes needed")
+        
+        print(f"\n🔚 Testing completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        sys.exit(0 if success else 1)
+        
+    except KeyboardInterrupt:
+        print(f"\n⚠️ Testing interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Testing failed with error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
