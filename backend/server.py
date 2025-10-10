@@ -121,9 +121,10 @@ CSRF_SECRET = os.environ['CSRF_SECRET']
 if MODULAR_COMPONENTS_AVAILABLE:
     modular_auth_service = AuthService(db, JWT_SECRET)
     modular_subscription_service = SubscriptionService(db)
+    modular_ai_service = AIService(db, EMERGENT_LLM_KEY)
     deps.db = db
     deps.auth_service = modular_auth_service
-    logger.info("✅ Modular auth and subscription services initialized")
+    logger.info("✅ Modular auth, subscription, and AI services initialized")
 
 # Logging configuration already moved up
 
