@@ -4933,6 +4933,7 @@ async def login_user(login_data: UserLogin, response: Response):
     
     return {
         "message": "Login successful",
+        "token": token,  # For backward compatibility with Bearer token auth
         "user": {
             "user_id": user.user_id,
             "full_name": user.full_name,
