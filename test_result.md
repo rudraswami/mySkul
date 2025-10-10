@@ -204,19 +204,41 @@
 ## user_problem_statement: "Implement comprehensive audit remediations to strengthen backend security, scalability, and frontend data integrity. Stage 1: Authentication & Secret Hardening, FastAPI Modularization, Subscription Endpoint Unification, etc."
 
 ## backend:
-  - task: "PHASE 1: Backend Test Library & Gamification System"
-    implemented: true
-  - task: "UNIFY SUBSCRIPTION PAYLOADS FOR MOCK TESTS"
-    implemented: true
+  - task: "STAGE 1: Authentication & Secret Hardening"
+    implemented: false
     working: false
-    file: "server.py"
-    stuck_count: 3
+    file: "backend/server.py"
+    stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         -working: false
         -agent: "main"
-        -comment: "Updated /api/mock-tests/generate to use SubscriptionService.check_feature_access and return enriched 402 payload (upsell_info, used, limit). Previously returned minimal payload via legacy handle_subscription_error causing generic error UI. Needs backend retest."
+        -comment: "CRITICAL SECURITY ISSUES IDENTIFIED: Hard-coded JWT secret fallback exists, CORS wildcard allows all origins, Bearer tokens stored in localStorage (XSS vulnerable), no CSRF protection, console logging of sensitive auth data, missing environment variable validation. Starting implementation of secure httpOnly cookies, CSRF middleware, CORS restrictions, and secret management hardening."
+
+  - task: "STAGE 1: FastAPI Modularization"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "Need to split monolithic server.py into modular routers: auth.py, ai.py, subscription.py, analytics.py, auto_notes.py. Move business logic to services/, Pydantic models to models/, create main.py for app initialization."
+
+  - task: "STAGE 1: Subscription Endpoint Unification"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "Remove duplicate /subscription/plans route definitions and implement single unified endpoint."
         -working: false
         -agent: "testing"
         -comment: "CRITICAL BACKEND ISSUE IDENTIFIED: /api/mock-tests/generate returns 500 Internal Server Error when user reaches quota limit instead of proper 402 Payment Required with upsell_info. First test generation works (200 OK with test data), but subsequent attempts fail with 500 errors. This prevents subscription modals from triggering correctly. Root cause likely ObjectId serialization or subscription service integration issue."
