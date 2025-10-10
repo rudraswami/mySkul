@@ -236,17 +236,17 @@
         -agent: "testing"
         -comment: "STAGE 2 MODULAR AUTHENTICATION SYSTEM TESTING COMPLETED - SUCCESS: Conducted comprehensive testing of Stage 2 FastAPI modularization focusing on modular authentication system. CRITICAL SUCCESS CRITERIA MET: ✅ Modular Architecture Health: /api/health endpoint shows modular_architecture: true, confirming modular components are loaded correctly, ✅ Legacy Authentication (Backward Compatibility): Successfully registered new user (stage2test@dhruvai.com) and authenticated with legacy endpoints, confirming existing auth system continues working alongside modular components, ✅ Core Foundation Validated: Health endpoint confirms modular architecture is enabled and functioning. MODULAR ENDPOINTS STATUS: ❌ Modular-specific endpoints (/api/auth/modular/register, /api/auth/modular/login, /api/user/modular/profile) return 404 Not Found - these are not yet implemented but this is expected as Stage 2 focuses on core architecture foundation, ❌ Dependency injection health endpoint (/api/health/dependencies) not found - also expected as this is advanced functionality. OVERALL SUCCESS RATE: 2/4 tests passed (50.0%) but CRITICAL SUCCESS CRITERIA: 2/2 passed (100.0%). CONCLUSION: ✅ Stage 2 modular authentication system foundation is working correctly - modular architecture is enabled, legacy authentication maintains backward compatibility, and core infrastructure is ready for additional modular endpoint implementation. The 404 responses for modular-specific endpoints are expected at this stage and don't indicate failure of the core modularization effort."
 
-  - task: "STAGE 1: Subscription Endpoint Unification"
+  - task: "STAGE 2b: Remaining Router Implementations"
     implemented: false
     working: false
-    file: "backend/server.py"
+    file: "backend/api/{ai,auto_notes,analytics,mock_tests}.py"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: true
     status_history:
         -working: false
         -agent: "main"
-        -comment: "Remove duplicate /subscription/plans route definitions and implement single unified endpoint."
+        -comment: "STAGE 2b INITIATED: Implementing remaining routers (ai.py, auto_notes.py, analytics.py, mock_tests.py) with dedicated services under backend/services/. SCOPE: 1) AI Router - dual-response, file/voice processing, guardrails, analytics, 2) Auto-Notes Router - audio sessions, transcription, summarization, 3) Analytics Router - dashboard analytics, goals, subject progress, 4) Mock Tests Router - test generation, submission, dashboard. REQUIREMENTS: Each router uses dedicated service, maintains async functions + Pydantic models, includes structured error handling, standardizes JSON responses, registers in main.py. Current monolithic server.py has 20+ AI endpoints, 15+ auto-notes endpoints, 10+ analytics endpoints, 25+ mock test endpoints to be modularized."
         -working: false
         -agent: "testing"
         -comment: "CRITICAL BACKEND ISSUE IDENTIFIED: /api/mock-tests/generate returns 500 Internal Server Error when user reaches quota limit instead of proper 402 Payment Required with upsell_info. First test generation works (200 OK with test data), but subsequent attempts fail with 500 errors. This prevents subscription modals from triggering correctly. Root cause likely ObjectId serialization or subscription service integration issue."
