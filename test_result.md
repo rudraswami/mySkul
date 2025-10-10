@@ -49,12 +49,11 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "Task name 1"
-##     - "Task name 2"
-##   stuck_tasks:
-##     - "Task name with persistent issues"
+##     - "STAGE 1: Authentication & Secret Hardening"
+##     - "STAGE 1: FastAPI Modularization"
+##   stuck_tasks: []
 ##   test_all: false
-##   test_priority: "high_first"  # or "sequential" or "stuck_first"
+##   test_priority: "high_first"
 ##
 ## agent_communication:
 ##     -agent: "main"  # or "testing" or "user"
