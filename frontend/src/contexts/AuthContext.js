@@ -137,7 +137,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     updateUser,
-    loading
+    loading,
+    token  // Added back for compatibility
   };
 
   return (
