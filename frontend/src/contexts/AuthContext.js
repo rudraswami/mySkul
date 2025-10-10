@@ -17,11 +17,20 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => localStorage.getItem('dhruv_ai_token'));
 
-  // Configure axios for cookie-based authentication
+  // Configure axios for both cookie-based AND Bearer token authentication
   useEffect(() => {
-    axios.defaults.withCredentials = true; // Send cookies with all requests
-  }, []);
+    // Send cookies with all requests (for secure httpOnly cookie auth)
+    axios.defaults.withCredentials = true;
+    
+    // Also set Authorization header for Bearer token fallback
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [token]);
 
   // Check if user is logged in on app load
   useEffect(() => {
