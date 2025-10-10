@@ -10248,7 +10248,13 @@ async def generate_mentor_hint(question: Dict, user_answer: str, correct_answer:
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow()}
+    return {
+        "status": "healthy", 
+        "timestamp": datetime.utcnow(),
+        "service": "dhruv-ai-backend",
+        "modular_architecture": MODULAR_COMPONENTS_AVAILABLE,
+        "audio_processing": AUDIO_PROCESSING_ENABLED
+    }
 
 @api_router.get("/")
 async def root():
