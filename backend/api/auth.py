@@ -3,9 +3,9 @@ Authentication router for user registration, login, logout, and CSRF
 """
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
 
-from ..models.core import User, UserCreate, UserLogin
-from ..services.auth_service import AuthService
-from ..dependencies import get_auth_service, get_database
+from models.core import User, UserCreate, UserLogin
+from services.auth_service import AuthService
+from dependencies import get_auth_service, get_database
 
 
 # Router instance
