@@ -201,7 +201,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-## user_problem_statement: "Complete Mock Test Module Redesign - Transform Mock Tests into flagship feature with Test Library, gamification (XP/badges/streaks), clean exam-like UI, performance optimization, and addictive engagement features."
+## user_problem_statement: "Implement comprehensive audit remediations to strengthen backend security, scalability, and frontend data integrity. Stage 1: Authentication & Secret Hardening, FastAPI Modularization, Subscription Endpoint Unification, etc."
 
 ## backend:
   - task: "PHASE 1: Backend Test Library & Gamification System"
