@@ -11233,13 +11233,34 @@ async def get_revenue_analytics(user: User = Depends(get_current_user)):
 # Include router in main app
 app.include_router(api_router)
 
-# CORS middleware
+# Security Middleware Configuration
+# CSRF Protection
+app.add_middleware(
+    CSRFMiddleware,
+    secret_key=CSRF_SECRET,
+    skip_if_trusted_origin=False,
+    csrf_header="x-csrf-token"
+)
+
+# CORS middleware - Restrictive configuration for production security
+cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
+if not cors_origins or cors_origins == ['']:
+    logger.error("CORS_ORIGINS environment variable is required for security")
+    raise RuntimeError("CORS_ORIGINS must be explicitly configured")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[origin.strip() for origin in cors_origins if origin.strip()],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Content-Type", 
+        "Authorization", 
+        "X-Requested-With",
+        "X-CSRF-Token",
+        "Cache-Control"
+    ],
+    expose_headers=["X-CSRF-Token"]
 )
 
 # Shutdown event
