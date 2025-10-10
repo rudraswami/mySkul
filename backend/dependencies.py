@@ -6,8 +6,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 import os
 
-from ..services.auth_service import AuthService
-from ..models.core import User
+from services.auth_service import AuthService
+from models.core import User
 
 # Global variables that will be set by main.py
 db: AsyncIOMotorClient = None
