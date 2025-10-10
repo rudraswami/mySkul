@@ -176,8 +176,7 @@ class AIService:
             # Initialize math validation LLM
             math_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                provider="openai",
-                model="gpt-4o",
+                session_id=f"math_val_{expression[:10]}",
                 system_message="You are a mathematical validator. Analyze expressions and provide confidence scores."
             )
             
