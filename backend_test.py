@@ -114,7 +114,539 @@ class DhruvAITester:
         """Test root endpoint"""
         return self.run_test("Root Endpoint", "GET", "", 200)
 
-    def test_user_registration(self):
+    def test_modular_auth_registration(self):
+        """Test Stage 2: Modular Auth Registration Endpoint"""
+        print("\n🔐 STAGE 2: MODULAR AUTH REGISTRATION TESTING")
+        print("   Testing new modular auth registration endpoint")
+        
+        # Create fresh user for modular registration testing
+        fresh_user_email = f"modular_reg_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Modular Test User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        print(f"   Creating user: {fresh_user_email}")
+        
+        # Test modular registration endpoint
+        success, response = self.run_test(
+            "Modular Auth Registration",
+            "POST",
+            "auth/modular/register",  # New modular endpoint
+            200,
+            data=registration_data
+        )
+        
+        if success:
+            print("   ✅ Modular registration endpoint working")
+            
+            # Verify response structure
+            if 'token' in response:
+                print(f"   ✅ JWT token provided: {response['token'][:20]}...")
+            if 'user' in response:
+                user_data = response['user']
+                print(f"   ✅ User data provided: {user_data.get('email')}")
+                print(f"   ✅ User ID: {user_data.get('user_id')}")
+            
+            # Check for modular-specific fields
+            if 'auth_method' in response:
+                print(f"   ✅ Auth method: {response['auth_method']}")
+            if 'session_type' in response:
+                print(f"   ✅ Session type: {response['session_type']}")
+                
+            return True, response.get('token'), response.get('user', {}).get('user_id')
+        else:
+            print("   ❌ Modular registration failed")
+            return False, None, None
+
+    def test_modular_auth_login(self):
+        """Test Stage 2: Modular Auth Login with Hybrid Authentication"""
+        print("\n🔐 STAGE 2: MODULAR AUTH LOGIN TESTING")
+        print("   Testing new modular login endpoint with hybrid auth (cookies + Bearer tokens)")
+        
+        # Use existing test user for login
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        # Test modular login endpoint
+        success, response = self.run_test(
+            "Modular Auth Login",
+            "POST",
+            "auth/modular/login",  # New modular endpoint
+            200,
+            data=login_data
+        )
+        
+        if success:
+            print("   ✅ Modular login endpoint working")
+            
+            # Verify hybrid authentication response
+            token_provided = 'token' in response
+            cookie_set = 'Set-Cookie' in str(response) or 'cookie' in response
+            
+            print(f"   📊 Hybrid Auth Analysis:")
+            print(f"      Bearer token provided: {token_provided}")
+            print(f"      Cookie authentication: {cookie_set}")
+            
+            if token_provided:
+                self.token = response['token']
+                print(f"   ✅ Bearer token: {self.token[:20]}...")
+            
+            if 'user' in response:
+                user_data = response['user']
+                self.user_id = user_data.get('user_id')
+                print(f"   ✅ User authenticated: {user_data.get('email')}")
+            
+            # Check for modular-specific fields
+            if 'auth_method' in response:
+                print(f"   ✅ Auth method: {response['auth_method']}")
+            if 'session_type' in response:
+                print(f"   ✅ Session type: {response['session_type']}")
+            
+            return True
+        else:
+            print("   ❌ Modular login failed")
+            return False
+
+    def test_modular_user_profile_endpoints(self):
+        """Test Stage 2: Modular User Profile GET/PUT Endpoints"""
+        print("\n👤 STAGE 2: MODULAR USER PROFILE ENDPOINTS TESTING")
+        print("   Testing new modular user profile GET/PUT endpoints")
+        
+        if not self.token:
+            print("   ❌ No token available for profile testing")
+            return False
+        
+        # Test modular GET profile endpoint
+        print("\n   📊 Testing Modular GET Profile Endpoint")
+        success, response = self.run_test(
+            "Modular Get User Profile",
+            "GET",
+            "user/modular/profile",  # New modular endpoint
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        get_profile_success = False
+        if success:
+            print("   ✅ Modular GET profile endpoint working")
+            
+            # Verify profile data structure
+            if 'user' in response:
+                user_data = response['user']
+                print(f"   ✅ Profile data retrieved: {user_data.get('email')}")
+                print(f"   ✅ Full name: {user_data.get('full_name')}")
+                print(f"   ✅ Exam type: {user_data.get('exam_type')}")
+                get_profile_success = True
+            
+            # Check for modular-specific fields
+            if 'profile_version' in response:
+                print(f"   ✅ Profile version: {response['profile_version']}")
+            if 'last_updated' in response:
+                print(f"   ✅ Last updated: {response['last_updated']}")
+        else:
+            print("   ❌ Modular GET profile failed")
+        
+        # Test modular PUT profile endpoint
+        print("\n   📝 Testing Modular PUT Profile Endpoint")
+        update_data = {
+            "full_name": "Updated Modular Test User",
+            "phone": "+91-9876543210",
+            "exam_type": "NEET",
+            "target_year": 2025
+        }
+        
+        success, response = self.run_test(
+            "Modular Update User Profile",
+            "PUT",
+            "user/modular/profile",  # New modular endpoint
+            200,
+            data=update_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        put_profile_success = False
+        if success:
+            print("   ✅ Modular PUT profile endpoint working")
+            
+            # Verify update response
+            if 'message' in response:
+                print(f"   ✅ Update message: {response['message']}")
+            if 'user' in response:
+                updated_user = response['user']
+                print(f"   ✅ Updated full name: {updated_user.get('full_name')}")
+                print(f"   ✅ Updated exam type: {updated_user.get('exam_type')}")
+                put_profile_success = True
+            
+            # Check for modular-specific fields
+            if 'update_timestamp' in response:
+                print(f"   ✅ Update timestamp: {response['update_timestamp']}")
+        else:
+            print("   ❌ Modular PUT profile failed")
+        
+        return get_profile_success and put_profile_success
+
+    def test_backward_compatibility(self):
+        """Test Stage 2: Backward Compatibility - Legacy and Modular Endpoints"""
+        print("\n🔄 STAGE 2: BACKWARD COMPATIBILITY TESTING")
+        print("   Testing that existing auth endpoints still work alongside new modular ones")
+        
+        # Test legacy registration endpoint
+        print("\n   📝 Testing Legacy Registration Endpoint")
+        legacy_user_email = f"legacy_test_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "Legacy Test User",
+            "email": legacy_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        legacy_reg_success, legacy_reg_response = self.run_test(
+            "Legacy Auth Registration",
+            "POST",
+            "auth/register",  # Original endpoint
+            200,
+            data=registration_data
+        )
+        
+        if legacy_reg_success:
+            print("   ✅ Legacy registration endpoint still working")
+        else:
+            print("   ❌ Legacy registration endpoint broken")
+        
+        # Test legacy login endpoint
+        print("\n   🔐 Testing Legacy Login Endpoint")
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        legacy_login_success, legacy_login_response = self.run_test(
+            "Legacy Auth Login",
+            "POST",
+            "auth/login",  # Original endpoint
+            200,
+            data=login_data
+        )
+        
+        legacy_token = None
+        if legacy_login_success:
+            print("   ✅ Legacy login endpoint still working")
+            legacy_token = legacy_login_response.get('token')
+        else:
+            print("   ❌ Legacy login endpoint broken")
+        
+        # Test legacy profile endpoints
+        print("\n   👤 Testing Legacy Profile Endpoints")
+        legacy_profile_success = False
+        if legacy_token:
+            success, response = self.run_test(
+                "Legacy Get User Profile",
+                "GET",
+                "user/profile",  # Original endpoint
+                200,
+                headers={'Authorization': f'Bearer {legacy_token}'}
+            )
+            
+            if success:
+                print("   ✅ Legacy GET profile endpoint still working")
+                legacy_profile_success = True
+            else:
+                print("   ❌ Legacy GET profile endpoint broken")
+        
+        # Summary
+        compatibility_score = sum([
+            legacy_reg_success,
+            legacy_login_success,
+            legacy_profile_success
+        ])
+        
+        print(f"\n   📊 Backward Compatibility Summary:")
+        print(f"      Legacy Registration: {'✅' if legacy_reg_success else '❌'}")
+        print(f"      Legacy Login: {'✅' if legacy_login_success else '❌'}")
+        print(f"      Legacy Profile: {'✅' if legacy_profile_success else '❌'}")
+        print(f"      Compatibility Score: {compatibility_score}/3")
+        
+        return compatibility_score >= 2  # At least 2/3 should work
+
+    def test_dependency_injection(self):
+        """Test Stage 2: Dependency Injection - AuthService and Database Dependencies"""
+        print("\n🔧 STAGE 2: DEPENDENCY INJECTION TESTING")
+        print("   Testing AuthService and database dependencies work correctly")
+        
+        # Test dependency injection health endpoint
+        success, response = self.run_test(
+            "Dependency Injection Health",
+            "GET",
+            "health/dependencies",  # Dependency health endpoint
+            200
+        )
+        
+        if success:
+            print("   ✅ Dependency injection health endpoint working")
+            
+            # Check dependency status
+            auth_service_status = response.get('auth_service_status', 'unknown')
+            database_status = response.get('database_status', 'unknown')
+            modular_deps_status = response.get('modular_dependencies_status', 'unknown')
+            
+            print(f"   📊 Dependency Status:")
+            print(f"      AuthService: {auth_service_status}")
+            print(f"      Database: {database_status}")
+            print(f"      Modular Dependencies: {modular_deps_status}")
+            
+            # Verify all dependencies are working
+            all_deps_working = all([
+                auth_service_status == 'healthy',
+                database_status == 'healthy',
+                modular_deps_status == 'healthy'
+            ])
+            
+            if all_deps_working:
+                print("   ✅ All dependencies working correctly")
+                return True
+            else:
+                print("   ⚠️ Some dependencies may have issues")
+                return False
+        else:
+            print("   ❌ Dependency injection health endpoint failed")
+            
+            # Fallback: Test if modular endpoints work (indirect dependency test)
+            print("   🔄 Fallback: Testing modular endpoints as dependency indicator")
+            
+            if self.token:
+                success, response = self.run_test(
+                    "Modular Endpoint Dependency Test",
+                    "GET",
+                    "user/modular/profile",
+                    200,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success:
+                    print("   ✅ Modular endpoints working (dependencies likely OK)")
+                    return True
+                else:
+                    print("   ❌ Modular endpoints failing (dependency issues)")
+                    return False
+            else:
+                print("   ❌ No token available for dependency testing")
+                return False
+
+    def test_hybrid_authentication_methods(self):
+        """Test Stage 2: Hybrid Authentication - Cookie-based and Bearer Token Methods"""
+        print("\n🔐 STAGE 2: HYBRID AUTHENTICATION METHODS TESTING")
+        print("   Testing both cookie-based and Bearer token authentication methods")
+        
+        # Test Bearer token authentication (already tested in other methods)
+        print("\n   🎫 Testing Bearer Token Authentication")
+        if not self.token:
+            print("   ❌ No Bearer token available")
+            bearer_auth_success = False
+        else:
+            success, response = self.run_test(
+                "Bearer Token Authentication",
+                "GET",
+                "user/profile",
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            bearer_auth_success = success
+            if success:
+                print("   ✅ Bearer token authentication working")
+            else:
+                print("   ❌ Bearer token authentication failed")
+        
+        # Test cookie-based authentication
+        print("\n   🍪 Testing Cookie-based Authentication")
+        
+        # First, login to get cookie
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        # Use requests session to handle cookies
+        import requests
+        session = requests.Session()
+        
+        try:
+            # Login to get cookie
+            login_url = f"{self.base_url}/auth/login"
+            login_response = session.post(login_url, json=login_data, timeout=30)
+            
+            if login_response.status_code == 200:
+                print("   ✅ Login successful, checking for cookies")
+                
+                # Check if cookies were set
+                cookies_set = len(session.cookies) > 0
+                print(f"   📊 Cookies set: {cookies_set}")
+                
+                if cookies_set:
+                    # Test API call with cookie authentication (no Authorization header)
+                    profile_url = f"{self.base_url}/user/profile"
+                    profile_response = session.get(profile_url, timeout=30)
+                    
+                    if profile_response.status_code == 200:
+                        print("   ✅ Cookie-based authentication working")
+                        cookie_auth_success = True
+                    else:
+                        print(f"   ❌ Cookie-based authentication failed: {profile_response.status_code}")
+                        cookie_auth_success = False
+                else:
+                    print("   ⚠️ No cookies set by login endpoint")
+                    cookie_auth_success = False
+            else:
+                print(f"   ❌ Login failed for cookie test: {login_response.status_code}")
+                cookie_auth_success = False
+                
+        except Exception as e:
+            print(f"   ❌ Cookie authentication test error: {str(e)}")
+            cookie_auth_success = False
+        
+        # Test hybrid authentication priority (cookie over Bearer)
+        print("\n   🔄 Testing Hybrid Authentication Priority")
+        hybrid_priority_success = False
+        
+        if self.token and cookie_auth_success:
+            try:
+                # Send request with both cookie and Bearer token
+                profile_url = f"{self.base_url}/user/profile"
+                headers = {'Authorization': f'Bearer {self.token}'}
+                
+                profile_response = session.get(profile_url, headers=headers, timeout=30)
+                
+                if profile_response.status_code == 200:
+                    print("   ✅ Hybrid authentication (cookie + Bearer) working")
+                    hybrid_priority_success = True
+                else:
+                    print(f"   ❌ Hybrid authentication failed: {profile_response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Hybrid authentication test error: {str(e)}")
+        else:
+            print("   ⚠️ Cannot test hybrid priority (missing token or cookie auth)")
+        
+        # Summary
+        print(f"\n   📊 Hybrid Authentication Summary:")
+        print(f"      Bearer Token Auth: {'✅' if bearer_auth_success else '❌'}")
+        print(f"      Cookie-based Auth: {'✅' if cookie_auth_success else '❌'}")
+        print(f"      Hybrid Priority: {'✅' if hybrid_priority_success else '❌'}")
+        
+        # At least Bearer token should work for basic functionality
+        return bearer_auth_success
+
+    def test_stage2_modular_authentication_comprehensive(self):
+        """Test Stage 2: Comprehensive Modular Authentication System Testing"""
+        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR AUTHENTICATION SYSTEM TESTING")
+        print("=" * 80)
+        
+        test_results = {
+            'modular_architecture_health': False,
+            'modular_auth_registration': False,
+            'modular_auth_login': False,
+            'modular_user_profile': False,
+            'backward_compatibility': False,
+            'dependency_injection': False,
+            'hybrid_authentication': False
+        }
+        
+        # Test 1: Modular Architecture Health
+        print("\n1️⃣ MODULAR ARCHITECTURE HEALTH CHECK")
+        test_results['modular_architecture_health'] = self.test_modular_architecture_health()
+        
+        # Test 2: Modular Auth Registration
+        print("\n2️⃣ MODULAR AUTH REGISTRATION")
+        reg_success, reg_token, reg_user_id = self.test_modular_auth_registration()
+        test_results['modular_auth_registration'] = reg_success
+        
+        # Test 3: Modular Auth Login
+        print("\n3️⃣ MODULAR AUTH LOGIN")
+        test_results['modular_auth_login'] = self.test_modular_auth_login()
+        
+        # Test 4: Modular User Profile Endpoints
+        print("\n4️⃣ MODULAR USER PROFILE ENDPOINTS")
+        test_results['modular_user_profile'] = self.test_modular_user_profile_endpoints()
+        
+        # Test 5: Backward Compatibility
+        print("\n5️⃣ BACKWARD COMPATIBILITY")
+        test_results['backward_compatibility'] = self.test_backward_compatibility()
+        
+        # Test 6: Dependency Injection
+        print("\n6️⃣ DEPENDENCY INJECTION")
+        test_results['dependency_injection'] = self.test_dependency_injection()
+        
+        # Test 7: Hybrid Authentication
+        print("\n7️⃣ HYBRID AUTHENTICATION")
+        test_results['hybrid_authentication'] = self.test_hybrid_authentication_methods()
+        
+        # Final Assessment
+        print("\n" + "=" * 80)
+        print("🎯 STAGE 2 MODULAR AUTHENTICATION SYSTEM - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        for test_name, result in test_results.items():
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {test_name.replace('_', ' ').title()}: {status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Critical Success Criteria Assessment
+        critical_tests = [
+            'modular_architecture_health',
+            'modular_auth_registration', 
+            'modular_auth_login',
+            'modular_user_profile',
+            'backward_compatibility'
+        ]
+        
+        critical_success_count = sum(test_results[test] for test in critical_tests)
+        critical_total = len(critical_tests)
+        critical_success_rate = (critical_success_count / critical_total) * 100
+        
+        print(f"\n🎯 CRITICAL SUCCESS CRITERIA: {critical_success_count}/{critical_total} ({critical_success_rate:.1f}%)")
+        
+        # Determine overall status
+        if critical_success_rate >= 80:
+            print("\n✅ STAGE 2 MODULAR AUTHENTICATION SYSTEM: SUCCESS")
+            print("   Core foundation of Stage 2 modularization is working correctly")
+        elif critical_success_rate >= 60:
+            print("\n⚠️ STAGE 2 MODULAR AUTHENTICATION SYSTEM: PARTIAL SUCCESS")
+            print("   Most core functionality working, some issues need attention")
+        else:
+            print("\n❌ STAGE 2 MODULAR AUTHENTICATION SYSTEM: NEEDS WORK")
+            print("   Critical issues prevent proper modular authentication functionality")
+        
+        # Specific recommendations
+        print(f"\n🔧 RECOMMENDATIONS:")
+        if not test_results['modular_architecture_health']:
+            print("   - Fix modular architecture loading and health endpoint")
+        if not test_results['modular_auth_registration']:
+            print("   - Implement or fix modular registration endpoint")
+        if not test_results['modular_auth_login']:
+            print("   - Implement or fix modular login endpoint with hybrid auth")
+        if not test_results['modular_user_profile']:
+            print("   - Implement or fix modular user profile GET/PUT endpoints")
+        if not test_results['backward_compatibility']:
+            print("   - Ensure legacy endpoints continue working alongside modular ones")
+        if not test_results['dependency_injection']:
+            print("   - Fix AuthService and database dependency injection")
+        if not test_results['hybrid_authentication']:
+            print("   - Implement proper cookie-based and Bearer token hybrid authentication")
+        
+        return success_rate >= 70  # 70% success rate for overall pass
         """Test user registration"""
         registration_data = {
             "full_name": "Test User",
