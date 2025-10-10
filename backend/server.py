@@ -6729,15 +6729,16 @@ async def handle_upsell_response(
         logger.error(f"Upsell response handling error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to handle upsell response")
 
-@api_router.get("/subscription/plans")
-async def get_available_plans():
-    """Get all available subscription plans"""
-    try:
-        plan_config = await SubscriptionService.load_plan_config()
-        return {"plans": plan_config}
-    except Exception as e:
-        logger.error(f"Get plans error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get subscription plans")
+# DUPLICATE ENDPOINT REMOVED - Using modular subscription router instead
+# @api_router.get("/subscription/plans")
+# async def get_available_plans():
+#     """Get all available subscription plans"""
+#     try:
+#         plan_config = await SubscriptionService.load_plan_config()
+#         return {"plans": plan_config}
+#     except Exception as e:
+#         logger.error(f"Get plans error: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Failed to get subscription plans")
 
 @api_router.post("/subscription/upgrade")
 async def upgrade_subscription(
