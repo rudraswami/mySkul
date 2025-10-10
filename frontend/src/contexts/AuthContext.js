@@ -35,28 +35,30 @@ export function AuthProvider({ children }) {
   // Check if user is logged in on app load
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const response = await axios.get(`${API}/user/profile`);
-        setUser(response.data);
-        // SECURITY: Remove sensitive auth data logging
-        // console.log('Auth check successful:', response.data.email);
-      } catch (error) {
-        // SECURITY: Only log errors in development
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Auth check failed:', error.response?.status);
-        }
-        
-        // Only logout for actual auth errors (401, 403), not network errors
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          // User session invalid - clear user state but don't call logout API
-          setUser(null);
+      if (token) {
+        try {
+          const response = await axios.get(`${API}/user/profile`);
+          setUser(response.data);
+          // SECURITY: Remove sensitive auth data logging
+          // console.log('Auth check successful:', response.data.email);
+        } catch (error) {
+          // SECURITY: Only log errors in development
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Auth check failed:', error.response?.status);
+          }
+          
+          // Only logout for actual auth errors (401, 403), not network errors
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            // User session invalid - clear user state and token
+            logout();
+          }
         }
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [token]);
 
   const login = async (email, password) => {
     try {
