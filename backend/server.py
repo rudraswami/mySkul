@@ -11290,14 +11290,6 @@ async def get_revenue_analytics(user: User = Depends(get_current_user)):
 app.include_router(api_router)
 
 # Security Middleware Configuration
-# CSRF Protection
-app.add_middleware(
-    CSRFMiddleware,
-    secret=CSRF_SECRET,
-    cookie_name="csrftoken",
-    header_name="x-csrftoken"
-)
-
 # CORS middleware - Restrictive configuration for production security
 cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
 if not cors_origins or cors_origins == ['']:
@@ -11318,6 +11310,15 @@ app.add_middleware(
     ],
     expose_headers=["X-CSRF-Token"]
 )
+
+# TODO: Add CSRF protection back after implementing proper token flow
+# CSRF Protection - Temporarily disabled for initial cookie auth implementation  
+# app.add_middleware(
+#     CSRFMiddleware,
+#     secret=CSRF_SECRET,
+#     cookie_name="csrftoken",
+#     header_name="x-csrftoken"
+# )
 
 # Shutdown event
 @app.on_event("shutdown")
