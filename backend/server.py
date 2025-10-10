@@ -4850,8 +4850,8 @@ class SubscriptionService:
 # ============= API ENDPOINTS =============
 
 @api_router.post("/auth/register")
-async def register_user(user_data: UserCreate):
-    """Register a new user"""
+async def register_user(user_data: UserCreate, response: Response):
+    """Register a new user with secure httpOnly cookie authentication"""
     
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
@@ -4871,9 +4871,19 @@ async def register_user(user_data: UserCreate):
     # Create JWT token
     token = create_jwt_token(user.user_id, user.email)
     
+    # Set secure httpOnly cookie
+    response.set_cookie(
+        key="dhruv_ai_auth",
+        value=token,
+        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
+        expires=7 * 24 * 60 * 60,  # 7 days in seconds
+        httponly=True,
+        secure=True,  # HTTPS only in production
+        samesite="lax"  # CSRF protection
+    )
+    
     return {
         "message": "User registered successfully",
-        "token": token,
         "user": {
             "user_id": user.user_id,
             "full_name": user.full_name,
