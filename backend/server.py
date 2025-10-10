@@ -47,7 +47,9 @@ except ImportError as e:
 try:
     from api.auth import router as auth_router_new
     from api.user import router as user_router_new
+    from api.subscription import router as subscription_router_new
     from services.auth_service import AuthService
+    from services.subscription_service import SubscriptionService
     import dependencies as deps
     MODULAR_COMPONENTS_AVAILABLE = True
     logger.info("✅ Modular components loaded successfully")
