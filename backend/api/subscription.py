@@ -3,6 +3,7 @@ Subscription router for managing user subscriptions, plans, and access control
 """
 from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import Dict, Any
+from datetime import datetime, timezone
 
 from models.core import User
 from models.subscription import (
