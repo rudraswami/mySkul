@@ -78,6 +78,38 @@ class DhruvAITester:
         """Test health check endpoint"""
         return self.run_test("Health Check", "GET", "health", 200)
 
+    def test_modular_architecture_health(self):
+        """Test Stage 2: Modular Architecture Health Check"""
+        print("\n🏗️ STAGE 2: MODULAR ARCHITECTURE HEALTH CHECK")
+        print("   Testing /api/health endpoint for modular_architecture: true")
+        
+        success, response = self.run_test(
+            "Modular Architecture Health",
+            "GET",
+            "health",
+            200
+        )
+        
+        if success:
+            modular_arch = response.get('modular_architecture', False)
+            components_loaded = response.get('modular_components_loaded', False)
+            auth_service_ready = response.get('auth_service_ready', False)
+            
+            print(f"   📊 Health Check Response:")
+            print(f"      modular_architecture: {modular_arch}")
+            print(f"      modular_components_loaded: {components_loaded}")
+            print(f"      auth_service_ready: {auth_service_ready}")
+            
+            if modular_arch:
+                print("   ✅ Modular architecture is enabled")
+                return True
+            else:
+                print("   ❌ Modular architecture is NOT enabled")
+                return False
+        else:
+            print("   ❌ Health check endpoint failed")
+            return False
+
     def test_root_endpoint(self):
         """Test root endpoint"""
         return self.run_test("Root Endpoint", "GET", "", 200)
