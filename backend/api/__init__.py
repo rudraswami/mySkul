@@ -1,2 +1,2 @@
 """FastAPI modular routers package"""
-from . import auth
+from . import auth, user
