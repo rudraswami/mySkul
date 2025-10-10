@@ -107,3 +107,13 @@ class ChatMessage(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     feedback: Optional[str] = None  # helpful, not_helpful
     confidence: Optional[float] = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    exam_type: Optional[str] = None
+    target_year: Optional[int] = None
+    current_standard: Optional[str] = None
+    institution: Optional[str] = None
