@@ -11293,9 +11293,9 @@ app.include_router(api_router)
 # CSRF Protection
 app.add_middleware(
     CSRFMiddleware,
-    secret_key=CSRF_SECRET,
-    skip_if_trusted_origin=False,
-    csrf_header="x-csrf-token"
+    secret=CSRF_SECRET,
+    cookie_name="csrftoken",
+    header_name="x-csrftoken"
 )
 
 # CORS middleware - Restrictive configuration for production security
