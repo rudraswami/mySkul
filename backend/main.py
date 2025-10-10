@@ -14,9 +14,9 @@ from fastapi.responses import JSONResponse as FastAPIJSONResponse
 import json as json_lib
 
 # Import modular components
-from .api import auth
-from .services.auth_service import AuthService
-from . import dependencies
+from api import auth
+from services.auth_service import AuthService
+import dependencies
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
