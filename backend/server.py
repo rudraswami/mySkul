@@ -113,6 +113,13 @@ EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
 JWT_SECRET = os.environ['JWT_SECRET']
 CSRF_SECRET = os.environ['CSRF_SECRET']
 
+# Initialize modular auth service if available
+if MODULAR_COMPONENTS_AVAILABLE:
+    modular_auth_service = AuthService(db, JWT_SECRET)
+    deps.db = db
+    deps.auth_service = modular_auth_service
+    logger.info("✅ Modular auth service initialized")
+
 # Logging configuration already moved up
 
 # Stripe Configuration
