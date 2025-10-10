@@ -49,8 +49,8 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "STAGE 1: Authentication & Secret Hardening"
-##     - "STAGE 1: FastAPI Modularization"
+##     - "STAGE 2: FastAPI Modularization"
+##     - "STAGE 1: Subscription Endpoint Unification"
 ##   stuck_tasks: []
 ##   test_all: false
 ##   test_priority: "high_first"
