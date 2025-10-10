@@ -2,32 +2,27 @@
 Authentication router for user registration, login, logout, and CSRF
 """
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
-from motor.motor_asyncio import AsyncIOMotorClient
 
 from ..models.core import User, UserCreate, UserLogin
 from ..services.auth_service import AuthService
+from ..dependencies import get_auth_service, get_database
 
 
 # Router instance
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-# Dependency to get auth service
-def get_auth_service(db: AsyncIOMotorClient, jwt_secret: str) -> AuthService:
-    """Dependency to create auth service instance"""
-    return AuthService(db, jwt_secret)
-
-
 @router.post("/register")
 async def register_user(
     user_data: UserCreate, 
     response: Response,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    db = Depends(get_database)
 ):
     """Register a new user with secure httpOnly cookie authentication"""
     
     # Check if user already exists
-    existing_user = await auth_service.db.users.find_one({"email": user_data.email})
+    existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -39,7 +34,7 @@ async def register_user(
     )
     
     # Save to database
-    await auth_service.db.users.insert_one(user.dict())
+    await db.users.insert_one(user.dict())
     
     # Create JWT token
     token = auth_service.create_jwt_token(user.user_id, user.email)
@@ -63,12 +58,13 @@ async def register_user(
 async def login_user(
     login_data: UserLogin, 
     response: Response,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    db = Depends(get_database)
 ):
     """Login user with secure httpOnly cookie authentication"""
     
     # Find user
-    user_doc = await auth_service.db.users.find_one({"email": login_data.email})
+    user_doc = await db.users.find_one({"email": login_data.email})
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
