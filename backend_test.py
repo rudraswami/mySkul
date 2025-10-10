@@ -17639,13 +17639,16 @@ def main():
     
     success = tester.test_razorpay_comprehensive_integration()
     
+if __name__ == "__main__":
+    tester = DhruvAITester()
+    
+    # Run Stage 2 Modular Authentication System Tests
+    print("🎯 EXECUTING STAGE 2 FASTAPI MODULARIZATION - MODULAR AUTHENTICATION SYSTEM TESTS")
+    success = tester.run_stage2_modular_authentication_tests()
+    
     if success:
-        print("\n🎉 RAZORPAY PAYMENT INTEGRATION TESTING COMPLETED SUCCESSFULLY!")
-        print("✅ All critical Razorpay endpoints are working as expected")
-        print("✅ Phase 1 completion requirements met for payment integration")
+        print("\n🎉 STAGE 2 MODULAR AUTHENTICATION SYSTEM TESTING COMPLETED SUCCESSFULLY")
         sys.exit(0)
     else:
-        print("\n❌ RAZORPAY PAYMENT INTEGRATION TESTING FAILED!")
-        print("🚨 Critical issues found that need immediate attention")
-        print("🔧 Check environment variables, Razorpay client configuration, and API responses")
+        print("\n⚠️ STAGE 2 MODULAR AUTHENTICATION SYSTEM TESTING COMPLETED WITH ISSUES")
         sys.exit(1)
