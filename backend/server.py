@@ -1,6 +1,7 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File, Form, Request, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File, Form, Request, Query, Response, Cookie
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette_csrf import CSRFMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
@@ -27,6 +28,7 @@ from bson.objectid import ObjectId
 from fastapi.responses import JSONResponse as FastAPIJSONResponse
 from fastapi.encoders import jsonable_encoder
 import json as json_lib
+import secrets
 
 # Logging configuration (moved up to be available for imports)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
