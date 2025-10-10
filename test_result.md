@@ -49,8 +49,8 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "STAGE 2: FastAPI Modularization"
-##     - "STAGE 1: Subscription Endpoint Unification"
+##     - "STAGE 2: Router Implementations (subscription.py, ai.py, auto_notes.py, analytics.py, mock_tests.py)"
+##     - "STAGE 2: Service Layer Implementation"
 ##   stuck_tasks: []
 ##   test_all: false
 ##   test_priority: "high_first"
