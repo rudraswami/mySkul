@@ -4932,6 +4932,17 @@ async def login_user(login_data: UserLogin, response: Response):
         }
     }
 
+@api_router.post("/auth/logout")
+async def logout_user(response: Response):
+    """Logout user by clearing the authentication cookie"""
+    response.delete_cookie(
+        key="dhruv_ai_auth",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return {"message": "Logout successful"}
+
 @api_router.get("/user/profile")
 async def get_user_profile(user: User = Depends(get_current_user)):
     """Get user profile"""
