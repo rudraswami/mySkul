@@ -11346,6 +11346,13 @@ app.add_middleware(
 #     header_name="x-csrftoken"
 # )
 
+# Include modular routers for new architecture
+if MODULAR_COMPONENTS_AVAILABLE:
+    # These routers provide the same functionality as the endpoints above but with modular architecture
+    app.include_router(auth_router_new, prefix="/api", tags=["modular-auth"])
+    app.include_router(user_router_new, prefix="/api", tags=["modular-user"])
+    logger.info("✅ Modular routers registered")
+
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_db_client():
