@@ -49,8 +49,10 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "STAGE 2: Router Implementations (subscription.py, ai.py, auto_notes.py, analytics.py, mock_tests.py)"
-##     - "STAGE 2: Service Layer Implementation"
+##     - "STAGE 2b: AI Router Implementation (ai.py)"
+##     - "STAGE 2b: Auto-Notes Router Implementation (auto_notes.py)"
+##     - "STAGE 2b: Analytics Router Implementation (analytics.py)"
+##     - "STAGE 2b: Mock Tests Router Implementation (mock_tests.py)"
 ##   stuck_tasks: []
 ##   test_all: false
 ##   test_priority: "high_first"
