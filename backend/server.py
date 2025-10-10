@@ -7024,15 +7024,16 @@ async def get_context_information(context_id: str, context_type: str, user_id: s
         logger.error(f"Context retrieval error: {str(e)}")
         return ""
 
-@api_router.get("/ai/available-contexts")
-async def get_available_contexts(user: User = Depends(get_current_user)):
-    """Get available contexts for Context Pin feature"""
-    
-    try:
-        contexts = []
-        
-        # Get recent AI chat sessions
-        ai_sessions = await db.ai_sessions.find({
+# MIGRATED TO MODULAR AI ROUTER - Using api/ai.py instead
+# @api_router.get("/ai/available-contexts")
+# async def get_available_contexts(user: User = Depends(get_current_user)):
+#     """Get available contexts for Context Pin feature"""
+#     
+#     try:
+#         contexts = []
+#         
+#         # Get recent AI chat sessions
+#         ai_sessions = await db.ai_sessions.find({
             "user_id": user.user_id
         }).sort("created_at", -1).limit(10).to_list(length=None)
         
