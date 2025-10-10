@@ -17639,6 +17639,28 @@ def main():
     
     success = tester.test_razorpay_comprehensive_integration()
     
+    def run_stage2_modular_authentication_tests(self):
+        """Run Stage 2 FastAPI Modularization - MODULAR AUTHENTICATION SYSTEM Tests"""
+        print("🚀 STARTING STAGE 2 FASTAPI MODULARIZATION - MODULAR AUTHENTICATION SYSTEM TESTING")
+        print("=" * 100)
+        print("CRITICAL TESTING SCOPE:")
+        print("1. **Modular Architecture Health**: Verify /api/health shows modular_architecture: true")
+        print("2. **Modular Auth Registration**: Test new modular auth registration endpoint works correctly")
+        print("3. **Modular Auth Login**: Test new modular login endpoint with hybrid auth (cookies + Bearer tokens)")
+        print("4. **Modular User Profile**: Test new modular user profile GET/PUT endpoints")
+        print("5. **Backward Compatibility**: Ensure existing auth endpoints still work alongside new modular ones")
+        print("6. **Dependency Injection**: Verify AuthService and database dependencies work correctly")
+        print("7. **Hybrid Authentication**: Test both cookie-based and Bearer token authentication methods")
+        print("=" * 100)
+        
+        # Run comprehensive Stage 2 testing
+        overall_success = self.test_stage2_modular_authentication_comprehensive()
+        
+        print(f"\n🏁 STAGE 2 TESTING COMPLETED")
+        print(f"📊 Final Status: {'✅ SUCCESS' if overall_success else '❌ NEEDS ATTENTION'}")
+        
+        return overall_success
+
 if __name__ == "__main__":
     tester = DhruvAITester()
     
