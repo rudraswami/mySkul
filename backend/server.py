@@ -4891,6 +4891,7 @@ async def register_user(user_data: UserCreate, response: Response):
     
     return {
         "message": "User registered successfully",
+        "token": token,  # For backward compatibility with Bearer token auth
         "user": {
             "user_id": user.user_id,
             "full_name": user.full_name,
