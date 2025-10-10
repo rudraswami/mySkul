@@ -34,14 +34,17 @@ import secrets
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# PHASE 2: Audio Processing Imports - Lightweight Version
+# Import new modular components for backward compatibility
 try:
-    from audio_processor_lite import get_audio_processor
-    AUDIO_PROCESSING_ENABLED = True
-    logger.info("✅ Lightweight audio processing loaded successfully")
+    from api.auth import router as auth_router_new
+    from api.user import router as user_router_new
+    from services.auth_service import AuthService
+    import dependencies as deps
+    MODULAR_COMPONENTS_AVAILABLE = True
+    logger.info("✅ Modular components loaded successfully")
 except ImportError as e:
-    logger.warning(f"Audio processing not available: {e}")
-    AUDIO_PROCESSING_ENABLED = False
+    MODULAR_COMPONENTS_AVAILABLE = False
+    logger.warning(f"Modular components not available: {e}")
 
 # Custom JSONResponse that handles MongoDB ObjectId serialization
 class JSONResponse(FastAPIJSONResponse):
