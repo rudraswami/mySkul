@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 from fastapi import HTTPException, Request, Header
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from ..models.core import User
+from models.core import User
 
 
 class AuthService:
