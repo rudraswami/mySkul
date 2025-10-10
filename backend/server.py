@@ -99,6 +99,7 @@ db = client[os.environ['DB_NAME']]
 # AI Chat Configuration - NO FALLBACK ALLOWED FOR SECURITY
 EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
 JWT_SECRET = os.environ['JWT_SECRET']
+CSRF_SECRET = os.environ['CSRF_SECRET']
 
 # Logging configuration already moved up
 
