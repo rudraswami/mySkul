@@ -246,7 +246,8 @@ class AIService:
         try:
             fact_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                model_name="gpt-4o",
+                provider="openai",
+                model="gpt-4o",
                 system_message="You are a fact checker. Verify statements and provide confidence scores."
             )
             
