@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 
 class Phase2Tester:
-    def __init__(self, base_url="https://mobile-auth-revamp.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://ai-education-app.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

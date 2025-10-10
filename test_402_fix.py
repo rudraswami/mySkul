@@ -14,7 +14,7 @@ from datetime import datetime
 class Test402PaymentRequiredFix:
     def __init__(self):
         # Get backend URL from environment
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://mobile-auth-revamp.preview.emergentagent.com')
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-education-app.preview.emergentagent.com')
         self.base_url = f"{backend_url}/api"
         self.token = None
         self.last_response_status = None
