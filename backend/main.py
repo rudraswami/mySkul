@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse as FastAPIJSONResponse
 import json as json_lib
 
 # Import modular components
-from api import auth
+from api import auth, user
 from services.auth_service import AuthService
 import dependencies
 
