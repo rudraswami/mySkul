@@ -57,14 +57,39 @@ class JSONResponse(FastAPIJSONResponse):
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Critical Environment Variable Validation
+def validate_critical_env_vars():
+    """Validate critical environment variables on startup - fail fast if missing"""
+    required_vars = {
+        'JWT_SECRET': 'JWT signing secret is required for authentication security',
+        'MONGO_URL': 'MongoDB connection URL is required',
+        'DB_NAME': 'Database name is required',
+        'EMERGENT_LLM_KEY': 'Emergent LLM API key is required for AI functionality'
+    }
+    
+    missing_vars = []
+    for var, description in required_vars.items():
+        if not os.environ.get(var):
+            missing_vars.append(f"{var}: {description}")
+    
+    if missing_vars:
+        logger.error("CRITICAL: Missing required environment variables:")
+        for var in missing_vars:
+            logger.error(f"  - {var}")
+        logger.error("Application startup aborted for security reasons.")
+        raise RuntimeError("Missing critical environment variables")
+
+# Validate environment variables before starting
+validate_critical_env_vars()
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# AI Chat Configuration
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
-JWT_SECRET = os.environ.get('JWT_SECRET', 'dhruv-ai-secure-jwt-secret-key-2025-change-in-production')
+# AI Chat Configuration - NO FALLBACK ALLOWED FOR SECURITY
+EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
+JWT_SECRET = os.environ['JWT_SECRET']
 
 # Logging configuration already moved up
 
