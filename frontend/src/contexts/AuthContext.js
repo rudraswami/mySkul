@@ -6,8 +6,9 @@ const AuthContext = createContext();
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-console.log('AuthContext - Backend URL:', BACKEND_URL);
-console.log('AuthContext - API URL:', API);
+// SECURITY: Remove console logging for production
+// console.log('AuthContext - Backend URL:', BACKEND_URL);
+// console.log('AuthContext - API URL:', API);
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -16,64 +17,54 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(() => localStorage.getItem('dhruv_ai_token'));
 
-  // Set up axios interceptor for authentication
+  // Configure axios for cookie-based authentication
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
+    axios.defaults.withCredentials = true; // Send cookies with all requests
+  }, []);
 
   // Check if user is logged in on app load
   useEffect(() => {
     const checkAuth = async () => {
-      if (token) {
-        try {
-          const response = await axios.get(`${API}/user/profile`);
-          setUser(response.data);
-          console.log('Auth check successful:', response.data.email);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          console.error('Error status:', error.response?.status);
-          console.error('Error message:', error.response?.data?.detail || error.message);
-          
-          // Only logout for actual auth errors (401, 403), not network errors
-          if (error.response?.status === 401 || error.response?.status === 403) {
-            console.log('Authentication failed - logging out');
-            logout();
-          } else {
-            console.log('Network error - keeping user logged in');
-            // For network errors, we'll keep the user logged in but log the error
-          }
+      try {
+        const response = await axios.get(`${API}/user/profile`);
+        setUser(response.data);
+        // SECURITY: Remove sensitive auth data logging
+        // console.log('Auth check successful:', response.data.email);
+      } catch (error) {
+        // SECURITY: Only log errors in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth check failed:', error.response?.status);
+        }
+        
+        // Only logout for actual auth errors (401, 403), not network errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          // User session invalid - clear user state but don't call logout API
+          setUser(null);
         }
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, [token]);
+  }, []);
 
   const login = async (email, password) => {
     try {
-      console.log('Attempting login with:', { email, API });
+      // SECURITY: Remove sensitive login data from logs
       const response = await axios.post(`${API}/auth/login`, { email, password });
-      console.log('Login response:', response.data);
       
-      const { token: newToken, user: userData } = response.data;
+      const { user: userData } = response.data;
       
-      setToken(newToken);
       setUser(userData);
-      localStorage.setItem('dhruv_ai_token', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
-      console.log('Login successful, token stored:', newToken?.substring(0, 20) + '...');
+      // SECURITY: Remove token logging - cookies are httpOnly
+      // console.log('Login successful, cookie set automatically');
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
-      console.error('Error response:', error.response?.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Login error:', error.response?.status);
+      }
       return { 
         success: false, 
         error: error.response?.data?.detail || error.message || 'Login failed' 
@@ -84,16 +75,15 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     try {
       const response = await axios.post(`${API}/auth/register`, userData);
-      const { token: newToken, user: newUser } = response.data;
+      const { user: newUser } = response.data;
       
-      setToken(newToken);
       setUser(newUser);
-      localStorage.setItem('dhruv_ai_token', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
       return { success: true };
     } catch (error) {
-      console.error('Registration error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Registration error:', error.response?.status);
+      }
       return { 
         success: false, 
         error: error.response?.data?.detail || 'Registration failed' 
@@ -101,11 +91,18 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('dhruv_ai_token');
-    delete axios.defaults.headers.common['Authorization'];
+  const logout = async () => {
+    try {
+      // Call logout endpoint to clear cookie
+      await axios.post(`${API}/auth/logout`);
+    } catch (error) {
+      // Logout should proceed even if API call fails
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Logout API error:', error.response?.status);
+      }
+    } finally {
+      setUser(null);
+    }
   };
 
   const updateUser = (updatedUserData) => {
@@ -118,8 +115,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     updateUser,
-    loading,
-    token
+    loading
   };
 
   return (
