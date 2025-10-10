@@ -4913,13 +4913,15 @@ async def login_user(login_data: UserLogin, response: Response):
     token = create_jwt_token(user.user_id, user.email)
     
     # Set secure httpOnly cookie
+    # Use secure=False for development (HTTP), secure=True for production (HTTPS)
+    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
     response.set_cookie(
         key="dhruv_ai_auth",
         value=token,
         max_age=7 * 24 * 60 * 60,  # 7 days in seconds
         expires=7 * 24 * 60 * 60,  # 7 days in seconds
         httponly=True,
-        secure=True,  # HTTPS only in production
+        secure=is_production,  # HTTPS only in production
         samesite="lax"  # CSRF protection
     )
     
