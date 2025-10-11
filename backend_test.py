@@ -1428,6 +1428,550 @@ class DhruvAITester:
         
         return security_score >= (total_checks * 0.75)  # 75% security checks must pass
 
+    def test_auth_router_csrf_token(self):
+        """Test Auth Router - GET /api/auth/csrf-token"""
+        print("   Testing GET /api/auth/csrf-token endpoint")
+        
+        success, response = self.run_test(
+            "Auth Router CSRF Token",
+            "GET",
+            "auth/csrf-token",
+            200
+        )
+        
+        if success:
+            print("   ✅ Auth router CSRF token working")
+            if 'csrf_token' in response:
+                print(f"   ✅ CSRF token provided")
+            return True
+        else:
+            print("   ❌ Auth router CSRF token failed")
+            return False
+
+    def test_subscription_router_info(self):
+        """Test Subscription Router - GET /api/subscription/info"""
+        print("   Testing GET /api/subscription/info endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for subscription info test")
+            return False
+        
+        success, response = self.run_test(
+            "Subscription Router Info",
+            "GET",
+            "subscription/info",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Subscription router info working")
+            if 'plan' in response:
+                print(f"   ✅ Plan info: {response.get('plan')}")
+            if 'status' in response:
+                print(f"   ✅ Status: {response.get('status')}")
+            return True
+        else:
+            print("   ❌ Subscription router info failed")
+            return False
+
+    def test_subscription_router_check_access(self):
+        """Test Subscription Router - POST /api/subscription/check-access"""
+        print("   Testing POST /api/subscription/check-access endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for check access test")
+            return False
+        
+        check_data = {
+            "feature_name": "mock_tests_weekly"
+        }
+        
+        success, response = self.run_test(
+            "Subscription Router Check Access",
+            "POST",
+            "subscription/check-access",
+            [200, 402],  # Accept both success and payment required
+            data=check_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ✅ Subscription router check access working (Status: {status_code})")
+            
+            has_access = response.get('has_access')
+            print(f"   📊 Access result: {has_access}")
+            
+            if status_code == 402:
+                upsell_info = response.get('upsell_info', {})
+                if upsell_info:
+                    print(f"   ✅ Upsell info provided for 402 response")
+            
+            return True
+        else:
+            print("   ❌ Subscription router check access failed")
+            return False
+
+    def test_subscription_router_track_usage(self):
+        """Test Subscription Router - POST /api/subscription/track-usage"""
+        print("   Testing POST /api/subscription/track-usage endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for track usage test")
+            return False
+        
+        usage_data = {
+            "feature_name": "ai_conversations_daily",
+            "usage_amount": 1
+        }
+        
+        success, response = self.run_test(
+            "Subscription Router Track Usage",
+            "POST",
+            "subscription/track-usage",
+            200,
+            data=usage_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Subscription router track usage working")
+            if 'message' in response:
+                print(f"   ✅ Response: {response.get('message')}")
+            return True
+        else:
+            print("   ❌ Subscription router track usage failed")
+            return False
+
+    def test_ai_router_available_contexts(self):
+        """Test AI Router - GET /api/ai/available-contexts"""
+        print("   Testing GET /api/ai/available-contexts endpoint")
+        
+        success, response = self.run_test(
+            "AI Router Available Contexts",
+            "GET",
+            "ai/available-contexts",
+            200
+        )
+        
+        if success:
+            print("   ✅ AI router available contexts working")
+            if 'subjects' in response:
+                subjects = response.get('subjects', [])
+                print(f"   ✅ Subjects available: {len(subjects)}")
+            if 'ai_modes' in response:
+                modes = response.get('ai_modes', [])
+                print(f"   ✅ AI modes: {modes}")
+            return True
+        else:
+            print("   ❌ AI router available contexts failed")
+            return False
+
+    def test_ai_router_chat_sessions(self):
+        """Test AI Router - GET /api/chat/sessions"""
+        print("   Testing GET /api/chat/sessions endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for chat sessions test")
+            return False
+        
+        success, response = self.run_test(
+            "AI Router Chat Sessions",
+            "GET",
+            "chat/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ AI router chat sessions working")
+            if isinstance(response, list):
+                print(f"   ✅ Sessions retrieved: {len(response)}")
+            return True
+        else:
+            print("   ❌ AI router chat sessions failed")
+            return False
+
+    def test_ai_router_chat_message(self):
+        """Test AI Router - POST /api/chat/message"""
+        print("   Testing POST /api/chat/message endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for chat message test")
+            return False
+        
+        # First create a session
+        session_data = {
+            "title": "Test Session",
+            "subject": "Mathematics",
+            "topic": "Algebra"
+        }
+        
+        session_success, session_response = self.run_test(
+            "Create Chat Session",
+            "POST",
+            "chat/sessions",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if not session_success:
+            print("   ❌ Could not create session for message test")
+            return False
+        
+        session_id = session_response.get('session_id')
+        if not session_id:
+            print("   ❌ No session_id returned from session creation")
+            return False
+        
+        # Now send a message
+        message_data = {
+            "message": "What is quadratic equation?",
+            "session_id": session_id,
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "AI Router Chat Message",
+            "POST",
+            "chat/message",
+            200,
+            data=message_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ AI router chat message working")
+            if 'response' in response:
+                print(f"   ✅ AI response received")
+            return True
+        else:
+            print("   ❌ AI router chat message failed")
+            return False
+
+    def test_ai_router_guardrails_math(self):
+        """Test AI Router - POST /api/guardrails/validate-math"""
+        print("   Testing POST /api/guardrails/validate-math endpoint")
+        
+        math_data = {
+            "expression": "x^2 + 2x + 1 = 0",
+            "units": "equation"
+        }
+        
+        success, response = self.run_test(
+            "AI Router Guardrails Math",
+            "POST",
+            "guardrails/validate-math",
+            200,
+            data=math_data
+        )
+        
+        if success:
+            print("   ✅ AI router guardrails math working")
+            if 'is_valid' in response:
+                print(f"   ✅ Validation result: {response.get('is_valid')}")
+            if 'confidence_score' in response:
+                print(f"   ✅ Confidence: {response.get('confidence_score')}")
+            return True
+        else:
+            print("   ❌ AI router guardrails math failed")
+            return False
+
+    def test_ai_router_guardrails_fact(self):
+        """Test AI Router - POST /api/guardrails/fact-verification"""
+        print("   Testing POST /api/guardrails/fact-verification endpoint")
+        
+        fact_data = {
+            "statement": "The speed of light is 3 x 10^8 m/s",
+            "subject": "Physics",
+            "context": "Physics constants"
+        }
+        
+        success, response = self.run_test(
+            "AI Router Guardrails Fact",
+            "POST",
+            "guardrails/fact-verification",
+            200,
+            data=fact_data
+        )
+        
+        if success:
+            print("   ✅ AI router guardrails fact verification working")
+            if 'is_verified' in response:
+                print(f"   ✅ Verification result: {response.get('is_verified')}")
+            if 'confidence_score' in response:
+                print(f"   ✅ Confidence: {response.get('confidence_score')}")
+            return True
+        else:
+            print("   ❌ AI router guardrails fact verification failed")
+            return False
+
+    def test_ai_router_guardrails_citations(self):
+        """Test AI Router - GET /api/guardrails/citations/{subject}/{topic}"""
+        print("   Testing GET /api/guardrails/citations/{subject}/{topic} endpoint")
+        
+        success, response = self.run_test(
+            "AI Router Guardrails Citations",
+            "GET",
+            "guardrails/citations/Mathematics/Quadratic Equations",
+            200
+        )
+        
+        if success:
+            print("   ✅ AI router guardrails citations working")
+            if isinstance(response, list):
+                print(f"   ✅ Citations retrieved: {len(response)}")
+                if response:
+                    citation = response[0]
+                    if 'source_title' in citation:
+                        print(f"   ✅ Sample citation: {citation.get('source_title')}")
+            return True
+        else:
+            print("   ❌ AI router guardrails citations failed")
+            return False
+
+    def test_analytics_router_dashboard(self):
+        """Test Analytics Router - GET /api/analytics/dashboard"""
+        print("   Testing GET /api/analytics/dashboard endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for analytics dashboard test")
+            return False
+        
+        success, response = self.run_test(
+            "Analytics Router Dashboard",
+            "GET",
+            "analytics/dashboard",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Analytics router dashboard working")
+            if 'total_study_time' in response:
+                print(f"   ✅ Study time: {response.get('total_study_time')}")
+            if 'current_streak' in response:
+                print(f"   ✅ Streak: {response.get('current_streak')}")
+            return True
+        else:
+            print("   ❌ Analytics router dashboard failed")
+            return False
+
+    def test_analytics_router_daily_goals(self):
+        """Test Analytics Router - GET /api/analytics/daily-goals"""
+        print("   Testing GET /api/analytics/daily-goals endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for daily goals test")
+            return False
+        
+        success, response = self.run_test(
+            "Analytics Router Daily Goals",
+            "GET",
+            "analytics/daily-goals",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Analytics router daily goals working")
+            if 'goals' in response:
+                goals = response.get('goals', [])
+                print(f"   ✅ Goals retrieved: {len(goals)}")
+            return True
+        else:
+            print("   ❌ Analytics router daily goals failed")
+            return False
+
+    def test_analytics_router_subject_progress(self):
+        """Test Analytics Router - GET /api/analytics/subject-progress"""
+        print("   Testing GET /api/analytics/subject-progress endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for subject progress test")
+            return False
+        
+        success, response = self.run_test(
+            "Analytics Router Subject Progress",
+            "GET",
+            "analytics/subject-progress",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Analytics router subject progress working")
+            if 'subjects' in response:
+                subjects = response.get('subjects', [])
+                print(f"   ✅ Subject progress data: {len(subjects)} subjects")
+            return True
+        else:
+            print("   ❌ Analytics router subject progress failed")
+            return False
+
+    def test_authentication_flow_comprehensive(self):
+        """Test comprehensive authentication flow: Register → Login → Use token"""
+        print("   Testing comprehensive authentication flow")
+        
+        # Step 1: Register new user
+        fresh_email = f"auth_flow_{int(time.time())}@dhruvai.com"
+        reg_data = {
+            "full_name": "Auth Flow Test User",
+            "email": fresh_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "target_year": 2026
+        }
+        
+        reg_success, reg_response = self.run_test(
+            "Auth Flow - Register",
+            "POST",
+            "auth/register",
+            200,
+            data=reg_data
+        )
+        
+        if not reg_success:
+            print("   ❌ Registration step failed")
+            return False
+        
+        # Step 2: Login with new user
+        login_data = {
+            "email": fresh_email,
+            "password": "password123"
+        }
+        
+        login_success, login_response = self.run_test(
+            "Auth Flow - Login",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if not login_success:
+            print("   ❌ Login step failed")
+            return False
+        
+        # Step 3: Use token for protected endpoint
+        token = login_response.get('token')
+        if not token:
+            print("   ❌ No token received from login")
+            return False
+        
+        profile_success, profile_response = self.run_test(
+            "Auth Flow - Use Token",
+            "GET",
+            "user/profile",
+            200,
+            headers={'Authorization': f'Bearer {token}'}
+        )
+        
+        if profile_success:
+            print("   ✅ Complete authentication flow working")
+            return True
+        else:
+            print("   ❌ Token usage step failed")
+            return False
+
+    def test_dependency_injection_comprehensive(self):
+        """Test dependency injection by checking service availability"""
+        print("   Testing dependency injection via service endpoints")
+        
+        # Test if services are properly injected by checking multiple endpoints
+        service_tests = [
+            ("auth/register", "POST"),
+            ("subscription/plans", "GET"),
+            ("ai/available-contexts", "GET")
+        ]
+        
+        service_results = []
+        
+        for endpoint, method in service_tests:
+            if method == "POST" and "auth" in endpoint:
+                # Test with sample data
+                test_data = {
+                    "full_name": "DI Test User",
+                    "email": f"di_test_{int(time.time())}@dhruvai.com",
+                    "password": "password123",
+                    "exam_type": "JEE",
+                    "target_year": 2026
+                }
+                
+                success, response = self.run_test(
+                    f"DI Test - {endpoint}",
+                    method,
+                    endpoint,
+                    200,
+                    data=test_data
+                )
+            else:
+                success, response = self.run_test(
+                    f"DI Test - {endpoint}",
+                    method,
+                    endpoint,
+                    200
+                )
+            
+            service_results.append(success)
+        
+        success_rate = sum(service_results) / len(service_results)
+        
+        if success_rate >= 0.8:  # 80% of services working
+            print("   ✅ Dependency injection working (services accessible)")
+            return True
+        else:
+            print(f"   ❌ Dependency injection issues (success rate: {success_rate:.1%})")
+            return False
+
+    def test_error_handling_consistency(self):
+        """Test consistent error handling across routers"""
+        print("   Testing error handling consistency")
+        
+        error_tests = [
+            # Test 401 errors (no auth)
+            ("user/profile", "GET", 401, {}),
+            ("subscription/info", "GET", 401, {}),
+            ("analytics/dashboard", "GET", 401, {}),
+            
+            # Test 422 errors (invalid data)
+            ("auth/register", "POST", 422, {"invalid": "data"}),
+        ]
+        
+        consistent_errors = 0
+        total_tests = len(error_tests)
+        
+        for endpoint, method, expected_status, data in error_tests:
+            if method == "GET":
+                success, response = self.run_test(
+                    f"Error Test - {endpoint}",
+                    method,
+                    endpoint,
+                    expected_status
+                )
+            else:
+                success, response = self.run_test(
+                    f"Error Test - {endpoint}",
+                    method,
+                    endpoint,
+                    expected_status,
+                    data=data
+                )
+            
+            if success:
+                consistent_errors += 1
+        
+        consistency_rate = consistent_errors / total_tests
+        
+        if consistency_rate >= 0.75:  # 75% consistency required
+            print(f"   ✅ Error handling consistent ({consistency_rate:.1%})")
+            return True
+        else:
+            print(f"   ❌ Error handling inconsistent ({consistency_rate:.1%})")
+            return False
+
     def test_user_registration(self):
         """Test user registration"""
         registration_data = {
