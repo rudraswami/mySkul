@@ -10,6 +10,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import FormattedAIResponse, { DualResponseContainer, formatMathExpressions, formatVisualResponse, formatProfessorMentorResponse } from './FormattedAIResponse';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
+import AITutor20 from './AITutor20';
 import { 
   Brain, 
   Send, 
@@ -46,7 +47,9 @@ import {
   MoreVertical,
   Trash2,
   Crown,
-  Menu
+  Menu,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import axios from 'axios';
 
