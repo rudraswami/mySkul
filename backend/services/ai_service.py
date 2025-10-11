@@ -266,20 +266,7 @@ Subject Context: {subject}"""
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
             mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
             
-            # Start both calls concurrently for better performance
-            import asyncio
-            
-            async def get_professor_response():
-                return await self._safe_llm_call(
-                    professor_chat, professor_message, "professor", subject, message
-                )
-            
-            async def get_mentor_response():
-                return await self._safe_llm_call(
-                    mentor_chat, mentor_message, "mentor", subject, message
-                )
-            
-            # Implement FAST-FIRST strategy: immediate fallbacks + background LLM
+            # FAST-FIRST strategy: immediate fallbacks + background LLM (no waiting!)
             logger.info("🚀 Using fast-first strategy for immediate response")
             
             # Generate immediate high-quality fallbacks
