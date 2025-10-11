@@ -22,7 +22,8 @@ import {
 import { 
   useCurrentSubscription, 
   useSubscriptionPlans, 
-  useSubscriptionInfo 
+  useSubscriptionInfo,
+  useUpgradeSubscription
 } from '../hooks/useSubscription';
 
 export default function Subscription() {
