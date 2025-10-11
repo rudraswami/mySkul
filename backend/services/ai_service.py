@@ -276,11 +276,11 @@ Subject Context: {subject}"""
             # Log that we're using fallbacks for better UX
             logger.info(f"✅ Immediate fallback responses generated in <1s (subject: {subject})")
             
-            # Optional: Start LLM calls in background for future improvement
-            # (Don't await them - let them complete for caching/analytics)
-            asyncio.create_task(self._background_llm_improvement(
-                professor_chat, mentor_chat, professor_message, mentor_message, subject, message, user_id
-            ))
+            # Background LLM calls disabled during performance optimization
+            # asyncio.create_task(self._background_llm_improvement(
+            #     professor_chat, mentor_chat, professor_message, mentor_message, subject, message, user_id
+            # ))
+            logger.info("⚡ Background LLM calls disabled for maximum performance")
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
