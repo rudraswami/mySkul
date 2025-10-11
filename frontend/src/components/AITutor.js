@@ -657,6 +657,9 @@ export default function AITutor() {
         try {
           console.log(`🔄 AI API call - attempt ${attempt}/${retryAttempts}`);
           
+          // STREAMING PHASE: Set phase to streaming when API call starts
+          setMessagePhase('streaming');
+          
           if (aiMode === 'dual') {
             response = await axios.post(`${API}/ai/dual-response`, {
               message: messageToSend,
