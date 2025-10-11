@@ -16788,7 +16788,7 @@ def main():
         
         return all_valid
     
-    def test_backward_compatibility_new_routers(self):
+    def test_new_backward_compatibility_new_routers(self):
         """Test Backward Compatibility - New routers don't break existing functionality"""
         print("   Testing backward compatibility with existing routers")
         
