@@ -191,25 +191,112 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         return formulas
     
     def clean_text(self, text: str) -> str:
-        """Clean special characters and escape sequences from text"""
+        """
+        Comprehensive text cleaning - removes ALL escape characters and artifacts
+        AI Tutor 2.4 enhancement
+        """
         if not text:
             return ''
         
-        # Remove common escape sequences
+        # First pass: Remove escape sequences
         cleaned = text.replace('\\n', '\n')
-        cleaned = cleaned.replace('\\t', '\t')
+        cleaned = cleaned.replace('\\r', '\r')
+        cleaned = cleaned.replace('\\t', '    ')
         cleaned = cleaned.replace('\\"', '"')
         cleaned = cleaned.replace("\\'", "'")
-        cleaned = cleaned.replace('\\\\', '\\')
+        cleaned = cleaned.replace('\\\\', '')
+        cleaned = cleaned.replace('\\/', '/')
         
-        # Remove non-breaking spaces
+        # Remove non-breaking spaces and special unicode
         cleaned = cleaned.replace('\u00a0', ' ')
         cleaned = cleaned.replace('\xa0', ' ')
+        cleaned = cleaned.replace('\u200b', '')  # Zero-width space
+        cleaned = cleaned.replace('\u2009', ' ')  # Thin space
+        cleaned = cleaned.replace('\u202f', ' ')  # Narrow no-break space
         
-        # Clean up multiple spaces
-        cleaned = re.sub(r' +', ' ', cleaned)
+        # Clean up LaTeX artifacts
+        cleaned = cleaned.replace('\\[', '[')
+        cleaned = cleaned.replace('\\]', ']')
+        cleaned = cleaned.replace('\\(', '(')
+        cleaned = cleaned.replace('\\)', ')')
         
-        # Clean up multiple newlines
-        cleaned = re.sub(r'\n\n+', '\n\n', cleaned)
+        # Remove any remaining backslashes not part of LaTeX
+        cleaned = re.sub(r'\\(?![a-zA-Z{])', '', cleaned)
+        
+        # Clean up multiple spaces (but preserve intentional spacing)
+        cleaned = re.sub(r' {3,}', '  ', cleaned)
+        cleaned = re.sub(r'  +', ' ', cleaned)
+        
+        # Clean up multiple newlines (max 2 consecutive)
+        cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+        
+        # Remove leading/trailing whitespace from each line
+        lines = [line.strip() for line in cleaned.split('\n')]
+        cleaned = '\n'.join(lines)
         
         return cleaned.strip()
+    
+    def split_mentor_response(self, mentor_text: str) -> Dict[str, str]:
+        """
+        Split mentor response into structured emotional sections
+        AI Tutor 2.4 feature
+        """
+        cleaned = self.clean_text(mentor_text)
+        
+        # Initialize sections
+        sections = {
+            'motivation_spark': '',
+            'simplified_recap': '',
+            'confidence_tips': '',
+            'encouragement': ''
+        }
+        
+        # Split into sentences
+        sentences = re.split(r'[.!?]+', cleaned)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        
+        if not sentences:
+            sections['motivation_spark'] = cleaned[:150]
+            return sections
+        
+        # First 1-2 sentences as motivation spark
+        sections['motivation_spark'] = '. '.join(sentences[:min(2, len(sentences))]) + '.'
+        
+        # Identify key points (numbered, bulleted, or "Remember", "Important")
+        key_points = []
+        remaining = []
+        
+        for sentence in sentences[2:]:
+            sentence_lower = sentence.lower()
+            if (re.match(r'^\d+[\.\)]', sentence) or 
+                sentence.startswith('•') or 
+                sentence.startswith('-') or
+                any(keyword in sentence_lower for keyword in ['remember', 'important', 'key', 'tip'])):
+                key_points.append(sentence)
+            else:
+                remaining.append(sentence)
+        
+        # Build simplified recap (bullet points)
+        if key_points:
+            sections['simplified_recap'] = '\n'.join([f"• {point.strip()}" for point in key_points[:3]])
+        elif len(remaining) > 0:
+            sections['simplified_recap'] = '\n'.join([f"• {sent.strip()}" for sent in remaining[:3]])
+        
+        # Confidence tips (action-oriented sentences)
+        confidence_words = ['practice', 'try', 'start', 'begin', 'approach', 'focus', 'study', 'learn']
+        tips = [s for s in remaining if any(word in s.lower() for word in confidence_words)]
+        if tips:
+            sections['confidence_tips'] = ' '.join(tips[:2])
+        
+        # Last sentence as encouragement
+        if len(sentences) > 3:
+            sections['encouragement'] = sentences[-1].strip() + '.'
+        elif not sections['encouragement']:
+            sections['encouragement'] = "You've got this! Keep up the great work! 🌟"
+        
+        # Trim each section to reasonable length
+        for key in sections:
+            if sections[key] and len(sections[key]) > 200:
+                sections[key] = sections[key][:197] + '...'
+        
+        return sections
