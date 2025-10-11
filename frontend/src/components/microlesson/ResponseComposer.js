@@ -143,7 +143,7 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <span className="text-2xl">📘</span>
                 <h3 className="text-lg font-bold text-gray-800">Core Concept</h3>
               </div>
-              <p className="text-gray-800 text-base leading-relaxed pl-8">
+              <p className="text-gray-800 text-base leading-loose pl-8" style={{ lineHeight: '1.8' }}>
                 {cleanText(microLessonSections.concept_overview)}
               </p>
             </div>
