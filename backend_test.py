@@ -1434,7 +1434,6 @@ class DhruvAITester:
             print(f"   📊 Cookie set in response: {cookies_set}")
             
             # Make second request with cookie to get the token
-            import requests
             session = requests.Session()
             
             # First request to set cookie
