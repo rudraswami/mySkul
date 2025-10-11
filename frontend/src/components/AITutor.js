@@ -617,6 +617,8 @@ export default function AITutor() {
     // SUBMIT PHASE: Store message and start loading, but keep input visible
     setLoading(true);
     const messageToSend = currentMessage;
+    setPendingMessage(messageToSend);
+    setMessagePhase('submit');
     
     // DO NOT clear input here - keep it visible during processing
 
