@@ -67,71 +67,103 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         raise ValueError("No valid JSON found in parser response")
     
     def _rule_based_parse(self, response: str, subject: str, topic: str) -> Dict[str, Any]:
-        """Rule-based parsing as fallback"""
+        """Enhanced rule-based parsing with better extraction"""
         sections = {
             'concept_overview': '',
-            'key_formula': '',
+            'key_formula': [],
             'step_by_step': '',
             'real_life_analogy': '',
             'mentor_tip': '',
             'visual_prompt': f"Generate a visual illustration for {topic} in {subject}"
         }
         
-        # Split response into paragraphs
+        # Split response into paragraphs and lines
         paragraphs = [p.strip() for p in response.split('\n\n') if p.strip()]
+        lines = [l.strip() for l in response.split('\n') if l.strip()]
         
         if len(paragraphs) == 0:
-            sections['concept_overview'] = response[:200]
+            sections['concept_overview'] = response[:300]
             return sections
         
-        # First paragraph is usually concept overview
-        sections['concept_overview'] = paragraphs[0] if paragraphs else ''
-        
-        # Look for formulas (LaTeX or equation patterns)
-        formula_patterns = [
-            r'\$\$.*?\$\$',
-            r'\$.*?\$',
-            r'[A-Za-z]\s*=\s*[^,\n]+',
-            r'\b[A-Z][a-z]?\s*=\s*[\d\w\+\-\*/\^]+',
-        ]
-        for pattern in formula_patterns:
-            formulas = re.findall(pattern, response)
-            if formulas:
-                sections['key_formula'] = ' '.join(formulas[:3])
+        # Extract concept overview (first substantial paragraph, up to 300 chars)
+        for para in paragraphs[:3]:
+            if len(para) > 50 and len(para) < 500:
+                sections['concept_overview'] = para
                 break
         
-        # Look for numbered steps
-        step_patterns = [
-            r'(?:Step\s+\d+|^\d+\.|^●|^•|\*\*Step)',
-        ]
-        for pattern in step_patterns:
-            if re.search(pattern, response, re.MULTILINE | re.IGNORECASE):
-                # Extract steps section
-                steps_text = '\n'.join([p for p in paragraphs if re.search(pattern, p, re.IGNORECASE)])
-                if steps_text:
-                    sections['step_by_step'] = steps_text
-                    break
+        if not sections['concept_overview']:
+            sections['concept_overview'] = paragraphs[0][:300] if paragraphs else response[:300]
         
-        # Look for analogies or examples
-        analogy_keywords = ['for example', 'imagine', 'think of', 'like', 'similar to', 'real-world', 'real life']
+        # Enhanced formula extraction
+        formulas = self.extract_formulas(response)
+        
+        # Also look for equations in text (e.g., F = ma, E = mc^2)
+        simple_equation_pattern = r'(?:^|[^a-zA-Z])([A-Z][a-z]?\s*=\s*[^\.,\n]{2,40})(?:[,\.]|$)'
+        simple_equations = re.findall(simple_equation_pattern, response, re.MULTILINE)
+        
+        all_formulas = list(set(formulas + simple_equations))
+        sections['key_formula'] = [f.strip() for f in all_formulas if len(f.strip()) > 2][:3]
+        
+        # Extract step-by-step content
+        step_blocks = []
+        current_block = []
+        in_step_section = False
+        
+        for line in lines:
+            # Check if line starts a step
+            if re.match(r'^(\d+[\.\):]|Step\s+\d+|[•\-\*]\s)', line, re.IGNORECASE):
+                if current_block:
+                    step_blocks.append('\n'.join(current_block))
+                current_block = [line]
+                in_step_section = True
+            elif in_step_section and line and not line.startswith('#'):
+                current_block.append(line)
+            elif in_step_section and not line:
+                if current_block:
+                    step_blocks.append('\n'.join(current_block))
+                    current_block = []
+                in_step_section = False
+        
+        if current_block:
+            step_blocks.append('\n'.join(current_block))
+        
+        if step_blocks:
+            sections['step_by_step'] = '\n\n'.join(step_blocks[:5])
+        
+        # Extract real-life examples and applications
+        example_keywords = ['example', 'application', 'real-world', 'real life', 'practical', 'consider', 'imagine']
+        for i, para in enumerate(paragraphs):
+            para_lower = para.lower()
+            if any(keyword in para_lower for keyword in example_keywords):
+                # Get this paragraph and maybe the next one
+                example_text = para
+                if i + 1 < len(paragraphs) and len(paragraphs[i + 1]) < 300:
+                    example_text += '\n\n' + paragraphs[i + 1]
+                sections['real_life_analogy'] = example_text[:500]
+                break
+        
+        # Extract tips and important notes
+        tip_indicators = ['tip', 'remember', 'important', 'note', 'key point', 'pro tip', 'keep in mind', '💡', '⚠️']
         for para in paragraphs:
-            if any(keyword in para.lower() for keyword in analogy_keywords):
-                sections['real_life_analogy'] = para
+            para_lower = para.lower()
+            if any(tip in para_lower for tip in tip_indicators):
+                sections['mentor_tip'] = para[:400]
                 break
         
-        # Look for tips or advice
-        tip_keywords = ['tip:', 'remember', 'important', 'note:', 'pro tip', 'keep in mind']
-        for para in paragraphs:
-            if any(keyword in para.lower() for keyword in tip_keywords):
-                sections['mentor_tip'] = para
-                break
-        
-        # If no specific sections found, distribute content
-        if not sections['step_by_step'] and len(paragraphs) > 1:
-            sections['step_by_step'] = '\n\n'.join(paragraphs[1:min(3, len(paragraphs))])
+        # If no specific sections, intelligently distribute
+        if not sections['step_by_step'] and len(paragraphs) > 2:
+            # Take middle paragraphs as step-by-step
+            start_idx = 1 if sections['concept_overview'] else 0
+            end_idx = -1 if sections['real_life_analogy'] else len(paragraphs)
+            sections['step_by_step'] = '\n\n'.join(paragraphs[start_idx:min(end_idx, start_idx + 3)])
         
         if not sections['real_life_analogy'] and len(paragraphs) > 3:
+            # Last paragraph as analogy
             sections['real_life_analogy'] = paragraphs[-1]
+        
+        if not sections['mentor_tip'] and len(paragraphs) > 4:
+            # Second to last as tip
+            sections['mentor_tip'] = paragraphs[-2]
         
         return sections
     
