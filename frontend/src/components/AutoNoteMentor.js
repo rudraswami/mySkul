@@ -54,16 +54,30 @@ export default function AutoNoteMentor() {
     trackFeatureUsage, 
     getFeatureRemaining, 
     getFeatureLimit,
-    currentTier 
-, 
+    currentTier, 
     openUpsellModal, 
     setUpsellModal
   } = useSubscription();
   
+  // #PHASE3-SECURITY-FRONTEND - React Query hooks for data fetching
+  const { 
+    data: sessionsData, 
+    isLoading: sessionsLoading,
+    refetch: refetchSessions 
+  } = useAutoNotesSessions();
+  
+  const { 
+    data: analyticsData, 
+    isLoading: analyticsLoading 
+  } = useAutoNotesAnalytics();
+  
+  const startSessionMutation = useStartAutoNotesSession();
+  
   // Enhanced Session Management
   const [currentSession, setCurrentSession] = useState(null);
   const [sessionStatus, setSessionStatus] = useState('idle'); // idle, recording, processing, completed, uploading
-  const [sessions, setSessions] = useState([]);
+  // #PHASE3-SECURITY-FRONTEND - Use React Query data with fallbacks
+  const [sessions, setSessions] = useState(sessionsData?.sessions || []);
   
   // Enhanced Recording & Upload State
   const [isRecording, setIsRecording] = useState(false);
