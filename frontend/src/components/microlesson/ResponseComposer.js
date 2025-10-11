@@ -265,7 +265,13 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <h3 className="font-bold text-yellow-900">Pro Tip</h3>
               </div>
               <div className="text-yellow-900 text-sm leading-relaxed">
-                <LatexRenderer text={microLessonSections.mentor_tip} />
+                <ReactMarkdown 
+                  components={{
+                    p: ({ children }) => <LatexRenderer text={children} />
+                  }}
+                >
+                  {sanitizeText(microLessonSections.mentor_tip)}
+                </ReactMarkdown>
               </div>
             </div>
           )}
