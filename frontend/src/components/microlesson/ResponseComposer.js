@@ -61,19 +61,32 @@ const ResponseComposer = ({ message, onQuickAction }) => {
     return options[Math.floor(Math.random() * options.length)];
   };
   
-  // Clean special characters from text (preserving LaTeX for LatexRenderer)
-  const cleanText = (text) => {
+  // Enhanced text sanitization using DOMPurify for safe markdown
+  const sanitizeText = (text) => {
     if (!text) return '';
-    return text
-      .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold markers
-      .replace(/\*(.+?)\*/g, '$1')      // Remove italic markers
-      .replace(/✅/g, '')                // Remove checkmarks
-      .replace(/❌/g, '')
+    
+    // First pass: remove escaped characters and emojis
+    let cleaned = text
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
       .replace(/\\\\/g, '')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      // Remove emojis but preserve text
+      .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+      // Remove specific symbols
+      .replace(/[✅❌☑💡🔎📔💙👇📚🧮🧠🎯⚡💪🌟]/g, '')
+      // Remove numbered emojis
+      .replace(/[1-9]️⃣|🔟/g, '')
       .replace(/\u00a0/g, ' ')
       .trim();
+    
+    // Second pass: sanitize with DOMPurify for safe HTML/markdown
+    return DOMPurify.sanitize(cleaned, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'code'],
+      ALLOWED_ATTR: []
+    });
   };
 
   // Extract formulas
