@@ -7,6 +7,7 @@ import secrets
 from pathlib import Path
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette_csrf import CSRFMiddleware
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson.objectid import ObjectId
