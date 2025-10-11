@@ -16249,7 +16249,7 @@ def main():
             print("   ❌ Auto-Notes session detail failed")
             return False
     
-    def test_auto_notes_analytics(self):
+    def test_new_auto_notes_analytics(self):
         """Test Auto-Notes Router - GET /api/auto-notes/analytics"""
         print("   Testing GET /api/auto-notes/analytics endpoint")
         
