@@ -26,50 +26,54 @@ const FormulaCard = ({ formulas, title = 'Key Formula' }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
-      className="p-6 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 shadow-sm mb-4"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="p-8 rounded-2xl bg-gradient-to-br from-violet-100 via-purple-50 to-pink-50 border-2 border-violet-300 shadow-lg hover:shadow-2xl transition-all"
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start space-x-4">
         <div className="flex-shrink-0 mt-1">
-          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-            <span className="text-2xl">🧮</span>
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-md">
+            <span className="text-3xl">🧮</span>
           </div>
         </div>
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-900 font-poppins">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-2xl font-bold text-gray-900 font-poppins flex items-center">
               {title}
+              <span className="ml-2 text-2xl">📐</span>
             </h3>
             <button
-              onClick={() => handleCopy(formulas[0])}
-              className="p-2 hover:bg-white rounded-lg transition-colors"
+              onClick={() => handleCopy(typeof formulas === 'string' ? formulas : formulas[0])}
+              className="p-3 hover:bg-white rounded-xl transition-all hover:scale-110"
               title="Copy formula"
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-600" />
+                <Check className="w-5 h-5 text-green-600" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-500" />
+                <Copy className="w-5 h-5 text-violet-600" />
               )}
             </button>
           </div>
           
-          <div className="bg-white p-4 rounded-lg">
+          <div className="bg-white p-6 rounded-xl shadow-inner border-2 border-violet-100">
             {typeof formulas === 'string' ? (
-              <div className="text-center text-xl">
+              <div className="text-center">
                 <BlockMath math={cleanFormula(formulas)} />
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {formulas.map((formula, index) => (
-                  <div key={index} className="text-center text-xl">
+                  <div key={index} className="text-center">
                     <BlockMath math={cleanFormula(formula)} />
                   </div>
                 ))}
               </div>
             )}
           </div>
+          <p className="text-xs text-violet-700 mt-3 text-center font-medium">
+            💡 Tip: Click the copy icon to save this formula!
+          </p>
         </div>
       </div>
     </motion.div>
