@@ -7974,21 +7974,41 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
-        if success and 'primary' in response and 'response' in response['primary']:
-            sanitized_text = response['primary']['response']
-            print(f"   Response preview: {sanitized_text[:100]}...")
+        if success:
+            print(f"   ✅ API call successful, analyzing response structure...")
             
-            # Check for removal of emojis
-            common_emojis = ['✅', '❌', '💡', '🔎', '1️⃣', '2️⃣', '3️⃣', '🎯', '📊', '⚡']
-            has_emojis = any(emoji in sanitized_text for emoji in common_emojis)
+            # Check different possible response structures
+            sanitized_text = None
+            if 'dual_response' in response:
+                dual_resp = response['dual_response']
+                if 'primary' in dual_resp and 'response' in dual_resp['primary']:
+                    sanitized_text = dual_resp['primary']['response']
+                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
+                    sanitized_text = dual_resp['professor']['response']
+            elif 'primary' in response and 'response' in response['primary']:
+                sanitized_text = response['primary']['response']
+            elif 'professor_response' in response:
+                sanitized_text = response['professor_response']
+            elif 'response' in response:
+                sanitized_text = response['response']
             
-            if not has_emojis:
-                print("   ✅ Emojis removed from response")
-                test_results['text_sanitization_emojis'] = True
+            if sanitized_text:
+                print(f"   Response preview: {sanitized_text[:100]}...")
+                
+                # Check for removal of emojis
+                common_emojis = ['✅', '❌', '💡', '🔎', '1️⃣', '2️⃣', '3️⃣', '🎯', '📊', '⚡']
+                has_emojis = any(emoji in sanitized_text for emoji in common_emojis)
+                
+                if not has_emojis:
+                    print("   ✅ Emojis removed from response")
+                    test_results['text_sanitization_emojis'] = True
+                else:
+                    print("   ❌ Emojis still present in response")
+                    found_emojis = [emoji for emoji in common_emojis if emoji in sanitized_text]
+                    print(f"   Found emojis: {found_emojis}")
             else:
-                print("   ❌ Emojis still present in response")
-                found_emojis = [emoji for emoji in common_emojis if emoji in sanitized_text]
-                print(f"   Found emojis: {found_emojis}")
+                print("   ❌ Could not find response text in API response")
+                print(f"   Available keys: {list(response.keys())}")
         else:
             print("   ❌ Failed to get response for emoji test")
         
