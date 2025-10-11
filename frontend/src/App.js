@@ -56,8 +56,8 @@ function App() {
           </Router>
         </SubscriptionProvider>
       </AuthProvider>
-      {/* React Query DevTools - only in development */}
-      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+      {/* React Query DevTools - temporarily disabled due to compatibility issues */}
+      {/* {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />} */}
     </QueryClientProvider>
   );
 }
