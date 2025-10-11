@@ -60,10 +60,10 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "STAGE 2b: AI Router Implementation (ai.py)"
-##     - "STAGE 2b: Auto-Notes Router Implementation (auto_notes.py)"
-##     - "STAGE 2b: Analytics Router Implementation (analytics.py)"
-##     - "STAGE 2b: Mock Tests Router Implementation (mock_tests.py)"
+##     - "STAGE 3: React Query Migration Validation"
+##     - "STAGE 3: CSRF Protection Testing"
+##     - "STAGE 3: Frontend Component Data Integrity Testing"
+##     - "STAGE 3: API Client CSRF Token Exchange Testing"
 ##   stuck_tasks: []
 ##   test_all: false
 ##   test_priority: "high_first"
