@@ -137,6 +137,12 @@ export default function AITutor() {
   const [personalizedDifficulty, setPersonalizedDifficulty] = useState(0.5);
   const [feedbackSentiment, setFeedbackSentiment] = useState('neutral');
   
+  // AI Tutor Subscription States
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeHint, setUpgradeHint] = useState(null);
+  const [accessInfo, setAccessInfo] = useState(null);
+  const [sessionUsage, setSessionUsage] = useState({ remaining: 0, total: 0, usage_percent: 0 });
+  
   // Phase E: Wellness Integration State
   const [showWellnessCheck, setShowWellnessCheck] = useState(false);
   const [wellnessData, setWellnessData] = useState({
