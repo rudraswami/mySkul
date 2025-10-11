@@ -18,19 +18,92 @@ const MentorCard = ({ mentorData, weight }) => {
 
   const sections = mentorData.mentor_sections || {};
   
-  // Clean text helper (preserving LaTeX for LatexRenderer)
-  const cleanText = (text) => {
+  // Enhanced text sanitization and section parsing
+  const sanitizeText = (text) => {
     if (!text) return '';
-    return text
-      .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold markers
-      .replace(/\*(.+?)\*/g, '$1')      // Remove italic markers
-      .replace(/✅/g, '')                // Remove checkmarks
-      .replace(/❌/g, '')
+    
+    let cleaned = text
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
       .replace(/\\\\/g, '')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      // Remove emojis but preserve text
+      .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+      // Remove specific symbols  
+      .replace(/[✅❌☑💡🔎📔💙👇📚🧮🧠🎯⚡💪🌟]/g, '')
+      // Remove numbered emojis
+      .replace(/[1-9]️⃣|🔟/g, '')
+      .replace(/\u00a0/g, ' ')
       .trim();
+    
+    return DOMPurify.sanitize(cleaned, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'code'],
+      ALLOWED_ATTR: []
+    });
   };
+
+  // Split mentor text by sections using ### markers or regex
+  const splitMentorText = (text) => {
+    if (!text) return {};
+    
+    const cleanedText = sanitizeText(text);
+    const sections = {
+      motivation_spark: '',
+      simplified_recap: '',
+      confidence_tips: '',
+      encouragement: ''
+    };
+    
+    // Split by ### markers or numbered sections
+    const sectionMarkers = [
+      { key: 'motivation_spark', patterns: ['### Motivation', '1.', 'Motivation', 'Why this matters'] },
+      { key: 'simplified_recap', patterns: ['### Quick Recap', '2.', 'Recap', 'Summary', 'Key Points'] },
+      { key: 'confidence_tips', patterns: ['### Confidence Tips', '3.', 'Tips', 'Strategy', 'How to'] },
+      { key: 'encouragement', patterns: ['### Encouragement', '4.', 'Keep Going', 'You got this'] }
+    ];
+    
+    // Try to parse structured sections
+    let remainingText = cleanedText;
+    
+    for (const section of sectionMarkers) {
+      for (const pattern of section.patterns) {
+        const regex = new RegExp(`${pattern}[:\\s]*([^#]*?)(?=###|$)`, 'i');
+        const match = remainingText.match(regex);
+        if (match && match[1]) {
+          sections[section.key] = match[1].trim().substring(0, 300);
+          remainingText = remainingText.replace(match[0], '');
+          break;
+        }
+      }
+    }
+    
+    // If no structured sections found, distribute text intelligently
+    if (!sections.motivation_spark && !sections.simplified_recap) {
+      const sentences = cleanedText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      
+      if (sentences.length > 0) {
+        sections.motivation_spark = sentences[0]?.trim() + '.';
+      }
+      if (sentences.length > 2) {
+        sections.simplified_recap = sentences.slice(1, 3).join('. ').trim() + '.';
+      }
+      if (sentences.length > 3) {
+        sections.confidence_tips = sentences.slice(3, 5).join('. ').trim() + '.';
+      }
+      if (sentences.length > 5) {
+        sections.encouragement = sentences[sentences.length - 1]?.trim() + '.';
+      }
+    }
+    
+    return sections;
+  };
+
+  // Use existing sections or split the raw text
+  const mentorSections = sections.motivation_spark 
+    ? sections 
+    : splitMentorText(mentorData.response || mentorData.raw_text || '');
 
   return (
     <div className="border-2 border-pink-200 rounded-2xl overflow-hidden shadow-lg">
