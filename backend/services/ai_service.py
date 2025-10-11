@@ -15,6 +15,8 @@ import base64
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.svg_generator import SVGGenerator
+from utils.response_parser import ResponseParser
+from utils.motivational_generator import MotivationalGenerator
 
 from models.core import User, ChatSession, ChatMessage
 from models.ai import (
