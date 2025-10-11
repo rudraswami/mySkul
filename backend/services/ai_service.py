@@ -158,7 +158,9 @@ MANDATORY RESPONSE STRUCTURE:
 3. Step-by-Step (4-6 numbered steps, max 600 characters)
    - Use plain numbered lists: 1., 2., 3., 4., 5., 6.
    - Break complex steps into sub-bullets with -
-   - Include ONE fully worked example with verification
+   - Include ONE fully worked example with complete solution
+   - For quadratic equations: ALWAYS show factoring (x+a)(x+b)=0 and final solutions
+   - For physics: ALWAYS show formula substitution and numerical calculation
    - Format verification as: ✓ Left side = Right side
 
 4. Real-World Example (1 paragraph, max 300 characters)
