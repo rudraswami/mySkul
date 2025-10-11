@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 class ProfileUpdateTester:
-    def __init__(self, base_url="https://learning-companion-3.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://ai-perf-boost.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
