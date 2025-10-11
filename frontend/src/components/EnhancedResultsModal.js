@@ -295,32 +295,32 @@ export default function EnhancedResultsModal({
             {results.dual_feedback && (
               <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Professor Analysis */}
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Brain className="w-4 h-4 text-blue-600" />
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base font-bold text-blue-900">
+                      <Brain className="w-5 h-5 text-blue-600" />
                       Professor's Analysis
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {results.dual_feedback.professor_analysis || 'Analysis not available'}
-                    </p>
+                  <CardContent className="max-h-64 overflow-y-auto">
+                    <div className="text-sm text-gray-800 leading-loose space-y-2" style={{ lineHeight: '1.8' }}>
+                      <LatexRenderer text={sanitizeText(results.dual_feedback.professor_analysis || 'Analysis not available')} />
+                    </div>
                   </CardContent>
                 </Card>
 
                 {/* Mentor Feedback */}
-                <Card className="bg-green-50 border-green-200">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <GraduationCap className="w-4 h-4 text-green-600" />
+                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base font-bold text-green-900">
+                      <GraduationCap className="w-5 h-5 text-green-600" />
                       Mentor's Encouragement
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {results.dual_feedback.mentor_feedback || 'Keep practicing!'}
-                    </p>
+                  <CardContent className="max-h-64 overflow-y-auto">
+                    <div className="text-sm text-gray-800 leading-loose space-y-2" style={{ lineHeight: '1.8' }}>
+                      <LatexRenderer text={sanitizeText(results.dual_feedback.mentor_feedback || 'Keep practicing!')} />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
