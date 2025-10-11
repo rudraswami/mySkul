@@ -44,7 +44,7 @@ const MentorCard = ({ mentorData, weight }) => {
     });
   };
 
-  // Split mentor text by sections using ### markers or regex
+  // Enhanced mentor text splitting with better natural language processing
   const splitMentorText = (text) => {
     if (!text) return {};
     
@@ -56,25 +56,57 @@ const MentorCard = ({ mentorData, weight }) => {
       encouragement: ''
     };
     
-    // Split by ### markers or numbered sections
-    const sectionMarkers = [
-      { key: 'motivation_spark', patterns: ['### Motivation', '1.', 'Motivation', 'Why this matters'] },
-      { key: 'simplified_recap', patterns: ['### Quick Recap', '2.', 'Recap', 'Summary', 'Key Points'] },
-      { key: 'confidence_tips', patterns: ['### Confidence Tips', '3.', 'Tips', 'Strategy', 'How to'] },
-      { key: 'encouragement', patterns: ['### Encouragement', '4.', 'Keep Going', 'You got this'] }
+    // Enhanced section markers with more natural language patterns
+    const sectionPatterns = [
+      {
+        key: 'motivation_spark',
+        patterns: [
+          /(?:motivation|why this matters|importance)[:\s]*([^.]*\.)/i,
+          /^([^.]*(?:important|matters|great|awesome|excellent)[^.]*\.)/i,
+          /^([^.]*(?:you can|you will|this helps)[^.]*\.)/i
+        ]
+      },
+      {
+        key: 'simplified_recap', 
+        patterns: [
+          /(?:recap|summary|key points?|remember)[:\s]*([^.]*\.(?:[^.]*\.){0,2})/i,
+          /(?:main idea|in summary|to sum up)[:\s]*([^.]*\.(?:[^.]*\.){0,2})/i,
+          /(?:\d+[\.\)]|\u2022|\-)\s*([^.]*\.(?:[^.]*\.){0,1})/g
+        ]
+      },
+      {
+        key: 'confidence_tips',
+        patterns: [
+          /(?:tip|strategy|approach|try|practice)[:\s]*([^.]*\.(?:[^.]*\.){0,1})/i,
+          /(?:you can|start by|focus on)[:\s]*([^.]*\.(?:[^.]*\.){0,1})/i,
+          /(?:remember to|make sure to|don't forget)[:\s]*([^.]*\.)/i
+        ]
+      },
+      {
+        key: 'encouragement',
+        patterns: [
+          /(?:you've got this|keep going|great job|well done|good luck)[^.]*\./i,
+          /(?:confidence|believe|trust yourself)[^.]*\./i,
+          /([^.]*(?:proud|amazing|incredible|fantastic)[^.]*\.)$/i
+        ]
+      }
     ];
     
-    // Try to parse structured sections
-    let remainingText = cleanedText;
-    
-    for (const section of sectionMarkers) {
+    // Try to extract structured sections using patterns
+    for (const section of sectionPatterns) {
       for (const pattern of section.patterns) {
-        const regex = new RegExp(`${pattern}[:\\s]*([^#]*?)(?=###|$)`, 'i');
-        const match = remainingText.match(regex);
-        if (match && match[1]) {
-          sections[section.key] = match[1].trim().substring(0, 300);
-          remainingText = remainingText.replace(match[0], '');
-          break;
+        const matches = cleanedText.match(pattern);
+        if (matches) {
+          if (pattern.global) {
+            // Handle multiple matches (like bullet points)
+            sections[section.key] = matches.slice(0, 3).join(' ').trim();
+          } else {
+            sections[section.key] = matches[1] ? matches[1].trim() : matches[0].trim();
+          }
+          if (sections[section.key]) {
+            sections[section.key] = sections[section.key].substring(0, 250);
+            break;
+          }
         }
       }
     }
