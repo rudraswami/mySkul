@@ -16554,7 +16554,7 @@ def main():
             print("   ❌ Mock-Tests subjects NEET failed")
             return False
     
-    def test_mock_tests_resume(self):
+    def test_new_mock_tests_resume(self):
         """Test Mock-Tests Router - GET /api/mock-tests/resume"""
         print("   Testing GET /api/mock-tests/resume endpoint")
         
