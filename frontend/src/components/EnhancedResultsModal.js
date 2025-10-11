@@ -198,15 +198,16 @@ export default function EnhancedResultsModal({
               <div className={`mb-8 transform transition-all duration-500 delay-500 ${
                 animationStep >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
               }`}>
-                <Card className="bg-white">
+                <Card className="bg-white overflow-visible">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Target className="w-5 h-5 text-blue-600" />
+                    <CardTitle className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Target className="w-5 h-5 text-purple-600" />
                       Subject-wise Performance
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={200}>
+                  <CardContent className="overflow-x-auto">
+                    <div style={{ minWidth: '500px' }}>
+                      <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={subjectData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
