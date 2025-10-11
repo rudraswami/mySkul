@@ -3030,6 +3030,15 @@ export default function AITutor() {
 
 
       {/* Global Upsell Modal is rendered in App.js; single reusable popup */}
+      
+      {/* AI Tutor Subscription Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        upgradeHint={upgradeHint}
+        accessInfo={accessInfo}
+        currentTier={accessInfo?.current_tier || 'FREE'}
+      />
     </div>
   );
 }
