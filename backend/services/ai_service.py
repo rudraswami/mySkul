@@ -106,45 +106,97 @@ class AIService:
             return []
     
     async def generate_dual_ai_response(self, user_id: str, message: str, session_id: str, subject: str) -> Dict[str, Any]:
-        """Generate dual AI response (Professor + Mentor)"""
+        """
+        Generate enhanced dual AI response with adaptive personas, visual generation, and progressive disclosure
+        AI Tutor 2.0 feature
+        """
         try:
-            # Initialize LLM chat with Emergent LLM key
+            # Step 1: Analyze sentiment and user intent
+            sentiment_analysis = self.sentiment_analyzer.analyze(message)
+            logger.info(f"Sentiment analysis: {sentiment_analysis}")
+            
+            # Step 2: Get persona blend based on sentiment
+            persona_blend = sentiment_analysis['persona_blend']
+            professor_weight = persona_blend['professor']
+            mentor_weight = persona_blend['mentor']
+            
+            # Step 3: Generate adaptive responses
+            # Professor response (logical, detailed explanation)
+            professor_system = f"""You are a knowledgeable Professor AI providing accurate, detailed explanations.
+Focus on: Conceptual clarity, step-by-step reasoning, and exam-relevant insights.
+Tone: {sentiment_analysis['primary_sentiment']} detected - adapt your explanation accordingly.
+Structure your response in these sections:
+1. FOUNDATION: Core concept in simple terms
+2. STEP_BY_STEP: Detailed explanation with examples
+3. REAL_LIFE: Practical application or analogy
+4. KEY_POINTS: 3-5 bullet points to remember"""
+            
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                session_id=f"professor_{user_id}",
-                system_message="You are a knowledgeable professor providing accurate, detailed explanations for competitive exam preparation."
-            )
+                session_id=f"professor_{user_id}_{session_id}",
+                system_message=professor_system
+            ).with_model("openai", "gpt-5")
+            
+            # Mentor response (motivational, strategic guidance)
+            mentor_system = f"""You are a supportive Mentor AI providing encouragement and study strategies.
+Focus on: Building confidence, providing motivation, and suggesting learning strategies.
+Tone: {sentiment_analysis['primary_sentiment']} detected - provide appropriate emotional support.
+Keep response concise (2-3 sentences) with actionable advice."""
             
             mentor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                session_id=f"mentor_{user_id}",
-                system_message="You are a supportive mentor providing encouragement and study strategies for exam preparation."
-            )
+                session_id=f"mentor_{user_id}_{session_id}",
+                system_message=mentor_system
+            ).with_model("openai", "gpt-5")
             
             # Generate responses
-            professor_response = await professor_chat.generate_response([
-                UserMessage(content=f"Subject: {subject}. Question: {message}")
-            ])
+            professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
+            mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
             
-            mentor_response = await mentor_chat.generate_response([
-                UserMessage(content=f"Subject: {subject}. Provide motivational guidance for: {message}")
-            ])
+            professor_response = await professor_chat.send_message(professor_message)
+            mentor_response = await mentor_chat.send_message(mentor_message)
             
-            # Create dual response structure
+            # Step 4: Generate visual concept (SVG primary, Gemini fallback)
+            visual_svg = self.svg_generator.generate_concept_visual(message, subject)
+            visual_data = {
+                'type': 'svg',
+                'content': visual_svg,
+                'generated': visual_svg is not None
+            }
+            
+            # If no SVG was generated and it's a visual concept, try Gemini
+            if not visual_svg and any(keyword in message.lower() for keyword in ['show', 'draw', 'visualize', 'diagram', 'graph']):
+                visual_data = await self._generate_gemini_visual(message, subject)
+            
+            # Step 5: Parse professor response into progressive disclosure sections
+            professor_content = professor_response if isinstance(professor_response, str) else str(professor_response)
+            progressive_sections = self._parse_progressive_sections(professor_content)
+            
+            # Step 6: Generate quick actions
+            quick_actions = self._generate_quick_actions(message, subject, sentiment_analysis)
+            
+            # Step 7: Create enhanced dual response structure
             dual_response = {
                 "primary": {
                     "type": "professor",
-                    "response": professor_response.content,
-                    "confidence": 0.9
+                    "response": professor_content,
+                    "confidence": 0.95,
+                    "progressive_sections": progressive_sections,
+                    "weight": professor_weight
                 },
                 "secondary": {
                     "type": "mentor", 
-                    "response": mentor_response.content,
-                    "confidence": 0.85
+                    "response": mentor_response if isinstance(mentor_response, str) else str(mentor_response),
+                    "confidence": 0.9,
+                    "weight": mentor_weight
                 },
+                "visual": visual_data,
+                "sentiment_analysis": sentiment_analysis,
+                "quick_actions": quick_actions,
                 "session_id": session_id,
                 "subject": subject,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "persona_blend": persona_blend
             }
             
             # Save message to session
@@ -155,6 +207,106 @@ class AIService:
         except Exception as e:
             logger.error(f"Generate dual AI response error: {str(e)}")
             raise Exception(f"Failed to generate dual AI response: {str(e)}")
+    
+    def _parse_progressive_sections(self, content: str) -> Dict[str, str]:
+        """Parse professor response into progressive disclosure sections"""
+        sections = {
+            'foundation': '',
+            'step_by_step': '',
+            'real_life': '',
+            'key_points': ''
+        }
+        
+        # Try to extract marked sections
+        import re
+        
+        foundation_match = re.search(r'(?:FOUNDATION|1\..*?FOUNDATION)[:\s]+(.*?)(?=STEP_BY_STEP|STEP-BY-STEP|2\.|$)', content, re.IGNORECASE | re.DOTALL)
+        if foundation_match:
+            sections['foundation'] = foundation_match.group(1).strip()
+        
+        step_match = re.search(r'(?:STEP_BY_STEP|STEP-BY-STEP|2\..*?STEP)[:\s]+(.*?)(?=REAL_LIFE|REAL-LIFE|3\.|$)', content, re.IGNORECASE | re.DOTALL)
+        if step_match:
+            sections['step_by_step'] = step_match.group(1).strip()
+        
+        real_life_match = re.search(r'(?:REAL_LIFE|REAL-LIFE|3\..*?REAL)[:\s]+(.*?)(?=KEY_POINTS|KEY POINTS|4\.|$)', content, re.IGNORECASE | re.DOTALL)
+        if real_life_match:
+            sections['real_life'] = real_life_match.group(1).strip()
+        
+        key_points_match = re.search(r'(?:KEY_POINTS|KEY POINTS|4\..*?KEY)[:\s]+(.*?)$', content, re.IGNORECASE | re.DOTALL)
+        if key_points_match:
+            sections['key_points'] = key_points_match.group(1).strip()
+        
+        # If no sections found, use whole content as foundation
+        if not any(sections.values()):
+            sections['foundation'] = content
+        
+        return sections
+    
+    def _generate_quick_actions(self, message: str, subject: str, sentiment: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate contextual quick actions based on message and sentiment"""
+        actions = [
+            {
+                'id': 'save_notes',
+                'label': 'Save to Notes',
+                'icon': 'bookmark',
+                'action': 'save_to_notes'
+            },
+            {
+                'id': 'practice_similar',
+                'label': 'Practice Similar',
+                'icon': 'target',
+                'action': 'generate_practice'
+            }
+        ]
+        
+        # Add context-specific actions
+        if sentiment['needs_encouragement']:
+            actions.append({
+                'id': 'explain_differently',
+                'label': 'Explain Differently',
+                'icon': 'refresh',
+                'action': 'explain_different'
+            })
+        
+        if 'visual' in message.lower() or 'show' in message.lower():
+            actions.append({
+                'id': 'show_visual',
+                'label': 'Show Visual',
+                'icon': 'image',
+                'action': 'generate_visual'
+            })
+        
+        return actions
+    
+    async def _generate_gemini_visual(self, prompt: str, subject: str) -> Dict[str, Any]:
+        """Generate visual using Gemini Nano Banana (fallback)"""
+        try:
+            if not self.gemini_chat:
+                self.gemini_chat = LlmChat(
+                    api_key=self.emergent_llm_key,
+                    session_id="visual_gen",
+                    system_message="You are a visual AI that generates educational concept illustrations."
+                ).with_model("gemini", "gemini-2.5-flash-image-preview").with_params(modalities=["image", "text"])
+            
+            visual_prompt = UserMessage(
+                text=f"Create a simple, educational illustration for this {subject} concept: {prompt}. Make it clean and suitable for learning."
+            )
+            
+            text, images = await self.gemini_chat.send_message_multimodal_response(visual_prompt)
+            
+            if images and len(images) > 0:
+                return {
+                    'type': 'gemini_image',
+                    'content': images[0]['data'],  # base64 data
+                    'mime_type': images[0]['mime_type'],
+                    'generated': True
+                }
+            
+            return {'type': 'none', 'content': None, 'generated': False}
+            
+        except Exception as e:
+            logger.error(f"Gemini visual generation error: {str(e)}")
+            return {'type': 'none', 'content': None, 'generated': False}
     
     async def save_session_message(self, user_id: str, session_id: str, message: str, ai_response: Dict[str, Any]):
         """Save a chat message to the session"""
