@@ -89,8 +89,8 @@ export default function Analytics() {
 
   const populateDemoData = async () => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
-      const response = await fetch(`${backendUrl}/api/demo/populate-data`, {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/demo/populate-data`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +101,9 @@ export default function Analytics() {
       if (response.ok) {
         const data = await response.json();
         alert('Demo data populated! Refreshing analytics...');
-        await loadAnalytics(); // Refresh the data
+        // React Query will automatically refetch when the component remounts or
+        // we can manually invalidate queries if needed
+        window.location.reload(); // Simple refresh for demo data
       } else {
         console.error('Failed to populate demo data');
       }
@@ -113,12 +115,15 @@ export default function Analytics() {
   if (loading) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading analytics...</p>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center">
+            <LoadingSpinner size="lg" className="text-blue-600 mb-4" />
+            <p className="text-gray-600">Loading analytics...</p>
+          </div>
         </div>
       </div>
     );
+  }
   }
 
   const getSubjectColor = (color) => {
