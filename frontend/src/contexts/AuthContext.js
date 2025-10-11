@@ -106,8 +106,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      // Call logout endpoint to clear cookie
-      await axios.post(`${API}/auth/logout`);
+      // Call logout endpoint to clear cookie using authAPI
+      await authAPI.logout();
     } catch (error) {
       // Logout should proceed even if API call fails
       if (process.env.NODE_ENV === 'development') {
@@ -118,7 +118,6 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       localStorage.removeItem('dhruv_ai_token');
-      delete axios.defaults.headers.common['Authorization'];
     }
   };
 
