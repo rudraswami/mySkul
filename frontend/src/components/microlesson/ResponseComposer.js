@@ -14,8 +14,6 @@ import MentorCard from './MentorCard';
  * Student-first design with collapsible mentor, emotional anchors, and progressive reveal
  */
 const ResponseComposer = ({ message, onQuickAction }) => {
-  const [mentorExpanded, setMentorExpanded] = useState(false);
-  
   const {
     dual_response,
     visual,
@@ -30,6 +28,35 @@ const ResponseComposer = ({ message, onQuickAction }) => {
   const { primary, secondary } = dual_response;
   const microLessonSections = primary.micro_lesson_sections || {};
   const sentiment = sentiment_analysis?.primary_sentiment || 'neutral';
+  
+  // Dynamic emotional anchors based on sentiment and topic
+  const getEmotionalAnchor = (position) => {
+    const anchors = {
+      concept: [
+        "💡 Take a deep breath — this part builds your concept foundation.",
+        "✨ Focus here — this is the core idea you need to master!",
+        "🎯 Starting point locked in — let's build on this!"
+      ],
+      formula: [
+        "🧮 This is the key equation — let's break it down together!",
+        "📐 The formula is your toolkit — understand it, own it!",
+        "✨ Mathematics made simple — one step at a time!"
+      ],
+      steps: [
+        "🎯 Almost there — let's visualize the next step!",
+        "💪 You're doing great — breaking down complex ideas!",
+        "🚀 Each step brings clarity — keep the momentum!"
+      ],
+      practice: [
+        "🎉 Great! You've cracked the logic — now let's see it in action.",
+        "💫 Knowledge unlocked — time to practice and reinforce!",
+        "🌟 You've got this — let's solidify your understanding!"
+      ]
+    };
+    
+    const options = anchors[position] || anchors.concept;
+    return options[Math.floor(Math.random() * options.length)];
+  };
   
   // Clean special characters from text
   const cleanText = (text) => {
