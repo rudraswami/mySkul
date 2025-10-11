@@ -710,6 +710,48 @@ export default function AITutor() {
 
       const newMessage = response.data;
       
+      // Validate response is not empty or corrupted
+      if (!newMessage || typeof newMessage !== 'object') {
+        throw new Error('Invalid or empty response from AI service');
+      }
+      
+      // Ensure dual response has proper structure for dual mode
+      if (aiMode === 'dual' && (!newMessage.dual_response || 
+          !newMessage.dual_response.primary || 
+          !newMessage.dual_response.secondary)) {
+        console.warn('⚠️ Incomplete dual response structure, using fallback');
+        
+        // Create a safe fallback response
+        newMessage.dual_response = {
+          primary: {
+            type: 'professor',
+            response: newMessage.dual_response?.primary?.response || 
+                     `I understand you're asking about ${selectedSubject}. Let me help you with this concept step by step.`,
+            confidence: 0.8,
+            micro_lesson_sections: {
+              concept_overview: `This is an important topic in ${selectedSubject} that builds foundational understanding.`,
+              step_by_step: 'Let me break this down into clear, manageable steps for better understanding.',
+              real_life_analogy: 'This concept has practical applications in everyday situations.',
+              mentor_tip: 'Focus on understanding the core principles rather than memorizing.'
+            }
+          },
+          secondary: {
+            type: 'mentor',
+            response: newMessage.dual_response?.secondary?.response || 
+                     `Great question about ${selectedSubject}! You're showing curiosity and that's the key to learning.`,
+            mentor_sections: {
+              motivation_spark: "Every question you ask brings you closer to mastery.",
+              simplified_recap: "Focus on one concept at a time and build from there.",
+              confidence_tips: "Practice regularly and don't be afraid to ask follow-up questions.",
+              encouragement: "You're making excellent progress! Keep up the great work!"
+            }
+          }
+        };
+      }
+      
+      // Clear user input only after successful response validation
+      setCurrentMessage('');
+      
       // Update session title if AI detected a more specific topic
       if (newMessage.topic_detected && newMessage.topic_detected !== 'General') {
         await updateSessionTitleIfNeeded(sessionId, newMessage.topic_detected, messageToSend);
