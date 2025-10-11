@@ -94,8 +94,8 @@ export default function Subscription() {
     setShowPaymentModal(false);
     setPaymentDetails(null);
     
-    // Refresh subscription data
-    loadCurrentSubscription();
+    // Refresh subscription data using React Query
+    // The useUpgradeSubscription hook already handles query invalidation
     
     // Show success message or redirect
     alert('Subscription upgraded successfully!');
