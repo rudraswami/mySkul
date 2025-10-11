@@ -166,15 +166,25 @@ const ResponseComposer = ({ message, onQuickAction }) => {
             <div className="flex-1 border-t-2 border-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           </div>
 
-          {/* Formula Card */}
+          {/* Formula Card with Anchor */}
           {formulaList.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center space-x-2 mb-3">
-                <span className="text-2xl">🧮</span>
-                <h3 className="text-lg font-bold text-gray-800">Key Formula</h3>
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center justify-center space-x-2 my-4 px-4 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg border border-purple-200"
+              >
+                <span className="text-purple-700 font-medium text-xs">{getEmotionalAnchor('formula')}</span>
+              </motion.div>
+              
+              <div className="mb-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  <span className="text-2xl">🧮</span>
+                  <h3 className="text-lg font-bold text-gray-800">Key Formula</h3>
+                </div>
+                <FormulaCard formulas={formulaList} title="" />
               </div>
-              <FormulaCard formulas={formulaList} title="" />
-            </div>
+            </>
           )}
 
           {/* Step-by-Step Explanation */}
