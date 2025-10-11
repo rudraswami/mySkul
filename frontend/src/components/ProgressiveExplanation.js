@@ -118,7 +118,7 @@ const ProgressiveExplanation = ({ sections, sentiment }) => {
           </motion.div>
         );
       })}
-    </motion.div>
+    </div>
   );
 };
 
