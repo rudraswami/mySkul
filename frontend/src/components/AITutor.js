@@ -822,8 +822,10 @@ export default function AITutor() {
     } catch (error) {
       console.error('Failed to send message:', error);
       
-      // Always restore user input on any error
+      // Always restore user input on any error and reset phases
       setCurrentMessage(messageToSend);
+      setPendingMessage('');
+      setMessagePhase('idle');
       
       // Check if this is a subscription-related error first
       if (error.response?.status === 402 || error.response?.status === 429) {
