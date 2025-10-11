@@ -779,8 +779,10 @@ export default function AITutor() {
       setMessages(prev => [...prev, enhancedMessage]);
       
       // RESET PHASE: Clear user input only AFTER message is successfully appended to conversation
-      // This ensures the user sees their message appear before the input field is cleared
-      setCurrentMessage('');
+      // Use a slight delay to ensure DOM update and message visibility before clearing input
+      setTimeout(() => {
+        setCurrentMessage('');
+      }, 100);
       
       // Update personalized difficulty if provided
       if (newMessage.dual_response?.user_difficulty_level) {
