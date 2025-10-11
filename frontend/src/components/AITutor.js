@@ -191,8 +191,11 @@ export default function AITutor() {
   // If AI Tutor 2.0 is enabled, render the new component
   if (useAITutor20) {
     return (
-      <AITutor20 
-        onBackToV1={() => setUseAITutor20(false)}
+      <SimpleAITutor20 
+        onBackToV1={() => {
+          console.log('Back to classic clicked');
+          setUseAITutor20(false);
+        }}
         className="h-full"
       />
     );
