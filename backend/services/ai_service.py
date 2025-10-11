@@ -266,21 +266,38 @@ Subject Context: {subject}"""
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
             mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
             
-            # FAST-FIRST strategy: immediate fallbacks + background LLM (no waiting!)
-            logger.info("🚀 Using fast-first strategy for immediate response")
+            # Generate real AI responses with proper LLM calls
+            logger.info("🤖 Generating contextual AI responses via LLM")
             
-            # Generate immediate high-quality fallbacks
-            professor_response = self._generate_fast_fallback("professor", subject, message)
-            mentor_response = self._generate_fast_fallback("mentor", subject, message)
-            
-            # Log that we're using fallbacks for better UX
-            logger.info(f"✅ Immediate fallback responses generated in <1s (subject: {subject})")
-            
-            # Background LLM calls disabled during performance optimization
-            # asyncio.create_task(self._background_llm_improvement(
-            #     professor_chat, mentor_chat, professor_message, mentor_message, subject, message, user_id
-            # ))
-            logger.info("⚡ Background LLM calls disabled for maximum performance")
+            try:
+                # Make actual LLM calls for contextual, subject-specific responses
+                professor_task = asyncio.create_task(self._safe_llm_call(
+                    professor_chat, professor_message, "professor", subject, message, max_retries=2, timeout_seconds=30
+                ))
+                mentor_task = asyncio.create_task(self._safe_llm_call(
+                    mentor_chat, mentor_message, "mentor", subject, message, max_retries=2, timeout_seconds=30
+                ))
+                
+                # Wait for both responses with timeout
+                professor_response, mentor_response = await asyncio.gather(
+                    professor_task, mentor_task, return_exceptions=True
+                )
+                
+                # Handle potential exceptions and use fallbacks only if LLM calls fail
+                if isinstance(professor_response, Exception):
+                    logger.warning(f"Professor LLM call failed: {professor_response}, using fallback")
+                    professor_response = self._generate_fast_fallback("professor", subject, message)
+                
+                if isinstance(mentor_response, Exception):
+                    logger.warning(f"Mentor LLM call failed: {mentor_response}, using fallback")
+                    mentor_response = self._generate_fast_fallback("mentor", subject, message)
+                
+                logger.info(f"✅ AI responses generated for {subject}: {message[:50]}...")
+                
+            except Exception as e:
+                logger.error(f"LLM calls failed: {e}, using fallback responses")
+                professor_response = self._generate_fast_fallback("professor", subject, message)
+                mentor_response = self._generate_fast_fallback("mentor", subject, message)
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
