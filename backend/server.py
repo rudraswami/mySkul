@@ -11371,7 +11371,7 @@ app.add_middleware(
     CSRFMiddleware,
     secret=CSRF_SECRET,
     cookie_name="csrftoken",
-    header_name="x-csrftoken"
+    header_name="X-CSRF-Token"
 )
 
 # Include modular routers for new architecture
