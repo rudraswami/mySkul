@@ -1558,8 +1558,83 @@ export default function AITutor() {
         </motion.div>
       </div>
 
-      {/* Sidebar - Chat Sessions - Hidden on mobile */}
-      <div className="hidden lg:flex w-80 bg-white border-r border-gray-100 flex-col">{/* Rest of the component... */}
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Brain className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Dhruv AI</h2>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={startNewSession}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+              variant="outline"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              New
+            </Button>
+          </div>
+          
+          {/* Subject Selector */}
+          <div className="relative mb-4">
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900">
+                <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects[user?.exam_type]?.map(subject => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search conversations..."
+              className="bg-gray-50 border-gray-200 text-gray-900 pl-9"
+            />
+            <MessageCircle className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          
+          {filteredSessions.length > 0 && (
+            <div className="flex items-center justify-between text-xs text-gray-500 mt-3">
+              <span>
+                {searchQuery ? `Found ${filteredSessions.length}` : 'Chat History'}
+              </span>
+              {sessions.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={exportConversation}
+                  disabled={messages.length === 0}
+                  className="text-gray-400 hover:text-blue-600 h-6 w-6 p-0"
+                  title="Export conversation"
+                >
+                  <FileText className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
