@@ -79,6 +79,13 @@ export default function AutoNoteMentor() {
   // #PHASE3-SECURITY-FRONTEND - Use React Query data with fallbacks
   const [sessions, setSessions] = useState(sessionsData?.sessions || []);
   
+  // Update sessions when React Query data changes
+  useEffect(() => {
+    if (sessionsData?.sessions) {
+      setSessions(sessionsData.sessions);
+    }
+  }, [sessionsData]);
+  
   // Enhanced Recording & Upload State
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
