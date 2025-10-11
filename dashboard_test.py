@@ -10,7 +10,7 @@ import sys
 
 class DashboardTester:
     def __init__(self):
-        self.base_url = "https://ai-education-app.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-audit.preview.emergentagent.com/api"
         self.token = None
         self.test_email = "test@dhruvai.com"
         self.test_password = "password123"

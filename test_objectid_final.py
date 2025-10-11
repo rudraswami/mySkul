@@ -10,7 +10,7 @@ import time
 
 class FinalObjectIdTester:
     def __init__(self):
-        self.base_url = "https://ai-education-app.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-audit.preview.emergentagent.com/api"
         self.token = None
         
     def login(self):
