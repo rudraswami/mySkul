@@ -16138,18 +16138,25 @@ def main():
     
     tester = DhruvAITester()
     
-    # PRIORITY TESTS - Authentication Issues
-    priority_tests = [
-        ("🚨 URGENT: Authentication APIs Comprehensive", tester.test_authentication_apis_comprehensive),
-        ("🚨 CRITICAL: Subscription Check-Access 402 Response", tester.test_subscription_check_access_402_response),
-    ]
+    # Run comprehensive Stage 2 modular integration testing
+    print("\n🎯 EXECUTING STAGE 2 COMPREHENSIVE MODULAR INTEGRATION TESTING")
+    print("   Credentials: test@dhruvai.com / password123")
     
-    # Core functionality tests (run after authentication is verified)
-    core_tests = [
-        ("Health Check", tester.test_health_check),
-        ("User Profile", tester.test_user_profile),
-        ("User Profile Update", tester.test_user_profile_update),
-        ("Dashboard Analytics", tester.test_dashboard_analytics),
+    overall_success = tester.test_stage2_comprehensive_modular_integration()
+    
+    print(f"\n" + "=" * 80)
+    print(f"🏁 TESTING COMPLETE")
+    print(f"📊 Overall Tests: {tester.tests_run}")
+    print(f"✅ Passed: {tester.tests_passed}")
+    print(f"❌ Failed: {tester.tests_run - tester.tests_passed}")
+    print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    
+    if overall_success:
+        print(f"🎉 STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: SUCCESS")
+    else:
+        print(f"⚠️ STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: NEEDS ATTENTION")
+    
+    return overall_success
     ]
     
     # Run priority tests first
