@@ -41,13 +41,21 @@ async def test_cleaning():
     print("=" * 80)
     print("CHECKS:")
     print("=" * 80)
-    print(f"✅ LaTeX delimiters preserved: \\[ present = {'\\[' in cleaned}")
-    print(f"✅ LaTeX delimiters preserved: \\] present = {'\\]' in cleaned}")
-    print(f"✅ LaTeX delimiters preserved: \\( present = {'\\(' in cleaned}")
-    print(f"✅ LaTeX delimiters preserved: \\) present = {'\\)' in cleaned}")
-    print(f"✅ Bold markers removed: ** not present = {'**' not in cleaned}")
-    print(f"✅ Checkmarks removed: ✅ not present = {'✅' not in cleaned}")
-    print(f"✅ Double backslashes removed: \\\\\\\\ not present = {'\\\\\\\\' not in cleaned}")
+    latex_open = '\\['
+    latex_close = '\\]'
+    inline_open = '\\('
+    inline_close = '\\)'
+    bold = '**'
+    check = '✅'
+    dbl_slash = '\\\\'
+    
+    print(f"✅ LaTeX delimiters preserved: {latex_open} present = {latex_open in cleaned}")
+    print(f"✅ LaTeX delimiters preserved: {latex_close} present = {latex_close in cleaned}")
+    print(f"✅ LaTeX delimiters preserved: {inline_open} present = {inline_open in cleaned}")
+    print(f"✅ LaTeX delimiters preserved: {inline_close} present = {inline_close in cleaned}")
+    print(f"✅ Bold markers removed: {bold} not present = {bold not in cleaned}")
+    print(f"✅ Checkmarks removed: {check} not present = {check not in cleaned}")
+    print(f"✅ Double backslashes removed: {dbl_slash} not present = {dbl_slash not in cleaned}")
 
 if __name__ == "__main__":
     asyncio.run(test_cleaning())
