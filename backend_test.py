@@ -18090,61 +18090,46 @@ class DhruvAITester:
         """Validate the structure of dual-response API response"""
         print("   🔍 Validating response structure...")
         
+        # Check if dual_response exists
+        dual_response = response.get('dual_response', {})
+        if not dual_response:
+            print("   ❌ Missing dual_response")
+            return False
+        
         # Check primary response structure
-        primary = response.get('primary', {})
+        primary = dual_response.get('primary', {})
         if not primary:
             print("   ❌ Missing primary response")
             return False
         
-        required_primary_fields = ['type', 'response', 'confidence', 'weight']
+        required_primary_fields = ['persona', 'response', 'reasoning']
         for field in required_primary_fields:
             if field not in primary:
                 print(f"   ❌ Missing primary.{field}")
                 return False
         
         # Check secondary response structure
-        secondary = response.get('secondary', {})
+        secondary = dual_response.get('secondary', {})
         if not secondary:
             print("   ❌ Missing secondary response")
             return False
         
-        required_secondary_fields = ['type', 'response', 'weight']
+        required_secondary_fields = ['persona', 'response', 'reasoning']
         for field in required_secondary_fields:
             if field not in secondary:
                 print(f"   ❌ Missing secondary.{field}")
                 return False
         
-        # Check visual structure
-        visual = response.get('visual', {})
-        if visual:
-            required_visual_fields = ['type', 'content', 'generated']
-            for field in required_visual_fields:
-                if field not in visual:
-                    print(f"   ❌ Missing visual.{field}")
-                    return False
-        
-        # Check sentiment analysis structure
-        sentiment_analysis = response.get('sentiment_analysis', {})
-        if not sentiment_analysis:
-            print("   ❌ Missing sentiment_analysis")
+        # Check action buttons structure
+        action_buttons = response.get('action_buttons', {})
+        if not action_buttons:
+            print("   ❌ Missing action_buttons")
             return False
         
-        required_sentiment_fields = ['primary_sentiment', 'intent_type', 'persona_blend']
-        for field in required_sentiment_fields:
-            if field not in sentiment_analysis:
-                print(f"   ❌ Missing sentiment_analysis.{field}")
-                return False
-        
-        # Check persona blend structure
-        persona_blend = sentiment_analysis.get('persona_blend', {})
-        if 'professor' not in persona_blend or 'mentor' not in persona_blend:
-            print("   ❌ Missing professor/mentor weights in persona_blend")
-            return False
-        
-        # Check quick actions structure
-        quick_actions = response.get('quick_actions', [])
-        if not isinstance(quick_actions, list):
-            print("   ❌ quick_actions should be a list")
+        # Check analytics structure
+        analytics = response.get('analytics', {})
+        if not analytics:
+            print("   ❌ Missing analytics")
             return False
         
         print("   ✅ Response structure validation passed")
