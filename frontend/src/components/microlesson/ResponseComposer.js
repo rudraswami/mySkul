@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import ConceptCard from './ConceptCard';
 import FormulaCard from './FormulaCard';
 import TipCard from './TipCard';
@@ -10,6 +11,7 @@ import VisualConceptBlock from '../VisualConceptBlock';
 /**
  * ResponseComposer - Main orchestrator for AI Tutor 2.1 micro-lesson rendering
  * Transforms raw AI responses into structured, visually appealing micro-lessons
+ * Enhanced with better visual rhythm and emotional engagement
  */
 const ResponseComposer = ({ message, onQuickAction }) => {
   const {
@@ -23,15 +25,29 @@ const ResponseComposer = ({ message, onQuickAction }) => {
     return null;
   }
 
-  const { primary } = dual_response;
+  const { primary, secondary } = dual_response;
   const microLessonSections = primary.micro_lesson_sections || {};
   const sentiment = sentiment_analysis?.primary_sentiment || 'neutral';
+  
+  // Check if we have structured sections
+  const hasStructuredContent = Object.values(microLessonSections).some(v => 
+    v && (typeof v === 'string' ? v.length > 0 : v.length > 0)
+  );
 
   // Extract formulas
   const formulas = microLessonSections.key_formula || '';
   const formulaList = formulas ? 
     (Array.isArray(formulas) ? formulas : [formulas]) : 
     [];
+  
+  // Transition phrases for better flow
+  const transitionPhrases = {
+    formula: "Let's look at the key equation 👇",
+    stepByStep: "Breaking it down step by step 📋",
+    realLife: "How does this apply in real life? 🌍",
+    tip: "Here's an important tip to remember 💡",
+    practice: "Ready to practice? Let's go! 🎯"
+  };
 
   return (
     <div className="space-y-0">
