@@ -7,6 +7,16 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
+import { LoadingSpinner } from './ui/loading';
+
+// #PHASE3-SECURITY-FRONTEND - React Query Migration
+import { 
+  useAutoNotesSessions,
+  useAutoNotesSession,
+  useAutoNotesAnalytics,
+  useStartAutoNotesSession
+} from '../hooks/useAutoNotes';
+
 import { 
   Mic, 
   MicOff,
