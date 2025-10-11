@@ -16382,7 +16382,7 @@ def main():
             print("   ❌ Mock-Tests library recent failed")
             return False
     
-    def test_mock_tests_library_high_scores(self):
+    def test_new_mock_tests_library_high_scores(self):
         """Test Mock-Tests Router - GET /api/mock-tests/library/high-scores"""
         print("   Testing GET /api/mock-tests/library/high-scores endpoint")
         
