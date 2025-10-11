@@ -38,6 +38,8 @@ class AIService:
         self.emergent_llm_key = emergent_llm_key
         self.sentiment_analyzer = SentimentAnalyzer()
         self.svg_generator = SVGGenerator()
+        self.response_parser = ResponseParser(emergent_llm_key)
+        self.motivational_generator = MotivationalGenerator()
         self.gemini_chat = None  # Lazy init for Gemini visual generation
     
     async def create_chat_session(self, user_id: str, title: str, subject: str, topic: str = "General", ai_mode: str = "dual") -> ChatSession:
