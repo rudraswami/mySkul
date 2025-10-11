@@ -72,10 +72,18 @@ async def get_dashboard(
 ):
     """Get dashboard statistics"""
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Dashboard requested for user: {user.user_id}")
+        
         stats = await service.get_dashboard_stats(user.user_id)
+        logger.info(f"Dashboard stats retrieved: {stats}")
         return stats
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get dashboard: {str(e)}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Dashboard error for user {user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to load dashboard: {str(e)}")
 
 
 @router.get("/performance-trends")
