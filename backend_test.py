@@ -543,16 +543,18 @@ class DhruvAITester:
         # At least Bearer token should work for basic functionality
         return bearer_auth_success
 
-    def test_stage2_modular_router_implementation(self):
-        """Test Stage 2: Comprehensive Modular Router Implementation - REVIEW REQUEST FOCUS"""
-        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR ROUTER IMPLEMENTATION TESTING")
+    def test_stage2_comprehensive_modular_integration(self):
+        """Test Stage 2: COMPREHENSIVE MODULAR INTEGRATION TESTING - REVIEW REQUEST FOCUS"""
+        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR INTEGRATION TESTING")
         print("=" * 80)
-        print("   TESTING SCOPE - MODULAR ROUTERS IMPLEMENTED:")
-        print("   1. Auth Router (api/auth.py): Registration, login, logout, CSRF token")
-        print("   2. User Router (api/user.py): Profile GET/PUT operations")
-        print("   3. Subscription Router (api/subscription.py): Plans, access check, usage tracking")
-        print("   4. Service Layer: AuthService and SubscriptionService with dependency injection")
-        print("   5. Health Monitoring: Enhanced health endpoint showing modular architecture status")
+        print("   TESTING SCOPE - 5 MODULAR ROUTERS AS REQUESTED IN REVIEW:")
+        print("   1. AUTH ROUTER (/api/auth/...): register, login, logout, csrf-token")
+        print("   2. USER ROUTER (/api/user/...): profile GET/PUT operations")
+        print("   3. SUBSCRIPTION ROUTER (/api/subscription/...): plans, info, check-access, track-usage")
+        print("   4. AI ROUTER (/api/ai/...): available-contexts, chat sessions, message, guardrails")
+        print("   5. ANALYTICS ROUTER (/api/analytics/...): dashboard, daily-goals, subject-progress")
+        print("   CRITICAL AREAS: Authentication flow, Hybrid auth, Dependency injection, Error handling")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
         
         test_results = {
             'modular_architecture_health': False,
