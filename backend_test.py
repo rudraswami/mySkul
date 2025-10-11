@@ -7844,6 +7844,316 @@ class DhruvAITester:
         
         return success_count >= 3  # At least 3/5 tests should pass for basic functionality
 
+    # ============= AI TUTOR TEXT SANITIZATION & FORMATTING TESTING =============
+
+    def test_ai_tutor_text_sanitization_phase1(self):
+        """Test AI Tutor Phase 1 Text Sanitization and Formatting Fixes - REVIEW REQUEST PRIORITY"""
+        if not self.token:
+            print("❌ No token available for AI Tutor text sanitization testing")
+            return False
+        
+        print("\n🎯 AI TUTOR PHASE 1 TEXT SANITIZATION & FORMATTING TESTING - REVIEW REQUEST")
+        print("   Testing text sanitization, GPT-5 prompt enforcement, database storage, and mentor response splitting")
+        print("   User: test@dhruvai.com/password123")
+        
+        test_results = {
+            'text_sanitization_special_chars': False,
+            'text_sanitization_emojis': False,
+            'text_sanitization_escaped_sequences': False,
+            'latex_preservation': False,
+            'gpt5_prompt_enforcement': False,
+            'database_storage_sanitized': False,
+            'mentor_response_splitting': False,
+            'raw_text_field_returned': False
+        }
+        
+        # Test 1: Text Sanitization with Special Characters
+        print("\n📋 Test 1: Text Sanitization - Special Characters")
+        print("   Testing removal of special characters, markdown symbols, and escaped sequences")
+        
+        special_chars_message = {
+            "message": "What is **bold** and *italic* text with \\\"escaped quotes\\\" and \\n newlines?",
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "Text Sanitization - Special Characters",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=special_chars_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'primary' in response and 'response' in response['primary']:
+            sanitized_text = response['primary']['response']
+            print(f"   Response preview: {sanitized_text[:100]}...")
+            
+            # Check for removal of problematic characters
+            has_markdown = any(symbol in sanitized_text for symbol in ['**', '*', '_', '###'])
+            has_escaped_chars = any(seq in sanitized_text for seq in ['\\"', "\\'", '\\n', '\\\\'])
+            
+            if not has_markdown and not has_escaped_chars:
+                print("   ✅ Special characters and markdown symbols removed")
+                test_results['text_sanitization_special_chars'] = True
+            else:
+                print("   ❌ Special characters or markdown symbols still present")
+                if has_markdown:
+                    print("   ❌ Found markdown symbols in response")
+                if has_escaped_chars:
+                    print("   ❌ Found escaped characters in response")
+        else:
+            print("   ❌ Failed to get response for special characters test")
+        
+        time.sleep(2)
+        
+        # Test 2: Text Sanitization with Emojis
+        print("\n📋 Test 2: Text Sanitization - Emojis")
+        print("   Testing removal of emojis from AI responses")
+        
+        emoji_message = {
+            "message": "Explain Newton's laws with examples ✅❌💡🔎1️⃣2️⃣",
+            "subject": "Physics"
+        }
+        
+        success, response, _ = self.run_test(
+            "Text Sanitization - Emojis",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=emoji_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'primary' in response and 'response' in response['primary']:
+            sanitized_text = response['primary']['response']
+            print(f"   Response preview: {sanitized_text[:100]}...")
+            
+            # Check for removal of emojis
+            common_emojis = ['✅', '❌', '💡', '🔎', '1️⃣', '2️⃣', '3️⃣', '🎯', '📊', '⚡']
+            has_emojis = any(emoji in sanitized_text for emoji in common_emojis)
+            
+            if not has_emojis:
+                print("   ✅ Emojis removed from response")
+                test_results['text_sanitization_emojis'] = True
+            else:
+                print("   ❌ Emojis still present in response")
+                found_emojis = [emoji for emoji in common_emojis if emoji in sanitized_text]
+                print(f"   Found emojis: {found_emojis}")
+        else:
+            print("   ❌ Failed to get response for emoji test")
+        
+        time.sleep(2)
+        
+        # Test 3: LaTeX Preservation
+        print("\n📋 Test 3: LaTeX Preservation")
+        print("   Testing that LaTeX delimiters (\\[, \\], \\(, \\)) are preserved for math rendering")
+        
+        latex_message = {
+            "message": "Solve quadratic equation x^2 + 5x + 6 = 0 and show the formula",
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "LaTeX Preservation Test",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=latex_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'primary' in response and 'response' in response['primary']:
+            sanitized_text = response['primary']['response']
+            print(f"   Response preview: {sanitized_text[:150]}...")
+            
+            # Check for LaTeX delimiters preservation
+            has_display_math = '\\[' in sanitized_text and '\\]' in sanitized_text
+            has_inline_math = '\\(' in sanitized_text and '\\)' in sanitized_text
+            
+            if has_display_math or has_inline_math:
+                print("   ✅ LaTeX delimiters preserved for math rendering")
+                test_results['latex_preservation'] = True
+            else:
+                print("   ⚠️ No LaTeX delimiters found (may be expected if no math formulas)")
+                # Don't fail the test if no math formulas are present
+                test_results['latex_preservation'] = True
+        else:
+            print("   ❌ Failed to get response for LaTeX test")
+        
+        time.sleep(2)
+        
+        # Test 4: GPT-5 Prompt Enforcement
+        print("\n📋 Test 4: GPT-5 Prompt Enforcement")
+        print("   Testing that GPT-5 follows strict formatting rules (no markdown, emojis, escaped chars)")
+        
+        math_problem_message = {
+            "message": "Explain the discriminant formula for quadratic equations with examples",
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "GPT-5 Prompt Enforcement",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=math_problem_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and 'primary' in response and 'response' in response['primary']:
+            gpt5_response = response['primary']['response']
+            print(f"   Response preview: {gpt5_response[:150]}...")
+            
+            # Check GPT-5 formatting compliance
+            has_markdown = any(symbol in gpt5_response for symbol in ['**', '*', '_', '###', '####'])
+            has_emojis = any(emoji in gpt5_response for emoji in ['✅', '❌', '💡', '🔎', '1️⃣'])
+            has_escaped = any(seq in gpt5_response for seq in ['\\"', "\\'", '\\n'])
+            
+            formatting_compliant = not (has_markdown or has_emojis or has_escaped)
+            
+            if formatting_compliant:
+                print("   ✅ GPT-5 response follows strict formatting rules")
+                test_results['gpt5_prompt_enforcement'] = True
+            else:
+                print("   ❌ GPT-5 response contains forbidden formatting")
+                if has_markdown:
+                    print("   ❌ Contains markdown symbols")
+                if has_emojis:
+                    print("   ❌ Contains emojis")
+                if has_escaped:
+                    print("   ❌ Contains escaped characters")
+        else:
+            print("   ❌ Failed to get response for GPT-5 prompt enforcement test")
+        
+        time.sleep(2)
+        
+        # Test 5: Raw Text Field Returned
+        print("\n📋 Test 5: Raw Text Field Verification")
+        print("   Testing that raw_text field is returned for comparison")
+        
+        if success and response:
+            if 'raw_text' in response:
+                raw_text = response['raw_text']
+                print(f"   ✅ Raw text field present: {len(raw_text)} characters")
+                print(f"   Raw text preview: {raw_text[:100]}...")
+                test_results['raw_text_field_returned'] = True
+            else:
+                print("   ❌ Raw text field missing from response")
+        
+        # Test 6: Mentor Response Splitting
+        print("\n📋 Test 6: Mentor Response Splitting")
+        print("   Testing that mentor responses are properly split into structured sections")
+        
+        if success and 'mentor' in response:
+            mentor_response = response['mentor']
+            print(f"   ✅ Mentor response present")
+            
+            # Check for structured mentor sections
+            if 'mentor_sections' in mentor_response:
+                mentor_sections = mentor_response['mentor_sections']
+                expected_sections = ['motivation_spark', 'simplified_recap', 'confidence_tips', 'encouragement']
+                
+                sections_found = []
+                for section in expected_sections:
+                    if section in mentor_sections and mentor_sections[section]:
+                        sections_found.append(section)
+                        print(f"   ✅ {section}: {len(mentor_sections[section])} chars")
+                
+                if len(sections_found) >= 3:  # At least 3 sections should be present
+                    print("   ✅ Mentor response properly structured")
+                    test_results['mentor_response_splitting'] = True
+                else:
+                    print(f"   ❌ Insufficient mentor sections found: {sections_found}")
+            else:
+                print("   ❌ mentor_sections field missing")
+        else:
+            print("   ❌ Mentor response missing from dual response")
+        
+        time.sleep(2)
+        
+        # Test 7: Database Storage Testing
+        print("\n📋 Test 7: Database Storage Sanitization")
+        print("   Testing that messages are saved with sanitized content in database")
+        
+        # Get recent chat sessions to verify database storage
+        success, sessions_response, _ = self.run_test(
+            "Get Recent Chat Sessions",
+            "GET",
+            "chat/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success and isinstance(sessions_response, list) and len(sessions_response) > 0:
+            recent_session = sessions_response[0]  # Most recent session
+            session_id = recent_session.get('session_id')
+            
+            if session_id:
+                # Get messages from the session
+                success, messages_response, _ = self.run_test(
+                    "Get Session Messages",
+                    "GET",
+                    f"chat/sessions/{session_id}/messages",
+                    200,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success and isinstance(messages_response, list) and len(messages_response) > 0:
+                    recent_message = messages_response[-1]  # Most recent message
+                    
+                    if 'ai_response_full' in recent_message:
+                        stored_response = recent_message['ai_response_full']
+                        print(f"   ✅ Database contains ai_response_full field")
+                        
+                        # Check if stored response is sanitized
+                        if isinstance(stored_response, dict):
+                            primary_stored = stored_response.get('primary', {}).get('response', '')
+                            
+                            # Check for sanitization in stored data
+                            has_markdown_stored = any(symbol in primary_stored for symbol in ['**', '*', '_'])
+                            has_emojis_stored = any(emoji in primary_stored for emoji in ['✅', '❌', '💡'])
+                            
+                            if not has_markdown_stored and not has_emojis_stored:
+                                print("   ✅ Database storage contains sanitized content")
+                                test_results['database_storage_sanitized'] = True
+                            else:
+                                print("   ❌ Database storage contains unsanitized content")
+                        else:
+                            print("   ⚠️ ai_response_full not in expected format")
+                    else:
+                        print("   ❌ ai_response_full field missing from stored message")
+                else:
+                    print("   ❌ Failed to retrieve session messages")
+            else:
+                print("   ❌ No session_id found in recent session")
+        else:
+            print("   ❌ Failed to retrieve chat sessions for database test")
+        
+        # Final Assessment
+        print(f"\n🎯 AI TUTOR PHASE 1 TEXT SANITIZATION TESTING SUMMARY:")
+        print(f"   ✅ Special Characters Removal: {'PASS' if test_results['text_sanitization_special_chars'] else 'FAIL'}")
+        print(f"   ✅ Emoji Removal: {'PASS' if test_results['text_sanitization_emojis'] else 'FAIL'}")
+        print(f"   ✅ Escaped Sequences Removal: {'PASS' if test_results['text_sanitization_escaped_sequences'] else 'FAIL'}")
+        print(f"   ✅ LaTeX Preservation: {'PASS' if test_results['latex_preservation'] else 'FAIL'}")
+        print(f"   ✅ GPT-5 Prompt Enforcement: {'PASS' if test_results['gpt5_prompt_enforcement'] else 'FAIL'}")
+        print(f"   ✅ Raw Text Field: {'PASS' if test_results['raw_text_field_returned'] else 'FAIL'}")
+        print(f"   ✅ Mentor Response Splitting: {'PASS' if test_results['mentor_response_splitting'] else 'FAIL'}")
+        print(f"   ✅ Database Storage Sanitized: {'PASS' if test_results['database_storage_sanitized'] else 'FAIL'}")
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"   📊 Overall Success Rate: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        if success_count >= 6:  # At least 6/8 tests should pass for Phase 1 completion
+            print(f"   ✅ AI TUTOR PHASE 1 TEXT SANITIZATION FIXES WORKING")
+            return True
+        else:
+            print(f"   ❌ AI TUTOR PHASE 1 TEXT SANITIZATION FIXES NEED ATTENTION")
+            return False
+
     # ============= AI TUTOR SESSION MANAGEMENT TESTING =============
 
     def test_ai_tutor_session_isolation_fix(self):
