@@ -120,14 +120,13 @@ def create_app() -> FastAPI:
         expose_headers=["X-CSRF-Token"]
     )
 
-    # TODO: Add CSRF protection back after implementing proper token flow
-    # CSRF Protection - Temporarily disabled for initial cookie auth implementation  
-    # app.add_middleware(
-    #     CSRFMiddleware,
-    #     secret=os.environ['CSRF_SECRET'],
-    #     cookie_name="csrftoken",
-    #     header_name="x-csrftoken"
-    # )
+    # CSRF Protection - Re-enabled with proper token flow
+    app.add_middleware(
+        CSRFMiddleware,
+        secret=os.environ['CSRF_SECRET'],
+        cookie_name="csrftoken",
+        header_name="x-csrftoken"
+    )
     
     # Register routers with API prefix
     app.include_router(auth.router, prefix="/api")
