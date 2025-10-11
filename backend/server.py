@@ -5258,7 +5258,10 @@ async def save_chat_message(session_id: str, message_request: SessionMessageRequ
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    # Extract clean response text from AI response
+    # Store the complete AI response structure for proper UI rendering
+    full_response = message_request.ai_response
+    
+    # Also extract clean text for backward compatibility
     clean_response = ""
     if isinstance(message_request.ai_response, dict):
         # Extract primary response text from dual_response structure
@@ -5279,7 +5282,7 @@ async def save_chat_message(session_id: str, message_request: SessionMessageRequ
         # If ai_response is not a dict, convert to string
         clean_response = str(message_request.ai_response)
     
-    # Create message with clean response text only
+    # Create message with both full structure and clean text
     message = ChatMessage(
         session_id=session_id,
         user_id=user.user_id,
