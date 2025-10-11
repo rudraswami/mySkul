@@ -555,40 +555,29 @@ class DhruvAITester:
         print("   CREDENTIALS: test@dhruvai.com / password123")
         
         test_results = {
-            # Authentication Router Tests
-            'auth_router_register': False,
-            'auth_router_login': False,
-            'auth_router_logout': False,
-            'auth_router_csrf_token': False,
+            # Auto-Notes Router Tests (NEW)
+            'auto_notes_start_session': False,
+            'auto_notes_sessions_list': False,
+            'auto_notes_session_detail': False,
+            'auto_notes_analytics': False,
+            'auto_notes_class_series': False,
             
-            # User Router Tests
-            'user_router_profile_get': False,
-            'user_router_profile_put': False,
-            
-            # Subscription Router Tests
-            'subscription_router_plans': False,
-            'subscription_router_info': False,
-            'subscription_router_check_access': False,
-            'subscription_router_track_usage': False,
-            
-            # AI Router Tests
-            'ai_router_available_contexts': False,
-            'ai_router_chat_sessions': False,
-            'ai_router_chat_message': False,
-            'ai_router_guardrails_math': False,
-            'ai_router_guardrails_fact': False,
-            'ai_router_guardrails_citations': False,
-            
-            # Analytics Router Tests
-            'analytics_router_dashboard': False,
-            'analytics_router_daily_goals': False,
-            'analytics_router_subject_progress': False,
+            # Mock-Tests Router Tests (NEW)
+            'mock_tests_library': False,
+            'mock_tests_library_recent': False,
+            'mock_tests_library_high_scores': False,
+            'mock_tests_dashboard': False,
+            'mock_tests_performance_trends': False,
+            'mock_tests_subjects_jee': False,
+            'mock_tests_subjects_neet': False,
+            'mock_tests_resume': False,
+            'mock_tests_detailed_review': False,
             
             # Critical Integration Tests
             'authentication_flow': False,
-            'hybrid_auth_methods': False,
-            'dependency_injection': False,
-            'error_handling_consistency': False,
+            'service_integration': False,
+            'error_handling_401': False,
+            'data_structure_validation': False,
             'backward_compatibility': False
         }
         
