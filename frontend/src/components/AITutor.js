@@ -188,19 +188,6 @@ export default function AITutor() {
     };
   }, [sessionActions.showMenu]);
   
-  // If AI Tutor 2.0 is enabled, render the new component
-  if (useAITutor20) {
-    return (
-      <SimpleAITutor20 
-        onBackToV1={() => {
-          console.log('Back to classic clicked');
-          setUseAITutor20(false);
-        }}
-        className="h-full"
-      />
-    );
-  }
-  
   // Show toast notification
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
