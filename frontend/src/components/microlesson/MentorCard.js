@@ -304,14 +304,26 @@ const MentorCard = ({ mentorData, weight }) => {
 
               {/* Confidence Tips - Collapsible */}
               {mentorSections.confidence_tips && (
-                <div>
+                <div className="border-l-4 border-green-300 pl-4 my-4">
                   <button
                     onClick={() => setShowTips(!showTips)}
-                    className="flex items-center space-x-2 text-pink-900 font-semibold hover:text-pink-700 transition-colors mb-2"
+                    className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-green-50 transition-colors group"
                   >
-                    <Target className="w-5 h-5" />
-                    <span>🌟 Confidence Boost</span>
-                    <motion.div animate={{ rotate: showTips ? 180 : 0 }}>
+                    <div className="flex items-center space-x-3">
+                      <Target className="w-5 h-5 text-green-600" />
+                      <div>
+                        <span className="font-semibold text-pink-900">🎯 Confidence Boost</span>
+                        {!showTips && (
+                          <p className="text-xs text-pink-700 mt-1">
+                            {mentorSections.confidence_tips.substring(0, 60)}...
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <motion.div 
+                      animate={{ rotate: showTips ? 180 : 0 }}
+                      className="text-green-600 group-hover:text-green-800"
+                    >
                       <ChevronDown className="w-4 h-4" />
                     </motion.div>
                   </button>
@@ -322,13 +334,13 @@ const MentorCard = ({ mentorData, weight }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="pl-7 text-pink-900 text-sm leading-relaxed"
+                        className="pl-8 pr-4 pb-3 text-pink-900 text-sm leading-relaxed bg-green-25 rounded-b-lg"
                       >
                         <ReactMarkdown 
                           components={{
-                            p: ({ children }) => <LatexRenderer text={children} />,
-                            li: ({ children }) => <li className="mb-1"><LatexRenderer text={children} /></li>,
-                            ul: ({ children }) => <ul className="list-disc list-inside">{children}</ul>
+                            p: ({ children }) => <div className="mb-2"><LatexRenderer text={children} /></div>,
+                            li: ({ children }) => <li className="mb-1 ml-4"><LatexRenderer text={children} /></li>,
+                            ul: ({ children }) => <ul className="list-disc list-inside space-y-1">{children}</ul>
                           }}
                         >
                           {mentorSections.confidence_tips}
