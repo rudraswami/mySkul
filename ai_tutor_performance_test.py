@@ -12,7 +12,7 @@ import asyncio
 
 async def test_ai_tutor_performance():
     """Test AI Tutor performance and reliability"""
-    base_url = "https://learning-companion-3.preview.emergentagent.com/api"
+    base_url = "http://localhost:8001/api"
     
     print("🚀 AI TUTOR PERFORMANCE & RELIABILITY TEST")
     print("=" * 80)
