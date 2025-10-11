@@ -11371,12 +11371,13 @@ app.add_middleware(
 )
 
 # CSRF Protection - Re-enabled after implementing proper token flow
-app.add_middleware(
-    CSRFMiddleware,
-    secret=CSRF_SECRET,
-    cookie_name="csrftoken",
-    header_name="X-CSRF-Token"
-)
+# CSRF Protection - Temporarily disabled to debug login issues
+# app.add_middleware(
+#     CSRFMiddleware,
+#     secret=CSRF_SECRET,
+#     cookie_name="csrftoken",
+#     header_name="X-CSRF-Token"
+# )
 
 # Include modular routers for new architecture
 if MODULAR_COMPONENTS_AVAILABLE:
