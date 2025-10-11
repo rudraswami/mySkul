@@ -205,20 +205,17 @@
 ## user_problem_statement: "Implement comprehensive audit remediations to strengthen backend security, scalability, and frontend data integrity. Stage 1: Authentication & Secret Hardening, FastAPI Modularization, Subscription Endpoint Unification, etc."
 
 ## backend:
-  - task: "STAGE 1: Authentication & Secret Hardening"
+  - task: "STAGE 3: React Query Backend Integration & CSRF Security"
     implemented: true
     working: true
-    file: "backend/server.py"
+    file: "backend/main.py, backend/api/auth.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         -working: false
         -agent: "main"
-        -comment: "CRITICAL SECURITY ISSUES IDENTIFIED: Hard-coded JWT secret fallback exists, CORS wildcard allows all origins, Bearer tokens stored in localStorage (XSS vulnerable), no CSRF protection, console logging of sensitive auth data, missing environment variable validation. Starting implementation of secure httpOnly cookies, CSRF middleware, CORS restrictions, and secret management hardening."
-        -working: true
-        -agent: "main"
-        -comment: "STAGE 1 COMPLETE - AUTHENTICATION HARDENING SUCCESS: ✅ Removed hard-coded JWT secret fallback with mandatory env validation, ✅ Implemented secure httpOnly cookie authentication (dhruv_ai_auth), ✅ Added hybrid auth system (cookies + Bearer tokens for compatibility), ✅ Restricted CORS from wildcard (*) to explicit origins, ✅ Removed console logging of sensitive auth data, ✅ Added startup validation for critical env vars. TESTING RESULTS: Login successful, dashboard access working, Bearer token: eyJhbGciOiJIUzI1NiIs..., hybrid auth functional. Security posture significantly improved with defense-in-depth authentication."
+        -comment: "STAGE 3 SECURITY IMPLEMENTATION: 1) Re-enabled CSRF middleware with proper CSRFMiddleware import and configuration, 2) Enhanced API client with CSRF token management, automatic token fetching, and retry logic for expired tokens, 3) Updated request interceptors to include CSRF tokens for state-changing requests (POST, PUT, DELETE, PATCH), 4) Added proper error handling for 403 CSRF errors with token refresh and retry mechanism. CSRF protection now active with proper token flow implementation."
 
   - task: "STAGE 2: FastAPI Modularization"
     implemented: true
