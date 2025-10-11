@@ -7941,6 +7941,7 @@ class DhruvAITester:
         
         emoji_message = {
             "message": "Explain Newton's laws with examples ✅❌💡🔎1️⃣2️⃣",
+            "session_id": test_session_id,
             "subject": "Physics"
         }
         
