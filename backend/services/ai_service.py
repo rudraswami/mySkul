@@ -5,6 +5,8 @@ Enhanced for AI Tutor 2.0 with adaptive personas, visual generation, and sentime
 import os
 import logging
 import sys
+import asyncio
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
