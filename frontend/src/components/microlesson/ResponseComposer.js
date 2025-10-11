@@ -224,9 +224,9 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <span className="text-xl">💡</span>
                 <h3 className="font-bold text-yellow-900">Pro Tip</h3>
               </div>
-              <p className="text-yellow-900 text-sm leading-relaxed">
-                {cleanText(microLessonSections.mentor_tip)}
-              </p>
+              <div className="text-yellow-900 text-sm leading-relaxed">
+                <LatexRenderer text={microLessonSections.mentor_tip} />
+              </div>
             </div>
           )}
         </div>
