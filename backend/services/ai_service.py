@@ -113,9 +113,22 @@ class AIService:
     async def generate_dual_ai_response(self, user_id: str, message: str, session_id: str, subject: str) -> Dict[str, Any]:
         """
         Generate enhanced dual AI response with adaptive personas, visual generation, and progressive disclosure
-        AI Tutor 2.0 feature
+        AI Tutor 2.0 feature with subscription checking and usage tracking
         """
         try:
+            # Step 0: Check subscription access (if subscription service available)
+            if self.subscription_service:
+                access_info = await self.subscription_service.check_ai_tutor_access(user_id)
+                if not access_info.get("allowed", True):
+                    logger.warning(f"AI Tutor access denied for user {user_id}: limit reached")
+                    return {
+                        "error": "subscription_limit_reached",
+                        "message": "AI Tutor session limit reached",
+                        "upgrade_hint": access_info.get("upgrade_hint"),
+                        "access_info": access_info
+                    }
+                logger.info(f"AI Tutor access check: {access_info.get('remaining')} sessions remaining")
+            
             # Step 1: Analyze sentiment and user intent
             sentiment_analysis = self.sentiment_analyzer.analyze(message)
             logger.info(f"Sentiment analysis: {sentiment_analysis}")
