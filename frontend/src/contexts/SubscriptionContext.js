@@ -115,25 +115,25 @@ export function SubscriptionProvider({ children }) {
     }
   };
 
-  // Helper functions for market-standard messaging
+  // Helper functions for market-standard messaging (updated for planConfig_ai_tutor.json)
   const getFeatureTitle = (featureName) => {
     const titles = {
-      'ai_tutor_daily': '🎓 Unlock Unlimited AI Tutoring',
+      'ai_sessions_monthly': '🎓 Unlock More AI Tutoring Sessions',
+      'mentor_tips_daily': '💡 Unlock Daily Mentor Tips',
       'mock_tests_weekly': '🏆 Access More Mock Tests',
-      'auto_note_recordings_daily': '🎤 Record Unlimited Classes',
-      'auto_note_uploads_daily': '📁 Upload More Files'
+      'auto_note_uploads_daily': '📁 Upload More Notes & Files'
     };
     return titles[featureName] || '⚡ Upgrade Your Learning';
   };
 
   const getFeatureDescription = (featureName) => {
     const descriptions = {
-      'ai_tutor_daily': "You've reached your daily AI Tutor limit. Upgrade to Premium for unlimited conversations with your personal AI Professor and Mentor.",
-      'mock_tests_weekly': "You've used all your mock tests this week. Upgrade to Premium for unlimited practice tests and detailed performance analytics.",
-      'auto_note_recordings_daily': "You've reached your daily recording limit. Upgrade to Premium for unlimited live recording sessions.",
-      'auto_note_uploads_daily': "You've reached your daily upload limit. Upgrade to Premium for unlimited file uploads and processing."
+      'ai_sessions_monthly': "You've reached your monthly AI Tutor limit. Upgrade to get more conversations with your personal AI Professor and Mentor.",
+      'mentor_tips_daily': "Unlock daily motivational mentor tips. Upgrade to receive personalized encouragement and study tips every day.",
+      'mock_tests_weekly': "You've used all your mock tests this week. Upgrade for more practice tests and detailed performance analytics.",
+      'auto_note_uploads_daily': "You've reached your daily upload limit. Upgrade for more file uploads and unlimited processing."
     };
-    return descriptions[featureName] || "You've reached your limit for this feature. Upgrade to Premium for unlimited access.";
+    return descriptions[featureName] || "You've reached your limit for this feature. Upgrade for enhanced access.";
   };
 
   const getFeatureBenefits = (featureName) => {
