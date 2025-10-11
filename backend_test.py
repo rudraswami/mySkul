@@ -18,7 +18,7 @@ class DhruvAITester:
         self.test_user_email = "test@dhruvai.com"
         self.fresh_user_email = f"fresh_user_{int(time.time())}@dhruvai.com"  # Fresh user for free tier testing
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, use_session=False):
         """Run a single API test"""
         url = f"{self.base_url}/{endpoint}"
         test_headers = {'Content-Type': 'application/json'}
@@ -35,28 +35,40 @@ class DhruvAITester:
         print(f"   Method: {method}")
         
         try:
-            if method == 'GET':
-                response = requests.get(url, headers=test_headers, timeout=30)
-            elif method == 'POST':
-                response = requests.post(url, json=data, headers=test_headers, timeout=30)
-            elif method == 'PUT':
-                response = requests.put(url, json=data, headers=test_headers, timeout=30)
+            # Use session for cookie handling if needed
+            if use_session:
+                import requests
+                session = requests.Session()
+                
+                if method == 'GET':
+                    response = session.get(url, headers=test_headers, timeout=30)
+                elif method == 'POST':
+                    response = session.post(url, json=data, headers=test_headers, timeout=30)
+                elif method == 'PUT':
+                    response = session.put(url, json=data, headers=test_headers, timeout=30)
+            else:
+                if method == 'GET':
+                    response = requests.get(url, headers=test_headers, timeout=30)
+                elif method == 'POST':
+                    response = requests.post(url, json=data, headers=test_headers, timeout=30)
+                elif method == 'PUT':
+                    response = requests.put(url, json=data, headers=test_headers, timeout=30)
 
             print(f"   Status Code: {response.status_code}")
             
             # Store last response status for subscription error checking
             self.last_response_status = response.status_code
             
-            success = response.status_code == expected_status
+            success = response.status_code == expected_status or (isinstance(expected_status, list) and response.status_code in expected_status)
             if success:
                 self.tests_passed += 1
                 print(f"✅ Passed - Status: {response.status_code}")
                 try:
                     response_data = response.json()
                     print(f"   Response: {json.dumps(response_data, indent=2)[:200]}...")
-                    return True, response_data
+                    return True, response_data, response
                 except:
-                    return True, {}
+                    return True, {}, response
             else:
                 print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
                 try:
@@ -67,13 +79,13 @@ class DhruvAITester:
                 except:
                     print(f"   Error: {response.text}")
                     self.last_error_data = {"error": response.text}
-                return False, {}
+                return False, {}, response
 
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
             self.last_response_status = 0
             self.last_error_data = {"error": str(e)}
-            return False, {}
+            return False, {}, None
 
     def test_health_check(self):
         """Test health check endpoint"""
