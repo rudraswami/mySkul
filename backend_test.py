@@ -16281,7 +16281,7 @@ def main():
             print("   ❌ Auto-Notes analytics failed")
             return False
     
-    def test_auto_notes_class_series(self):
+    def test_new_auto_notes_class_series(self):
         """Test Auto-Notes Router - GET /api/auto-notes/class-series"""
         print("   Testing GET /api/auto-notes/class-series endpoint")
         
