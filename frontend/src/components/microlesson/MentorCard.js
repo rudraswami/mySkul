@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, ChevronDown, Sparkles, MessageCircle, Target, TrendingUp } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import LatexRenderer from './LatexRenderer';
 
 /**
