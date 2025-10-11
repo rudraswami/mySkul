@@ -111,23 +111,60 @@ const MentorCard = ({ mentorData, weight }) => {
       }
     }
     
-    // If no structured sections found, distribute text intelligently
-    if (!sections.motivation_spark && !sections.simplified_recap) {
-      const sentences = cleanedText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    // Enhanced fallback: Intelligent text distribution for unstructured content
+    const hasContent = Object.values(sections).some(s => s && s.trim().length > 0);
+    
+    if (!hasContent || (!sections.motivation_spark && !sections.simplified_recap)) {
+      // Split by sentences for better readability
+      const sentences = cleanedText
+        .split(/[.!?]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15); // Filter out short fragments
       
-      if (sentences.length > 0) {
-        sections.motivation_spark = sentences[0]?.trim() + '.';
-      }
-      if (sentences.length > 2) {
-        sections.simplified_recap = sentences.slice(1, 3).join('. ').trim() + '.';
-      }
-      if (sentences.length > 3) {
-        sections.confidence_tips = sentences.slice(3, 5).join('. ').trim() + '.';
-      }
-      if (sentences.length > 5) {
-        sections.encouragement = sentences[sentences.length - 1]?.trim() + '.';
+      if (sentences.length === 1) {
+        // Single sentence - use as motivation
+        sections.motivation_spark = sentences[0] + '.';
+      } else if (sentences.length === 2) {
+        // Two sentences - split between motivation and recap
+        sections.motivation_spark = sentences[0] + '.';
+        sections.simplified_recap = sentences[1] + '.';
+      } else if (sentences.length >= 3) {
+        // Multiple sentences - distribute intelligently
+        sections.motivation_spark = sentences[0] + '.';
+        
+        // Use middle sentences for recap (max 2 sentences)
+        const recapCount = Math.min(2, sentences.length - 2);
+        sections.simplified_recap = sentences.slice(1, 1 + recapCount)
+          .map(s => `• ${s}`)
+          .join('\n');
+        
+        // Use actionable sentences for tips
+        const actionSentences = sentences.filter(s => 
+          /^(?:try|start|focus|practice|remember|make sure|you can|you should)/i.test(s.trim())
+        );
+        
+        if (actionSentences.length > 0) {
+          sections.confidence_tips = actionSentences[0] + '.';
+        } else if (sentences.length > 3) {
+          sections.confidence_tips = sentences[sentences.length - 2] + '.';
+        }
+        
+        // Last sentence or encouraging phrase for encouragement
+        const lastSentence = sentences[sentences.length - 1];
+        if (/(?:you|great|good|success|confident|believe|proud)/i.test(lastSentence)) {
+          sections.encouragement = lastSentence + '.';
+        } else {
+          sections.encouragement = 'You\'ve got this! Keep up the great work!';
+        }
       }
     }
+    
+    // Ensure all sections have reasonable length
+    Object.keys(sections).forEach(key => {
+      if (sections[key] && sections[key].length > 300) {
+        sections[key] = sections[key].substring(0, 297) + '...';
+      }
+    });
     
     return sections;
   };
