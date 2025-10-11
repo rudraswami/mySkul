@@ -163,7 +163,16 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <h3 className="text-lg font-bold text-gray-800">Core Concept</h3>
               </div>
               <div className="text-gray-800 text-base leading-loose pl-8" style={{ lineHeight: '1.8' }}>
-                <LatexRenderer text={microLessonSections.concept_overview} />
+                <ReactMarkdown 
+                  components={{
+                    p: ({ children }) => <LatexRenderer text={children} />,
+                    li: ({ children }) => <li><LatexRenderer text={children} /></li>,
+                    strong: ({ children }) => <strong><LatexRenderer text={children} /></strong>,
+                    em: ({ children }) => <em><LatexRenderer text={children} /></em>
+                  }}
+                >
+                  {sanitizeText(microLessonSections.concept_overview)}
+                </ReactMarkdown>
               </div>
             </div>
           )}
