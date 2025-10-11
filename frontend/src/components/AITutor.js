@@ -2862,9 +2862,13 @@ export default function AITutor() {
                   placeholder={
                     dragOver 
                       ? 'Drop your file here...' 
-                      : loading 
-                        ? 'AI is thinking...' 
-                        : 'Type your doubt here...'
+                      : messagePhase === 'streaming' 
+                        ? '🤖 AI is generating response...'
+                        : messagePhase === 'submit'
+                        ? '📤 Sending message...'
+                        : loading 
+                          ? 'Processing...'
+                          : 'Type your doubt here...'
                   }
                   className={`message-input chat-input resize-none border min-h-12 text-base md:text-sm pr-20 ${
                     dragOver 
