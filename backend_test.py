@@ -8073,28 +8073,33 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
-        if success and 'primary' in response and 'response' in response['primary']:
-            gpt5_response = response['primary']['response']
-            print(f"   Response preview: {gpt5_response[:150]}...")
+        if success:
+            print(f"   ✅ API call successful, analyzing response structure...")
+            professor_text, mentor_text, raw_text = extract_response_text(response)
             
-            # Check GPT-5 formatting compliance
-            has_markdown = any(symbol in gpt5_response for symbol in ['**', '*', '_', '###', '####'])
-            has_emojis = any(emoji in gpt5_response for emoji in ['✅', '❌', '💡', '🔎', '1️⃣'])
-            has_escaped = any(seq in gpt5_response for seq in ['\\"', "\\'", '\\n'])
-            
-            formatting_compliant = not (has_markdown or has_emojis or has_escaped)
-            
-            if formatting_compliant:
-                print("   ✅ GPT-5 response follows strict formatting rules")
-                test_results['gpt5_prompt_enforcement'] = True
+            if professor_text:
+                print(f"   Response preview: {professor_text[:150]}...")
+                
+                # Check GPT-5 formatting compliance
+                has_markdown = any(symbol in professor_text for symbol in ['**', '*', '_', '###', '####'])
+                has_emojis = any(emoji in professor_text for emoji in ['✅', '❌', '💡', '🔎', '1️⃣'])
+                has_escaped = any(seq in professor_text for seq in ['\\"', "\\'", '\\n'])
+                
+                formatting_compliant = not (has_markdown or has_emojis or has_escaped)
+                
+                if formatting_compliant:
+                    print("   ✅ GPT-5 response follows strict formatting rules")
+                    test_results['gpt5_prompt_enforcement'] = True
+                else:
+                    print("   ❌ GPT-5 response contains forbidden formatting")
+                    if has_markdown:
+                        print("   ❌ Contains markdown symbols")
+                    if has_emojis:
+                        print("   ❌ Contains emojis")
+                    if has_escaped:
+                        print("   ❌ Contains escaped characters")
             else:
-                print("   ❌ GPT-5 response contains forbidden formatting")
-                if has_markdown:
-                    print("   ❌ Contains markdown symbols")
-                if has_emojis:
-                    print("   ❌ Contains emojis")
-                if has_escaped:
-                    print("   ❌ Contains escaped characters")
+                print("   ❌ Could not find response text in API response")
         else:
             print("   ❌ Failed to get response for GPT-5 prompt enforcement test")
         
