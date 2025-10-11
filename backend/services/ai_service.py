@@ -516,18 +516,29 @@ Subject Context: {subject}"""
             }
     
     async def save_session_message(self, user_id: str, session_id: str, message: str, ai_response: Dict[str, Any]):
-        """Save a chat message to the session"""
+        """Save a chat message to the session with sanitized content"""
         try:
-            # Save the message
+            # Extract sanitized response for database storage
+            sanitized_response = ai_response.get('primary', {}).get('response', '')
+            
+            # Save the message with sanitized content
             chat_message = ChatMessage(
                 session_id=session_id,
                 user_id=user_id,
-                message=message,
-                response=str(ai_response.get('primary', {}).get('response', ''))
+                message=self.response_parser.sanitize_text(message),  # Sanitize user message too
+                response=str(sanitized_response)
             )
             
             message_dict = chat_message.dict()
             message_dict['timestamp'] = message_dict['timestamp'].isoformat()
+            
+            # Store complete sanitized response structure for analysis
+            message_dict['ai_response_full'] = {
+                'primary_sanitized': ai_response.get('primary', {}).get('response', ''),
+                'secondary_sanitized': ai_response.get('secondary', {}).get('response', ''),
+                'micro_sections': ai_response.get('primary', {}).get('micro_lesson_sections', {}),
+                'mentor_sections': ai_response.get('secondary', {}).get('mentor_sections', {})
+            }
             
             await self.db.chat_messages.insert_one(message_dict)
             
