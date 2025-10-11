@@ -191,11 +191,17 @@ const MentorCard = ({ mentorData, weight }) => {
           </motion.div>
           <div className="text-left">
             <h3 className="text-xl font-bold text-pink-900 flex items-center space-x-2">
-              <span>{expanded ? "Mentor's Guidance" : "💬 Show Mentor's Motivation"}</span>
+              <span>{expanded ? "Mentor's Guidance" : "💬 Show Mentor's Support"}</span>
               <Sparkles className="w-4 h-4 text-pink-600" />
+              {!expanded && (
+                <span className="ml-2 px-2 py-1 bg-pink-200 text-pink-800 rounded-full text-xs font-bold">
+                  {Object.values(mentorSections).filter(s => s && s.trim()).length} sections
+                </span>
+              )}
             </h3>
             <p className="text-sm text-pink-700">
-              {expanded ? "Warm support and confidence-building tips" : "Get emotional support and study strategies"}
+              {expanded ? "Warm support and confidence-building tips" : 
+               `${Object.values(mentorSections).filter(s => s && s.trim()).length} helpful sections available`}
             </p>
           </div>
         </div>
