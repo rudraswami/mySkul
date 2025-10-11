@@ -21,6 +21,7 @@ import {
   Zap
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import LatexRenderer from './microlesson/LatexRenderer';
 
 export default function EnhancedResultsModal({ 
   results, 
