@@ -1526,34 +1526,38 @@ export default function AITutor() {
     return groups;
   }, [filteredSessions]);
 
+  // Quick action handler for AI Tutor 2.0
+  const handleQuickAction = async (action, messageData) => {
+    switch (action.action) {
+      case 'save_to_notes':
+        await handleAddToNotes(
+          messageData.subject || selectedSubject,
+          messageData.dual_response?.primary?.response || '',
+          messageData.subject || selectedSubject,
+          messageData.topic_detected || 'General',
+          messageData.session_id
+        );
+        break;
+      case 'generate_practice':
+        await handlePracticeMore(
+          messageData.message || currentMessage,
+          messageData.subject || selectedSubject,
+          messageData.topic_detected || 'General'
+        );
+        break;
+      case 'explain_different':
+        setCurrentMessage(`Explain this differently: ${messageData.dual_response?.primary?.response?.substring(0, 100)}...`);
+        break;
+      case 'generate_visual':
+        showToast('Visual generation requested!', 'info');
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-white">
-      {/* Feature Toggle Header - AI Tutor 2.0 Beta */}
-      <div className="fixed top-4 right-4 z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-lg shadow-lg border border-purple-200 p-3"
-        >
-          <div className="flex items-center space-x-3">
-            <span className="text-sm font-medium text-gray-700">
-              Try AI Tutor 2.0
-            </span>
-            <button
-              onClick={() => {
-                console.log('Toggle button clicked!', useAITutor20);
-                setUseAITutor20(true);
-                console.log('State should be changed to true');
-              }}
-              className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200"
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Beta</span>
-            </button>
-          </div>
-        </motion.div>
-      </div>
-
       {/* Sidebar - Chat Sessions - Hidden on mobile */}
       <div className="hidden lg:flex w-80 bg-white border-r border-gray-100 flex-col">
         <div className="p-6 border-b border-gray-100">
