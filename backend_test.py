@@ -19516,15 +19516,18 @@ def main():
         return critical_success
 
 if __name__ == "__main__":
-    # Run AI Tutor Backend Comprehensive Testing as requested in review
+    # Run AI Tutor Timeout Optimization Testing as requested in review
     tester = DhruvAITester()
     
-    # Run the comprehensive AI Tutor backend tests
-    success = tester.run_comprehensive_ai_tutor_backend_tests()
+    print("🚀 REVIEW REQUEST: Testing AI Tutor timeout and performance optimization")
+    print("   User recharged Universal Key but was still getting timeout errors")
+    print("   Testing optimized backend timeouts and enhanced contextual fallbacks")
     
-    print(f"\n🏁 AI Tutor Backend Testing Complete: {'SUCCESS' if success else 'FAILED'}")
+    # Run the timeout optimization tests
+    success = tester.test_ai_tutor_timeout_optimization()
+    
+    print(f"\n🏁 AI Tutor Timeout Optimization Testing Complete: {'SUCCESS' if success else 'FAILED'}")
     sys.exit(0 if success else 1)
-    print("REVIEW REQUEST: Testing AI Tutor backend Phase 1 fixes")
     print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
     print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
