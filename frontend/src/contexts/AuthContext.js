@@ -59,8 +59,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // SECURITY: Remove sensitive login data from logs
-      const response = await axios.post(`${API}/auth/login`, { email, password });
+      // Use authAPI with CSRF token handling
+      const response = await authAPI.login(email, password);
       
       const { token: newToken, user: userData } = response.data;
       
@@ -68,7 +68,6 @@ export function AuthProvider({ children }) {
       setToken(newToken);
       setUser(userData);
       localStorage.setItem('dhruv_ai_token', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
       // SECURITY: httpOnly cookie is also set automatically by backend
       return { success: true };
@@ -85,14 +84,13 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${API}/auth/register`, userData);
+      const response = await authAPI.register(userData);
       const { token: newToken, user: newUser } = response.data;
       
       // Set both token (for Bearer auth fallback) and user state
       setToken(newToken);
       setUser(newUser);
       localStorage.setItem('dhruv_ai_token', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
       return { success: true };
     } catch (error) {
