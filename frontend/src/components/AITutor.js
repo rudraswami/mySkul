@@ -1536,8 +1536,30 @@ export default function AITutor() {
 
   return (
     <div className="flex h-screen bg-white">
+      {/* Feature Toggle Header - AI Tutor 2.0 Beta */}
+      <div className="fixed top-4 right-4 z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-lg shadow-lg border border-purple-200 p-3"
+        >
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700">
+              Try AI Tutor 2.0
+            </span>
+            <button
+              onClick={() => setUseAITutor20(true)}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Beta</span>
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Sidebar - Chat Sessions - Hidden on mobile */}
-      <div className="hidden lg:flex w-80 bg-white border-r border-gray-100 flex-col">
+      <div className="hidden lg:flex w-80 bg-white border-r border-gray-100 flex-col">{/* Rest of the component... */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
