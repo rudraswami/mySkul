@@ -660,14 +660,16 @@ class DhruvAITester:
         
         # Critical Success Criteria Assessment
         critical_tests = [
-            'modular_architecture_health',
-            'auth_router_registration', 
+            'auth_router_register',
             'auth_router_login',
             'user_router_profile_get',
             'user_router_profile_put',
             'subscription_router_plans',
-            'subscription_router_access_check',
-            'service_layer_dependency_injection',
+            'subscription_router_check_access',
+            'ai_router_available_contexts',
+            'analytics_router_dashboard',
+            'authentication_flow',
+            'dependency_injection',
             'backward_compatibility'
         ]
         
