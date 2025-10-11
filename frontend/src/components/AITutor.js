@@ -749,9 +749,6 @@ export default function AITutor() {
         };
       }
       
-      // Clear user input only after successful response validation
-      setCurrentMessage('');
-      
       // Update session title if AI detected a more specific topic
       if (newMessage.topic_detected && newMessage.topic_detected !== 'General') {
         await updateSessionTitleIfNeeded(sessionId, newMessage.topic_detected, messageToSend);
@@ -780,6 +777,10 @@ export default function AITutor() {
 
       // Add message to current conversation
       setMessages(prev => [...prev, enhancedMessage]);
+      
+      // RESET PHASE: Clear user input only AFTER message is successfully appended to conversation
+      // This ensures the user sees their message appear before the input field is cleared
+      setCurrentMessage('');
       
       // Update personalized difficulty if provided
       if (newMessage.dual_response?.user_difficulty_level) {
