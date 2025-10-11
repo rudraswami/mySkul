@@ -156,110 +156,11 @@ const UpgradeModal = ({
                   </motion.div>
                 )}
 
-                {/* Simple message fallback */}
-                {upgradeHint?.message && !upgradeHint?.mentor_message && (
-                  <div className="bg-yellow-50 rounded-xl p-5 border border-yellow-200">
-                    <p className="text-gray-800 leading-relaxed">
-                      {upgradeHint.message}
-                    </p>
-                  </div>
-                )}
-
-                {/* Upgrade Benefits */}
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-5">
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center">
-                    <Zap className="w-5 h-5 text-yellow-500 mr-2" />
-                    Upgrade to {upgradeHint?.target_plan || "Premium"} and Get:
-                  </h3>
-                  <ul className="space-y-2">
-                    {upgradeHint?.target_plan === "STARTER" && (
-                      <>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          20 AI sessions per month
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Weekly AI insights
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Export your notes
-                        </li>
-                      </>
-                    )}
-                    {upgradeHint?.target_plan === "SCHOLAR" && (
-                      <>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          100 AI sessions per month
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          5 mentor tips daily
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Advanced analytics
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Adaptive AI guidance
-                        </li>
-                      </>
-                    )}
-                    {upgradeHint?.target_plan === "ACHIEVER" && (
-                      <>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          300 AI sessions per month
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          30 mentor tips daily
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Unlimited mock tests
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Emotion-aware AI
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Priority support
-                        </li>
-                      </>
-                    )}
-                    {upgradeHint?.target_plan === "LEGEND" && (
-                      <>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Unlimited everything!
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Priority AI models
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Dedicated mentor support
-                        </li>
-                        <li className="flex items-center text-gray-700">
-                          <span className="text-green-500 mr-2">✓</span>
-                          Custom study plans
-                        </li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={handleUpgrade}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold"
                   >
                     <span className="flex items-center justify-center">
                       {upgradeHint?.cta || "Upgrade Now"}
@@ -277,11 +178,6 @@ const UpgradeModal = ({
                     </Button>
                   )}
                 </div>
-
-                {/* Trust Badge */}
-                <p className="text-center text-sm text-gray-500">
-                  ✨ Join 10,000+ students who upgraded to accelerate their learning
-                </p>
               </div>
             </Card>
           </motion.div>
