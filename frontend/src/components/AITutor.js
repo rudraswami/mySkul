@@ -11,8 +11,11 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import FormattedAIResponse, { DualResponseContainer, formatMathExpressions, formatVisualResponse, formatProfessorMentorResponse } from './FormattedAIResponse';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
-import AITutor20 from './AITutor20';
-import SimpleAITutor20 from './SimpleAITutor20';
+import AIResponseCardV2 from './AIResponseCardV2';
+import PersonaHeader from './PersonaHeader';
+import VisualConceptBlock from './VisualConceptBlock';
+import ProgressiveExplanation from './ProgressiveExplanation';
+import QuickActionTray from './QuickActionTray';
 import { 
   Brain, 
   Send, 
