@@ -116,9 +116,41 @@ export default function MockTests() {
   const [showSubmitLoading, setShowSubmitLoading] = useState(false);
   
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [mockTests, setMockTests] = useState([]);
-  const [recentResults, setRecentResults] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  // #PHASE3-SECURITY-FRONTEND - Use React Query data with fallbacks
+  const [mockTests, setMockTests] = useState(mockTestsLibrary?.tests || []);
+  const [recentResults, setRecentResults] = useState(recentTestsData?.tests || []);
+  const [analytics, setAnalytics] = useState(dashboardData || null);
+  
+  // Update state when React Query data changes
+  useEffect(() => {
+    if (mockTestsLibrary?.tests) {
+      setMockTests(mockTestsLibrary.tests);
+    }
+  }, [mockTestsLibrary]);
+  
+  useEffect(() => {
+    if (recentTestsData?.tests) {
+      setRecentResults(recentTestsData.tests);
+    }
+  }, [recentTestsData]);
+  
+  useEffect(() => {
+    if (dashboardData) {
+      setAnalytics(dashboardData);
+    }
+  }, [dashboardData]);
+  
+  useEffect(() => {
+    if (performanceTrendsData) {
+      setPerformanceTrends(performanceTrendsData);
+    }
+  }, [performanceTrendsData]);
+  
+  useEffect(() => {
+    if (subjectsData) {
+      setExamSubjects(subjectsData);
+    }
+  }, [subjectsData]);
   
   // Individual loading states for each button
   const [loadingStates, setLoadingStates] = useState({});
