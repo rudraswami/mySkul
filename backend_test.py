@@ -618,7 +618,7 @@ class DhruvAITester:
         
         # Final Assessment
         print("\n" + "=" * 80)
-        print("🎯 STAGE 2 MODULAR ROUTER IMPLEMENTATION - FINAL RESULTS")
+        print("🎯 STAGE 2: NEW ROUTERS (AUTO-NOTES & MOCK-TESTS) - FINAL RESULTS")
         print("=" * 80)
         
         success_count = sum(test_results.values())
@@ -626,70 +626,69 @@ class DhruvAITester:
         success_rate = (success_count / total_tests) * 100
         
         print(f"\n📊 TEST RESULTS SUMMARY:")
-        for test_name, result in test_results.items():
-            status = "✅ PASS" if result else "❌ FAIL"
-            print(f"   {test_name.replace('_', ' ').title()}: {status}")
+        
+        # Auto-Notes Router Results
+        auto_notes_tests = [k for k in test_results.keys() if k.startswith('auto_notes_')]
+        auto_notes_success = sum(test_results[test] for test in auto_notes_tests)
+        print(f"\n   AUTO-NOTES ROUTER ({auto_notes_success}/{len(auto_notes_tests)}):")
+        for test_name in auto_notes_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            print(f"      {test_name.replace('_', ' ').title()}: {status}")
+        
+        # Mock-Tests Router Results
+        mock_tests_tests = [k for k in test_results.keys() if k.startswith('mock_tests_')]
+        mock_tests_success = sum(test_results[test] for test in mock_tests_tests)
+        print(f"\n   MOCK-TESTS ROUTER ({mock_tests_success}/{len(mock_tests_tests)}):")
+        for test_name in mock_tests_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            print(f"      {test_name.replace('_', ' ').title()}: {status}")
+        
+        # Integration Tests Results
+        integration_tests = [k for k in test_results.keys() if not k.startswith(('auto_notes_', 'mock_tests_'))]
+        integration_success = sum(test_results[test] for test in integration_tests)
+        print(f"\n   INTEGRATION TESTS ({integration_success}/{len(integration_tests)}):")
+        for test_name in integration_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            print(f"      {test_name.replace('_', ' ').title()}: {status}")
         
         print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
         
-        # Critical Success Criteria Assessment
-        critical_tests = [
-            'auth_router_register',
-            'auth_router_login',
-            'user_router_profile_get',
-            'user_router_profile_put',
-            'subscription_router_plans',
-            'subscription_router_check_access',
-            'ai_router_available_contexts',
-            'analytics_router_dashboard',
-            'authentication_flow',
-            'dependency_injection',
-            'backward_compatibility'
-        ]
+        # Router-specific success rates
+        auto_notes_rate = (auto_notes_success / len(auto_notes_tests)) * 100 if auto_notes_tests else 0
+        mock_tests_rate = (mock_tests_success / len(mock_tests_tests)) * 100 if mock_tests_tests else 0
         
-        critical_success_count = sum(test_results[test] for test in critical_tests)
-        critical_total = len(critical_tests)
-        critical_success_rate = (critical_success_count / critical_total) * 100
-        
-        print(f"\n🎯 CRITICAL SUCCESS CRITERIA: {critical_success_count}/{critical_total} ({critical_success_rate:.1f}%)")
+        print(f"\n🎯 ROUTER SUCCESS RATES:")
+        print(f"   Auto-Notes Router: {auto_notes_success}/{len(auto_notes_tests)} ({auto_notes_rate:.1f}%)")
+        print(f"   Mock-Tests Router: {mock_tests_success}/{len(mock_tests_tests)} ({mock_tests_rate:.1f}%)")
         
         # Determine overall status
-        if critical_success_rate >= 80:
-            print("\n✅ STAGE 2 MODULAR ROUTER IMPLEMENTATION: SUCCESS")
-            print("   Modular foundation is production-ready for additional router implementation")
-        elif critical_success_rate >= 60:
-            print("\n⚠️ STAGE 2 MODULAR ROUTER IMPLEMENTATION: PARTIAL SUCCESS")
-            print("   Most core functionality working, some issues need attention")
+        if success_rate >= 85:
+            print("\n✅ STAGE 2 NEW ROUTERS INTEGRATION: EXCELLENT SUCCESS")
+            print("   Both Auto-Notes and Mock-Tests routers are production-ready")
+        elif success_rate >= 70:
+            print("\n⚠️ STAGE 2 NEW ROUTERS INTEGRATION: GOOD SUCCESS")
+            print("   Most functionality working, minor issues need attention")
+        elif success_rate >= 50:
+            print("\n⚠️ STAGE 2 NEW ROUTERS INTEGRATION: PARTIAL SUCCESS")
+            print("   Core functionality working, some endpoints need fixes")
         else:
-            print("\n❌ STAGE 2 MODULAR ROUTER IMPLEMENTATION: NEEDS WORK")
-            print("   Critical issues prevent proper modular router functionality")
+            print("\n❌ STAGE 2 NEW ROUTERS INTEGRATION: NEEDS WORK")
+            print("   Critical issues prevent proper router functionality")
         
         # Specific recommendations
         print(f"\n🔧 RECOMMENDATIONS:")
-        if not test_results['auth_router_register']:
-            print("   - Fix auth router registration endpoint")
-        if not test_results['auth_router_login']:
-            print("   - Fix auth router login endpoint")
-        if not test_results['user_router_profile_get']:
-            print("   - Fix user router profile GET endpoint")
-        if not test_results['user_router_profile_put']:
-            print("   - Fix user router profile PUT endpoint")
-        if not test_results['subscription_router_plans']:
-            print("   - Fix subscription router plans endpoint")
-        if not test_results['subscription_router_check_access']:
-            print("   - Fix subscription router check access endpoint")
-        if not test_results['ai_router_available_contexts']:
-            print("   - Fix AI router available contexts endpoint")
-        if not test_results['analytics_router_dashboard']:
-            print("   - Fix analytics router dashboard endpoint")
+        if auto_notes_rate < 80:
+            print("   - Fix Auto-Notes router endpoints for better reliability")
+        if mock_tests_rate < 80:
+            print("   - Fix Mock-Tests router endpoints for better reliability")
         if not test_results['authentication_flow']:
-            print("   - Fix complete authentication flow (register → login → use token)")
-        if not test_results['dependency_injection']:
-            print("   - Fix service dependency injection")
-        if not test_results['backward_compatibility']:
-            print("   - Ensure legacy endpoints continue working alongside modular ones")
-        if not test_results['error_handling_consistency']:
-            print("   - Ensure consistent error handling across all routers")
+            print("   - Fix authentication flow for protected endpoints")
+        if not test_results['service_integration']:
+            print("   - Fix service layer dependency injection")
+        if not test_results['error_handling_401']:
+            print("   - Ensure consistent 401 error handling")
+        if not test_results['data_structure_validation']:
+            print("   - Validate response data structures match expected formats")
         
         return success_rate >= 70  # 70% success rate for overall pass
 
