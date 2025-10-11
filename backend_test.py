@@ -96,7 +96,7 @@ class DhruvAITester:
         print("\n🏗️ STAGE 2: MODULAR ARCHITECTURE HEALTH CHECK")
         print("   Testing /api/health endpoint for modular_architecture: true")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Architecture Health",
             "GET",
             "health",
@@ -146,7 +146,7 @@ class DhruvAITester:
         print(f"   Creating user: {fresh_user_email}")
         
         # Test modular registration endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Auth Registration",
             "POST",
             "auth/modular/register",  # New modular endpoint
@@ -188,7 +188,7 @@ class DhruvAITester:
         }
         
         # Test modular login endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Auth Login",
             "POST",
             "auth/modular/login",  # New modular endpoint
@@ -238,7 +238,7 @@ class DhruvAITester:
         
         # Test modular GET profile endpoint
         print("\n   📊 Testing Modular GET Profile Endpoint")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Get User Profile",
             "GET",
             "user/modular/profile",  # New modular endpoint
@@ -275,7 +275,7 @@ class DhruvAITester:
             "target_year": 2025
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Update User Profile",
             "PUT",
             "user/modular/profile",  # New modular endpoint
@@ -361,7 +361,7 @@ class DhruvAITester:
         print("\n   👤 Testing Legacy Profile Endpoints")
         legacy_profile_success = False
         if legacy_token:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Legacy Get User Profile",
                 "GET",
                 "user/profile",  # Original endpoint
@@ -396,7 +396,7 @@ class DhruvAITester:
         print("   Testing AuthService and database dependencies work correctly")
         
         # Test dependency injection health endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Dependency Injection Health",
             "GET",
             "health/dependencies",  # Dependency health endpoint
@@ -436,7 +436,7 @@ class DhruvAITester:
             print("   🔄 Fallback: Testing modular endpoints as dependency indicator")
             
             if self.token:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     "Modular Endpoint Dependency Test",
                     "GET",
                     "user/modular/profile",
@@ -465,7 +465,7 @@ class DhruvAITester:
             print("   ❌ No Bearer token available")
             bearer_auth_success = False
         else:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Bearer Token Authentication",
                 "GET",
                 "user/profile",
@@ -709,7 +709,7 @@ class DhruvAITester:
         """Test comprehensive modular architecture health check"""
         print("   Testing enhanced health endpoint for modular architecture status")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Modular Architecture Health Check",
             "GET",
             "health",
@@ -759,7 +759,7 @@ class DhruvAITester:
         
         print(f"   Creating user: {fresh_user_email}")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auth Router Register",
             "POST",
             "auth/register",
@@ -788,7 +788,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auth Router Login",
             "POST",
             "auth/login",
@@ -823,7 +823,7 @@ class DhruvAITester:
             return False
         
         # Test auth router logout endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auth Router Logout",
             "POST",
             "auth/logout",  # Should work via modular auth router
@@ -852,7 +852,7 @@ class DhruvAITester:
             return False
         
         # Test user router GET profile endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "User Router Profile GET",
             "GET",
             "user/profile",  # Should work via modular user router
@@ -891,7 +891,7 @@ class DhruvAITester:
             "target_year": 2025
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "User Router Profile PUT",
             "PUT",
             "user/profile",  # Should work via modular user router
@@ -922,7 +922,7 @@ class DhruvAITester:
         print("   Focus: Single unified /subscription/plans endpoint (no duplicates)")
         
         # Test subscription router plans endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Plans",
             "GET",
             "subscription/plans",  # Should work via modular subscription router
@@ -967,7 +967,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Access Check",
             "POST",
             "subscription/check-access",  # Should work via modular subscription router
@@ -1012,7 +1012,7 @@ class DhruvAITester:
             return False
         
         # Test subscription router usage tracking endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Usage Tracking",
             "GET",
             "subscription/usage",  # Should work via modular subscription router
@@ -1056,7 +1056,7 @@ class DhruvAITester:
             return False
         
         # Test subscription router current subscription endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Current Subscription",
             "GET",
             "subscription/current",  # Should work via modular subscription router
@@ -1092,7 +1092,7 @@ class DhruvAITester:
         print("   Testing service layer dependency injection")
         
         # Test if services are properly injected by checking health endpoint
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Service Layer Dependency Injection",
             "GET",
             "health/services",  # Service health endpoint
@@ -1132,7 +1132,7 @@ class DhruvAITester:
             print("   🔄 Fallback: Testing modular endpoints as service indicator")
             
             if self.token:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     "Service Dependency Fallback Test",
                     "GET",
                     "user/profile",
@@ -1218,7 +1218,7 @@ class DhruvAITester:
                         "password": "password123"
                     }
                 
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Legacy {endpoint}",
                     method,
                     endpoint,
@@ -1231,7 +1231,7 @@ class DhruvAITester:
                 if self.token and "user" in endpoint:
                     headers['Authorization'] = f'Bearer {self.token}'
                 
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Legacy {endpoint}",
                     method,
                     endpoint,
@@ -1338,7 +1338,7 @@ class DhruvAITester:
         
         # Test 1: JWT tokens working
         if self.token:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Security - JWT Token Authentication",
                 "GET",
                 "user/profile",
@@ -1352,7 +1352,7 @@ class DhruvAITester:
                 print("   ❌ JWT token authentication failed")
         
         # Test 2: Authentication required for protected endpoints
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Security - Authentication Required",
             "GET",
             "user/profile",
@@ -1366,7 +1366,7 @@ class DhruvAITester:
             print("   ❌ Protected endpoints accessible without authentication")
         
         # Test 3: CORS headers (check in response)
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Security - CORS Headers Check",
             "GET",
             "health",
@@ -1381,7 +1381,7 @@ class DhruvAITester:
             print("   ❌ CORS configuration blocking requests")
         
         # Test 4: Secure endpoints (no sensitive data exposure)
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Security - No Sensitive Data Exposure",
             "GET",
             "subscription/plans",
@@ -1474,7 +1474,7 @@ class DhruvAITester:
         
         # Test 1: Login without CSRF token (should fail)
         print("   🔒 Testing login without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login Without CSRF Token",
             "POST",
             "auth/login",
@@ -1491,7 +1491,7 @@ class DhruvAITester:
         # Test 2: Login with invalid CSRF token (should fail)
         print("   🔒 Testing login with invalid CSRF token (should fail)")
         invalid_headers = {'X-CSRFToken': 'invalid_token_12345'}
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login With Invalid CSRF Token",
             "POST",
             "auth/login",
@@ -1511,7 +1511,7 @@ class DhruvAITester:
         if self.csrf_token:
             print("   🔓 Testing login with valid CSRF token (should succeed)")
             valid_headers = {'X-CSRFToken': self.csrf_token}
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Login With Valid CSRF Token",
                 "POST",
                 "auth/login",
@@ -1557,7 +1557,7 @@ class DhruvAITester:
         
         # Test 1: Register without CSRF token (should fail)
         print("   🔒 Testing registration without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Register Without CSRF Token",
             "POST",
             "auth/register",
@@ -1579,7 +1579,7 @@ class DhruvAITester:
             # Use different email for successful registration
             registration_data['email'] = f"csrf_reg_success_{int(time.time())}@dhruvai.com"
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Register With Valid CSRF Token",
                 "POST",
                 "auth/register",
@@ -1610,7 +1610,7 @@ class DhruvAITester:
         
         # Test 1: Logout without CSRF token (should fail)
         print("   🔒 Testing logout without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Logout Without CSRF Token",
             "POST",
             "auth/logout",
@@ -1631,7 +1631,7 @@ class DhruvAITester:
                 'Authorization': f'Bearer {self.token}',
                 'X-CSRFToken': self.csrf_token
             }
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Logout With Valid CSRF Token",
                 "POST",
                 "auth/logout",
@@ -1669,7 +1669,7 @@ class DhruvAITester:
         }
         
         # Without CSRF token (should fail)
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Upgrade Without CSRF",
             "POST",
             "subscription/upgrade",
@@ -1690,7 +1690,7 @@ class DhruvAITester:
         check_data = {"feature_name": "mock_tests_weekly"}
         
         # Without CSRF token (should fail)
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access Without CSRF",
             "POST",
             "subscription/check-access",
@@ -1714,7 +1714,7 @@ class DhruvAITester:
         }
         
         # Without CSRF token (should fail)
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Track Usage Without CSRF",
             "POST",
             "subscription/track-usage",
@@ -1739,7 +1739,7 @@ class DhruvAITester:
             }
             
             # Test check-access with valid CSRF token
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Check Access With Valid CSRF",
                 "POST",
                 "subscription/check-access",
@@ -1774,7 +1774,7 @@ class DhruvAITester:
         
         # Test 1: Profile update without CSRF token (should fail)
         print("   🔒 Testing profile update without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Profile Update Without CSRF Token",
             "PUT",
             "user/profile",
@@ -1796,7 +1796,7 @@ class DhruvAITester:
                 'Authorization': f'Bearer {self.token}',
                 'X-CSRFToken': self.csrf_token
             }
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Profile Update With Valid CSRF Token",
                 "PUT",
                 "user/profile",
@@ -1834,7 +1834,7 @@ class DhruvAITester:
         
         # Test 1: Mock test generation without CSRF token (should fail)
         print("   🔒 Testing mock test generation without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation Without CSRF Token",
             "POST",
             "mock-tests/generate",
@@ -1856,7 +1856,7 @@ class DhruvAITester:
                 'Authorization': f'Bearer {self.token}',
                 'X-CSRFToken': self.csrf_token
             }
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Mock Test Generation With Valid CSRF Token",
                 "POST",
                 "mock-tests/generate",
@@ -1893,7 +1893,7 @@ class DhruvAITester:
         
         # Test 1: Auto-notes session creation without CSRF token (should fail)
         print("   🔒 Testing auto-notes session creation without CSRF token (should fail)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Session Without CSRF Token",
             "POST",
             "auto-notes/start-session",
@@ -1915,7 +1915,7 @@ class DhruvAITester:
                 'Authorization': f'Bearer {self.token}',
                 'X-CSRFToken': self.csrf_token
             }
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Auto-Notes Session With Valid CSRF Token",
                 "POST",
                 "auto-notes/start-session",
@@ -1946,7 +1946,7 @@ class DhruvAITester:
         
         # Test 1: Get a fresh CSRF token
         print("   🔄 Testing CSRF token refresh")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "CSRF Token Refresh",
             "GET",
             "auth/csrf-token",
@@ -1986,7 +1986,7 @@ class DhruvAITester:
                 'X-CSRFToken': self.csrf_token
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Retry With Refreshed CSRF Token",
                 "POST",
                 "subscription/check-access",
@@ -2020,7 +2020,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Missing CSRF Token Error Response",
             "POST",
             "auth/login",
@@ -2047,7 +2047,7 @@ class DhruvAITester:
         print("   🔒 Testing 403 responses for invalid CSRF tokens")
         invalid_headers = {'X-CSRFToken': 'invalid_csrf_token_12345'}
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Invalid CSRF Token Error Response",
             "POST",
             "auth/login",
@@ -2065,7 +2065,7 @@ class DhruvAITester:
         
         # Test 3: Test CORS headers are still present
         print("   🌐 Testing CORS headers still allow proper origins")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "CORS Headers Check",
             "GET",
             "health",
@@ -2223,7 +2223,7 @@ class DhruvAITester:
             print("   ❌ No token available for subscription info test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Info",
             "GET",
             "subscription/info",
@@ -2254,7 +2254,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Check Access",
             "POST",
             "subscription/check-access",
@@ -2293,7 +2293,7 @@ class DhruvAITester:
             "usage_amount": 1
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Router Track Usage",
             "POST",
             "subscription/track-usage",
@@ -2315,7 +2315,7 @@ class DhruvAITester:
         """Test AI Router - GET /api/ai/available-contexts"""
         print("   Testing GET /api/ai/available-contexts endpoint")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Available Contexts",
             "GET",
             "ai/available-contexts",
@@ -2343,7 +2343,7 @@ class DhruvAITester:
             print("   ❌ No token available for chat sessions test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Chat Sessions",
             "GET",
             "chat/sessions",
@@ -2400,7 +2400,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Chat Message",
             "POST",
             "chat/message",
@@ -2427,7 +2427,7 @@ class DhruvAITester:
             "units": "equation"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Guardrails Math",
             "POST",
             "guardrails/validate-math",
@@ -2456,7 +2456,7 @@ class DhruvAITester:
             "context": "Physics constants"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Guardrails Fact",
             "POST",
             "guardrails/fact-verification",
@@ -2479,7 +2479,7 @@ class DhruvAITester:
         """Test AI Router - GET /api/guardrails/citations/{subject}/{topic}"""
         print("   Testing GET /api/guardrails/citations/{subject}/{topic} endpoint")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Router Guardrails Citations",
             "GET",
             "guardrails/citations/Mathematics/Quadratic Equations",
@@ -2507,7 +2507,7 @@ class DhruvAITester:
             print("   ❌ No token available for analytics dashboard test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Analytics Router Dashboard",
             "GET",
             "analytics/dashboard",
@@ -2534,7 +2534,7 @@ class DhruvAITester:
             print("   ❌ No token available for daily goals test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Analytics Router Daily Goals",
             "GET",
             "analytics/daily-goals",
@@ -2560,7 +2560,7 @@ class DhruvAITester:
             print("   ❌ No token available for subject progress test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Analytics Router Subject Progress",
             "GET",
             "analytics/subject-progress",
@@ -2667,7 +2667,7 @@ class DhruvAITester:
                     "target_year": 2026
                 }
                 
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"DI Test - {endpoint}",
                     method,
                     endpoint,
@@ -2675,7 +2675,7 @@ class DhruvAITester:
                     data=test_data
                 )
             else:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"DI Test - {endpoint}",
                     method,
                     endpoint,
@@ -2712,14 +2712,14 @@ class DhruvAITester:
         
         for endpoint, method, expected_status, data in error_tests:
             if method == "GET":
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Error Test - {endpoint}",
                     method,
                     endpoint,
                     expected_status
                 )
             else:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Error Test - {endpoint}",
                     method,
                     endpoint,
@@ -2750,7 +2750,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "User Registration",
             "POST",
             "auth/register",
@@ -2773,7 +2773,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "User Login",
             "POST",
             "auth/login",
@@ -2825,7 +2825,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login API - Valid Credentials",
             "POST",
             "auth/login",
@@ -2863,7 +2863,7 @@ class DhruvAITester:
             "password": "wrongpassword"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login API - Invalid Credentials",
             "POST",
             "auth/login",
@@ -2890,7 +2890,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Registration API - New User",
             "POST",
             "auth/register",
@@ -2927,7 +2927,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Registration API - Existing User",
             "POST",
             "auth/register",
@@ -2953,7 +2953,7 @@ class DhruvAITester:
         
         rate_limit_hits = 0
         for i in range(5):  # Send 5 rapid requests
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Rate Limit Check - Request {i+1}",
                 "POST",
                 "auth/login",
@@ -3017,7 +3017,7 @@ class DhruvAITester:
                 return False
         
         print(f"\n📊 Step 1: Test Current User Subscription Status")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription Status",
             "GET",
             "subscription/current",
@@ -3047,7 +3047,7 @@ class DhruvAITester:
         }
         
         print(f"   Creating fresh user: {fresh_user_email}")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Subscription Testing",
             "POST",
             "auth/register",
@@ -3068,7 +3068,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Initial State",
             "POST",
             "subscription/check-access",
@@ -3115,7 +3115,7 @@ class DhruvAITester:
         for i in range(max_attempts):
             print(f"   Generating test {i+1}/{max_attempts}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Attempt {i+1}",
                 "POST",
                 "mock-tests/generate",
@@ -3144,7 +3144,7 @@ class DhruvAITester:
         print(f"\n🚨 Step 5: Test checkFeatureAccess After Quota Exhaustion")
         print("   Expected: HTTP 402 Payment Required with upsell_info")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - After Quota Exhaustion",
             "POST",
             "subscription/check-access",
@@ -3198,7 +3198,7 @@ class DhruvAITester:
         print(f"\n🚫 Step 6: Test Mock Test Generation After Quota Exhaustion")
         print("   Expected: Should return proper error response for subscription modal")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - After Quota Exhaustion",
             "POST",
             "mock-tests/generate",
@@ -3278,7 +3278,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login Free Tier User",
             "POST",
             "auth/login",
@@ -3298,7 +3298,7 @@ class DhruvAITester:
         
         # Step 2: Check initial subscription status
         print("\n📊 Step 2: Check Initial Subscription Status")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Initial Subscription Status",
             "GET",
             "subscription/current",
@@ -3313,7 +3313,7 @@ class DhruvAITester:
         
         # Step 3: Check initial usage for mock_tests_weekly
         print("\n📊 Step 3: Check Initial Usage for mock_tests_weekly")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Initial Usage Check",
             "GET",
             "subscription/usage",
@@ -3337,7 +3337,7 @@ class DhruvAITester:
             "usage_count": 3
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Set Usage Above Limit",
             "POST",
             "subscription/test-set-usage",
@@ -3360,7 +3360,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Should Return 402",
             "POST",
             "subscription/check-access",
@@ -3422,7 +3422,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - Should Return 402",
             "POST",
             "mock-tests/generate",
@@ -3582,7 +3582,7 @@ class DhruvAITester:
             print(f"\n   Test {i}/{total_tests}: {scenario['name']}")
             print(f"   Data: {scenario['data']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Profile Update - {scenario['name']}",
                 "PUT",
                 "user/profile",
@@ -3672,7 +3672,7 @@ class DhruvAITester:
         }
         
         print("   Sending AI chat message (this may take a few seconds)...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Chat Message",
             "POST",
             "chat/message",
@@ -3725,7 +3725,7 @@ class DhruvAITester:
         print("   Testing /api/dashboard/analytics endpoint specifically")
         print("   Expected fields: recent_progress, total_study_time, chat_sessions_count, current_streak, weekly_goals_progress")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Dashboard Analytics",
             "GET",
             "dashboard/analytics",
@@ -3894,7 +3894,7 @@ class DhruvAITester:
             print(f"   Testing mock test generation {i+1}/{len(test_params)}: {params['subject']} Level {params['difficulty']} ({params['num_questions']} questions)")
             
             # Use JSON body instead of query parameters (as per review request)
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Generate Mock Test - {params['subject']} L{params['difficulty']}",
                 "POST",
                 "mock-tests/generate",
@@ -3968,7 +3968,7 @@ class DhruvAITester:
         print(f"   Submitting test {test_id} with {len(sample_answers)} answers...")
         print("   This may take a few seconds for AI analysis...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Submit Mock Test",
             "POST",
             f"mock-tests/{test_id}/submit",
@@ -4006,7 +4006,7 @@ class DhruvAITester:
         
         print("   Fetching comprehensive performance analytics...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Performance Analytics",
             "GET",
             "analytics/performance",
@@ -4065,7 +4065,7 @@ class DhruvAITester:
             print("   This may take a few seconds for AI recommendations...")
             
             # Send as JSON body (not form data)
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Stress Assessment - Scenario {i+1}",
                 "POST",
                 "wellness/stress-assessment",
@@ -4096,7 +4096,7 @@ class DhruvAITester:
         print("   Fetching personalized motivational content...")
         print("   This may take a few seconds for AI content generation...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Motivational Content",
             "GET",
             "wellness/motivational-content",
@@ -4144,7 +4144,7 @@ class DhruvAITester:
             "user_id": self.user_id or "test_user"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Razorpay Environment Check",
             "POST",
             "razorpay/create-order",
@@ -4202,7 +4202,7 @@ class DhruvAITester:
             "user_id": self.user_id or "test_user"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Razorpay Order - Premium Monthly",
             "POST",
             "razorpay/create-order",
@@ -4303,7 +4303,7 @@ class DhruvAITester:
             "user_id": self.user_id or "test_user"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Razorpay Order - Pro Yearly",
             "POST",
             "razorpay/create-order",
@@ -4385,7 +4385,7 @@ class DhruvAITester:
             "user_id": self.user_id or "test_user"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Verify Razorpay Payment - Mock",
             "POST",
             "razorpay/verify-payment",
@@ -4443,7 +4443,7 @@ class DhruvAITester:
             "user_id": self.user_id or "test_user"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Invalid Signature Handling",
             "POST",
             "razorpay/verify-payment",
@@ -4476,7 +4476,7 @@ class DhruvAITester:
         print("   Testing if subscription is prepared for upgrade after order creation")
         
         # First, check current subscription status
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription Status",
             "GET",
             "subscription/current",
@@ -4708,7 +4708,7 @@ class DhruvAITester:
         
         # Test 1: Check current subscription status
         print("\n📊 Test 1: Current Subscription Status")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription Status",
             "GET",
             "subscription/current",
@@ -4723,7 +4723,7 @@ class DhruvAITester:
         
         # Test 2: Check current usage
         print("\n📊 Test 2: Current Usage Status")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Usage Status",
             "GET",
             "subscription/usage",
@@ -4744,7 +4744,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Within Limits",
             "POST",
             "subscription/check-access",
@@ -4773,7 +4773,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User",
             "POST",
             "auth/register",
@@ -4801,7 +4801,7 @@ class DhruvAITester:
         for i in range(3):  # Try to generate 3 tests (limit is 2)
             print(f"   Generating test {i+1}/3...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Attempt {i+1}",
                 "POST",
                 "mock-tests/generate",
@@ -4830,7 +4830,7 @@ class DhruvAITester:
         
         # Test 6: Test check-access after quota exhaustion (should return 402)
         print("\n🚨 Test 6: Check Access After Quota Exhaustion (should return 402)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - After Quota Exhaustion",
             "POST",
             "subscription/check-access",
@@ -4907,7 +4907,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Mock Test Testing",
             "POST",
             "auth/register",
@@ -4937,7 +4937,7 @@ class DhruvAITester:
         for i in range(2):  # Generate 2 tests (free tier limit)
             print(f"   Generating test {i+1}/2...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation Within Quota - Test {i+1}",
                 "POST",
                 "mock-tests/generate",
@@ -4962,7 +4962,7 @@ class DhruvAITester:
         
         # Test 2: Attempt to generate test beyond quota (should return 402)
         print("\n🚨 Step 3: Generate Mock Test Beyond Quota (should return 402)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation Beyond Quota",
             "POST",
             "mock-tests/generate",
@@ -5082,7 +5082,7 @@ class DhruvAITester:
             print(f"\n📊 Test {i}/3: {scenario['name']}")
             print(f"   Data: {scenario['data']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Plan Upgrade - {scenario['name']}",
                 "POST",
                 "subscription/upgrade",
@@ -5128,7 +5128,7 @@ class DhruvAITester:
             "billing_cycle": "monthly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Plan Upgrade - Old Format",
             "POST",
             "subscription/upgrade",
@@ -5185,7 +5185,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Register Test User",
             "POST",
             "auth/register",
@@ -5201,7 +5201,7 @@ class DhruvAITester:
                 "password": test_password
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Login Test User",
                 "POST",
                 "auth/login",
@@ -5234,7 +5234,7 @@ class DhruvAITester:
             "generation_mode": "standard"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "First Test Generation",
             "POST",
             "mock-tests/generate",
@@ -5305,7 +5305,7 @@ class DhruvAITester:
         # Wait a moment then generate the same test configuration
         time.sleep(2)
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Cached Test Retrieval",
             "POST",
             "mock-tests/generate",
@@ -5408,7 +5408,7 @@ class DhruvAITester:
         for i, test_config in enumerate(test_configurations):
             print(f"   Testing {test_config['name']}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Test Type - {test_config['name']}",
                 "POST",
                 "mock-tests/generate",
@@ -5481,7 +5481,7 @@ class DhruvAITester:
             
             print(f"   Submitting {len(sample_answers)} answers...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Submit Test Flow",
                 "POST",
                 f"mock-tests/{test_id}/submit",
@@ -5617,7 +5617,7 @@ class DhruvAITester:
         
         # Step 2: Check current subscription status
         print("\n📊 Step 1: Check Current Subscription Status")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription Status",
             "GET",
             "subscription/current",
@@ -5632,7 +5632,7 @@ class DhruvAITester:
         
         # Step 3: Check current usage
         print("\n📊 Step 2: Check Current Usage")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Usage Check",
             "GET",
             "subscription/usage",
@@ -5664,7 +5664,7 @@ class DhruvAITester:
         
         if current_usage < limit:
             print("   User has remaining quota, testing generation...")
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Mock Test Generation - Within Quota",
                 "POST",
                 "mock-tests/generate",
@@ -5711,7 +5711,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Quota Testing",
             "POST",
             "auth/register",
@@ -5733,7 +5733,7 @@ class DhruvAITester:
         for i in range(limit + 1):  # Try to generate one more than limit
             print(f"   Generating test {i+1}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Attempt {i+1}",
                 "POST",
                 "mock-tests/generate",
@@ -5764,7 +5764,7 @@ class DhruvAITester:
         # Step 7: Test when limit reached (should return 402)
         print(f"\n🔴 Step 6: Test When Limit Reached (Expect 402)")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - Limit Reached",
             "POST",
             "mock-tests/generate",
@@ -5934,7 +5934,7 @@ class DhruvAITester:
                 "num_questions": 3  # Small number for faster testing
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Enhanced Questions - {subject}",
                 "POST",
                 "mock-tests/generate",
@@ -5995,7 +5995,7 @@ class DhruvAITester:
         print(f"\n📝 Step 1: Creating Fresh User for Free Tier Testing")
         print(f"   Email: {fresh_user_email}")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Mock Test Fix Testing",
             "POST",
             "auth/register",
@@ -6020,7 +6020,7 @@ class DhruvAITester:
             "usage_increment": 1
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - mock_tests_weekly",
             "POST",
             "subscription/check-access",
@@ -6068,7 +6068,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - Within Free Tier",
             "POST",
             "mock-tests/generate",
@@ -6109,7 +6109,7 @@ class DhruvAITester:
         print(f"\n📊 Step 4: Test Mock Test Subjects API for Usage Display")
         print(f"   Testing: /api/mock-tests/subjects for correct usage information")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Subjects - Usage Display",
             "GET",
             "mock-tests/subjects",
@@ -6152,7 +6152,7 @@ class DhruvAITester:
         print(f"   Testing: Second mock test generation to trigger limit")
         print(f"   Expected: Should return 402 with proper error structure")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - Limit Reached",
             "POST",
             "mock-tests/generate",
@@ -6280,7 +6280,7 @@ class DhruvAITester:
             print(f"   Daily hours: {scenario['daily_study_hours']}, Weak subjects: {len(scenario['weak_subjects'])}")
             print("   This may take 10-15 seconds for dual AI planning...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Study Plan - {scenario['name']}",
                 "POST",
                 "ai/dual-study-plan",
@@ -6371,7 +6371,7 @@ class DhruvAITester:
             print(f"   Question: '{scenario['message'][:50]}...'")
             print("   This may take 10-15 seconds for enhanced dual analysis...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Enhanced Analysis - {scenario['name']}",
                 "POST",
                 "ai/enhanced-question-analysis",
@@ -6494,7 +6494,7 @@ class DhruvAITester:
             print(f"   Testing {test_case['name']} with authentication...")
             
             # Test with valid authentication
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Phase 2 Auth - {test_case['name']}",
                 test_case['method'],
                 test_case['endpoint'],
@@ -6594,7 +6594,7 @@ class DhruvAITester:
         for scenario in error_scenarios:
             print(f"   Testing {scenario['name']}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Error Handling - {scenario['name']}",
                 scenario['method'],
                 scenario['endpoint'],
@@ -6642,7 +6642,7 @@ class DhruvAITester:
             print(f"   Testing {test_case['name']}...")
             print("   This may take 5-10 seconds for AI processing...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Backward Compatibility - {test_case['name']}",
                 test_case['method'],
                 test_case['endpoint'],
@@ -6690,7 +6690,7 @@ class DhruvAITester:
         
         # Test 1: GET /api/auto-notes/sessions - Core endpoint for Notes Library
         print("\n📋 Test 1: GET /api/auto-notes/sessions - Notes Library Backend")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Sessions Endpoint",
             "GET",
             "auto-notes/sessions",
@@ -6742,7 +6742,7 @@ class DhruvAITester:
         if test_results['sessions_endpoint'] and sessions:
             session_id = sessions[0].get('session_id')
             if session_id:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     "Individual Session Loading",
                     "GET",
                     f"auto-notes/{session_id}",
@@ -6810,7 +6810,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Start Auto-Note Session",
             "POST",
             "auto-notes/start-session",
@@ -6831,7 +6831,7 @@ class DhruvAITester:
         
         # Test 2: GET /api/auto-notes/sessions
         print("\n📋 Test 2: GET /api/auto-notes/sessions")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Auto-Note Sessions List",
             "GET",
             "auto-notes/sessions",
@@ -6854,7 +6854,7 @@ class DhruvAITester:
         # Test 3: GET /api/auto-notes/{session_id}
         if session_id:
             print(f"\n📋 Test 3: GET /api/auto-notes/{session_id}")
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Get Specific Auto-Note Session",
                 "GET",
                 f"auto-notes/{session_id}",
@@ -6879,7 +6879,7 @@ class DhruvAITester:
                 "total_duration": 300.0
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "End Auto-Note Session",
                 "POST",
                 f"auto-notes/end-session?session_id={session_id}",
@@ -6936,7 +6936,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Live Recording Session",
             "POST",
             "auto-notes/start-session",
@@ -6983,7 +6983,7 @@ class DhruvAITester:
         for i, chunk in enumerate(audio_chunks):
             print(f"   Processing chunk {i+1}/{len(audio_chunks)}: '{chunk['transcription'][:30]}...'")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Process Audio Chunk {i+1}",
                 "POST",
                 "auto-notes/process-audio",
@@ -7013,7 +7013,7 @@ class DhruvAITester:
             "total_duration": 15.0
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Complete Live Recording Session",
             "POST",
             f"auto-notes/end-session?session_id={session_id}",
@@ -7072,7 +7072,7 @@ class DhruvAITester:
             "duration": 180.0
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Upload Audio File",
             "POST",
             "auto-notes/upload-audio",
@@ -7096,7 +7096,7 @@ class DhruvAITester:
         print("\n📋 Step 2: Checking Transcription Progress")
         time.sleep(2)  # Allow some processing time
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Upload Session Status",
             "GET",
             f"auto-notes/{session_id}",
@@ -7124,7 +7124,7 @@ class DhruvAITester:
             "total_duration": 180.0
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Complete File Processing",
             "POST",
             f"auto-notes/end-session?session_id={session_id}",
@@ -7149,7 +7149,7 @@ class DhruvAITester:
         
         # Step 4: Verify session persistence
         print("\n📋 Step 4: Verifying Session Persistence")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Verify Uploaded Session Persistence",
             "GET",
             "auto-notes/sessions",
@@ -7215,7 +7215,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create AI Processing Session",
             "POST",
             "auto-notes/start-session",
@@ -7249,7 +7249,7 @@ class DhruvAITester:
         }
         
         print("   This may take 10-15 seconds for dual AI analysis...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Complete Session with AI Processing",
             "POST",
             f"auto-notes/end-session?session_id={session_id}",
@@ -7315,7 +7315,7 @@ class DhruvAITester:
         # Step 3: Verify the processed session can be retrieved
         if session_id:
             print("\n📋 Step 3: Verifying Processed Session Retrieval")
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Retrieve Processed Session",
                 "GET",
                 f"auto-notes/{session_id}",
@@ -7362,7 +7362,7 @@ class DhruvAITester:
         # Test 1: Valid authentication
         print("\n📋 Test 1: Valid Authentication")
         if self.token:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Valid Auth - Start Session",
                 "POST",
                 "auto-notes/start-session",
@@ -7379,7 +7379,7 @@ class DhruvAITester:
         
         # Test 2: Invalid token
         print("\n📋 Test 2: Invalid Token Authentication")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Invalid Auth - Start Session",
             "POST",
             "auto-notes/start-session",
@@ -7396,7 +7396,7 @@ class DhruvAITester:
         
         # Test 3: No authentication
         print("\n📋 Test 3: No Authentication Header")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "No Auth - Start Session",
             "POST",
             "auto-notes/start-session",
@@ -7421,7 +7421,7 @@ class DhruvAITester:
             
             valid_endpoints = 0
             for endpoint, method, data in endpoints_to_test:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Token Validation - {endpoint}",
                     method,
                     endpoint,
@@ -7475,7 +7475,7 @@ class DhruvAITester:
         
         # Test 1: Invalid session ID
         print("\n📋 Test 1: Invalid Session ID Handling")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Invalid Session ID",
             "GET",
             "auto-notes/invalid-session-id-12345",
@@ -7494,7 +7494,7 @@ class DhruvAITester:
         
         # Test 2: Missing required fields
         print("\n📋 Test 2: Missing Required Fields")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Missing Required Fields",
             "POST",
             "auto-notes/start-session",
@@ -7514,7 +7514,7 @@ class DhruvAITester:
         
         # Test 3: Invalid data types
         print("\n📋 Test 3: Invalid Data Types")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Invalid Data Types",
             "POST",
             "auto-notes/process-audio",
@@ -7547,7 +7547,7 @@ class DhruvAITester:
         
         users_error_found = False
         for endpoint, method, data in endpoints_to_check:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Check Users Error - {endpoint}",
                 method,
                 endpoint,
@@ -7619,7 +7619,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Auto-Note Session",
             "POST",
             "auto-notes/start-session",
@@ -7643,7 +7643,7 @@ class DhruvAITester:
             "total_duration": 300.0
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Complete Auto-Note Session",
             "POST",
             f"auto-notes/end-session?session_id={session_id}",
@@ -7673,7 +7673,7 @@ class DhruvAITester:
             "specific_concepts": ["quadratic equations", "discriminant", "quadratic formula"]
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Generate Flashcards from Session",
             "POST",
             "auto-notes/generate-flashcards",
@@ -7735,7 +7735,7 @@ class DhruvAITester:
             "additional_context": "I need help understanding when to use the discriminant"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Explain Point from Session",
             "POST",
             "auto-notes/explain-point",
@@ -7793,7 +7793,7 @@ class DhruvAITester:
         print("   GET /api/auto-notes/{session_id}")
         print("   Expected: Session data available when buttons are clicked")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Load Session Data",
             "GET",
             f"auto-notes/{session_id}",
@@ -7875,7 +7875,7 @@ class DhruvAITester:
             "ai_mode": "dual"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create New Session",
             "POST",
             "chat/sessions",
@@ -7906,7 +7906,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Send New Message (Should Create New Session)",
             "POST",
             "ai/dual-response",
@@ -7940,7 +7940,7 @@ class DhruvAITester:
         print("\n📋 Test 3: Session Listing Test - GET /api/chat/sessions")
         print("   Testing that sessions are ordered by last_updated (latest first)")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Chat Sessions (Check Ordering)",
             "GET",
             "chat/sessions",
@@ -8009,7 +8009,7 @@ class DhruvAITester:
                 "subject": "Mathematics"
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Send Message to Existing Session",
                 "POST",
                 "ai/dual-response",
@@ -8120,7 +8120,7 @@ class DhruvAITester:
         for i, test_case in enumerate(math_test_cases):
             print(f"   Testing math validation {i+1}/{len(math_test_cases)}: {test_case['expression']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Math Validation - {test_case['expression']}",
                 "POST",
                 "guardrails/validate-math",
@@ -8151,7 +8151,7 @@ class DhruvAITester:
         for test_case in citation_test_cases:
             print(f"   Testing citations for {test_case['subject']}/{test_case['topic']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Citations - {test_case['subject']}/{test_case['topic']}",
                 "GET",
                 f"guardrails/citations/{test_case['subject']}/{test_case['topic']}",
@@ -8189,7 +8189,7 @@ class DhruvAITester:
         for i, test_case in enumerate(fact_test_cases):
             print(f"   Testing fact verification {i+1}/{len(fact_test_cases)}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Fact Verification - {i+1}",
                 "POST",
                 "guardrails/fact-verification",
@@ -8211,7 +8211,7 @@ class DhruvAITester:
         # 4. Test Disagreement Alerts (requires session_id)
         print("\n📋 Testing /api/guardrails/disagreements/{session_id}")
         if self.session_id:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Disagreement Alerts",
                 "GET",
                 f"guardrails/disagreements/{self.session_id}",
@@ -8272,7 +8272,7 @@ class DhruvAITester:
             "difficulty_level": "similar"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Practice Problem Generation",
             "POST",
             "actions/practice-more",
@@ -8300,7 +8300,7 @@ class DhruvAITester:
             "interaction_id": str(uuid.uuid4())
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Add to Notes",
             "POST",
             "actions/add-to-notes",
@@ -8326,7 +8326,7 @@ class DhruvAITester:
             "interaction_id": str(uuid.uuid4())
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Flashcards",
             "POST",
             "actions/create-flashcards",
@@ -8353,7 +8353,7 @@ class DhruvAITester:
             "difficulty_level": 0.7
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Schedule Revision",
             "POST",
             "actions/schedule-revision",
@@ -8373,7 +8373,7 @@ class DhruvAITester:
         
         # 5. Test Get Notes
         print("\n📋 Testing /api/actions/notes")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get User Notes",
             "GET",
             "actions/notes",
@@ -8390,7 +8390,7 @@ class DhruvAITester:
         
         # 6. Test Get Flashcard Decks
         print("\n📋 Testing /api/actions/flashcard-decks")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Flashcard Decks",
             "GET",
             "actions/flashcard-decks",
@@ -8407,7 +8407,7 @@ class DhruvAITester:
         
         # 7. Test Get Revision Schedule
         print("\n📋 Testing /api/actions/revision-schedule")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Revision Schedule",
             "GET",
             "actions/revision-schedule",
@@ -8476,7 +8476,7 @@ class DhruvAITester:
         for i, test_case in enumerate(wellness_test_cases):
             print(f"   Testing wellness check {i+1}/{len(wellness_test_cases)}: Stress {test_case['stress_level']}/10")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Wellness Check - Scenario {i+1}",
                 "POST",
                 "analytics/wellness-check",
@@ -8501,7 +8501,7 @@ class DhruvAITester:
         
         # 2. Test Wellness History
         print("\n📋 Testing /api/analytics/wellness-history")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Wellness History",
             "GET",
             "analytics/wellness-history",
@@ -8631,7 +8631,7 @@ class DhruvAITester:
         """Test that usage tracking updates correctly after mock test generation"""
         print("\n   Testing usage tracking after mock test generation...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Usage Tracking After Generation",
             "GET",
             "subscription/usage",
@@ -8821,7 +8821,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Login",
             "POST",
             "auth/login",
@@ -8841,7 +8841,7 @@ class DhruvAITester:
         
         # Step 2: Check GET /api/subscription/current - verify user has free plan with 2 tests/month limit
         print("\n   Step 2: Check subscription status - should show free plan with 2 tests/month...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Subscription Check",
             "GET",
             "subscription/current",
@@ -8868,7 +8868,7 @@ class DhruvAITester:
         
         # Step 3: Check current usage - should show 0/2 tests used
         print("\n   Step 3: Check current usage - should show 0/2 tests used...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Usage Check",
             "GET",
             "subscription/usage",
@@ -8897,7 +8897,7 @@ class DhruvAITester:
         
         # Step 4: Test GET /api/mock-tests/subjects - verify subscription access shows has_access: true
         print("\n   Step 4: Check subjects access - should show has_access: true...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Subjects Access",
             "GET",
             "mock-tests/subjects",
@@ -8935,7 +8935,7 @@ class DhruvAITester:
         print(f"   Test parameters: {test_data}")
         print("   This may take 10-15 seconds for AI generation...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Mock Test Generation",
             "POST",
             "mock-tests/generate",
@@ -9031,7 +9031,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Authentication",
             "POST",
             "auth/login",
@@ -9057,7 +9057,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Session Creation",
             "POST",
             "auto-notes/start-session",
@@ -9087,7 +9087,7 @@ class DhruvAITester:
         print("   Expected: 200 OK with proper ObjectId serialization")
         print(f"   Testing with user_id: {self.user_id}")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Sessions List",
             "GET",
             "auto-notes/sessions",
@@ -9133,7 +9133,7 @@ class DhruvAITester:
         print("   This endpoint was previously failing with 500 Internal Server Error")
         print("   Expected: 200 OK with proper datetime/ObjectId serialization")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Analytics",
             "GET",
             "auto-notes/analytics",
@@ -9173,7 +9173,7 @@ class DhruvAITester:
         print("   This endpoint was previously failing with 500 Internal Server Error")
         print("   Expected: 200 OK with proper ObjectId serialization")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Class Series",
             "GET",
             "auto-notes/class-series",
@@ -9256,7 +9256,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Mentor Authentication",
             "POST",
             "auth/login",
@@ -9285,7 +9285,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Start Session",
             "POST",
             "auto-notes/start-session",
@@ -9309,7 +9309,7 @@ class DhruvAITester:
             "total_duration": 1800.0  # 30 minutes
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note End Session",
             "POST",
             f"auto-notes/end-session?session_id={session_id}",
@@ -9336,7 +9336,7 @@ class DhruvAITester:
         
         # 3. Session Listing
         print("\n📋 STEP 3: Session Listing - GET /api/auto-notes/sessions")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Sessions List",
             "GET",
             "auto-notes/sessions",
@@ -9377,7 +9377,7 @@ class DhruvAITester:
         # 4. Session Retrieval
         print("\n📋 STEP 4: Session Retrieval - GET /api/auto-notes/{session_id}")
         if session_id:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Auto-Note Session Retrieval",
                 "GET",
                 f"auto-notes/{session_id}",
@@ -9418,7 +9418,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note File Upload Session Creation",
             "POST",
             "auto-notes/start-session",
@@ -9438,7 +9438,7 @@ class DhruvAITester:
                 "total_duration": 900.0  # 15 minutes
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Auto-Note File Upload Session Completion",
                 "POST",
                 f"auto-notes/end-session?session_id={file_session_id}",
@@ -9451,7 +9451,7 @@ class DhruvAITester:
                 print("   ✅ File upload session completed successfully")
                 
                 # Verify it appears in sessions list
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     "Auto-Note Sessions List After File Upload",
                     "GET",
                     "auto-notes/sessions",
@@ -9534,7 +9534,7 @@ class DhruvAITester:
         print(f"\n📝 Step 1: Creating Fresh User for ObjectId Serialization Testing")
         print(f"   Email: {fresh_user_email}")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for ObjectId Test",
             "POST",
             "auth/register",
@@ -9554,7 +9554,7 @@ class DhruvAITester:
         # Step 2: Check initial subscription status
         print(f"\n📊 Step 2: Check Initial Subscription Status")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Initial Subscription Status",
             "GET",
             "subscription/current",
@@ -9587,7 +9587,7 @@ class DhruvAITester:
         for attempt in range(1, max_attempts + 1):
             print(f"\n   Attempt {attempt}: Generating mock test...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Attempt {attempt}",
                 "POST",
                 "mock-tests/generate",
@@ -9710,7 +9710,7 @@ class DhruvAITester:
             "usage_increment": 1
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Direct 402 Test",
             "POST",
             "subscription/check-access",
@@ -9781,7 +9781,7 @@ class DhruvAITester:
         print("   Checking: whisper, librosa, noisereduce, pydub, ffmpeg-python, celery, redis")
         
         # Test backend health to see if audio processing is enabled
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Backend Health Check",
             "GET",
             "",
@@ -9803,7 +9803,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Audio Test Session",
             "POST",
             "auto-notes/start-session",
@@ -9865,7 +9865,7 @@ class DhruvAITester:
         
         if test_session_id:
             # Test processing status endpoint
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Processing Status Endpoint",
                 "GET",
                 f"auto-notes/processing-status/{test_session_id}",
@@ -9914,7 +9914,7 @@ class DhruvAITester:
         print("\n🔍 Test 6: Audio Quality Analysis Endpoint")
         
         if test_session_id:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Audio Quality Analysis",
                 "GET",
                 f"auto-notes/audio-quality-analysis/{test_session_id}",
@@ -9936,7 +9936,7 @@ class DhruvAITester:
         
         # Test if we can get session data that shows context analysis
         if test_session_id:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Session Context Analysis",
                 "GET",
                 f"auto-notes/{test_session_id}",
@@ -10046,7 +10046,7 @@ class DhruvAITester:
                 "password": "password123"
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Login Test User",
                 "POST",
                 "auth/login",
@@ -10075,7 +10075,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - mock_tests_weekly",
             "POST",
             "subscription/check-access",
@@ -10118,7 +10118,7 @@ class DhruvAITester:
         
         print(f"   Payload: {json.dumps(test_generation_payload, indent=2)}")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generation - First Attempt",
             "POST",
             "mock-tests/generate",
@@ -10173,7 +10173,7 @@ class DhruvAITester:
         if first_attempt_successful:
             print("\n📊 Step 4: Second Attempt to Trigger Subscription Limit")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Mock Test Generation - Second Attempt",
                 "POST",
                 "mock-tests/generate",
@@ -10189,7 +10189,7 @@ class DhruvAITester:
                 print(f"   🔄 Attempting third generation to trigger limit...")
                 
                 # Third attempt should definitely hit limit
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     "Mock Test Generation - Third Attempt (Should Hit Limit)",
                     "POST",
                     "mock-tests/generate",
@@ -10228,7 +10228,7 @@ class DhruvAITester:
         # Step 5: Final verification of check-access after attempts
         print("\n📊 Step 5: Final check-access Verification")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Final Check Access Verification",
             "POST",
             "subscription/check-access",
@@ -10319,7 +10319,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh Free User",
             "POST",
             "auth/register",
@@ -10347,7 +10347,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Tests Generate - With Quota",
             "POST",
             "mock-tests/generate",
@@ -10382,7 +10382,7 @@ class DhruvAITester:
         for i in range(max_free_tests - 1):  # Generate remaining tests
             print(f"   Generating test {tests_generated + 1}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Test {tests_generated + 1}",
                 "POST",
                 "mock-tests/generate",
@@ -10407,7 +10407,7 @@ class DhruvAITester:
         print("\n🚨 Step 5: Test /api/mock-tests/generate - Limit Reached")
         print("   Expected: 402 Payment Required with upsell_info")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Tests Generate - Limit Reached",
             "POST",
             "mock-tests/generate",
@@ -10464,7 +10464,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Dual Response - With Quota",
             "POST",
             "ai/dual-response",
@@ -10511,7 +10511,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create AI Quota Test User",
             "POST",
             "auth/register",
@@ -10536,7 +10536,7 @@ class DhruvAITester:
                     "subject": "Mathematics"
                 }
                 
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"AI Message {i+1}",
                     "POST",
                     "ai/dual-response",
@@ -10563,7 +10563,7 @@ class DhruvAITester:
             print("\n🚨 Step 8: Test /api/ai/dual-response - Limit Reached")
             print("   Expected: 402 Payment Required with enriched upsell payload")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "AI Dual Response - Limit Reached",
                 "POST",
                 "ai/dual-response",
@@ -10622,7 +10622,7 @@ class DhruvAITester:
         }
         
         # Use original test user who should have access
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Within Limits",
             "POST",
             "subscription/check-access",
@@ -10657,7 +10657,7 @@ class DhruvAITester:
         print("   Expected: HTTP 402 (not 200) with upsell_info and reason limit_reached")
         
         # Use fresh user who exhausted mock test quota
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Feature Exhausted",
             "POST",
             "subscription/check-access",
@@ -10755,7 +10755,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login Test User",
             "POST",
             "auth/login",
@@ -10784,7 +10784,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User",
             "POST",
             "auth/register",
@@ -10811,7 +10811,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generate - Within Quota",
             "POST",
             "mock-tests/generate",
@@ -10848,7 +10848,7 @@ class DhruvAITester:
         for i in range(max_attempts - 1):  # Generate 2 more tests
             print(f"   Generating test {tests_generated + 1}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generate - Attempt {tests_generated + 1}",
                 "POST",
                 "mock-tests/generate",
@@ -10876,7 +10876,7 @@ class DhruvAITester:
         print("\n🚨 Step 5: Test /api/mock-tests/generate - After Exhausting Quota")
         print("   Expected: 402 Payment Required with detail.upsell_info (mentor_message, professor_message, target_tier, target_plan), used, limit")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock Test Generate - After Quota Exhaustion",
             "POST",
             "mock-tests/generate",
@@ -10932,7 +10932,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Within Limits",
             "POST",
             "subscription/check-access",
@@ -10960,7 +10960,7 @@ class DhruvAITester:
         print("\n🚨 Step 7: Test /api/subscription/check-access - Exhausted Feature")
         print("   Using fresh user who exhausted quota")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Exhausted Feature",
             "POST",
             "subscription/check-access",
@@ -11012,7 +11012,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Dual Response - Within Limits",
             "POST",
             "ai/dual-response",
@@ -11043,7 +11043,7 @@ class DhruvAITester:
         print("\n🚨 Step 9: Test /api/ai/dual-response - At Limit")
         print("   Testing AI dual response with user who exhausted quota")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Dual Response - At Limit",
             "POST",
             "ai/dual-response",
@@ -11269,7 +11269,7 @@ class DhruvAITester:
         }
         
         print(f"   Creating fresh user: {fresh_user_email}")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Quota Testing",
             "POST",
             "auth/register",
@@ -11299,7 +11299,7 @@ class DhruvAITester:
             test_num = i + 1
             print(f"\n   Generating mock test {test_num}/3...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Test {test_num}",
                 "POST",
                 "mock-tests/generate",
@@ -11337,7 +11337,7 @@ class DhruvAITester:
         
         # Check usage tracking
         print(f"\n   Checking usage tracking...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Usage Tracking",
             "GET",
             "subscription/usage",
@@ -11368,7 +11368,7 @@ class DhruvAITester:
                 "password": "password123"
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Login Test User",
                 "POST",
                 "auth/login",
@@ -11387,7 +11387,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Should Return 402",
             "POST",
             "subscription/check-access",
@@ -11434,7 +11434,7 @@ class DhruvAITester:
         # Test with query parameters (not JSON body)
         upgrade_url = "subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly"
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Plan Upgrade - Query Parameters",
             "POST",
             upgrade_url,
@@ -11525,7 +11525,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Create Fresh User for Quota Testing",
             "POST",
             "auth/register",
@@ -11558,7 +11558,7 @@ class DhruvAITester:
         for i in range(3):  # Try to generate 3 tests
             print(f"   Generating mock test {i+1}/3...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - Attempt {i+1}",
                 "POST",
                 "mock-tests/generate",
@@ -11608,7 +11608,7 @@ class DhruvAITester:
             "feature_name": "mock_tests_weekly"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Access - Should Return 402",
             "POST",
             "subscription/check-access",
@@ -11649,7 +11649,7 @@ class DhruvAITester:
         # Test upgrade endpoint with query parameters
         upgrade_url = "subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly"
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Plan Upgrade with Query Parameters",
             "POST",
             upgrade_url,
@@ -11675,7 +11675,7 @@ class DhruvAITester:
         print("   Testing uppercase 'FREE' plan name handling")
         
         # Check current subscription with fresh user
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription - Case Sensitivity",
             "GET",
             "subscription/current",
@@ -11768,7 +11768,7 @@ class DhruvAITester:
         print("\n1️⃣ CSRF TOKEN GENERATION TEST")
         print("   Testing GET /api/auth/csrf-token returns valid non-empty CSRF tokens")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "CSRF Token Generation",
             "GET",
             "auth/csrf-token",
@@ -11798,7 +11798,7 @@ class DhruvAITester:
         
         # Test without CSRF token (should return 403)
         print("   🔒 Testing login WITHOUT CSRF token (should return 403)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Login Without CSRF Token",
             "POST",
             "auth/login",
@@ -11815,7 +11815,7 @@ class DhruvAITester:
         # Test with valid CSRF token (should succeed)
         if self.csrf_token:
             print("   🔓 Testing login WITH valid CSRF token (should succeed)")
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Login With Valid CSRF Token",
                 "POST",
                 "auth/login",
@@ -11857,7 +11857,7 @@ class DhruvAITester:
         
         # Test without CSRF token (should return 403)
         print("   🔒 Testing registration WITHOUT CSRF token (should return 403)")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Register Without CSRF Token",
             "POST",
             "auth/register",
@@ -11876,7 +11876,7 @@ class DhruvAITester:
             print("   🔓 Testing registration WITH valid CSRF token (should succeed)")
             registration_data['email'] = f"csrf_test_success_{int(time.time())}@dhruvai.com"
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Register With Valid CSRF Token",
                 "POST",
                 "auth/register",
@@ -11914,7 +11914,7 @@ class DhruvAITester:
                 print(f"   🔒 Testing CSRF protection on {method} {endpoint}")
                 
                 # Test without CSRF token (should fail with 403)
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"CSRF Protection - {endpoint} without token",
                     method,
                     endpoint,
@@ -11956,7 +11956,7 @@ class DhruvAITester:
             if csrf_token:  # Only add header if token is not empty
                 headers['X-CSRFToken'] = csrf_token
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"CSRF Error - {scenario_name}",
                 "POST",
                 "auth/login",
@@ -12170,7 +12170,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Authentication",
             "POST",
             "auth/login",
@@ -12197,7 +12197,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Session Creation",
             "POST",
             "auto-notes/start-session",
@@ -12255,7 +12255,7 @@ class DhruvAITester:
         for i, chunk_data in enumerate(audio_chunks):
             print(f"   Processing audio chunk {i+1}/3...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Audio Processing Chunk {i+1}",
                 "POST",
                 "auto-notes/process-audio",
@@ -12286,7 +12286,7 @@ class DhruvAITester:
             return False
         
         # Try to retrieve session to check if chunks are stored
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Check Audio Chunks Storage",
             "GET",
             f"auto-notes/{self.auto_note_session_id}",
@@ -12327,7 +12327,7 @@ class DhruvAITester:
         
         print("   This may take 15-30 seconds for complete AI processing...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Session Completion",
             "POST",
             "auto-notes/end-session",
@@ -12390,7 +12390,7 @@ class DhruvAITester:
             print("   ❌ No session ID available for session retrieval test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Session Retrieval",
             "GET",
             f"auto-notes/{self.auto_note_session_id}",
@@ -12448,7 +12448,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "AI Concept Extraction",
             "POST",
             "auto-notes/extract-concepts",
@@ -12481,7 +12481,7 @@ class DhruvAITester:
         
         print("   This may take 10-15 seconds for dual AI processing...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Dual AI Analysis",
             "POST",
             "auto-notes/dual-analysis",
@@ -12518,7 +12518,7 @@ class DhruvAITester:
         
         # Test 1: GET /api/subscription/current - should return user subscription details without 500 errors
         print("   Step 1: Testing GET /api/subscription/current (should NOT return 500 errors)...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Current - Infrastructure Fix",
             "GET",
             "subscription/current",
@@ -12545,7 +12545,7 @@ class DhruvAITester:
         
         # Test 2: GET /api/subscription/usage - validate usage tracking works properly
         print("   Step 2: Testing GET /api/subscription/usage (should work properly)...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Usage - Infrastructure Fix",
             "GET",
             "subscription/usage",
@@ -12612,7 +12612,7 @@ class DhruvAITester:
                         "num_questions": 3  # Minimum questions as per review request
                     }
                     
-                    success, response = self.run_test(
+                    success, response, _ = self.run_test(
                         "Free Tier Mock Test Generation",
                         "POST",
                         "mock-tests/generate", 
@@ -12663,7 +12663,7 @@ class DhruvAITester:
         
         # Test 1: Verify user is on free tier
         print("   Step 1: Verifying free tier subscription status...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Free Tier Status Check",
             "GET",
             "subscription/current",
@@ -12799,7 +12799,7 @@ class DhruvAITester:
         
         # Test 1: Get current exam type and subjects
         print("   Step 1: Getting current exam type and subjects...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Current Subjects",
             "GET",
             "mock-tests/subjects",
@@ -13088,7 +13088,7 @@ class DhruvAITester:
         print("   Getting detailed test review...")
         print("   This may take 10-15 seconds for AI-generated explanations...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Detailed Test Review",
             "GET",
             f"mock-tests/{test_id}/detailed-review",
@@ -13142,7 +13142,7 @@ class DhruvAITester:
         
         print("   Testing Bookmarked Questions API...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Bookmarked Questions",
             "GET",
             "bookmarked-questions",
@@ -13191,7 +13191,7 @@ class DhruvAITester:
         print("   Testing Performance Trends API...")
         print("   This may take a few seconds to analyze performance data...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Performance Trends",
             "GET",
             "mock-tests/performance-trends",
@@ -13280,7 +13280,7 @@ class DhruvAITester:
                 "retake_mode": mode
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Enhanced Retake - {mode.title()} Mode",
                 "POST",
                 f"mock-tests/{test_id}/retake",
@@ -13349,7 +13349,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Generate Test for Enhancement APIs",
             "POST",
             "mock-tests/generate",
@@ -13399,7 +13399,7 @@ class DhruvAITester:
         for i, test_case in enumerate(math_expressions):
             print(f"   Testing math expression {i+1}/4: {test_case['expression']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Math Validation - {test_case['expression'][:20]}",
                 "POST",
                 "guardrails/validate-math",
@@ -13433,7 +13433,7 @@ class DhruvAITester:
         for test_case in citation_tests:
             print(f"   Testing citations for {test_case['subject']}/{test_case['topic']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Citations - {test_case['subject']}/{test_case['topic']}",
                 "GET",
                 f"guardrails/citations/{test_case['subject']}/{test_case['topic']}",
@@ -13465,7 +13465,7 @@ class DhruvAITester:
         # Test 3: Disagreement Alerts API - SHOULD STILL WORK (requires session_id)
         print("   Testing GET /api/guardrails/disagreements/{session_id} (should still work)...")
         if hasattr(self, 'session_id') and self.session_id:
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Disagreement Alerts",
                 "GET",
                 f"guardrails/disagreements/{self.session_id}",
@@ -13511,7 +13511,7 @@ class DhruvAITester:
         for i, test_case in enumerate(fact_verification_tests):
             print(f"   Testing fact verification {i+1}/3: {test_case['statement'][:50]}...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Fact Verification - {test_case['subject']}",
                 "POST",
                 "guardrails/fact-verification",
@@ -13590,7 +13590,7 @@ class DhruvAITester:
             print(f"   Message: '{test_case['message'][:50]}...'")
             print("   Checking for 402 subscription/budget errors...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Dual Response - {test_case['name']}",
                 "POST",
                 "ai/dual-response",
@@ -13695,7 +13695,7 @@ class DhruvAITester:
             print(f"   Testing practice problems {i+1}/2: {test_case['subject']}")
             print("   Checking for 'cannot import name LLMChat' errors...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Practice Problems - {test_case['subject']}",
                 "POST",
                 "actions/practice-more",
@@ -13742,7 +13742,7 @@ class DhruvAITester:
             print(f"   Testing create flashcards {i+1}/2: {test_case['title']}")
             print("   Checking for 'cannot import name LLMChat' errors...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Create Flashcards - {test_case['title'][:20]}",
                 "POST",
                 "actions/create-flashcards",
@@ -13780,7 +13780,7 @@ class DhruvAITester:
         for i, test_case in enumerate(note_tests):
             print(f"   Testing add to notes: {test_case['title']}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Add to Notes - {test_case['title'][:20]}",
                 "POST",
                 "actions/add-to-notes",
@@ -13903,7 +13903,7 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Fresh User Registration",
             "POST",
             "auth/register",
@@ -13927,7 +13927,7 @@ class DhruvAITester:
                 "password": "password123"
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Fresh User Login",
                 "POST",
                 "auth/login",
@@ -13950,7 +13950,7 @@ class DhruvAITester:
         print("   Verifying initial subscription status...")
         
         # Test /api/subscription/current
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Current Subscription",
             "GET",
             "subscription/current",
@@ -13973,7 +13973,7 @@ class DhruvAITester:
             return False
         
         # Test /api/subscription/usage
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Subscription Usage",
             "GET",
             "subscription/usage",
@@ -14026,7 +14026,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "First Mock Test Generation",
             "POST",
             "mock-tests/generate",
@@ -14099,7 +14099,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Second Mock Test Generation",
             "POST",
             "mock-tests/generate",
@@ -14172,7 +14172,7 @@ class DhruvAITester:
             "num_questions": 5
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Third Mock Test Attempt (Should Be Blocked)",
             "POST",
             "mock-tests/generate",
@@ -14300,7 +14300,7 @@ class DhruvAITester:
             "password": "password123"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Existing User Login",
             "POST",
             "auth/login",
@@ -14395,7 +14395,7 @@ class DhruvAITester:
                 "importance_score": 0.8
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Schedule Revision",
                 "POST",
                 "actions/schedule-revision",
@@ -14418,7 +14418,7 @@ class DhruvAITester:
         
         # Test 5: Get User Notes API
         print("   Testing GET /api/actions/notes...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get User Notes",
             "GET",
             "actions/notes?subject=Mathematics&limit=10",
@@ -14446,7 +14446,7 @@ class DhruvAITester:
         
         # Test 6: Get Flashcard Decks API
         print("   Testing GET /api/actions/flashcard-decks...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Flashcard Decks",
             "GET",
             "actions/flashcard-decks?subject=Mathematics&limit=10",
@@ -14474,7 +14474,7 @@ class DhruvAITester:
         
         # Test 7: Get Revision Schedule API
         print("   Testing GET /api/actions/revision-schedule...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Revision Schedule",
             "GET",
             "actions/revision-schedule?days_ahead=7",
@@ -14517,7 +14517,7 @@ class DhruvAITester:
         
         # Test 1: Performance Stats API
         print("   Testing GET /api/analytics/performance-stats...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Performance Stats",
             "GET",
             "analytics/performance-stats",
@@ -14538,7 +14538,7 @@ class DhruvAITester:
         
         # Test 2: Learning Analytics API
         print("   Testing GET /api/analytics/learning-analytics...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Learning Analytics",
             "GET",
             "analytics/learning-analytics?days_back=7",
@@ -14581,7 +14581,7 @@ class DhruvAITester:
         for i, test_case in enumerate(wellness_tests):
             print(f"   Testing wellness check {i+1}/2: Stress Level {test_case['stress_level']}/10")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Wellness Check - Stress {test_case['stress_level']}",
                 "POST",
                 "analytics/wellness-check",
@@ -14605,7 +14605,7 @@ class DhruvAITester:
         
         # Test 4: Wellness History API
         print("   Testing GET /api/analytics/wellness-history...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Wellness History",
             "GET",
             "analytics/wellness-history?days_back=30",
@@ -14681,7 +14681,7 @@ class DhruvAITester:
                 "session_id": self.session_id if hasattr(self, 'session_id') and self.session_id else str(uuid.uuid4())
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Enhanced Dual Response - {scenario['name']}",
                 "POST",
                 "ai/dual-response",
@@ -15154,7 +15154,7 @@ class DhruvAITester:
         
         print("   Testing Phase A: Available Contexts API...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Available Contexts API",
             "GET",
             "ai/available-contexts",
@@ -15476,7 +15476,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Start Session",
             "POST",
             "auto-notes/start-session",
@@ -15533,7 +15533,7 @@ class DhruvAITester:
         for i, chunk_data in enumerate(audio_chunks):
             print(f"   Processing audio chunk {i+1}/3...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Process Audio Chunk {i+1}",
                 "POST",
                 "auto-notes/process-audio",
@@ -15563,7 +15563,7 @@ class DhruvAITester:
         print("   Testing auto-note session completion...")
         print("   This may take 10-15 seconds for dual AI analysis...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note End Session",
             "POST",
             f"auto-notes/end-session?session_id={self.note_session_id}",
@@ -15606,7 +15606,7 @@ class DhruvAITester:
         
         print("   Testing auto-note session retrieval...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Auto-Note Session",
             "GET",
             f"auto-notes/{self.note_session_id}",
@@ -15635,7 +15635,7 @@ class DhruvAITester:
         
         print("   Testing auto-note sessions listing...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "List Auto-Note Sessions",
             "GET",
             "auto-notes/sessions",
@@ -15682,7 +15682,7 @@ class DhruvAITester:
             "additional_context": "I need more details about electromagnetic induction"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Explain Note Point",
             "POST",
             "auto-notes/explain-point",
@@ -15720,7 +15720,7 @@ class DhruvAITester:
             "specific_concepts": ["electromagnetic induction", "Faraday's law"]
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Generate Flashcards",
             "POST",
             "auto-notes/generate-flashcards",
@@ -15796,7 +15796,7 @@ class DhruvAITester:
             print(f"   Testing scenario {i+1}/5: {scenario['scenario_type']}")
             print(f"   Message: '{scenario['message'][:50]}...'")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Scenario Classification - {scenario['scenario_type']}",
                 "GET",
                 f"ai/scenario-classify?message={scenario['message']}",
@@ -15842,7 +15842,7 @@ class DhruvAITester:
         print(f"   Question: '{mathematical_question}'")
         print("   This may take 10-15 seconds for dual AI mathematical processing...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mathematical Formatting Test",
             "POST",
             "ai/dual-response",
@@ -15972,7 +15972,7 @@ class DhruvAITester:
             print(f"   Message: '{test_case['message'][:50]}...'")
             print("   This may take 10-15 seconds for dual AI processing...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Dual AI Response - {test_case['description']}",
                 "POST",
                 "ai/dual-response",
@@ -16047,7 +16047,7 @@ class DhruvAITester:
             print(f"   Message: '{test_case['message'][:50]}...'")
             print("   This may take 5-10 seconds for AI processing...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mentor Only Response - {i+1}",
                 "POST",
                 "ai/mentor-only",
@@ -16106,7 +16106,7 @@ class DhruvAITester:
             print(f"   Message: '{test_case['message'][:50]}...'")
             print("   This may take 5-10 seconds for AI processing...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Professor Only Response - {i+1}",
                 "POST",
                 "ai/professor-only",
@@ -16155,7 +16155,7 @@ class DhruvAITester:
         print("   Testing legacy /api/chat/message endpoint...")
         print("   This may take 5-10 seconds for AI processing...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Legacy Chat Message Compatibility",
             "POST",
             "chat/message",
@@ -16208,7 +16208,7 @@ class DhruvAITester:
             
             if endpoint == "ai/scenario-classify":
                 # Special handling for GET endpoint with query param
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Auth Integration - {endpoint}",
                     method,
                     f"{endpoint}?message=Test message",
@@ -16216,7 +16216,7 @@ class DhruvAITester:
                     headers={'Authorization': f'Bearer {self.token}'}
                 )
             else:
-                success, response = self.run_test(
+                success, response, _ = self.run_test(
                     f"Auth Integration - {endpoint}",
                     method,
                     endpoint,
@@ -16284,7 +16284,7 @@ class DhruvAITester:
             "subject": "Physics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Start Session (Collection Fix)",
             "POST",
             "auto-notes/start-session",
@@ -16306,7 +16306,7 @@ class DhruvAITester:
         
         # Test 2: Get session (should retrieve from auto_note_sessions collection)
         print("   2. Testing /api/auto-notes/{session_id}...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note Get Session (Collection Fix)",
             "GET",
             f"auto-notes/{self.critical_session_id}",
@@ -16325,7 +16325,7 @@ class DhruvAITester:
         
         # Test 3: List sessions (should list from auto_note_sessions collection)
         print("   3. Testing /api/auto-notes/sessions...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Note List Sessions (Collection Fix)",
             "GET",
             "auto-notes/sessions",
@@ -16367,7 +16367,7 @@ class DhruvAITester:
         
         # Test 1: Dashboard analytics (should not have ObjectId serialization errors)
         print("   1. Testing /api/dashboard/analytics...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Dashboard Analytics (ObjectId Fix)",
             "GET",
             "dashboard/analytics",
@@ -16390,7 +16390,7 @@ class DhruvAITester:
         
         # Test 2: Performance analytics (should properly serialize datetime objects)
         print("   2. Testing /api/analytics/performance...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Performance Analytics (ObjectId Fix)",
             "GET",
             "analytics/performance",
@@ -16439,7 +16439,7 @@ class DhruvAITester:
             print(f"   Request: {test_data}")
             print("   This may take 5-10 seconds for AI processing...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Mock Test Generation - {subject} (API Fix)",
                 "POST",
                 "mock-tests/generate",
@@ -16504,7 +16504,7 @@ class DhruvAITester:
         
         # GET /api/subscription/info - Get user subscription info with plan details
         print("   Testing GET /api/subscription/info...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Info",
             "GET",
             "subscription/info",
@@ -16543,7 +16543,7 @@ class DhruvAITester:
             feature_name = feature_test['feature']
             print(f"   Testing feature access: {feature_name}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Feature Access - {feature_name}",
                 "POST",
                 f"subscription/check-access?feature_name={feature_name}",
@@ -16579,7 +16579,7 @@ class DhruvAITester:
         
         # Track usage for AI tutor
         print("   Testing POST /api/subscription/track-usage...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Track Usage - AI Tutor",
             "POST",
             "subscription/track-usage?feature_name=ai_tutor_daily",
@@ -16595,7 +16595,7 @@ class DhruvAITester:
         
         # Get current usage statistics
         print("   Testing GET /api/subscription/usage...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Usage Statistics",
             "GET",
             "subscription/usage",
@@ -16614,7 +16614,7 @@ class DhruvAITester:
         
         # Test Mentor + Professor dialogue generation
         print("   Testing upsell dialogue generation...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Upsell Dialogue Generation",
             "POST",
             "subscription/check-access?feature_name=ai_tutor_daily",
@@ -16635,7 +16635,7 @@ class DhruvAITester:
             
             # Test upsell interaction recording
             print("   Testing POST /api/subscription/upsell-response...")
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 "Record Upsell Interaction",
                 "POST",
                 "subscription/upsell-response?interaction_id=test_interaction_123&response=dismissed",
@@ -16653,7 +16653,7 @@ class DhruvAITester:
         print("\n📋 Test 5: Plan Configuration")
         
         print("   Testing GET /api/subscription/plans...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Get Subscription Plans",
             "GET",
             "subscription/plans",
@@ -16705,7 +16705,7 @@ class DhruvAITester:
         print("\n📋 Test 6: Upgrade Functionality")
         
         print("   Testing POST /api/subscription/upgrade...")
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Upgrade",
             "POST",
             "subscription/upgrade?target_tier=PREMIUM&billing_cycle=monthly",
@@ -16766,7 +16766,7 @@ class DhruvAITester:
         """Test GET /api/subscription/plans to verify all 4 subscription tiers"""
         print("   Testing subscription plans API...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Subscription Plans API",
             "GET",
             "subscription/plans",
@@ -16838,7 +16838,7 @@ class DhruvAITester:
         
         print("   Testing current subscription API...")
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Current Subscription API",
             "GET",
             "subscription/current",
@@ -16926,7 +16926,7 @@ class DhruvAITester:
                 "cancel_url": "https://example.com/cancel"
             }
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Checkout Session - {scenario['plan_name']}",
                 "POST",
                 "subscription/checkout",
@@ -16973,7 +16973,7 @@ class DhruvAITester:
             "cancel_url": "https://example.com/cancel"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Checkout Session - Free Plan (Should Fail)",
             "POST",
             "subscription/checkout",
@@ -17004,7 +17004,7 @@ class DhruvAITester:
             
             print(f"   Checking payment status for {plan_name} session...")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Payment Status - {plan_name}",
                 "GET",
                 f"subscription/payment-status/{session_id}",
@@ -17045,7 +17045,7 @@ class DhruvAITester:
         print("   Testing usage tracking and access control...")
         
         # First, get current usage
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Usage Summary",
             "GET",
             "subscription/usage",
@@ -17125,7 +17125,7 @@ class DhruvAITester:
         
         # Note: This test will likely fail without proper Stripe signature
         # but we can test the endpoint exists and handles requests
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Stripe Webhook",
             "POST",
             "webhook/stripe",
@@ -17194,7 +17194,7 @@ class DhruvAITester:
             "subject": "Mathematics"
         }
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Start Session",
             "POST",
             "auto-notes/start-session",
@@ -17232,7 +17232,7 @@ class DhruvAITester:
             print("   ❌ No token available for auto-notes sessions list test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Sessions List",
             "GET",
             "auto-notes/sessions",
@@ -17271,7 +17271,7 @@ class DhruvAITester:
         else:
             session_id = self.session_id
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Session Detail",
             "GET",
             f"auto-notes/{session_id}",
@@ -17303,7 +17303,7 @@ class DhruvAITester:
             print("   ❌ No token available for auto-notes analytics test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Analytics",
             "GET",
             "auto-notes/analytics",
@@ -17335,7 +17335,7 @@ class DhruvAITester:
             print("   ❌ No token available for auto-notes class series test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Auto-Notes Class Series",
             "GET",
             "auto-notes/class-series",
@@ -17370,7 +17370,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests library test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Library",
             "GET",
             "mock-tests/library",
@@ -17403,7 +17403,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests recent test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Library Recent",
             "GET",
             "mock-tests/library/recent",
@@ -17436,7 +17436,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests high scores test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Library High Scores",
             "GET",
             "mock-tests/library/high-scores",
@@ -17467,7 +17467,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests dashboard test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Dashboard",
             "GET",
             "mock-tests/dashboard",
@@ -17499,7 +17499,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests performance trends test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Performance Trends",
             "GET",
             "mock-tests/performance-trends",
@@ -17530,7 +17530,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests subjects JEE test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Subjects JEE",
             "GET",
             "mock-tests/subjects?exam_type=JEE",
@@ -17569,7 +17569,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests subjects NEET test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Subjects NEET",
             "GET",
             "mock-tests/subjects?exam_type=NEET",
@@ -17608,7 +17608,7 @@ class DhruvAITester:
             print("   ❌ No token available for mock-tests resume test")
             return False
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Resume",
             "GET",
             "mock-tests/resume",
@@ -17642,7 +17642,7 @@ class DhruvAITester:
         # Use a placeholder test_id since we may not have a real one
         test_id = "test-id-placeholder"
         
-        success, response = self.run_test(
+        success, response, _ = self.run_test(
             "Mock-Tests Detailed Review",
             "GET",
             f"mock-tests/{test_id}/detailed-review",
@@ -17688,7 +17688,7 @@ class DhruvAITester:
                 integration_results.append(False)
                 continue
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Service Integration - {service_name}",
                 "GET",
                 endpoint,
@@ -17729,7 +17729,7 @@ class DhruvAITester:
         for endpoint in protected_endpoints:
             print(f"   Testing 401 for {endpoint}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"401 Error Handling - {endpoint}",
                 "GET",
                 endpoint,
@@ -17783,7 +17783,7 @@ class DhruvAITester:
             endpoint = test_case["endpoint"]
             print(f"   Validating structure for {endpoint}")
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Data Structure - {endpoint}",
                 "GET",
                 endpoint,
@@ -17856,7 +17856,7 @@ class DhruvAITester:
             
             headers = {'Authorization': f'Bearer {self.token}'} if endpoint != "subscription/plans" else {}
             
-            success, response = self.run_test(
+            success, response, _ = self.run_test(
                 f"Backward Compatibility - {endpoint}",
                 "GET",
                 endpoint,
