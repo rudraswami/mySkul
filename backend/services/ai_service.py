@@ -292,6 +292,11 @@ Student Question: {message}"""
             # Save message to session
             await self.save_session_message(user_id, session_id, message, dual_response)
             
+            # Track AI Tutor session usage (if subscription service available)
+            if self.subscription_service:
+                await self.subscription_service.track_ai_tutor_session(user_id)
+                logger.info(f"✅ Tracked AI Tutor session for user {user_id}")
+            
             return dual_response
             
         except Exception as e:
