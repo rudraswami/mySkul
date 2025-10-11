@@ -260,17 +260,51 @@ Subject Context: {subject}"""
                 system_message=mentor_system
             ).with_model("openai", "gpt-5")
             
-            # Generate responses with timeout and retry logic
+            # Generate responses with hybrid approach: fast + quality
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
             mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
             
-            # Implement robust LLM calls with timeout and fallbacks
-            professor_response = await self._safe_llm_call(
-                professor_chat, professor_message, "professor", subject, message
-            )
-            mentor_response = await self._safe_llm_call(
-                mentor_chat, mentor_message, "mentor", subject, message
-            )
+            # Start both calls concurrently for better performance
+            import asyncio
+            
+            async def get_professor_response():
+                return await self._safe_llm_call(
+                    professor_chat, professor_message, "professor", subject, message
+                )
+            
+            async def get_mentor_response():
+                return await self._safe_llm_call(
+                    mentor_chat, mentor_message, "mentor", subject, message
+                )
+            
+            # Run both calls concurrently with overall timeout
+            try:
+                professor_task = asyncio.create_task(get_professor_response())
+                mentor_task = asyncio.create_task(get_mentor_response())
+                
+                # Wait for both with 30-second overall timeout
+                professor_response, mentor_response = await asyncio.wait_for(
+                    asyncio.gather(professor_task, mentor_task),
+                    timeout=30.0
+                )
+                
+            except asyncio.TimeoutError:
+                logger.warning("⏰ Overall dual response timeout - using partial results + fallbacks")
+                
+                # Try to get partial results
+                professor_response = None
+                mentor_response = None
+                
+                if professor_task.done() and not professor_task.exception():
+                    professor_response = professor_task.result()
+                if mentor_task.done() and not mentor_task.exception():
+                    mentor_response = mentor_task.result()
+                
+                # Use fallbacks for missing responses
+                if not professor_response:
+                    professor_response = self._generate_fast_fallback("professor", subject, message)
+                if not mentor_response:
+                    mentor_response = self._generate_fast_fallback("mentor", subject, message)
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
