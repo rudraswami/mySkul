@@ -45,13 +45,14 @@ export default function Analytics() {
   
   const loading = dashboardLoading || subjectLoading || goalsLoading;
 
-  // Sample analytics data (fallback)
+  // Use API data with fallbacks for backward compatibility
+  const analytics = dashboardAnalytics || {};
   const studyData = {
-    totalTime: analytics?.parent_summary?.monthly_hours || 42,
-    weeklyGoal: 50,
-    streak: 7,
-    averageSession: 2.5,
-    subjects: analytics?.subject_performance ? Object.entries(analytics.subject_performance).map(([name, data], index) => ({
+    totalTime: analytics?.parent_summary?.monthly_hours || dailyGoals?.total_time || 42,
+    weeklyGoal: dailyGoals?.weekly_goal || 50,
+    streak: dailyGoals?.streak || 7,
+    averageSession: analytics?.average_session || 2.5,
+    subjects: subjectProgress ? Object.entries(subjectProgress).map(([name, data], index) => ({
       name,
       time: data.time_spent / 60 || 0, // Convert minutes to hours
       progress: data.mastery_avg || 0,
