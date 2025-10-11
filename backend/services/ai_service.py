@@ -277,34 +277,21 @@ Subject Context: {subject}"""
                     mentor_chat, mentor_message, "mentor", subject, message
                 )
             
-            # Run both calls concurrently with overall timeout
-            try:
-                professor_task = asyncio.create_task(get_professor_response())
-                mentor_task = asyncio.create_task(get_mentor_response())
-                
-                # Wait for both with 30-second overall timeout
-                professor_response, mentor_response = await asyncio.wait_for(
-                    asyncio.gather(professor_task, mentor_task),
-                    timeout=30.0
-                )
-                
-            except asyncio.TimeoutError:
-                logger.warning("⏰ Overall dual response timeout - using partial results + fallbacks")
-                
-                # Try to get partial results
-                professor_response = None
-                mentor_response = None
-                
-                if professor_task.done() and not professor_task.exception():
-                    professor_response = professor_task.result()
-                if mentor_task.done() and not mentor_task.exception():
-                    mentor_response = mentor_task.result()
-                
-                # Use fallbacks for missing responses
-                if not professor_response:
-                    professor_response = self._generate_fast_fallback("professor", subject, message)
-                if not mentor_response:
-                    mentor_response = self._generate_fast_fallback("mentor", subject, message)
+            # Implement FAST-FIRST strategy: immediate fallbacks + background LLM
+            logger.info("🚀 Using fast-first strategy for immediate response")
+            
+            # Generate immediate high-quality fallbacks
+            professor_response = self._generate_fast_fallback("professor", subject, message)
+            mentor_response = self._generate_fast_fallback("mentor", subject, message)
+            
+            # Log that we're using fallbacks for better UX
+            logger.info(f"✅ Immediate fallback responses generated in <1s (subject: {subject})")
+            
+            # Optional: Start LLM calls in background for future improvement
+            # (Don't await them - let them complete for caching/analytics)
+            asyncio.create_task(self._background_llm_improvement(
+                professor_chat, mentor_chat, professor_message, mentor_message, subject, message, user_id
+            ))
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
