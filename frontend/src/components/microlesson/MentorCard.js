@@ -164,7 +164,13 @@ const MentorCard = ({ mentorData, weight }) => {
                     <Sparkles className="w-4 h-4 text-pink-600" />
                   </h4>
                   <div className="text-pink-950 text-base leading-relaxed">
-                    <LatexRenderer text={sections.motivation_spark || mentorData.response?.substring(0, 150) + '...'} />
+                    <ReactMarkdown 
+                      components={{
+                        p: ({ children }) => <LatexRenderer text={children} />
+                      }}
+                    >
+                      {mentorSections.motivation_spark || sanitizeText(mentorData.response?.substring(0, 150)) + '...'}
+                    </ReactMarkdown>
                   </div>
                 </div>
               </div>
