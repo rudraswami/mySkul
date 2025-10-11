@@ -610,11 +610,11 @@ export default function AITutor() {
       return;
     }
 
+    // SUBMIT PHASE: Store message and start loading, but keep input visible
     setLoading(true);
     const messageToSend = currentMessage;
     
-    // Keep user input visible until we confirm success
-    // setCurrentMessage(''); // Don't clear immediately
+    // DO NOT clear input here - keep it visible during processing
 
     try {
       let response;
