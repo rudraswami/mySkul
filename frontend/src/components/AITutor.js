@@ -807,9 +807,12 @@ export default function AITutor() {
     } catch (error) {
       console.error('Failed to send message:', error);
       
+      // Always restore user input on any error
+      setCurrentMessage(messageToSend);
+      
       // Check if this is a subscription-related error first
       if (error.response?.status === 402 || error.response?.status === 429) {
-        console.log('Subscription limit reached in catch block - triggering global modal');
+        console.log('Subscription limit reached - triggering global modal');
         
         // Store failed action for retry after upgrade
         const failedAction = () => {
@@ -818,35 +821,49 @@ export default function AITutor() {
         };
         setLastFailedAction(failedAction);
         
-        // Trigger the shared upsell flow so UI/data is consistent
+        // Trigger the shared upsell flow
         await triggerFeatureUpsell('ai_tutor_daily');
-        return; // Don't add error messages to chat
+        return;
       }
       
-      // For server errors, add user-friendly message but prevent duplicates
-      if (error.response?.status >= 500) {
-        // Check if we already have recent error messages to prevent spam
-        const recentErrors = messages.filter(msg => 
-          msg.type === 'system_error' && 
-          new Date() - new Date(msg.timestamp) < 5000 // 5 seconds
-        );
-        
-        if (recentErrors.length === 0) {
-          const errorMessage = {
-            type: 'system_error',
-            message: "I'm temporarily having trouble processing your message. Please try again in a moment, or contact support if the issue persists.",
-            timestamp: new Date().toISOString()
-          };
-          setMessages(prev => [...prev, errorMessage]);
-        }
-        
-        // Don't put message back for server errors
-        showToast('Server temporarily unavailable. Please try again.', 'error');
+      // Enhanced error handling with user-friendly messages
+      let errorMessageText = "I'm having trouble processing your message. ";
+      let toastMessage = "";
+      
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessageText += "The request took too long. Please try again with a shorter question.";
+        toastMessage = "Request timed out. Please try again.";
+      } else if (error.response?.status >= 500) {
+        errorMessageText += "There's a temporary server issue. Please try again in a moment.";
+        toastMessage = "Server temporarily unavailable. Trying again...";
+      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
+        errorMessageText += "Please check your internet connection and try again.";
+        toastMessage = "Network error. Check your connection.";
       } else {
-        // For other errors (network, etc.), put message back in input
-        setCurrentMessage(messageToSend);
-        showToast('Failed to send message. Please check your connection.', 'error');
+        errorMessageText += "Something unexpected happened. Please try again.";
+        toastMessage = "Something went wrong. Please try again.";
       }
+      
+      // Add helpful error message to chat (with retry button)
+      const errorMessage = {
+        type: 'system_error',
+        message: errorMessageText,
+        user_message: messageToSend, // Store original message for retry
+        timestamp: new Date().toISOString(),
+        retry_available: true
+      };
+      
+      // Check if we already have recent error messages to prevent spam
+      const recentErrors = messages.filter(msg => 
+        msg.type === 'system_error' && 
+        new Date() - new Date(msg.timestamp) < 10000 // 10 seconds
+      );
+      
+      if (recentErrors.length === 0) {
+        setMessages(prev => [...prev, errorMessage]);
+      }
+      
+      showToast(toastMessage, 'error');
     } finally {
       setLoading(false);
     }
