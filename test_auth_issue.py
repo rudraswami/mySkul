@@ -9,7 +9,7 @@ def test_auth_issue():
     print("🔍 TESTING AUTHENTICATION ISSUE")
     print("="*50)
     
-    base_url = "https://tutor-upgrade.preview.emergentagent.com/api"
+    base_url = "https://tutor-refinement.preview.emergentagent.com/api"
     
     # Step 1: Login and get token
     print("1. Getting authentication token...")
