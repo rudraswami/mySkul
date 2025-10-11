@@ -8029,21 +8029,26 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
-        if success and 'primary' in response and 'response' in response['primary']:
-            sanitized_text = response['primary']['response']
-            print(f"   Response preview: {sanitized_text[:150]}...")
+        if success:
+            print(f"   ✅ API call successful, analyzing response structure...")
+            professor_text, mentor_text, raw_text = extract_response_text(response)
             
-            # Check for LaTeX delimiters preservation
-            has_display_math = '\\[' in sanitized_text and '\\]' in sanitized_text
-            has_inline_math = '\\(' in sanitized_text and '\\)' in sanitized_text
-            
-            if has_display_math or has_inline_math:
-                print("   ✅ LaTeX delimiters preserved for math rendering")
-                test_results['latex_preservation'] = True
+            if professor_text:
+                print(f"   Response preview: {professor_text[:150]}...")
+                
+                # Check for LaTeX delimiters preservation
+                has_display_math = '\\[' in professor_text and '\\]' in professor_text
+                has_inline_math = '\\(' in professor_text and '\\)' in professor_text
+                
+                if has_display_math or has_inline_math:
+                    print("   ✅ LaTeX delimiters preserved for math rendering")
+                    test_results['latex_preservation'] = True
+                else:
+                    print("   ⚠️ No LaTeX delimiters found (may be expected if no math formulas)")
+                    # Don't fail the test if no math formulas are present
+                    test_results['latex_preservation'] = True
             else:
-                print("   ⚠️ No LaTeX delimiters found (may be expected if no math formulas)")
-                # Don't fail the test if no math formulas are present
-                test_results['latex_preservation'] = True
+                print("   ❌ Could not find response text in API response")
         else:
             print("   ❌ Failed to get response for LaTeX test")
         
