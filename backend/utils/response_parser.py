@@ -189,3 +189,27 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
             formulas.extend(matches)
         
         return formulas
+    
+    def clean_text(self, text: str) -> str:
+        """Clean special characters and escape sequences from text"""
+        if not text:
+            return ''
+        
+        # Remove common escape sequences
+        cleaned = text.replace('\\n', '\n')
+        cleaned = cleaned.replace('\\t', '\t')
+        cleaned = cleaned.replace('\\"', '"')
+        cleaned = cleaned.replace("\\'", "'")
+        cleaned = cleaned.replace('\\\\', '\\')
+        
+        # Remove non-breaking spaces
+        cleaned = cleaned.replace('\u00a0', ' ')
+        cleaned = cleaned.replace('\xa0', ' ')
+        
+        # Clean up multiple spaces
+        cleaned = re.sub(r' +', ' ', cleaned)
+        
+        # Clean up multiple newlines
+        cleaned = re.sub(r'\n\n+', '\n\n', cleaned)
+        
+        return cleaned.strip()
