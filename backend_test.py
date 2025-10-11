@@ -16135,7 +16135,7 @@ def main():
 
     # ============= NEW AUTO-NOTES ROUTER TESTS =============
     
-    def test_auto_notes_start_session(self):
+    def test_new_auto_notes_start_session(self):
         """Test Auto-Notes Router - POST /api/auto-notes/start-session"""
         print("   Testing POST /api/auto-notes/start-session endpoint")
         
