@@ -58,8 +58,9 @@ export default function Subscription() {
     setUpgrading(true);
     setSelectedPlan(planTier);
     
-    // Find the plan details
-    const plan = subscriptionPlans.find(p => p.tier === planTier);
+    // Use plansData from React Query instead of hardcoded subscriptionPlans
+    const plan = plansData?.plans?.find(p => p.tier === planTier) || 
+                 subscriptionPlans.find(p => p.tier === planTier);
     if (!plan) {
       console.error('Plan not found');
       setUpgrading(false);
