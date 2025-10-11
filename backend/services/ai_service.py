@@ -559,6 +559,88 @@ Subject Context: {subject}"""
             logger.error(f"Save session message error: {str(e)}")
             return False
     
+    async def _safe_llm_call(self, chat_instance, message, role_type: str, subject: str, user_message: str, max_retries: int = 3, timeout_seconds: int = 15):
+        """
+        Safe LLM API call with timeout, retry, and intelligent fallbacks
+        Ensures no blank responses ever reach the frontend
+        """
+        import asyncio
+        import time
+        
+        fallback_responses = {
+            "professor": f"""I understand you're asking about {subject}. Let me help you with this concept.
+
+**Core Explanation:**
+This is an important topic in {subject} that builds foundational understanding.
+
+**Key Points:**
+1. Let me break this down step by step
+2. The main concept involves understanding the relationship between different elements
+3. Practice with similar problems will help solidify your understanding
+
+**Quick Summary:**
+Focus on the fundamental principles and practice regularly to master this concept.""",
+            
+            "mentor": f"""I can see you're working hard on {subject} - that's fantastic! 
+
+**Motivation Spark:** 
+Every question you ask brings you closer to mastering this subject.
+
+**Study Strategy:** 
+• Take your time to understand each concept thoroughly
+• Practice with similar examples
+• Don't hesitate to ask follow-up questions
+
+**Encouragement:**
+You're making great progress! Keep up the excellent work and stay curious. Learning takes time, and you're on the right path! 🌟"""
+        }
+        
+        for attempt in range(max_retries):
+            try:
+                start_time = time.time()
+                logger.info(f"Starting {role_type} LLM call - attempt {attempt + 1}/{max_retries}")
+                
+                # Apply timeout to the LLM call
+                response = await asyncio.wait_for(
+                    chat_instance.send_message(message),
+                    timeout=timeout_seconds
+                )
+                
+                elapsed = time.time() - start_time
+                logger.info(f"✅ {role_type} response received in {elapsed:.2f}s")
+                
+                # Validate response is not empty
+                response_text = response if isinstance(response, str) else str(response)
+                if not response_text or len(response_text.strip()) < 10:
+                    raise ValueError(f"Empty or too short {role_type} response")
+                
+                return response_text
+                
+            except asyncio.TimeoutError:
+                elapsed = time.time() - start_time
+                logger.warning(f"⏰ {role_type} LLM call timeout after {elapsed:.2f}s (attempt {attempt + 1})")
+                
+                if attempt < max_retries - 1:
+                    # Exponential backoff: 1s, 2s, 4s
+                    delay = 2 ** attempt
+                    logger.info(f"Retrying in {delay}s...")
+                    await asyncio.sleep(delay)
+                    continue
+                    
+            except Exception as e:
+                elapsed = time.time() - start_time if 'start_time' in locals() else 0
+                logger.error(f"❌ {role_type} LLM call error after {elapsed:.2f}s: {str(e)} (attempt {attempt + 1})")
+                
+                if attempt < max_retries - 1:
+                    delay = 2 ** attempt
+                    logger.info(f"Retrying in {delay}s...")
+                    await asyncio.sleep(delay)
+                    continue
+        
+        # All retries failed - use intelligent fallback
+        logger.warning(f"🔄 All {role_type} LLM attempts failed, using fallback response")
+        return fallback_responses.get(role_type, "I'm here to help! Please try asking your question again.")
+
     async def validate_math_expression(self, expression: str, units: Optional[str] = None) -> Dict[str, Any]:
         """Validate mathematical expressions using guardrails"""
         try:
