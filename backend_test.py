@@ -37,7 +37,6 @@ class DhruvAITester:
         try:
             # Use session for cookie handling if needed
             if use_session:
-                import requests
                 session = requests.Session()
                 
                 if method == 'GET':
