@@ -7090,72 +7090,85 @@ async def get_dual_ai_response(request: DualAIRequest, user: User = Depends(get_
     """Get coordinated response from both Mentor and Professor AI layers with personalization"""
     
     try:
-        # Check subscription access for AI tutor using new hybrid system
-        access_info = await SubscriptionService.check_feature_access(user.user_id, "ai_tutor_daily")
-        if not access_info["has_access"]:
-            if access_info["reason"] == "feature_locked":
-                # Return upsell information instead of hard error
-                raise HTTPException(
-                    status_code=402,
-                    detail={
-                        "message": "AI Tutor feature requires upgrade",
-                        "upsell_info": access_info.get("upsell_info", {}),
-                        "upgrade_needed": True
-                    }
-                )
-            elif access_info["reason"] == "limit_reached":
-                # Return soft limit with upsell info
-                raise HTTPException(
-                    status_code=402,
-                    detail={
-                        "message": f"Daily AI Tutor limit reached ({access_info['current_usage']}/{access_info['limit']})",
-                        "upsell_info": access_info.get("upsell_info", {}),
-                        "upgrade_needed": True,
-                        "reset_time": "midnight"
-                    }
-                )
-        
-        # Extract topic from message (simple keyword extraction - can be enhanced)
-        topic_name = extract_topic_from_message(request.message, request.subject)
-        
-        # Get user context for personalization
-        user_context = {
-            'exam_type': user.exam_type,
-            'grade': user.grade,
-            'target_year': user.target_year,
-            'user_id': user.user_id
-        }
-        
-        # Get personalized dual-layer response
-        try:
-            coordinated_response = await dual_ai.get_personalized_coordinated_response(
-                request.message, 
-                request.subject, 
-                request.session_id,
+        # Use new modular AI service with all AI Tutor 2.1+ enhancements and Phase 1 fixes
+        if MODULAR_COMPONENTS_AVAILABLE:
+            dual_response = await modular_ai_service.generate_dual_ai_response(
                 user.user_id,
-                topic_name,
-                user_context
+                request.message,
+                request.session_id,
+                request.subject
             )
-        except Exception as personalization_error:
-            logger.warning(f"Personalization failed, using fallback: {str(personalization_error)}")
-            # Fallback to non-personalized response
-            coordinated_response = await dual_ai.get_coordinated_response(
-                request.message, 
-                request.subject, 
-                request.session_id, 
-                user_context
+            return dual_response
+        else:
+            # Fallback to legacy system if modular components unavailable
+            logger.warning("Using legacy dual AI system - modular components not available")
+            
+            # Check subscription access for AI tutor using new hybrid system
+            access_info = await SubscriptionService.check_feature_access(user.user_id, "ai_tutor_daily")
+            if not access_info["has_access"]:
+                if access_info["reason"] == "feature_locked":
+                    # Return upsell information instead of hard error
+                    raise HTTPException(
+                        status_code=402,
+                        detail={
+                            "message": "AI Tutor feature requires upgrade",
+                            "upsell_info": access_info.get("upsell_info", {}),
+                            "upgrade_needed": True
+                        }
+                    )
+                elif access_info["reason"] == "limit_reached":
+                    # Return soft limit with upsell info
+                    raise HTTPException(
+                        status_code=402,
+                        detail={
+                            "message": f"Daily AI Tutor limit reached ({access_info['current_usage']}/{access_info['limit']})",
+                            "upsell_info": access_info.get("upsell_info", {}),
+                            "upgrade_needed": True,
+                            "reset_time": "midnight"
+                        }
+                    )
+            
+            # Extract topic from message (simple keyword extraction - can be enhanced)
+            topic_name = extract_topic_from_message(request.message, request.subject)
+            
+            # Get user context for personalization
+            user_context = {
+                'exam_type': user.exam_type,
+                'grade': user.grade,
+                'target_year': user.target_year,
+                'user_id': user.user_id
+            }
+            
+            # Get personalized dual-layer response
+            try:
+                coordinated_response = await dual_ai.get_personalized_coordinated_response(
+                    request.message, 
+                    request.subject, 
+                    request.session_id,
+                    user.user_id,
+                    topic_name,
+                    user_context
+                )
+            except Exception as personalization_error:
+                logger.warning(f"Personalization failed, using fallback: {str(personalization_error)}")
+                # Fallback to non-personalized response
+                coordinated_response = await dual_ai.get_coordinated_response(
+                    request.message, 
+                    request.subject, 
+                    request.session_id, 
+                    user_context
+                )
+            
+            # Save chat message with dual-layer data
+            chat_message = ChatMessage(
+                session_id=request.session_id,
+                user_id=user.user_id,
+                message=request.message,
+                response=coordinated_response['primary_response'],
+                reasoning=f"Dual-layer AI: {coordinated_response['primary_persona']} leading. Scenario: {coordinated_response['scenario_type']}"
             )
-        
-        # Save chat message with dual-layer data
-        chat_message = ChatMessage(
-            session_id=request.session_id,
-            user_id=user.user_id,
-            message=request.message,
-            response=coordinated_response['primary_response'],
-            reasoning=f"Dual-layer AI: {coordinated_response['primary_persona']} leading. Scenario: {coordinated_response['scenario_type']}"
-        )
-        
-        await db.chat_messages.insert_one(chat_message.dict())
+            
+            await db.chat_messages.insert_one(chat_message.dict())
         
         # Phase C: Advanced Guardrails Integration
         guardrails_data = {}
