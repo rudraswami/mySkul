@@ -223,7 +223,16 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <h3 className="text-lg font-bold text-gray-800">Detailed Breakdown</h3>
               </div>
               <div className="pl-8 text-gray-800 text-base leading-loose space-y-3" style={{ lineHeight: '1.8' }}>
-                <LatexRenderer text={microLessonSections.step_by_step} />
+                <ReactMarkdown 
+                  components={{
+                    p: ({ children }) => <div className="mb-3"><LatexRenderer text={children} /></div>,
+                    li: ({ children }) => <li className="mb-2"><LatexRenderer text={children} /></li>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-2">{children}</ol>,
+                    ul: ({ children }) => <ul className="list-disc list-inside space-y-2">{children}</ul>
+                  }}
+                >
+                  {sanitizeText(microLessonSections.step_by_step)}
+                </ReactMarkdown>
               </div>
             </div>
           )}
