@@ -262,7 +262,7 @@ Subject Context: {subject}"""
                 api_key=self.emergent_llm_key,
                 session_id=f"mentor_{user_id}_{session_id}",
                 system_message=mentor_system
-            ).with_model("openai", "gpt-5")
+            ).with_model("openai", "gpt-4o")  # Using GPT-4o for optimal speed/quality balance
             
             # Generate responses with hybrid approach: fast + quality
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
