@@ -703,10 +703,11 @@ export default function AutoNoteMentor() {
 
   const startRecording = async () => {
     // CRITICAL: Check subscription access FIRST
-    const accessInfo = await checkFeatureAccess('auto_note_recordings_daily');
+    // Both uploads and recordings use same feature quota from planConfig_ai_tutor.json
+    const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
     if (!accessInfo.has_access) {
       // Open the unified modal immediately
-      setUpsellModal(prev => prev || openUpsellModal('auto_note_recordings_daily', accessInfo));
+      setUpsellModal(prev => prev || openUpsellModal('auto_note_uploads_daily', accessInfo));
       return;
     }
 
