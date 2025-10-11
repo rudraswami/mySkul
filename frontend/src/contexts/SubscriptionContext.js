@@ -27,15 +27,25 @@ export function SubscriptionProvider({ children }) {
       }
     } catch (error) {
       console.error('Failed to fetch subscription info:', error);
-      // Set default FREE tier on error
+      // Set default FREE tier on error - use planConfig_ai_tutor.json values
       setSubscriptionInfo({
         subscription_tier: 'FREE',
         plan_info: {
-          display_name: '🧩 Free - The Explorer',
+          display_name: '🆓 Free - Try Before You Commit',
           features: {
-            ai_tutor_daily: 5,
-            mock_tests_weekly: 2,
-            auto_note_uploads_daily: 1
+            ai_sessions_monthly: 10,
+            mentor_tips_daily: 0,
+            mock_tests_weekly: 1,
+            auto_note_uploads_daily: 1,
+            focus_engine_type: 'static',
+            ai_insights: 'locked',
+            voice_mode: 'locked',
+            offline_mode: false,
+            analytics_tier: 'basic',
+            visuals: 'standard',
+            priority_support: false,
+            export_notes: false,
+            concept_tagging: false
           }
         },
         daily_usage: {}
