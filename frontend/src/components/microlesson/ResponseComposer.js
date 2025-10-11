@@ -8,6 +8,7 @@ import PracticeActions from './PracticeActions';
 import MotivationalFooter from './MotivationalFooter';
 import VisualConceptBlock from '../VisualConceptBlock';
 import MentorCard from './MentorCard';
+import LatexRenderer from './LatexRenderer';
 
 /**
  * ResponseComposer - AI Tutor 2.3 Complete UX Redesign
