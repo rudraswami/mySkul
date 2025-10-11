@@ -17,6 +17,7 @@ from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.svg_generator import SVGGenerator
 from utils.response_parser import ResponseParser
 from utils.motivational_generator import MotivationalGenerator
+from utils.format_validator import format_validator
 
 from models.core import User, ChatSession, ChatMessage
 from models.ai import (
