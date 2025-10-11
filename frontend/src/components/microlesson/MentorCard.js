@@ -117,9 +117,9 @@ const MentorCard = ({ mentorData, weight }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="pl-7 text-pink-900 text-sm leading-relaxed whitespace-pre-wrap"
+                        className="pl-7 text-pink-900 text-sm leading-relaxed"
                       >
-                        {cleanText(sections.simplified_recap)}
+                        <LatexRenderer text={sections.simplified_recap} />
                       </motion.div>
                     )}
                   </AnimatePresence>
