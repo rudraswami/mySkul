@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, ChevronDown, ChevronUp, Heart, GraduationCap } from 'lucide-react';
 import ConceptCard from './ConceptCard';
 import FormulaCard from './FormulaCard';
 import TipCard from './TipCard';
@@ -9,11 +9,12 @@ import MotivationalFooter from './MotivationalFooter';
 import VisualConceptBlock from '../VisualConceptBlock';
 
 /**
- * ResponseComposer - Main orchestrator for AI Tutor 2.1 micro-lesson rendering
- * Transforms raw AI responses into structured, visually appealing micro-lessons
- * Enhanced with better visual rhythm and emotional engagement
+ * ResponseComposer - AI Tutor 2.3 Complete UX Redesign
+ * Student-first design with collapsible mentor, emotional anchors, and progressive reveal
  */
 const ResponseComposer = ({ message, onQuickAction }) => {
+  const [mentorExpanded, setMentorExpanded] = useState(false);
+  
   const {
     dual_response,
     visual,
@@ -29,24 +30,42 @@ const ResponseComposer = ({ message, onQuickAction }) => {
   const microLessonSections = primary.micro_lesson_sections || {};
   const sentiment = sentiment_analysis?.primary_sentiment || 'neutral';
   
-  // Check if we have structured sections
-  const hasStructuredContent = Object.values(microLessonSections).some(v => 
-    v && (typeof v === 'string' ? v.length > 0 : v.length > 0)
-  );
+  // Clean special characters from text
+  const cleanText = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, '\\')
+      .replace(/\u00a0/g, ' ')
+      .trim();
+  };
 
   // Extract formulas
   const formulas = microLessonSections.key_formula || '';
   const formulaList = formulas ? 
-    (Array.isArray(formulas) ? formulas : [formulas]) : 
+    (Array.isArray(formulas) ? formulas.map(f => cleanText(f)) : [cleanText(formulas)]) : 
     [];
   
-  // Transition phrases for better flow
-  const transitionPhrases = {
-    formula: "Let's look at the key equation 👇",
-    stepByStep: "Breaking it down step by step 📋",
-    realLife: "How does this apply in real life? 🌍",
-    tip: "Here's an important tip to remember 💡",
-    practice: "Ready to practice? Let's go! 🎯"
+  // Animation variants for progressive reveal
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
   };
 
   return (
