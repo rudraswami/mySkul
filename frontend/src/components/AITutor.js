@@ -2884,7 +2884,8 @@ export default function AITutor() {
                           : 'border-gray-200 focus:border-blue-300 hover:border-gray-300'
                   } rounded-lg focus:ring-2 focus:ring-blue-100 transition-all mobile-transition`}
                   rows={2}
-                  disabled={loading}
+                  disabled={messagePhase === 'streaming' || loading}
+                  readOnly={messagePhase === 'submit' || messagePhase === 'reset'}
                 />
                 
                 {/* Input Icons */}
