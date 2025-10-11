@@ -2875,6 +2875,10 @@ export default function AITutor() {
                       ? 'border-blue-300 bg-blue-50' 
                       : isListening 
                         ? 'border-red-300 bg-red-50' 
+                        : messagePhase === 'streaming'
+                          ? 'border-blue-400 bg-blue-50 animate-pulse'
+                        : messagePhase === 'submit'
+                          ? 'border-green-400 bg-green-50'
                         : loading
                           ? 'border-gray-300 bg-gray-50'
                           : 'border-gray-200 focus:border-blue-300 hover:border-gray-300'
