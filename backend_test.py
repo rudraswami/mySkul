@@ -19185,69 +19185,6 @@ class DhruvAITester:
             print("   🔧 LLM integration may need further fixes")
             return False
 
-def main():
-    """Main function to run AI Tutor contextual fix tests"""
-    print("🤖 DHRUV AI BACKEND - AI TUTOR CONTEXTUAL FIX TESTING")
-    print("=" * 80)
-    print("CRITICAL REVIEW REQUEST: Test AI Tutor response generation fix")
-    print("Issue: Previously all questions were getting identical generic responses")
-    print("Fix: Re-enabled actual LLM calls instead of using only static fallback responses")
-    print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
-    print("Test Credentials: test@dhruvai.com / password123")
-    print("=" * 80)
-    
-    tester = DhruvAITester()
-    
-    # First authenticate
-    print("\n🔐 AUTHENTICATION SETUP")
-    login_success = tester.test_auth_router_login()
-    
-    if not login_success:
-        print("❌ Authentication failed - cannot proceed with AI Tutor testing")
-        return
-    
-    # Run AI Tutor contextual fix test
-    contextual_success = tester.test_ai_tutor_dual_response_contextual_fix()
-    
-    # Final Summary
-    print("\n" + "=" * 80)
-    print("🤖 AI TUTOR CONTEXTUAL FIX TESTING - FINAL SUMMARY")
-    print("=" * 80)
-    
-    print(f"\n📊 TEST EXECUTION SUMMARY:")
-    print(f"   Total Tests Run: {tester.tests_run}")
-    print(f"   Tests Passed: {tester.tests_passed}")
-    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
-    
-    print(f"\n🤖 AI TUTOR CONTEXTUAL FIX STATUS:")
-    if contextual_success:
-        print("   ✅ AI TUTOR CONTEXTUAL FIX: SUCCESS")
-        print("   The backend is generating contextual, subject-specific responses")
-        print("   LLM integration is working correctly instead of generic fallbacks")
-    else:
-        print("   ❌ AI TUTOR CONTEXTUAL FIX: NEEDS WORK")
-        print("   Responses are still too generic or not contextual enough")
-        print("   LLM integration may need further fixes")
-    
-    print(f"\n🎯 KEY FINDINGS:")
-    print("   - Mathematics, Physics, Biology responses tested for contextual content")
-    print("   - Response uniqueness and subject-specific keywords validated")
-    print("   - Generic fallback responses detection implemented")
-    print("   - Dual AI response structure (Professor + Mentor) verified")
-    print("   - Authentication and API endpoint functionality confirmed")
-    
-    print(f"\n📋 NEXT STEPS:")
-    if contextual_success:
-        print("   - AI Tutor contextual responses are production-ready")
-        print("   - Continue with frontend integration testing")
-        print("   - Monitor response quality in production")
-    else:
-        print("   - Fix LLM integration to ensure contextual responses")
-        print("   - Re-test AI Tutor dual-response endpoint")
-        print("   - Ensure actual LLM calls instead of static fallbacks")
-    
-        return contextual_success
-
     def test_ai_tutor_timeout_optimization(self):
         """Test AI Tutor Timeout and Performance Optimization"""
         print("\n🚀 AI TUTOR TIMEOUT OPTIMIZATION TESTING")
