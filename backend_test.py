@@ -16445,7 +16445,7 @@ def main():
             print("   ❌ Mock-Tests dashboard failed")
             return False
     
-    def test_mock_tests_performance_trends(self):
+    def test_new_mock_tests_performance_trends(self):
         """Test Mock-Tests Router - GET /api/mock-tests/performance-trends"""
         print("   Testing GET /api/mock-tests/performance-trends endpoint")
         
