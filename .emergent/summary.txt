@@ -1,0 +1,102 @@
+<analysis>
+The AI engineer's work iterated significantly, evolving the Dhruv AI Tutor from version 2.0 to 2.4, driven by continuous user feedback on output readability and functionality. Initial efforts focused on LLM integration and foundational UI. Major challenges involved refactoring , resolving React hook errors, and addressing flat, text-heavy and special character output. This led to developing a backend hybrid response parser, motivational generator, and a comprehensive frontend micro-lesson component system using KaTeX and Framer Motion. Recurring issues included backend routing (legacy  vs. ), text cleaning, and enhancing visual rhythm. The engineer also implemented a full AI Tutor subscription layer with metering and an upgrade modal. Most recently, the focus shifted to a comprehensive formatting system, updating LLM prompts and integrating a backend  to ensure readable, structured, and emotionally engaging content, directly addressing persistent user complaints about broken output.
+</analysis>
+
+<product_requirements>
+The Dhruv AI platform aims to be an engaging EdTech application with an AI Tutor, Auto-Note Mentor, and Mock Tests. The core evolving requirement is the AI Tutor 2.0-2.4 enhancement, striving for a visually appealing, adaptive, and confidence-boosting learning companion. Initially, this involved visual-first learning (SVG/Lottie), adaptive personas, progressive disclosure (collapsible sections), sentiment adaptation, and smart quick actions. User feedback subsequently drove requirements for structured micro-lessons (ConceptCard, FormulaCard, MentorCard), improved typography, emotional engagement, and robust special character handling. Specific issues addressed included flat, text-heavy responses, raw LaTeX rendering, emoji pollution, and mentor overload requiring collapsible sections and trimming. Later, requirements expanded to a comprehensive AI Tutor subscription layer with usage-based quotas, tiered access (Starter, Scholar, Achiever, Legend), metering, and an upgrade modal. Finally, a selective refactor was requested to remove legacy code, ensuring full unification under  and a final set of comprehensive formatting rules to ensure all AI-generated content is readable, structured, and emotionally supportive.
+</product_requirements>
+
+<key_technical_concepts>
+- **Full-stack**: React, FastAPI, MongoDB.
+- **AI/LLM**: OpenAI GPT-5, Gemini Nano Banana (Emergent LLM), .
+- **Backend**: FastAPI modularization, Pydantic, httpOnly cookies, CORS, environment variables, subscription management, usage metering.
+- **Frontend Data**: React Query (TanStack Query), Axios client.
+- **Frontend UI/Animations**: Framer Motion, KaTeX (math rendering), SVG/Lottie (visuals), Tailwind CSS.
+- **Deployment**: Supervisor, Kubernetes ingress ( prefix).
+</key_technical_concepts>
+
+<code_architecture>
+The application uses a React frontend, FastAPI backend, and MongoDB. The backend is modular with routers, services, and models.
+
+
+-   ****:
+    -   **Importance**: The active entry point for the backend due to Supervisor configuration. Contains legacy routes and a duplicate chat message endpoint.
+    -   **Changes**: Identified as the running entry point, not . Contains a duplicate  route that uses old logic, which was documented but not immediately refactored.
+-   ****:
+    -   **Importance**: Orchestrates AI response generation, LLM calls, and various utilities.
+    -   **Changes**: Updated Professor/Mentor system prompts with comprehensive formatting rules (LaTeX, markdown, emoji, length constraints). Integrated subscription checks and usage recording (, ). Integrated  to validate responses before returning.
+-   ****:
+    -   **Importance**: Structures LLM responses and performs text cleaning.
+    -   **Changes**: Modified to preserve LaTeX delimiters. Enhanced text cleaning to aggressively remove emojis, special characters, and double backslashes, aligning with new formatting rules.
+-   ** (New File)**:
+    -   **Importance**: A new utility to validate the adherence of AI-generated content to predefined formatting rules.
+    -   **Changes**: Created to perform structural and content validation on AI responses.
+-   ****:
+    -   **Importance**: Manages user subscription plans and feature access.
+    -   **Changes**: Extended with AI Tutor-specific metering logic (, ) and methods to retrieve AI session limits.
+-   ****:
+    -   **Importance**: FastAPI router for subscription-related endpoints.
+    -   **Changes**: Added  endpoint for AI Tutor features. Modified to transform  from an object to an array to resolve a frontend runtime error.
+-   ** (New File)**:
+    -   **Importance**: Stores the new AI Tutor feature-level subscription tiers and their associated limits.
+    -   **Changes**: Created to define Starter, Scholar, Achiever, and Legend plans with AI session and mentor tip limits.
+-   ****:
+    -   **Importance**: Intended main entry point for the FastAPI application, but  is currently active.
+    -   **Changes**: Injected  instance into .
+-   ****:
+    -   **Importance**: The main AI Tutor interface.
+    -   **Changes**: Significantly refactored to remove feature toggles and integrate AI Tutor 2.0 as default. Integrated  with  state and  logic to enforce AI session limits.
+-   ****:
+    -   **Importance**: Displays mock test results, including AI Professor/Mentor feedback.
+    -   **Changes**: Modified to import and use  and client-side sanitization for Professor/Mentor text. Adjusted CSS to make the chart section scrollable.
+-   ** (New File)**:
+    -   **Importance**: Centralized component for rendering LaTeX math expressions using KaTeX.
+    -   **Changes**: Created to detect and render  and  patterns, improving math display.
+-   ****:
+    -   **Importance**: Orchestrates the display of various micro-lesson components.
+    -   **Changes**: Updated to integrate  for all text content, ensuring proper math rendering.
+-   ****:
+    -   **Importance**: Displays collapsible mentor responses.
+    -   **Changes**: Updated to use  for its content.
+-   ** (New File)**:
+    -   **Importance**: A modal component to prompt users to upgrade their subscription when AI session limits are reached.
+    -   **Changes**: Created to display tiered plans and upgrade options.
+-   ** (New File)**:
+    -   **Importance**: A React Query hook for AI Tutor data fetches, caching, and analytics.
+    -   **Changes**: Created to handle AI Tutor-specific data interactions.
+-   ** (New Directory and files)**:
+    -   **Importance**: Contains comprehensive documentation for the AI Tutor system.
+    -   **Changes**: Created with , , , , , and  detailing the system architecture, design, and formatting rules.
+-   **,  (New Files)**:
+    -   **Importance**: Documentation of the selective refactor plan and findings.
+    -   **Changes**: Created to detail the removal of legacy frontend components (e.g., , ) and to highlight the architectural issue of  being the active entry point over .
+</code_architecture>
+
+<pending_tasks>
+- Complete React Query migration for remaining frontend components.
+- Update  integration with React Query.
+- Re-enable CSRF middleware in the backend and implement frontend token exchange.
+- Test cookie-based authentication with CSRF and visually verify UI.
+- Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
+- Obtain and update Razorpay production API keys.
+- Visually verify AI Tutor and Mock Test Results output to confirm all formatting, sanitization, and KaTeX rendering issues are fully resolved.
+- Address the  vs.  entry point architectural issue flagged during refactoring (current plan is to accept the cleanup and plan migration separately).
+</pending_tasks>
+
+<current_work>
+Immediately prior to this summary, the AI engineer was implementing a comprehensive formatting system for all AI-generated educational content, directly addressing the user's persistent complaints about unreadable, poorly formatted, and non-rendering output, including issues with special characters and LaTeX.
+
+The work involved:
+1.  **Updating LLM Prompts**: Modified  to update both Professor and Mentor system prompts. These new prompts include detailed  guidelines (e.g., Concept Overview, Key Formulas, Step-by-Step, Real-World Example, Pro Tip) and explicit  (e.g., using  and  for LaTeX, , , short sentences/paragraphs, active voice).
+2.  **Enhancing Response Parser**: Updated  to align its parsing logic with the new prompt structures and to ensure robust text cleaning, preserving correct LaTeX delimiters while stripping unwanted markdown or special characters.
+3.  **Creating a Format Validator**: Introduced a new utility file, , responsible for programmatically checking if the AI-generated responses adhere to the new comprehensive formatting rules.
+4.  **Integrating Format Validator**: Modified  to integrate the newly created  to validate the AI's output before it is returned to the frontend.
+5.  **Restarting Backend**: The backend services were restarted to apply these changes.
+6.  **Documenting the System**: Created a new documentation file, , to detail the comprehensive formatting rules and validation pipeline.
+
+This work aims to ensure that the AI Tutor's output is consistently readable, structured, emotionally engaging, and formatted correctly, eliminating previously reported issues like emoji pollution, raw LaTeX display, and inconsistent markdown.
+</current_work>
+
+<optional_next_step>
+Visually test the AI Tutor and Mock Test Results to verify all formatting, sanitization, and KaTeX rendering issues are fully resolved as per the new comprehensive rules.
+</optional_next_step>

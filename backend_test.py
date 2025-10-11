@@ -7,7 +7,7 @@ import io
 import uuid
 
 class DhruvAITester:
-    def __init__(self, base_url="https://tutor-refinement.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://learning-companion-3.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
@@ -2792,7 +2792,7 @@ class DhruvAITester:
         print("\n🚨 URGENT: AUTHENTICATION APIS COMPREHENSIVE TESTING")
         print("   User reports: Login API returning 429, Registration APIs failing")
         print("   Testing: /api/auth/login and /api/auth/register endpoints")
-        print("   Backend URL: https://tutor-refinement.preview.emergentagent.com")
+        print("   Backend URL: https://learning-companion-3.preview.emergentagent.com")
         
         auth_test_results = {
             'login_valid_credentials': False,
@@ -18140,7 +18140,7 @@ def main():
     print("=" * 80)
     print("STAGE 3 BACKEND TESTING: Comprehensive CSRF Security Validation")
     print("Focus: CSRF token exchange, protection enforcement, error handling")
-    print("Backend URL: https://tutor-refinement.preview.emergentagent.com/api")
+    print("Backend URL: https://learning-companion-3.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     
