@@ -219,8 +219,8 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         cleaned = cleaned.replace("\\'", "'")
         cleaned = cleaned.replace('\\/', '/')
         
-        # Remove double backslashes (but not before LaTeX commands)
-        cleaned = re.sub(r'\\\\(?![a-zA-Z\[\]\(\){])', '', cleaned)
+        # Remove double backslashes completely (LaTeX uses single backslash)
+        cleaned = cleaned.replace('\\\\', '')
         
         # Remove non-breaking spaces and special unicode
         cleaned = cleaned.replace('\u00a0', ' ')
