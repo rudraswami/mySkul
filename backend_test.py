@@ -543,17 +543,15 @@ class DhruvAITester:
         # At least Bearer token should work for basic functionality
         return bearer_auth_success
 
-    def test_stage2_comprehensive_modular_integration(self):
-        """Test Stage 2: COMPREHENSIVE MODULAR INTEGRATION TESTING - REVIEW REQUEST FOCUS"""
-        print("\n🎯 STAGE 2: COMPREHENSIVE MODULAR INTEGRATION TESTING")
+    def test_stage2_new_routers_integration(self):
+        """Test Stage 2: NEW ROUTERS INTEGRATION TESTING - AUTO-NOTES & MOCK-TESTS"""
+        print("\n🎯 STAGE 2: NEW ROUTERS INTEGRATION TESTING")
         print("=" * 80)
-        print("   TESTING SCOPE - 5 MODULAR ROUTERS AS REQUESTED IN REVIEW:")
-        print("   1. AUTH ROUTER (/api/auth/...): register, login, logout, csrf-token")
-        print("   2. USER ROUTER (/api/user/...): profile GET/PUT operations")
-        print("   3. SUBSCRIPTION ROUTER (/api/subscription/...): plans, info, check-access, track-usage")
-        print("   4. AI ROUTER (/api/ai/...): available-contexts, chat sessions, message, guardrails")
-        print("   5. ANALYTICS ROUTER (/api/analytics/...): dashboard, daily-goals, subject-progress")
-        print("   CRITICAL AREAS: Authentication flow, Hybrid auth, Dependency injection, Error handling")
+        print("   TESTING SCOPE - 2 NEW MODULAR ROUTERS AS REQUESTED IN REVIEW:")
+        print("   6. AUTO-NOTES ROUTER (/api/auto-notes/...): start-session, sessions, analytics, class-series")
+        print("   7. MOCK-TESTS ROUTER (/api/mock-tests/...): library, subjects, dashboard, performance-trends")
+        print("   FOCUS: Complete modularization with all 7 routers (5 existing + 2 new)")
+        print("   CRITICAL AREAS: Service integration, Authentication, Error handling, Data structures")
         print("   CREDENTIALS: test@dhruvai.com / password123")
         
         test_results = {
