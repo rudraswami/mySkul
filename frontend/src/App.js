@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './App.css';
 
 // Components
@@ -24,18 +26,39 @@ import UpsellModal from './components/UpsellModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Create React Query client with optimized config for low-connectivity students
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2, // Retry failed requests twice
+      staleTime: 3 * 60 * 1000, // 3 minutes - data considered fresh
+      cacheTime: 10 * 60 * 1000, // 10 minutes - keep in cache
+      refetchOnWindowFocus: true, // Refetch when user returns to tab
+      refetchOnReconnect: true, // Refetch when network reconnects
+      refetchOnMount: false, // Don't refetch on component mount if data is fresh
+    },
+    mutations: {
+      retry: 1, // Retry mutations once on failure
+    },
+  },
+});
+
 function App() {
   return (
-    <AuthProvider>
-      <SubscriptionProvider>
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-            <AppContent />
-            <Toaster />
-          </div>
-        </Router>
-      </SubscriptionProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <Router>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+              <AppContent />
+              <Toaster />
+            </div>
+          </Router>
+        </SubscriptionProvider>
+      </AuthProvider>
+      {/* React Query DevTools - only in development */}
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 }
 
