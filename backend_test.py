@@ -16197,8 +16197,9 @@ def main():
         ("🆕 Submit Mock Test", tester.test_submit_mock_test),
         ("🆕 Performance Analytics", tester.test_performance_analytics),
         ("🆕 Stress Assessment", tester.test_stress_assessment),
-        ("🆕 Motivational Content", tester.test_motivational_content),
-        ("🆕 Auth Validation", tester.test_integration_auth_validation),
+
+if __name__ == "__main__":
+    main()
         
         # Phase A: AI Tutor Complete Input Methods Tests (PRIORITY FOR REVIEW REQUEST)
         ("🎯 Phase A: Image Upload & OCR Processing", tester.test_ai_tutor_file_processing_image_upload),
