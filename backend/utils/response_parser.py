@@ -249,8 +249,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
             "\u2600-\u26FF"          # Miscellaneous Symbols
             "\u2700-\u27BF"          # Dingbats
             "\u3000-\u303F"          # CJK Symbols and Punctuation
-            "\u1F100-\u1F1FF"        # Enclosed Alphanumeric Supplement
-            "\u24C2-\u1F251"         # Enclosed characters
+            "\u24C2-\u24FF"          # Enclosed Alphanumerics
             "\u200d"                 # Zero width joiner
             "\ufe0f"                 # Variation selector
             "]+", 
