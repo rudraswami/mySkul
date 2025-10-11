@@ -7867,12 +7867,40 @@ class DhruvAITester:
             'raw_text_field_returned': False
         }
         
+        # First, create a chat session for testing
+        print("\n📋 Setup: Creating Chat Session for Testing")
+        session_data = {
+            "title": "Text Sanitization Test Session",
+            "subject": "Mathematics",
+            "topic": "General Testing",
+            "ai_mode": "dual"
+        }
+        
+        success, session_response, _ = self.run_test(
+            "Create Chat Session for Testing",
+            "POST",
+            "chat/sessions",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if not success or 'session_id' not in session_response:
+            print("   ❌ Failed to create chat session - cannot proceed with dual-response tests")
+            return False
+        
+        test_session_id = session_response['session_id']
+        print(f"   ✅ Test session created: {test_session_id}")
+        
+        time.sleep(1)
+        
         # Test 1: Text Sanitization with Special Characters
         print("\n📋 Test 1: Text Sanitization - Special Characters")
         print("   Testing removal of special characters, markdown symbols, and escaped sequences")
         
         special_chars_message = {
             "message": "What is **bold** and *italic* text with \\\"escaped quotes\\\" and \\n newlines?",
+            "session_id": test_session_id,
             "subject": "Mathematics"
         }
         
