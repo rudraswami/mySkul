@@ -93,7 +93,8 @@ def create_app() -> FastAPI:
     emergent_llm_key = os.environ['EMERGENT_LLM_KEY']
     auth_service = AuthService(db, jwt_secret)
     subscription_service = SubscriptionService(db)
-    ai_service = AIService(db, emergent_llm_key)
+    # Inject subscription service into AI service for usage tracking
+    ai_service = AIService(db, emergent_llm_key, subscription_service=subscription_service)
     
     # Set dependencies
     dependencies.db = db
