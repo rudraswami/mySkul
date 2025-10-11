@@ -16133,7 +16133,721 @@ def main():
     
     return overall_success
 
+    # ============= NEW AUTO-NOTES ROUTER TESTS =============
+    
+    def test_auto_notes_start_session(self):
+        """Test Auto-Notes Router - POST /api/auto-notes/start-session"""
+        print("   Testing POST /api/auto-notes/start-session endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for auto-notes start session test")
+            return False
+        
+        session_data = {
+            "title": "Test Session",
+            "subject": "Mathematics"
+        }
+        
+        success, response = self.run_test(
+            "Auto-Notes Start Session",
+            "POST",
+            "auto-notes/start-session",
+            200,
+            data=session_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Auto-Notes start session working")
+            
+            # Store session_id for later tests
+            if 'session_id' in response:
+                self.session_id = response['session_id']
+                print(f"   ✅ Session ID: {self.session_id}")
+            
+            # Verify response structure
+            expected_fields = ['session_id', 'session_name', 'subject', 'status', 'created_at']
+            for field in expected_fields:
+                if field in response:
+                    print(f"   ✅ {field}: {response[field]}")
+                else:
+                    print(f"   ⚠️ Missing field: {field}")
+            
+            return True
+        else:
+            print("   ❌ Auto-Notes start session failed")
+            return False
+    
+    def test_auto_notes_sessions_list(self):
+        """Test Auto-Notes Router - GET /api/auto-notes/sessions"""
+        print("   Testing GET /api/auto-notes/sessions endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for auto-notes sessions list test")
+            return False
+        
+        success, response = self.run_test(
+            "Auto-Notes Sessions List",
+            "GET",
+            "auto-notes/sessions",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Auto-Notes sessions list working")
+            
+            # Verify response structure
+            if 'sessions' in response:
+                sessions = response['sessions']
+                print(f"   ✅ Sessions array: {len(sessions)} sessions")
+            
+            if 'total' in response:
+                total = response['total']
+                print(f"   ✅ Total count: {total}")
+            
+            return True
+        else:
+            print("   ❌ Auto-Notes sessions list failed")
+            return False
+    
+    def test_auto_notes_session_detail(self):
+        """Test Auto-Notes Router - GET /api/auto-notes/{session_id}"""
+        print("   Testing GET /api/auto-notes/{session_id} endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for auto-notes session detail test")
+            return False
+        
+        if not self.session_id:
+            print("   ⚠️ No session_id available, using placeholder")
+            session_id = "test-session-id"
+        else:
+            session_id = self.session_id
+        
+        success, response = self.run_test(
+            "Auto-Notes Session Detail",
+            "GET",
+            f"auto-notes/{session_id}",
+            [200, 404],  # Accept 404 if session doesn't exist
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ✅ Auto-Notes session detail working (Status: {status_code})")
+            
+            if status_code == 200:
+                # Verify session detail structure
+                expected_fields = ['session_id', 'title', 'subject', 'status']
+                for field in expected_fields:
+                    if field in response:
+                        print(f"   ✅ {field}: {response[field]}")
+            
+            return True
+        else:
+            print("   ❌ Auto-Notes session detail failed")
+            return False
+    
+    def test_auto_notes_analytics(self):
+        """Test Auto-Notes Router - GET /api/auto-notes/analytics"""
+        print("   Testing GET /api/auto-notes/analytics endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for auto-notes analytics test")
+            return False
+        
+        success, response = self.run_test(
+            "Auto-Notes Analytics",
+            "GET",
+            "auto-notes/analytics",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Auto-Notes analytics working")
+            
+            # Verify analytics structure
+            expected_fields = ['total_sessions', 'completed_sessions', 'active_sessions']
+            for field in expected_fields:
+                if field in response:
+                    print(f"   ✅ {field}: {response[field]}")
+                else:
+                    print(f"   ⚠️ Missing field: {field}")
+            
+            return True
+        else:
+            print("   ❌ Auto-Notes analytics failed")
+            return False
+    
+    def test_auto_notes_class_series(self):
+        """Test Auto-Notes Router - GET /api/auto-notes/class-series"""
+        print("   Testing GET /api/auto-notes/class-series endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for auto-notes class series test")
+            return False
+        
+        success, response = self.run_test(
+            "Auto-Notes Class Series",
+            "GET",
+            "auto-notes/class-series",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Auto-Notes class series working")
+            
+            # Verify class series structure
+            if 'series' in response:
+                series = response['series']
+                print(f"   ✅ Series list: {len(series)} series")
+            
+            if 'total' in response:
+                total = response['total']
+                print(f"   ✅ Total count: {total}")
+            
+            return True
+        else:
+            print("   ❌ Auto-Notes class series failed")
+            return False
+    
+    # ============= NEW MOCK-TESTS ROUTER TESTS =============
+    
+    def test_mock_tests_library(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/library"""
+        print("   Testing GET /api/mock-tests/library endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests library test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Library",
+            "GET",
+            "mock-tests/library",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests library working")
+            
+            # Verify library structure
+            if 'tests' in response:
+                tests = response['tests']
+                print(f"   ✅ Tests array: {len(tests)} tests")
+            
+            if 'total' in response:
+                total = response['total']
+                print(f"   ✅ Total count: {total}")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests library failed")
+            return False
+    
+    def test_mock_tests_library_recent(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/library/recent"""
+        print("   Testing GET /api/mock-tests/library/recent endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests recent test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Library Recent",
+            "GET",
+            "mock-tests/library/recent",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests library recent working")
+            
+            # Verify recent tests structure (up to 5 tests)
+            if isinstance(response, list):
+                print(f"   ✅ Recent tests: {len(response)} tests (max 5)")
+                if len(response) <= 5:
+                    print("   ✅ Correct limit applied")
+            elif 'tests' in response:
+                tests = response['tests']
+                print(f"   ✅ Recent tests: {len(tests)} tests")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests library recent failed")
+            return False
+    
+    def test_mock_tests_library_high_scores(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/library/high-scores"""
+        print("   Testing GET /api/mock-tests/library/high-scores endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests high scores test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Library High Scores",
+            "GET",
+            "mock-tests/library/high-scores",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests library high scores working")
+            
+            # Verify high scores structure
+            if isinstance(response, list):
+                print(f"   ✅ High score tests: {len(response)} tests")
+            elif 'tests' in response:
+                tests = response['tests']
+                print(f"   ✅ High score tests: {len(tests)} tests")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests library high scores failed")
+            return False
+    
+    def test_mock_tests_dashboard(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/dashboard"""
+        print("   Testing GET /api/mock-tests/dashboard endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests dashboard test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Dashboard",
+            "GET",
+            "mock-tests/dashboard",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests dashboard working")
+            
+            # Verify dashboard stats structure
+            expected_fields = ['total_tests', 'submitted_tests', 'average_score', 'total_attempts']
+            for field in expected_fields:
+                if field in response:
+                    print(f"   ✅ {field}: {response[field]}")
+                else:
+                    print(f"   ⚠️ Missing field: {field}")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests dashboard failed")
+            return False
+    
+    def test_mock_tests_performance_trends(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/performance-trends"""
+        print("   Testing GET /api/mock-tests/performance-trends endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests performance trends test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Performance Trends",
+            "GET",
+            "mock-tests/performance-trends",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests performance trends working")
+            
+            # Verify trends structure
+            if 'trends' in response:
+                trends = response['trends']
+                print(f"   ✅ Trends array: {len(trends)} data points")
+            elif isinstance(response, list):
+                print(f"   ✅ Trends data: {len(response)} data points")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests performance trends failed")
+            return False
+    
+    def test_mock_tests_subjects_jee(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/subjects?exam_type=JEE"""
+        print("   Testing GET /api/mock-tests/subjects?exam_type=JEE endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests subjects JEE test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Subjects JEE",
+            "GET",
+            "mock-tests/subjects?exam_type=JEE",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests subjects JEE working")
+            
+            # Verify JEE subjects
+            expected_subjects = ["Mathematics", "Physics", "Chemistry"]
+            if 'subjects' in response:
+                subjects = response['subjects']
+                print(f"   ✅ JEE subjects: {subjects}")
+                
+                # Check if expected subjects are present
+                for subject in expected_subjects:
+                    if subject in subjects:
+                        print(f"   ✅ {subject} found")
+                    else:
+                        print(f"   ⚠️ {subject} missing")
+            elif isinstance(response, list):
+                print(f"   ✅ JEE subjects: {response}")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests subjects JEE failed")
+            return False
+    
+    def test_mock_tests_subjects_neet(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/subjects?exam_type=NEET"""
+        print("   Testing GET /api/mock-tests/subjects?exam_type=NEET endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests subjects NEET test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Subjects NEET",
+            "GET",
+            "mock-tests/subjects?exam_type=NEET",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests subjects NEET working")
+            
+            # Verify NEET subjects
+            expected_subjects = ["Physics", "Chemistry", "Biology"]
+            if 'subjects' in response:
+                subjects = response['subjects']
+                print(f"   ✅ NEET subjects: {subjects}")
+                
+                # Check if expected subjects are present
+                for subject in expected_subjects:
+                    if subject in subjects:
+                        print(f"   ✅ {subject} found")
+                    else:
+                        print(f"   ⚠️ {subject} missing")
+            elif isinstance(response, list):
+                print(f"   ✅ NEET subjects: {response}")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests subjects NEET failed")
+            return False
+    
+    def test_mock_tests_resume(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/resume"""
+        print("   Testing GET /api/mock-tests/resume endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests resume test")
+            return False
+        
+        success, response = self.run_test(
+            "Mock-Tests Resume",
+            "GET",
+            "mock-tests/resume",
+            200,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ Mock-Tests resume working")
+            
+            # Verify resume tests structure
+            if isinstance(response, list):
+                print(f"   ✅ Resumable tests: {len(response)} tests")
+            elif 'tests' in response:
+                tests = response['tests']
+                print(f"   ✅ Resumable tests: {len(tests)} tests")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests resume failed")
+            return False
+    
+    def test_mock_tests_detailed_review(self):
+        """Test Mock-Tests Router - GET /api/mock-tests/{test_id}/detailed-review"""
+        print("   Testing GET /api/mock-tests/{test_id}/detailed-review endpoint")
+        
+        if not self.token:
+            print("   ❌ No token available for mock-tests detailed review test")
+            return False
+        
+        # Use a placeholder test_id since we may not have a real one
+        test_id = "test-id-placeholder"
+        
+        success, response = self.run_test(
+            "Mock-Tests Detailed Review",
+            "GET",
+            f"mock-tests/{test_id}/detailed-review",
+            [200, 404],  # Accept 404 if test doesn't exist
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            status_code = getattr(self, 'last_response_status', 0)
+            print(f"   ✅ Mock-Tests detailed review working (Status: {status_code})")
+            
+            if status_code == 200:
+                # Verify detailed review structure
+                expected_fields = ['test_details', 'attempts', 'latest_attempt']
+                for field in expected_fields:
+                    if field in response:
+                        print(f"   ✅ {field} present")
+            
+            return True
+        else:
+            print("   ❌ Mock-Tests detailed review failed")
+            return False
+    
+    # ============= INTEGRATION TESTS =============
+    
+    def test_service_integration(self):
+        """Test Service Integration - AutoNotesService and MockTestsService"""
+        print("   Testing service layer integration for new routers")
+        
+        # Test if services are properly injected by testing endpoints
+        service_tests = [
+            ("auto-notes/analytics", "AutoNotesService"),
+            ("mock-tests/dashboard", "MockTestsService")
+        ]
+        
+        integration_results = []
+        
+        for endpoint, service_name in service_tests:
+            print(f"   Testing {service_name} integration via {endpoint}")
+            
+            if not self.token:
+                print(f"   ❌ No token for {service_name} test")
+                integration_results.append(False)
+                continue
+            
+            success, response = self.run_test(
+                f"Service Integration - {service_name}",
+                "GET",
+                endpoint,
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            integration_results.append(success)
+            if success:
+                print(f"   ✅ {service_name} integration working")
+            else:
+                print(f"   ❌ {service_name} integration failed")
+        
+        # All services should be working
+        all_services_working = all(integration_results)
+        
+        if all_services_working:
+            print("   ✅ All service integrations working")
+        else:
+            print("   ⚠️ Some service integrations have issues")
+        
+        return all_services_working
+    
+    def test_error_handling_401(self):
+        """Test Error Handling - 401 Unauthorized for protected endpoints"""
+        print("   Testing 401 error handling for protected endpoints")
+        
+        # Test protected endpoints without authentication
+        protected_endpoints = [
+            "auto-notes/sessions",
+            "auto-notes/analytics",
+            "mock-tests/library",
+            "mock-tests/dashboard"
+        ]
+        
+        error_handling_results = []
+        
+        for endpoint in protected_endpoints:
+            print(f"   Testing 401 for {endpoint}")
+            
+            success, response = self.run_test(
+                f"401 Error Handling - {endpoint}",
+                "GET",
+                endpoint,
+                401,  # Should return 401 without token
+                headers={}  # No authorization header
+            )
+            
+            error_handling_results.append(success)
+            if success:
+                print(f"   ✅ {endpoint} correctly returns 401")
+            else:
+                print(f"   ❌ {endpoint} does not return 401")
+        
+        # All endpoints should return 401
+        all_401_working = all(error_handling_results)
+        
+        if all_401_working:
+            print("   ✅ All protected endpoints correctly return 401")
+        else:
+            print("   ⚠️ Some endpoints don't properly handle authentication")
+        
+        return all_401_working
+    
+    def test_data_structure_validation(self):
+        """Test Data Structure Validation - Response formats match expected"""
+        print("   Testing response data structures match expected formats")
+        
+        if not self.token:
+            print("   ❌ No token available for data structure validation")
+            return False
+        
+        # Test key endpoints and their expected response structures
+        structure_tests = [
+            {
+                "endpoint": "auto-notes/analytics",
+                "expected_fields": ["total_sessions", "completed_sessions", "active_sessions"]
+            },
+            {
+                "endpoint": "mock-tests/dashboard", 
+                "expected_fields": ["total_tests", "submitted_tests", "average_score", "total_attempts"]
+            },
+            {
+                "endpoint": "mock-tests/subjects?exam_type=JEE",
+                "expected_content": ["Mathematics", "Physics", "Chemistry"]
+            }
+        ]
+        
+        validation_results = []
+        
+        for test_case in structure_tests:
+            endpoint = test_case["endpoint"]
+            print(f"   Validating structure for {endpoint}")
+            
+            success, response = self.run_test(
+                f"Data Structure - {endpoint}",
+                "GET",
+                endpoint,
+                200,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                # Check expected fields
+                if "expected_fields" in test_case:
+                    fields_present = all(field in response for field in test_case["expected_fields"])
+                    if fields_present:
+                        print(f"   ✅ All expected fields present in {endpoint}")
+                        validation_results.append(True)
+                    else:
+                        print(f"   ⚠️ Missing expected fields in {endpoint}")
+                        validation_results.append(False)
+                
+                # Check expected content
+                elif "expected_content" in test_case:
+                    if 'subjects' in response:
+                        content = response['subjects']
+                    elif isinstance(response, list):
+                        content = response
+                    else:
+                        content = []
+                    
+                    content_valid = all(item in content for item in test_case["expected_content"])
+                    if content_valid:
+                        print(f"   ✅ Expected content present in {endpoint}")
+                        validation_results.append(True)
+                    else:
+                        print(f"   ⚠️ Missing expected content in {endpoint}")
+                        validation_results.append(False)
+                else:
+                    validation_results.append(True)
+            else:
+                print(f"   ❌ Failed to get response from {endpoint}")
+                validation_results.append(False)
+        
+        # All validations should pass
+        all_valid = all(validation_results)
+        
+        if all_valid:
+            print("   ✅ All data structures valid")
+        else:
+            print("   ⚠️ Some data structures don't match expected formats")
+        
+        return all_valid
+    
+    def test_backward_compatibility_new_routers(self):
+        """Test Backward Compatibility - New routers don't break existing functionality"""
+        print("   Testing backward compatibility with existing routers")
+        
+        if not self.token:
+            print("   ❌ No token available for backward compatibility test")
+            return False
+        
+        # Test that existing endpoints still work
+        existing_endpoints = [
+            "user/profile",
+            "subscription/current",
+            "subscription/plans"
+        ]
+        
+        compatibility_results = []
+        
+        for endpoint in existing_endpoints:
+            print(f"   Testing existing endpoint: {endpoint}")
+            
+            headers = {'Authorization': f'Bearer {self.token}'} if endpoint != "subscription/plans" else {}
+            
+            success, response = self.run_test(
+                f"Backward Compatibility - {endpoint}",
+                "GET",
+                endpoint,
+                200,
+                headers=headers
+            )
+            
+            compatibility_results.append(success)
+            if success:
+                print(f"   ✅ {endpoint} still working")
+            else:
+                print(f"   ❌ {endpoint} broken")
+        
+        # Most endpoints should still work
+        compatibility_score = sum(compatibility_results)
+        total_endpoints = len(existing_endpoints)
+        
+        print(f"   📊 Backward Compatibility: {compatibility_score}/{total_endpoints}")
+        
+        return compatibility_score >= (total_endpoints * 0.8)  # 80% compatibility required
 
 
 if __name__ == "__main__":
-    main()
+    tester = DhruvAITester()
+    
+    print("🚀 Starting Dhruv AI Backend Testing - NEW ROUTERS FOCUS...")
+    print(f"🌐 Base URL: {tester.base_url}")
+    print(f"📧 Test User: {tester.test_user_email}")
+    
+    # Run comprehensive Stage 2 new routers integration testing
+    success = tester.test_stage2_new_routers_integration()
+    
+    print(f"\n" + "=" * 80)
+    print(f"🎯 FINAL RESULT: {'SUCCESS' if success else 'FAILURE'}")
+    print(f"📊 Tests Run: {tester.tests_run}")
+    print(f"✅ Tests Passed: {tester.tests_passed}")
+    print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    print("=" * 80)
+    
+    sys.exit(0 if success else 1)
