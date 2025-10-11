@@ -16413,7 +16413,7 @@ def main():
             print("   ❌ Mock-Tests library high scores failed")
             return False
     
-    def test_mock_tests_dashboard(self):
+    def test_new_mock_tests_dashboard(self):
         """Test Mock-Tests Router - GET /api/mock-tests/dashboard"""
         print("   Testing GET /api/mock-tests/dashboard endpoint")
         
