@@ -179,7 +179,7 @@ const MentorCard = ({ mentorData, weight }) => {
               <div className="border-t-2 border-pink-200 my-4"></div>
 
               {/* Simplified Recap - Collapsible */}
-              {sections.simplified_recap && (
+              {mentorSections.simplified_recap && (
                 <div>
                   <button
                     onClick={() => setShowRecap(!showRecap)}
