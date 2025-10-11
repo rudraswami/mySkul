@@ -138,36 +138,40 @@ export function SubscriptionProvider({ children }) {
 
   const getFeatureBenefits = (featureName) => {
     const baseBenefits = [
-      'Unlimited access to all features',
+      'Enhanced feature access',
       'Priority AI processing',
       'Advanced analytics & insights',
       'Download notes & test reports',
-      '24/7 premium support'
+      'Premium support'
     ];
     
     const featureBenefits = {
-      'ai_tutor_daily': [
-        'Unlimited AI conversations',
+      'ai_sessions_monthly': [
+        'More AI Tutor conversations per month',
         'Advanced problem-solving guidance',
         'Personalized study recommendations',
+        'Dual AI (Professor + Mentor) responses',
+        ...baseBenefits.slice(1)
+      ],
+      'mentor_tips_daily': [
+        'Daily motivational mentor tips',
+        'Personalized encouragement',
+        'Study habit improvement guidance',
+        'Mental wellness support',
         ...baseBenefits.slice(1)
       ],
       'mock_tests_weekly': [
-        'Unlimited mock tests',
+        'More mock tests per week',
         'Detailed performance analytics',
         'Subject-wise improvement tracking',
-        ...baseBenefits.slice(1)
-      ],
-      'auto_note_recordings_daily': [
-        'Unlimited live recordings',
-        'Real-time transcription',
-        'Auto-generated flashcards',
+        'Adaptive difficulty adjustment',
         ...baseBenefits.slice(1)
       ],
       'auto_note_uploads_daily': [
-        'Unlimited file uploads',
+        'More file uploads daily',
         'Support for all file formats',
-        'Bulk processing capabilities',
+        'AI-powered note structuring',
+        'Auto-generated flashcards',
         ...baseBenefits.slice(1)
       ]
     };
