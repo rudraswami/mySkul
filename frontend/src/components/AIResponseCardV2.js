@@ -2,9 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Heart, Sparkles } from 'lucide-react';
 import PersonaHeader from './PersonaHeader';
-import VisualConceptBlock from './VisualConceptBlock';
-import ProgressiveExplanation from './ProgressiveExplanation';
-import QuickActionTray from './QuickActionTray';
+import ResponseComposer from './microlesson/ResponseComposer';
 
 /**
  * AIResponseCardV2 - Enhanced AI Tutor 2.0 response card
