@@ -846,7 +846,8 @@ export default function AITutor() {
       }
 
       // Track feature usage for subscription system and refresh usage count
-      await trackFeatureUsage('ai_tutor_daily');
+      // Updated to use correct feature name from planConfig_ai_tutor.json
+      await trackFeatureUsage('ai_sessions_monthly');
       
       // Force refresh subscription info to update usage counter display
       setTimeout(() => {
