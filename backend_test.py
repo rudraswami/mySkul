@@ -19019,11 +19019,14 @@ def main():
         return success_rate >= 60
 
 if __name__ == "__main__":
-    # Run AI Tutor Phase 1 Text Sanitization Testing
+    # Run AI Tutor Backend Comprehensive Testing as requested in review
     tester = DhruvAITester()
     
-    print("🚀 AI TUTOR PHASE 1 TEXT SANITIZATION & FORMATTING TESTING")
-    print("=" * 80)
+    # Run the comprehensive AI Tutor backend tests
+    success = tester.run_comprehensive_ai_tutor_backend_tests()
+    
+    print(f"\n🏁 AI Tutor Backend Testing Complete: {'SUCCESS' if success else 'FAILED'}")
+    sys.exit(0 if success else 1)
     print("REVIEW REQUEST: Testing AI Tutor backend Phase 1 fixes")
     print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
     print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
