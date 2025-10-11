@@ -6590,7 +6590,8 @@ async def process_voice_input(
 async def get_subscription_info(user: User = Depends(get_current_user)):
     """Get current user subscription information"""
     try:
-        info = await SubscriptionService.get_user_subscription_info(user.user_id)
+        # Use modular subscription service instance (initialized with db connection)
+        info = await modular_subscription_service.get_user_subscription_info(user.user_id)
         return info
     except Exception as e:
         logger.error(f"Get subscription info error: {str(e)}")
