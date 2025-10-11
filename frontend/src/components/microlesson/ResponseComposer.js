@@ -59,14 +59,17 @@ const ResponseComposer = ({ message, onQuickAction }) => {
     return options[Math.floor(Math.random() * options.length)];
   };
   
-  // Clean special characters from text
+  // Clean special characters from text (preserving LaTeX for LatexRenderer)
   const cleanText = (text) => {
     if (!text) return '';
     return text
-      .replace(/\\n/g, '\n')
+      .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold markers
+      .replace(/\*(.+?)\*/g, '$1')      // Remove italic markers
+      .replace(/✅/g, '')                // Remove checkmarks
+      .replace(/❌/g, '')
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
-      .replace(/\\\\/g, '\\')
+      .replace(/\\\\/g, '')
       .replace(/\u00a0/g, ' ')
       .trim();
   };
