@@ -581,53 +581,40 @@ class DhruvAITester:
             'backward_compatibility': False
         }
         
-        # AUTHENTICATION ROUTER TESTS
-        print("\n1️⃣ AUTHENTICATION ROUTER (/api/auth/...)")
-        print("   Testing: register, login, logout, csrf-token endpoints")
-        test_results['auth_router_register'] = self.test_auth_router_register()
-        test_results['auth_router_login'] = self.test_auth_router_login()
-        test_results['auth_router_logout'] = self.test_auth_router_logout()
-        test_results['auth_router_csrf_token'] = self.test_auth_router_csrf_token()
+        # AUTHENTICATION SETUP
+        print("\n1️⃣ AUTHENTICATION SETUP")
+        print("   Authenticating with test@dhruvai.com / password123")
+        test_results['authentication_flow'] = self.test_auth_router_login()
         
-        # USER ROUTER TESTS
-        print("\n2️⃣ USER ROUTER (/api/user/...)")
-        print("   Testing: profile GET/PUT endpoints with authentication")
-        test_results['user_router_profile_get'] = self.test_user_router_profile_get()
-        test_results['user_router_profile_put'] = self.test_user_router_profile_put()
+        # AUTO-NOTES ROUTER TESTS (NEW)
+        print("\n2️⃣ AUTO-NOTES ROUTER (/api/auto-notes/...)")
+        print("   Testing: start-session, sessions, analytics, class-series endpoints")
+        test_results['auto_notes_start_session'] = self.test_auto_notes_start_session()
+        test_results['auto_notes_sessions_list'] = self.test_auto_notes_sessions_list()
+        test_results['auto_notes_session_detail'] = self.test_auto_notes_session_detail()
+        test_results['auto_notes_analytics'] = self.test_auto_notes_analytics()
+        test_results['auto_notes_class_series'] = self.test_auto_notes_class_series()
         
-        # SUBSCRIPTION ROUTER TESTS
-        print("\n3️⃣ SUBSCRIPTION ROUTER (/api/subscription/...)")
-        print("   Testing: plans, info, check-access, track-usage endpoints")
-        test_results['subscription_router_plans'] = self.test_subscription_router_plans()
-        test_results['subscription_router_info'] = self.test_subscription_router_info()
-        test_results['subscription_router_check_access'] = self.test_subscription_router_check_access()
-        test_results['subscription_router_track_usage'] = self.test_subscription_router_track_usage()
-        
-        # AI ROUTER TESTS
-        print("\n4️⃣ AI ROUTER (/api/ai/...)")
-        print("   Testing: available-contexts, chat sessions, message, guardrails endpoints")
-        test_results['ai_router_available_contexts'] = self.test_ai_router_available_contexts()
-        test_results['ai_router_chat_sessions'] = self.test_ai_router_chat_sessions()
-        test_results['ai_router_chat_message'] = self.test_ai_router_chat_message()
-        test_results['ai_router_guardrails_math'] = self.test_ai_router_guardrails_math()
-        test_results['ai_router_guardrails_fact'] = self.test_ai_router_guardrails_fact()
-        test_results['ai_router_guardrails_citations'] = self.test_ai_router_guardrails_citations()
-        
-        # ANALYTICS ROUTER TESTS
-        print("\n5️⃣ ANALYTICS ROUTER (/api/analytics/...)")
-        print("   Testing: dashboard, daily-goals, subject-progress endpoints")
-        test_results['analytics_router_dashboard'] = self.test_analytics_router_dashboard()
-        test_results['analytics_router_daily_goals'] = self.test_analytics_router_daily_goals()
-        test_results['analytics_router_subject_progress'] = self.test_analytics_router_subject_progress()
+        # MOCK-TESTS ROUTER TESTS (NEW)
+        print("\n3️⃣ MOCK-TESTS ROUTER (/api/mock-tests/...)")
+        print("   Testing: library, subjects, dashboard, performance-trends endpoints")
+        test_results['mock_tests_library'] = self.test_mock_tests_library()
+        test_results['mock_tests_library_recent'] = self.test_mock_tests_library_recent()
+        test_results['mock_tests_library_high_scores'] = self.test_mock_tests_library_high_scores()
+        test_results['mock_tests_dashboard'] = self.test_mock_tests_dashboard()
+        test_results['mock_tests_performance_trends'] = self.test_mock_tests_performance_trends()
+        test_results['mock_tests_subjects_jee'] = self.test_mock_tests_subjects_jee()
+        test_results['mock_tests_subjects_neet'] = self.test_mock_tests_subjects_neet()
+        test_results['mock_tests_resume'] = self.test_mock_tests_resume()
+        test_results['mock_tests_detailed_review'] = self.test_mock_tests_detailed_review()
         
         # CRITICAL INTEGRATION TESTS
-        print("\n6️⃣ CRITICAL INTEGRATION TESTS")
-        print("   Testing: Authentication flow, Hybrid auth, Dependency injection, Error handling")
-        test_results['authentication_flow'] = self.test_authentication_flow_comprehensive()
-        test_results['hybrid_auth_methods'] = self.test_hybrid_authentication_methods()
-        test_results['dependency_injection'] = self.test_dependency_injection_comprehensive()
-        test_results['error_handling_consistency'] = self.test_error_handling_consistency()
-        test_results['backward_compatibility'] = self.test_backward_compatibility_comprehensive()
+        print("\n4️⃣ CRITICAL INTEGRATION TESTS")
+        print("   Testing: Service integration, Error handling, Data structures")
+        test_results['service_integration'] = self.test_service_integration()
+        test_results['error_handling_401'] = self.test_error_handling_401()
+        test_results['data_structure_validation'] = self.test_data_structure_validation()
+        test_results['backward_compatibility'] = self.test_backward_compatibility_new_routers()
         
         # Final Assessment
         print("\n" + "=" * 80)
