@@ -594,65 +594,53 @@ class DhruvAITester:
             'backward_compatibility': False
         }
         
-        # Test 1: Modular Architecture Health Check
-        print("\n1️⃣ MODULAR ARCHITECTURE HEALTH CHECK")
-        test_results['modular_architecture_health'] = self.test_modular_architecture_health_comprehensive()
-        
-        # Test 2: Auth Router - Registration
-        print("\n2️⃣ AUTH ROUTER - REGISTRATION ENDPOINT")
-        test_results['auth_router_registration'] = self.test_auth_router_registration()
-        
-        # Test 3: Auth Router - Login
-        print("\n3️⃣ AUTH ROUTER - LOGIN ENDPOINT")
+        # AUTHENTICATION ROUTER TESTS
+        print("\n1️⃣ AUTHENTICATION ROUTER (/api/auth/...)")
+        print("   Testing: register, login, logout, csrf-token endpoints")
+        test_results['auth_router_register'] = self.test_auth_router_register()
         test_results['auth_router_login'] = self.test_auth_router_login()
-        
-        # Test 4: Auth Router - Logout
-        print("\n4️⃣ AUTH ROUTER - LOGOUT ENDPOINT")
         test_results['auth_router_logout'] = self.test_auth_router_logout()
+        test_results['auth_router_csrf_token'] = self.test_auth_router_csrf_token()
         
-        # Test 5: User Router - Profile GET
-        print("\n5️⃣ USER ROUTER - PROFILE GET ENDPOINT")
+        # USER ROUTER TESTS
+        print("\n2️⃣ USER ROUTER (/api/user/...)")
+        print("   Testing: profile GET/PUT endpoints with authentication")
         test_results['user_router_profile_get'] = self.test_user_router_profile_get()
-        
-        # Test 6: User Router - Profile PUT
-        print("\n6️⃣ USER ROUTER - PROFILE PUT ENDPOINT")
         test_results['user_router_profile_put'] = self.test_user_router_profile_put()
         
-        # Test 7: Subscription Router - Plans
-        print("\n7️⃣ SUBSCRIPTION ROUTER - PLANS ENDPOINT")
+        # SUBSCRIPTION ROUTER TESTS
+        print("\n3️⃣ SUBSCRIPTION ROUTER (/api/subscription/...)")
+        print("   Testing: plans, info, check-access, track-usage endpoints")
         test_results['subscription_router_plans'] = self.test_subscription_router_plans()
+        test_results['subscription_router_info'] = self.test_subscription_router_info()
+        test_results['subscription_router_check_access'] = self.test_subscription_router_check_access()
+        test_results['subscription_router_track_usage'] = self.test_subscription_router_track_usage()
         
-        # Test 8: Subscription Router - Access Check
-        print("\n8️⃣ SUBSCRIPTION ROUTER - ACCESS CHECK ENDPOINT")
-        test_results['subscription_router_access_check'] = self.test_subscription_router_access_check()
+        # AI ROUTER TESTS
+        print("\n4️⃣ AI ROUTER (/api/ai/...)")
+        print("   Testing: available-contexts, chat sessions, message, guardrails endpoints")
+        test_results['ai_router_available_contexts'] = self.test_ai_router_available_contexts()
+        test_results['ai_router_chat_sessions'] = self.test_ai_router_chat_sessions()
+        test_results['ai_router_chat_message'] = self.test_ai_router_chat_message()
+        test_results['ai_router_guardrails_math'] = self.test_ai_router_guardrails_math()
+        test_results['ai_router_guardrails_fact'] = self.test_ai_router_guardrails_fact()
+        test_results['ai_router_guardrails_citations'] = self.test_ai_router_guardrails_citations()
         
-        # Test 9: Subscription Router - Usage Tracking
-        print("\n9️⃣ SUBSCRIPTION ROUTER - USAGE TRACKING ENDPOINT")
-        test_results['subscription_router_usage_tracking'] = self.test_subscription_router_usage_tracking()
+        # ANALYTICS ROUTER TESTS
+        print("\n5️⃣ ANALYTICS ROUTER (/api/analytics/...)")
+        print("   Testing: dashboard, daily-goals, subject-progress endpoints")
+        test_results['analytics_router_dashboard'] = self.test_analytics_router_dashboard()
+        test_results['analytics_router_daily_goals'] = self.test_analytics_router_daily_goals()
+        test_results['analytics_router_subject_progress'] = self.test_analytics_router_subject_progress()
         
-        # Test 10: Subscription Router - Current Subscription
-        print("\n🔟 SUBSCRIPTION ROUTER - CURRENT SUBSCRIPTION ENDPOINT")
-        test_results['subscription_router_current'] = self.test_subscription_router_current()
-        
-        # Test 11: Service Layer Dependency Injection
-        print("\n1️⃣1️⃣ SERVICE LAYER - DEPENDENCY INJECTION")
-        test_results['service_layer_dependency_injection'] = self.test_service_layer_dependency_injection()
-        
-        # Test 12: Duplicate Route Resolution
-        print("\n1️⃣2️⃣ DUPLICATE ROUTE RESOLUTION")
-        test_results['duplicate_route_resolution'] = self.test_duplicate_route_resolution()
-        
-        # Test 13: Backward Compatibility
-        print("\n1️⃣3️⃣ BACKWARD COMPATIBILITY")
+        # CRITICAL INTEGRATION TESTS
+        print("\n6️⃣ CRITICAL INTEGRATION TESTS")
+        print("   Testing: Authentication flow, Hybrid auth, Dependency injection, Error handling")
+        test_results['authentication_flow'] = self.test_authentication_flow_comprehensive()
+        test_results['hybrid_auth_methods'] = self.test_hybrid_authentication_methods()
+        test_results['dependency_injection'] = self.test_dependency_injection_comprehensive()
+        test_results['error_handling_consistency'] = self.test_error_handling_consistency()
         test_results['backward_compatibility'] = self.test_backward_compatibility_comprehensive()
-        
-        # Test 14: Database Integration
-        print("\n1️⃣4️⃣ DATABASE INTEGRATION VIA SERVICES")
-        test_results['database_integration'] = self.test_database_integration_via_services()
-        
-        # Test 15: Security Maintained
-        print("\n1️⃣5️⃣ SECURITY MAINTAINED")
-        test_results['security_maintained'] = self.test_security_maintained()
         
         # Final Assessment
         print("\n" + "=" * 80)
