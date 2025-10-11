@@ -16159,45 +16159,9 @@ def main():
     return overall_success
 
 
-if __name__ == "__main__":
-    main()
-        
-        # SUBSCRIPTION SYSTEM TESTS (PRIORITY FOR REVIEW REQUEST)
-        ("🎯 Comprehensive Hybrid Subscription System", tester.test_subscription_system_comprehensive),
-        ("💰 Subscription Plans API", tester.test_subscription_plans_api),
-        ("💰 Current Subscription API", tester.test_current_subscription_api),
-        ("💰 Checkout Session Creation", tester.test_checkout_session_creation),
-        ("💰 Payment Status API", tester.test_payment_status_api),
-        ("💰 Usage Tracking & Access Control", tester.test_usage_tracking_access_control),
-        ("💰 Stripe Webhook Endpoint", tester.test_stripe_webhook_endpoint),
-        ("💰 Subscription Integration Flow", tester.test_subscription_integration_flow),
-        
-        ("AI Chat Message", tester.test_ai_chat_message),
-        ("Chat Sessions", tester.test_chat_sessions),
-        ("Chat Messages", tester.test_chat_messages),
-        ("Dashboard Analytics", tester.test_dashboard_analytics),
-        ("Progress Summary", tester.test_progress_summary),
-        ("Update Progress", tester.test_update_progress),
-        ("Doubt Resolution", tester.test_doubt_resolution),
-        
-        # Phase 4 Enhanced Features
-        ("🆕 Generate Mock Tests", tester.test_generate_mock_test),
-        ("🆕 Enhanced Question Generation", tester.test_enhanced_question_generation),
-        ("🆕 Submit Mock Test", tester.test_submit_mock_test),
-        ("🆕 Performance Analytics", tester.test_performance_analytics),
-        ("🆕 Stress Assessment", tester.test_stress_assessment),
 
 if __name__ == "__main__":
     main()
-        
-        # Phase A: AI Tutor Complete Input Methods Tests (PRIORITY FOR REVIEW REQUEST)
-        ("🎯 Phase A: Image Upload & OCR Processing", tester.test_ai_tutor_file_processing_image_upload),
-        ("🎯 Phase A: PDF Upload & Text Extraction", tester.test_ai_tutor_file_processing_pdf_upload),
-        ("🎯 Phase A: File Validation (Size & Type)", tester.test_ai_tutor_file_validation),
-        ("🎯 Phase A: Available Contexts API", tester.test_ai_tutor_available_contexts_api),
-        ("🎯 Phase A: Context Integration", tester.test_ai_tutor_context_integration),
-        ("🎯 Phase A: Authentication Security", tester.test_ai_tutor_authentication_security),
-        ("🎯 Phase A: Comprehensive Integration", tester.test_phase_a_integration_comprehensive),
         
         # Auto-Note Mentor API Tests
         ("🎯 Auto-Note Interactive Features", tester.test_auto_note_mentor_interactive_features),
