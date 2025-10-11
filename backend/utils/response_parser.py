@@ -147,7 +147,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         for para in paragraphs:
             para_lower = para.lower()
             if any(tip in para_lower for tip in tip_indicators):
-                sections['mentor_tip'] = para[:400]
+                sections['mentor_tip'] = self.clean_text(para[:400])
                 break
         
         # If no specific sections, intelligently distribute
