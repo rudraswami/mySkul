@@ -40,11 +40,11 @@ class DhruvAITester:
                 session = requests.Session()
                 
                 if method == 'GET':
-                    response = session.get(url, headers=test_headers, timeout=30)
+                    response = session.get(url, headers=test_headers, timeout=60)
                 elif method == 'POST':
-                    response = session.post(url, json=data, headers=test_headers, timeout=30)
+                    response = session.post(url, json=data, headers=test_headers, timeout=60)
                 elif method == 'PUT':
-                    response = session.put(url, json=data, headers=test_headers, timeout=30)
+                    response = session.put(url, json=data, headers=test_headers, timeout=60)
             else:
                 if method == 'GET':
                     response = requests.get(url, headers=test_headers, timeout=60)
