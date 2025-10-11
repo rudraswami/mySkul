@@ -69,21 +69,28 @@ const ResponseComposer = ({ message, onQuickAction }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-5"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Friendly Welcome Banner */}
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-purple-100 via-blue-100 to-indigo-100 rounded-2xl border-2 border-purple-200"
+      >
+        <Sparkles className="w-6 h-6 text-purple-600" />
+        <span className="text-lg font-bold text-gray-800">Let's explore this together! 🎓</span>
+        <Sparkles className="w-6 h-6 text-purple-600" />
+      </motion.div>
+
       {/* Visual Concept (if available) */}
       {visual && visual.generated && (
-        <VisualConceptBlock visualData={visual} />
+        <motion.div variants={itemVariants}>
+          <VisualConceptBlock visualData={visual} />
+        </motion.div>
       )}
-
-      {/* Friendly Introduction */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center space-x-2 text-purple-600 font-medium"
-      >
-        <Sparkles className="w-5 h-5" />
-        <span>Let's explore this together! 🎓</span>
-      </motion.div>
 
       {/* Concept Overview Card */}
       {microLessonSections.concept_overview && (
