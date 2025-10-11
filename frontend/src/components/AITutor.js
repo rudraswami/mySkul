@@ -1559,6 +1559,8 @@ export default function AITutor() {
         </motion.div>
       </div>
 
+      {/* Sidebar - Chat Sessions - Hidden on mobile */}
+      <div className="hidden lg:flex w-80 bg-white border-r border-gray-100 flex-col">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
