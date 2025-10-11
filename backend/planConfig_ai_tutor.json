@@ -1,0 +1,184 @@
+{
+  "FREE": {
+    "display_name": "🆓 Free - Try Before You Commit",
+    "price_monthly": 0,
+    "price_yearly": 0,
+    "price_quarterly": 0,
+    "tagline": "Explore AI learning at your own pace",
+    "persona": "Curious beginner exploring AI guidance",
+    "core_emotion": "Hope & curiosity",
+    "description": "Get started with AI Tutor basics and build trust",
+    "features": {
+      "ai_sessions_monthly": 10,
+      "mentor_tips_daily": 0,
+      "mock_tests_weekly": 1,
+      "auto_note_uploads_daily": 1,
+      "focus_engine_type": "static",
+      "ai_insights": "locked",
+      "voice_mode": "locked",
+      "offline_mode": false,
+      "analytics_tier": "basic",
+      "visuals": "standard",
+      "priority_support": false,
+      "export_notes": false,
+      "concept_tagging": false,
+      "student_verification_discount": false
+    },
+    "upgrade_messages": {
+      "mentor": "You've used {usage} of your {limit} free AI sessions! Ready to unlock more learning?",
+      "professor": "Your progress is promising. Upgrade to continue your analytical journey without limits.",
+      "growth_metric": "Free users learn 3x slower than Starter users",
+      "cta": "Start your AI journey for just ₹99/month"
+    }
+  },
+  "STARTER": {
+    "display_name": "🟢 Starter - Begin Your AI Journey",
+    "price_monthly": 99,
+    "price_quarterly": 269,
+    "price_yearly": 899,
+    "tagline": "Begin your AI journey",
+    "persona": "Casual learner getting started",
+    "core_emotion": "Confidence & curiosity",
+    "description": "Perfect for students exploring AI-powered learning",
+    "features": {
+      "ai_sessions_monthly": 20,
+      "mentor_tips_daily": 0,
+      "mock_tests_weekly": 2,
+      "auto_note_uploads_daily": 3,
+      "focus_engine_type": "static",
+      "ai_insights": "weekly",
+      "voice_mode": "locked",
+      "offline_mode": false,
+      "analytics_tier": "basic",
+      "visuals": "standard",
+      "priority_support": false,
+      "export_notes": true,
+      "concept_tagging": false,
+      "student_verification_discount": true
+    },
+    "upgrade_messages": {
+      "mentor": "You're making great progress! Upgrade to Scholar for 100 sessions and mentor support.",
+      "professor": "Your learning velocity is increasing. Scholar tier would unlock adaptive AI guidance.",
+      "growth_metric": "Scholar users achieve 2.5x better retention",
+      "cta": "Upgrade to Scholar for ₹299/month"
+    },
+    "student_verified_price": {
+      "monthly": 89,
+      "quarterly": 242,
+      "yearly": 809
+    }
+  },
+  "SCHOLAR": {
+    "display_name": "🔵 Scholar - Master Concepts with Smart Guidance",
+    "price_monthly": 299,
+    "price_quarterly": 799,
+    "price_yearly": 2699,
+    "tagline": "Master concepts with smart guidance",
+    "persona": "Regular exam-goer seeking consistent improvement",
+    "core_emotion": "Progress & determination",
+    "description": "Ideal for students preparing for competitive exams",
+    "features": {
+      "ai_sessions_monthly": 100,
+      "mentor_tips_daily": 5,
+      "mock_tests_weekly": 5,
+      "auto_note_uploads_daily": "unlimited",
+      "focus_engine_type": "adaptive",
+      "ai_insights": "daily",
+      "voice_mode": "mentor_only",
+      "offline_mode": false,
+      "analytics_tier": "advanced",
+      "visuals": "enhanced",
+      "priority_support": false,
+      "export_notes": true,
+      "concept_tagging": true,
+      "student_verification_discount": true
+    },
+    "upgrade_messages": {
+      "mentor": "You're crushing it! Ready for 300 sessions + unlimited mentor access with Achiever?",
+      "professor": "Your mastery rate is impressive. Achiever tier unlocks priority AI and offline mode.",
+      "growth_metric": "Achiever users score 15% higher on mock tests",
+      "cta": "Upgrade to Achiever for ₹699/month"
+    },
+    "student_verified_price": {
+      "monthly": 269,
+      "quarterly": 719,
+      "yearly": 2429
+    }
+  },
+  "ACHIEVER": {
+    "display_name": "🟠 Achiever (Pro) - Your AI Mentor for Competitive Success",
+    "price_monthly": 699,
+    "price_quarterly": 1899,
+    "price_yearly": 5999,
+    "tagline": "Your AI mentor for competitive success",
+    "persona": "Serious aspirant targeting top ranks",
+    "core_emotion": "Mastery & ambition",
+    "description": "For students committed to excellence and top percentile scores",
+    "features": {
+      "ai_sessions_monthly": 300,
+      "mentor_tips_daily": 30,
+      "mock_tests_weekly": "unlimited",
+      "auto_note_uploads_daily": "unlimited",
+      "focus_engine_type": "emotion_aware",
+      "ai_insights": "personalized_daily",
+      "voice_mode": "full_sync",
+      "offline_mode": true,
+      "analytics_tier": "deep",
+      "visuals": "priority",
+      "priority_support": true,
+      "export_notes": true,
+      "concept_tagging": true,
+      "student_verification_discount": true
+    },
+    "upgrade_messages": {
+      "mentor": "You're in the top 10%! Unlock unlimited AI sessions with Legend tier.",
+      "professor": "Your analytical depth is exceptional. Legend provides priority AI and 24/7 learning lab.",
+      "growth_metric": "Legend users are 3x more likely to hit their target score",
+      "cta": "Unlock Legend for ₹1,499/month"
+    },
+    "student_verified_price": {
+      "monthly": 629,
+      "quarterly": 1709,
+      "yearly": 5399
+    }
+  },
+  "LEGEND": {
+    "display_name": "🟣 Legend (Elite) - Personal AI Mentor, 24×7 Learning Lab",
+    "price_monthly": 1499,
+    "price_quarterly": 3999,
+    "price_yearly": 11999,
+    "tagline": "Personal AI mentor, 24×7 learning lab",
+    "persona": "Top performer seeking absolute mastery",
+    "core_emotion": "Excellence & confidence",
+    "description": "The ultimate learning experience for top aspirants",
+    "features": {
+      "ai_sessions_monthly": "unlimited",
+      "mentor_tips_daily": "unlimited",
+      "mock_tests_weekly": "unlimited",
+      "auto_note_uploads_daily": "unlimited",
+      "focus_engine_type": "emotion_aware_advanced",
+      "ai_insights": "real_time_personalized",
+      "voice_mode": "priority_full_sync",
+      "offline_mode": true,
+      "analytics_tier": "premium",
+      "visuals": "priority_plus",
+      "priority_support": true,
+      "export_notes": true,
+      "concept_tagging": true,
+      "student_verification_discount": true,
+      "dedicated_mentor": true,
+      "custom_study_plan": true
+    },
+    "upgrade_messages": {
+      "mentor": "You're at the pinnacle! Keep crushing your goals with unlimited AI access.",
+      "professor": "Your mastery journey continues with premium features and dedicated support.",
+      "growth_metric": "You're in the top 1% of learners",
+      "cta": "Continue your excellence"
+    },
+    "student_verified_price": {
+      "monthly": 1349,
+      "quarterly": 3599,
+      "yearly": 10799
+    }
+  }
+}
