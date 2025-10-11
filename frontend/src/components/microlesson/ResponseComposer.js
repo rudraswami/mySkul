@@ -149,11 +149,21 @@ const ResponseComposer = ({ message, onQuickAction }) => {
             </div>
           )}
 
-          {/* Emotional Anchor */}
-          <div className="flex items-center justify-center space-x-2 my-4 text-purple-600 text-sm font-medium">
-            <span>✨</span>
-            <span>You're getting this! Keep going.</span>
-            <span>✨</span>
+          {/* Dynamic Emotional Anchor */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center justify-center space-x-2 my-5 px-4 py-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl border border-yellow-300"
+          >
+            <Zap className="w-5 h-5 text-orange-600" />
+            <span className="text-orange-800 font-medium text-sm">{getEmotionalAnchor('concept')}</span>
+          </motion.div>
+
+          {/* Visual Separator */}
+          <div className="flex items-center my-5">
+            <div className="flex-1 border-t-2 border-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+            <span className="px-3 text-gray-400">•••</span>
+            <div className="flex-1 border-t-2 border-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           </div>
 
           {/* Formula Card */}
