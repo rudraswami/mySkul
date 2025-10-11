@@ -270,34 +270,46 @@ Subject Context: {subject}"""
             logger.info("🤖 Generating contextual AI responses via LLM")
             
             try:
-                # Make actual LLM calls for contextual, subject-specific responses
+                # HYBRID STRATEGY: Fast LLM calls with intelligent timeout management
+                # Frontend expects response within 20s, so we use 12s max for LLM calls
+                logger.info("🚀 Starting hybrid fast+contextual AI generation")
+                
+                # Create LLM tasks with aggressive timeout for speed
                 professor_task = asyncio.create_task(self._safe_llm_call(
-                    professor_chat, professor_message, "professor", subject, message, max_retries=2, timeout_seconds=30
+                    professor_chat, professor_message, "professor", subject, message, max_retries=1, timeout_seconds=12
                 ))
                 mentor_task = asyncio.create_task(self._safe_llm_call(
-                    mentor_chat, mentor_message, "mentor", subject, message, max_retries=2, timeout_seconds=30
+                    mentor_chat, mentor_message, "mentor", subject, message, max_retries=1, timeout_seconds=12
                 ))
                 
-                # Wait for both responses with timeout
-                professor_response, mentor_response = await asyncio.gather(
-                    professor_task, mentor_task, return_exceptions=True
-                )
+                # Wait with overall timeout of 15 seconds (leaves 5s buffer for processing)
+                try:
+                    professor_response, mentor_response = await asyncio.wait_for(
+                        asyncio.gather(professor_task, mentor_task, return_exceptions=True),
+                        timeout=15.0
+                    )
+                    
+                    # Check for exceptions and use enhanced contextual fallbacks if needed
+                    if isinstance(professor_response, Exception):
+                        logger.warning(f"Professor LLM call failed: {professor_response}, using enhanced contextual fallback")
+                        professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
+                    
+                    if isinstance(mentor_response, Exception):
+                        logger.warning(f"Mentor LLM call failed: {mentor_response}, using enhanced contextual fallback")
+                        mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
+                    
+                    logger.info(f"✅ Hybrid AI responses completed for {subject}")
                 
-                # Handle potential exceptions and use fallbacks only if LLM calls fail
-                if isinstance(professor_response, Exception):
-                    logger.warning(f"Professor LLM call failed: {professor_response}, using fallback")
-                    professor_response = self._generate_fast_fallback("professor", subject, message)
-                
-                if isinstance(mentor_response, Exception):
-                    logger.warning(f"Mentor LLM call failed: {mentor_response}, using fallback")
-                    mentor_response = self._generate_fast_fallback("mentor", subject, message)
-                
-                logger.info(f"✅ AI responses generated for {subject}: {message[:50]}...")
+                except asyncio.TimeoutError:
+                    # Overall timeout - use enhanced contextual fallbacks for better UX
+                    logger.warning("⏰ Overall LLM timeout (15s), using enhanced contextual fallbacks")
+                    professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
+                    mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
                 
             except Exception as e:
-                logger.error(f"LLM calls failed: {e}, using fallback responses")
-                professor_response = self._generate_fast_fallback("professor", subject, message)
-                mentor_response = self._generate_fast_fallback("mentor", subject, message)
+                logger.error(f"Hybrid LLM strategy failed: {e}, using enhanced contextual fallbacks")
+                professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
+                mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
