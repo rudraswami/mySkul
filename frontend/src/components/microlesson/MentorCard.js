@@ -148,7 +148,7 @@ const MentorCard = ({ mentorData, weight }) => {
                         exit={{ height: 0, opacity: 0 }}
                         className="pl-7 text-pink-900 text-sm leading-relaxed"
                       >
-                        {cleanText(sections.confidence_tips)}
+                        <LatexRenderer text={sections.confidence_tips} />
                       </motion.div>
                     )}
                   </AnimatePresence>
