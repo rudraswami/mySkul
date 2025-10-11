@@ -94,12 +94,23 @@ def debug_ai_response():
                             print(f"   Secondary response length: {len(secondary_text)} chars")
                             print(f"   Secondary preview: {secondary_text[:100]}..." if secondary_text else "   Secondary: EMPTY!")
                     
-                    # Check for blank responses
+                    # Check for blank responses (handle both old and new structure)
                     has_content = False
+                    
                     if 'dual_response' in data:
+                        # New structure
                         primary_resp = data['dual_response'].get('primary', {}).get('response', '')
                         secondary_resp = data['dual_response'].get('secondary', {}).get('response', '')
                         has_content = len(primary_resp) > 20 and len(secondary_resp) > 20
+                        print(f"   Using dual_response structure")
+                    elif 'primary' in data and 'secondary' in data:
+                        # Current structure
+                        primary_resp = data['primary'].get('response', '') if isinstance(data['primary'], dict) else str(data['primary'])
+                        secondary_resp = data['secondary'].get('response', '') if isinstance(data['secondary'], dict) else str(data['secondary'])
+                        has_content = len(primary_resp) > 20 and len(secondary_resp) > 20
+                        print(f"   Using root-level primary/secondary structure")
+                        print(f"   Primary: {primary_resp[:50]}..." if primary_resp else "   Primary: EMPTY!")
+                        print(f"   Secondary: {secondary_resp[:50]}..." if secondary_resp else "   Secondary: EMPTY!")
                     
                     result = "✅ SUCCESS" if has_content else "❌ BLANK RESPONSES"
                     print(f"\n🎯 Result: {result}")
