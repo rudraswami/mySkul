@@ -19211,7 +19211,7 @@ def main():
     
     # Final Summary
     print("\n" + "=" * 80)
-    print("🛡️ STAGE 3 BACKEND CSRF TESTING - FINAL SUMMARY")
+    print("🤖 AI TUTOR CONTEXTUAL FIX TESTING - FINAL SUMMARY")
     print("=" * 80)
     
     print(f"\n📊 TEST EXECUTION SUMMARY:")
@@ -19219,34 +19219,34 @@ def main():
     print(f"   Tests Passed: {tester.tests_passed}")
     print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
     
-    print(f"\n🛡️ CSRF PROTECTION STATUS:")
-    if csrf_success:
-        print("   ✅ CSRF PROTECTION: SECURE")
-        print("   The backend has robust CSRF protection implemented")
-        print("   All critical security mechanisms are working correctly")
+    print(f"\n🤖 AI TUTOR CONTEXTUAL FIX STATUS:")
+    if contextual_success:
+        print("   ✅ AI TUTOR CONTEXTUAL FIX: SUCCESS")
+        print("   The backend is generating contextual, subject-specific responses")
+        print("   LLM integration is working correctly instead of generic fallbacks")
     else:
-        print("   ❌ CSRF PROTECTION: NEEDS ATTENTION")
-        print("   Critical CSRF security issues identified")
-        print("   Immediate fixes required for production security")
+        print("   ❌ AI TUTOR CONTEXTUAL FIX: NEEDS WORK")
+        print("   Responses are still too generic or not contextual enough")
+        print("   LLM integration may need further fixes")
     
     print(f"\n🎯 KEY FINDINGS:")
-    print("   - CSRF token generation and validation tested")
-    print("   - Authentication flow security validated")
-    print("   - API endpoint protection verified")
-    print("   - Error handling and security responses checked")
-    print("   - Token refresh and retry mechanisms tested")
+    print("   - Mathematics, Physics, Biology responses tested for contextual content")
+    print("   - Response uniqueness and subject-specific keywords validated")
+    print("   - Generic fallback responses detection implemented")
+    print("   - Dual AI response structure (Professor + Mentor) verified")
+    print("   - Authentication and API endpoint functionality confirmed")
     
     print(f"\n📋 NEXT STEPS:")
-    if csrf_success:
-        print("   - CSRF protection is production-ready")
+    if contextual_success:
+        print("   - AI Tutor contextual responses are production-ready")
         print("   - Continue with frontend integration testing")
-        print("   - Monitor CSRF token usage in production")
+        print("   - Monitor response quality in production")
     else:
-        print("   - Fix identified CSRF protection issues")
-        print("   - Re-test CSRF implementation")
-        print("   - Ensure all endpoints require CSRF tokens")
+        print("   - Fix LLM integration to ensure contextual responses")
+        print("   - Re-test AI Tutor dual-response endpoint")
+        print("   - Ensure actual LLM calls instead of static fallbacks")
     
-    return csrf_success
+    return contextual_success
 
 if __name__ == "__main__":
     # Run AI Tutor Backend Comprehensive Testing as requested in review
