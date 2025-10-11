@@ -232,6 +232,27 @@ class SubscriptionService:
             logger.error(f"Get weekly usage error: {str(e)}")
             return 0
     
+    async def get_monthly_usage(self, user_id: str, feature_name: str) -> int:
+        """Get current month's usage for a specific feature"""
+        try:
+            # Get start of current month
+            now = datetime.now(timezone.utc)
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            # Aggregate usage for this month
+            usage_docs = await self.db.usage_tracking.find({
+                "user_id": user_id,
+                "feature_name": feature_name,
+                "usage_date": {"$gte": month_start}
+            }).to_list(length=None)
+            
+            total_usage = sum(doc.get('usage_count', 0) for doc in usage_docs)
+            return total_usage
+            
+        except Exception as e:
+            logger.error(f"Get monthly usage error: {str(e)}")
+            return 0
+    
     async def track_usage(self, user_id: str, feature_name: str, increment: int = 1):
         """Track feature usage for a user"""
         try:
