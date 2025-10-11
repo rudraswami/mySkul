@@ -258,8 +258,12 @@ class SubscriptionService:
         try:
             now = datetime.now(timezone.utc)
             
-            # For weekly features, use start of week as usage date
-            if "weekly" in feature_name:
+            # Determine usage_date based on feature type
+            if "monthly" in feature_name:
+                # For monthly features, use start of month
+                usage_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            elif "weekly" in feature_name:
+                # For weekly features, use start of week (Monday)
                 today = now.date()
                 week_start = today - timedelta(days=today.weekday())
                 usage_date = datetime.combine(week_start, datetime.min.time()).replace(tzinfo=timezone.utc)
