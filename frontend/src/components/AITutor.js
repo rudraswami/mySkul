@@ -1105,6 +1105,8 @@ export default function AITutor() {
   // Retry failed message
   const retryMessage = (originalMessage) => {
     setCurrentMessage(originalMessage);
+    setPendingMessage('');
+    setMessagePhase('idle');
     setTimeout(() => {
       sendMessage();
     }, 100);
