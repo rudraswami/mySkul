@@ -128,7 +128,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
             step_blocks.append('\n'.join(current_block))
         
         if step_blocks:
-            sections['step_by_step'] = '\n\n'.join(step_blocks[:5])
+            sections['step_by_step'] = self.clean_text('\n\n'.join(step_blocks[:5]))
         
         # Extract real-life examples and applications
         example_keywords = ['example', 'application', 'real-world', 'real life', 'practical', 'consider', 'imagine']
