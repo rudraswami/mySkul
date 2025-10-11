@@ -296,11 +296,11 @@ class SubscriptionService:
         try:
             plan_config = await self.load_plan_config()
             
-            # Determine target plan
-            if current_tier == "FREE":
-                target_plan = "PREMIUM"
-            else:
-                target_plan = "PRO"
+            # Determine target plan using tier hierarchy
+            target_plan = self._get_next_tier(current_tier)
+            
+            # Get upgrade messages from plan config if available
+            upgrade_messages = plan_config.get(current_tier, {}).get('upgrade_messages', {})
             
             # Get growth stats (simplified version)
             growth_stats = {
@@ -309,15 +309,23 @@ class SubscriptionService:
                 "total_study_hours": 45
             }
             
-            # Generate contextual messages
+            # Generate contextual messages - updated for planConfig_ai_tutor.json feature names
             feature_benefits = {
-                "ai_conversations": {
-                    "mentor_message": "🎯 You're asking great questions! Unlock unlimited AI conversations to dive deeper into complex topics and get personalized explanations.",
-                    "professor_message": "📚 Your curiosity is commendable. Premium access allows continuous dialogue for thorough understanding of challenging concepts."
+                "ai_sessions_monthly": {
+                    "mentor_message": upgrade_messages.get('mentor', "🎯 You're asking great questions! Unlock more AI sessions to dive deeper into complex topics."),
+                    "professor_message": upgrade_messages.get('professor', "📚 Your curiosity is commendable. Upgrade for continuous dialogue and thorough understanding.")
                 },
                 "mock_tests_weekly": {
-                    "mentor_message": "⚡ You're on fire with practice! Upgrade to take unlimited mock tests and accelerate your preparation.",
-                    "professor_message": "📈 Consistent testing leads to better results. Premium membership removes all test limitations."
+                    "mentor_message": "⚡ You're on fire with practice! Upgrade to take more mock tests and accelerate your preparation.",
+                    "professor_message": "📈 Consistent testing leads to better results. Higher tiers remove test limitations."
+                },
+                "auto_note_uploads_daily": {
+                    "mentor_message": "📚 You're taking great notes! Upgrade for more uploads and unlimited processing.",
+                    "professor_message": "📊 Comprehensive notes accelerate mastery. Upgrade for enhanced note-taking capabilities."
+                },
+                "mentor_tips_daily": {
+                    "mentor_message": "💡 You love our motivation! Upgrade to get daily mentor tips and encouragement.",
+                    "professor_message": "🎯 Consistent motivation enhances performance. Unlock daily mentor guidance."
                 }
             }
             
