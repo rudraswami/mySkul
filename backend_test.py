@@ -16129,10 +16129,11 @@ class DhruvAITester:
             return False
 
 def main():
-    """Main test runner - URGENT AUTHENTICATION FOCUS"""
-    print("🚨 URGENT: Dhruv AI Authentication APIs Testing...")
-    print("   User reports: Login API returning 429, Registration APIs failing")
-    print("   Focus: Authentication endpoints and subscription check-access")
+    """Main test execution - STAGE 2 MODULAR INTEGRATION TESTING"""
+    print("🚀 Starting Dhruv AI Backend Testing Suite")
+    print("🎯 STAGE 2: COMPREHENSIVE MODULAR INTEGRATION TESTING")
+    print("   Focus: Complete validation of 5 modular routers as per review request")
+    print("   Scope: Auth, User, Subscription, AI, Analytics routers")
     print("=" * 80)
     
     tester = DhruvAITester()
