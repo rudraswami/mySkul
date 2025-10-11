@@ -332,6 +332,14 @@ Subject Context: {subject}"""
                 "persona_blend": persona_blend
             }
             
+            # Step 10: Apply format validation and cleanup (AI Tutor 2.4)
+            dual_response = format_validator.validate_and_fix_response(dual_response)
+            
+            # Validate structure
+            validation_issues = format_validator.validate_structure(dual_response)
+            if validation_issues:
+                logger.warning(f"Response validation issues: {validation_issues}")
+            
             # Save message to session
             await self.save_session_message(user_id, session_id, message, dual_response)
             
