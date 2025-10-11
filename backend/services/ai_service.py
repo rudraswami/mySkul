@@ -26,11 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 class AIService:
-    """AI service for managing chat sessions, dual AI responses, and AI-powered features"""
+    """
+    AI service for managing chat sessions, dual AI responses, and AI-powered features
+    Enhanced for AI Tutor 2.0 with adaptive personas, visual generation, and sentiment analysis
+    """
     
     def __init__(self, db: AsyncIOMotorClient, emergent_llm_key: str):
         self.db = db
         self.emergent_llm_key = emergent_llm_key
+        self.sentiment_analyzer = SentimentAnalyzer()
+        self.svg_generator = SVGGenerator()
+        self.gemini_chat = None  # Lazy init for Gemini visual generation
     
     async def create_chat_session(self, user_id: str, title: str, subject: str, topic: str = "General", ai_mode: str = "dual") -> ChatSession:
         """Create a new chat session"""
