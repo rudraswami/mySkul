@@ -7980,6 +7980,7 @@ class DhruvAITester:
         
         latex_message = {
             "message": "Solve quadratic equation x^2 + 5x + 6 = 0 and show the formula",
+            "session_id": test_session_id,
             "subject": "Mathematics"
         }
         
