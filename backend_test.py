@@ -16157,15 +16157,10 @@ def main():
         print(f"⚠️ STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: NEEDS ATTENTION")
     
     return overall_success
-    
-    # Test sequence - Core APIs first, then SUBSCRIPTION SYSTEM (Priority), then Phase 4 features, then Dual-Layer AI
-    tests = [
-        ("Health Check", tester.test_health_check),
-        ("Root Endpoint", tester.test_root_endpoint),
-        ("User Registration", tester.test_user_registration),
-        ("User Login", tester.test_user_login),
-        ("User Profile", tester.test_user_profile),
-        ("🎯 User Profile Update", tester.test_user_profile_update),
+
+
+if __name__ == "__main__":
+    main()
         
         # SUBSCRIPTION SYSTEM TESTS (PRIORITY FOR REVIEW REQUEST)
         ("🎯 Comprehensive Hybrid Subscription System", tester.test_subscription_system_comprehensive),
