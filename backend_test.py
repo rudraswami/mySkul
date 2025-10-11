@@ -18964,6 +18964,227 @@ class DhruvAITester:
         
         return success_rate >= 60
 
+    def test_ai_tutor_dual_response_contextual_fix(self):
+        """Test AI Tutor Dual Response Contextual Fix - CRITICAL REVIEW REQUEST"""
+        print("\n🤖 AI TUTOR DUAL RESPONSE CONTEXTUAL FIX TESTING")
+        print("=" * 80)
+        print("   CRITICAL ISSUE: Previously all questions were getting identical generic responses")
+        print("   FIX IMPLEMENTED: Re-enabled actual LLM calls instead of using only static fallback responses")
+        print("   TEST SCENARIOS: Mathematics, Physics, Biology questions")
+        print("   VERIFICATION: Each response should be DIFFERENT and contextual to the subject/question")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        
+        if not self.token:
+            print("   ❌ No token available for AI Tutor testing")
+            return False
+        
+        test_scenarios = [
+            {
+                "name": "Mathematics Question",
+                "message": "How do I solve quadratic equations?",
+                "subject": "Mathematics",
+                "session_id": "test_session_math",
+                "expected_keywords": ["quadratic", "formula", "factoring", "discriminant", "ax²", "roots"]
+            },
+            {
+                "name": "Physics Question", 
+                "message": "Explain Newton's second law of motion",
+                "subject": "Physics",
+                "session_id": "test_session_physics",
+                "expected_keywords": ["F=ma", "force", "mass", "acceleration", "newton", "motion"]
+            },
+            {
+                "name": "Biology Question",
+                "message": "What is photosynthesis?",
+                "subject": "Biology", 
+                "session_id": "test_session_biology",
+                "expected_keywords": ["chlorophyll", "glucose", "sunlight", "carbon dioxide", "oxygen", "plants"]
+            }
+        ]
+        
+        responses = []
+        test_results = []
+        
+        print(f"\n📋 TESTING {len(test_scenarios)} CONTEXTUAL SCENARIOS:")
+        
+        for i, scenario in enumerate(test_scenarios, 1):
+            print(f"\n{i}️⃣ {scenario['name']}:")
+            print(f"   Question: '{scenario['message']}'")
+            print(f"   Subject: {scenario['subject']}")
+            
+            # Send request to AI Tutor dual-response endpoint
+            request_data = {
+                "message": scenario["message"],
+                "subject": scenario["subject"],
+                "session_id": scenario["session_id"]
+            }
+            
+            success, response, _ = self.run_test(
+                f"AI Tutor {scenario['name']}",
+                "POST",
+                "ai/dual-response",
+                200,
+                data=request_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                # Extract response content
+                dual_response = response.get('dual_response', {})
+                primary_response = dual_response.get('primary', {}).get('response', '')
+                secondary_response = dual_response.get('secondary', {}).get('response', '')
+                
+                # Combine both responses for analysis
+                full_response = f"{primary_response} {secondary_response}".lower()
+                responses.append(full_response)
+                
+                print(f"   ✅ Response received ({len(full_response)} characters)")
+                print(f"   📝 Primary response preview: {primary_response[:100]}...")
+                print(f"   📝 Secondary response preview: {secondary_response[:100]}...")
+                
+                # Check for contextual keywords
+                keywords_found = []
+                for keyword in scenario['expected_keywords']:
+                    if keyword.lower() in full_response:
+                        keywords_found.append(keyword)
+                
+                contextual_score = len(keywords_found) / len(scenario['expected_keywords'])
+                print(f"   🎯 Contextual keywords found: {len(keywords_found)}/{len(scenario['expected_keywords'])} ({contextual_score*100:.1f}%)")
+                print(f"   📊 Keywords found: {', '.join(keywords_found)}")
+                
+                # Check if response is generic (contains generic phrases)
+                generic_phrases = [
+                    "let's explore this together",
+                    "i'm here to help",
+                    "great question",
+                    "let me help you with that",
+                    "this is an interesting topic"
+                ]
+                
+                generic_count = sum(1 for phrase in generic_phrases if phrase in full_response)
+                is_generic = generic_count > 2 or len(full_response) < 100
+                
+                print(f"   🔍 Generic phrases detected: {generic_count}")
+                print(f"   ⚖️ Response appears generic: {is_generic}")
+                
+                # Determine if test passed
+                test_passed = contextual_score >= 0.3 and not is_generic  # At least 30% keywords and not generic
+                test_results.append(test_passed)
+                
+                if test_passed:
+                    print(f"   ✅ {scenario['name']} - CONTEXTUAL RESPONSE SUCCESS")
+                else:
+                    print(f"   ❌ {scenario['name']} - FAILED (generic or non-contextual)")
+            else:
+                print(f"   ❌ {scenario['name']} - API REQUEST FAILED")
+                test_results.append(False)
+                responses.append("")
+        
+        # CRITICAL VERIFICATION: Check if responses are DIFFERENT
+        print(f"\n🔍 RESPONSE UNIQUENESS ANALYSIS:")
+        
+        if len(responses) >= 2:
+            # Compare responses for similarity
+            unique_responses = 0
+            similarity_threshold = 0.8  # 80% similarity threshold
+            
+            for i in range(len(responses)):
+                for j in range(i + 1, len(responses)):
+                    if responses[i] and responses[j]:
+                        # Simple similarity check based on common words
+                        words_i = set(responses[i].split())
+                        words_j = set(responses[j].split())
+                        
+                        if len(words_i) > 0 and len(words_j) > 0:
+                            common_words = words_i.intersection(words_j)
+                            similarity = len(common_words) / max(len(words_i), len(words_j))
+                            
+                            print(f"   📊 Similarity between {test_scenarios[i]['subject']} and {test_scenarios[j]['subject']}: {similarity*100:.1f}%")
+                            
+                            if similarity < similarity_threshold:
+                                unique_responses += 1
+            
+            responses_are_unique = unique_responses >= (len(responses) - 1)
+            print(f"   🎯 Responses are sufficiently unique: {responses_are_unique}")
+        else:
+            responses_are_unique = False
+            print(f"   ❌ Insufficient responses for uniqueness analysis")
+        
+        # FINAL ASSESSMENT
+        print(f"\n" + "=" * 80)
+        print("🎯 AI TUTOR CONTEXTUAL FIX - FINAL RESULTS")
+        print("=" * 80)
+        
+        contextual_success_count = sum(test_results)
+        total_tests = len(test_scenarios)
+        contextual_success_rate = (contextual_success_count / total_tests) * 100 if total_tests > 0 else 0
+        
+        print(f"\n📊 CONTEXTUAL RESPONSE RESULTS:")
+        for i, (scenario, result) in enumerate(zip(test_scenarios, test_results)):
+            status = "✅ CONTEXTUAL" if result else "❌ GENERIC/FAILED"
+            print(f"   {scenario['subject']}: {status}")
+        
+        print(f"\n📈 SUCCESS METRICS:")
+        print(f"   Contextual Responses: {contextual_success_count}/{total_tests} ({contextual_success_rate:.1f}%)")
+        print(f"   Response Uniqueness: {'✅ UNIQUE' if responses_are_unique else '❌ SIMILAR'}")
+        
+        # VERIFICATION CRITERIA CHECK
+        print(f"\n✅ VERIFICATION CRITERIA:")
+        criteria_met = []
+        
+        # Each response should be DIFFERENT and contextual
+        different_and_contextual = contextual_success_count >= 2 and responses_are_unique
+        criteria_met.append(different_and_contextual)
+        print(f"   Each response DIFFERENT and contextual: {'✅' if different_and_contextual else '❌'}")
+        
+        # Mathematics response should mention quadratic formula, factoring, etc.
+        math_contextual = test_results[0] if len(test_results) > 0 else False
+        criteria_met.append(math_contextual)
+        print(f"   Mathematics response contextual: {'✅' if math_contextual else '❌'}")
+        
+        # Physics response should mention F=ma, mass, acceleration, etc.
+        physics_contextual = test_results[1] if len(test_results) > 1 else False
+        criteria_met.append(physics_contextual)
+        print(f"   Physics response contextual: {'✅' if physics_contextual else '❌'}")
+        
+        # Biology response should mention chlorophyll, glucose, etc.
+        biology_contextual = test_results[2] if len(test_results) > 2 else False
+        criteria_met.append(biology_contextual)
+        print(f"   Biology response contextual: {'✅' if biology_contextual else '❌'}")
+        
+        # NO generic "Let's explore this together" responses
+        no_generic_responses = all(not any(phrase in resp for phrase in ["let's explore this together"]) for resp in responses if resp)
+        criteria_met.append(no_generic_responses)
+        print(f"   NO generic responses: {'✅' if no_generic_responses else '❌'}")
+        
+        # Both professor and mentor responses should be unique and relevant
+        unique_and_relevant = responses_are_unique and contextual_success_rate >= 66.7  # At least 2/3 contextual
+        criteria_met.append(unique_and_relevant)
+        print(f"   Professor and Mentor responses unique/relevant: {'✅' if unique_and_relevant else '❌'}")
+        
+        # Calculate final success
+        criteria_success_count = sum(criteria_met)
+        total_criteria = len(criteria_met)
+        final_success_rate = (criteria_success_count / total_criteria) * 100
+        
+        print(f"\n🏆 FINAL ASSESSMENT:")
+        print(f"   Criteria Met: {criteria_success_count}/{total_criteria} ({final_success_rate:.1f}%)")
+        
+        if final_success_rate >= 83.3:  # 5/6 criteria
+            print("   ✅ AI TUTOR CONTEXTUAL FIX: EXCELLENT SUCCESS")
+            print("   🎯 Contextual, subject-specific responses working correctly")
+            print("   🚀 Ready for production use")
+            return True
+        elif final_success_rate >= 66.7:  # 4/6 criteria
+            print("   ⚠️ AI TUTOR CONTEXTUAL FIX: GOOD SUCCESS")
+            print("   🎯 Most responses contextual, minor improvements needed")
+            return True
+        else:
+            print("   ❌ AI TUTOR CONTEXTUAL FIX: NEEDS WORK")
+            print("   🎯 Responses still too generic or not contextual enough")
+            print("   🔧 LLM integration may need further fixes")
+            return False
+
 def main():
     """Main function to run CSRF protection tests"""
     print("🛡️ DHRUV AI BACKEND CSRF PROTECTION TESTING")
