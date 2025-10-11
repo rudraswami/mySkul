@@ -11358,14 +11358,13 @@ app.add_middleware(
     expose_headers=["X-CSRF-Token"]
 )
 
-# TODO: Add CSRF protection back after implementing proper token flow
-# CSRF Protection - Temporarily disabled for initial cookie auth implementation  
-# app.add_middleware(
-#     CSRFMiddleware,
-#     secret=CSRF_SECRET,
-#     cookie_name="csrftoken",
-#     header_name="x-csrftoken"
-# )
+# CSRF Protection - Re-enabled after implementing proper token flow
+app.add_middleware(
+    CSRFMiddleware,
+    secret=CSRF_SECRET,
+    cookie_name="csrftoken",
+    header_name="x-csrftoken"
+)
 
 # Include modular routers for new architecture
 if MODULAR_COMPONENTS_AVAILABLE:
