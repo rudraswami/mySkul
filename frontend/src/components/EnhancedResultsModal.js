@@ -237,6 +237,7 @@ export default function EnhancedResultsModal({
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
