@@ -329,6 +329,41 @@ Keep response concise (2-3 sentences) with actionable advice."""
             logger.error(f"Gemini visual generation error: {str(e)}")
             return {'type': 'none', 'content': None, 'generated': False}
     
+    async def _get_user_analytics(self, user_id: str, subject: str) -> Dict[str, Any]:
+        """Get user analytics for motivational message generation"""
+        try:
+            # Get user's recent analytics
+            analytics = await self.db.user_analytics.find_one({
+                "user_id": user_id,
+                "subject": subject
+            })
+            
+            if not analytics:
+                return {
+                    'accuracy': 0,
+                    'previous_accuracy': 0,
+                    'streak': 0,
+                    'mastery': 0,
+                    'current_topic': subject
+                }
+            
+            return {
+                'accuracy': analytics.get('accuracy', 0),
+                'previous_accuracy': analytics.get('previous_accuracy', 0),
+                'streak': analytics.get('streak', 0),
+                'mastery': analytics.get('mastery', 0),
+                'current_topic': analytics.get('current_topic', subject)
+            }
+        except Exception as e:
+            logger.error(f"Error fetching user analytics: {str(e)}")
+            return {
+                'accuracy': 0,
+                'previous_accuracy': 0,
+                'streak': 0,
+                'mastery': 0,
+                'current_topic': subject
+            }
+    
     async def save_session_message(self, user_id: str, session_id: str, message: str, ai_response: Dict[str, Any]):
         """Save a chat message to the session"""
         try:
