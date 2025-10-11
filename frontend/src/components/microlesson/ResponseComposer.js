@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronDown, ChevronUp, Heart, GraduationCap } from 'lucide-react';
+import { Sparkles, ChevronDown, ChevronUp, Heart, GraduationCap, Zap } from 'lucide-react';
 import ConceptCard from './ConceptCard';
 import FormulaCard from './FormulaCard';
 import TipCard from './TipCard';
 import PracticeActions from './PracticeActions';
 import MotivationalFooter from './MotivationalFooter';
 import VisualConceptBlock from '../VisualConceptBlock';
+import MentorCard from './MentorCard';
 
 /**
  * ResponseComposer - AI Tutor 2.3 Complete UX Redesign
