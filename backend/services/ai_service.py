@@ -179,7 +179,22 @@ Keep response concise (2-3 sentences) with actionable advice."""
             # Step 6: Generate quick actions
             quick_actions = self._generate_quick_actions(message, subject, sentiment_analysis)
             
-            # Step 7: Create enhanced dual response structure
+            # Step 7: Parse response into micro-lesson sections (AI Tutor 2.1)
+            micro_lesson_sections = await self.response_parser.parse_response(
+                professor_content,
+                subject,
+                message
+            )
+            
+            # Step 8: Generate motivational footer with real analytics
+            user_analytics = await self._get_user_analytics(user_id, subject)
+            motivational_data = self.motivational_generator.generate(
+                user_analytics,
+                sentiment_analysis['primary_sentiment'],
+                subject
+            )
+            
+            # Step 9: Create enhanced dual response structure
             dual_response = {
                 "primary": {
                     "type": "professor",
