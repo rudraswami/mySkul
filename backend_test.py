@@ -16,6 +16,7 @@ class DhruvAITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.test_user_email = "test@dhruvai.com"
+        self.test_password = "password123"
         self.fresh_user_email = f"fresh_user_{int(time.time())}@dhruvai.com"  # Fresh user for free tier testing
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, use_session=False):
