@@ -228,77 +228,22 @@ const ResponseComposer = ({ message, onQuickAction }) => {
         </div>
       </motion.div>
 
-      {/* Emotional Anchor - Motivation */}
-      <motion.div
-        variants={itemVariants}
-        className="flex items-center justify-center space-x-2 text-sm text-purple-700 font-medium"
-      >
-        <span>💡</span>
-        <span>Let's visualize this concept below</span>
-        <span>👇</span>
-      </motion.div>
+      {/* Visual Separator before Mentor */}
+      {secondary && (
+        <motion.div variants={itemVariants} className="flex items-center my-6">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent"></div>
+          <span className="px-4 text-pink-400 text-sm">💝</span>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent"></div>
+        </motion.div>
+      )}
 
-      {/* Collapsible Mentor Section */}
+      {/* Enhanced Mentor Card with Structured Sections */}
       {secondary && secondary.response && (
         <motion.div variants={itemVariants}>
-          <div className="border-2 border-pink-200 rounded-2xl overflow-hidden shadow-lg">
-            {/* Mentor Toggle Button */}
-            <button
-              onClick={() => setMentorExpanded(!mentorExpanded)}
-              className="w-full p-6 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-lg">
-                  <Heart className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-bold text-pink-900">
-                    {mentorExpanded ? "Hide Mentor's Motivation" : "💬 Show Mentor's Motivation"}
-                  </h3>
-                  <p className="text-sm text-pink-700">
-                    {mentorExpanded ? "Collapse supportive guidance" : "Get emotional support and study strategies"}
-                  </p>
-                </div>
-              </div>
-              <motion.div
-                animate={{ rotate: mentorExpanded ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ChevronDown className="w-6 h-6 text-pink-700" />
-              </motion.div>
-            </button>
-
-            {/* Mentor Content - Collapsible */}
-            <AnimatePresence>
-              {mentorExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-8 bg-gradient-to-br from-pink-50 to-purple-50">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-lg bg-pink-400 flex items-center justify-center">
-                          <span className="text-2xl">💜</span>
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-pink-950 text-base leading-relaxed">
-                          {cleanText(secondary.response)}
-                        </p>
-                        <span className="inline-block mt-4 px-3 py-1 bg-pink-200 text-pink-800 rounded-full text-xs font-semibold">
-                          {Math.round((secondary.weight || 0.3) * 100)}% Emotional Support
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <MentorCard 
+            mentorData={secondary} 
+            weight={secondary.weight}
+          />
         </motion.div>
       )}
 
