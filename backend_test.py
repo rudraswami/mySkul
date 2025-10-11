@@ -18499,14 +18499,71 @@ def main():
     return csrf_success
 
 if __name__ == "__main__":
-    # Run AI Tutor 2.0 Enhanced Dual-Response Testing
+    # Run AI Tutor Phase 1 Text Sanitization Testing
     tester = DhruvAITester()
     
-    print("🚀 Starting AI Tutor 2.0 Enhanced Dual-Response Testing...")
-    print("=" * 60)
+    print("🚀 AI TUTOR PHASE 1 TEXT SANITIZATION & FORMATTING TESTING")
+    print("=" * 80)
+    print("REVIEW REQUEST: Testing AI Tutor backend Phase 1 fixes")
+    print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
+    print("Backend URL: https://learning-companion-3.preview.emergentagent.com/api")
+    print("Test Credentials: test@dhruvai.com / password123")
+    print("=" * 80)
     
-    # Run the specific test requested in the review
-    success = tester.test_ai_tutor_dual_response_endpoint()
+    # Authenticate first
+    print("\n🔐 AUTHENTICATION SETUP")
+    login_success = tester.test_auth_router_login()
+    
+    if not login_success:
+        print("❌ Authentication failed - cannot proceed with testing")
+        exit(1)
+    
+    # Run the AI Tutor text sanitization tests
+    print("\n🎯 RUNNING AI TUTOR PHASE 1 SANITIZATION TESTS")
+    sanitization_success = tester.test_ai_tutor_text_sanitization_phase1()
+    
+    # Final Summary
+    print("\n" + "=" * 80)
+    print("🎯 AI TUTOR PHASE 1 TESTING - FINAL SUMMARY")
+    print("=" * 80)
+    
+    print(f"\n📊 TEST EXECUTION SUMMARY:")
+    print(f"   Total Tests Run: {tester.tests_run}")
+    print(f"   Tests Passed: {tester.tests_passed}")
+    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
+    
+    print(f"\n🎯 AI TUTOR PHASE 1 STATUS:")
+    if sanitization_success:
+        print("   ✅ PHASE 1 FIXES: WORKING")
+        print("   Text sanitization and formatting fixes are functional")
+        print("   GPT-5 prompt enforcement is working correctly")
+        print("   Database storage contains sanitized content")
+        print("   Mentor response splitting is operational")
+    else:
+        print("   ❌ PHASE 1 FIXES: NEED ATTENTION")
+        print("   Critical text sanitization issues identified")
+        print("   Some formatting fixes may not be working properly")
+    
+    print(f"\n🔍 KEY TESTING AREAS COVERED:")
+    print("   - Text sanitization (special chars, emojis, escaped sequences)")
+    print("   - LaTeX delimiter preservation for math rendering")
+    print("   - GPT-5 prompt enforcement (no markdown, emojis)")
+    print("   - Database storage with sanitized content")
+    print("   - Mentor response structured sections")
+    print("   - Raw text field availability")
+    
+    print(f"\n📋 RECOMMENDATIONS:")
+    if sanitization_success:
+        print("   - Phase 1 text sanitization fixes are production-ready")
+        print("   - Continue with frontend integration testing")
+        print("   - Monitor text quality in production usage")
+    else:
+        print("   - Fix identified text sanitization issues")
+        print("   - Re-test GPT-5 prompt enforcement")
+        print("   - Verify database storage sanitization")
+        print("   - Check mentor response splitting logic")
+    
+    exit(0 if sanitization_success else 1)
     
     print("\n" + "=" * 60)
     print(f"🏁 Testing Complete: {tester.tests_passed}/{tester.tests_run} tests passed")
