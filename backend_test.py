@@ -17930,7 +17930,7 @@ def main():
     
     return csrf_success
 
-def test_ai_tutor_dual_response_endpoint(self):
+    def test_ai_tutor_dual_response_endpoint(self):
         """Test AI Tutor 2.0 Enhanced Dual-Response Endpoint with All New Features"""
         print("\n🤖 AI TUTOR 2.0 ENHANCED DUAL-RESPONSE ENDPOINT TESTING")
         print("=" * 80)
