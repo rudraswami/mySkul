@@ -237,7 +237,15 @@ const MentorCard = ({ mentorData, weight }) => {
                         exit={{ height: 0, opacity: 0 }}
                         className="pl-7 text-pink-900 text-sm leading-relaxed"
                       >
-                        <LatexRenderer text={sections.confidence_tips} />
+                        <ReactMarkdown 
+                          components={{
+                            p: ({ children }) => <LatexRenderer text={children} />,
+                            li: ({ children }) => <li className="mb-1"><LatexRenderer text={children} /></li>,
+                            ul: ({ children }) => <ul className="list-disc list-inside">{children}</ul>
+                          }}
+                        >
+                          {mentorSections.confidence_tips}
+                        </ReactMarkdown>
                       </motion.div>
                     )}
                   </AnimatePresence>
