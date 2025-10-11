@@ -1,153 +1,83 @@
-/**
- * VisualConceptBlock Component
- * Displays concept visualizations with fade-in animations
- */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lightbulb, AlertCircle } from 'lucide-react';
-import { useVisualGenerator } from '../hooks/useVisualGenerator';
+import { Image as ImageIcon, X } from 'lucide-react';
 
-const VisualConceptBlock = ({ 
-  topic, 
-  subject = 'general',
-  className = '',
-  showTitle = true,
-  animate = true 
-}) => {
-  const { generateVisual, isLoading, error } = useVisualGenerator();
-  const [visual, setVisual] = useState(null);
+/**
+ * VisualConceptBlock - Renders SVG or Gemini-generated visuals
+ * Supports both inline SVG and base64 images with expand/collapse
+ */
+const VisualConceptBlock = ({ visualData }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  useEffect(() => {
-    if (topic) {
-      generateVisual(topic, subject, false).then(result => {
-        setVisual(result);
-      });
-    }
-  }, [topic, subject, generateVisual]);
-
-  const containerVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { 
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    }
-  };
-
-  const svgVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        delay: 0.2,
-        duration: 0.5
-      }
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center p-6 ${className}`}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
-
-  if (error && !visual) {
-    return (
-      <div className={`flex items-center justify-center p-4 text-gray-500 ${className}`}>
-        <AlertCircle className="w-5 h-5 mr-2" />
-        <span className="text-sm">Visual not available</span>
-      </div>
-    );
-  }
-
-  if (!visual?.content) {
+  if (!visualData || !visualData.generated) {
     return null;
   }
 
-  const MotionWrapper = animate ? motion.div : 'div';
-  const motionProps = animate ? {
-    variants: containerVariants,
-    initial: "hidden",
-    animate: "visible"
-  } : {};
+  const renderVisual = () => {
+    if (visualData.type === 'svg' && visualData.content) {
+      return (
+        <div 
+          className="w-full max-w-xs mx-auto"
+          dangerouslySetInnerHTML={{ __html: visualData.content }}
+        />
+      );
+    } else if (visualData.type === 'gemini_image' && visualData.content) {
+      return (
+        <img
+          src={`data:${visualData.mime_type || 'image/png'};base64,${visualData.content}`}
+          alt="AI Generated Concept Visual"
+          className="w-full max-w-md mx-auto rounded-lg"
+        />
+      );
+    }
+    return null;
+  };
 
   return (
-    <MotionWrapper
-      {...motionProps}
-      className={`bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 shadow-sm border border-gray-100 ${className}`}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="my-4"
     >
-      {/* Title */}
-      {showTitle && topic && (
-        <div className="flex items-center mb-4">
-          <Lightbulb className="w-4 h-4 text-amber-500 mr-2" />
-          <h3 className="text-sm font-medium text-gray-700 capitalize">
-            {topic.replace(/_/g, ' ')}
-          </h3>
-        </div>
-      )}
-
-      {/* Visual Content */}
-      <div className="flex justify-center">
-        <motion.div
-          variants={animate ? svgVariants : {}}
-          className="relative"
+      {/* Compact View */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors w-full"
         >
-          {visual.type === 'svg' ? (
-            <div 
-              dangerouslySetInnerHTML={{ __html: visual.content }}
-              className="concept-visual"
-            />
-          ) : (
-            <img 
-              src={visual.content} 
-              alt={`Visual representation of ${topic}`}
-              className="max-w-[120px] max-h-[100px] object-contain"
-              loading="lazy"
-            />
-          )}
-          
-          {/* Success Indicator */}
-          {visual.success && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
-            >
-              <span className="text-white text-xs">✓</span>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Metadata */}
-      {visual.fallback && (
-        <div className="mt-3 text-center">
-          <span className="text-xs text-gray-400">Concept visualization</span>
-        </div>
+          <ImageIcon className="w-4 h-4" />
+          <span className="text-sm font-medium">View Concept Visual</span>
+        </button>
       )}
-      
-      {/* CSS for concept visuals */}
-      <style jsx>{`
-        .concept-visual svg {
-          filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
-          transition: transform 0.2s ease;
-        }
-        .concept-visual:hover svg {
-          transform: scale(1.05);
-        }
-      `}</style>
-    </MotionWrapper>
+
+      {/* Expanded View */}
+      {isExpanded && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <ImageIcon className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-gray-700">Concept Visualization</span>
+            </div>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg">
+            {renderVisual()}
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 };
 

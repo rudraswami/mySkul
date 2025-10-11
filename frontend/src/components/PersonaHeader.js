@@ -1,141 +1,63 @@
-/**
- * PersonaHeader Component
- * Displays adaptive emotion gradient header with persona indicators
- */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Heart, BookOpen, Users } from 'lucide-react';
+import { GraduationCap, Heart } from 'lucide-react';
 
-const PersonaHeader = ({ 
-  personaConfig, 
-  motivationalMessage, 
-  userStats = {}, 
-  className = '' 
-}) => {
-  if (!personaConfig) {
-    return null;
-  }
-
-  const { colorScheme, gradient, greeting, tone } = personaConfig;
+/**
+ * PersonaHeader - Displays adaptive persona blend for AI Tutor 2.0
+ * Shows Professor/Mentor weight distribution with animated visual indicator
+ */
+const PersonaHeader = ({ personaBlend, sentimentAnalysis }) => {
+  const professorWeight = personaBlend?.professor || 0.5;
+  const mentorWeight = personaBlend?.mentor || 0.5;
   
-  // Persona icons
-  const PersonaIcon = () => {
-    switch (tone) {
-      case 'academic':
-        return <BookOpen className="w-5 h-5" />;
-      case 'supportive':
-        return <Heart className="w-5 h-5" />;
-      default:
-        return <Brain className="w-5 h-5" />;
-    }
-  };
-
-  // Animation variants
-  const headerVariants = {
-    hidden: { opacity: 0, y: -20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
-  };
-
-  const pulseVariants = {
-    pulse: {
-      scale: [1, 1.05, 1],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
+  const getToneGradient = (sentiment) => {
+    const gradients = {
+      confusion: 'from-orange-400 to-yellow-400',
+      confidence: 'from-green-400 to-emerald-400',
+      frustration: 'from-red-400 to-pink-400',
+      curiosity: 'from-purple-400 to-indigo-400'
+    };
+    return gradients[sentiment] || 'from-blue-400 to-indigo-400';
   };
 
   return (
     <motion.div
-      variants={headerVariants}
-      initial="hidden"
-      animate="visible"
-      className={`relative overflow-hidden rounded-lg ${className}`}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100"
     >
-      {/* Gradient Background */}
-      <div className={`bg-gradient-to-r ${gradient} p-4`}>
-        {/* Top Row - Persona and Stats */}
-        <div className="flex items-center justify-between mb-2">
-          {/* Persona Indicator */}
-          <motion.div 
-            className="flex items-center space-x-2 text-white"
-            variants={tone === 'supportive' ? pulseVariants : {}}
-            animate={tone === 'supportive' ? 'pulse' : ''}
-          >
-            <div className="p-2 bg-white bg-opacity-20 rounded-full">
-              <PersonaIcon />
-            </div>
-            <div>
-              <span className="text-sm font-medium opacity-90">
-                {tone === 'academic' ? 'Professor Mode' : 
-                 tone === 'supportive' ? 'Mentor Mode' : 
-                 'Adaptive Mode'}
-              </span>
-            </div>
-          </motion.div>
-
-          {/* User Stats */}
-          {userStats && (
-            <div className="flex items-center space-x-4 text-white text-sm">
-              {userStats.streak && (
-                <div className="flex items-center space-x-1">
-                  <span className="opacity-75">Streak:</span>
-                  <span className="font-bold">{userStats.streak}</span>
-                  <span>🔥</span>
-                </div>
-              )}
-              {userStats.focus && (
-                <div className="flex items-center space-x-1">
-                  <span className="opacity-75">Focus:</span>
-                  <span className="font-medium">{userStats.focus}</span>
-                </div>
-              )}
-            </div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Adaptive Learning Mode</span>
+          {sentimentAnalysis?.primary_sentiment && (
+            <span className="text-xs px-2 py-0.5 bg-white rounded-full text-gray-600">
+              {sentimentAnalysis.primary_sentiment}
+            </span>
           )}
-        </div>
-
-        {/* Greeting Message */}
-        <motion.div 
-          className="text-white"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <p className="text-lg font-medium mb-1">{greeting}</p>
-          {motivationalMessage && (
-            <motion.p 
-              className="text-sm opacity-90"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              {motivationalMessage}
-            </motion.p>
-          )}
-        </motion.div>
-
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-20 h-20 opacity-10">
-          <div className="w-full h-full rounded-full bg-white transform rotate-12 -translate-x-4 -translate-y-4"></div>
-        </div>
-        <div className="absolute bottom-0 left-0 w-16 h-16 opacity-10">
-          <div className="w-full h-full rounded-full bg-white transform -rotate-12 translate-x-2 translate-y-2"></div>
         </div>
       </div>
 
-      {/* Bottom Accent Line */}
-      <motion.div 
-        className={`h-1 bg-gradient-to-r ${gradient} opacity-60`}
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ delay: 0.7, duration: 0.8 }}
-      />
+      {/* Persona Blend Indicator */}
+      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: '50%' }}
+          animate={{ width: `${professorWeight * 100}%` }}
+          transition={{ duration: 0.5 }}
+          className={`h-full bg-gradient-to-r ${getToneGradient(sentimentAnalysis?.primary_sentiment)}`}
+        />
+      </div>
+
+      {/* Labels */}
+      <div className="flex items-center justify-between mt-2 text-xs">
+        <div className="flex items-center space-x-1">
+          <GraduationCap className="w-3 h-3 text-blue-600" />
+          <span className="text-gray-600">Professor {Math.round(professorWeight * 100)}%</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <Heart className="w-3 h-3 text-pink-500" />
+          <span className="text-gray-600">Mentor {Math.round(mentorWeight * 100)}%</span>
+        </div>
+      </div>
     </motion.div>
   );
 };
