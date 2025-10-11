@@ -165,10 +165,10 @@ const ResponseComposer = ({ message, onQuickAction }) => {
               <div className="text-gray-800 text-base leading-loose pl-8" style={{ lineHeight: '1.8' }}>
                 <ReactMarkdown 
                   components={{
-                    p: ({ children }) => <LatexRenderer text={children} />,
-                    li: ({ children }) => <li><LatexRenderer text={children} /></li>,
-                    strong: ({ children }) => <strong><LatexRenderer text={children} /></strong>,
-                    em: ({ children }) => <em><LatexRenderer text={children} /></em>
+                    p: ({ children }) => <div className="mb-2"><LatexRenderer text={String(children)} /></div>,
+                    li: ({ children }) => <li><LatexRenderer text={String(children)} /></li>,
+                    strong: ({ children }) => <strong><LatexRenderer text={String(children)} /></strong>,
+                    em: ({ children }) => <em><LatexRenderer text={String(children)} /></em>
                   }}
                 >
                   {sanitizeText(microLessonSections.concept_overview)}
