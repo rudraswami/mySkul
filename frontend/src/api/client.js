@@ -19,16 +19,45 @@ export const apiClient = axios.create({
   withCredentials: true, // Enable cookies for hybrid auth
 });
 
+// CSRF token management
+let csrfToken = null;
+
 /**
- * Request interceptor - Add authentication token
+ * Fetch and store CSRF token
+ */
+const fetchCsrfToken = async () => {
+  try {
+    const response = await apiClient.get('/auth/csrf-token');
+    csrfToken = response.data.csrf_token;
+    return csrfToken;
+  } catch (error) {
+    console.warn('Failed to fetch CSRF token:', error);
+    return null;
+  }
+};
+
+/**
+ * Request interceptor - Add authentication token and CSRF token
  */
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // Get JWT token from localStorage
     const token = localStorage.getItem('dhruv_ai_token');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Add CSRF token for state-changing requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase())) {
+      // Fetch CSRF token if not available
+      if (!csrfToken) {
+        await fetchCsrfToken();
+      }
+      
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
     }
     
     return config;
