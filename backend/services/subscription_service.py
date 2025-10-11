@@ -97,10 +97,15 @@ class SubscriptionService:
             tier = sub_info['subscription_tier']
             plan_features = sub_info['plan_info']['features']
             
-            # Get appropriate usage based on feature type
-            if "weekly" in feature_name:
+            # Get appropriate usage based on feature type (daily/weekly/monthly)
+            if "monthly" in feature_name:
+                # Monthly features (e.g., ai_sessions_monthly)
+                current_usage = await self.get_monthly_usage(user_id, feature_name)
+            elif "weekly" in feature_name:
+                # Weekly features (e.g., mock_tests_weekly)
                 current_usage = await self.get_weekly_usage(user_id, feature_name)
             else:
+                # Daily features (e.g., mentor_tips_daily, auto_note_uploads_daily)
                 daily_usage = sub_info['daily_usage']
                 current_usage = daily_usage.get(feature_name, 0)
             
