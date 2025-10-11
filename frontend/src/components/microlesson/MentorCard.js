@@ -289,8 +289,8 @@ const MentorCard = ({ mentorData, weight }) => {
                       >
                         <ReactMarkdown 
                           components={{
-                            p: ({ children }) => <div className="mb-2"><LatexRenderer text={children} /></div>,
-                            li: ({ children }) => <li className="mb-1 ml-4"><LatexRenderer text={children} /></li>,
+                            p: ({ children }) => <div className="mb-2"><LatexRenderer text={String(children)} /></div>,
+                            li: ({ children }) => <li className="mb-1 ml-4"><LatexRenderer text={String(children)} /></li>,
                             ul: ({ children }) => <ul className="list-disc list-inside space-y-1">{children}</ul>
                           }}
                         >
