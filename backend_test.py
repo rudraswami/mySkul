@@ -16476,7 +16476,7 @@ def main():
             print("   ❌ Mock-Tests performance trends failed")
             return False
     
-    def test_mock_tests_subjects_jee(self):
+    def test_new_mock_tests_subjects_jee(self):
         """Test Mock-Tests Router - GET /api/mock-tests/subjects?exam_type=JEE"""
         print("   Testing GET /api/mock-tests/subjects?exam_type=JEE endpoint")
         
