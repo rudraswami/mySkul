@@ -6654,8 +6654,14 @@ async def track_feature_usage_endpoint(
 ):
     """Track feature usage for subscription limits"""
     try:
-        usage_result = await SubscriptionService.track_feature_usage(user.user_id, request.feature_name)
-        return usage_result
+        # Use modular subscription service instance (initialized with db connection)
+        success = await modular_subscription_service.track_usage(user.user_id, request.feature_name)
+        if success:
+            return {"message": "Usage tracked successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to track usage")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Usage tracking error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to track feature usage")
