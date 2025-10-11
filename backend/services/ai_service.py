@@ -201,6 +201,7 @@ Keep response concise (2-3 sentences) with actionable advice."""
                     "response": professor_content,
                     "confidence": 0.95,
                     "progressive_sections": progressive_sections,
+                    "micro_lesson_sections": micro_lesson_sections,
                     "weight": professor_weight
                 },
                 "secondary": {
@@ -212,6 +213,7 @@ Keep response concise (2-3 sentences) with actionable advice."""
                 "visual": visual_data,
                 "sentiment_analysis": sentiment_analysis,
                 "quick_actions": quick_actions,
+                "motivational_footer": motivational_data,
                 "session_id": session_id,
                 "subject": subject,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
