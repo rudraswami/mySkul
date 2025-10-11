@@ -641,24 +641,65 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
-      if (aiMode === 'dual') {
-        response = await axios.post(`${API}/ai/dual-response`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId
-        }, { headers });
-      } else if (aiMode === 'mentor') {
-        response = await axios.post(`${API}/ai/mentor-only`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId
-        }, { headers });
-      } else { // professor
-        response = await axios.post(`${API}/ai/professor-only`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId
-        }, { headers });
+      // Enhanced API call with timeout and retry logic
+      const timeoutDuration = 20000; // 20 second timeout
+      const retryAttempts = 2;
+      
+      let lastError = null;
+      
+      for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+        try {
+          console.log(`🔄 AI API call - attempt ${attempt}/${retryAttempts}`);
+          
+          if (aiMode === 'dual') {
+            response = await axios.post(`${API}/ai/dual-response`, {
+              message: messageToSend,
+              subject: selectedSubject,
+              session_id: sessionId
+            }, { 
+              headers,
+              timeout: timeoutDuration
+            });
+          } else if (aiMode === 'mentor') {
+            response = await axios.post(`${API}/ai/mentor-only`, {
+              message: messageToSend,
+              subject: selectedSubject,
+              session_id: sessionId
+            }, { 
+              headers,
+              timeout: timeoutDuration
+            });
+          } else { // professor
+            response = await axios.post(`${API}/ai/professor-only`, {
+              message: messageToSend,
+              subject: selectedSubject,
+              session_id: sessionId
+            }, { 
+              headers,
+              timeout: timeoutDuration
+            });
+          }
+          
+          // If we get here, the request succeeded
+          console.log('✅ AI response received successfully');
+          break;
+          
+        } catch (attemptError) {
+          lastError = attemptError;
+          console.error(`❌ Attempt ${attempt} failed:`, attemptError.message);
+          
+          // If this is the last attempt or a subscription error, don't retry
+          if (attempt === retryAttempts || 
+              attemptError.response?.status === 402 || 
+              attemptError.response?.status === 429) {
+            throw attemptError;
+          }
+          
+          // Wait before retry (exponential backoff)
+          const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+          console.log(`⏳ Waiting ${delayMs}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
       }
 
       // If any endpoint returned 402/429 via axios intercepts (unlikely here), ensure modal opens
