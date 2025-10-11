@@ -19657,20 +19657,18 @@ class DhruvAITester:
         return critical_success
 
 if __name__ == "__main__":
-    # Run GPT-4o Model Optimization Testing as requested in review
     tester = DhruvAITester()
     
-    print("🚀 REVIEW REQUEST: Testing GPT-4o model optimization for AI Tutor performance")
-    print("   MODEL CHANGE: GPT-5 → GPT-4o for significantly faster response times")
-    print("   TIMEOUT CONFIG: 10s per LLM call, 1 retry max")
-    print("   ENHANCED FALLBACKS: Subject-specific contextual responses")
-    print("   SUCCESS CRITERIA: Response within 15s (vs previous 50+ seconds)")
+    # Run comprehensive production-readiness tests
+    print("Starting comprehensive production-readiness testing...")
+    success = tester.run_comprehensive_production_readiness_tests()
     
-    # Run the GPT-4o optimization tests
-    success = tester.test_gpt4o_optimization_performance()
-    
-    print(f"\n🏁 GPT-4o Model Optimization Testing Complete: {'SUCCESS' if success else 'FAILED'}")
-    sys.exit(0 if success else 1)
+    if success:
+        print("\n🎉 Production-readiness testing completed successfully!")
+        sys.exit(0)
+    else:
+        print("\n💥 Production-readiness testing identified issues. Check the output above for details.")
+        sys.exit(1)
     print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
     print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
