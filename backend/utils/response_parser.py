@@ -139,7 +139,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
                 example_text = para
                 if i + 1 < len(paragraphs) and len(paragraphs[i + 1]) < 300:
                     example_text += '\n\n' + paragraphs[i + 1]
-                sections['real_life_analogy'] = example_text[:500]
+                sections['real_life_analogy'] = self.clean_text(example_text[:500])
                 break
         
         # Extract tips and important notes
