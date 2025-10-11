@@ -959,6 +959,9 @@ export default function AITutor() {
     setMessages([]);
     setCurrentSession(null);
     setSessionActions({ showMenu: null, isRenaming: null });
+    // Reset input phases when starting new session
+    setPendingMessage('');
+    setMessagePhase('idle');
   };
 
   // Session Management Actions
