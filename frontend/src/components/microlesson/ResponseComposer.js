@@ -225,8 +225,8 @@ const ResponseComposer = ({ message, onQuickAction }) => {
               <div className="pl-8 text-gray-800 text-base leading-loose space-y-3" style={{ lineHeight: '1.8' }}>
                 <ReactMarkdown 
                   components={{
-                    p: ({ children }) => <div className="mb-3"><LatexRenderer text={children} /></div>,
-                    li: ({ children }) => <li className="mb-2"><LatexRenderer text={children} /></li>,
+                    p: ({ children }) => <div className="mb-3"><LatexRenderer text={String(children)} /></div>,
+                    li: ({ children }) => <li className="mb-2"><LatexRenderer text={String(children)} /></li>,
                     ol: ({ children }) => <ol className="list-decimal list-inside space-y-2">{children}</ol>,
                     ul: ({ children }) => <ul className="list-disc list-inside space-y-2">{children}</ul>
                   }}
