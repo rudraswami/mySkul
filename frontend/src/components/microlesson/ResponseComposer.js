@@ -50,11 +50,21 @@ const ResponseComposer = ({ message, onQuickAction }) => {
   };
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-6">
       {/* Visual Concept (if available) */}
       {visual && visual.generated && (
         <VisualConceptBlock visualData={visual} />
       )}
+
+      {/* Friendly Introduction */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center space-x-2 text-purple-600 font-medium"
+      >
+        <Sparkles className="w-5 h-5" />
+        <span>Let's explore this together! 🎓</span>
+      </motion.div>
 
       {/* Concept Overview Card */}
       {microLessonSections.concept_overview && (
@@ -64,73 +74,154 @@ const ResponseComposer = ({ message, onQuickAction }) => {
         />
       )}
 
-      {/* Formula Card */}
+      {/* Transition: Formula Section */}
       {formulaList.length > 0 && (
-        <FormulaCard
-          formulas={formulaList}
-          title="Key Formula"
-        />
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-center text-sm text-gray-600 font-medium"
+          >
+            {transitionPhrases.formula}
+          </motion.div>
+          <FormulaCard
+            formulas={formulaList}
+            title="Key Formula"
+          />
+        </>
       )}
 
-      {/* Step-by-Step Explanation */}
+      {/* Transition: Step-by-Step */}
       {microLessonSections.step_by_step && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.15 }}
-          className="p-6 rounded-xl bg-white border border-gray-200 shadow-sm mb-4"
-        >
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                <span className="text-2xl">📋</span>
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="text-center text-sm text-gray-600 font-medium"
+          >
+            {transitionPhrases.stepByStep}
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="p-8 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 shadow-sm"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
+                  <span className="text-3xl">📋</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
+                  Detailed Explanation
+                  <span className="ml-2 text-2xl">✨</span>
+                </h3>
+                <div className="text-gray-800 leading-relaxed font-inter text-base whitespace-pre-wrap space-y-3">
+                  {microLessonSections.step_by_step}
+                </div>
               </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 font-poppins">
-                Step-by-Step Explanation
-              </h3>
-              <div className="text-gray-700 leading-relaxed font-inter whitespace-pre-wrap">
-                {microLessonSections.step_by_step}
-              </div>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
 
-      {/* Real-Life Analogy */}
+      {/* Transition: Real-Life */}
       {microLessonSections.real_life_analogy && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.25 }}
+            className="text-center text-sm text-gray-600 font-medium"
+          >
+            {transitionPhrases.realLife}
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            className="p-8 rounded-xl bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border border-teal-100 shadow-sm"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
+                  <span className="text-3xl">🌍</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
+                  Real-World Connection
+                  <span className="ml-2 text-2xl">💡</span>
+                </h3>
+                <p className="text-gray-800 leading-relaxed font-inter text-base">
+                  {microLessonSections.real_life_analogy}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+
+      {/* Mentor Tip with transition */}
+      {microLessonSections.mentor_tip && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="text-center text-sm text-gray-600 font-medium"
+          >
+            {transitionPhrases.tip}
+          </motion.div>
+          <TipCard
+            content={microLessonSections.mentor_tip}
+            type="mentor"
+          />
+        </>
+      )}
+
+      {/* Mentor Response (if available) */}
+      {secondary && secondary.response && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="p-6 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100 shadow-sm mb-4"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+          className="p-8 rounded-xl bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 border-2 border-pink-200 shadow-lg"
         >
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                <span className="text-2xl">🌍</span>
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center shadow-lg">
+                <span className="text-3xl">💜</span>
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 font-poppins">
-                Real-Life Application
+              <h3 className="text-xl font-bold text-pink-900 mb-3 font-poppins flex items-center">
+                Your Mentor's Guidance
+                <span className="ml-2 text-sm px-3 py-1 bg-pink-200 text-pink-800 rounded-full">
+                  {Math.round((secondary.weight || 0.5) * 100)}% Support
+                </span>
               </h3>
-              <p className="text-gray-700 leading-relaxed font-inter">
-                {microLessonSections.real_life_analogy}
+              <p className="text-pink-950 leading-relaxed font-inter text-base">
+                {secondary.response}
               </p>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* Mentor Tip */}
-      {microLessonSections.mentor_tip && (
-        <TipCard
-          content={microLessonSections.mentor_tip}
-          type="mentor"
-        />
-      )}
+      {/* Practice Section with transition */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.45 }}
+        className="text-center text-sm text-gray-600 font-medium"
+      >
+        {transitionPhrases.practice}
+      </motion.div>
 
       {/* Practice Actions */}
       <PracticeActions
@@ -144,6 +235,18 @@ const ResponseComposer = ({ message, onQuickAction }) => {
       {motivational_footer && (
         <MotivationalFooter motivationalData={motivational_footer} />
       )}
+
+      {/* Success Moment */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200"
+      >
+        <p className="text-green-800 font-medium">
+          🎉 Great job exploring this concept! You're one step closer to mastery. 
+        </p>
+      </motion.div>
     </div>
   );
 };
