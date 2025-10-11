@@ -19246,7 +19246,7 @@ def main():
         print("   - Re-test AI Tutor dual-response endpoint")
         print("   - Ensure actual LLM calls instead of static fallbacks")
     
-    return contextual_success
+        return contextual_success
 
     def test_ai_tutor_timeout_optimization(self):
         """Test AI Tutor Timeout and Performance Optimization"""
