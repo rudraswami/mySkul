@@ -121,11 +121,17 @@ async def get_detailed_review(
 ):
     """Get detailed review for a test"""
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Detailed review requested for test: {test_id}, user: {user.user_id}")
+        
         test = await service.get_test(test_id, user.user_id)
         if not test:
+            logger.warning(f"Test not found: {test_id} for user: {user.user_id}")
             raise HTTPException(status_code=404, detail="Test not found")
         
         attempts = await service.get_test_attempts(test_id, user.user_id)
+        logger.info(f"Retrieved {len(attempts)} attempts for test: {test_id}")
         
         return {
             "test": test,
@@ -135,6 +141,9 @@ async def get_detailed_review(
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Detailed review error for test {test_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get detailed review: {str(e)}")
 
 
