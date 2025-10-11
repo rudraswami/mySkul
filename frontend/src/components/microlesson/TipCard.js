@@ -28,23 +28,24 @@ const TipCard = ({ content, type = 'mentor' }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
-      className={`p-6 rounded-xl bg-gradient-to-br ${style.gradient} border ${style.border} shadow-sm mb-4`}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className={`p-8 rounded-2xl bg-gradient-to-br ${style.gradient} border-2 ${style.border} shadow-lg hover:shadow-xl transition-all`}
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start space-x-4">
         <div className="flex-shrink-0 mt-1">
-          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-            <span className="text-2xl">{style.emoji}</span>
+          <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-md">
+            <span className="text-4xl">{style.emoji}</span>
           </div>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 font-poppins flex items-center">
-            <Lightbulb className="w-5 h-5 mr-2 text-yellow-600" />
-            {type === 'mentor' ? 'Mentor Tip' : 'Pro Tip'}
+          <h3 className="text-2xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
+            <Lightbulb className="w-6 h-6 mr-2 text-yellow-500" />
+            {type === 'mentor' ? 'Mentor Wisdom' : 'Pro Tip'}
+            <span className="ml-2">✨</span>
           </h3>
-          <p className="text-gray-700 leading-relaxed font-inter">
+          <p className="text-gray-800 leading-relaxed font-inter text-lg">
             {content}
           </p>
         </div>
