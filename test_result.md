@@ -72,15 +72,12 @@ backend:
 ##   test_sequence: 1
 ##   run_ui: false
 ##
-## test_plan:
-##   current_focus:
-##     - "STAGE 3: React Query Migration Validation"
-##     - "STAGE 3: CSRF Protection Testing"
-##     - "STAGE 3: Frontend Component Data Integrity Testing"
-##     - "STAGE 3: API Client CSRF Token Exchange Testing"
-##   stuck_tasks: []
-##   test_all: false
-##   test_priority: "high_first"
+test_plan:
+  current_focus:
+    - "AI Tutor Mathematical Accuracy Enhancement"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
 ##
 ## agent_communication:
 ##     -agent: "main"  # or "testing" or "user"
