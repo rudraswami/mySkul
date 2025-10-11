@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get(`${API}/user/profile`);
+          const response = await apiClient.get('/user/profile');
           setUser(response.data);
           // SECURITY: Remove sensitive auth data logging
           // console.log('Auth check successful:', response.data.email);
