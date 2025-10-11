@@ -192,6 +192,108 @@ async def get_usage_info(
         raise HTTPException(status_code=500, detail=f"Failed to get usage info: {str(e)}")
 
 
+
+
+# ============= AI TUTOR SPECIFIC ENDPOINTS =============
+
+@router.get("/check-ai-tutor-access")
+async def check_ai_tutor_access(
+    user: User = Depends(get_current_user),
+    subscription_service: SubscriptionService = Depends(get_subscription_service)
+):
+    """
+    Check if user can access AI Tutor
+    Returns: {allowed, remaining, total, usage_percent, needs_upgrade, upgrade_hint}
+    """
+    try:
+        access_info = await subscription_service.check_ai_tutor_access(user.user_id)
+        return access_info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check AI Tutor access: {str(e)}")
+
+
+@router.post("/track-ai-tutor-session")
+async def track_ai_tutor_session(
+    user: User = Depends(get_current_user),
+    subscription_service: SubscriptionService = Depends(get_subscription_service)
+):
+    """Track an AI Tutor session usage"""
+    try:
+        # First check if user has access
+        access_info = await subscription_service.check_ai_tutor_access(user.user_id)
+        
+        if not access_info.get("allowed", False):
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "message": "AI Tutor session limit reached",
+                    "upgrade_hint": access_info.get("upgrade_hint"),
+                    "needs_upgrade": True
+                }
+            )
+        
+        # Track the session
+        success = await subscription_service.track_ai_tutor_session(user.user_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to track session")
+        
+        # Return updated access info
+        updated_access = await subscription_service.check_ai_tutor_access(user.user_id)
+        return {
+            "message": "Session tracked successfully",
+            "access_info": updated_access
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to track AI Tutor session: {str(e)}")
+
+
+@router.get("/check-mentor-tip-access")
+async def check_mentor_tip_access(
+    user: User = Depends(get_current_user),
+    subscription_service: SubscriptionService = Depends(get_subscription_service)
+):
+    """Check if user can access mentor tips today"""
+    try:
+        access_info = await subscription_service.check_mentor_tip_access(user.user_id)
+        return access_info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check mentor tip access: {str(e)}")
+
+
+@router.post("/track-mentor-tip-usage")
+async def track_mentor_tip_usage(
+    user: User = Depends(get_current_user),
+    subscription_service: SubscriptionService = Depends(get_subscription_service)
+):
+    """Track mentor tip usage"""
+    try:
+        # Check access first
+        access_info = await subscription_service.check_mentor_tip_access(user.user_id)
+        
+        if not access_info.get("allowed", False):
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "message": "Mentor tip limit reached for today",
+                    "upgrade_hint": access_info.get("upgrade_hint"),
+                    "needs_upgrade": access_info.get("needs_upgrade", False)
+                }
+            )
+        
+        # Track usage
+        success = await subscription_service.track_mentor_tip_usage(user.user_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to track usage")
+        
+        return {"message": "Mentor tip usage tracked successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to track mentor tip usage: {str(e)}")
+
+
 @router.post("/upgrade")
 async def upgrade_subscription(
     request: SubscriptionRequest,
