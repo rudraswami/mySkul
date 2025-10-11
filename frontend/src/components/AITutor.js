@@ -88,16 +88,6 @@ export default function AITutor() {
   const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
   
-  // If AI Tutor 2.0 is enabled, render the new component
-  if (useAITutor20) {
-    return (
-      <AITutor20 
-        onBackToV1={() => setUseAITutor20(false)}
-        className="h-full"
-      />
-    );
-  }
-  
   // Phase 3: Enhanced functionality states
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
@@ -113,6 +103,16 @@ export default function AITutor() {
   const [renameValue, setRenameValue] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [lastFailedAction, setLastFailedAction] = useState(null);
+  
+  // If AI Tutor 2.0 is enabled, render the new component
+  if (useAITutor20) {
+    return (
+      <AITutor20 
+        onBackToV1={() => setUseAITutor20(false)}
+        className="h-full"
+      />
+    );
+  }
   
   // Show toast notification
   const showToast = (message, type = 'success') => {
