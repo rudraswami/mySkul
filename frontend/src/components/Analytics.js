@@ -25,35 +25,25 @@ import {
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('week');
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const backendUrl = process.env.REACT_APP_BACKEND_URL;
-
-  useEffect(() => {
-    loadAnalytics();
-  }, []);
-
-  const loadAnalytics = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
-      const response = await fetch(`${backendUrl}/api/analytics/performance`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-      }
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // #PHASE3-SECURITY-FRONTEND - Replace useState/useEffect with React Query hooks
+  const { 
+    data: dashboardAnalytics, 
+    isLoading: dashboardLoading, 
+    error: dashboardError 
+  } = useDashboardAnalytics();
+  
+  const { 
+    data: subjectProgress, 
+    isLoading: subjectLoading 
+  } = useSubjectProgress();
+  
+  const { 
+    data: dailyGoals, 
+    isLoading: goalsLoading 
+  } = useDailyGoals();
+  
+  const loading = dashboardLoading || subjectLoading || goalsLoading;
 
   // Sample analytics data (fallback)
   const studyData = {
