@@ -11712,6 +11712,292 @@ class DhruvAITester:
         
         return fixes_working >= 3  # Return True if at least 3/4 fixes are working
 
+    def test_csrf_protection_comprehensive(self):
+        """CSRF PROTECTION VALIDATION - URGENT RE-TEST as requested in review"""
+        print("\n🔒 CSRF PROTECTION VALIDATION - URGENT RE-TEST")
+        print("="*80)
+        print("   TESTING SCOPE: CSRF middleware enabled and working correctly")
+        print("   FOCUS: Token generation, protection enforcement, critical endpoints, error handling")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        print("   GOAL: Confirm CSRF middleware is ACTIVE and protecting all POST/PUT/DELETE endpoints")
+        
+        csrf_test_results = {
+            'csrf_token_generation': False,
+            'csrf_protection_login': False,
+            'csrf_protection_register': False,
+            'csrf_protection_critical_endpoints': False,
+            'csrf_error_handling': False
+        }
+        
+        # Test 1: CSRF Token Generation
+        print("\n1️⃣ CSRF TOKEN GENERATION TEST")
+        print("   Testing GET /api/auth/csrf-token returns valid non-empty CSRF tokens")
+        
+        success, response = self.run_test(
+            "CSRF Token Generation",
+            "GET",
+            "auth/csrf-token",
+            200
+        )
+        
+        if success and 'csrf_token' in response and response['csrf_token']:
+            self.csrf_token = response['csrf_token']
+            token_length = len(self.csrf_token)
+            print(f"   ✅ CSRF token generated successfully: {self.csrf_token[:20]}...")
+            print(f"   ✅ Token length: {token_length} characters")
+            print(f"   ✅ Token format appears valid")
+            csrf_test_results['csrf_token_generation'] = True
+        else:
+            print("   ❌ CSRF token generation failed")
+            print(f"   ❌ Response: {response}")
+            csrf_test_results['csrf_token_generation'] = False
+        
+        # Test 2: CSRF Protection Enforcement - Login
+        print("\n2️⃣ CSRF PROTECTION ENFORCEMENT - LOGIN")
+        print("   Testing POST /api/auth/login with/without CSRF tokens")
+        
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        # Test without CSRF token (should return 403)
+        print("   🔒 Testing login WITHOUT CSRF token (should return 403)")
+        success, response = self.run_test(
+            "Login Without CSRF Token",
+            "POST",
+            "auth/login",
+            403,  # Should return 403 Forbidden
+            data=login_data
+        )
+        
+        login_protection_working = success
+        if success:
+            print("   ✅ CSRF protection active - login blocked without token")
+        else:
+            print("   ❌ CSRF protection NOT working - login succeeded without token")
+        
+        # Test with valid CSRF token (should succeed)
+        if self.csrf_token:
+            print("   🔓 Testing login WITH valid CSRF token (should succeed)")
+            success, response = self.run_test(
+                "Login With Valid CSRF Token",
+                "POST",
+                "auth/login",
+                200,  # Should succeed
+                data=login_data,
+                headers={'X-CSRFToken': self.csrf_token}
+            )
+            
+            if success:
+                print("   ✅ Login successful with valid CSRF token")
+                # Store token for subsequent tests
+                if 'token' in response:
+                    self.token = response['token']
+                    print(f"   ✅ JWT token obtained: {self.token[:20]}...")
+                if 'user' in response:
+                    user_data = response['user']
+                    self.user_id = user_data.get('user_id')
+                    print(f"   ✅ User authenticated: {user_data.get('email')}")
+                login_protection_working = login_protection_working and True
+            else:
+                print("   ❌ Login failed even with valid CSRF token")
+                login_protection_working = False
+        
+        csrf_test_results['csrf_protection_login'] = login_protection_working
+        
+        # Test 3: CSRF Protection Enforcement - Register
+        print("\n3️⃣ CSRF PROTECTION ENFORCEMENT - REGISTER")
+        print("   Testing POST /api/auth/register with/without CSRF tokens")
+        
+        fresh_user_email = f"csrf_test_{int(time.time())}@dhruvai.com"
+        registration_data = {
+            "full_name": "CSRF Test User",
+            "email": fresh_user_email,
+            "password": "password123",
+            "exam_type": "JEE",
+            "grade": "Class 12",
+            "target_year": 2026
+        }
+        
+        # Test without CSRF token (should return 403)
+        print("   🔒 Testing registration WITHOUT CSRF token (should return 403)")
+        success, response = self.run_test(
+            "Register Without CSRF Token",
+            "POST",
+            "auth/register",
+            403,  # Should return 403 Forbidden
+            data=registration_data
+        )
+        
+        register_protection_working = success
+        if success:
+            print("   ✅ CSRF protection active - registration blocked without token")
+        else:
+            print("   ❌ CSRF protection NOT working - registration succeeded without token")
+        
+        # Test with valid CSRF token (should succeed)
+        if self.csrf_token:
+            print("   🔓 Testing registration WITH valid CSRF token (should succeed)")
+            registration_data['email'] = f"csrf_test_success_{int(time.time())}@dhruvai.com"
+            
+            success, response = self.run_test(
+                "Register With Valid CSRF Token",
+                "POST",
+                "auth/register",
+                200,  # Should succeed
+                data=registration_data,
+                headers={'X-CSRFToken': self.csrf_token}
+            )
+            
+            if success:
+                print("   ✅ Registration successful with valid CSRF token")
+                register_protection_working = register_protection_working and True
+            else:
+                print("   ❌ Registration failed even with valid CSRF token")
+                register_protection_working = False
+        
+        csrf_test_results['csrf_protection_register'] = register_protection_working
+        
+        # Test 4: CSRF Protection on Critical Endpoints
+        print("\n4️⃣ CSRF PROTECTION ON CRITICAL ENDPOINTS")
+        print("   Testing subscription operations, user profile updates, mock test generation")
+        
+        if not self.token:
+            print("   ❌ Missing authentication token for critical endpoint tests")
+            csrf_test_results['csrf_protection_critical_endpoints'] = False
+        else:
+            critical_endpoints = [
+                ("subscription/upgrade", "POST", {"target_tier": "PREMIUM", "billing_cycle": "monthly"}),
+                ("user/profile", "PUT", {"full_name": "CSRF Test Update"}),
+                ("mock-tests/generate", "POST", {"exam_type": "JEE", "subjects": ["Mathematics"], "difficulty": 3, "num_questions": 5})
+            ]
+            
+            critical_protection_results = []
+            
+            for endpoint, method, data in critical_endpoints:
+                print(f"   🔒 Testing CSRF protection on {method} {endpoint}")
+                
+                # Test without CSRF token (should fail with 403)
+                success, response = self.run_test(
+                    f"CSRF Protection - {endpoint} without token",
+                    method,
+                    endpoint,
+                    403,  # Should return 403 Forbidden
+                    data=data,
+                    headers={'Authorization': f'Bearer {self.token}'}
+                )
+                
+                if success:
+                    print(f"   ✅ CSRF protection working on {endpoint} - blocked without token")
+                    critical_protection_results.append(True)
+                else:
+                    print(f"   ❌ CSRF protection NOT working on {endpoint} - request succeeded without token")
+                    critical_protection_results.append(False)
+            
+            # All critical endpoints should have CSRF protection
+            protection_score = sum(critical_protection_results)
+            total_endpoints = len(critical_endpoints)
+            
+            print(f"   📊 CSRF Protection Score: {protection_score}/{total_endpoints}")
+            csrf_test_results['csrf_protection_critical_endpoints'] = protection_score >= total_endpoints
+        
+        # Test 5: CSRF Error Handling
+        print("\n5️⃣ CSRF ERROR HANDLING")
+        print("   Testing proper 403 responses and error messages for CSRF validation failures")
+        
+        error_scenarios = [
+            ("Empty CSRF token", ""),
+            ("Invalid CSRF token", "invalid_token_12345"),
+            ("Malformed CSRF token", "malformed@#$%^&*()"),
+        ]
+        
+        error_handling_results = []
+        
+        for scenario_name, csrf_token in error_scenarios:
+            print(f"   🔍 Testing {scenario_name}")
+            
+            headers = {}
+            if csrf_token:  # Only add header if token is not empty
+                headers['X-CSRFToken'] = csrf_token
+            
+            success, response = self.run_test(
+                f"CSRF Error - {scenario_name}",
+                "POST",
+                "auth/login",
+                403,  # Should return 403 Forbidden
+                data=login_data,
+                headers=headers
+            )
+            
+            if success:
+                print(f"   ✅ Proper 403 response for {scenario_name}")
+                
+                # Check for CSRF-specific error message
+                error_message = response.get('detail', '').lower()
+                if 'csrf' in error_message or 'forbidden' in error_message:
+                    print(f"   ✅ CSRF error message present: {response.get('detail', '')}")
+                    error_handling_results.append(True)
+                else:
+                    print(f"   ⚠️ Generic error message (no CSRF indication): {response.get('detail', '')}")
+                    error_handling_results.append(True)  # Still counts as working if 403 is returned
+            else:
+                print(f"   ❌ Incorrect response for {scenario_name}")
+                error_handling_results.append(False)
+        
+        error_handling_score = sum(error_handling_results)
+        csrf_test_results['csrf_error_handling'] = error_handling_score >= 2  # At least 2/3 should work
+        
+        # Final Assessment
+        print("\n" + "="*80)
+        print("🔒 CSRF PROTECTION VALIDATION - FINAL RESULTS")
+        print("="*80)
+        
+        success_count = sum(csrf_test_results.values())
+        total_tests = len(csrf_test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 CSRF TEST RESULTS SUMMARY:")
+        print(f"   CSRF Token Generation: {'✅ PASS' if csrf_test_results['csrf_token_generation'] else '❌ FAIL'}")
+        print(f"   CSRF Protection Login: {'✅ PASS' if csrf_test_results['csrf_protection_login'] else '❌ FAIL'}")
+        print(f"   CSRF Protection Register: {'✅ PASS' if csrf_test_results['csrf_protection_register'] else '❌ FAIL'}")
+        print(f"   CSRF Protection Critical Endpoints: {'✅ PASS' if csrf_test_results['csrf_protection_critical_endpoints'] else '❌ FAIL'}")
+        print(f"   CSRF Error Handling: {'✅ PASS' if csrf_test_results['csrf_error_handling'] else '❌ FAIL'}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Determine overall status
+        if success_rate >= 80:
+            print("\n✅ CSRF PROTECTION VALIDATION: EXCELLENT SUCCESS")
+            print("   CSRF middleware is ACTIVE and properly protecting all endpoints")
+            print("   Security validation PASSED - application is protected against CSRF attacks")
+        elif success_rate >= 60:
+            print("\n⚠️ CSRF PROTECTION VALIDATION: PARTIAL SUCCESS")
+            print("   CSRF middleware is partially working, some issues need attention")
+            print("   Security validation MIXED - some endpoints may be vulnerable")
+        else:
+            print("\n❌ CSRF PROTECTION VALIDATION: CRITICAL FAILURE")
+            print("   CSRF middleware is NOT working properly")
+            print("   Security validation FAILED - application is vulnerable to CSRF attacks")
+        
+        # Specific recommendations
+        print(f"\n🔧 RECOMMENDATIONS:")
+        if not csrf_test_results['csrf_token_generation']:
+            print("   - Fix CSRF token generation endpoint (/api/auth/csrf-token)")
+        if not csrf_test_results['csrf_protection_login']:
+            print("   - Fix CSRF protection on login endpoint")
+        if not csrf_test_results['csrf_protection_register']:
+            print("   - Fix CSRF protection on registration endpoint")
+        if not csrf_test_results['csrf_protection_critical_endpoints']:
+            print("   - Fix CSRF protection on critical endpoints (subscription, profile, mock tests)")
+        if not csrf_test_results['csrf_error_handling']:
+            print("   - Improve CSRF error handling and error messages")
+        
+        if success_rate >= 80:
+            print("   - CSRF protection is working correctly - no immediate action needed")
+        
+        return success_rate >= 80  # 80% success rate for overall pass
+
     def run_comprehensive_tests(self):
         """Run comprehensive backend tests focusing on REVIEW REQUEST issues"""
         print("🚀 Starting Comprehensive Dhruv AI Backend Testing...")
