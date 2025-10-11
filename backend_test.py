@@ -11999,16 +11999,13 @@ class DhruvAITester:
         return success_rate >= 80  # 80% success rate for overall pass
 
     def run_comprehensive_tests(self):
-        """Run comprehensive backend tests focusing on REVIEW REQUEST issues"""
+        """Run comprehensive backend tests focusing on CSRF PROTECTION VALIDATION"""
         print("🚀 Starting Comprehensive Dhruv AI Backend Testing...")
         print(f"   Backend URL: {self.base_url}")
-        print(f"   Focus: REVIEW REQUEST critical fixes")
+        print(f"   Focus: CSRF PROTECTION VALIDATION - URGENT RE-TEST")
         
-        # PRIORITY: Test the specific review request critical fixes
-        critical_fixes_success = self.test_review_request_critical_fixes()
-        
-        # Also test the previously identified FIXED backend issues
-        fixed_issues_success = self.test_fixed_backend_issues()
+        # PRIORITY: Test CSRF protection as requested in review
+        csrf_protection_success = self.test_csrf_protection_comprehensive()
         
         # Final Results
         print("\n" + "="*60)
@@ -12021,17 +12018,18 @@ class DhruvAITester:
         print(f"✅ Tests Passed: {self.tests_passed}")
         print(f"❌ Tests Failed: {self.tests_run - self.tests_passed}")
         print(f"📈 Success Rate: {success_rate:.1f}%")
-        print(f"🎯 Critical Fixes Working: {'✅' if critical_fixes_success else '❌'}")
-        print(f"🔧 Previously Fixed Issues: {'✅' if fixed_issues_success else '❌'}")
+        print(f"🔒 CSRF Protection Working: {'✅' if csrf_protection_success else '❌'}")
         
-        if critical_fixes_success and fixed_issues_success:
-            print("🎉 EXCELLENT: All critical backend fixes are working correctly!")
-        elif critical_fixes_success:
-            print("✅ GOOD: Review request fixes working, some other issues remain")
+        if csrf_protection_success:
+            print("🎉 EXCELLENT: CSRF protection is ACTIVE and working correctly!")
+            print("   All POST/PUT/DELETE endpoints are properly protected")
+            print("   Security validation PASSED")
         else:
-            print("🚨 CRITICAL: Review request fixes still have problems")
+            print("🚨 CRITICAL: CSRF protection validation FAILED")
+            print("   Application may be vulnerable to CSRF attacks")
+            print("   Immediate action required to fix CSRF middleware")
         
-        return critical_fixes_success
+        return csrf_protection_success
     
     # ============= AUTO-NOTE MENTOR COMPREHENSIVE TESTING =============
     
