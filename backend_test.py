@@ -16515,7 +16515,7 @@ def main():
             print("   ❌ Mock-Tests subjects JEE failed")
             return False
     
-    def test_mock_tests_subjects_neet(self):
+    def test_new_mock_tests_subjects_neet(self):
         """Test Mock-Tests Router - GET /api/mock-tests/subjects?exam_type=NEET"""
         print("   Testing GET /api/mock-tests/subjects?exam_type=NEET endpoint")
         
