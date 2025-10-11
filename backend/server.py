@@ -4989,15 +4989,18 @@ async def logout_user(response: Response):
 @api_router.get("/auth/csrf-token")
 async def get_csrf_token(request: Request):
     """Get CSRF token for secure form submissions"""
-    # For starlette-csrf, we need to generate and return the token
-    # The middleware should handle setting the cookie
-    from starlette_csrf import get_csrf_token
-    try:
-        csrf_token = get_csrf_token(request)
-        return {"csrf_token": csrf_token}
-    except Exception as e:
-        # Fallback: return a basic response to indicate CSRF is active
-        return {"csrf_token": "csrf_required"}
+    # Check if token is available in request state from CSRF middleware
+    csrf_token = getattr(request.state, 'csrf_token', None)
+    if not csrf_token:
+        # Check cookies as fallback
+        csrf_token = request.cookies.get('csrftoken', '')
+    
+    if not csrf_token:
+        # Generate a simple token for development
+        import secrets
+        csrf_token = secrets.token_urlsafe(32)
+    
+    return {"csrf_token": csrf_token}
 
 @api_router.get("/user/profile")
 async def get_user_profile(user: User = Depends(get_current_user)):
