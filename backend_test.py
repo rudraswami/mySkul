@@ -16622,7 +16622,7 @@ def main():
     
     # ============= INTEGRATION TESTS =============
     
-    def test_service_integration(self):
+    def test_new_service_integration(self):
         """Test Service Integration - AutoNotesService and MockTestsService"""
         print("   Testing service layer integration for new routers")
         
