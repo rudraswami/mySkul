@@ -7877,29 +7877,13 @@ class DhruvAITester:
             mentor_text = None
             raw_text = None
             
-            # Check for dual_response structure
+            # Check for dual_response structure (current API format)
             if 'dual_response' in response_data:
                 dual_resp = response_data['dual_response']
                 if 'primary' in dual_resp and 'response' in dual_resp['primary']:
                     professor_text = dual_resp['primary']['response']
-                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
-                    professor_text = dual_resp['professor']['response']
-                if 'mentor' in dual_resp and 'response' in dual_resp['mentor']:
-                    mentor_text = dual_resp['mentor']['response']
-            
-            # Check for direct response fields
-            elif 'primary' in response_data and 'response' in response_data['primary']:
-                professor_text = response_data['primary']['response']
-            elif 'professor_response' in response_data:
-                professor_text = response_data['professor_response']
-            elif 'response' in response_data:
-                professor_text = response_data['response']
-            
-            # Check for mentor response
-            if 'mentor' in response_data and 'response' in response_data['mentor']:
-                mentor_text = response_data['mentor']['response']
-            elif 'mentor_response' in response_data:
-                mentor_text = response_data['mentor_response']
+                if 'secondary' in dual_resp and 'response' in dual_resp['secondary']:
+                    mentor_text = dual_resp['secondary']['response']
             
             # Check for raw text
             if 'raw_text' in response_data:
