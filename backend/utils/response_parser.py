@@ -200,22 +200,39 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         
         return formulas
     
-    def clean_text(self, text: str) -> str:
+    def sanitize_text(self, text: str) -> str:
         """
-        Comprehensive text cleaning - preserves LaTeX, removes artifacts
-        AI Tutor 2.4 enhancement - Student-friendly cleaning with emoji removal
+        Enhanced sanitization for database storage
+        Removes escaped characters, special symbols, and ensures markdown compatibility
         """
         if not text:
             return ''
         
-        # Remove markdown formatting (bold, italic)
-        cleaned = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # Remove **bold**
-        cleaned = re.sub(r'\*(.+?)\*', r'\1', cleaned)   # Remove *italic*
-        cleaned = re.sub(r'__(.+?)__', r'\1', cleaned)   # Remove __bold__
-        cleaned = re.sub(r'_(.+?)_', r'\1', cleaned)     # Remove _italic_
+        # Phase 1: Remove ALL escaped characters first (before DB save)
+        cleaned = text
         
-        # Remove ALL emojis using Unicode ranges
-        # This removes: checkmarks, numbered emojis, faces, symbols, etc.
+        # Remove escaped quotes, slashes, and problematic escapes
+        cleaned = cleaned.replace('\\"', '"')
+        cleaned = cleaned.replace("\\'", "'")
+        cleaned = cleaned.replace('\\/', '/')
+        cleaned = cleaned.replace('\\n', '\n')
+        cleaned = cleaned.replace('\\r', '\r')
+        cleaned = cleaned.replace('\\t', '\t')
+        
+        # Remove double and triple backslashes (preserve single for LaTeX)
+        cleaned = re.sub(r'\\{3,}', '\\', cleaned)  # \\\\ → \
+        cleaned = cleaned.replace('\\\\', '\\')      # \\ → \
+        
+        # Remove JSON escape artifacts
+        cleaned = cleaned.replace('\\u00a0', ' ')    # Non-breaking space
+        cleaned = cleaned.replace('\\u2009', ' ')    # Thin space
+        cleaned = cleaned.replace('\\u202f', ' ')    # Narrow no-break space
+        cleaned = cleaned.replace('\\u200b', '')     # Zero-width space
+        
+        # Remove problematic Unicode sequences that appear as literals
+        cleaned = re.sub(r'\\u[0-9a-fA-F]{4}', '', cleaned)
+        
+        # Aggressive emoji removal with extended patterns
         emoji_pattern = re.compile(
             "["
             "\U0001F1E0-\U0001F1FF"  # flags (iOS)
@@ -228,66 +245,55 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
             "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
             "\U0001FA00-\U0001FA6F"  # Chess Symbols
             "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
-            "\U00002702-\U000027B0"  # Dingbats
-            "\U000024C2-\U0001F251"  # Enclosed characters
-            "\U0001f926-\U0001f937"  # Person gestures
-            "\U00010000-\U0010ffff"  # Supplementary Private Use Area
-            "\u2640-\u2642"          # Gender symbols
-            "\u2600-\u2B55"          # Misc symbols
+            "\u2190-\u21FF"          # Arrows
+            "\u2600-\u26FF"          # Miscellaneous Symbols
+            "\u2700-\u27BF"          # Dingbats
+            "\u3000-\u303F"          # CJK Symbols and Punctuation
+            "\u1F100-\u1F1FF"        # Enclosed Alphanumeric Supplement
+            "\u24C2-\u1F251"         # Enclosed characters
             "\u200d"                 # Zero width joiner
-            "\u23cf"                 # Eject button
-            "\u23e9"                 # Fast forward
-            "\u231a"                 # Watch
-            "\ufe0f"                 # Dingbats
-            "\u3030"                 # Wavy dash
+            "\ufe0f"                 # Variation selector
             "]+", 
             flags=re.UNICODE
         )
         cleaned = emoji_pattern.sub('', cleaned)
         
-        # Also remove specific problematic emojis that might not be caught
-        cleaned = cleaned.replace('✅', '')
-        cleaned = cleaned.replace('❌', '')
-        cleaned = cleaned.replace('☑', '')
-        cleaned = cleaned.replace('💡', '')
-        cleaned = cleaned.replace('🔎', '')
-        cleaned = cleaned.replace('📔', '')
-        cleaned = cleaned.replace('💙', '')
-        cleaned = cleaned.replace('👇', '')
-        cleaned = cleaned.replace('📚', '')
-        cleaned = cleaned.replace('🧮', '')
-        cleaned = cleaned.replace('🧠', '')
+        # Remove specific problematic symbols that bypass regex
+        bad_symbols = ['✅', '❌', '☑', '💡', '🔎', '📔', '💙', '👇', '📚', '🧮', '🧠', 
+                      '🎯', '⚡', '💪', '🌟', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', 
+                      '7️⃣', '8️⃣', '9️⃣', '🔟', '✳️', '❗', '❓', '⭐', '🎪']
+        for symbol in bad_symbols:
+            cleaned = cleaned.replace(symbol, '')
         
-        # First pass: Remove escape sequences (but preserve LaTeX delimiters)
-        # We need to keep \[, \], \(, \) for LaTeX rendering
-        # Replace escaped quotes and newlines
-        cleaned = cleaned.replace('\\"', '"')
-        cleaned = cleaned.replace("\\'", "'")
-        cleaned = cleaned.replace('\\/', '/')
-        
-        # Remove double backslashes completely (LaTeX uses single backslash)
-        cleaned = cleaned.replace('\\\\', '')
+        # Clean markdown symbols for DB storage (markdown-friendly)
+        cleaned = re.sub(r'\*{2,}(.+?)\*{2,}', r'\1', cleaned)  # **bold** → text
+        cleaned = re.sub(r'_{2,}(.+?)_{2,}', r'\1', cleaned)    # __text__ → text
+        cleaned = re.sub(r'`{1,3}(.+?)`{1,3}', r'\1', cleaned)  # `code` → code
+        cleaned = re.sub(r'#{1,6}\s*(.+)', r'\1', cleaned)      # # heading → text
         
         # Remove non-breaking spaces and special unicode
         cleaned = cleaned.replace('\u00a0', ' ')
         cleaned = cleaned.replace('\xa0', ' ')
-        cleaned = cleaned.replace('\u200b', '')  # Zero-width space
-        cleaned = cleaned.replace('\u2009', ' ')  # Thin space
-        cleaned = cleaned.replace('\u202f', ' ')  # Narrow no-break space
+        cleaned = cleaned.replace('\u200b', '')
+        cleaned = cleaned.replace('\u2009', ' ')
+        cleaned = cleaned.replace('\u202f', ' ')
         
-        # Clean up multiple spaces (but preserve intentional spacing)
-        cleaned = re.sub(r' {3,}', '  ', cleaned)
+        # Clean up excessive whitespace
+        cleaned = re.sub(r' {3,}', ' ', cleaned)
         cleaned = re.sub(r'  +', ' ', cleaned)
-        
-        # Clean up multiple newlines (max 2 consecutive)
         cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
         
         # Remove leading/trailing whitespace from each line
         lines = [line.strip() for line in cleaned.split('\n')]
-        cleaned = '\n'.join(lines)
+        cleaned = '\n'.join(line for line in lines if line)
         
         return cleaned.strip()
     
+    def clean_text(self, text: str) -> str:
+        """
+        Legacy method - now calls sanitize_text for consistency
+        """
+        return self.sanitize_text(text)    
     def split_mentor_response(self, mentor_text: str) -> Dict[str, str]:
         """
         Split mentor response into structured emotional sections
