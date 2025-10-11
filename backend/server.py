@@ -5097,7 +5097,7 @@ async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_
     # Get AI response using enhanced modular AI service (AI Tutor 2.1)
     try:
         # Use new modular AI service with all AI Tutor 2.1 enhancements
-        dual_response = await ai_service_modular.generate_dual_ai_response(
+        dual_response = await modular_ai_service.generate_dual_ai_response(
             user.user_id,
             chat_request.message,
             session_id,
@@ -5109,7 +5109,9 @@ async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_
         
     except Exception as e:
         logger.error(f"Chat error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to process message")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to process message: {str(e)}")
 
 @api_router.get("/chat/sessions")
 async def get_chat_sessions(user: User = Depends(get_current_user)):
