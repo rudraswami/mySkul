@@ -16157,47 +16157,6 @@ def main():
         print(f"⚠️ STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: NEEDS ATTENTION")
     
     return overall_success
-    ]
-    
-    # Run priority tests first
-    print("\n🎯 RUNNING PRIORITY TESTS (Authentication Issues)")
-    print("=" * 60)
-    
-    priority_results = []
-    for test_name, test_func in priority_tests:
-        print(f"\n{'='*20} {test_name} {'='*20}")
-        try:
-            result = test_func()
-            priority_results.append((test_name, result))
-            if result:
-                print(f"✅ {test_name} - PASSED")
-            else:
-                print(f"❌ {test_name} - FAILED")
-        except Exception as e:
-            print(f"💥 {test_name} - ERROR: {str(e)}")
-            priority_results.append((test_name, False))
-        
-        time.sleep(2)  # Delay between tests
-    
-    # Check if we should continue with core tests
-    auth_working = any(result for name, result in priority_results if "Authentication" in name)
-    
-    if auth_working:
-        print("\n🎯 RUNNING CORE FUNCTIONALITY TESTS")
-        print("=" * 60)
-        
-        core_results = []
-        for test_name, test_func in core_tests:
-            print(f"\n{'='*10} {test_name} {'='*10}")
-            try:
-                result = test_func()
-                core_results.append((test_name, result))
-                if result:
-                    print(f"✅ {test_name} - PASSED")
-                else:
-                    print(f"❌ {test_name} - FAILED")
-            except Exception as e:
-                print(f"💥 {test_name} - ERROR: {str(e)}")
                 core_results.append((test_name, False))
             
             time.sleep(1)  # Delay between tests
