@@ -754,12 +754,12 @@ class DhruvAITester:
             print("   ❌ Health check endpoint failed")
             return False
 
-    def test_auth_router_registration(self):
-        """Test Auth Router - Registration endpoint"""
-        print("   Testing modular auth router registration endpoint")
+    def test_auth_router_register(self):
+        """Test Auth Router - POST /api/auth/register"""
+        print("   Testing POST /api/auth/register endpoint")
         
         # Create fresh user for registration testing
-        fresh_user_email = f"auth_router_reg_{int(time.time())}@dhruvai.com"
+        fresh_user_email = f"auth_reg_{int(time.time())}@dhruvai.com"
         registration_data = {
             "full_name": "Auth Router Test User",
             "email": fresh_user_email,
@@ -769,27 +769,23 @@ class DhruvAITester:
             "target_year": 2026
         }
         
-        print(f"   Creating user via auth router: {fresh_user_email}")
+        print(f"   Creating user: {fresh_user_email}")
         
-        # Test auth router registration endpoint
         success, response = self.run_test(
-            "Auth Router Registration",
+            "Auth Router Register",
             "POST",
-            "auth/register",  # Should work via modular auth router
+            "auth/register",
             200,
             data=registration_data
         )
         
         if success:
             print("   ✅ Auth router registration working")
-            
-            # Verify response structure
             if 'token' in response:
                 print(f"   ✅ JWT token provided")
             if 'user' in response:
                 user_data = response['user']
-                print(f"   ✅ User data provided: {user_data.get('email')}")
-                
+                print(f"   ✅ User data: {user_data.get('email')}")
             return True
         else:
             print("   ❌ Auth router registration failed")
