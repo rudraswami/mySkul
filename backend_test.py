@@ -16349,7 +16349,7 @@ def main():
             print("   ❌ Mock-Tests library failed")
             return False
     
-    def test_mock_tests_library_recent(self):
+    def test_new_mock_tests_library_recent(self):
         """Test Mock-Tests Router - GET /api/mock-tests/library/recent"""
         print("   Testing GET /api/mock-tests/library/recent endpoint")
         
