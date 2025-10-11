@@ -165,7 +165,7 @@ export default function Subscription() {
     }
   ];
 
-  if (loading) {
+  if (loading || plansLoading) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
