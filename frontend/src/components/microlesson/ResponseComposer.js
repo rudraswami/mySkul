@@ -89,10 +89,10 @@ const ResponseComposer = ({ message, onQuickAction }) => {
     });
   };
 
-  // Extract formulas
+  // Extract formulas using sanitized text
   const formulas = microLessonSections.key_formula || '';
   const formulaList = formulas ? 
-    (Array.isArray(formulas) ? formulas.map(f => cleanText(f)) : [cleanText(formulas)]) : 
+    (Array.isArray(formulas) ? formulas.map(f => sanitizeText(f)) : [sanitizeText(formulas)]) : 
     [];
   
   // Animation variants for progressive reveal
