@@ -46,6 +46,8 @@ export default function Subscription() {
     isLoading: plansLoading 
   } = useSubscriptionPlans();
   
+  const upgradeSubscriptionMutation = useUpgradeSubscription();
+  
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
