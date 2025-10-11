@@ -74,7 +74,22 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    // Handle CSRF token errors
+    if (error.response?.status === 403 && error.response.data?.detail?.includes('CSRF')) {
+      console.warn('CSRF token expired, refreshing...');
+      // Clear expired token and retry
+      csrfToken = null;
+      await fetchCsrfToken();
+      
+      // Retry the original request
+      if (csrfToken) {
+        const originalRequest = error.config;
+        originalRequest.headers['X-CSRF-Token'] = csrfToken;
+        return apiClient.request(originalRequest);
+      }
+    }
+    
     // Handle authentication errors
     if (error.response?.status === 401) {
       // Don't auto-logout here - let components handle it
