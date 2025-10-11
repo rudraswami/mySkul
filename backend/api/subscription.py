@@ -93,22 +93,40 @@ async def check_feature_access(
     user: User = Depends(get_current_user),
     subscription_service: SubscriptionService = Depends(get_subscription_service)
 ):
-    """Check if user has access to a specific feature"""
+    """
+    Check if user has access to a specific feature
+    #BACKEND-FIX-PHASE3 - Returns 200 OK with access info if access granted,
+    402 Payment Required with upsell info if access denied
+    """
     try:
         access_info = await subscription_service.check_feature_access(user.user_id, request.feature_name)
         
+        # Return 200 OK with access info if user has access
+        if access_info.get("has_access", False):
+            return {
+                "has_access": True,
+                "feature": request.feature_name,
+                "remaining": access_info.get("remaining", 0),
+                "limit": access_info.get("limit", 0),
+                "used": access_info.get("used", 0),
+                "subscription_tier": access_info.get("subscription_tier", "FREE")
+            }
+        
         # Return 402 Payment Required if access is denied and upgrade needed
-        if not access_info.get("has_access", False) and access_info.get("upgrade_needed", False):
+        if access_info.get("upgrade_needed", False):
             raise HTTPException(
                 status_code=402,
                 detail={
                     "message": f"Access denied for {request.feature_name}",
                     "reason": access_info.get("reason", "limit_reached"),
                     "upsell_info": access_info.get("upsell_info", {}),
+                    "has_access": False,
+                    "upgrade_needed": True,
                     **access_info
                 }
             )
         
+        # Default: return access info with 200 OK
         return access_info
     except HTTPException:
         raise
