@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { LoadingSpinner } from './ui/loading';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -14,6 +15,13 @@ import {
   Calendar,
   Brain
 } from 'lucide-react';
+
+// #PHASE3-SECURITY-FRONTEND - React Query Migration
+import { 
+  useDashboardAnalytics,
+  useSubjectProgress,
+  useDailyGoals 
+} from '../hooks/useAnalytics';
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('week');
