@@ -260,7 +260,13 @@ const MentorCard = ({ mentorData, weight }) => {
                     <span className="font-bold text-pink-900">🧭 Keep Going!</span>
                   </div>
                   <div className="text-pink-950 text-sm italic">
-                    "<LatexRenderer text={sections.encouragement} />"
+                    "<ReactMarkdown 
+                      components={{
+                        p: ({ children }) => <LatexRenderer text={children} />
+                      }}
+                    >
+                      {mentorSections.encouragement}
+                    </ReactMarkdown>"
                   </div>
                 </div>
               )}
