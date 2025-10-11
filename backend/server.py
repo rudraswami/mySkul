@@ -4987,18 +4987,22 @@ async def logout_user(response: Response):
     return {"message": "Logout successful"}
 
 @api_router.get("/auth/csrf-token")
-async def get_csrf_token(request: Request):
+async def get_csrf_token(request: Request, response: Response):
     """Get CSRF token for secure form submissions"""
-    # Check if token is available in request state from CSRF middleware
-    csrf_token = getattr(request.state, 'csrf_token', None)
-    if not csrf_token:
-        # Check cookies as fallback
-        csrf_token = request.cookies.get('csrftoken', '')
+    # Import the CSRF token generation
+    import secrets
     
-    if not csrf_token:
-        # Generate a simple token for development
-        import secrets
-        csrf_token = secrets.token_urlsafe(32)
+    # Generate a new CSRF token
+    csrf_token = secrets.token_urlsafe(32)
+    
+    # Set the CSRF cookie manually to match middleware expectations
+    response.set_cookie(
+        key="csrftoken",
+        value=csrf_token,
+        httponly=False,  # Frontend needs to read this
+        secure=False,    # Set to True in production with HTTPS
+        samesite="lax"
+    )
     
     return {"csrf_token": csrf_token}
 
