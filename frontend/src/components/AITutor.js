@@ -1549,7 +1549,11 @@ export default function AITutor() {
               Try AI Tutor 2.0
             </span>
             <button
-              onClick={() => setUseAITutor20(true)}
+              onClick={() => {
+                console.log('Toggle button clicked!', useAITutor20);
+                setUseAITutor20(true);
+                console.log('State should be changed to true');
+              }}
               className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200"
             >
               <Sparkles className="w-3 h-3" />
