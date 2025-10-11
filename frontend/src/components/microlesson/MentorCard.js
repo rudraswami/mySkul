@@ -253,7 +253,7 @@ const MentorCard = ({ mentorData, weight }) => {
               )}
 
               {/* Encouragement Quote */}
-              {sections.encouragement && (
+              {mentorSections.encouragement && (
                 <div className="bg-gradient-to-r from-pink-100 to-purple-100 border-l-4 border-pink-400 p-4 rounded-r-xl">
                   <div className="flex items-center space-x-2 mb-2">
                     <TrendingUp className="w-5 h-5 text-pink-600" />
