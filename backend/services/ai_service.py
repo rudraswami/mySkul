@@ -732,6 +732,39 @@ Every question you ask helps build a stronger foundation for your learning journ
 
 **Encouragement:**
 You're making great progress by actively seeking to understand. Keep up this excellent attitude toward learning!"""
+    
+    async def _background_llm_improvement(self, professor_chat, mentor_chat, professor_message, mentor_message, subject: str, user_message: str, user_id: str):
+        """
+        Run LLM calls in background for analytics and future improvements
+        This doesn't block the user response but helps improve system over time
+        """
+        try:
+            logger.info("🔄 Starting background LLM calls for system improvement")
+            
+            # These run in background - user already got fast response
+            start_time = time.time()
+            
+            professor_task = asyncio.create_task(self._safe_llm_call(
+                professor_chat, professor_message, "professor", subject, user_message, max_retries=1, timeout_seconds=120
+            ))
+            mentor_task = asyncio.create_task(self._safe_llm_call(
+                mentor_chat, mentor_message, "mentor", subject, user_message, max_retries=1, timeout_seconds=120
+            ))
+            
+            # Wait for completion (or timeout after 2 minutes total)
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(professor_task, mentor_task, return_exceptions=True),
+                    timeout=120.0
+                )
+                elapsed = time.time() - start_time
+                logger.info(f"📊 Background LLM calls completed in {elapsed:.2f}s - data saved for analytics")
+                
+            except asyncio.TimeoutError:
+                logger.warning("⏰ Background LLM calls timed out - not affecting user experience")
+                
+        except Exception as e:
+            logger.error(f"❌ Background LLM improvement error: {str(e)} - not affecting user experience")
 
     async def validate_math_expression(self, expression: str, units: Optional[str] = None) -> Dict[str, Any]:
         """Validate mathematical expressions using guardrails"""
