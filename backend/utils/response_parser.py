@@ -88,11 +88,11 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         # Extract concept overview (first substantial paragraph, up to 300 chars)
         for para in paragraphs[:3]:
             if len(para) > 50 and len(para) < 500:
-                sections['concept_overview'] = para
+                sections['concept_overview'] = self.clean_text(para)
                 break
         
         if not sections['concept_overview']:
-            sections['concept_overview'] = paragraphs[0][:300] if paragraphs else response[:300]
+            sections['concept_overview'] = self.clean_text(paragraphs[0][:300] if paragraphs else response[:300])
         
         # Enhanced formula extraction
         formulas = self.extract_formulas(response)
