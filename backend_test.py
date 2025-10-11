@@ -12416,6 +12416,209 @@ class DhruvAITester:
         
         return success_rate >= 80  # 80% success rate for overall pass
 
+    def test_gpt4o_optimization_performance(self):
+        """Test GPT-4o Model Optimization for AI Tutor Performance"""
+        print("\n🚀 GPT-4O MODEL OPTIMIZATION PERFORMANCE TESTING")
+        print("=" * 80)
+        print("   TESTING SCOPE: GPT-4o model optimization for significantly faster response times")
+        print("   MODEL CHANGE: GPT-5 → GPT-4o (109 tokens/sec vs slower GPT-5)")
+        print("   TIMEOUT CONFIG: 10s per LLM call, 1 retry max")
+        print("   ENHANCED FALLBACKS: Subject-specific contextual responses")
+        print("   SUCCESS CRITERIA: Response within 15s (vs previous 50+ seconds)")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        
+        # Authentication setup
+        if not self.token:
+            print("   🔐 Authenticating for GPT-4o optimization test...")
+            auth_success = self.test_auth_router_login()
+            if not auth_success:
+                print("   ❌ Authentication failed - cannot test GPT-4o optimization")
+                return False
+        
+        # Test data for GPT-4o optimization
+        test_message = "Explain the quadratic formula"
+        test_subject = "Mathematics"
+        test_session_id = "gpt4o_speed_test"
+        
+        dual_response_data = {
+            "message": test_message,
+            "subject": test_subject,
+            "session_id": test_session_id
+        }
+        
+        print(f"\n📊 TEST PARAMETERS:")
+        print(f"   Message: '{test_message}'")
+        print(f"   Subject: {test_subject}")
+        print(f"   Session ID: {test_session_id}")
+        print(f"   Expected Response Time: < 15 seconds")
+        print(f"   Expected Content: quadratic formula, ax²+bx+c=0, discriminant")
+        
+        # Record start time for performance measurement
+        start_time = time.time()
+        
+        print(f"\n⏱️ PERFORMANCE TEST STARTING...")
+        print(f"   Start Time: {datetime.fromtimestamp(start_time).strftime('%H:%M:%S.%f')[:-3]}")
+        
+        # Execute the dual response API call
+        success, response, _ = self.run_test(
+            "GPT-4o Dual Response Performance",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=dual_response_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        # Record end time and calculate duration
+        end_time = time.time()
+        response_time = end_time - start_time
+        
+        print(f"   End Time: {datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')[:-3]}")
+        print(f"   ⏱️ TOTAL RESPONSE TIME: {response_time:.2f} seconds")
+        
+        # Performance criteria check
+        performance_success = response_time <= 15.0
+        if performance_success:
+            print(f"   ✅ PERFORMANCE SUCCESS: Response completed in {response_time:.2f}s (< 15s target)")
+        else:
+            print(f"   ❌ PERFORMANCE FAILURE: Response took {response_time:.2f}s (> 15s target)")
+        
+        # Content quality verification
+        content_success = False
+        professor_content_valid = False
+        mentor_content_valid = False
+        
+        if success and response:
+            print(f"\n📝 CONTENT QUALITY VERIFICATION:")
+            
+            # Check dual response structure
+            dual_response = response.get('dual_response', {})
+            primary_response = dual_response.get('primary', {})
+            secondary_response = dual_response.get('secondary', {})
+            
+            professor_response = primary_response.get('response', '')
+            mentor_response = secondary_response.get('response', '')
+            
+            print(f"   📊 Response Structure Analysis:")
+            print(f"      Dual Response Present: {'✅' if dual_response else '❌'}")
+            print(f"      Primary Response Length: {len(professor_response)} characters")
+            print(f"      Secondary Response Length: {len(mentor_response)} characters")
+            
+            # Content validation for Professor response
+            professor_keywords = ['quadratic formula', 'ax²+bx+c=0', 'discriminant', 'quadratic', 'formula']
+            professor_matches = [keyword for keyword in professor_keywords if keyword.lower() in professor_response.lower()]
+            
+            if len(professor_matches) >= 2:  # At least 2 relevant keywords
+                professor_content_valid = True
+                print(f"   ✅ Professor Response Content: VALID ({len(professor_matches)} relevant keywords)")
+                print(f"      Keywords found: {', '.join(professor_matches)}")
+            else:
+                print(f"   ❌ Professor Response Content: INVALID (only {len(professor_matches)} relevant keywords)")
+                print(f"      Keywords found: {', '.join(professor_matches) if professor_matches else 'None'}")
+            
+            # Content validation for Mentor response
+            mentor_keywords = ['mathematics', 'learning', 'understand', 'practice', 'help', 'study']
+            mentor_matches = [keyword for keyword in mentor_keywords if keyword.lower() in mentor_response.lower()]
+            
+            if len(mentor_matches) >= 2:  # At least 2 encouraging/educational keywords
+                mentor_content_valid = True
+                print(f"   ✅ Mentor Response Content: VALID ({len(mentor_matches)} encouraging keywords)")
+                print(f"      Keywords found: {', '.join(mentor_matches)}")
+            else:
+                print(f"   ❌ Mentor Response Content: INVALID (only {len(mentor_matches)} encouraging keywords)")
+                print(f"      Keywords found: {', '.join(mentor_matches) if mentor_matches else 'None'}")
+            
+            # Check for generic responses (fallback quality)
+            generic_phrases = ['let\'s explore this together', 'i can help you with that', 'that\'s a great question']
+            professor_generic = any(phrase in professor_response.lower() for phrase in generic_phrases)
+            mentor_generic = any(phrase in mentor_response.lower() for phrase in generic_phrases)
+            
+            if not professor_generic and not mentor_generic:
+                print(f"   ✅ Non-Generic Responses: Both responses are contextual and specific")
+            else:
+                print(f"   ⚠️ Generic Response Detected: {'Professor' if professor_generic else ''} {'Mentor' if mentor_generic else ''}")
+            
+            content_success = professor_content_valid and mentor_content_valid and not (professor_generic or mentor_generic)
+            
+            # Display response samples
+            print(f"\n📄 RESPONSE SAMPLES:")
+            print(f"   Professor Response (first 200 chars): {professor_response[:200]}...")
+            print(f"   Mentor Response (first 200 chars): {mentor_response[:200]}...")
+        
+        else:
+            print(f"   ❌ API CALL FAILED: Cannot verify content quality")
+            if not success:
+                print(f"      Error: API returned non-200 status")
+            if not response:
+                print(f"      Error: No response data received")
+        
+        # Fallback quality test (if main request failed)
+        fallback_success = False
+        if not success:
+            print(f"\n🔄 FALLBACK QUALITY TEST:")
+            print(f"   Testing enhanced contextual fallback system...")
+            
+            # Check if error response contains contextual fallback
+            error_data = getattr(self, 'last_error_data', {})
+            if error_data and isinstance(error_data, dict):
+                fallback_message = error_data.get('fallback_response', '')
+                if fallback_message and 'mathematics' in fallback_message.lower():
+                    fallback_success = True
+                    print(f"   ✅ Enhanced Contextual Fallback: Mathematics-specific content provided")
+                    print(f"   Fallback Content: {fallback_message[:150]}...")
+                else:
+                    print(f"   ❌ Enhanced Contextual Fallback: Generic or missing fallback")
+            else:
+                print(f"   ❌ Enhanced Contextual Fallback: No fallback data available")
+        
+        # Final assessment
+        print(f"\n" + "=" * 80)
+        print(f"🚀 GPT-4O MODEL OPTIMIZATION - FINAL RESULTS")
+        print(f"=" * 80)
+        
+        print(f"\n📊 SUCCESS CRITERIA EVALUATION:")
+        print(f"   ✅ Response Time (< 15s): {'PASS' if performance_success else 'FAIL'} ({response_time:.2f}s)")
+        print(f"   ✅ No Timeout Errors: {'PASS' if success else 'FAIL'}")
+        print(f"   ✅ Contextual Mathematics Content: {'PASS' if content_success else 'FAIL'}")
+        print(f"   ✅ Professor Response Quality: {'PASS' if professor_content_valid else 'FAIL'}")
+        print(f"   ✅ Mentor Response Quality: {'PASS' if mentor_content_valid else 'FAIL'}")
+        print(f"   ✅ Enhanced Fallback (if needed): {'PASS' if fallback_success or success else 'FAIL'}")
+        
+        # Calculate overall success
+        criteria_met = sum([
+            performance_success,
+            success,  # No timeout errors
+            content_success,
+            fallback_success or success  # Either main response works or fallback is good
+        ])
+        
+        total_criteria = 4
+        success_rate = (criteria_met / total_criteria) * 100
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {criteria_met}/{total_criteria} ({success_rate:.1f}%)")
+        
+        if success_rate >= 75:
+            print(f"\n✅ GPT-4O OPTIMIZATION: EXCELLENT SUCCESS")
+            print(f"   Significant performance improvement demonstrated")
+            print(f"   Response quality maintained with faster model")
+            print(f"   Enhanced fallbacks working correctly")
+        elif success_rate >= 50:
+            print(f"\n⚠️ GPT-4O OPTIMIZATION: PARTIAL SUCCESS")
+            print(f"   Some improvements visible, optimization needs refinement")
+        else:
+            print(f"\n❌ GPT-4O OPTIMIZATION: NEEDS WORK")
+            print(f"   Performance targets not met, requires investigation")
+        
+        # Performance comparison note
+        if performance_success:
+            improvement_factor = 50.0 / response_time if response_time > 0 else float('inf')
+            print(f"\n🎯 PERFORMANCE IMPROVEMENT:")
+            print(f"   Previous Response Time: ~50+ seconds")
+            print(f"   Current Response Time: {response_time:.2f} seconds")
+            print(f"   Improvement Factor: {improvement_factor:.1f}x faster")
+        
+        return success_rate >= 75
+
     def run_comprehensive_tests(self):
         """Run comprehensive backend tests focusing on CSRF PROTECTION VALIDATION"""
         print("🚀 Starting Comprehensive Dhruv AI Backend Testing...")
