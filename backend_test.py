@@ -18808,7 +18808,7 @@ def main():
         print("   - Re-test CSRF implementation")
         print("   - Ensure all endpoints require CSRF tokens")
     
-        return csrf_success
+    return csrf_success
 
     def run_comprehensive_ai_tutor_backend_tests(self):
         """Run comprehensive AI Tutor backend testing as requested in review"""
