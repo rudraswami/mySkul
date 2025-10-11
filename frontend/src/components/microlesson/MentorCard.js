@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, ChevronDown, Sparkles, MessageCircle, Target, TrendingUp } from 'lucide-react';
+import LatexRenderer from './LatexRenderer';
 
 /**
  * MentorCard - Structured emotional guidance with collapsible sections
