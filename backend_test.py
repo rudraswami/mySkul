@@ -8019,6 +8019,7 @@ class DhruvAITester:
         
         math_problem_message = {
             "message": "Explain the discriminant formula for quadratic equations with examples",
+            "session_id": test_session_id,
             "subject": "Mathematics"
         }
         
