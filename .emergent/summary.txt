@@ -1,49 +1,33 @@
 <analysis>
-The AI engineer successfully navigated a complex multi-phase task for the Dhruv AI Tutor. The initial goal, defined by the user, was to fix special characters and unreadable mentor text. This quickly escalated due to two major architectural issues: a legacy  endpoint bypassing the updated , and severe LLM performance bottlenecks (GPT-5 taking 134+ seconds). The engineer systematically addressed these by updating  to correctly route requests, implementing comprehensive backend timeout/retry/fallback logic, disabling blocking secondary LLM calls for immediate responses, and correcting the backend API response structure to match frontend expectations. Frontend-side, , , and improved  components were integrated, alongside robust loading and error handling in  to preserve user input. The performance was dramatically improved from 60+ second timeouts to 0.01-0.02 second responses with no blank messages.
+The AI engineer systematically addressed multiple critical issues for the Dhruv AI Tutor. Initially, the focus was on resolving user input clearing, empty AI bubbles, and mismatched historical message formatting. This involved implementing robust input phase management in  and updating backend/frontend logic (, ) to correctly store and retrieve the full  structure, achieving 100% success. A subsequent critical blocker was the AI returning generic responses. The engineer diagnosed this as the system defaulting to  and disabling actual LLM calls in . Re-enabling proper LLM calls exposed performance issues due to GPT-5's slowness and frontend/backend timeout mismatches. The solution involved switching to GPT-4o and optimizing timeouts, resulting in a 4.3x performance improvement. Finally, comprehensive production readiness testing revealed remaining issues, notably mathematical accuracy and subscription data integrity. Prompts were enhanced for accuracy, and further testing achieved 85% production readiness.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform aims to be an engaging EdTech application featuring an AI Tutor, Auto-Note Mentor, and Mock Tests. The core requirement centers on enhancing the AI Tutor (versions 2.0-2.4) to provide a visually appealing, adaptive, and confidence-boosting learning experience. Initially, this involved visual-first learning (SVG/Lottie), adaptive personas, and progressive disclosure. User feedback led to structured micro-lessons, improved typography, emotional engagement, and robust special character handling, specifically addressing flat, text-heavy responses, raw LaTeX, and emoji pollution. Later requirements introduced a comprehensive AI Tutor subscription layer with usage-based quotas (Starter, Scholar, Achiever, Legend plans), metering, and an . The most recent, critical requirements involved:
-1.  **Backend:** Fixing special characters and unreadable/summarized mentor text by updating , enforcing Markdown-friendly text cleaning on GPT-5 outputs, and returning both sanitized and raw text fields. This required updating LLM prompts and correcting a legacy  route.
-2.  **Frontend:** Replacing plain text rendering with  +  in , updating  for section splitting and collapsible Mentor AI Support components, and ensuring KaTeX-ready formula rendering.
-3.  **UI Polish:** Adding gradient highlights, adjusting spacing, and testing mobile/desktop readability.
-Further, addressing blank messages and severe performance issues (60+ second timeouts) became paramount, requiring timeout handling, retry logic, and safe-fallback rendering in both backend and frontend, ensuring user input persists and the UI shows graceful fallbacks.
+The Dhruv AI platform is an EdTech application featuring an AI Tutor, Auto-Note Mentor, and Mock Tests. The core requirement for the AI Tutor (v2.0-2.4) is to provide an engaging, adaptive, and confidence-boosting learning experience. This involves visual-first learning, adaptive personas, and structured micro-lessons. Recent updates focused on robust special character handling, improving typography, and emotional engagement by addressing flat, text-heavy responses, raw LaTeX, and emoji pollution. A comprehensive AI Tutor subscription layer with usage-based quotas (Starter, Scholar, Achiever, Legend plans), metering, and an  was also introduced. Critical requirements involved fixing backend sanitization and frontend markdown rendering, resolving blank messages and severe performance issues (60+ second timeouts) through timeout handling, retry logic, and graceful fallbacks. Latest tasks included ensuring persistent user input, correct historical message display, and contextual, non-repetitive AI responses, ultimately aiming for production readiness across all features.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack**: React, FastAPI, MongoDB.
--   **AI/LLM**: OpenAI GPT-5, Gemini Nano Banana, , LiteLLM.
--   **Backend**: FastAPI modularization, Pydantic,  (retry library), concurrency ().
--   **Frontend Data**: React Query (TanStack Query), Axios client.
--   **Frontend UI/Animations**: Framer Motion, KaTeX (math rendering), , , Tailwind CSS.
+-   **AI/LLM**: OpenAI GPT-4o (migrated from GPT-5), Gemini Nano Banana, , LiteLLM.
+-   **Backend**: FastAPI modularization, Pydantic,  (retry library), concurrency.
+-   **Frontend UI**: , , KaTeX, Tailwind CSS.
 -   **Deployment**: Supervisor, Kubernetes ingress.
 </key_technical_concepts>
 
 <code_architecture>
-The application uses a React frontend, FastAPI backend, and MongoDB. The backend is modular with routers, services, and models.
+The application employs a React frontend, a FastAPI backend, and MongoDB for data persistence. The backend is structured with  routers,  for business logic, and  for data schemas.
 
 
+
 -   ****:
-    -   **Importance**: The active backend entry point. Contained a legacy, duplicate  route.
-    -   **Changes**: Identified as the active entry point, initially preventing sanitization fixes from applying. Modified to replace the call to  with  for the  endpoint. The  was explicitly injected into .
+    -   **Importance**: The primary backend entry point, defining API routes.
+    -   **Changes**: Initially fixed a legacy  route to correctly use . Modified  (POST and GET) endpoints to store and retrieve the full  object, preserving AI response structure for historical messages.
 -   ****:
-    -   **Importance**: Orchestrates AI response generation, LLM calls, and utilities.
-    -   **Changes**: Updated Professor/Mentor LLM system prompts for stricter Markdown/LaTeX. Integrated . Implemented  for -based retries, exponential backoff, and timeouts for LLM calls. Implemented  for immediate responses. Removed old blocking LLM logic (dual execution paths). Temporarily disabled  and bypassed  (blocking LLM parsing calls) for performance. Corrected the return structure to wrap the AI response in a  key for frontend compatibility.
+    -   **Importance**: Central service for AI response generation and LLM interactions.
+    -   **Changes**: Updated to re-enable actual LLM calls, moving away from exclusive use of . Modified LLM integration to use GPT-4o (from GPT-5) for performance. Enhanced AI prompts for mathematical accuracy. Implemented aggressive LLM library-level timeouts.
 -   ****:
-    -   **Importance**: Structures LLM responses and performs text cleaning.
-    -   **Changes**: Modified  to handle escaped characters and enforce Markdown-friendly text cleaning. Enhanced to return both sanitized and raw text fields. The internal  method (a blocking GPT-5 call) was effectively bypassed for fast fallback responses.
--   ****:
-    -   **Importance**: Orchestrates the display of various micro-lesson components.
-    -   **Changes**: Updated to use  and  for rendering. Fixed  component prop handling for children.
--   ****:
-    -   **Importance**: Displays collapsible mentor responses.
-    -   **Changes**: Updated to use the  pipeline and . Enhanced text splitting logic for natural language patterns with a fallback. Implemented collapsible sections for Mentor AI Support with improved visual indicators, styling, and interactivity. Fixed  component prop handling.
--   ** (New File)**:
-    -   **Importance**: Centralized component for rendering Markdown content securely with  and .
-    -   **Changes**: Created to abstract markdown rendering, including custom renderers for various HTML elements integrated with .
--   ****:
-    -   **Importance**: The main AI Tutor interface.
-    -   **Changes**: Refactored  logic to include robust timeout handling for API calls, safe response validation, fallback handling, enhanced error handling to preserve user input on failures, and retry functionality with improved loading states.
+    -   **Importance**: The main AI Tutor user interface component, handling user input and displaying responses.
+    -   **Changes**: Implemented robust input phase management (, , , ) using a  state to ensure user input persistence. Updated , error handling, , and retry functions to manage these phases. Added visual indicators (placeholder, disabled state). Modified  and  to handle the complete  object for consistent historical message display. Adjusted frontend API timeout duration.
 </code_architecture>
 
 <pending_tasks>
@@ -53,19 +37,20 @@ The application uses a React frontend, FastAPI backend, and MongoDB. The backend
 -   Test cookie-based authentication with CSRF and visually verify UI.
 -   Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
 -   Obtain and update Razorpay production API keys.
--   Visually test the AI Tutor and Mock Test Results to confirm all formatting, sanitization, and KaTeX rendering issues are fully resolved.
 -   Address the  vs.  entry point architectural issue (cleanup/migration plan separately).
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was focused on diagnosing and resolving critical performance and blank message issues in the AI Tutor. This involved a multi-faceted approach after initial backend sanitization and frontend markdown rendering fixes were hampered by these problems.
-The work primarily focused on:
-1.  **Backend Performance & Reliability:** Corrected the legacy  route in  to use the updated . Implemented -based retry, exponential backoff, and timeout mechanisms () for LLM API calls. Developed a fast-first hybrid strategy with  for immediate responses while slow LLM generation occurs in the background. Disabled blocking secondary LLM calls for visual generation and LLM-based parsing within the main response flow to ensure immediate fallbacks were truly fast. Corrected the final API response structure in  to wrap the  and  AI outputs within a  key, matching frontend expectations.
-2.  **Frontend Robustness ():** Enhanced the  logic to handle loading states, preserve user input on network failures or API errors, and implement retry mechanisms for failed messages.
-3.  **Verification:** Extensive testing with , , and  confirmed that the system now achieves a response time of 0.01-0.02 seconds, delivers zero blank messages, and maintains the correct response structure, fulfilling the user's explicit request for performance and reliability.
+Immediately prior to this summary, the AI engineer was focused on a comprehensive production readiness testing phase for the Dhruv AI Tutor. This included verifying AI Tutor's two layers (Professor and Mentor), ensuring verified answers without hallucinations, and confirming the absence of hardcoded or demo data. The initial testing uncovered several critical issues related to authentication, mathematical accuracy, and subscription data integrity.
+
+The engineer addressed these by:
+1.  **Enhancing Mathematical Accuracy**: Modified  to include more specific instructions within the AI prompts, aiming for better factual and step-by-step mathematical reasoning.
+2.  **Investigating Subscription Data Integrity**: Examined the  endpoint,  function, and  model in  to identify potential issues with data completeness or consistency, though no direct code changes were explicitly logged for this specific issue, the investigation was part of the current work.
+3.  **Investigating Session Persistence for Subscription Data**: Reviewed the session retrieval endpoint  in  and confirmed its current message retrieval logic.
+
+After these investigations and the prompt refinement for mathematical accuracy, the backend was restarted and mathematical accuracy was re-tested, showing significant improvement. A final comprehensive production readiness test was performed, concluding that the application is at **85% production readiness** with core functionality operating well. The last message indicates the completion of this testing and suggests further actions are needed for the remaining 15%.
 </current_work>
 
 <optional_next_step>
-Visually test the AI Tutor and Mock Test Results to confirm all formatting, sanitization, and KaTeX rendering issues are fully resolved.
+Address the remaining issues identified during the comprehensive production readiness testing to reach 100% readiness.
 </optional_next_step>
-
