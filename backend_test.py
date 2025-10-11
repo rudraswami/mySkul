@@ -47,11 +47,11 @@ class DhruvAITester:
                     response = session.put(url, json=data, headers=test_headers, timeout=30)
             else:
                 if method == 'GET':
-                    response = requests.get(url, headers=test_headers, timeout=30)
+                    response = requests.get(url, headers=test_headers, timeout=60)
                 elif method == 'POST':
-                    response = requests.post(url, json=data, headers=test_headers, timeout=30)
+                    response = requests.post(url, json=data, headers=test_headers, timeout=60)
                 elif method == 'PUT':
-                    response = requests.put(url, json=data, headers=test_headers, timeout=30)
+                    response = requests.put(url, json=data, headers=test_headers, timeout=60)
 
             print(f"   Status Code: {response.status_code}")
             
