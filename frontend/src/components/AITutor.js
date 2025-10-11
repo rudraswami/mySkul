@@ -104,6 +104,89 @@ export default function AITutor() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [lastFailedAction, setLastFailedAction] = useState(null);
   
+  // ============= ENGAGEMENT & GAMIFICATION STATES =============
+  const [streakInfo, setStreakInfo] = useState({ current_streak: 0, longest_streak: 0 });
+  const [xpInfo, setXPInfo] = useState({ total_xp: 0, current_level: 1, progress_percentage: 0 });
+  const [showXPPopup, setShowXPPopup] = useState(false);
+  const [lastXPGain, setLastXPGain] = useState(null);
+  const [verificationBadge, setVerificationBadge] = useState("✓ 100% Hallucination-Free AI");
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceAnimation, setVoiceAnimation] = useState(false);
+  const [modeTransition, setModeTransition] = useState(false);
+
+  // Phase A: Complete Input Methods states
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [showContextPin, setShowContextPin] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [contextPinData, setContextPinData] = useState([]);
+  const [selectedContext, setSelectedContext] = useState(null);
+  const [availableContexts, setAvailableContexts] = useState([]);
+  const fileInputRef = useRef(null);
+
+  // Phase B: Personalization states
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [showPersonalization, setShowPersonalization] = useState(false);
+  const [topicMastery, setTopicMastery] = useState({});
+  const [errorPatterns, setErrorPatterns] = useState([]);
+  const [lastFeedback, setLastFeedback] = useState(null);
+  const [personalizedDifficulty, setPersonalizedDifficulty] = useState(0.5);
+  const [feedbackSentiment, setFeedbackSentiment] = useState('neutral');
+  
+  // Phase E: Wellness Integration State
+  const [showWellnessCheck, setShowWellnessCheck] = useState(false);
+  const [wellnessData, setWellnessData] = useState({
+    stress_level: 5,
+    motivation_level: 7,
+    confidence_level: 6,
+    study_satisfaction: 7
+  });
+
+  const subjects = {
+    'JEE': ['Mathematics', 'Physics', 'Chemistry'],
+    'NEET': ['Physics', 'Chemistry', 'Biology'],
+    'UPSC': ['General Studies', 'Current Affairs', 'History', 'Geography', 'Polity']
+  };
+
+  useEffect(() => {
+    fetchChatSessions();
+    loadPersonalizationData();
+    initializeSpeechRecognition();
+    fetchEngagementData();
+  }, []);
+
+  useEffect(() => {
+    // Filter sessions based on search query
+    if (searchQuery.trim()) {
+      const filtered = sessions.filter(session => 
+        session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        session.subject.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredSessions(filtered);
+    } else {
+      setFilteredSessions(sessions);
+    }
+  }, [searchQuery, sessions]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Close session action menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sessionActions.showMenu && !event.target.closest('.session-action-menu')) {
+        setSessionActions({ ...sessionActions, showMenu: null });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [sessionActions.showMenu]);
+  
   // If AI Tutor 2.0 is enabled, render the new component
   if (useAITutor20) {
     return (
