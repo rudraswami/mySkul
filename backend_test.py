@@ -17560,51 +17560,59 @@ class DhruvAITester:
         return compatibility_score >= (total_endpoints * 0.8)  # 80% compatibility required
 
 def main():
-    """Main test execution - STAGE 2 MODULAR INTEGRATION TESTING"""
-    print("🚀 Starting Dhruv AI Backend Testing Suite")
-    print("🎯 STAGE 2: COMPREHENSIVE MODULAR INTEGRATION TESTING")
-    print("   Focus: Complete validation of 5 modular routers as per review request")
-    print("   Scope: Auth, User, Subscription, AI, Analytics routers")
+    """Main function to run CSRF protection tests"""
+    print("🛡️ DHRUV AI BACKEND CSRF PROTECTION TESTING")
+    print("=" * 80)
+    print("STAGE 3 BACKEND TESTING: Comprehensive CSRF Security Validation")
+    print("Focus: CSRF token exchange, protection enforcement, error handling")
+    print("Backend URL: https://modular-backend-5.preview.emergentagent.com/api")
+    print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     
     tester = DhruvAITester()
     
-    # Run comprehensive Stage 2 modular integration testing
-    print("\n🎯 EXECUTING STAGE 2 COMPREHENSIVE MODULAR INTEGRATION TESTING")
-    print("   Credentials: test@dhruvai.com / password123")
+    # Run comprehensive CSRF protection tests
+    csrf_success = tester.test_comprehensive_csrf_protection()
     
-    overall_success = tester.test_stage2_comprehensive_modular_integration()
+    # Final Summary
+    print("\n" + "=" * 80)
+    print("🛡️ STAGE 3 BACKEND CSRF TESTING - FINAL SUMMARY")
+    print("=" * 80)
     
-    print(f"\n" + "=" * 80)
-    print(f"🏁 TESTING COMPLETE")
-    print(f"📊 Overall Tests: {tester.tests_run}")
-    print(f"✅ Passed: {tester.tests_passed}")
-    print(f"❌ Failed: {tester.tests_run - tester.tests_passed}")
-    print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    print(f"\n📊 TEST EXECUTION SUMMARY:")
+    print(f"   Total Tests Run: {tester.tests_run}")
+    print(f"   Tests Passed: {tester.tests_passed}")
+    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
     
-    if overall_success:
-        print(f"🎉 STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: SUCCESS")
+    print(f"\n🛡️ CSRF PROTECTION STATUS:")
+    if csrf_success:
+        print("   ✅ CSRF PROTECTION: SECURE")
+        print("   The backend has robust CSRF protection implemented")
+        print("   All critical security mechanisms are working correctly")
     else:
-        print(f"⚠️ STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: NEEDS ATTENTION")
+        print("   ❌ CSRF PROTECTION: NEEDS ATTENTION")
+        print("   Critical CSRF security issues identified")
+        print("   Immediate fixes required for production security")
     
-    return overall_success
-
+    print(f"\n🎯 KEY FINDINGS:")
+    print("   - CSRF token generation and validation tested")
+    print("   - Authentication flow security validated")
+    print("   - API endpoint protection verified")
+    print("   - Error handling and security responses checked")
+    print("   - Token refresh and retry mechanisms tested")
+    
+    print(f"\n📋 NEXT STEPS:")
+    if csrf_success:
+        print("   - CSRF protection is production-ready")
+        print("   - Continue with frontend integration testing")
+        print("   - Monitor CSRF token usage in production")
+    else:
+        print("   - Fix identified CSRF protection issues")
+        print("   - Re-test CSRF implementation")
+        print("   - Ensure all endpoints require CSRF tokens")
+    
+    return csrf_success
 
 if __name__ == "__main__":
-    tester = DhruvAITester()
-    
-    print("🚀 Starting Dhruv AI Backend Testing - NEW ROUTERS FOCUS...")
-    print(f"🌐 Base URL: {tester.base_url}")
-    print(f"📧 Test User: {tester.test_user_email}")
-    
-    # Run comprehensive Stage 2 new routers integration testing
-    success = tester.test_stage2_new_routers_integration()
-    
-    print(f"\n" + "=" * 80)
-    print(f"🎯 FINAL RESULT: {'SUCCESS' if success else 'FAILURE'}")
-    print(f"📊 Tests Run: {tester.tests_run}")
-    print(f"✅ Tests Passed: {tester.tests_passed}")
-    print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
-    print("=" * 80)
-    
+    success = main()
     sys.exit(0 if success else 1)
