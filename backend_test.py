@@ -16707,7 +16707,7 @@ def main():
         
         return all_401_working
     
-    def test_data_structure_validation(self):
+    def test_new_data_structure_validation(self):
         """Test Data Structure Validation - Response formats match expected"""
         print("   Testing response data structures match expected formats")
         
