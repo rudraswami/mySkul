@@ -1076,6 +1076,14 @@ export default function AITutor() {
       sendMessage();
     }
   };
+  
+  // Retry failed message
+  const retryMessage = (originalMessage) => {
+    setCurrentMessage(originalMessage);
+    setTimeout(() => {
+      sendMessage();
+    }, 100);
+  };
 
   // Phase 3: Enhanced functionality methods
   const copyToClipboard = (text) => {
