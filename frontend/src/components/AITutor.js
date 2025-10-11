@@ -359,28 +359,26 @@ export default function AITutor() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
 
-      // Extract clean response text for storage
-      let cleanResponse = '';
-      if (aiResponse && typeof aiResponse === 'object') {
-        // Extract primary response from dual_response structure
-        if (aiResponse.dual_response && aiResponse.dual_response.primary) {
-          cleanResponse = aiResponse.dual_response.primary.response || '';
-        }
-        // Fallback to other response structures
-        else if (aiResponse.response) {
-          cleanResponse = aiResponse.response;
-        }
-        // If no clean text found, store the whole object (fallback)
-        else {
-          cleanResponse = aiResponse;
-        }
-      } else {
-        cleanResponse = aiResponse;
+      // Save the complete AI response structure to preserve dual_response data
+      // This ensures historical messages can be properly rendered
+      let responseToStore = aiResponse;
+      
+      // If aiResponse has dual_response structure, preserve it entirely
+      if (aiResponse && typeof aiResponse === 'object' && aiResponse.dual_response) {
+        responseToStore = aiResponse;
+      }
+      // For other structures, still save the complete object
+      else if (aiResponse && typeof aiResponse === 'object') {
+        responseToStore = aiResponse;
+      }
+      // If it's just text, wrap it in a simple structure
+      else {
+        responseToStore = { response: aiResponse };
       }
 
       await axios.post(`${API}/chat/${sessionId}/messages`, {
         user_message: message,
-        ai_response: cleanResponse,
+        ai_response: responseToStore,
         timestamp: new Date().toISOString()
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
