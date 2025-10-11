@@ -758,7 +758,8 @@ export default function AutoNoteMentor() {
       });
       
       // Track feature usage for subscription (recording started successfully)
-      await trackFeatureUsage('auto_note_recordings_daily');
+      // Both uploads and recordings share the same daily quota
+      await trackFeatureUsage('auto_note_uploads_daily');
       
       // Initialize Web Speech API for real-time transcription
       if ('webkitSpeechRecognition' in window) {
