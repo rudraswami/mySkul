@@ -192,20 +192,35 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
     
     def clean_text(self, text: str) -> str:
         """
-        Comprehensive text cleaning - removes ALL escape characters and artifacts
-        AI Tutor 2.4 enhancement
+        Comprehensive text cleaning - preserves LaTeX, removes artifacts
+        AI Tutor 2.4 enhancement - Student-friendly cleaning
         """
         if not text:
             return ''
         
-        # First pass: Remove escape sequences
-        cleaned = text.replace('\\n', '\n')
-        cleaned = cleaned.replace('\\r', '\r')
-        cleaned = cleaned.replace('\\t', '    ')
+        # Remove markdown formatting (bold, italic)
+        cleaned = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # Remove **bold**
+        cleaned = re.sub(r'\*(.+?)\*', r'\1', cleaned)   # Remove *italic*
+        cleaned = re.sub(r'__(.+?)__', r'\1', cleaned)   # Remove __bold__
+        cleaned = re.sub(r'_(.+?)_', r'\1', cleaned)     # Remove _italic_
+        
+        # Remove emoji-like checkmarks and boxes (but keep regular emojis)
+        cleaned = cleaned.replace('✅', '')
+        cleaned = cleaned.replace('❌', '')
+        cleaned = cleaned.replace('☑', '')
+        cleaned = cleaned.replace('📘', '📘')  # Keep this one
+        cleaned = cleaned.replace('📙', '')
+        cleaned = cleaned.replace('📗', '')
+        
+        # First pass: Remove escape sequences (but preserve LaTeX delimiters)
+        # We need to keep \[, \], \(, \) for LaTeX rendering
+        # Replace escaped quotes and newlines
         cleaned = cleaned.replace('\\"', '"')
         cleaned = cleaned.replace("\\'", "'")
-        cleaned = cleaned.replace('\\\\', '')
         cleaned = cleaned.replace('\\/', '/')
+        
+        # Remove double backslashes (but not before LaTeX commands)
+        cleaned = re.sub(r'\\\\(?![a-zA-Z\[\]\(\){])', '', cleaned)
         
         # Remove non-breaking spaces and special unicode
         cleaned = cleaned.replace('\u00a0', ' ')
@@ -213,15 +228,6 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         cleaned = cleaned.replace('\u200b', '')  # Zero-width space
         cleaned = cleaned.replace('\u2009', ' ')  # Thin space
         cleaned = cleaned.replace('\u202f', ' ')  # Narrow no-break space
-        
-        # Clean up LaTeX artifacts
-        cleaned = cleaned.replace('\\[', '[')
-        cleaned = cleaned.replace('\\]', ']')
-        cleaned = cleaned.replace('\\(', '(')
-        cleaned = cleaned.replace('\\)', ')')
-        
-        # Remove any remaining backslashes not part of LaTeX
-        cleaned = re.sub(r'\\(?![a-zA-Z{])', '', cleaned)
         
         # Clean up multiple spaces (but preserve intentional spacing)
         cleaned = re.sub(r' {3,}', '  ', cleaned)
