@@ -17934,6 +17934,9 @@ class DhruvAITester:
             test_results['curiosity_parabola_test'] = True
             print("   ✅ Parabola question processed successfully")
             
+            # Print full response for debugging
+            print(f"   🔍 Full response structure: {json.dumps(response, indent=2)}")
+            
             # Validate response structure
             if self.validate_dual_response_structure(response, "curiosity", "parabola"):
                 test_results['response_structure_valid'] = True
