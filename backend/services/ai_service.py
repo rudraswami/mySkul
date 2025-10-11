@@ -1,12 +1,20 @@
 """
 AI service for chat sessions, dual AI responses, guardrails, and AI-powered features
+Enhanced for AI Tutor 2.0 with adaptive personas, visual generation, and sentiment analysis
 """
 import os
 import logging
+import sys
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+import base64
+
+# Add utils to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from utils.sentiment_analyzer import SentimentAnalyzer
+from utils.svg_generator import SVGGenerator
 
 from models.core import User, ChatSession, ChatMessage
 from models.ai import (
