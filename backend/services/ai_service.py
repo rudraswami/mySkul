@@ -197,11 +197,13 @@ RENDER SAFETY:
 Topic: {message}
 Subject: {subject}"""
             
+            # Use GPT-4o for faster response times (109 tokens/sec vs GPT-5's slower response)
+            # GPT-4o provides excellent quality with significantly better speed for user experience
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"professor_{user_id}_{session_id}",
                 system_message=professor_system
-            ).with_model("openai", "gpt-5")
+            ).with_model("openai", "gpt-4o")  # Using GPT-4o for optimal speed/quality balance
             
             # Mentor response (motivational, strategic guidance)
             mentor_system = f"""You are a Mentor AI providing emotionally supportive guidance optimized for student motivation.
