@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -18,64 +18,38 @@ import {
   X
 } from 'lucide-react';
 
+// #PHASE3-SECURITY-FRONTEND - React Query Migration
+import { 
+  useCurrentSubscription, 
+  useSubscriptionPlans, 
+  useSubscriptionInfo 
+} from '../hooks/useSubscription';
+
 export default function Subscription() {
   const { user } = useAuth();
-  const [currentSubscription, setCurrentSubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+  // #PHASE3-SECURITY-FRONTEND - Replace useState/useEffect with React Query hooks
+  const { 
+    data: currentSubscription, 
+    isLoading: loading, 
+    error: subscriptionError 
+  } = useCurrentSubscription();
+  
+  const { 
+    data: subscriptionInfo, 
+    isLoading: infoLoading 
+  } = useSubscriptionInfo();
+  
+  const { 
+    data: plansData, 
+    isLoading: plansLoading 
+  } = useSubscriptionPlans();
+  
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState(null);
-
-  useEffect(() => {
-    loadCurrentSubscription();
-  }, []);
-
-  const loadCurrentSubscription = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      
-      const response = await fetch(`${backendUrl}/api/subscription/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentSubscription(data);
-      }
-    } catch (error) {
-      console.error('Failed to load subscription:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUsage = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      
-      const response = await fetch(`${backendUrl}/api/subscription/usage`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      }
-    } catch (error) {
-      console.error('Failed to load usage:', error);
-      return null;
-    }
-  };
 
   const handleUpgrade = async (planTier, cycle = 'monthly') => {
     setUpgrading(true);
