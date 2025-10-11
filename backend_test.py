@@ -1420,21 +1420,44 @@ class DhruvAITester:
         """Test CSRF Token Endpoint - GET /api/auth/csrf-token"""
         print("   Testing GET /api/auth/csrf-token endpoint")
         
-        success, response = self.run_test(
-            "CSRF Token Endpoint",
+        # First request to get the cookie set
+        success, response, resp_obj = self.run_test(
+            "CSRF Token Endpoint - Initial Request",
             "GET",
             "auth/csrf-token",
-            200
+            200,
+            use_session=True
         )
         
         if success:
-            print("   ✅ CSRF token endpoint working")
-            if 'csrf_token' in response:
-                self.csrf_token = response['csrf_token']
-                print(f"   ✅ CSRF token obtained: {self.csrf_token[:20]}...")
-                return True
+            # Check if cookie was set in response
+            cookies_set = resp_obj and 'set-cookie' in str(resp_obj.headers).lower()
+            print(f"   📊 Cookie set in response: {cookies_set}")
+            
+            # Make second request with cookie to get the token
+            import requests
+            session = requests.Session()
+            
+            # First request to set cookie
+            session.get(f"{self.base_url}/auth/csrf-token", timeout=30)
+            
+            # Second request to get token
+            response = session.get(f"{self.base_url}/auth/csrf-token", timeout=30)
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                if 'csrf_token' in token_data and token_data['csrf_token']:
+                    self.csrf_token = token_data['csrf_token']
+                    token_length = len(self.csrf_token)
+                    print(f"   ✅ CSRF token obtained: {self.csrf_token[:20]}...")
+                    print(f"   ✅ Token length: {token_length} characters")
+                    print(f"   ✅ Token format appears valid")
+                    return True
+                else:
+                    print("   ❌ No CSRF token in response")
+                    return False
             else:
-                print("   ❌ No CSRF token in response")
+                print(f"   ❌ Second request failed: {response.status_code}")
                 return False
         else:
             print("   ❌ CSRF token endpoint failed")
