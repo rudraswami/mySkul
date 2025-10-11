@@ -24,20 +24,21 @@ const ConceptCard = ({ content, sentiment = 'neutral' }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`p-6 rounded-xl bg-gradient-to-br ${getGradient(sentiment)} border border-blue-100 shadow-sm mb-4`}
+      transition={{ duration: 0.4 }}
+      className={`p-8 rounded-2xl bg-gradient-to-br ${getGradient(sentiment)} border-2 border-blue-200 shadow-lg hover:shadow-xl transition-shadow`}
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start space-x-4">
         <div className="flex-shrink-0 mt-1">
-          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-            <span className="text-2xl">📘</span>
+          <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-md">
+            <span className="text-4xl">📘</span>
           </div>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 font-poppins">
-            Concept Overview
+          <h3 className="text-2xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
+            Core Concept
+            <span className="ml-2 text-2xl">✨</span>
           </h3>
-          <p className="text-gray-700 leading-relaxed font-inter">
+          <p className="text-gray-800 leading-relaxed font-inter text-lg">
             {content}
           </p>
         </div>
