@@ -35,13 +35,72 @@ async def get_subscription_plans(
         # Convert plan config to proper format
         plans = []
         for plan_name, plan_data in plan_config.items():
+            # Convert features object to user-friendly array for frontend
+            features_obj = plan_data.get("features", {})
+            features_array = []
+            
+            # AI Tutor specific features
+            if features_obj.get("ai_sessions_monthly"):
+                sessions = features_obj["ai_sessions_monthly"]
+                if sessions == "unlimited":
+                    features_array.append("🚀 Unlimited AI Tutor sessions - Ask anything, anytime")
+                else:
+                    features_array.append(f"🎯 {sessions} AI Tutor sessions per month")
+            
+            # Mentor tips
+            if features_obj.get("mentor_tips_daily"):
+                tips = features_obj["mentor_tips_daily"]
+                if tips == "unlimited":
+                    features_array.append("💙 Unlimited mentor motivational tips")
+                elif tips > 0:
+                    features_array.append(f"💙 {tips} mentor tips per day")
+            
+            # Mock tests
+            if features_obj.get("mock_tests_weekly"):
+                tests = features_obj["mock_tests_weekly"]
+                if tests == "unlimited":
+                    features_array.append("📝 Unlimited mock tests weekly")
+                else:
+                    features_array.append(f"📝 {tests} mock tests per week")
+            
+            # Auto notes
+            if features_obj.get("auto_note_uploads_daily"):
+                uploads = features_obj["auto_note_uploads_daily"]
+                if uploads == "unlimited":
+                    features_array.append("📁 Unlimited note uploads daily")
+                else:
+                    features_array.append(f"📁 {uploads} note upload(s) daily")
+            
+            # Advanced features
+            if features_obj.get("analytics_access"):
+                tier = features_obj.get("analytics_tier", "basic")
+                features_array.append(f"📊 {tier.capitalize()} analytics & insights")
+            
+            if features_obj.get("offline_mode"):
+                features_array.append("📱 Offline mode enabled")
+            
+            if features_obj.get("priority_support"):
+                features_array.append("⚡ Priority customer support")
+            
+            if features_obj.get("export_notes"):
+                features_array.append("💾 Export notes & reports")
+            
+            if features_obj.get("concept_tagging"):
+                features_array.append("🔗 Advanced concept tagging")
+            
+            if features_obj.get("emotion_sync"):
+                features_array.append("🧠 Emotion-aware AI tutor")
+            
             plan = {
                 "name": plan_name,
                 "display_name": plan_data.get("display_name", plan_name),
+                "tier": plan_name,
+                "tagline": plan_data.get("tagline", ""),
                 "price_monthly": plan_data.get("price_monthly", 0),
                 "price_yearly": plan_data.get("price_yearly", 0),
-                "features": plan_data.get("features", {}),
-                "is_popular": plan_data.get("is_popular", False),
+                "price_quarterly": plan_data.get("price_quarterly", 0),
+                "features": features_array,  # Now an array!
+                "is_popular": plan_data.get("is_popular", plan_name == "SCHOLAR"),
                 "description": plan_data.get("description", ""),
             }
             plans.append(plan)
