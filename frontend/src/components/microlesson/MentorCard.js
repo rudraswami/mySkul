@@ -16,11 +16,14 @@ const MentorCard = ({ mentorData, weight }) => {
 
   const sections = mentorData.mentor_sections || {};
   
-  // Clean text helper
+  // Clean text helper (preserving LaTeX for LatexRenderer)
   const cleanText = (text) => {
     if (!text) return '';
     return text
-      .replace(/\\n/g, '\n')
+      .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold markers
+      .replace(/\*(.+?)\*/g, '$1')      // Remove italic markers
+      .replace(/✅/g, '')                // Remove checkmarks
+      .replace(/❌/g, '')
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
       .replace(/\\\\/g, '')
