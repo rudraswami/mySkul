@@ -615,11 +615,14 @@ export default function AITutor() {
     }
 
     // SUBMIT PHASE: Store message and start loading, but keep input visible
-    setLoading(true);
     const messageToSend = currentMessage;
     setPendingMessage(messageToSend);
     setMessagePhase('submit');
     
+    // Give UI time to show submit phase before starting loading
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    setLoading(true);
     // DO NOT clear input here - keep it visible during processing
 
     try {
@@ -643,6 +646,9 @@ export default function AITutor() {
         }
       }
       
+      // STREAMING PHASE: Transition to streaming phase before API calls
+      setMessagePhase('streaming');
+      
       // Choose API endpoint based on AI mode
       const token = localStorage.getItem('dhruv_ai_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -656,9 +662,6 @@ export default function AITutor() {
       for (let attempt = 1; attempt <= retryAttempts; attempt++) {
         try {
           console.log(`🔄 AI API call - attempt ${attempt}/${retryAttempts}`);
-          
-          // STREAMING PHASE: Set phase to streaming when API call starts
-          setMessagePhase('streaming');
           
           if (aiMode === 'dual') {
             response = await axios.post(`${API}/ai/dual-response`, {
