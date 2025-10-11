@@ -305,20 +305,46 @@ Subject Context: {subject}"""
                 subject
             )
             
-            # Step 9: Create enhanced dual response structure
+            # Step 8.5: Sanitize content before database storage
+            professor_sanitized = self.response_parser.sanitize_text(professor_content)
+            mentor_sanitized = self.response_parser.sanitize_text(mentor_content)
+            
+            # Sanitize micro-lesson sections
+            sanitized_micro_sections = {}
+            for key, value in micro_lesson_sections.items():
+                if isinstance(value, str):
+                    sanitized_micro_sections[key] = self.response_parser.sanitize_text(value)
+                elif isinstance(value, list):
+                    sanitized_micro_sections[key] = [self.response_parser.sanitize_text(str(item)) for item in value]
+                else:
+                    sanitized_micro_sections[key] = value
+            
+            # Sanitize mentor sections
+            sanitized_mentor_sections = {}
+            for key, value in mentor_sections.items():
+                if isinstance(value, str):
+                    sanitized_mentor_sections[key] = self.response_parser.sanitize_text(value)
+                else:
+                    sanitized_mentor_sections[key] = value
+            
+            # Step 9: Create enhanced dual response structure with both raw and sanitized content
             dual_response = {
                 "primary": {
                     "type": "professor",
-                    "response": professor_content,
+                    "response": professor_sanitized,
+                    "raw_text": professor_content,
                     "confidence": 0.95,
                     "progressive_sections": progressive_sections,
-                    "micro_lesson_sections": micro_lesson_sections,
+                    "micro_lesson_sections": sanitized_micro_sections,
+                    "raw_micro_lesson_sections": micro_lesson_sections,
                     "weight": professor_weight
                 },
                 "secondary": {
                     "type": "mentor", 
-                    "response": mentor_content,
-                    "mentor_sections": mentor_sections,
+                    "response": mentor_sanitized,
+                    "raw_text": mentor_content,
+                    "mentor_sections": sanitized_mentor_sections,
+                    "raw_mentor_sections": mentor_sections,
                     "confidence": 0.9,
                     "weight": mentor_weight
                 },
