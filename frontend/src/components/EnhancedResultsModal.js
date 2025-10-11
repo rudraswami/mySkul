@@ -34,6 +34,29 @@ export default function EnhancedResultsModal({
   const [animationStep, setAnimationStep] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
 
+  // Sanitize AI feedback text
+  const sanitizeText = (text) => {
+    if (!text) return '';
+    
+    // Remove ALL emojis
+    const emojiPattern = /[\u{1F1E0}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{231A}-\u{23FF}\u{FE0F}\u{1F600}-\u{1F64F}]/gu;
+    let cleaned = text.replace(emojiPattern, '');
+    
+    // Remove specific problematic emojis
+    cleaned = cleaned.replace(/✅|❌|☑|💡|🔎|📔|💙|👇|📚|🧮|🧠|1️⃣|2️⃣|3️⃣|4️⃣|5️⃣|6️⃣|7️⃣|8️⃣|9️⃣|🔟/g, '');
+    
+    // Remove markdown
+    cleaned = cleaned.replace(/\*\*(.+?)\*\*/g, '$1'); // **bold**
+    cleaned = cleaned.replace(/\*(.+?)\*/g, '$1');     // *italic*
+    cleaned = cleaned.replace(/__(.+?)__/g, '$1');     // __underline__
+    cleaned = cleaned.replace(/_(.+?)_/g, '$1');       // _italic_
+    
+    // Remove special characters
+    cleaned = cleaned.replace(/###/g, '');
+    
+    return cleaned.trim();
+  };
+
   // Animated score counter
   useEffect(() => {
     const timer = setTimeout(() => {
