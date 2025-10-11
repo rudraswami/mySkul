@@ -19186,19 +19186,28 @@ class DhruvAITester:
             return False
 
 def main():
-    """Main function to run CSRF protection tests"""
-    print("🛡️ DHRUV AI BACKEND CSRF PROTECTION TESTING")
+    """Main function to run AI Tutor contextual fix tests"""
+    print("🤖 DHRUV AI BACKEND - AI TUTOR CONTEXTUAL FIX TESTING")
     print("=" * 80)
-    print("STAGE 3 BACKEND TESTING: Comprehensive CSRF Security Validation")
-    print("Focus: CSRF token exchange, protection enforcement, error handling")
+    print("CRITICAL REVIEW REQUEST: Test AI Tutor response generation fix")
+    print("Issue: Previously all questions were getting identical generic responses")
+    print("Fix: Re-enabled actual LLM calls instead of using only static fallback responses")
     print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     
     tester = DhruvAITester()
     
-    # Run comprehensive CSRF protection tests
-    csrf_success = tester.test_comprehensive_csrf_protection()
+    # First authenticate
+    print("\n🔐 AUTHENTICATION SETUP")
+    login_success = tester.test_auth_router_login()
+    
+    if not login_success:
+        print("❌ Authentication failed - cannot proceed with AI Tutor testing")
+        return
+    
+    # Run AI Tutor contextual fix test
+    contextual_success = tester.test_ai_tutor_dual_response_contextual_fix()
     
     # Final Summary
     print("\n" + "=" * 80)
