@@ -16157,12 +16157,6 @@ def main():
         print(f"⚠️ STAGE 2 COMPREHENSIVE MODULAR INTEGRATION: NEEDS ATTENTION")
     
     return overall_success
-                core_results.append((test_name, False))
-            
-            time.sleep(1)  # Delay between tests
-    else:
-        print("\n⚠️  SKIPPING CORE TESTS - Authentication not working")
-        core_results = []
     
     # Test sequence - Core APIs first, then SUBSCRIPTION SYSTEM (Priority), then Phase 4 features, then Dual-Layer AI
     tests = [
