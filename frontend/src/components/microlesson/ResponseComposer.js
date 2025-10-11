@@ -267,7 +267,7 @@ const ResponseComposer = ({ message, onQuickAction }) => {
               <div className="text-yellow-900 text-sm leading-relaxed">
                 <ReactMarkdown 
                   components={{
-                    p: ({ children }) => <LatexRenderer text={children} />
+                    p: ({ children }) => <LatexRenderer text={String(children)} />
                   }}
                 >
                   {sanitizeText(microLessonSections.mentor_tip)}
