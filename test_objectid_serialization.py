@@ -10,7 +10,7 @@ import time
 
 class ObjectIdSerializationTester:
     def __init__(self):
-        self.base_url = "https://modular-backend-5.preview.emergentagent.com/api"
+        self.base_url = "https://tutor-upgrade.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         
