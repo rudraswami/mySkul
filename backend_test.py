@@ -16666,7 +16666,7 @@ def main():
         
         return all_services_working
     
-    def test_error_handling_401(self):
+    def test_new_error_handling_401(self):
         """Test Error Handling - 401 Unauthorized for protected endpoints"""
         print("   Testing 401 error handling for protected endpoints")
         
