@@ -508,32 +508,51 @@ export default function AITutor() {
   // Helper function to parse and clean message response
   const parseMessageResponse = (message) => {
     try {
-      // If the response is a string that looks like JSON, try to parse it
-      if (typeof message.response === 'string' && message.response.startsWith('{')) {
-        const parsedResponse = JSON.parse(message.response);
-        
-        // If it's a parsed object with dual_response structure, use it
-        if (parsedResponse.dual_response && parsedResponse.dual_response.primary) {
+      // Handle different message response formats for backward compatibility
+      let responseData = message.response;
+      
+      // If response is a string that looks like JSON, parse it
+      if (typeof responseData === 'string' && responseData.startsWith('{')) {
+        try {
+          responseData = JSON.parse(responseData);
+        } catch (parseError) {
+          console.warn('Failed to parse JSON response:', parseError);
+          return message; // Return as-is if JSON parsing fails
+        }
+      }
+      
+      // If responseData is an object with dual_response structure
+      if (responseData && typeof responseData === 'object') {
+        // Case 1: Complete dual response structure
+        if (responseData.dual_response && responseData.dual_response.primary) {
           return {
             ...message,
-            dual_response: parsedResponse.dual_response,
-            guardrails: parsedResponse.guardrails,
-            action_buttons: parsedResponse.action_buttons,
-            analytics: parsedResponse.analytics,
-            disagreement_alert: parsedResponse.disagreement_alert,
-            response: parsedResponse.dual_response.primary.response // Clean text for fallback
+            dual_response: responseData.dual_response,
+            guardrails: responseData.guardrails,
+            action_buttons: responseData.action_buttons,
+            analytics: responseData.analytics,
+            disagreement_alert: responseData.disagreement_alert,
+            response: responseData.dual_response.primary.response // Clean text for fallback
           };
         }
-        // If it has a simple response field, use that
-        else if (parsedResponse.response) {
+        // Case 2: Direct dual_response (without wrapper)
+        else if (responseData.primary && responseData.secondary) {
           return {
             ...message,
-            response: parsedResponse.response
+            dual_response: responseData,
+            response: responseData.primary.response // Clean text for fallback
+          };
+        }
+        // Case 3: Simple response object
+        else if (responseData.response) {
+          return {
+            ...message,
+            response: responseData.response
           };
         }
       }
       
-      // If response is already clean text or not JSON, return as is
+      // Case 4: Plain text response - return as-is
       return message;
     } catch (error) {
       // If parsing fails, return the original message
