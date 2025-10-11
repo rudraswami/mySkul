@@ -220,7 +220,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         cleaned = cleaned.replace('\\t', '\t')
         
         # Remove double and triple backslashes (preserve single for LaTeX)
-        cleaned = re.sub(r'\\{3,}', '\\', cleaned)  # \\\\ → \
+        cleaned = re.sub(r'\\{3,}', r'\\', cleaned)  # \\\\ → \
         cleaned = cleaned.replace('\\\\', '\\')      # \\ → \
         
         # Remove JSON escape artifacts
