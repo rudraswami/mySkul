@@ -290,9 +290,8 @@ Subject Context: {subject}"""
                 'generated': visual_svg is not None
             }
             
-            # If no SVG was generated and it's a visual concept, try Gemini
-            if not visual_svg and any(keyword in message.lower() for keyword in ['show', 'draw', 'visualize', 'diagram', 'graph']):
-                visual_data = await self._generate_gemini_visual(message, subject)
+            # Skip slow Gemini visual generation for fast-first strategy
+            # Visual generation moved to background task for better performance
             
             # Step 5: Parse professor response into progressive disclosure sections
             professor_content = professor_response if isinstance(professor_response, str) else str(professor_response)
