@@ -50,10 +50,14 @@ try:
     from api.subscription import router as subscription_router_new
     from api.ai import router as ai_router_new
     from api.analytics import router as analytics_router_new
+    from api.auto_notes import router as auto_notes_router_new
+    from api.mock_tests import router as mock_tests_router_new
     from services.auth_service import AuthService
     from services.subscription_service import SubscriptionService
     from services.ai_service import AIService
     from services.analytics_service import AnalyticsService
+    from services.auto_notes_service import AutoNotesService
+    from services.mock_tests_service import MockTestsService
     import dependencies as deps
     MODULAR_COMPONENTS_AVAILABLE = True
     logger.info("✅ Modular components loaded successfully")
