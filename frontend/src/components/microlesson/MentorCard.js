@@ -88,9 +88,9 @@ const MentorCard = ({ mentorData, weight }) => {
                     <span>Motivation Spark</span>
                     <Sparkles className="w-4 h-4 text-pink-600" />
                   </h4>
-                  <p className="text-pink-950 text-base leading-relaxed">
-                    {cleanText(sections.motivation_spark || mentorData.response?.substring(0, 150) + '...')}
-                  </p>
+                  <div className="text-pink-950 text-base leading-relaxed">
+                    <LatexRenderer text={sections.motivation_spark || mentorData.response?.substring(0, 150) + '...'} />
+                  </div>
                 </div>
               </div>
 
