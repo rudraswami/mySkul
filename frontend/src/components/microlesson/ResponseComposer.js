@@ -207,7 +207,7 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <span className="text-2xl">🌍</span>
                 <h3 className="text-lg font-bold text-gray-800">Real-World Connection</h3>
               </div>
-              <p className="pl-8 text-gray-800 text-base leading-relaxed">
+              <p className="pl-8 text-gray-800 text-base leading-loose" style={{ lineHeight: '1.8' }}>
                 {cleanText(microLessonSections.real_life_analogy)}
               </p>
             </div>
