@@ -612,7 +612,9 @@ export default function AITutor() {
 
     setLoading(true);
     const messageToSend = currentMessage;
-    setCurrentMessage('');
+    
+    // Keep user input visible until we confirm success
+    // setCurrentMessage(''); // Don't clear immediately
 
     try {
       let response;
