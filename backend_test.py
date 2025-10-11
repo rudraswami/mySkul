@@ -21021,16 +21021,65 @@ class DhruvAITester:
 if __name__ == "__main__":
     tester = DhruvAITester()
     
-    # Run comprehensive production-readiness tests
-    print("Starting comprehensive production-readiness testing...")
-    success = tester.run_comprehensive_production_readiness_tests()
+    print("🧮 MATHEMATICAL ACCURACY VERIFICATION TESTING")
+    print("=" * 80)
+    print("Focus: Enhanced mathematical accuracy in AI Tutor responses")
+    print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
+    print("Test Credentials: test@dhruvai.com / password123")
+    print("=" * 80)
     
-    if success:
-        print("\n🎉 Production-readiness testing completed successfully!")
-        sys.exit(0)
-    else:
-        print("\n💥 Production-readiness testing identified issues. Check the output above for details.")
+    # Authenticate first
+    print("\n🔐 AUTHENTICATION SETUP")
+    login_success = tester.test_auth_router_login()
+    
+    if not login_success:
+        print("❌ Authentication failed - cannot proceed with testing")
         sys.exit(1)
+    
+    # Run the mathematical accuracy verification tests
+    print("\n🎯 RUNNING MATHEMATICAL ACCURACY VERIFICATION TESTS")
+    accuracy_success = tester.test_mathematical_accuracy_verification()
+    
+    # Final Summary
+    print("\n" + "=" * 80)
+    print("🧮 MATHEMATICAL ACCURACY VERIFICATION - FINAL SUMMARY")
+    print("=" * 80)
+    
+    print(f"\n📊 TEST EXECUTION SUMMARY:")
+    print(f"   Total Tests Run: {tester.tests_run}")
+    print(f"   Tests Passed: {tester.tests_passed}")
+    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
+    
+    print(f"\n🎯 MATHEMATICAL ACCURACY STATUS:")
+    if accuracy_success:
+        print("   ✅ MATHEMATICAL ACCURACY: WORKING")
+        print("   Enhanced system prompts are functioning correctly")
+        print("   Mathematical responses show complete solutions")
+        print("   Step-by-step work and verification included")
+    else:
+        print("   ❌ MATHEMATICAL ACCURACY: NEEDS IMPROVEMENT")
+        print("   Mathematical accuracy issues persist")
+        print("   System prompts may need further enhancement")
+    
+    print(f"\n🔍 KEY TESTING AREAS COVERED:")
+    print("   - Quadratic equation factoring (x² + 5x + 6 = 0)")
+    print("   - Physics force and acceleration (F=ma)")
+    print("   - Complete factoring form verification")
+    print("   - Step-by-step solution methodology")
+    print("   - Units and verification inclusion")
+    
+    print(f"\n📋 RECOMMENDATIONS:")
+    if accuracy_success:
+        print("   - Mathematical accuracy enhancements are working")
+        print("   - System prompts are producing complete solutions")
+        print("   - Continue monitoring mathematical response quality")
+    else:
+        print("   - Review and enhance system prompts further")
+        print("   - Focus on complete factoring solutions")
+        print("   - Ensure step-by-step methodology is enforced")
+        print("   - Add verification requirements to prompts")
+    
+    sys.exit(0 if accuracy_success else 1)
     print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
     print("Backend URL: https://ai-perf-boost.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
