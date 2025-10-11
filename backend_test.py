@@ -20849,6 +20849,175 @@ class DhruvAITester:
         
         return False
 
+    def test_mathematical_accuracy_verification(self):
+        """Test enhanced mathematical accuracy in AI Tutor responses"""
+        print("\n🧮 MATHEMATICAL ACCURACY VERIFICATION TESTING")
+        print("=" * 80)
+        print("   TESTING SCOPE: Enhanced mathematical accuracy after system prompt improvements")
+        print("   FOCUS: Complete factoring solutions, step-by-step work, accurate answers")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        
+        if not self.token:
+            print("   ❌ No authentication token available")
+            return False
+        
+        test_results = {
+            'mathematics_quadratic_factoring': False,
+            'physics_force_acceleration': False,
+            'response_completeness': False,
+            'mathematical_accuracy': False,
+            'step_by_step_solutions': False
+        }
+        
+        # Test 1: Mathematics - Quadratic Equation Factoring
+        print("\n1️⃣ MATHEMATICS ACCURACY TEST - Quadratic Equation Factoring")
+        print("   Testing: x² + 5x + 6 = 0 using factoring method")
+        
+        math_request = {
+            "message": "Solve x² + 5x + 6 = 0 using factoring method",
+            "subject": "Mathematics",
+            "session_id": "math_accuracy_test"
+        }
+        
+        success, response, _ = self.run_test(
+            "Mathematics Quadratic Factoring",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=math_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ AI Tutor dual-response endpoint working")
+            
+            # Extract professor response for analysis
+            professor_response = ""
+            if 'dual_response' in response:
+                dual_resp = response['dual_response']
+                if 'primary' in dual_resp and 'response' in dual_resp['primary']:
+                    professor_response = dual_resp['primary']['response']
+                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
+                    professor_response = dual_resp['professor']['response']
+            
+            print(f"   📝 Professor Response Length: {len(professor_response)} characters")
+            
+            # Check for required mathematical elements
+            response_lower = professor_response.lower()
+            
+            # Required elements for quadratic factoring
+            has_factoring_form = "(x+2)(x+3)" in professor_response or "(x + 2)(x + 3)" in professor_response
+            has_solutions = ("x = -2" in professor_response or "x=-2" in professor_response) and ("x = -3" in professor_response or "x=-3" in professor_response)
+            has_step_by_step = "step" in response_lower or "first" in response_lower or "then" in response_lower
+            has_verification = "check" in response_lower or "verify" in response_lower or "substitute" in response_lower
+            
+            print(f"   📊 Mathematical Accuracy Analysis:")
+            print(f"      Factoring form (x+2)(x+3): {'✅' if has_factoring_form else '❌'}")
+            print(f"      Solutions x=-2, x=-3: {'✅' if has_solutions else '❌'}")
+            print(f"      Step-by-step method: {'✅' if has_step_by_step else '❌'}")
+            print(f"      Verification included: {'✅' if has_verification else '❌'}")
+            
+            # Calculate success criteria
+            math_accuracy_score = sum([has_factoring_form, has_solutions, has_step_by_step, has_verification])
+            test_results['mathematics_quadratic_factoring'] = math_accuracy_score >= 3  # At least 3/4 criteria
+            
+            if test_results['mathematics_quadratic_factoring']:
+                print(f"   ✅ Mathematics accuracy test PASSED ({math_accuracy_score}/4 criteria)")
+            else:
+                print(f"   ❌ Mathematics accuracy test FAILED ({math_accuracy_score}/4 criteria)")
+                print(f"   📝 Response preview: {professor_response[:200]}...")
+        else:
+            print("   ❌ Mathematics accuracy test failed - API error")
+        
+        # Test 2: Physics - Force and Acceleration
+        print("\n2️⃣ PHYSICS ACCURACY TEST - Force and Acceleration")
+        print("   Testing: If force = 10N and mass = 2kg, find acceleration using F=ma")
+        
+        physics_request = {
+            "message": "If force = 10N and mass = 2kg, find acceleration using F=ma",
+            "subject": "Physics",
+            "session_id": "physics_accuracy_test"
+        }
+        
+        success, response, _ = self.run_test(
+            "Physics Force Acceleration",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=physics_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            print("   ✅ AI Tutor dual-response endpoint working")
+            
+            # Extract professor response for analysis
+            professor_response = ""
+            if 'dual_response' in response:
+                dual_resp = response['dual_response']
+                if 'primary' in dual_resp and 'response' in dual_resp['primary']:
+                    professor_response = dual_resp['primary']['response']
+                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
+                    professor_response = dual_resp['professor']['response']
+            
+            print(f"   📝 Professor Response Length: {len(professor_response)} characters")
+            
+            # Check for required physics elements
+            response_lower = professor_response.lower()
+            
+            # Required elements for physics calculation
+            has_formula = "f = ma" in response_lower or "f=ma" in response_lower
+            has_substitution = "10 = 2" in professor_response or "10=2" in professor_response
+            has_solution = "a = 5" in professor_response or "a=5" in professor_response or "acceleration = 5" in response_lower
+            has_units = "m/s²" in professor_response or "m/s2" in professor_response or "meters per second squared" in response_lower
+            
+            print(f"   📊 Physics Accuracy Analysis:")
+            print(f"      Formula F=ma: {'✅' if has_formula else '❌'}")
+            print(f"      Substitution 10=2×a: {'✅' if has_substitution else '❌'}")
+            print(f"      Solution a=5: {'✅' if has_solution else '❌'}")
+            print(f"      Units m/s²: {'✅' if has_units else '❌'}")
+            
+            # Calculate success criteria
+            physics_accuracy_score = sum([has_formula, has_substitution, has_solution, has_units])
+            test_results['physics_force_acceleration'] = physics_accuracy_score >= 3  # At least 3/4 criteria
+            
+            if test_results['physics_force_acceleration']:
+                print(f"   ✅ Physics accuracy test PASSED ({physics_accuracy_score}/4 criteria)")
+            else:
+                print(f"   ❌ Physics accuracy test FAILED ({physics_accuracy_score}/4 criteria)")
+                print(f"   📝 Response preview: {professor_response[:200]}...")
+        else:
+            print("   ❌ Physics accuracy test failed - API error")
+        
+        # Overall Assessment
+        print("\n" + "=" * 80)
+        print("🧮 MATHEMATICAL ACCURACY VERIFICATION - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        print(f"   Mathematics Quadratic Factoring: {'✅ PASS' if test_results['mathematics_quadratic_factoring'] else '❌ FAIL'}")
+        print(f"   Physics Force Acceleration: {'✅ PASS' if test_results['physics_force_acceleration'] else '❌ FAIL'}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Determine overall status
+        if success_rate >= 80:
+            print("\n✅ MATHEMATICAL ACCURACY VERIFICATION: EXCELLENT SUCCESS")
+            print("   Enhanced system prompts are working correctly")
+            print("   Mathematical responses show complete factoring and step-by-step solutions")
+        elif success_rate >= 60:
+            print("\n⚠️ MATHEMATICAL ACCURACY VERIFICATION: PARTIAL SUCCESS")
+            print("   Some improvements visible but more work needed")
+        else:
+            print("\n❌ MATHEMATICAL ACCURACY VERIFICATION: NEEDS IMPROVEMENT")
+            print("   Mathematical accuracy issues persist despite system prompt enhancements")
+        
+        return success_rate >= 60  # 60% success rate for overall pass
+
 if __name__ == "__main__":
     tester = DhruvAITester()
     
