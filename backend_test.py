@@ -7955,28 +7955,14 @@ class DhruvAITester:
         
         if success:
             print(f"   ✅ API call successful, analyzing response structure...")
+            professor_text, mentor_text, raw_text = extract_response_text(response)
             
-            # Check different possible response structures
-            sanitized_text = None
-            if 'dual_response' in response:
-                dual_resp = response['dual_response']
-                if 'primary' in dual_resp and 'response' in dual_resp['primary']:
-                    sanitized_text = dual_resp['primary']['response']
-                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
-                    sanitized_text = dual_resp['professor']['response']
-            elif 'primary' in response and 'response' in response['primary']:
-                sanitized_text = response['primary']['response']
-            elif 'professor_response' in response:
-                sanitized_text = response['professor_response']
-            elif 'response' in response:
-                sanitized_text = response['response']
-            
-            if sanitized_text:
-                print(f"   Response preview: {sanitized_text[:100]}...")
+            if professor_text:
+                print(f"   Response preview: {professor_text[:100]}...")
                 
                 # Check for removal of problematic characters
-                has_markdown = any(symbol in sanitized_text for symbol in ['**', '*', '_', '###'])
-                has_escaped_chars = any(seq in sanitized_text for seq in ['\\"', "\\'", '\\n', '\\\\'])
+                has_markdown = any(symbol in professor_text for symbol in ['**', '*', '_', '###'])
+                has_escaped_chars = any(seq in professor_text for seq in ['\\"', "\\'", '\\n', '\\\\'])
                 
                 if not has_markdown and not has_escaped_chars:
                     print("   ✅ Special characters and markdown symbols removed")
