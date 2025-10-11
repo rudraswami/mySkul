@@ -155,15 +155,15 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
             # Take middle paragraphs as step-by-step
             start_idx = 1 if sections['concept_overview'] else 0
             end_idx = -1 if sections['real_life_analogy'] else len(paragraphs)
-            sections['step_by_step'] = '\n\n'.join(paragraphs[start_idx:min(end_idx, start_idx + 3)])
+            sections['step_by_step'] = self.clean_text('\n\n'.join(paragraphs[start_idx:min(end_idx, start_idx + 3)]))
         
         if not sections['real_life_analogy'] and len(paragraphs) > 3:
             # Last paragraph as analogy
-            sections['real_life_analogy'] = paragraphs[-1]
+            sections['real_life_analogy'] = self.clean_text(paragraphs[-1])
         
         if not sections['mentor_tip'] and len(paragraphs) > 4:
             # Second to last as tip
-            sections['mentor_tip'] = paragraphs[-2]
+            sections['mentor_tip'] = self.clean_text(paragraphs[-2])
         
         return sections
     
