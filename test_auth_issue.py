@@ -9,7 +9,7 @@ def test_auth_issue():
     print("🔍 TESTING AUTHENTICATION ISSUE")
     print("="*50)
     
-    base_url = "https://dhruv-audit.preview.emergentagent.com/api"
+    base_url = "https://modular-backend-5.preview.emergentagent.com/api"
     
     # Step 1: Login and get token
     print("1. Getting authentication token...")

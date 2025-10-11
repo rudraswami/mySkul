@@ -10,7 +10,7 @@ import sys
 
 class MathFormattingTester:
     def __init__(self):
-        self.base_url = "https://dhruv-audit.preview.emergentagent.com/api"
+        self.base_url = "https://modular-backend-5.preview.emergentagent.com/api"
         self.token = None
         self.test_user_email = "test@dhruvai.com"
         self.test_user_password = "password123"

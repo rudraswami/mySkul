@@ -7,7 +7,7 @@ import requests
 import json
 
 # Test credentials
-base_url = "https://dhruv-audit.preview.emergentagent.com/api"
+base_url = "https://modular-backend-5.preview.emergentagent.com/api"
 test_email = "test@dhruvai.com"
 test_password = "password123"
 
