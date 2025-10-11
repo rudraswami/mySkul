@@ -198,8 +198,8 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <span className="text-2xl">📋</span>
                 <h3 className="text-lg font-bold text-gray-800">Detailed Breakdown</h3>
               </div>
-              <div className="pl-8 text-gray-800 text-base leading-loose whitespace-pre-wrap space-y-3" style={{ lineHeight: '1.8' }}>
-                {cleanText(microLessonSections.step_by_step)}
+              <div className="pl-8 text-gray-800 text-base leading-loose space-y-3" style={{ lineHeight: '1.8' }}>
+                <LatexRenderer text={microLessonSections.step_by_step} />
               </div>
             </div>
           )}
