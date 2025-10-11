@@ -792,20 +792,18 @@ class DhruvAITester:
             return False
 
     def test_auth_router_login(self):
-        """Test Auth Router - Login endpoint"""
-        print("   Testing modular auth router login endpoint")
+        """Test Auth Router - POST /api/auth/login"""
+        print("   Testing POST /api/auth/login endpoint")
         
-        # Use existing test user for login
         login_data = {
             "email": "test@dhruvai.com",
             "password": "password123"
         }
         
-        # Test auth router login endpoint
         success, response = self.run_test(
             "Auth Router Login",
             "POST",
-            "auth/login",  # Should work via modular auth router
+            "auth/login",
             200,
             data=login_data
         )
@@ -816,7 +814,7 @@ class DhruvAITester:
             # Store token for subsequent tests
             if 'token' in response:
                 self.token = response['token']
-                print(f"   ✅ Bearer token obtained")
+                print(f"   ✅ JWT token obtained: {self.token[:20]}...")
             
             if 'user' in response:
                 user_data = response['user']
