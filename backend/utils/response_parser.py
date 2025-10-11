@@ -193,7 +193,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
     def clean_text(self, text: str) -> str:
         """
         Comprehensive text cleaning - preserves LaTeX, removes artifacts
-        AI Tutor 2.4 enhancement - Student-friendly cleaning
+        AI Tutor 2.4 enhancement - Student-friendly cleaning with emoji removal
         """
         if not text:
             return ''
@@ -204,13 +204,36 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         cleaned = re.sub(r'__(.+?)__', r'\1', cleaned)   # Remove __bold__
         cleaned = re.sub(r'_(.+?)_', r'\1', cleaned)     # Remove _italic_
         
-        # Remove emoji-like checkmarks and boxes (but keep regular emojis)
-        cleaned = cleaned.replace('✅', '')
-        cleaned = cleaned.replace('❌', '')
-        cleaned = cleaned.replace('☑', '')
-        cleaned = cleaned.replace('📘', '📘')  # Keep this one
-        cleaned = cleaned.replace('📙', '')
-        cleaned = cleaned.replace('📗', '')
+        # Remove ALL emojis using Unicode ranges
+        # This removes: checkmarks, numbered emojis, faces, symbols, etc.
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F700-\U0001F77F"  # alchemical symbols
+            "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+            "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+            "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+            "\U0001FA00-\U0001FA6F"  # Chess Symbols
+            "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+            "\U00002702-\U000027B0"  # Dingbats
+            "\U000024C2-\U0001F251"  # Enclosed characters
+            "\U0001f926-\U0001f937"  # Person gestures
+            "\U00010000-\U0010ffff"  # Supplementary Private Use Area
+            "\u2640-\u2642"          # Gender symbols
+            "\u2600-\u2B55"          # Misc symbols
+            "\u200d"                 # Zero width joiner
+            "\u23cf"                 # Eject button
+            "\u23e9"                 # Fast forward
+            "\u231a"                 # Watch
+            "\ufe0f"                 # Dingbats
+            "\u3030"                 # Wavy dash
+            "]+", 
+            flags=re.UNICODE
+        )
+        cleaned = emoji_pattern.sub('', cleaned)
         
         # First pass: Remove escape sequences (but preserve LaTeX delimiters)
         # We need to keep \[, \], \(, \) for LaTeX rendering
