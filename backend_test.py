@@ -12,6 +12,7 @@ class DhruvAITester:
         self.token = None
         self.user_id = None
         self.session_id = None
+        self.csrf_token = None
         self.tests_run = 0
         self.tests_passed = 0
         self.test_user_email = "test@dhruvai.com"
