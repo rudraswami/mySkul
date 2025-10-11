@@ -16832,3 +16832,23 @@ def main():
     
     return overall_success
 
+
+if __name__ == "__main__":
+    tester = DhruvAITester()
+    
+    print("🚀 Starting Dhruv AI Backend Testing - NEW ROUTERS FOCUS...")
+    print(f"🌐 Base URL: {tester.base_url}")
+    print(f"📧 Test User: {tester.test_user_email}")
+    
+    # Run comprehensive Stage 2 new routers integration testing
+    success = tester.test_stage2_new_routers_integration()
+    
+    print(f"
+" + "=" * 80)
+    print(f"🎯 FINAL RESULT: {\"SUCCESS\" if success else \"FAILURE\"}")
+    print(f"📊 Tests Run: {tester.tests_run}")
+    print(f"✅ Tests Passed: {tester.tests_passed}")
+    print(f"📈 Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    print("=" * 80)
+    
+    sys.exit(0 if success else 1)
