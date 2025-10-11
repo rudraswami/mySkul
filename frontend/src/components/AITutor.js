@@ -569,6 +569,38 @@ export default function AITutor() {
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
 
+    // Check AI Tutor subscription access BEFORE sending
+    try {
+      const accessCheckResponse = await client.get('/api/subscription/check-ai-tutor-access');
+      const accessData = accessCheckResponse.data;
+      
+      // Update session usage display
+      setSessionUsage({
+        remaining: accessData.remaining,
+        total: accessData.total,
+        usage_percent: accessData.usage_percent || 0
+      });
+      
+      // If limit reached, show upgrade modal
+      if (!accessData.allowed) {
+        setAccessInfo(accessData);
+        setUpgradeHint(accessData.upgrade_hint);
+        setShowUpgradeModal(true);
+        return;
+      }
+      
+      // If approaching limit (80%+), show warning in upgrade hint but allow message
+      if (accessData.upgrade_hint && accessData.upgrade_hint.type === 'approaching_limit') {
+        setAccessInfo(accessData);
+        setUpgradeHint(accessData.upgrade_hint);
+        setShowUpgradeModal(true);
+        // Don't return - let user continue but show warning
+      }
+    } catch (error) {
+      console.error('Subscription check error:', error);
+      // Fail open - allow message if check fails
+    }
+
     // Note: We still check access but the backend will also check
     // This prevents most cases but backend is the final authority
     // Use unified global trigger to ensure consistent modal hydration
