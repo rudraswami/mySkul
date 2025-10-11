@@ -16585,7 +16585,7 @@ def main():
             print("   ❌ Mock-Tests resume failed")
             return False
     
-    def test_mock_tests_detailed_review(self):
+    def test_new_mock_tests_detailed_review(self):
         """Test Mock-Tests Router - GET /api/mock-tests/{test_id}/detailed-review"""
         print("   Testing GET /api/mock-tests/{test_id}/detailed-review endpoint")
         
