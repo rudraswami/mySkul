@@ -89,7 +89,7 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         
         # Split response into paragraphs and lines
         paragraphs = [p.strip() for p in response.split('\n\n') if p.strip()]
-        lines = [l.strip() for l in response.split('\n') if l.strip()]
+        lines = [line.strip() for line in response.split('\n') if line.strip()]
         
         if len(paragraphs) == 0:
             sections['concept_overview'] = response[:300]
