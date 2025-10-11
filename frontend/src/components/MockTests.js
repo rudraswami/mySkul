@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
+import { LoadingSpinner } from './ui/loading';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
 import TestLibrary from './TestLibrary';
@@ -14,6 +15,16 @@ import Leaderboard from './Leaderboard';
 import BadgeUnlockAnimation from './BadgeUnlockAnimation';
 import MotivationalPopup from './MotivationalPopup';
 import TestGenerationProgress from './TestGenerationProgress';
+
+// #PHASE3-SECURITY-FRONTEND - React Query Migration
+import { 
+  useMockTestsLibrary,
+  useMockTestsDashboard,
+  useMockTestsPerformanceTrends,
+  useMockTestsSubjects,
+  useRecentMockTests
+} from '../hooks/useMockTests';
+
 import { 
   FileText, 
   Clock, 
