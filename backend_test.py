@@ -845,6 +845,36 @@
             print("   ❌ Failed to get 402 response with upsell_info")
             return False
 
+# Main execution
+if __name__ == "__main__":
+    print("🚀 DHRUV AI SUBSCRIPTION SYSTEM RE-TEST - POST-FIX VALIDATION")
+    print("=" * 80)
+    
+    tester = DhruvAITester()
+    
+    # Run the subscription system re-test
+    success = tester.test_subscription_system_retest_post_fix()
+    
+    print("\n" + "=" * 80)
+    print("🏁 SUBSCRIPTION SYSTEM RE-TEST COMPLETED")
+    print("=" * 80)
+    
+    if success:
+        print("✅ OVERALL RESULT: SUCCESS")
+        print("   The subscription system post-fix validation passed!")
+    else:
+        print("❌ OVERALL RESULT: FAILURE") 
+        print("   The subscription system needs additional fixes.")
+    
+    print(f"\n📊 FINAL STATISTICS:")
+    print(f"   Tests Run: {tester.tests_run}")
+    print(f"   Tests Passed: {tester.tests_passed}")
+    if tester.tests_run > 0:
+        success_rate = (tester.tests_passed / tester.tests_run) * 100
+        print(f"   Success Rate: {success_rate:.1f}%")
+    
+    sys.exit(0 if success else 1)
+
 import requests
 import sys
 import json
