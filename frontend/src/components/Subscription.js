@@ -112,7 +112,8 @@ export default function Subscription() {
     setPaymentDetails(null);
   };
 
-  const subscriptionPlans = [
+  // Use API data if available, fallback to hardcoded plans for backward compatibility
+  const subscriptionPlans = plansData?.plans || [
     {
       name: 'Free',
       price_monthly: 0,
