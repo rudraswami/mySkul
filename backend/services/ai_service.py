@@ -260,12 +260,17 @@ Subject Context: {subject}"""
                 system_message=mentor_system
             ).with_model("openai", "gpt-5")
             
-            # Generate responses
+            # Generate responses with timeout and retry logic
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
             mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
             
-            professor_response = await professor_chat.send_message(professor_message)
-            mentor_response = await mentor_chat.send_message(mentor_message)
+            # Implement robust LLM calls with timeout and fallbacks
+            professor_response = await self._safe_llm_call(
+                professor_chat, professor_message, "professor", subject, message
+            )
+            mentor_response = await self._safe_llm_call(
+                mentor_chat, mentor_message, "mentor", subject, message
+            )
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
