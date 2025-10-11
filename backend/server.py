@@ -6603,7 +6603,8 @@ async def check_feature_access_endpoint(
 ):
     """Check if user has access to a specific feature"""
     try:
-        access_info = await SubscriptionService.check_feature_access(user.user_id, request.feature_name)
+        # Use modular subscription service instance (initialized with db connection)
+        access_info = await modular_subscription_service.check_feature_access(user.user_id, request.feature_name)
         
         # Return proper HTTP status codes based on access
         if not access_info.get("has_access", True):
