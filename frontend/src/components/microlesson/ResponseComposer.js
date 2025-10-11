@@ -245,7 +245,14 @@ const ResponseComposer = ({ message, onQuickAction }) => {
                 <h3 className="text-lg font-bold text-gray-800">Real-World Connection</h3>
               </div>
               <div className="pl-8 text-gray-800 text-base leading-loose" style={{ lineHeight: '1.8' }}>
-                <LatexRenderer text={microLessonSections.real_life_analogy} />
+                <ReactMarkdown 
+                  components={{
+                    p: ({ children }) => <LatexRenderer text={children} />,
+                    li: ({ children }) => <li><LatexRenderer text={children} /></li>
+                  }}
+                >
+                  {sanitizeText(microLessonSections.real_life_analogy)}
+                </ReactMarkdown>
               </div>
             </div>
           )}
