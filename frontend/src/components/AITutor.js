@@ -73,6 +73,10 @@ export default function AITutor() {
     isFeatureUnlimited,
     triggerFeatureUpsell
   } = useSubscription();
+  
+  // Feature toggle state for AI Tutor 2.0
+  const [useAITutor20, setUseAITutor20] = useState(false);
+  
   const [currentMessage, setCurrentMessage] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [currentSession, setCurrentSession] = useState(null);
@@ -82,6 +86,16 @@ export default function AITutor() {
   const [aiMode, setAiMode] = useState('dual'); // 'dual', 'mentor', 'professor'
   const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
+  
+  // If AI Tutor 2.0 is enabled, render the new component
+  if (useAITutor20) {
+    return (
+      <AITutor20 
+        onBackToV1={() => setUseAITutor20(false)}
+        className="h-full"
+      />
+    );
+  }
   
   // Phase 3: Enhanced functionality states
   const [isListening, setIsListening] = useState(false);
