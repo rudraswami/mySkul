@@ -7913,23 +7913,43 @@ class DhruvAITester:
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
-        if success and 'primary' in response and 'response' in response['primary']:
-            sanitized_text = response['primary']['response']
-            print(f"   Response preview: {sanitized_text[:100]}...")
+        if success:
+            print(f"   ✅ API call successful, analyzing response structure...")
             
-            # Check for removal of problematic characters
-            has_markdown = any(symbol in sanitized_text for symbol in ['**', '*', '_', '###'])
-            has_escaped_chars = any(seq in sanitized_text for seq in ['\\"', "\\'", '\\n', '\\\\'])
+            # Check different possible response structures
+            sanitized_text = None
+            if 'dual_response' in response:
+                dual_resp = response['dual_response']
+                if 'primary' in dual_resp and 'response' in dual_resp['primary']:
+                    sanitized_text = dual_resp['primary']['response']
+                elif 'professor' in dual_resp and 'response' in dual_resp['professor']:
+                    sanitized_text = dual_resp['professor']['response']
+            elif 'primary' in response and 'response' in response['primary']:
+                sanitized_text = response['primary']['response']
+            elif 'professor_response' in response:
+                sanitized_text = response['professor_response']
+            elif 'response' in response:
+                sanitized_text = response['response']
             
-            if not has_markdown and not has_escaped_chars:
-                print("   ✅ Special characters and markdown symbols removed")
-                test_results['text_sanitization_special_chars'] = True
+            if sanitized_text:
+                print(f"   Response preview: {sanitized_text[:100]}...")
+                
+                # Check for removal of problematic characters
+                has_markdown = any(symbol in sanitized_text for symbol in ['**', '*', '_', '###'])
+                has_escaped_chars = any(seq in sanitized_text for seq in ['\\"', "\\'", '\\n', '\\\\'])
+                
+                if not has_markdown and not has_escaped_chars:
+                    print("   ✅ Special characters and markdown symbols removed")
+                    test_results['text_sanitization_special_chars'] = True
+                else:
+                    print("   ❌ Special characters or markdown symbols still present")
+                    if has_markdown:
+                        print("   ❌ Found markdown symbols in response")
+                    if has_escaped_chars:
+                        print("   ❌ Found escaped characters in response")
             else:
-                print("   ❌ Special characters or markdown symbols still present")
-                if has_markdown:
-                    print("   ❌ Found markdown symbols in response")
-                if has_escaped_chars:
-                    print("   ❌ Found escaped characters in response")
+                print("   ❌ Could not find response text in API response")
+                print(f"   Available keys: {list(response.keys())}")
         else:
             print("   ❌ Failed to get response for special characters test")
         
