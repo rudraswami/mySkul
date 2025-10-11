@@ -92,188 +92,198 @@ const ResponseComposer = ({ message, onQuickAction }) => {
         </motion.div>
       )}
 
-      {/* Concept Overview Card */}
-      {microLessonSections.concept_overview && (
-        <ConceptCard
-          content={microLessonSections.concept_overview}
-          sentiment={sentiment}
-        />
-      )}
-
-      {/* Transition: Formula Section */}
-      {formulaList.length > 0 && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-center text-sm text-gray-600 font-medium"
-          >
-            {transitionPhrases.formula}
-          </motion.div>
-          <FormulaCard
-            formulas={formulaList}
-            title="Key Formula"
-          />
-        </>
-      )}
-
-      {/* Transition: Step-by-Step */}
-      {microLessonSections.step_by_step && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="text-center text-sm text-gray-600 font-medium"
-          >
-            {transitionPhrases.stepByStep}
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="p-8 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 shadow-sm"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
-                  <span className="text-3xl">📋</span>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
-                  Detailed Explanation
-                  <span className="ml-2 text-2xl">✨</span>
-                </h3>
-                <div className="text-gray-800 leading-relaxed font-inter text-base whitespace-pre-wrap space-y-3">
-                  {microLessonSections.step_by_step}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-
-      {/* Transition: Real-Life */}
-      {microLessonSections.real_life_analogy && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="text-center text-sm text-gray-600 font-medium"
-          >
-            {transitionPhrases.realLife}
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-            className="p-8 rounded-xl bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border border-teal-100 shadow-sm"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
-                  <span className="text-3xl">🌍</span>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 font-poppins flex items-center">
-                  Real-World Connection
-                  <span className="ml-2 text-2xl">💡</span>
-                </h3>
-                <p className="text-gray-800 leading-relaxed font-inter text-base">
-                  {microLessonSections.real_life_analogy}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-
-      {/* Mentor Tip with transition */}
-      {microLessonSections.mentor_tip && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.35 }}
-            className="text-center text-sm text-gray-600 font-medium"
-          >
-            {transitionPhrases.tip}
-          </motion.div>
-          <TipCard
-            content={microLessonSections.mentor_tip}
-            type="mentor"
-          />
-        </>
-      )}
-
-      {/* Mentor Response (if available) */}
-      {secondary && secondary.response && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className="p-8 rounded-xl bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 border-2 border-pink-200 shadow-lg"
-        >
-          <div className="flex items-start space-x-4">
-            <div className="flex-shrink-0">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center shadow-lg">
-                <span className="text-3xl">💜</span>
-              </div>
+      {/* Professor's Explanation Card with Academic Vibe */}
+      <motion.div variants={itemVariants}>
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 border-2 border-blue-300 shadow-xl">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-pink-900 mb-3 font-poppins flex items-center">
-                Your Mentor's Guidance
-                <span className="ml-2 text-sm px-3 py-1 bg-pink-200 text-pink-800 rounded-full">
-                  {Math.round((secondary.weight || 0.5) * 100)}% Support
-                </span>
-              </h3>
-              <p className="text-pink-950 leading-relaxed font-inter text-base">
-                {secondary.response}
+              <h2 className="text-2xl font-bold text-gray-900">Professor's Explanation</h2>
+              <p className="text-sm text-blue-700">Clear, structured, and exam-focused</p>
+            </div>
+            <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded-full text-xs font-semibold">
+              {Math.round((primary.weight || 0.7) * 100)}% Focus
+            </span>
+          </div>
+
+          {/* Concept Overview */}
+          {microLessonSections.concept_overview && (
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-2xl">📘</span>
+                <h3 className="text-lg font-bold text-gray-800">Core Concept</h3>
+              </div>
+              <p className="text-gray-800 text-base leading-relaxed pl-8">
+                {cleanText(microLessonSections.concept_overview)}
               </p>
             </div>
+          )}
+
+          {/* Emotional Anchor */}
+          <div className="flex items-center justify-center space-x-2 my-4 text-purple-600 text-sm font-medium">
+            <span>✨</span>
+            <span>You're getting this! Keep going.</span>
+            <span>✨</span>
+          </div>
+
+          {/* Formula Card */}
+          {formulaList.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-2xl">🧮</span>
+                <h3 className="text-lg font-bold text-gray-800">Key Formula</h3>
+              </div>
+              <FormulaCard formulas={formulaList} title="" />
+            </div>
+          )}
+
+          {/* Step-by-Step Explanation */}
+          {microLessonSections.step_by_step && (
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-2xl">📋</span>
+                <h3 className="text-lg font-bold text-gray-800">Detailed Breakdown</h3>
+              </div>
+              <div className="pl-8 text-gray-800 text-base leading-relaxed whitespace-pre-wrap space-y-2">
+                {cleanText(microLessonSections.step_by_step)}
+              </div>
+            </div>
+          )}
+
+          {/* Real-Life Examples */}
+          {microLessonSections.real_life_analogy && (
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-2xl">🌍</span>
+                <h3 className="text-lg font-bold text-gray-800">Real-World Connection</h3>
+              </div>
+              <p className="pl-8 text-gray-800 text-base leading-relaxed">
+                {cleanText(microLessonSections.real_life_analogy)}
+              </p>
+            </div>
+          )}
+
+          {/* Tip Section */}
+          {microLessonSections.mentor_tip && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-xl">💡</span>
+                <h3 className="font-bold text-yellow-900">Pro Tip</h3>
+              </div>
+              <p className="text-yellow-900 text-sm leading-relaxed">
+                {cleanText(microLessonSections.mentor_tip)}
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Emotional Anchor - Motivation */}
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-center space-x-2 text-sm text-purple-700 font-medium"
+      >
+        <span>💡</span>
+        <span>Let's visualize this concept below</span>
+        <span>👇</span>
+      </motion.div>
+
+      {/* Collapsible Mentor Section */}
+      {secondary && secondary.response && (
+        <motion.div variants={itemVariants}>
+          <div className="border-2 border-pink-200 rounded-2xl overflow-hidden shadow-lg">
+            {/* Mentor Toggle Button */}
+            <button
+              onClick={() => setMentorExpanded(!mentorExpanded)}
+              className="w-full p-6 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-lg">
+                  <Heart className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-pink-900">
+                    {mentorExpanded ? "Hide Mentor's Motivation" : "💬 Show Mentor's Motivation"}
+                  </h3>
+                  <p className="text-sm text-pink-700">
+                    {mentorExpanded ? "Collapse supportive guidance" : "Get emotional support and study strategies"}
+                  </p>
+                </div>
+              </div>
+              <motion.div
+                animate={{ rotate: mentorExpanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChevronDown className="w-6 h-6 text-pink-700" />
+              </motion.div>
+            </button>
+
+            {/* Mentor Content - Collapsible */}
+            <AnimatePresence>
+              {mentorExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-8 bg-gradient-to-br from-pink-50 to-purple-50">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-pink-400 flex items-center justify-center">
+                          <span className="text-2xl">💜</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-pink-950 text-base leading-relaxed">
+                          {cleanText(secondary.response)}
+                        </p>
+                        <span className="inline-block mt-4 px-3 py-1 bg-pink-200 text-pink-800 rounded-full text-xs font-semibold">
+                          {Math.round((secondary.weight || 0.3) * 100)}% Emotional Support
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       )}
 
-      {/* Practice Section with transition */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.45 }}
-        className="text-center text-sm text-gray-600 font-medium"
-      >
-        {transitionPhrases.practice}
-      </motion.div>
-
       {/* Practice Actions */}
-      <PracticeActions
-        onTrySimilar={() => onQuickAction && onQuickAction({ action: 'generate_practice' }, message)}
-        onSaveToNotes={() => onQuickAction && onQuickAction({ action: 'save_to_notes' }, message)}
-        onExplainDifferently={() => onQuickAction && onQuickAction({ action: 'explain_different' }, message)}
-        messageData={message}
-      />
+      <motion.div variants={itemVariants}>
+        <PracticeActions
+          onTrySimilar={() => onQuickAction && onQuickAction({ action: 'generate_practice' }, message)}
+          onSaveToNotes={() => onQuickAction && onQuickAction({ action: 'save_to_notes' }, message)}
+          onExplainDifferently={() => onQuickAction && onQuickAction({ action: 'explain_different' }, message)}
+          messageData={message}
+        />
+      </motion.div>
 
       {/* Motivational Footer */}
       {motivational_footer && (
-        <MotivationalFooter motivationalData={motivational_footer} />
+        <motion.div variants={itemVariants}>
+          <MotivationalFooter motivationalData={motivational_footer} />
+        </motion.div>
       )}
 
-      {/* Success Moment */}
+      {/* Success Celebration */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200"
+        variants={itemVariants}
+        className="text-center p-6 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl border-2 border-green-300 shadow-lg"
       >
-        <p className="text-green-800 font-medium">
-          🎉 Great job exploring this concept! You're one step closer to mastery. 
+        <p className="text-lg font-bold text-green-800">
+          🎉 Awesome! You've explored this concept thoroughly!
+        </p>
+        <p className="text-sm text-green-700 mt-2">
+          One step closer to mastery. Keep up the great work! 💪
         </p>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
