@@ -692,30 +692,30 @@ class DhruvAITester:
         
         # Specific recommendations
         print(f"\n🔧 RECOMMENDATIONS:")
-        if not test_results['modular_architecture_health']:
-            print("   - Fix modular architecture loading and health endpoint")
-        if not test_results['auth_router_registration']:
-            print("   - Implement or fix auth router registration endpoint")
+        if not test_results['auth_router_register']:
+            print("   - Fix auth router registration endpoint")
         if not test_results['auth_router_login']:
-            print("   - Implement or fix auth router login endpoint")
+            print("   - Fix auth router login endpoint")
         if not test_results['user_router_profile_get']:
-            print("   - Implement or fix user router profile GET endpoint")
+            print("   - Fix user router profile GET endpoint")
         if not test_results['user_router_profile_put']:
-            print("   - Implement or fix user router profile PUT endpoint")
+            print("   - Fix user router profile PUT endpoint")
         if not test_results['subscription_router_plans']:
-            print("   - Implement or fix subscription router plans endpoint")
-        if not test_results['subscription_router_access_check']:
-            print("   - Implement or fix subscription router access check endpoint")
-        if not test_results['service_layer_dependency_injection']:
-            print("   - Fix AuthService and SubscriptionService dependency injection")
-        if not test_results['duplicate_route_resolution']:
-            print("   - Resolve duplicate /subscription/plans routes")
+            print("   - Fix subscription router plans endpoint")
+        if not test_results['subscription_router_check_access']:
+            print("   - Fix subscription router check access endpoint")
+        if not test_results['ai_router_available_contexts']:
+            print("   - Fix AI router available contexts endpoint")
+        if not test_results['analytics_router_dashboard']:
+            print("   - Fix analytics router dashboard endpoint")
+        if not test_results['authentication_flow']:
+            print("   - Fix complete authentication flow (register → login → use token)")
+        if not test_results['dependency_injection']:
+            print("   - Fix service dependency injection")
         if not test_results['backward_compatibility']:
             print("   - Ensure legacy endpoints continue working alongside modular ones")
-        if not test_results['database_integration']:
-            print("   - Fix MongoDB operations via services")
-        if not test_results['security_maintained']:
-            print("   - Ensure httpOnly cookies, JWT tokens, CORS restrictions are maintained")
+        if not test_results['error_handling_consistency']:
+            print("   - Ensure consistent error handling across all routers")
         
         return success_rate >= 70  # 70% success rate for overall pass
 
