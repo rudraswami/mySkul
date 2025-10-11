@@ -16178,7 +16178,7 @@ def main():
             print("   ❌ Auto-Notes start session failed")
             return False
     
-    def test_auto_notes_sessions_list(self):
+    def test_new_auto_notes_sessions_list(self):
         """Test Auto-Notes Router - GET /api/auto-notes/sessions"""
         print("   Testing GET /api/auto-notes/sessions endpoint")
         
