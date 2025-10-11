@@ -247,8 +247,8 @@ const ResponseComposer = ({ message, onQuickAction }) => {
               <div className="pl-8 text-gray-800 text-base leading-loose" style={{ lineHeight: '1.8' }}>
                 <ReactMarkdown 
                   components={{
-                    p: ({ children }) => <LatexRenderer text={children} />,
-                    li: ({ children }) => <li><LatexRenderer text={children} /></li>
+                    p: ({ children }) => <div className="mb-2"><LatexRenderer text={String(children)} /></div>,
+                    li: ({ children }) => <li><LatexRenderer text={String(children)} /></li>
                   }}
                 >
                   {sanitizeText(microLessonSections.real_life_analogy)}
