@@ -16,6 +16,8 @@ import PersonaHeader from './PersonaHeader';
 import VisualConceptBlock from './VisualConceptBlock';
 import ProgressiveExplanation from './ProgressiveExplanation';
 import QuickActionTray from './QuickActionTray';
+import UpgradeModal from './UpgradeModal';
+import client from '../api/client';
 import { 
   Brain, 
   Send, 
