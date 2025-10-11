@@ -58,10 +58,37 @@ export default function MockTests() {
     getFeatureRemaining, 
     getFeatureLimit,
     setUpsellModal,
-
     currentTier,
     triggerFeatureUpsell
   } = useSubscription();
+  
+  // #PHASE3-SECURITY-FRONTEND - React Query hooks for data fetching
+  const { 
+    data: mockTestsLibrary, 
+    isLoading: libraryLoading,
+    error: libraryError 
+  } = useMockTestsLibrary();
+  
+  const { 
+    data: dashboardData, 
+    isLoading: dashboardLoading 
+  } = useMockTestsDashboard();
+  
+  const { 
+    data: recentTestsData, 
+    isLoading: recentLoading 
+  } = useRecentMockTests();
+  
+  const { 
+    data: performanceTrendsData, 
+    isLoading: trendsLoading 
+  } = useMockTestsPerformanceTrends();
+  
+  // Get subjects for default exam type (can be made dynamic later)
+  const { 
+    data: subjectsData, 
+    isLoading: subjectsLoading 
+  } = useMockTestsSubjects('JEE');
   
   // View state: 'generate' or 'library' or 'wizard' or 'exam' or 'results'
   const [activeView, setActiveView] = useState('generate');
