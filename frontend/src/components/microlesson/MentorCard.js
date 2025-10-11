@@ -162,9 +162,9 @@ const MentorCard = ({ mentorData, weight }) => {
                     <TrendingUp className="w-5 h-5 text-pink-600" />
                     <span className="font-bold text-pink-900">🧭 Keep Going!</span>
                   </div>
-                  <p className="text-pink-950 text-sm italic">
-                    "{cleanText(sections.encouragement)}"
-                  </p>
+                  <div className="text-pink-950 text-sm italic">
+                    "<LatexRenderer text={sections.encouragement} />"
+                  </div>
                 </div>
               )}
 
