@@ -18519,6 +18519,243 @@ class DhruvAITester:
         print("   ✅ Response structure validation passed")
         return True
 
+    def test_ai_tutor_text_sanitization_phase1(self):
+        """Test AI Tutor Phase 1 Text Sanitization Fixes"""
+        print("\n🤖 AI TUTOR PHASE 1 TEXT SANITIZATION TESTING")
+        print("=" * 80)
+        print("   TESTING SCOPE: Re-testing AI Tutor backend Phase 1 fixes for text sanitization")
+        print("   CRITICAL FIX: /api/ai/dual-response endpoint now uses modular_ai_service")
+        print("   FOCUS AREAS:")
+        print("   1. Text Sanitization Testing (special characters, emojis, escaped sequences)")
+        print("   2. GPT-5 Prompt Enforcement (no markdown symbols, no emojis, proper LaTeX)")
+        print("   3. Mentor Response Structure (readable sections, not wall of text)")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        
+        if not self.token:
+            print("   ❌ No authentication token available")
+            return False
+        
+        test_results = {
+            'authentication': False,
+            'special_characters_sanitization': False,
+            'emoji_sanitization': False,
+            'escaped_sequences_sanitization': False,
+            'markdown_symbols_removal': False,
+            'emoji_removal_gpt5': False,
+            'latex_formatting': False,
+            'mentor_structure': False,
+            'raw_text_fields': False
+        }
+        
+        # Authentication check
+        print("\n1️⃣ AUTHENTICATION VERIFICATION")
+        test_results['authentication'] = self.token is not None
+        if test_results['authentication']:
+            print("   ✅ Authentication token available")
+        else:
+            print("   ❌ Authentication failed")
+            return False
+        
+        # Test messages as specified in review request
+        test_messages = [
+            {
+                'name': 'Math with LaTeX',
+                'message': 'Solve x^2 + 5x + 6 = 0 step by step',
+                'focus': 'latex_formatting'
+            },
+            {
+                'name': 'Special Characters Test',
+                'message': 'What is **bold** text with emojis ✅❌?',
+                'focus': 'special_characters_sanitization'
+            },
+            {
+                'name': 'Numbered Emojis Test',
+                'message': 'Explain physics with 1️⃣ first law, 2️⃣ second law',
+                'focus': 'emoji_sanitization'
+            }
+        ]
+        
+        print("\n2️⃣ TEXT SANITIZATION TESTING")
+        print("   Testing /api/ai/dual-response endpoint with sanitization test messages")
+        
+        for test_msg in test_messages:
+            print(f"\n   📝 Testing: {test_msg['name']}")
+            print(f"      Message: {test_msg['message']}")
+            
+            # Prepare request data
+            request_data = {
+                "message": test_msg['message'],
+                "session_id": str(uuid.uuid4()),
+                "subject": "Mathematics"
+            }
+            
+            # Make API call
+            success, response, _ = self.run_test(
+                f"AI Tutor Dual Response - {test_msg['name']}",
+                "POST",
+                "ai/dual-response",
+                200,
+                data=request_data,
+                headers={'Authorization': f'Bearer {self.token}'}
+            )
+            
+            if success:
+                print(f"   ✅ API call successful for {test_msg['name']}")
+                
+                # Analyze response for sanitization
+                self.analyze_sanitization_response(response, test_msg, test_results)
+            else:
+                print(f"   ❌ API call failed for {test_msg['name']}")
+        
+        # Final Assessment
+        print("\n" + "=" * 80)
+        print("🤖 AI TUTOR PHASE 1 TEXT SANITIZATION - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        print(f"   Authentication: {'✅ PASS' if test_results['authentication'] else '❌ FAIL'}")
+        print(f"   Special Characters Sanitization: {'✅ PASS' if test_results['special_characters_sanitization'] else '❌ FAIL'}")
+        print(f"   Emoji Sanitization: {'✅ PASS' if test_results['emoji_sanitization'] else '❌ FAIL'}")
+        print(f"   Escaped Sequences Sanitization: {'✅ PASS' if test_results['escaped_sequences_sanitization'] else '❌ FAIL'}")
+        print(f"   Markdown Symbols Removal: {'✅ PASS' if test_results['markdown_symbols_removal'] else '❌ FAIL'}")
+        print(f"   Emoji Removal (GPT-5): {'✅ PASS' if test_results['emoji_removal_gpt5'] else '❌ FAIL'}")
+        print(f"   LaTeX Formatting: {'✅ PASS' if test_results['latex_formatting'] else '❌ FAIL'}")
+        print(f"   Mentor Structure: {'✅ PASS' if test_results['mentor_structure'] else '❌ FAIL'}")
+        print(f"   Raw Text Fields: {'✅ PASS' if test_results['raw_text_fields'] else '❌ FAIL'}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Determine overall status
+        if success_rate >= 85:
+            print("\n✅ AI TUTOR PHASE 1 TEXT SANITIZATION: EXCELLENT SUCCESS")
+            print("   Text sanitization fixes are working correctly")
+        elif success_rate >= 70:
+            print("\n⚠️ AI TUTOR PHASE 1 TEXT SANITIZATION: GOOD SUCCESS")
+            print("   Most sanitization working, minor issues need attention")
+        elif success_rate >= 50:
+            print("\n⚠️ AI TUTOR PHASE 1 TEXT SANITIZATION: PARTIAL SUCCESS")
+            print("   Core sanitization working, some areas need fixes")
+        else:
+            print("\n❌ AI TUTOR PHASE 1 TEXT SANITIZATION: NEEDS WORK")
+            print("   Critical sanitization issues prevent proper functionality")
+        
+        return success_rate >= 70  # 70% success rate for overall pass
+    
+    def analyze_sanitization_response(self, response, test_msg, test_results):
+        """Analyze API response for text sanitization compliance"""
+        try:
+            # Check if response has expected structure
+            if not isinstance(response, dict):
+                print("      ❌ Response is not a dictionary")
+                return
+            
+            # Check for primary and secondary responses
+            primary_response = response.get('primary', {})
+            secondary_response = response.get('secondary', {})
+            
+            if not primary_response or not secondary_response:
+                print("      ❌ Missing primary or secondary response")
+                return
+            
+            # Extract response texts
+            primary_text = primary_response.get('response', '')
+            secondary_text = secondary_response.get('response', '')
+            
+            # Check for raw_text fields
+            primary_raw = primary_response.get('raw_text', '')
+            secondary_raw = secondary_response.get('raw_text', '')
+            
+            if primary_raw or secondary_raw:
+                test_results['raw_text_fields'] = True
+                print("      ✅ Raw text fields present")
+            
+            # Test sanitization based on message focus
+            focus = test_msg['focus']
+            
+            if focus == 'special_characters_sanitization':
+                # Check for removal of **bold** markdown and special characters
+                has_markdown = '**' in primary_text or '**' in secondary_text
+                has_escaped_quotes = '\\"' in primary_text or "\\'" in primary_text
+                
+                if not has_markdown and not has_escaped_quotes:
+                    test_results['special_characters_sanitization'] = True
+                    test_results['markdown_symbols_removal'] = True
+                    print("      ✅ Special characters and markdown symbols sanitized")
+                else:
+                    print("      ❌ Special characters or markdown symbols not sanitized")
+                    if has_markdown:
+                        print("         - Found markdown symbols: **")
+                    if has_escaped_quotes:
+                        print("         - Found escaped quotes")
+            
+            elif focus == 'emoji_sanitization':
+                # Check for removal of emojis
+                emoji_patterns = ['✅', '❌', '1️⃣', '2️⃣', '💡']
+                has_emojis = any(emoji in primary_text or emoji in secondary_text for emoji in emoji_patterns)
+                
+                if not has_emojis:
+                    test_results['emoji_sanitization'] = True
+                    test_results['emoji_removal_gpt5'] = True
+                    print("      ✅ Emojis successfully removed")
+                else:
+                    print("      ❌ Emojis not removed")
+                    found_emojis = [emoji for emoji in emoji_patterns if emoji in primary_text or emoji in secondary_text]
+                    print(f"         - Found emojis: {found_emojis}")
+            
+            elif focus == 'latex_formatting':
+                # Check for proper LaTeX formatting with \\[ \\]
+                has_proper_latex = '\\[' in primary_text and '\\]' in primary_text
+                has_improper_latex = '$' in primary_text  # Should not use $ for display math
+                
+                if has_proper_latex and not has_improper_latex:
+                    test_results['latex_formatting'] = True
+                    print("      ✅ LaTeX properly formatted with \\[ \\]")
+                else:
+                    print("      ❌ LaTeX formatting issues")
+                    if not has_proper_latex:
+                        print("         - Missing proper \\[ \\] LaTeX formatting")
+                    if has_improper_latex:
+                        print("         - Found improper $ LaTeX formatting")
+            
+            # Check mentor response structure (should not be wall of text)
+            if 'mentor' in secondary_response.get('type', '').lower():
+                mentor_sections = secondary_response.get('mentor_sections', {})
+                
+                if mentor_sections and isinstance(mentor_sections, dict):
+                    expected_sections = ['motivation_spark', 'simplified_recap', 'confidence_tips', 'encouragement']
+                    found_sections = [section for section in expected_sections if section in mentor_sections]
+                    
+                    if len(found_sections) >= 3:  # At least 3 sections should be present
+                        test_results['mentor_structure'] = True
+                        print(f"      ✅ Mentor response properly structured ({len(found_sections)}/4 sections)")
+                    else:
+                        print(f"      ❌ Mentor response not properly structured ({len(found_sections)}/4 sections)")
+                else:
+                    print("      ❌ Mentor sections missing or invalid format")
+            
+            # General sanitization checks
+            combined_text = primary_text + secondary_text
+            
+            # Check for escaped sequences
+            escaped_sequences = ['\\n', '\\t', '\\"', "\\'"]
+            has_escaped = any(seq in combined_text for seq in escaped_sequences)
+            
+            if not has_escaped:
+                test_results['escaped_sequences_sanitization'] = True
+                print("      ✅ No escaped sequences found")
+            else:
+                print("      ❌ Found escaped sequences in response")
+                found_sequences = [seq for seq in escaped_sequences if seq in combined_text]
+                print(f"         - Found: {found_sequences}")
+            
+        except Exception as e:
+            print(f"      ❌ Error analyzing response: {str(e)}")
+            return
+
 def main():
     """Main function to run CSRF protection tests"""
     print("🛡️ DHRUV AI BACKEND CSRF PROTECTION TESTING")
