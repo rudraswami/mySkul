@@ -5136,10 +5136,18 @@ async def get_chat_messages(session_id: str, user: User = Depends(get_current_us
         {"session_id": session_id, "user_id": user.user_id}
     ).sort("timestamp", 1).to_list(100)
     
-    # Convert ObjectId to string for JSON serialization
+    # Process messages for proper frontend rendering
     for message in messages:
         if "_id" in message:
             message["_id"] = str(message["_id"])
+        
+        # If full_ai_response exists, use it for the response field to preserve dual_response structure
+        if "full_ai_response" in message and message["full_ai_response"]:
+            message["response"] = message["full_ai_response"]
+        
+        # Clean up the temporary full_ai_response field
+        if "full_ai_response" in message:
+            del message["full_ai_response"]
     
     return {"messages": messages}
 
