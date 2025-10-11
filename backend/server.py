@@ -5295,6 +5295,9 @@ async def save_chat_message(session_id: str, message_request: SessionMessageRequ
     message_dict = message.dict()
     message_dict['timestamp'] = message.timestamp.isoformat()
     
+    # Add the full AI response structure for complete UI rendering
+    message_dict['full_ai_response'] = full_response
+    
     # Save message
     result = await db.chat_messages.insert_one(message_dict)
     
