@@ -5104,25 +5104,8 @@ async def send_chat_message(chat_request: ChatRequest, user: User = Depends(get_
             chat_request.subject
         )
         
-        # Save chat message
-        chat_message = ChatMessage(
-            session_id=session_id,
-            user_id=user.user_id,
-            message=chat_request.message,
-            response=ai_response,
-            reasoning=reasoning,
-            confidence=0.95  # High confidence for demonstration
-        )
-        
-        await db.chat_messages.insert_one(chat_message.dict())
-        
-        return {
-            "session_id": session_id,
-            "message": chat_request.message,
-            "response": ai_response,
-            "reasoning": reasoning,
-            "timestamp": chat_message.timestamp
-        }
+        # Return enhanced dual response with all AI Tutor 2.1 features
+        return dual_response
         
     except Exception as e:
         logger.error(f"Chat error: {str(e)}")
