@@ -16316,7 +16316,7 @@ def main():
     
     # ============= NEW MOCK-TESTS ROUTER TESTS =============
     
-    def test_mock_tests_library(self):
+    def test_new_mock_tests_library(self):
         """Test Mock-Tests Router - GET /api/mock-tests/library"""
         print("   Testing GET /api/mock-tests/library endpoint")
         
