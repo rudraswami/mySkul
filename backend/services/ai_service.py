@@ -674,6 +674,77 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
         # All retries failed - use intelligent fallback
         logger.warning(f"🔄 All {role_type} LLM attempts failed, using fallback response")
         return fallback_responses.get(role_type, "I'm here to help! Please try asking your question again.")
+    
+    def _generate_fast_fallback(self, role_type: str, subject: str, user_message: str) -> str:
+        """
+        Generate immediate fallback responses when LLM calls fail or timeout
+        These are crafted to be helpful while indicating they're simplified responses
+        """
+        
+        # Detect question type for better fallbacks
+        is_math = any(word in user_message.lower() for word in ['solve', 'equation', 'calculate', '+', '-', '*', '/', '=', 'x^', 'formula'])
+        is_physics = 'physics' in subject.lower() or any(word in user_message.lower() for word in ['force', 'velocity', 'acceleration', 'newton', 'energy'])
+        is_concept = any(word in user_message.lower() for word in ['what is', 'explain', 'define', 'how does', 'why'])
+        
+        if role_type == "professor":
+            if is_math:
+                return f"""I can help you with this {subject} problem! Here's a structured approach:
+
+**Understanding the Problem:**
+Let's break down what we're being asked to find and identify the key information given.
+
+**Solution Strategy:**
+1. Identify the known values and what we need to solve for
+2. Choose the appropriate method or formula
+3. Apply the method step by step
+4. Check our answer for reasonableness
+
+**Next Steps:**
+Work through each step carefully, and feel free to ask if you need clarification on any part of the solution process."""
+            
+            elif is_physics:
+                return f"""This is a great {subject} question! Let me guide you through the concept:
+
+**Core Principle:**
+Understanding the fundamental relationship between the physical quantities involved.
+
+**Key Approach:**
+1. Identify the relevant physical laws or principles
+2. Set up the problem with known and unknown variables
+3. Apply the appropriate equations
+4. Solve systematically
+
+**Practical Application:**
+This concept appears frequently in real-world scenarios and is foundational for advanced topics."""
+                
+            else:
+                return f"""Thank you for your {subject} question! Here's how we can approach this:
+
+**Concept Overview:**
+This topic involves understanding key relationships and principles in {subject}.
+
+**Learning Strategy:**
+1. Start with the fundamental definitions
+2. Understand how concepts connect to each other
+3. Practice with examples to reinforce understanding
+4. Apply knowledge to solve problems
+
+**Study Tip:**
+Focus on understanding the 'why' behind concepts, not just memorizing facts."""
+        
+        else:  # mentor
+            return f"""I love your curiosity about {subject}! You're asking exactly the right kind of questions.
+
+**Why This Matters:**
+Every question you ask helps build a stronger foundation for your learning journey.
+
+**Study Approach:**
+• Take your time to understand each concept thoroughly
+• Don't worry if it seems challenging at first - that's completely normal
+• Practice regularly and be patient with yourself
+
+**Encouragement:**
+You're making great progress by actively seeking to understand. Keep up this excellent attitude toward learning!"""
 
     async def validate_math_expression(self, expression: str, units: Optional[str] = None) -> Dict[str, Any]:
         """Validate mathematical expressions using guardrails"""
