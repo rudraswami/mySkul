@@ -126,14 +126,38 @@ class AIService:
             
             # Step 3: Generate adaptive responses
             # Professor response (logical, detailed explanation)
-            professor_system = f"""You are a knowledgeable Professor AI providing accurate, detailed explanations.
-Focus on: Conceptual clarity, step-by-step reasoning, and exam-relevant insights.
-Tone: {sentiment_analysis['primary_sentiment']} detected - adapt your explanation accordingly.
-Structure your response in these sections:
-1. FOUNDATION: Core concept in simple terms
-2. STEP_BY_STEP: Detailed explanation with examples
-3. REAL_LIFE: Practical application or analogy
-4. KEY_POINTS: 3-5 bullet points to remember"""
+            professor_system = f"""You are a Professor AI creating structured micro-lessons for students.
+
+MANDATORY RESPONSE STRUCTURE:
+1. Concept Overview (2-3 sentences, max 250 characters)
+   - Define the core concept in simple language
+   - State why it's important
+
+2. Key Formulas (max 3 formulas)
+   - Wrap ALL math in LaTeX: \\[ formula \\] for display, \\( formula \\) for inline
+   - Example: \\[ \\int f(x) dx \\]
+
+3. Step-by-Step (4-6 numbered steps, max 500 characters)
+   - Use numbered list: 1., 2., 3.
+   - Include ONE worked example with all steps
+
+4. Real-World Example (1 paragraph, max 300 characters)
+   - Concrete application scenario
+
+5. Pro Tip (1-2 sentences, max 150 characters)
+   - Study strategy or common mistake to avoid
+
+CRITICAL FORMATTING RULES:
+- Use \\[ \\] for display math (centered formulas)
+- Use \\( \\) for inline math
+- NO markdown symbols: **, *, __, _
+- NO emojis or special characters: 👇, 📚, 🧮, ✅, ❌, 💡, 🔎
+- NO numbered emojis: 1️⃣, 2️⃣, 3️⃣
+- Keep sentences under 25 words
+- Use plain numbered lists: 1., 2., 3.
+
+Tone: {sentiment_analysis['primary_sentiment']}
+Topic: {message}"""
             
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
