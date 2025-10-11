@@ -24,6 +24,10 @@ const AIResponseCardV2 = ({ message, onQuickAction }) => {
   const { primary, secondary } = dual_response;
   const progressiveSections = primary.progressive_sections || {};
 
+  // Check if micro-lesson sections are available (AI Tutor 2.1)
+  const hasMicroLessons = primary.micro_lesson_sections && 
+    Object.keys(primary.micro_lesson_sections).length > 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -39,65 +43,55 @@ const AIResponseCardV2 = ({ message, onQuickAction }) => {
         />
       )}
 
-      {/* Professor Response with Progressive Disclosure */}
-      <div className="bg-white rounded-lg border border-blue-100 shadow-sm overflow-hidden">
-        {/* Professor Header */}
-        <div className="flex items-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
-          <GraduationCap className="w-5 h-5 text-blue-600" />
-          <span className="font-semibold text-blue-900">Professor AI</span>
-          <span className="text-xs text-blue-600 ml-auto">
-            {Math.round((primary.weight || 0.5) * 100)}% Focus
-          </span>
+      {/* AI Tutor 2.1 Micro-Lesson Rendering */}
+      {hasMicroLessons ? (
+        <div className="bg-white rounded-lg border border-blue-100 shadow-sm overflow-hidden p-4">
+          <ResponseComposer
+            message={message}
+            onQuickAction={onQuickAction}
+          />
         </div>
-
-        <div className="p-4">
-          {/* Visual Concept */}
-          {visual && visual.generated && (
-            <VisualConceptBlock visualData={visual} />
-          )}
-
-          {/* Progressive Sections */}
-          {Object.keys(progressiveSections).length > 0 ? (
-            <ProgressiveExplanation
-              sections={progressiveSections}
-              sentiment={sentiment_analysis?.primary_sentiment}
-            />
-          ) : (
-            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {primary.response}
+      ) : (
+        /* Fallback to AI Tutor 2.0 rendering */
+        <>
+          <div className="bg-white rounded-lg border border-blue-100 shadow-sm overflow-hidden">
+            {/* Professor Header */}
+            <div className="flex items-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+              <GraduationCap className="w-5 h-5 text-blue-600" />
+              <span className="font-semibold text-blue-900">Professor AI</span>
+              <span className="text-xs text-blue-600 ml-auto">
+                {Math.round((primary.weight || 0.5) * 100)}% Focus
+              </span>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Mentor Response */}
-      {secondary && secondary.response && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-100 p-4"
-        >
-          <div className="flex items-center space-x-2 mb-2">
-            <Heart className="w-4 h-4 text-pink-500" />
-            <span className="font-medium text-pink-900">Mentor AI</span>
-            <span className="text-xs text-pink-600">
-              {Math.round((secondary.weight || 0.5) * 100)}% Support
-            </span>
+            <div className="p-4">
+              <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {primary.response}
+              </div>
+            </div>
           </div>
-          <p className="text-pink-900 text-sm leading-relaxed">
-            {secondary.response}
-          </p>
-        </motion.div>
-      )}
 
-      {/* Quick Actions */}
-      {quick_actions && quick_actions.length > 0 && (
-        <QuickActionTray
-          actions={quick_actions}
-          onAction={onQuickAction}
-          messageData={message}
-        />
+          {/* Mentor Response */}
+          {secondary && secondary.response && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-100 p-4"
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <Heart className="w-4 h-4 text-pink-500" />
+                <span className="font-medium text-pink-900">Mentor AI</span>
+                <span className="text-xs text-pink-600">
+                  {Math.round((secondary.weight || 0.5) * 100)}% Support
+                </span>
+              </div>
+              <p className="text-pink-900 text-sm leading-relaxed">
+                {secondary.response}
+              </p>
+            </motion.div>
+          )}
+        </>
       )}
 
       {/* Confidence Indicator */}
