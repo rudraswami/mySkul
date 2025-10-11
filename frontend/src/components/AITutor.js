@@ -1636,7 +1636,8 @@ export default function AITutor() {
           )}
         </div>
         
-        <div className="space-y-4 flex-1 overflow-y-auto p-4">{/* Continue with existing content */}
+        {/* Chat History - Grouped by Subject */}
+        <div className="space-y-4 flex-1 overflow-y-auto p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-700">
               {searchQuery ? `Found ${filteredSessions.length}` : 'Chat History'}
