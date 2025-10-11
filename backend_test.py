@@ -16133,7 +16133,7 @@ def main():
     
     return overall_success
 
-    # ============= NEW AUTO-NOTES ROUTER TESTS =============
+# ============= NEW AUTO-NOTES ROUTER TESTS =============
     
     def test_new_auto_notes_start_session(self):
         """Test Auto-Notes Router - POST /api/auto-notes/start-session"""
