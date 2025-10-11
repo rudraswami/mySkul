@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ChevronDown, ChevronUp, Heart, GraduationCap, Zap } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import ConceptCard from './ConceptCard';
 import FormulaCard from './FormulaCard';
 import TipCard from './TipCard';
