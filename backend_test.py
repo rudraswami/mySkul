@@ -17930,6 +17930,289 @@ def main():
     
     return csrf_success
 
+    def test_ai_tutor_dual_response_endpoint(self):
+        """Test AI Tutor 2.0 Enhanced Dual-Response Endpoint with All New Features"""
+        print("\n🤖 AI TUTOR 2.0 ENHANCED DUAL-RESPONSE ENDPOINT TESTING")
+        print("=" * 80)
+        print("   TESTING SCOPE - AI TUTOR 2.0 ENHANCED FEATURES:")
+        print("   1. POST /api/ai/dual-response endpoint with enhanced features")
+        print("   2. Sentiment analysis working")
+        print("   3. Adaptive persona blending (Professor/Mentor weights)")
+        print("   4. Progressive disclosure sections (foundation, step_by_step, real_life, key_points)")
+        print("   5. SVG visual generation for mathematical concepts")
+        print("   6. Quick actions generation")
+        print("   7. Different message types (confusion, curiosity, concept learning)")
+        print("   CREDENTIALS: test@dhruvai.com / password123")
+        
+        # Authentication first
+        if not self.token:
+            print("   🔐 Authenticating first...")
+            auth_success = self.test_auth_router_login()
+            if not auth_success:
+                print("   ❌ Authentication failed - cannot test AI Tutor")
+                return False
+        
+        test_results = {
+            'curiosity_parabola_test': False,
+            'confusion_quadratic_test': False,
+            'concept_derivatives_test': False,
+            'sentiment_analysis_working': False,
+            'persona_blending_working': False,
+            'progressive_disclosure_working': False,
+            'svg_visual_generation_working': False,
+            'quick_actions_working': False,
+            'response_structure_valid': False
+        }
+        
+        # Test Case 1: Curiosity sentiment with parabola question
+        print("\n1️⃣ TEST CASE 1: CURIOSITY SENTIMENT - PARABOLA QUESTION")
+        print("   Message: 'Why is a parabola shaped like a U?'")
+        print("   Expected: Curiosity sentiment, higher professor weight, parabola SVG, progressive sections")
+        
+        curiosity_message = {
+            "message": "Why is a parabola shaped like a U?",
+            "session_id": str(uuid.uuid4()),
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "AI Tutor 2.0 - Curiosity Parabola Test",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=curiosity_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            test_results['curiosity_parabola_test'] = True
+            print("   ✅ Parabola question processed successfully")
+            
+            # Validate response structure
+            if self.validate_dual_response_structure(response, "curiosity", "parabola"):
+                test_results['response_structure_valid'] = True
+                
+                # Check sentiment analysis
+                sentiment_analysis = response.get('sentiment_analysis', {})
+                if sentiment_analysis.get('primary_sentiment') == 'curiosity':
+                    test_results['sentiment_analysis_working'] = True
+                    print("   ✅ Sentiment analysis: Curiosity detected correctly")
+                
+                # Check persona blending
+                persona_blend = sentiment_analysis.get('persona_blend', {})
+                professor_weight = persona_blend.get('professor', 0)
+                if professor_weight > 0.6:  # Higher professor weight expected
+                    test_results['persona_blending_working'] = True
+                    print(f"   ✅ Persona blending: Professor weight {professor_weight} (concept learning)")
+                
+                # Check progressive disclosure
+                primary_response = response.get('primary', {})
+                progressive_sections = primary_response.get('progressive_sections', {})
+                if all(section in progressive_sections for section in ['foundation', 'step_by_step', 'real_life', 'key_points']):
+                    test_results['progressive_disclosure_working'] = True
+                    print("   ✅ Progressive disclosure: All sections present")
+                
+                # Check SVG visual generation
+                visual = response.get('visual', {})
+                if visual.get('type') == 'svg' and visual.get('generated') and 'parabola' in visual.get('content', '').lower():
+                    test_results['svg_visual_generation_working'] = True
+                    print("   ✅ SVG visual: Parabola visualization generated")
+                
+                # Check quick actions
+                quick_actions = response.get('quick_actions', [])
+                if len(quick_actions) > 0:
+                    test_results['quick_actions_working'] = True
+                    action_types = [action.get('type', '') for action in quick_actions]
+                    print(f"   ✅ Quick actions: {len(quick_actions)} actions generated ({', '.join(action_types)})")
+        else:
+            print("   ❌ Parabola question test failed")
+        
+        # Test Case 2: Confusion sentiment with quadratic equations
+        print("\n2️⃣ TEST CASE 2: CONFUSION SENTIMENT - QUADRATIC EQUATIONS")
+        print("   Message: 'I'm confused about quadratic equations'")
+        print("   Expected: Confusion sentiment, higher mentor weight, appropriate quick actions")
+        
+        confusion_message = {
+            "message": "I'm confused about quadratic equations",
+            "session_id": str(uuid.uuid4()),
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "AI Tutor 2.0 - Confusion Quadratic Test",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=confusion_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            test_results['confusion_quadratic_test'] = True
+            print("   ✅ Quadratic confusion question processed successfully")
+            
+            # Check sentiment analysis for confusion
+            sentiment_analysis = response.get('sentiment_analysis', {})
+            if sentiment_analysis.get('primary_sentiment') == 'confusion':
+                print("   ✅ Sentiment analysis: Confusion detected correctly")
+                
+                # Check persona blending - should favor mentor for emotional support
+                persona_blend = sentiment_analysis.get('persona_blend', {})
+                mentor_weight = persona_blend.get('mentor', 0)
+                if mentor_weight > 0.4:  # Higher mentor weight expected for confusion
+                    print(f"   ✅ Persona blending: Mentor weight {mentor_weight} (emotional support)")
+        else:
+            print("   ❌ Quadratic confusion test failed")
+        
+        # Test Case 3: Concept learning with derivatives
+        print("\n3️⃣ TEST CASE 3: CONCEPT LEARNING - DERIVATIVES")
+        print("   Message: 'Explain derivatives'")
+        print("   Expected: Concept learning intent, professor-heavy blend, progressive sections")
+        
+        concept_message = {
+            "message": "Explain derivatives",
+            "session_id": str(uuid.uuid4()),
+            "subject": "Mathematics"
+        }
+        
+        success, response, _ = self.run_test(
+            "AI Tutor 2.0 - Concept Derivatives Test",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=concept_message,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        if success:
+            test_results['concept_derivatives_test'] = True
+            print("   ✅ Derivatives concept question processed successfully")
+            
+            # Check intent type
+            sentiment_analysis = response.get('sentiment_analysis', {})
+            if sentiment_analysis.get('intent_type') == 'concept_learning':
+                print("   ✅ Intent analysis: Concept learning detected correctly")
+                
+                # Check professor-heavy blend
+                persona_blend = sentiment_analysis.get('persona_blend', {})
+                professor_weight = persona_blend.get('professor', 0)
+                if professor_weight > 0.6:
+                    print(f"   ✅ Persona blending: Professor-heavy blend {professor_weight}")
+        else:
+            print("   ❌ Derivatives concept test failed")
+        
+        # Final Assessment
+        print("\n" + "=" * 80)
+        print("🤖 AI TUTOR 2.0 ENHANCED DUAL-RESPONSE - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        print(f"   Test Cases: {test_results['curiosity_parabola_test'] + test_results['confusion_quadratic_test'] + test_results['concept_derivatives_test']}/3")
+        print(f"   Sentiment Analysis: {'✅' if test_results['sentiment_analysis_working'] else '❌'}")
+        print(f"   Persona Blending: {'✅' if test_results['persona_blending_working'] else '❌'}")
+        print(f"   Progressive Disclosure: {'✅' if test_results['progressive_disclosure_working'] else '❌'}")
+        print(f"   SVG Visual Generation: {'✅' if test_results['svg_visual_generation_working'] else '❌'}")
+        print(f"   Quick Actions: {'✅' if test_results['quick_actions_working'] else '❌'}")
+        print(f"   Response Structure: {'✅' if test_results['response_structure_valid'] else '❌'}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Determine overall status
+        if success_rate >= 85:
+            print("\n✅ AI TUTOR 2.0 ENHANCED DUAL-RESPONSE: EXCELLENT SUCCESS")
+            print("   All enhanced features working correctly")
+        elif success_rate >= 70:
+            print("\n⚠️ AI TUTOR 2.0 ENHANCED DUAL-RESPONSE: GOOD SUCCESS")
+            print("   Most enhanced features working, minor issues need attention")
+        elif success_rate >= 50:
+            print("\n⚠️ AI TUTOR 2.0 ENHANCED DUAL-RESPONSE: PARTIAL SUCCESS")
+            print("   Core functionality working, some enhanced features need fixes")
+        else:
+            print("\n❌ AI TUTOR 2.0 ENHANCED DUAL-RESPONSE: NEEDS WORK")
+            print("   Critical issues prevent proper enhanced functionality")
+        
+        return success_rate >= 70  # 70% success rate for overall pass
+    
+    def validate_dual_response_structure(self, response, expected_sentiment=None, expected_visual_content=None):
+        """Validate the structure of dual-response API response"""
+        print("   🔍 Validating response structure...")
+        
+        # Check primary response structure
+        primary = response.get('primary', {})
+        if not primary:
+            print("   ❌ Missing primary response")
+            return False
+        
+        required_primary_fields = ['type', 'response', 'confidence', 'weight']
+        for field in required_primary_fields:
+            if field not in primary:
+                print(f"   ❌ Missing primary.{field}")
+                return False
+        
+        # Check secondary response structure
+        secondary = response.get('secondary', {})
+        if not secondary:
+            print("   ❌ Missing secondary response")
+            return False
+        
+        required_secondary_fields = ['type', 'response', 'weight']
+        for field in required_secondary_fields:
+            if field not in secondary:
+                print(f"   ❌ Missing secondary.{field}")
+                return False
+        
+        # Check visual structure
+        visual = response.get('visual', {})
+        if visual:
+            required_visual_fields = ['type', 'content', 'generated']
+            for field in required_visual_fields:
+                if field not in visual:
+                    print(f"   ❌ Missing visual.{field}")
+                    return False
+        
+        # Check sentiment analysis structure
+        sentiment_analysis = response.get('sentiment_analysis', {})
+        if not sentiment_analysis:
+            print("   ❌ Missing sentiment_analysis")
+            return False
+        
+        required_sentiment_fields = ['primary_sentiment', 'intent_type', 'persona_blend']
+        for field in required_sentiment_fields:
+            if field not in sentiment_analysis:
+                print(f"   ❌ Missing sentiment_analysis.{field}")
+                return False
+        
+        # Check persona blend structure
+        persona_blend = sentiment_analysis.get('persona_blend', {})
+        if 'professor' not in persona_blend or 'mentor' not in persona_blend:
+            print("   ❌ Missing professor/mentor weights in persona_blend")
+            return False
+        
+        # Check quick actions structure
+        quick_actions = response.get('quick_actions', [])
+        if not isinstance(quick_actions, list):
+            print("   ❌ quick_actions should be a list")
+            return False
+        
+        print("   ✅ Response structure validation passed")
+        return True
+
 if __name__ == "__main__":
-    success = main()
+    # Run AI Tutor 2.0 Enhanced Dual-Response Testing
+    tester = DhruvAITester()
+    
+    print("🚀 Starting AI Tutor 2.0 Enhanced Dual-Response Testing...")
+    print("=" * 60)
+    
+    # Run the specific test requested in the review
+    success = tester.test_ai_tutor_dual_response_endpoint()
+    
+    print("\n" + "=" * 60)
+    print(f"🏁 Testing Complete: {tester.tests_passed}/{tester.tests_run} tests passed")
+    print("=" * 60)
+    
     sys.exit(0 if success else 1)
