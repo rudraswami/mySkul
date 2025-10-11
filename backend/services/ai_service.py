@@ -210,7 +210,8 @@ Keep response concise (2-3 sentences) with actionable advice."""
                 },
                 "secondary": {
                     "type": "mentor", 
-                    "response": mentor_response if isinstance(mentor_response, str) else str(mentor_response),
+                    "response": mentor_content,
+                    "mentor_sections": mentor_sections,
                     "confidence": 0.9,
                     "weight": mentor_weight
                 },
