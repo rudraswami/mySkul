@@ -557,21 +557,41 @@ class DhruvAITester:
         print("   CREDENTIALS: test@dhruvai.com / password123")
         
         test_results = {
-            'modular_architecture_health': False,
-            'auth_router_registration': False,
+            # Authentication Router Tests
+            'auth_router_register': False,
             'auth_router_login': False,
             'auth_router_logout': False,
+            'auth_router_csrf_token': False,
+            
+            # User Router Tests
             'user_router_profile_get': False,
             'user_router_profile_put': False,
+            
+            # Subscription Router Tests
             'subscription_router_plans': False,
-            'subscription_router_access_check': False,
-            'subscription_router_usage_tracking': False,
-            'subscription_router_current': False,
-            'service_layer_dependency_injection': False,
-            'duplicate_route_resolution': False,
-            'backward_compatibility': False,
-            'database_integration': False,
-            'security_maintained': False
+            'subscription_router_info': False,
+            'subscription_router_check_access': False,
+            'subscription_router_track_usage': False,
+            
+            # AI Router Tests
+            'ai_router_available_contexts': False,
+            'ai_router_chat_sessions': False,
+            'ai_router_chat_message': False,
+            'ai_router_guardrails_math': False,
+            'ai_router_guardrails_fact': False,
+            'ai_router_guardrails_citations': False,
+            
+            # Analytics Router Tests
+            'analytics_router_dashboard': False,
+            'analytics_router_daily_goals': False,
+            'analytics_router_subject_progress': False,
+            
+            # Critical Integration Tests
+            'authentication_flow': False,
+            'hybrid_auth_methods': False,
+            'dependency_injection': False,
+            'error_handling_consistency': False,
+            'backward_compatibility': False
         }
         
         # Test 1: Modular Architecture Health Check
