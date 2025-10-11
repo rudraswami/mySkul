@@ -79,9 +79,6 @@ export default function AITutor() {
     triggerFeatureUpsell
   } = useSubscription();
   
-  // Feature toggle state for AI Tutor 2.0
-  const [useAITutor20, setUseAITutor20] = useState(false);
-  
   const [currentMessage, setCurrentMessage] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [currentSession, setCurrentSession] = useState(null);
