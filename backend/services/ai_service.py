@@ -186,6 +186,10 @@ Keep response concise (2-3 sentences) with actionable advice."""
                 message
             )
             
+            # Step 7.5: Split mentor response into structured sections (AI Tutor 2.4)
+            mentor_content = mentor_response if isinstance(mentor_response, str) else str(mentor_response)
+            mentor_sections = self.response_parser.split_mentor_response(mentor_content)
+            
             # Step 8: Generate motivational footer with real analytics
             user_analytics = await self._get_user_analytics(user_id, subject)
             motivational_data = self.motivational_generator.generate(
