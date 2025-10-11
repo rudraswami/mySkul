@@ -247,6 +247,15 @@ const ResponseComposer = ({ message, onQuickAction }) => {
         </motion.div>
       )}
 
+      {/* Emotional Anchor before Practice */}
+      <motion.div 
+        variants={itemVariants}
+        className="flex items-center justify-center space-x-2 my-5 px-4 py-3 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-xl border border-blue-200"
+      >
+        <Sparkles className="w-5 h-5 text-blue-600" />
+        <span className="text-blue-800 font-medium text-sm">{getEmotionalAnchor('practice')}</span>
+      </motion.div>
+
       {/* Practice Actions */}
       <motion.div variants={itemVariants}>
         <PracticeActions
