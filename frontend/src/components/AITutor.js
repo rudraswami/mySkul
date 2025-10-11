@@ -521,9 +521,9 @@ export default function AITutor() {
         }
       }
       
-      // If responseData is an object with dual_response structure
+      // If responseData is an object, check different structures
       if (responseData && typeof responseData === 'object') {
-        // Case 1: Complete dual response structure
+        // Case 1: Complete dual response structure (new format)
         if (responseData.dual_response && responseData.dual_response.primary) {
           return {
             ...message,
@@ -532,28 +532,42 @@ export default function AITutor() {
             action_buttons: responseData.action_buttons,
             analytics: responseData.analytics,
             disagreement_alert: responseData.disagreement_alert,
-            response: responseData.dual_response.primary.response // Clean text for fallback
+            response: responseData.dual_response.primary.response, // Clean text for fallback
+            user_message: message.message || message.user_message
           };
         }
-        // Case 2: Direct dual_response (without wrapper)
+        // Case 2: Direct dual_response (backend returns dual_response directly)
         else if (responseData.primary && responseData.secondary) {
           return {
             ...message,
             dual_response: responseData,
-            response: responseData.primary.response // Clean text for fallback
+            response: responseData.primary.response, // Clean text for fallback
+            user_message: message.message || message.user_message
           };
         }
         // Case 3: Simple response object
         else if (responseData.response) {
           return {
             ...message,
-            response: responseData.response
+            response: responseData.response,
+            user_message: message.message || message.user_message
+          };
+        }
+        // Case 4: Object without known structure - return as enhanced message
+        else {
+          return {
+            ...message,
+            ...responseData,
+            user_message: message.message || message.user_message
           };
         }
       }
       
-      // Case 4: Plain text response - return as-is
-      return message;
+      // Case 5: Plain text response - return as-is
+      return {
+        ...message,
+        user_message: message.message || message.user_message
+      };
     } catch (error) {
       // If parsing fails, return the original message
       console.warn('Failed to parse message response:', error);
