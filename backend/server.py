@@ -11375,7 +11375,9 @@ if MODULAR_COMPONENTS_AVAILABLE:
     app.include_router(subscription_router_new, prefix="/api", tags=["modular-subscription"])
     app.include_router(ai_router_new, prefix="/api", tags=["modular-ai"])
     app.include_router(analytics_router_new, prefix="/api", tags=["modular-analytics"])
-    logger.info("✅ Modular routers registered (Auth, User, Subscription, AI, Analytics)")
+    app.include_router(auto_notes_router_new, prefix="/api", tags=["modular-auto-notes"])
+    app.include_router(mock_tests_router_new, prefix="/api", tags=["modular-mock-tests"])
+    logger.info("✅ Modular routers registered (Auth, User, Subscription, AI, Analytics, Auto-Notes, Mock-Tests)")
 
 # Shutdown event
 @app.on_event("shutdown")
