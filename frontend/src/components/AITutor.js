@@ -91,6 +91,10 @@ export default function AITutor() {
   const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
   
+  // Input state management for proper phase separation
+  const [pendingMessage, setPendingMessage] = useState(''); // Message being processed
+  const [messagePhase, setMessagePhase] = useState('idle'); // 'idle', 'submit', 'streaming', 'reset'
+  
   // Phase 3: Enhanced functionality states
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
