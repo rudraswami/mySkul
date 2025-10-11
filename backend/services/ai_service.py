@@ -389,7 +389,10 @@ Subject Context: {subject}"""
                 await self.subscription_service.track_ai_tutor_session(user_id)
                 logger.info(f"✅ Tracked AI Tutor session for user {user_id}")
             
-            return dual_response
+            # Return in expected frontend format
+            return {
+                "dual_response": dual_response
+            }
             
         except Exception as e:
             logger.error(f"Generate dual AI response error: {str(e)}")
