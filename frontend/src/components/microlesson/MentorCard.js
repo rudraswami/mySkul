@@ -241,7 +241,7 @@ const MentorCard = ({ mentorData, weight }) => {
                   <div className="text-pink-950 text-base leading-relaxed">
                     <ReactMarkdown 
                       components={{
-                        p: ({ children }) => <LatexRenderer text={children} />
+                        p: ({ children }) => <LatexRenderer text={String(children)} />
                       }}
                     >
                       {mentorSections.motivation_spark || sanitizeText(mentorData.response?.substring(0, 150)) + '...'}
