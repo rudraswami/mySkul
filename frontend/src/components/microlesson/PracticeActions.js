@@ -44,17 +44,19 @@ const PracticeActions = ({ onTrySimilar, onSaveToNotes, onExplainDifferently, me
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.3 }}
-      className="mb-4"
+      transition={{ duration: 0.4, delay: 0.3 }}
+      className="p-6 bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 rounded-2xl border-2 border-purple-200"
     >
-      <div className="flex items-center space-x-2 mb-3">
-        <Sparkles className="w-4 h-4 text-purple-600" />
-        <h3 className="text-sm font-semibold text-gray-700 font-poppins">
-          Quick Practice
+      <div className="flex items-center space-x-3 mb-5">
+        <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 font-poppins">
+          Ready to Practice? 🎯
         </h3>
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
@@ -62,14 +64,14 @@ const PracticeActions = ({ onTrySimilar, onSaveToNotes, onExplainDifferently, me
               key={action.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 + index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
+              transition={{ delay: 0.4 + index * 0.1 }}
+              whileHover={{ scale: 1.08, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => action.onClick && action.onClick(messageData)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all ${getColorClasses(action.color)}`}
+              className={`flex items-center space-x-2 px-5 py-3 rounded-xl border-2 transition-all shadow-md hover:shadow-lg font-semibold ${getColorClasses(action.color)}`}
             >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{action.label}</span>
+              <Icon className="w-5 h-5" />
+              <span className="text-base">{action.label}</span>
             </motion.button>
           );
         })}
