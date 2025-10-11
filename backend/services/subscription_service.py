@@ -25,8 +25,16 @@ class SubscriptionService:
     async def load_plan_config(self):
         """Load plan configuration from JSON file"""
         if self.plan_config is None:
-            with open(self.config_path, 'r') as f:
-                self.plan_config = json.load(f)
+            # Try AI Tutor config first, fallback to legacy
+            ai_tutor_config_path = str(Path(__file__).parent.parent / 'planConfig_ai_tutor.json')
+            if Path(ai_tutor_config_path).exists():
+                with open(ai_tutor_config_path, 'r') as f:
+                    self.plan_config = json.load(f)
+                logger.info("✅ Loaded AI Tutor subscription configuration")
+            else:
+                with open(self.config_path, 'r') as f:
+                    self.plan_config = json.load(f)
+                logger.info("✅ Loaded legacy subscription configuration")
         return self.plan_config
     
     async def get_user_subscription_info(self, user_id: str) -> Dict[str, Any]:
