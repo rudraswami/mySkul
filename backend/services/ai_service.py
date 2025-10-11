@@ -301,8 +301,9 @@ Subject Context: {subject}"""
             # Step 6: Generate quick actions
             quick_actions = self._generate_quick_actions(message, subject, sentiment_analysis)
             
-            # Step 7: Parse response into micro-lesson sections (AI Tutor 2.1)
-            micro_lesson_sections = await self.response_parser.parse_response(
+            # Step 7: Parse response into micro-lesson sections (FAST rule-based only)
+            # Skip slow AI parsing for fast-first strategy
+            micro_lesson_sections = self.response_parser._rule_based_parse(
                 professor_content,
                 subject,
                 message
