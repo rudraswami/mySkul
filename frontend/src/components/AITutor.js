@@ -883,6 +883,11 @@ export default function AITutor() {
       showToast(toastMessage, 'error');
     } finally {
       setLoading(false);
+      // Ensure phases are reset if not already done
+      if (messagePhase !== 'idle') {
+        setPendingMessage('');
+        setMessagePhase('idle');
+      }
     }
   };
 
