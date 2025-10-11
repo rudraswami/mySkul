@@ -216,7 +216,7 @@ const MentorCard = ({ mentorData, weight }) => {
               )}
 
               {/* Confidence Tips - Collapsible */}
-              {sections.confidence_tips && (
+              {mentorSections.confidence_tips && (
                 <div>
                   <button
                     onClick={() => setShowTips(!showTips)}
