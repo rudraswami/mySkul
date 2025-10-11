@@ -235,6 +235,19 @@ Return JSON with keys: concept_overview, key_formula, step_by_step, real_life_an
         )
         cleaned = emoji_pattern.sub('', cleaned)
         
+        # Also remove specific problematic emojis that might not be caught
+        cleaned = cleaned.replace('✅', '')
+        cleaned = cleaned.replace('❌', '')
+        cleaned = cleaned.replace('☑', '')
+        cleaned = cleaned.replace('💡', '')
+        cleaned = cleaned.replace('🔎', '')
+        cleaned = cleaned.replace('📔', '')
+        cleaned = cleaned.replace('💙', '')
+        cleaned = cleaned.replace('👇', '')
+        cleaned = cleaned.replace('📚', '')
+        cleaned = cleaned.replace('🧮', '')
+        cleaned = cleaned.replace('🧠', '')
+        
         # First pass: Remove escape sequences (but preserve LaTeX delimiters)
         # We need to keep \[, \], \(, \) for LaTeX rendering
         # Replace escaped quotes and newlines
