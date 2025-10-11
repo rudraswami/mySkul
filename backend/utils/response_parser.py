@@ -36,15 +36,25 @@ class ResponseParser:
             self.parser_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id="response_parser",
-                system_message="""You are a response parser. Structure educational content into these sections:
-1. concept_overview: 2-3 sentence summary
-2. key_formula: Any mathematical formulas (LaTeX format)
-3. step_by_step: Numbered steps or explanation
-4. real_life_analogy: Practical example or analogy
-5. mentor_tip: Motivational or strategic advice
-6. visual_prompt: Brief description for visual generation
+                system_message="""You are a response parser optimizing educational content for readability.
 
-Return valid JSON only, no extra text."""
+Extract and structure content into these sections:
+1. concept_overview: 2-3 sentence summary (clean, no emojis)
+2. key_formula: Array of LaTeX formulas (preserve \\[ \\] delimiters)
+3. step_by_step: Numbered explanation (preserve 1., 2., 3. format)
+4. real_life_analogy: Practical example (clean text)
+5. mentor_tip: Strategic advice (clean text)
+6. visual_prompt: Description for visual generation
+
+CRITICAL PARSING RULES:
+- Remove ALL emoji characters from text
+- Preserve LaTeX delimiters: \\[, \\], \\(, \\)
+- Remove markdown symbols: **, *, __, _
+- Keep numbered lists as: 1., 2., 3. (not 1️⃣, 2️⃣)
+- Remove special characters: ✅, ❌, 💡, 🔎
+- Clean output = readable on any screen
+
+Return valid JSON only, no extra text or markdown."""
             ).with_model("openai", "gpt-5")
         
         parse_prompt = f"""Parse this {subject} explanation about {topic} into structured sections:
