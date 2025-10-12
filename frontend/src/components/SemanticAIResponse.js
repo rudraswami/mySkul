@@ -12,27 +12,48 @@ import 'katex/dist/katex.min.css';
 const SemanticAIResponse = ({ content, type = 'professor' }) => {
   if (!content) return null;
 
-  // Parse section tags from backend
+  // Parse section tags from backend with enhanced fallback logic
   const parseSections = (text) => {
     const sections = {};
     const sectionRegex = /\[SECTION:(\w+)\]([\s\S]*?)\[\/SECTION:\1\]/g;
     const microcardRegex = /\[MICROCARD:(\w+)\]([\s\S]*?)\[\/MICROCARD:\1\]/g;
     
     let match;
+    let foundSections = false;
     
     // Parse Professor sections
     while ((match = sectionRegex.exec(text)) !== null) {
       sections[match[1].toLowerCase()] = match[2].trim();
+      foundSections = true;
     }
     
     // Parse Mentor microcards
     while ((match = microcardRegex.exec(text)) !== null) {
       sections[match[1].toLowerCase()] = match[2].trim();
+      foundSections = true;
     }
     
-    // If no sections found, treat entire content as generic
-    if (Object.keys(sections).length === 0) {
-      sections['content'] = text;
+    // Enhanced fallback: If no sections found, use intelligent content splitting
+    if (!foundSections) {
+      // For Professor: Try to detect natural sections by paragraph structure
+      if (type === 'professor') {
+        const paragraphs = text.split('\n\n').filter(p => p.trim());
+        if (paragraphs.length >= 3) {
+          // First paragraph as concept
+          sections['concept'] = paragraphs[0];
+          // Middle paragraphs as steps
+          if (paragraphs.length > 3) {
+            sections['steps'] = paragraphs.slice(1, -1).join('\n\n');
+          }
+          // Last paragraph as pro tip
+          sections['protip'] = paragraphs[paragraphs.length - 1];
+        } else {
+          sections['content'] = text;
+        }
+      } else {
+        // For Mentor: Treat as motivation message
+        sections['motivation'] = text;
+      }
     }
     
     return sections;
