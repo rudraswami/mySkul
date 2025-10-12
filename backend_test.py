@@ -148,7 +148,8 @@ class BackendAPITester:
             "message": "Derive the quadratic formula",
             "subject": "Mathematics",
             "depth_level": "deep",
-            "exam_mode": "JEE"
+            "exam_mode": "JEE",
+            "session_id": session_id
         }
         
         print(f"   📝 Request: {json.dumps(complete_params_request, indent=2)}")
