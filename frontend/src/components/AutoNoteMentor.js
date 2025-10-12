@@ -1432,21 +1432,21 @@ export default function AutoNoteMentor() {
               );
             }
             
-            // Key points with beautiful formatting
+            // Key points with clean academic formatting
             if (trimmedLine.includes(':') && trimmedLine.length < 200) {
               const [term, ...definitionParts] = trimmedLine.split(':');
               const definition = definitionParts.join(':').trim();
               const currentPoint = pointCounter++;
               
               return (
-                <div key={lineIdx} className="mb-4">
-                  <div className={`bg-${theme.light} rounded-lg p-4 border-l-4 border-${theme.primary}`}>
+                <div key={lineIdx} className="mb-3.5">
+                  <div className="bg-white rounded-md p-4 border border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
                     <div className="flex items-start">
-                      <span className={`inline-flex items-center justify-center w-6 h-6 bg-${theme.secondary} text-white rounded-full text-sm font-medium mr-3 mt-0.5 flex-shrink-0`}>
+                      <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-700 rounded-md text-sm font-semibold mr-3 mt-0.5 flex-shrink-0 border border-blue-200">
                         {currentPoint}
                       </span>
                       <div className="flex-1">
-                        <h4 className="text-base font-semibold text-gray-800 mb-2 leading-relaxed">
+                        <h4 className="text-sm font-bold text-gray-900 mb-1.5 leading-snug">
                           {term.trim()}
                         </h4>
                         {definition && (
