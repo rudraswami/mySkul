@@ -341,7 +341,7 @@ Depth Level: {depth_level}"""
                 start_time = time.time()
                 professor_response = await self._safe_llm_call(
                     professor_chat, professor_message, "professor", subject, message, 
-                    max_retries=1, timeout_seconds=25  # Extended from 12s to 25s for deep reasoning
+                    max_retries=1, timeout_seconds=20  # Optimized from 25s to 20s with reduced max_tokens
                 )
                 professor_time = time.time() - start_time
                 
