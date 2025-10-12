@@ -113,6 +113,56 @@ class AIService:
             logger.error(f"Get session messages error: {str(e)}")
             return []
     
+    def _detect_depth_level(self, message: str, subject: str) -> str:
+        """
+        Phase 2: Detect appropriate depth level based on query characteristics
+        Returns: "deep", "standard", or "quick"
+        """
+        message_lower = message.lower()
+        word_count = len(message.split())
+        
+        # Deep indicators
+        deep_keywords = [
+            'derive', 'proof', 'mechanism', 'explain in detail', 'step by step',
+            'how does', 'why does', 'complete', 'comprehensive', 'detailed',
+            'biochemical', 'molecular', 'thermodynamic', 'quantum', 'relativistic'
+        ]
+        
+        # Quick indicators
+        quick_keywords = [
+            'what is', 'define', 'quick', 'brief', 'summary', 'in short',
+            'simple', 'basic', 'quickly'
+        ]
+        
+        # Check for deep indicators
+        if any(keyword in message_lower for keyword in deep_keywords) or word_count > 15:
+            return "deep"
+        
+        # Check for quick indicators
+        if any(keyword in message_lower for keyword in quick_keywords) or word_count < 6:
+            return "quick"
+        
+        # Default to standard
+        return "standard"
+    
+    def _detect_exam_mode(self, user_id: str, subject: str) -> str:
+        """
+        Phase 2: Detect exam context from user profile
+        Returns: "JEE", "NEET", or "CBSE"
+        """
+        # For Phase 2, we'll default based on subject
+        # Phase 3 will read from user profile in database
+        
+        subject_lower = subject.lower()
+        
+        # Subject-based heuristics
+        if any(term in subject_lower for term in ['physics', 'mathematics', 'chemistry']):
+            return "JEE"  # Engineering focus
+        elif any(term in subject_lower for term in ['biology', 'zoology', 'botany']):
+            return "NEET"  # Medical focus
+        else:
+            return "CBSE"  # General board exam
+    
     async def generate_dual_ai_response(self, user_id: str, message: str, session_id: str, subject: str) -> Dict[str, Any]:
         """
         Generate enhanced dual AI response with adaptive personas, visual generation, and progressive disclosure
