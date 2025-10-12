@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 // Get backend URL from environment
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Create axios instance with default configuration

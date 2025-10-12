@@ -23,7 +23,7 @@ import numpy as np
 from PyPDF2 import PdfReader
 from PIL import Image
 import math
-from lightweight_embeddings import get_embedding_service
+from .lightweight_embeddings import get_embedding_service
 from bson.objectid import ObjectId
 from fastapi.responses import JSONResponse as FastAPIJSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -1503,7 +1503,7 @@ import whisper
 import tempfile
 import os
 from pydub import AudioSegment
-import aiofiles
+
 
 class AutoNoteMentorEngine:
     """Advanced Auto-Note Mentor with Whisper integration"""

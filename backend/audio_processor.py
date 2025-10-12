@@ -14,10 +14,8 @@ import numpy as np
 
 # Audio processing libraries
 import librosa
-import soundfile as sf
 import noisereduce as nr
 from pydub import AudioSegment
-import ffmpeg
 import whisper
 
 # ML libraries
