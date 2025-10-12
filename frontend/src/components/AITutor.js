@@ -606,7 +606,7 @@ export default function AITutor() {
 
     // Check AI Tutor subscription access BEFORE sending
     try {
-      const accessCheckResponse = await client.get('/api/subscription/check-ai-tutor-access');
+      const accessCheckResponse = await client.get('/subscription/check-ai-tutor-access');
       const accessData = accessCheckResponse.data;
       
       // Update session usage display

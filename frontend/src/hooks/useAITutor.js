@@ -76,7 +76,7 @@ export const useAITutorSessions = () => {
   return useQuery({
     queryKey: ['ai-tutor-sessions'],
     queryFn: async () => {
-      const response = await client.get('/api/ai/sessions');
+      const response = await client.get('/ai/sessions');
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -92,7 +92,7 @@ export const useSessionMessages = (sessionId) => {
     queryKey: ['ai-tutor-messages', sessionId],
     queryFn: async () => {
       if (!sessionId) return [];
-      const response = await client.get(`/api/ai/sessions/${sessionId}/messages`);
+      const response = await client.get(`/ai/sessions/${sessionId}/messages`);
       return response.data;
     },
     enabled: !!sessionId,
@@ -108,7 +108,7 @@ export const useCreateSession = () => {
   
   return useMutation({
     mutationFn: async ({ title, subject, topic }) => {
-      const response = await client.post('/api/ai/create-session', {
+      const response = await client.post('/ai/create-session', {
         title,
         subject,
         topic: topic || 'General'
@@ -138,7 +138,7 @@ export const useSendMessage = () => {
     mutationFn: async ({ message, sessionId, subject }) => {
       const startTime = Date.now();
       
-      const response = await client.post('/api/ai/dual-response', {
+      const response = await client.post('/ai/dual-response', {
         message,
         session_id: sessionId,
         subject
@@ -192,7 +192,7 @@ export const useQuickAction = () => {
       
       switch (action) {
         case 'save_to_notes':
-          endpoint = '/api/actions/add-to-notes';
+          endpoint = '/actions/add-to-notes';
           payload = {
             content: messageData.dual_response?.primary?.response,
             subject: messageData.subject,
@@ -201,7 +201,7 @@ export const useQuickAction = () => {
           break;
           
         case 'generate_practice':
-          endpoint = '/api/actions/practice-more';
+          endpoint = '/actions/practice-more';
           payload = {
             topic: messageData.subject,
             difficulty: 'medium'
@@ -213,7 +213,7 @@ export const useQuickAction = () => {
           return { action: 'explain_different', messageData };
           
         case 'generate_visual':
-          endpoint = '/api/actions/generate-visual';
+          endpoint = '/actions/generate-visual';
           payload = {
             concept: messageData.dual_response?.primary?.micro_lesson_sections?.concept_overview
           };
