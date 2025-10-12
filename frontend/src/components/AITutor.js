@@ -9,9 +9,8 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import FormattedAIResponse, { DualResponseContainer, formatMathExpressions, formatVisualResponse, formatProfessorMentorResponse } from './FormattedAIResponse';
+import { formatMathExpressions, formatProfessorMentorResponse } from './FormattedAIResponse';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
-import AIResponseCardV2 from './AIResponseCardV2';
 import SemanticAIResponse from './SemanticAIResponse'; // Phase 2/3 enhanced rendering
 import PersonaHeader from './PersonaHeader';
 import VisualConceptBlock from './VisualConceptBlock';
