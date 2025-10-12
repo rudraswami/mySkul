@@ -1,3 +1,495 @@
+import requests
+import json
+import time
+import uuid
+from datetime import datetime
+
+class BackendAPITester:
+    def __init__(self):
+        self.base_url = "https://dhruv-tutor-upgrade.preview.emergentagent.com/api"
+        self.token = None
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+    
+    def run_test(self, test_name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.base_url}/{endpoint}"
+        
+        # Merge headers
+        test_headers = self.session.headers.copy()
+        if headers:
+            test_headers.update(headers)
+        
+        try:
+            if method == "GET":
+                response = self.session.get(url, headers=test_headers, timeout=60)
+            elif method == "POST":
+                response = self.session.post(url, json=data, headers=test_headers, timeout=60)
+            elif method == "PUT":
+                response = self.session.put(url, json=data, headers=test_headers, timeout=60)
+            elif method == "DELETE":
+                response = self.session.delete(url, headers=test_headers, timeout=60)
+            
+            # Handle expected status as list or single value
+            if isinstance(expected_status, list):
+                status_match = response.status_code in expected_status
+            else:
+                status_match = response.status_code == expected_status
+            
+            if status_match:
+                try:
+                    response_data = response.json()
+                    return True, response_data, response.status_code
+                except:
+                    return True, {}, response.status_code
+            else:
+                print(f"   ❌ {test_name}: Expected {expected_status}, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"      Error: {error_data}")
+                    return False, error_data, response.status_code
+                except:
+                    print(f"      Error: {response.text}")
+                    return False, {"error": response.text}, response.status_code
+                    
+        except Exception as e:
+            print(f"   ❌ {test_name}: Exception - {str(e)}")
+            return False, {"error": str(e)}, 0
+    
+    def test_auth_router_login(self):
+        """Test authentication with test@dhruvai.com / password123"""
+        login_data = {
+            "email": "test@dhruvai.com",
+            "password": "password123"
+        }
+        
+        success, response, _ = self.run_test(
+            "Authentication Login",
+            "POST",
+            "auth/login",
+            200,
+            data=login_data
+        )
+        
+        if success and response.get('token'):
+            self.token = response.get('token')
+            self.session.headers.update({'Authorization': f'Bearer {self.token}'})
+            print(f"   ✅ Authentication successful")
+            return True
+        else:
+            print(f"   ❌ Authentication failed")
+            return False
+
+    # ============= AI TUTOR SEMANTIC RENDERING VALIDATION =============
+    
+    def test_ai_tutor_semantic_rendering_validation(self):
+        """AI TUTOR SEMANTIC RENDERING VALIDATION - As per review request"""
+        print("\n🤖 AI TUTOR SEMANTIC RENDERING VALIDATION")
+        print("=" * 80)
+        print("   OBJECTIVE: Test /api/ai/dual-response endpoint for semantic tag generation")
+        print("   AUTH: test@dhruvai.com / password123")
+        print("   SCENARIOS: Mathematics (deep mode) + Physics (standard mode)")
+        print("   VALIDATION: Semantic tags, LaTeX math, key terms, response structure")
+        
+        test_results = {
+            'authentication': False,
+            'mathematics_deep_mode_200_ok': False,
+            'mathematics_semantic_tags': False,
+            'mathematics_latex_delimiters': False,
+            'mathematics_key_terms': False,
+            'mathematics_response_length': False,
+            'mathematics_raw_text_field': False,
+            'physics_standard_mode_200_ok': False,
+            'physics_semantic_structure': False,
+            'physics_response_time_check': False,
+            'overall_response_time_under_50s': False
+        }
+        
+        # AUTHENTICATION SETUP
+        print("\n1️⃣ AUTHENTICATION SETUP")
+        if not self.token:
+            print("   Authenticating with test@dhruvai.com / password123")
+            auth_success = self.test_auth_router_login()
+            if not auth_success:
+                print("   ❌ Authentication failed - cannot proceed with AI Tutor tests")
+                return False
+        
+        test_results['authentication'] = True
+        print("   ✅ Authentication successful")
+        
+        # SCENARIO 1: Mathematics Query - Deep Mode
+        print("\n2️⃣ SCENARIO 1: MATHEMATICS QUERY - DEEP MODE")
+        test_results.update(self.test_mathematics_deep_mode_scenario())
+        
+        # SCENARIO 2: Physics Query - Standard Mode  
+        print("\n3️⃣ SCENARIO 2: PHYSICS QUERY - STANDARD MODE")
+        test_results.update(self.test_physics_standard_mode_scenario())
+        
+        # SCENARIO 3: Response Time Check
+        print("\n4️⃣ SCENARIO 3: RESPONSE TIME CHECK")
+        test_results['overall_response_time_under_50s'] = self.test_overall_response_time()
+        
+        return self._print_semantic_rendering_test_results(test_results)
+    
+    def test_mathematics_deep_mode_scenario(self):
+        """Test Mathematics Query - Deep Mode with semantic validation"""
+        print("   Testing Mathematics deep mode with quadratic formula derivation")
+        
+        math_request_data = {
+            "message": "Explain quadratic formula derivation",
+            "subject": "Mathematics", 
+            "depth_level": "deep",
+            "exam_mode": "JEE"
+        }
+        
+        print(f"   📝 Request: {json.dumps(math_request_data, indent=2)}")
+        
+        # Measure response time
+        start_time = time.time()
+        
+        success, response, status_code = self.run_test(
+            "Mathematics Deep Mode - Quadratic Formula",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=math_request_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        end_time = time.time()
+        math_response_time = end_time - start_time
+        
+        results = {
+            'mathematics_deep_mode_200_ok': False,
+            'mathematics_semantic_tags': False,
+            'mathematics_latex_delimiters': False,
+            'mathematics_key_terms': False,
+            'mathematics_response_length': False,
+            'mathematics_raw_text_field': False
+        }
+        
+        if success and status_code == 200:
+            results['mathematics_deep_mode_200_ok'] = True
+            print(f"   ✅ Mathematics deep mode returned 200 OK")
+            print(f"   ⏱️ Response Time: {math_response_time:.1f}s")
+            
+            # Store response time for overall validation
+            self.math_response_time = math_response_time
+            
+            # Validate response structure
+            dual_response = response.get('dual_response', {})
+            primary = dual_response.get('primary', {})
+            secondary = dual_response.get('secondary', {})
+            
+            professor_response = primary.get('response', '')
+            professor_raw_text = primary.get('raw_text', '')
+            mentor_response = secondary.get('response', '')
+            mentor_raw_text = secondary.get('raw_text', '')
+            
+            print(f"   📊 Response Structure Analysis:")
+            print(f"      Professor response length: {len(professor_response)} chars")
+            print(f"      Professor raw_text length: {len(professor_raw_text)} chars")
+            print(f"      Mentor response length: {len(mentor_response)} chars")
+            print(f"      Mentor raw_text length: {len(mentor_raw_text)} chars")
+            
+            # VALIDATION 1: Semantic Tags in raw_text
+            print(f"\n   🏷️ SEMANTIC TAGS VALIDATION:")
+            professor_semantic_tags = self._check_semantic_tags(professor_raw_text, "professor")
+            mentor_semantic_tags = self._check_semantic_tags(mentor_raw_text, "mentor")
+            
+            if professor_semantic_tags and mentor_semantic_tags:
+                results['mathematics_semantic_tags'] = True
+                print(f"      ✅ Semantic tags present in both Professor and Mentor raw_text")
+            else:
+                print(f"      ❌ Semantic tags missing - Professor: {professor_semantic_tags}, Mentor: {mentor_semantic_tags}")
+            
+            # VALIDATION 2: LaTeX Math Delimiters
+            print(f"\n   🔢 LATEX MATH DELIMITERS VALIDATION:")
+            latex_delimiters = self._check_latex_delimiters(professor_raw_text, mentor_raw_text)
+            results['mathematics_latex_delimiters'] = latex_delimiters
+            
+            # VALIDATION 3: Key Terms in <key> tags
+            print(f"\n   🔑 KEY TERMS VALIDATION:")
+            key_terms = self._check_key_terms(professor_raw_text, mentor_raw_text)
+            results['mathematics_key_terms'] = key_terms
+            
+            # VALIDATION 4: Response Length (>1000 chars for Professor)
+            print(f"\n   📏 RESPONSE LENGTH VALIDATION:")
+            if len(professor_response) > 1000:
+                results['mathematics_response_length'] = True
+                print(f"      ✅ Professor response length sufficient: {len(professor_response)} > 1000 chars")
+            else:
+                print(f"      ❌ Professor response too short: {len(professor_response)} <= 1000 chars")
+            
+            # VALIDATION 5: raw_text field present
+            print(f"\n   📄 RAW_TEXT FIELD VALIDATION:")
+            if professor_raw_text and mentor_raw_text:
+                results['mathematics_raw_text_field'] = True
+                print(f"      ✅ raw_text field present in both primary and secondary")
+            else:
+                print(f"      ❌ raw_text field missing - Professor: {bool(professor_raw_text)}, Mentor: {bool(mentor_raw_text)}")
+            
+        else:
+            print(f"   ❌ Mathematics deep mode failed - Status: {status_code}")
+            if not success:
+                print(f"      Error: {response}")
+        
+        return results
+    
+    def test_physics_standard_mode_scenario(self):
+        """Test Physics Query - Standard Mode with semantic validation"""
+        print("   Testing Physics standard mode with Newton's second law")
+        
+        physics_request_data = {
+            "message": "What is Newton's second law?",
+            "subject": "Physics",
+            "depth_level": "standard", 
+            "exam_mode": "JEE"
+        }
+        
+        print(f"   📝 Request: {json.dumps(physics_request_data, indent=2)}")
+        
+        # Measure response time
+        start_time = time.time()
+        
+        success, response, status_code = self.run_test(
+            "Physics Standard Mode - Newton's Second Law",
+            "POST", 
+            "ai/dual-response",
+            200,
+            data=physics_request_data,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        end_time = time.time()
+        physics_response_time = end_time - start_time
+        
+        results = {
+            'physics_standard_mode_200_ok': False,
+            'physics_semantic_structure': False,
+            'physics_response_time_check': False
+        }
+        
+        if success and status_code == 200:
+            results['physics_standard_mode_200_ok'] = True
+            print(f"   ✅ Physics standard mode returned 200 OK")
+            print(f"   ⏱️ Response Time: {physics_response_time:.1f}s")
+            
+            # Store response time for overall validation
+            self.physics_response_time = physics_response_time
+            
+            # Validate response structure
+            dual_response = response.get('dual_response', {})
+            primary = dual_response.get('primary', {})
+            secondary = dual_response.get('secondary', {})
+            
+            professor_raw_text = primary.get('raw_text', '')
+            mentor_raw_text = secondary.get('raw_text', '')
+            
+            print(f"   📊 Response Structure Analysis:")
+            print(f"      Professor raw_text length: {len(professor_raw_text)} chars")
+            print(f"      Mentor raw_text length: {len(mentor_raw_text)} chars")
+            
+            # VALIDATION: Semantic Structure and Tags
+            print(f"\n   🏷️ PHYSICS SEMANTIC STRUCTURE VALIDATION:")
+            physics_semantic_valid = self._validate_physics_semantic_structure(professor_raw_text, mentor_raw_text)
+            results['physics_semantic_structure'] = physics_semantic_valid
+            
+            # VALIDATION: Response Time Check
+            if physics_response_time < 30:  # Reasonable response time
+                results['physics_response_time_check'] = True
+                print(f"      ✅ Physics response time acceptable: {physics_response_time:.1f}s < 30s")
+            else:
+                print(f"      ⚠️ Physics response time high: {physics_response_time:.1f}s >= 30s")
+            
+        else:
+            print(f"   ❌ Physics standard mode failed - Status: {status_code}")
+            if not success:
+                print(f"      Error: {response}")
+        
+        return results
+    
+    def test_overall_response_time(self):
+        """Test overall response time for both queries"""
+        print("   Testing overall response time for both Mathematics and Physics queries")
+        
+        total_time = getattr(self, 'math_response_time', 0) + getattr(self, 'physics_response_time', 0)
+        
+        print(f"   📊 Response Time Analysis:")
+        print(f"      Mathematics query: {getattr(self, 'math_response_time', 0):.1f}s")
+        print(f"      Physics query: {getattr(self, 'physics_response_time', 0):.1f}s")
+        print(f"      Total time: {total_time:.1f}s")
+        
+        if total_time < 50:
+            print(f"      ✅ Total response time under 50s: {total_time:.1f}s < 50s")
+            return True
+        else:
+            print(f"      ❌ Total response time exceeds 50s: {total_time:.1f}s >= 50s")
+            return False
+    
+    def _check_semantic_tags(self, raw_text, persona_type):
+        """Check for semantic tags in raw_text based on persona type"""
+        if persona_type == "professor":
+            expected_tags = ['[SECTION:CONCEPT]', '[SECTION:FORMULAS]', '[SECTION:STEPS]']
+            found_tags = [tag for tag in expected_tags if tag in raw_text]
+            
+            print(f"         Professor semantic tags found: {found_tags}")
+            return len(found_tags) >= 2  # At least 2 section tags
+            
+        elif persona_type == "mentor":
+            expected_tags = ['[MICROCARD:MOTIVATION]', '[MICROCARD:RECAP]', '[MICROCARD:TIP]']
+            found_tags = [tag for tag in expected_tags if tag in raw_text]
+            
+            print(f"         Mentor semantic tags found: {found_tags}")
+            return len(found_tags) >= 1  # At least 1 microcard tag
+        
+        return False
+    
+    def _check_latex_delimiters(self, professor_text, mentor_text):
+        """Check for LaTeX math delimiters in responses"""
+        latex_patterns = ['\\[', '\\]', '\\(', '\\)']
+        
+        professor_latex = sum(1 for pattern in latex_patterns if pattern in professor_text)
+        mentor_latex = sum(1 for pattern in latex_patterns if pattern in mentor_text)
+        
+        print(f"         LaTeX delimiters in Professor: {professor_latex}")
+        print(f"         LaTeX delimiters in Mentor: {mentor_latex}")
+        
+        # At least some LaTeX present in mathematics content
+        latex_present = professor_latex >= 2 or mentor_latex >= 2
+        
+        if latex_present:
+            print(f"         ✅ LaTeX math delimiters present")
+        else:
+            print(f"         ❌ LaTeX math delimiters missing or insufficient")
+        
+        return latex_present
+    
+    def _check_key_terms(self, professor_text, mentor_text):
+        """Check for key terms wrapped in <key> tags"""
+        key_tag_pattern = '<key>'
+        
+        professor_key_terms = professor_text.count(key_tag_pattern)
+        mentor_key_terms = mentor_text.count(key_tag_pattern)
+        
+        print(f"         Key terms in Professor: {professor_key_terms}")
+        print(f"         Key terms in Mentor: {mentor_key_terms}")
+        
+        # At least some key terms should be tagged
+        key_terms_present = professor_key_terms >= 1 or mentor_key_terms >= 1
+        
+        if key_terms_present:
+            print(f"         ✅ Key term tags present")
+        else:
+            print(f"         ❌ Key term tags missing")
+        
+        return key_terms_present
+    
+    def _validate_physics_semantic_structure(self, professor_text, mentor_text):
+        """Validate semantic structure for physics content"""
+        # Check for physics-specific semantic tags
+        physics_semantic_tags = [
+            '[SECTION:LAW]', '[SECTION:FORMULA]', '[SECTION:APPLICATION]',
+            '[MICROCARD:EXAMPLE]', '[MICROCARD:MEMORY]'
+        ]
+        
+        total_tags_found = 0
+        for tag in physics_semantic_tags:
+            if tag in professor_text or tag in mentor_text:
+                total_tags_found += 1
+                print(f"         Found semantic tag: {tag}")
+        
+        # Also check for general semantic structure
+        general_tags = ['[SECTION:', '[MICROCARD:']
+        general_structure = any(tag in professor_text or tag in mentor_text for tag in general_tags)
+        
+        if total_tags_found >= 1 or general_structure:
+            print(f"         ✅ Physics semantic structure valid ({total_tags_found} specific tags + general structure)")
+            return True
+        else:
+            print(f"         ❌ Physics semantic structure invalid (no semantic tags found)")
+            return False
+    
+    def _print_semantic_rendering_test_results(self, test_results):
+        """Print comprehensive test results for AI Tutor semantic rendering validation"""
+        print("\n" + "=" * 80)
+        print("🤖 AI TUTOR SEMANTIC RENDERING VALIDATION - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        
+        # Authentication
+        print(f"\n   AUTHENTICATION:")
+        auth_status = "✅ PASS" if test_results['authentication'] else "❌ FAIL"
+        print(f"      Authentication: {auth_status}")
+        
+        # Mathematics Deep Mode Tests
+        math_tests = [k for k in test_results.keys() if k.startswith('mathematics_')]
+        math_success = sum(test_results[test] for test in math_tests)
+        print(f"\n   MATHEMATICS DEEP MODE TESTS ({math_success}/{len(math_tests)}):")
+        for test_name in math_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('mathematics_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Physics Standard Mode Tests
+        physics_tests = [k for k in test_results.keys() if k.startswith('physics_')]
+        physics_success = sum(test_results[test] for test in physics_tests)
+        print(f"\n   PHYSICS STANDARD MODE TESTS ({physics_success}/{len(physics_tests)}):")
+        for test_name in physics_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('physics_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Overall Performance
+        overall_tests = ['overall_response_time_under_50s']
+        overall_success = sum(test_results[test] for test in overall_tests)
+        print(f"\n   OVERALL PERFORMANCE TESTS ({overall_success}/{len(overall_tests)}):")
+        for test_name in overall_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('overall_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Success Criteria Summary
+        print(f"\n🎯 SUCCESS CRITERIA SUMMARY:")
+        criteria_mapping = {
+            'Both responses return 200 OK': test_results['mathematics_deep_mode_200_ok'] and test_results['physics_standard_mode_200_ok'],
+            'Semantic tags present in raw_text': test_results['mathematics_semantic_tags'] and test_results['physics_semantic_structure'],
+            'LaTeX delimiters present': test_results['mathematics_latex_delimiters'],
+            'Key term tags present': test_results['mathematics_key_terms'],
+            'Response length appropriate (>1000 chars for Professor)': test_results['mathematics_response_length'],
+            'Response time reasonable (<50s)': test_results['overall_response_time_under_50s']
+        }
+        
+        for criterion, passed in criteria_mapping.items():
+            status = "✅" if passed else "❌"
+            print(f"   {status} {criterion}")
+        
+        # Determine overall status
+        if success_rate >= 90:
+            print("\n✅ AI TUTOR SEMANTIC RENDERING VALIDATION: EXCELLENT SUCCESS")
+            print("   All semantic tags, LaTeX rendering, and response structure working correctly")
+        elif success_rate >= 80:
+            print("\n⚠️ AI TUTOR SEMANTIC RENDERING VALIDATION: GOOD SUCCESS")
+            print("   Core semantic rendering working, minor issues need attention")
+        elif success_rate >= 70:
+            print("\n⚠️ AI TUTOR SEMANTIC RENDERING VALIDATION: PARTIAL SUCCESS")
+            print("   Basic functionality working, some semantic features need fixes")
+        else:
+            print("\n❌ AI TUTOR SEMANTIC RENDERING VALIDATION: NEEDS WORK")
+            print("   Critical issues prevent proper semantic tag generation and rendering")
+        
+        return success_rate >= 80  # 80% success rate for overall pass
+
     # ============= SUBSCRIPTION SYSTEM RE-TEST METHODS =============
     
     def test_subscription_system_retest_post_fix(self):
