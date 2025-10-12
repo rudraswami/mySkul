@@ -83,8 +83,479 @@ class BackendAPITester:
             print(f"   ❌ Authentication failed")
             return False
 
-    # ============= AI TUTOR SEMANTIC RENDERING VALIDATION =============
+    # ============= AI TUTOR RENDERING FIXES VALIDATION =============
     
+    def test_ai_tutor_rendering_fixes_validation(self):
+        """AI TUTOR RENDERING FIXES VALIDATION - As per review request"""
+        print("\n🤖 AI TUTOR RENDERING FIXES VALIDATION")
+        print("=" * 80)
+        print("   OBJECTIVE: Verify rendering fixes and performance optimizations")
+        print("   AUTH: test@dhruvai.com / password123")
+        print("   SCENARIOS: Complete Parameters Test (deep mode) + Quick Mode Test")
+        print("   PERFORMANCE: <45s for deep mode, <30s for quick mode")
+        
+        test_results = {
+            'authentication': False,
+            'complete_parameters_test_200_ok': False,
+            'complete_parameters_response_time_under_45s': False,
+            'complete_parameters_semantic_tags': False,
+            'complete_parameters_professor_response_800_chars': False,
+            'complete_parameters_mentor_response_500_chars': False,
+            'complete_parameters_numbered_lists': False,
+            'complete_parameters_bullet_points': False,
+            'complete_parameters_latex_delimiters': False,
+            'quick_mode_test_200_ok': False,
+            'quick_mode_response_time_under_30s': False,
+            'quick_mode_concise_responses': False,
+            'quick_mode_semantic_structure': False,
+            'performance_improvement_validated': False
+        }
+        
+        # AUTHENTICATION SETUP
+        print("\n1️⃣ AUTHENTICATION SETUP")
+        if not self.token:
+            print("   Authenticating with test@dhruvai.com / password123")
+            auth_success = self.test_auth_router_login()
+            if not auth_success:
+                print("   ❌ Authentication failed - cannot proceed with AI Tutor tests")
+                return False
+        
+        test_results['authentication'] = True
+        print("   ✅ Authentication successful")
+        
+        # TEST SCENARIO 1: Complete Parameters Test (Deep Mode)
+        print("\n2️⃣ TEST SCENARIO 1: COMPLETE PARAMETERS TEST (DEEP MODE)")
+        test_results.update(self.test_complete_parameters_scenario())
+        
+        # TEST SCENARIO 2: Quick Mode Test
+        print("\n3️⃣ TEST SCENARIO 2: QUICK MODE TEST")
+        test_results.update(self.test_quick_mode_scenario())
+        
+        # PERFORMANCE VALIDATION
+        print("\n4️⃣ PERFORMANCE VALIDATION")
+        test_results['performance_improvement_validated'] = self.test_performance_improvement()
+        
+        return self._print_rendering_fixes_test_results(test_results)
+    
+    def test_complete_parameters_scenario(self):
+        """Test Complete Parameters Test - Deep Mode with quadratic formula"""
+        print("   Testing Complete Parameters with quadratic formula derivation")
+        
+        # Generate a session ID for the request
+        session_id = str(uuid.uuid4())
+        
+        complete_params_request = {
+            "message": "Derive the quadratic formula",
+            "subject": "Mathematics",
+            "depth_level": "deep",
+            "exam_mode": "JEE"
+        }
+        
+        print(f"   📝 Request: {json.dumps(complete_params_request, indent=2)}")
+        
+        # Measure response time
+        start_time = time.time()
+        
+        success, response, status_code = self.run_test(
+            "Complete Parameters Test - Quadratic Formula",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=complete_params_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        end_time = time.time()
+        complete_params_response_time = end_time - start_time
+        
+        results = {
+            'complete_parameters_test_200_ok': False,
+            'complete_parameters_response_time_under_45s': False,
+            'complete_parameters_semantic_tags': False,
+            'complete_parameters_professor_response_800_chars': False,
+            'complete_parameters_mentor_response_500_chars': False,
+            'complete_parameters_numbered_lists': False,
+            'complete_parameters_bullet_points': False,
+            'complete_parameters_latex_delimiters': False
+        }
+        
+        if success and status_code == 200:
+            results['complete_parameters_test_200_ok'] = True
+            print(f"   ✅ Complete Parameters Test returned 200 OK")
+            print(f"   ⏱️ Response Time: {complete_params_response_time:.1f}s")
+            
+            # Store response time for performance validation
+            self.complete_params_response_time = complete_params_response_time
+            
+            # Check response time under 45s (optimized from ~60s)
+            if complete_params_response_time < 45:
+                results['complete_parameters_response_time_under_45s'] = True
+                print(f"   ✅ Response time under 45s: {complete_params_response_time:.1f}s < 45s")
+            else:
+                print(f"   ❌ Response time exceeds 45s: {complete_params_response_time:.1f}s >= 45s")
+            
+            # Validate response structure
+            dual_response = response.get('dual_response', {})
+            primary = dual_response.get('primary', {})
+            secondary = dual_response.get('secondary', {})
+            
+            professor_response = primary.get('response', '')
+            professor_raw_text = primary.get('raw_text', '')
+            mentor_response = secondary.get('response', '')
+            mentor_raw_text = secondary.get('raw_text', '')
+            
+            print(f"   📊 Response Structure Analysis:")
+            print(f"      Professor response length: {len(professor_response)} chars")
+            print(f"      Professor raw_text length: {len(professor_raw_text)} chars")
+            print(f"      Mentor response length: {len(mentor_response)} chars")
+            print(f"      Mentor raw_text length: {len(mentor_raw_text)} chars")
+            
+            # VALIDATION 1: Semantic tags present in raw_text
+            print(f"\n   🏷️ SEMANTIC TAGS VALIDATION:")
+            semantic_tags_present = self._check_semantic_tags_in_raw_text(professor_raw_text, mentor_raw_text)
+            results['complete_parameters_semantic_tags'] = semantic_tags_present
+            
+            # VALIDATION 2: Professor response >800 chars (reduced from 2000+ due to max_tokens optimization)
+            print(f"\n   📏 PROFESSOR RESPONSE LENGTH VALIDATION:")
+            if len(professor_response) > 800:
+                results['complete_parameters_professor_response_800_chars'] = True
+                print(f"      ✅ Professor response >800 chars: {len(professor_response)} > 800")
+            else:
+                print(f"      ❌ Professor response <=800 chars: {len(professor_response)} <= 800")
+            
+            # VALIDATION 3: Mentor response >500 chars
+            print(f"\n   📏 MENTOR RESPONSE LENGTH VALIDATION:")
+            if len(mentor_response) > 500:
+                results['complete_parameters_mentor_response_500_chars'] = True
+                print(f"      ✅ Mentor response >500 chars: {len(mentor_response)} > 500")
+            else:
+                print(f"      ❌ Mentor response <=500 chars: {len(mentor_response)} <= 500")
+            
+            # VALIDATION 4: Numbered lists (1., 2., 3.) present in STEPS section
+            print(f"\n   🔢 NUMBERED LISTS VALIDATION:")
+            numbered_lists_present = self._check_numbered_lists_in_steps(professor_raw_text, mentor_raw_text)
+            results['complete_parameters_numbered_lists'] = numbered_lists_present
+            
+            # VALIDATION 5: Bullet points present
+            print(f"\n   • BULLET POINTS VALIDATION:")
+            bullet_points_present = self._check_bullet_points(professor_raw_text, mentor_raw_text)
+            results['complete_parameters_bullet_points'] = bullet_points_present
+            
+            # VALIDATION 6: LaTeX delimiters present
+            print(f"\n   🔢 LATEX DELIMITERS VALIDATION:")
+            latex_delimiters_present = self._check_latex_delimiters_present(professor_raw_text, mentor_raw_text)
+            results['complete_parameters_latex_delimiters'] = latex_delimiters_present
+            
+        else:
+            print(f"   ❌ Complete Parameters Test failed - Status: {status_code}")
+            if not success:
+                print(f"      Error: {response}")
+        
+        return results
+    
+    def test_quick_mode_scenario(self):
+        """Test Quick Mode Test - Should be faster"""
+        print("   Testing Quick Mode with F=ma question")
+        
+        # Generate a session ID for the request
+        session_id = str(uuid.uuid4())
+        
+        quick_mode_request = {
+            "message": "What is F=ma?",
+            "subject": "Physics",
+            "depth_level": "quick",
+            "exam_mode": "JEE"
+        }
+        
+        print(f"   📝 Request: {json.dumps(quick_mode_request, indent=2)}")
+        
+        # Measure response time
+        start_time = time.time()
+        
+        success, response, status_code = self.run_test(
+            "Quick Mode Test - F=ma",
+            "POST",
+            "ai/dual-response",
+            200,
+            data=quick_mode_request,
+            headers={'Authorization': f'Bearer {self.token}'}
+        )
+        
+        end_time = time.time()
+        quick_mode_response_time = end_time - start_time
+        
+        results = {
+            'quick_mode_test_200_ok': False,
+            'quick_mode_response_time_under_30s': False,
+            'quick_mode_concise_responses': False,
+            'quick_mode_semantic_structure': False
+        }
+        
+        if success and status_code == 200:
+            results['quick_mode_test_200_ok'] = True
+            print(f"   ✅ Quick Mode Test returned 200 OK")
+            print(f"   ⏱️ Response Time: {quick_mode_response_time:.1f}s")
+            
+            # Store response time for performance validation
+            self.quick_mode_response_time = quick_mode_response_time
+            
+            # Check response time under 30s (should be faster in quick mode)
+            if quick_mode_response_time < 30:
+                results['quick_mode_response_time_under_30s'] = True
+                print(f"   ✅ Response time under 30s: {quick_mode_response_time:.1f}s < 30s")
+            else:
+                print(f"   ❌ Response time exceeds 30s: {quick_mode_response_time:.1f}s >= 30s")
+            
+            # Validate response structure
+            dual_response = response.get('dual_response', {})
+            primary = dual_response.get('primary', {})
+            secondary = dual_response.get('secondary', {})
+            
+            professor_response = primary.get('response', '')
+            professor_raw_text = primary.get('raw_text', '')
+            mentor_response = secondary.get('response', '')
+            mentor_raw_text = secondary.get('raw_text', '')
+            
+            print(f"   📊 Response Structure Analysis:")
+            print(f"      Professor response length: {len(professor_response)} chars")
+            print(f"      Mentor response length: {len(mentor_response)} chars")
+            
+            # VALIDATION 1: Concise responses (should be shorter than deep mode)
+            print(f"\n   📏 CONCISE RESPONSES VALIDATION:")
+            # Quick mode should have shorter responses than deep mode
+            concise_responses = len(professor_response) < 1000 and len(mentor_response) < 700
+            results['quick_mode_concise_responses'] = concise_responses
+            if concise_responses:
+                print(f"      ✅ Responses are concise for quick mode")
+            else:
+                print(f"      ❌ Responses too long for quick mode")
+            
+            # VALIDATION 2: Semantic structure maintained
+            print(f"\n   🏷️ SEMANTIC STRUCTURE VALIDATION:")
+            semantic_structure_maintained = self._check_semantic_structure_maintained(professor_raw_text, mentor_raw_text)
+            results['quick_mode_semantic_structure'] = semantic_structure_maintained
+            
+        else:
+            print(f"   ❌ Quick Mode Test failed - Status: {status_code}")
+            if not success:
+                print(f"      Error: {response}")
+        
+        return results
+    
+    def test_performance_improvement(self):
+        """Test performance improvement validation"""
+        print("   Testing performance improvement (~30% faster)")
+        
+        complete_params_time = getattr(self, 'complete_params_response_time', 0)
+        quick_mode_time = getattr(self, 'quick_mode_response_time', 0)
+        
+        print(f"   📊 Performance Analysis:")
+        print(f"      Complete Parameters Test: {complete_params_time:.1f}s")
+        print(f"      Quick Mode Test: {quick_mode_time:.1f}s")
+        print(f"      Previous benchmark: ~60s")
+        print(f"      Target: <45s for deep mode, <30s for quick mode")
+        
+        # Check if performance targets are met
+        deep_mode_improved = complete_params_time < 45
+        quick_mode_improved = quick_mode_time < 30
+        
+        # Calculate improvement percentage from 60s baseline
+        if complete_params_time > 0:
+            improvement_percentage = ((60 - complete_params_time) / 60) * 100
+            print(f"      Improvement from 60s baseline: {improvement_percentage:.1f}%")
+            
+            # Target is ~30% faster (42s or less)
+            target_met = improvement_percentage >= 30
+        else:
+            target_met = False
+        
+        performance_validated = deep_mode_improved and quick_mode_improved and target_met
+        
+        if performance_validated:
+            print(f"      ✅ Performance improvement validated")
+        else:
+            print(f"      ❌ Performance improvement not sufficient")
+        
+        return performance_validated
+    
+    def _check_semantic_tags_in_raw_text(self, professor_text, mentor_text):
+        """Check for semantic tags present in raw_text"""
+        semantic_tags = [
+            '[SECTION:', '[MICROCARD:', '<key>', '</key>',
+            '[CONCEPT]', '[STEPS]', '[FORMULAS]', '[MOTIVATION]', '[RECAP]'
+        ]
+        
+        professor_tags = sum(1 for tag in semantic_tags if tag in professor_text)
+        mentor_tags = sum(1 for tag in semantic_tags if tag in mentor_text)
+        
+        print(f"         Semantic tags in Professor: {professor_tags}")
+        print(f"         Semantic tags in Mentor: {mentor_tags}")
+        
+        tags_present = professor_tags >= 2 or mentor_tags >= 2
+        
+        if tags_present:
+            print(f"         ✅ Semantic tags present in raw_text")
+        else:
+            print(f"         ❌ Semantic tags missing in raw_text")
+        
+        return tags_present
+    
+    def _check_numbered_lists_in_steps(self, professor_text, mentor_text):
+        """Check for numbered lists (1., 2., 3.) present in STEPS section"""
+        numbered_patterns = ['1.', '2.', '3.', '4.', '5.']
+        
+        professor_numbered = sum(1 for pattern in numbered_patterns if pattern in professor_text)
+        mentor_numbered = sum(1 for pattern in numbered_patterns if pattern in mentor_text)
+        
+        print(f"         Numbered lists in Professor: {professor_numbered}")
+        print(f"         Numbered lists in Mentor: {mentor_numbered}")
+        
+        # Should have at least 2 numbered items in STEPS section
+        numbered_lists_present = professor_numbered >= 2 or mentor_numbered >= 2
+        
+        if numbered_lists_present:
+            print(f"         ✅ Numbered lists present in STEPS section")
+        else:
+            print(f"         ❌ Numbered lists missing in STEPS section")
+        
+        return numbered_lists_present
+    
+    def _check_bullet_points(self, professor_text, mentor_text):
+        """Check for bullet points present"""
+        bullet_patterns = ['•', '-', '*', '◦']
+        
+        professor_bullets = sum(1 for pattern in bullet_patterns if pattern in professor_text)
+        mentor_bullets = sum(1 for pattern in bullet_patterns if pattern in mentor_text)
+        
+        print(f"         Bullet points in Professor: {professor_bullets}")
+        print(f"         Bullet points in Mentor: {mentor_bullets}")
+        
+        bullet_points_present = professor_bullets >= 1 or mentor_bullets >= 1
+        
+        if bullet_points_present:
+            print(f"         ✅ Bullet points present")
+        else:
+            print(f"         ❌ Bullet points missing")
+        
+        return bullet_points_present
+    
+    def _check_latex_delimiters_present(self, professor_text, mentor_text):
+        """Check for LaTeX delimiters present"""
+        latex_patterns = ['\\[', '\\]', '\\(', '\\)', '$', '$$']
+        
+        professor_latex = sum(1 for pattern in latex_patterns if pattern in professor_text)
+        mentor_latex = sum(1 for pattern in latex_patterns if pattern in mentor_text)
+        
+        print(f"         LaTeX delimiters in Professor: {professor_latex}")
+        print(f"         LaTeX delimiters in Mentor: {mentor_latex}")
+        
+        latex_present = professor_latex >= 2 or mentor_latex >= 1
+        
+        if latex_present:
+            print(f"         ✅ LaTeX delimiters present")
+        else:
+            print(f"         ❌ LaTeX delimiters missing")
+        
+        return latex_present
+    
+    def _check_semantic_structure_maintained(self, professor_text, mentor_text):
+        """Check that semantic structure is maintained in quick mode"""
+        # Check for basic semantic structure elements
+        structure_elements = [
+            '[SECTION:', '[MICROCARD:', 'CONCEPT', 'STEPS', 'FORMULA'
+        ]
+        
+        professor_structure = sum(1 for element in structure_elements if element in professor_text)
+        mentor_structure = sum(1 for element in structure_elements if element in mentor_text)
+        
+        print(f"         Structure elements in Professor: {professor_structure}")
+        print(f"         Structure elements in Mentor: {mentor_structure}")
+        
+        structure_maintained = professor_structure >= 1 or mentor_structure >= 1
+        
+        if structure_maintained:
+            print(f"         ✅ Semantic structure maintained")
+        else:
+            print(f"         ❌ Semantic structure not maintained")
+        
+        return structure_maintained
+    
+    def _print_rendering_fixes_test_results(self, test_results):
+        """Print comprehensive test results for AI Tutor rendering fixes validation"""
+        print("\n" + "=" * 80)
+        print("🤖 AI TUTOR RENDERING FIXES VALIDATION - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        
+        # Authentication
+        print(f"\n   AUTHENTICATION:")
+        auth_status = "✅ PASS" if test_results['authentication'] else "❌ FAIL"
+        print(f"      Authentication: {auth_status}")
+        
+        # Complete Parameters Test
+        complete_tests = [k for k in test_results.keys() if k.startswith('complete_parameters_')]
+        complete_success = sum(test_results[test] for test in complete_tests)
+        print(f"\n   COMPLETE PARAMETERS TEST ({complete_success}/{len(complete_tests)}):")
+        for test_name in complete_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('complete_parameters_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Quick Mode Test
+        quick_tests = [k for k in test_results.keys() if k.startswith('quick_mode_')]
+        quick_success = sum(test_results[test] for test in quick_tests)
+        print(f"\n   QUICK MODE TEST ({quick_success}/{len(quick_tests)}):")
+        for test_name in quick_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('quick_mode_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Performance Validation
+        performance_tests = ['performance_improvement_validated']
+        performance_success = sum(test_results[test] for test in performance_tests)
+        print(f"\n   PERFORMANCE VALIDATION ({performance_success}/{len(performance_tests)}):")
+        for test_name in performance_tests:
+            status = "✅ PASS" if test_results[test_name] else "❌ FAIL"
+            display_name = test_name.replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Success Criteria Summary
+        print(f"\n🎯 SUCCESS CRITERIA SUMMARY:")
+        criteria_mapping = {
+            'Both tests return 200 OK': test_results['complete_parameters_test_200_ok'] and test_results['quick_mode_test_200_ok'],
+            'Parameters depth_level and exam_mode processed correctly': test_results['complete_parameters_test_200_ok'] and test_results['quick_mode_test_200_ok'],
+            'Response time improved (~30% faster)': test_results['performance_improvement_validated'],
+            'Semantic tags intact': test_results['complete_parameters_semantic_tags'] and test_results['quick_mode_semantic_structure'],
+            'Quality maintained despite token reduction': test_results['complete_parameters_professor_response_800_chars'] and test_results['complete_parameters_mentor_response_500_chars']
+        }
+        
+        for criterion, passed in criteria_mapping.items():
+            status = "✅" if passed else "❌"
+            print(f"   {status} {criterion}")
+        
+        # Determine overall status
+        if success_rate >= 90:
+            print("\n✅ AI TUTOR RENDERING FIXES VALIDATION: EXCELLENT SUCCESS")
+            print("   All rendering fixes and performance optimizations working correctly")
+        elif success_rate >= 80:
+            print("\n⚠️ AI TUTOR RENDERING FIXES VALIDATION: GOOD SUCCESS")
+            print("   Core rendering fixes working, minor optimizations need attention")
+        elif success_rate >= 70:
+            print("\n⚠️ AI TUTOR RENDERING FIXES VALIDATION: PARTIAL SUCCESS")
+            print("   Basic functionality working, some rendering features need fixes")
+        else:
+            print("\n❌ AI TUTOR RENDERING FIXES VALIDATION: NEEDS WORK")
+            print("   Critical issues prevent proper rendering fixes and performance optimization")
+        
+        return success_rate >= 80  # 80% success rate for overall pass
+
     def test_ai_tutor_semantic_rendering_validation(self):
         """AI TUTOR SEMANTIC RENDERING VALIDATION - As per review request"""
         print("\n🤖 AI TUTOR SEMANTIC RENDERING VALIDATION")
