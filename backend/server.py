@@ -58,7 +58,9 @@ try:
     from services.ai_service import AIService
     from services.analytics_service import AnalyticsService
     from services.auto_notes_service import AutoNotesService
-    from services.mock_tests_service import MockTestsService
+from services.mock_tests_service import MockTestsService
+    from api.jobs import router as jobs_router_new
+    from jobs.bootstrap import get_orchestrator as get_job_orchestrator
     import dependencies as deps
     MODULAR_COMPONENTS_AVAILABLE = True
     logger.info("✅ Modular components loaded successfully")
@@ -89,7 +91,8 @@ def validate_critical_env_vars():
         'JWT_SECRET': 'JWT signing secret is required for authentication security',
         'MONGO_URL': 'MongoDB connection URL is required',
         'DB_NAME': 'Database name is required',
-        'EMERGENT_LLM_KEY': 'Emergent LLM API key is required for AI functionality'
+        'EMERGENT_LLM_KEY': 'Emergent LLM API key is required for AI functionality',
+        'REDIS_URL': 'Redis connection URL is required for job orchestration',
     }
     
     missing_vars = []
@@ -136,7 +139,9 @@ if MODULAR_COMPONENTS_AVAILABLE:
     modular_ai_service = AIService(db, EMERGENT_LLM_KEY, modular_subscription_service)
     deps.db = db
     deps.auth_service = modular_auth_service
+    deps.job_orchestrator = get_job_orchestrator()
     logger.info("✅ Modular auth, subscription, and AI services initialized with subscription integration")
+    logger.info("✅ Job orchestrator initialized")
 
 # Logging configuration already moved up
 
@@ -11477,12 +11482,19 @@ if MODULAR_COMPONENTS_AVAILABLE:
     app.include_router(analytics_router_new, prefix="/api", tags=["modular-analytics"])
     app.include_router(auto_notes_router_new, prefix="/api", tags=["modular-auto-notes"])
     app.include_router(mock_tests_router_new, prefix="/api", tags=["modular-mock-tests"])
-    logger.info("✅ Modular routers registered (Auth, User, Subscription, AI, Analytics, Auto-Notes, Mock-Tests)")
+    app.include_router(jobs_router_new, prefix="/api", tags=["modular-jobs"])
+    logger.info("✅ Modular routers registered (Auth, User, Subscription, AI, Analytics, Auto-Notes, Mock-Tests, Jobs)")
 
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+    if MODULAR_COMPONENTS_AVAILABLE:
+        from jobs.config import get_redis_client
+
+        redis_client = get_redis_client()
+        await redis_client.close()
+        await redis_client.wait_closed()
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,2 +1,2 @@
-"""FastAPI modular routers package"""
-from . import auth, user, subscription, ai, analytics, auto_notes, mock_tests
+"""FastAPI modular routers package."""
+from . import analytics, auth, auto_notes, jobs, mock_tests, subscription, user, ai  # noqa: F401
