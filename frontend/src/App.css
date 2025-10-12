@@ -138,11 +138,15 @@ select:focus-visible {
   scroll-behavior: smooth;
   position: relative;
   will-change: scroll-position;
+  /* Contain layout to prevent reflow affecting parent viewport */
+  contain: layout;
 }
 
 /* Stable container dimensions to prevent layout shift */
 [data-testid="chat-container"] > div {
   min-height: min-content;
+  /* Prevent content from pushing container boundaries */
+  contain: layout style;
 }
 
 .message-bubble {
