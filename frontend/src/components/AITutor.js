@@ -815,7 +815,14 @@ export default function AITutor() {
         setLastScenarioType(newMessage.dual_response.scenario_type);
       }
 
-      // Add personalization info to the message
+      // Create explicit user message object
+      const userMessageObj = {
+        type: 'user',
+        message: messageToSend,
+        timestamp: new Date().toISOString()
+      };
+
+      // Add personalization info to the AI message
       const enhancedMessage = {
         ...newMessage,
         user_message: messageToSend,
@@ -825,8 +832,8 @@ export default function AITutor() {
         timestamp: new Date().toISOString()
       };
 
-      // Add message to current conversation
-      setMessages(prev => [...prev, enhancedMessage]);
+      // Add BOTH user message and AI response to current conversation
+      setMessages(prev => [...prev, userMessageObj, enhancedMessage]);
       
       // RESET PHASE: Clear user input only AFTER message is successfully appended to conversation
       // Use a delay to ensure DOM update and message visibility before clearing input
