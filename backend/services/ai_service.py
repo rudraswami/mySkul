@@ -716,9 +716,10 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                     await asyncio.sleep(delay)
                     continue
         
-        # All retries failed - use intelligent fallback
-        logger.warning(f"🔄 All {role_type} LLM attempts failed, using fallback response")
-        return fallback_responses.get(role_type, "I'm here to help! Please try asking your question again.")
+        # Phase 1: All retries failed - raise error instead of generic fallback
+        # Better to fail gracefully than return shallow content
+        logger.error(f"🚫 All {role_type} LLM attempts failed after {max_retries} retries")
+        raise TimeoutError(f"{role_type} AI generation failed after {max_retries} attempts - question requires more processing time")
     
     def _generate_enhanced_contextual_fallback(self, role_type: str, subject: str, user_message: str) -> str:
         """
