@@ -267,11 +267,18 @@ CRITICAL: Your response must COMPLEMENT the Professor's content, NOT repeat it.
 Student Question: {message}
 Subject Context: {subject}"""
             
+            # Phase 1: Added explicit LLM parameters for quality and depth
             mentor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"mentor_{user_id}_{session_id}",
                 system_message=mentor_system
-            ).with_model("openai", "gpt-4o")  # Using GPT-4o for optimal speed/quality balance
+            ).with_model("openai", "gpt-4o").with_params(
+                temperature=0.75,          # Balanced warmth and consistency
+                top_p=0.9,                # Nucleus sampling for natural tone
+                max_tokens=1600,          # Allow comprehensive guidance
+                presence_penalty=0.1,     # Reduce repetition
+                frequency_penalty=0.1     # Encourage natural variation
+            )
             
             # Generate responses with hybrid approach: fast + quality
             professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
