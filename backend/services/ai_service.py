@@ -318,7 +318,7 @@ Depth Level: {depth_level}"""
             ).with_model("openai", "gpt-4o").with_params(
                 temperature=0.75,          # Balanced creativity for explanations
                 top_p=0.9,                # Nucleus sampling for coherent responses
-                max_tokens=1600,          # Allow detailed, exam-level explanations
+                max_tokens=1200,          # Optimized for speed while maintaining quality (reduced from 1600)
                 presence_penalty=0.1,     # Slight penalty to reduce repetition
                 frequency_penalty=0.1     # Encourage varied vocabulary
             )
