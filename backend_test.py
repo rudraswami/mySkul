@@ -2235,36 +2235,42 @@ class BackendAPITester:
 
 # Main execution
 if __name__ == "__main__":
-    print("🚀 DHRUV AI TUTOR PHASE 1 TESTING - SEQUENTIAL EXECUTION & LLM PARAMETERS")
+    print("🚀 AI TUTOR SEMANTIC RENDERING VALIDATION - BACKEND API TESTING")
     print("=" * 80)
     
-    tester = DhruvAITester()
+    tester = BackendAPITester()
     
-    # Run the AI Tutor Phase 1 testing
-    success = tester.test_ai_tutor_phase_1_sequential_execution_llm_parameters()
+    # Run the AI Tutor Semantic Rendering Validation
+    success = tester.test_ai_tutor_semantic_rendering_validation()
     
     print("\n" + "=" * 80)
-    print("🏁 AI TUTOR PHASE 1 TESTING COMPLETED")
+    print("🏁 AI TUTOR SEMANTIC RENDERING VALIDATION COMPLETED")
     print("=" * 80)
     
     if success:
         print("✅ OVERALL RESULT: SUCCESS")
-        print("   AI Tutor Phase 1 enhancements working correctly!")
-        print("   ✅ Sequential execution (Professor → Mentor with context)")
-        print("   ✅ LLM parameters (temperature=0.75, top_p=0.9, max_tokens=1600)")
-        print("   ✅ Extended timeout (25s per call)")
-        print("   ✅ Deep, exam-level responses (not shallow overviews)")
+        print("   AI Tutor semantic rendering validation passed!")
+        print("   ✅ Both Mathematics and Physics queries returned 200 OK")
+        print("   ✅ Semantic tags present in raw_text fields")
+        print("   ✅ LaTeX delimiters present for mathematical content")
+        print("   ✅ Key terms wrapped in <key> tags")
+        print("   ✅ Response length appropriate (>1000 chars for Professor)")
+        print("   ✅ Response time reasonable (<50s total)")
     else:
         print("❌ OVERALL RESULT: FAILURE") 
-        print("   AI Tutor Phase 1 enhancements need fixes.")
+        print("   AI Tutor semantic rendering validation failed.")
+        print("   Check the detailed test results above for specific issues.")
     
     print(f"\n📊 FINAL STATISTICS:")
-    print(f"   Tests Run: {tester.tests_run}")
-    print(f"   Tests Passed: {tester.tests_passed}")
-    if tester.tests_run > 0:
-        success_rate = (tester.tests_passed / tester.tests_run) * 100
-        print(f"   Success Rate: {success_rate:.1f}%")
+    print(f"   Authentication: {'✅' if hasattr(tester, 'token') and tester.token else '❌'}")
+    print(f"   Mathematics Deep Mode: {'✅' if hasattr(tester, 'math_response_time') else '❌'}")
+    print(f"   Physics Standard Mode: {'✅' if hasattr(tester, 'physics_response_time') else '❌'}")
     
+    if hasattr(tester, 'math_response_time') and hasattr(tester, 'physics_response_time'):
+        total_time = tester.math_response_time + tester.physics_response_time
+        print(f"   Total Response Time: {total_time:.1f}s")
+    
+    import sys
     sys.exit(0 if success else 1)
 
 import requests
