@@ -42,18 +42,71 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
   const renderRichText = (text) => {
     if (!text) return null;
 
-    // Replace <key>term</key> with bold spans
-    let processed = text.replace(/<key>(.*?)<\/key>/g, '<strong class="text-gray-900 font-semibold">$1</strong>');
+    // Split text into parts: plain text, inline math \( \), display math \[ \]
+    const parts = [];
+    let lastIndex = 0;
     
-    // LaTeX inline math: \( \) → stay as is for KaTeX
-    // LaTeX display math: \[ \] → stay as is for KaTeX
-    // No processing needed - KaTeX handles this
+    // Regex to match LaTeX delimiters
+    const latexRegex = /(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g;
+    let match;
     
-    // Split by LaTeX delimiters to preserve them
-    const parts = processed.split(/(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/);
+    while ((match = latexRegex.exec(text)) !== null) {
+      // Add text before the math
+      if (match.index > lastIndex) {
+        const textBefore = text.substring(lastIndex, match.index);
+        parts.push({ type: 'text', content: textBefore });
+      }
+      
+      // Add the math part
+      const mathContent = match[1];
+      if (mathContent.startsWith('\\[')) {
+        // Display math (block)
+        const formula = mathContent.substring(2, mathContent.length - 2).trim();
+        parts.push({ type: 'block-math', content: formula });
+      } else if (mathContent.startsWith('\\(')) {
+        // Inline math
+        const formula = mathContent.substring(2, mathContent.length - 2).trim();
+        parts.push({ type: 'inline-math', content: formula });
+      }
+      
+      lastIndex = match.index + match[0].length;
+    }
     
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push({ type: 'text', content: text.substring(lastIndex) });
+    }
+    
+    // Render parts
     return (
-      <span dangerouslySetInnerHTML={{ __html: processed }} />
+      <span className="rich-text-content">
+        {parts.map((part, idx) => {
+          if (part.type === 'text') {
+            // Process <key> tags for bold emphasis
+            const processedText = part.content.replace(
+              /<key>(.*?)<\/key>/g, 
+              '<strong class="text-gray-900 font-bold bg-yellow-100 px-1 rounded">$1</strong>'
+            );
+            return (
+              <span 
+                key={idx} 
+                dangerouslySetInnerHTML={{ __html: processedText }}
+              />
+            );
+          } else if (part.type === 'inline-math') {
+            return (
+              <InlineMath key={idx} math={part.content} />
+            );
+          } else if (part.type === 'block-math') {
+            return (
+              <div key={idx} className="my-3">
+                <BlockMath math={part.content} />
+              </div>
+            );
+          }
+          return null;
+        })}
+      </span>
     );
   };
 
