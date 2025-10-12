@@ -57,8 +57,7 @@ try:
     from services.subscription_service import SubscriptionService
     from services.ai_service import AIService
     from services.analytics_service import AnalyticsService
-    from services.auto_notes_service import AutoNotesService
-from services.mock_tests_service import MockTestsService
+    from services.mock_tests_service import MockTestsService
     from api.jobs import router as jobs_router_new
     from jobs.bootstrap import get_orchestrator as get_job_orchestrator
     import dependencies as deps
