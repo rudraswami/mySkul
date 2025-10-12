@@ -59,7 +59,7 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
     return sections;
   };
 
-  // Render rich text with emphasis (key terms bolding, LaTeX)
+  // Render rich text with emphasis (key terms bolding, LaTeX, proper formatting)
   const renderRichText = (text) => {
     if (!text) return null;
 
@@ -67,8 +67,8 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
     const parts = [];
     let lastIndex = 0;
     
-    // Regex to match LaTeX delimiters
-    const latexRegex = /(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g;
+    // Regex to match LaTeX delimiters (handle both escaped and single backslash)
+    const latexRegex = /(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\\begin\{equation\}[\s\S]*?\\end\{equation\})/g;
     let match;
     
     while ((match = latexRegex.exec(text)) !== null) {
@@ -88,6 +88,10 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
         // Inline math
         const formula = mathContent.substring(2, mathContent.length - 2).trim();
         parts.push({ type: 'inline-math', content: formula });
+      } else if (mathContent.includes('\\begin{equation}')) {
+        // LaTeX equation environment
+        const formula = mathContent.replace(/\\begin\{equation\}|\\end\{equation\}/g, '').trim();
+        parts.push({ type: 'block-math', content: formula });
       }
       
       lastIndex = match.index + match[0].length;
@@ -98,36 +102,74 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
       parts.push({ type: 'text', content: text.substring(lastIndex) });
     }
     
-    // Render parts
+    // Render parts with proper formatting
     return (
-      <span className="rich-text-content">
+      <div className="rich-text-content space-y-2">
         {parts.map((part, idx) => {
           if (part.type === 'text') {
             // Process <key> tags for bold emphasis
-            const processedText = part.content.replace(
+            let processedText = part.content;
+            
+            // Handle key terms
+            processedText = processedText.replace(
               /<key>(.*?)<\/key>/g, 
               '<strong class="text-gray-900 font-bold bg-yellow-100 px-1 rounded">$1</strong>'
             );
+            
+            // Split by newlines and process each line
+            const lines = processedText.split('\n');
+            
             return (
-              <span 
-                key={idx} 
-                dangerouslySetInnerHTML={{ __html: processedText }}
-              />
+              <div key={idx}>
+                {lines.map((line, lineIdx) => {
+                  const trimmedLine = line.trim();
+                  if (!trimmedLine) return <div key={lineIdx} className="h-2" />;
+                  
+                  // Check for numbered list (1., 2., etc.)
+                  const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.+)$/);
+                  if (numberedMatch) {
+                    return (
+                      <div key={lineIdx} className="flex items-start mb-2">
+                        <span className="font-bold text-blue-600 mr-2 mt-0.5">{numberedMatch[1]}.</span>
+                        <span dangerouslySetInnerHTML={{ __html: numberedMatch[2] }} />
+                      </div>
+                    );
+                  }
+                  
+                  // Check for bullet list (-, •, *, etc.)
+                  const bulletMatch = trimmedLine.match(/^[-•*]\s+(.+)$/);
+                  if (bulletMatch) {
+                    return (
+                      <div key={lineIdx} className="flex items-start mb-2 ml-4">
+                        <span className="text-blue-600 mr-2 mt-0.5">•</span>
+                        <span dangerouslySetInnerHTML={{ __html: bulletMatch[1] }} />
+                      </div>
+                    );
+                  }
+                  
+                  // Regular paragraph
+                  return (
+                    <p key={lineIdx} className="mb-2" dangerouslySetInnerHTML={{ __html: trimmedLine }} />
+                  );
+                })}
+              </div>
             );
           } else if (part.type === 'inline-math') {
             return (
-              <InlineMath key={idx} math={part.content} />
+              <span key={idx} className="mx-1">
+                <InlineMath math={part.content} />
+              </span>
             );
           } else if (part.type === 'block-math') {
             return (
-              <div key={idx} className="my-3">
+              <div key={idx} className="my-4 overflow-x-auto">
                 <BlockMath math={part.content} />
               </div>
             );
           }
           return null;
         })}
-      </span>
+      </div>
     );
   };
 
