@@ -1461,14 +1461,14 @@ export default function AutoNoteMentor() {
               );
             }
             
-            // Bullet points (student-friendly style)
+            // Bullet points (clean academic style)
             if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.match(/^\d+\./)) {
               const cleanText = trimmedLine.replace(/^[•\-\d\.]\s*/, '').trim();
               
               return (
-                <div key={lineIdx} className="mb-3 ml-4">
+                <div key={lineIdx} className="mb-2.5 ml-3">
                   <div className="flex items-start">
-                    <span className={`w-2 h-2 bg-${theme.primary} rounded-full mt-2.5 mr-3 flex-shrink-0`}></span>
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-2.5 flex-shrink-0"></span>
                     <p className="text-gray-700 leading-relaxed text-sm">
                       {cleanText}
                     </p>
