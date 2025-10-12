@@ -9,7 +9,7 @@ import json
 import sys
 
 class CSRFTester:
-    def __init__(self, base_url="https://dhruv-optimize.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://dhruv-tutor-upgrade.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session = requests.Session()
         self.csrf_token = None

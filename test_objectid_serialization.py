@@ -10,7 +10,7 @@ import time
 
 class ObjectIdSerializationTester:
     def __init__(self):
-        self.base_url = "https://dhruv-optimize.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-tutor-upgrade.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         
