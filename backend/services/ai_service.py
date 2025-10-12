@@ -201,11 +201,18 @@ Subject: {subject}"""
             
             # Use GPT-4o for faster response times (109 tokens/sec vs GPT-5's slower response)
             # GPT-4o provides excellent quality with significantly better speed for user experience
+            # Phase 1: Added explicit LLM parameters for quality and depth
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"professor_{user_id}_{session_id}",
                 system_message=professor_system
-            ).with_model("openai", "gpt-4o")  # Using GPT-4o for optimal speed/quality balance
+            ).with_model("openai", "gpt-4o").with_params(
+                temperature=0.75,          # Balanced creativity for explanations
+                top_p=0.9,                # Nucleus sampling for coherent responses
+                max_tokens=1600,          # Allow detailed, exam-level explanations
+                presence_penalty=0.1,     # Slight penalty to reduce repetition
+                frequency_penalty=0.1     # Encourage varied vocabulary
+            )
             
             # Mentor response (motivational, strategic guidance)
             mentor_system = f"""You are a Mentor AI providing emotionally supportive guidance optimized for student motivation.
