@@ -138,11 +138,15 @@ class BackendAPITester:
         """Test Mathematics Query - Deep Mode with semantic validation"""
         print("   Testing Mathematics deep mode with quadratic formula derivation")
         
+        # Generate a session ID for the request
+        session_id = str(uuid.uuid4())
+        
         math_request_data = {
             "message": "Explain quadratic formula derivation",
             "subject": "Mathematics", 
             "depth_level": "deep",
-            "exam_mode": "JEE"
+            "exam_mode": "JEE",
+            "session_id": session_id
         }
         
         print(f"   📝 Request: {json.dumps(math_request_data, indent=2)}")
