@@ -409,6 +409,8 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
             {renderRichText(sections.content)}
           </div>
         )}
+          </div>
+        )}
       </div>
     );
   }
