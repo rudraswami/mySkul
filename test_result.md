@@ -96,7 +96,7 @@ backend:
 ##
 test_plan:
   current_focus:
-    - "Auto-Notes Subscription Enforcement Testing - Fresh Account"
+    - "AI Tutor Phase 1 Testing - Sequential Execution & LLM Parameters"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
