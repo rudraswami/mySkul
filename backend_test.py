@@ -1173,24 +1173,24 @@
 
 # Main execution
 if __name__ == "__main__":
-    print("🚀 DHRUV AI SUBSCRIPTION SYSTEM RE-TEST - POST-FIX VALIDATION")
+    print("🚀 DHRUV AI AUTO-NOTES SUBSCRIPTION ENFORCEMENT TESTING - FRESH ACCOUNT")
     print("=" * 80)
     
     tester = DhruvAITester()
     
-    # Run the subscription system re-test
-    success = tester.test_subscription_system_retest_post_fix()
+    # Run the auto-notes subscription enforcement test
+    success = tester.test_auto_notes_subscription_enforcement_fresh_account()
     
     print("\n" + "=" * 80)
-    print("🏁 SUBSCRIPTION SYSTEM RE-TEST COMPLETED")
+    print("🏁 AUTO-NOTES SUBSCRIPTION ENFORCEMENT TESTING COMPLETED")
     print("=" * 80)
     
     if success:
         print("✅ OVERALL RESULT: SUCCESS")
-        print("   The subscription system post-fix validation passed!")
+        print("   Auto-Notes subscription enforcement working correctly!")
     else:
         print("❌ OVERALL RESULT: FAILURE") 
-        print("   The subscription system needs additional fixes.")
+        print("   Auto-Notes subscription enforcement needs fixes.")
     
     print(f"\n📊 FINAL STATISTICS:")
     print(f"   Tests Run: {tester.tests_run}")
