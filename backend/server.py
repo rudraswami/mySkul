@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette_csrf import CSRFMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 import asyncio
@@ -5023,7 +5023,53 @@ async def login_user(login_data: UserLogin, response: Response):
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    user = User(**user_doc)
+    try:
+        user = User(**user_doc)
+    except ValidationError as exc:
+        missing_fields = sorted({str(error.get('loc', [''])[0]) for error in exc.errors()})
+        logger.warning(
+            "User document missing fields during login",
+            extra={
+                "event": "auth.login.user_doc_missing_fields",
+                "user_email": login_data.email,
+                "user_id": str(user_doc.get("user_id") or user_doc.get("_id")),
+                "missing_fields": missing_fields,
+            },
+        )
+
+        # Ensure password hash exists before attempting authentication to avoid bcrypt errors
+        if not user_doc.get("password_hash"):
+            logger.error(
+                "User document missing password hash during login",
+                extra={
+                    "event": "auth.login.password_hash_missing",
+                    "user_email": login_data.email,
+                    "user_id": str(user_doc.get("user_id") or user_doc.get("_id")),
+                },
+            )
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # Provide safe fallbacks for optional fields to keep legacy accounts functional
+        sanitized_doc = {**user_doc}
+        sanitized_doc.setdefault("user_id", str(user_doc.get("user_id") or user_doc.get("_id") or uuid.uuid4()))
+        sanitized_doc.setdefault("full_name", user_doc.get("full_name") or login_data.email.split("@")[0])
+        sanitized_doc.setdefault("exam_type", user_doc.get("exam_type") or "unknown")
+        sanitized_doc.setdefault("target_year", user_doc.get("target_year") or datetime.utcnow().year)
+        sanitized_doc.setdefault("subscription_type", user_doc.get("subscription_type") or "free")
+
+        try:
+            user = User(**sanitized_doc)
+        except ValidationError as final_exc:
+            logger.error(
+                "Failed to coerce user document for login",
+                extra={
+                    "event": "auth.login.user_doc_unrecoverable",
+                    "user_email": login_data.email,
+                    "user_id": str(user_doc.get("user_id") or user_doc.get("_id")),
+                    "errors": final_exc.errors(),
+                },
+            )
+            raise HTTPException(status_code=500, detail="User profile is incomplete. Contact support.")
     
     # Verify password
     if not verify_password(login_data.password, user.password_hash):
