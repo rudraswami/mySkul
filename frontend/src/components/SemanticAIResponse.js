@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain } from 'lucide-react';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 /**
  * SemanticAIResponse - Phase 2/3 Enhanced Rendering
