@@ -183,7 +183,15 @@ export default function AITutor() {
   }, [searchQuery, sessions]);
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll to bottom when messages change, with a delay to prevent viewport jump
+    // Use requestAnimationFrame to wait for content to render before scrolling
+    if (messages.length > 0) {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      });
+    }
   }, [messages]);
 
   // Close session action menus when clicking outside
