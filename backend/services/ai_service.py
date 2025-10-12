@@ -280,54 +280,73 @@ Subject Context: {subject}"""
                 frequency_penalty=0.1     # Encourage natural variation
             )
             
-            # Generate responses with hybrid approach: fast + quality
-            professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
-            mentor_message = UserMessage(text=f"Provide motivational guidance for: {message} in {subject}")
-            
-            # Generate real AI responses with proper LLM calls
-            logger.info("🤖 Generating contextual AI responses via LLM")
+            # Phase 1: SEQUENTIAL EXECUTION (Professor → Mentor chain)
+            # This ensures Mentor can read and complement Professor's explanation
+            logger.info("🤖 Starting sequential AI generation (Professor → Mentor)")
             
             try:
-                # HYBRID STRATEGY: Fast LLM calls with intelligent timeout management
-                # Frontend expects response within 20s, so we use 12s max for LLM calls
-                logger.info("🚀 Starting hybrid fast+contextual AI generation")
+                # STEP 1: Generate Professor response first (deep reasoning)
+                logger.info("🎓 Generating Professor response (deep technical explanation)...")
+                professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
                 
-                # Create LLM tasks with aggressive timeout for speed
-                professor_task = asyncio.create_task(self._safe_llm_call(
-                    professor_chat, professor_message, "professor", subject, message, max_retries=1, timeout_seconds=12
-                ))
-                mentor_task = asyncio.create_task(self._safe_llm_call(
-                    mentor_chat, mentor_message, "mentor", subject, message, max_retries=1, timeout_seconds=12
-                ))
+                start_time = time.time()
+                professor_response = await self._safe_llm_call(
+                    professor_chat, professor_message, "professor", subject, message, 
+                    max_retries=1, timeout_seconds=25  # Extended from 12s to 25s for deep reasoning
+                )
+                professor_time = time.time() - start_time
                 
-                # Wait with overall timeout of 15 seconds (leaves 5s buffer for processing)
-                try:
-                    professor_response, mentor_response = await asyncio.wait_for(
-                        asyncio.gather(professor_task, mentor_task, return_exceptions=True),
-                        timeout=15.0
-                    )
-                    
-                    # Check for exceptions and use enhanced contextual fallbacks if needed
-                    if isinstance(professor_response, Exception):
-                        logger.warning(f"Professor LLM call failed: {professor_response}, using enhanced contextual fallback")
-                        professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
-                    
-                    if isinstance(mentor_response, Exception):
-                        logger.warning(f"Mentor LLM call failed: {mentor_response}, using enhanced contextual fallback")
-                        mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
-                    
-                    logger.info(f"✅ Hybrid AI responses completed for {subject}")
+                # Validate Professor response
+                if isinstance(professor_response, Exception):
+                    logger.error(f"❌ Professor generation failed: {professor_response}")
+                    raise professor_response
                 
-                except asyncio.TimeoutError:
-                    # Overall timeout - use enhanced contextual fallbacks for better UX
-                    logger.warning("⏰ Overall LLM timeout (15s), using enhanced contextual fallbacks")
-                    professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
-                    mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
+                logger.info(f"✅ Professor response generated in {professor_time:.2f}s ({len(professor_response)} chars)")
+                
+                # STEP 2: Generate Mentor response WITH Professor context
+                # Mentor sees what Professor said and complements it (not repeats it)
+                logger.info("💙 Generating Mentor response (with Professor context)...")
+                
+                # Truncate Professor content for context (first 600 chars to save tokens)
+                professor_context = professor_response[:600] + ("..." if len(professor_response) > 600 else "")
+                
+                enhanced_mentor_message = UserMessage(
+                    text=f"""PROFESSOR'S TECHNICAL EXPLANATION (for your context):
+{professor_context}
+
+YOUR TASK:
+Provide motivational guidance and study tips for: "{message}" in {subject}
+
+CRITICAL INSTRUCTIONS:
+- Do NOT repeat the Professor's technical explanation
+- Focus on WHY this matters for exams and future learning
+- Provide memory tricks, study strategies, and encouragement
+- Be warm, supportive, and confidence-building
+- Your role is emotional support + strategic guidance, NOT technical re-explanation"""
+                )
+                
+                start_time = time.time()
+                mentor_response = await self._safe_llm_call(
+                    mentor_chat, enhanced_mentor_message, "mentor", subject, message,
+                    max_retries=1, timeout_seconds=25  # Extended from 12s to 25s
+                )
+                mentor_time = time.time() - start_time
+                
+                # Mentor failure is less critical - can gracefully degrade
+                if isinstance(mentor_response, Exception):
+                    logger.warning(f"⚠️ Mentor generation failed: {mentor_response}, using graceful fallback")
+                    mentor_response = f"Great question about {subject}! The Professor's explanation above is comprehensive. Keep practicing similar problems, and don't hesitate to ask follow-up questions. You're building real mastery here!"
+                
+                logger.info(f"✅ Mentor response generated in {mentor_time:.2f}s ({len(mentor_response)} chars)")
+                logger.info(f"🎯 Total generation time: {professor_time + mentor_time:.2f}s (Professor: {professor_time:.1f}s, Mentor: {mentor_time:.1f}s)")
+                
+            except asyncio.TimeoutError as e:
+                logger.error(f"⏰ AI generation timeout: {e}")
+                raise Exception("AI Tutor is thinking deeply about your question. This response needs more time - please try again in a moment.")
                 
             except Exception as e:
-                logger.error(f"Hybrid LLM strategy failed: {e}, using enhanced contextual fallbacks")
-                professor_response = self._generate_enhanced_contextual_fallback("professor", subject, message)
-                mentor_response = self._generate_enhanced_contextual_fallback("mentor", subject, message)
+                logger.error(f"❌ AI generation failed: {e}")
+                raise Exception(f"AI Tutor encountered an error: {str(e)}")
             
             # Step 4: Generate visual concept (SVG primary, Gemini fallback)
             visual_svg = self.svg_generator.generate_concept_visual(message, subject)
