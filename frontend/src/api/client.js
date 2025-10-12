@@ -77,17 +77,33 @@ apiClient.interceptors.response.use(
   async (error) => {
     // Handle CSRF token errors
     if (error.response?.status === 403 && error.response.data?.detail?.includes('CSRF')) {
+      const originalRequest = error.config;
+
+      if (!originalRequest) {
+        return Promise.reject(error);
+      }
+
+      if (originalRequest._csrfRetry) {
+        return Promise.reject(error);
+      }
+
       console.warn('CSRF token expired, refreshing...');
-      // Clear expired token and retry
+
+      // Clear expired token and retry once per request
+      originalRequest._csrfRetry = true;
       csrfToken = null;
       await fetchCsrfToken();
-      
-      // Retry the original request
+
       if (csrfToken) {
-        const originalRequest = error.config;
-        originalRequest.headers['X-CSRF-Token'] = csrfToken;
+        originalRequest.headers = {
+          ...(originalRequest.headers || {}),
+          'X-CSRF-Token': csrfToken,
+        };
+
         return apiClient.request(originalRequest);
       }
+
+      return Promise.reject(error);
     }
     
     // Handle authentication errors
