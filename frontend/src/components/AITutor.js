@@ -243,7 +243,25 @@ export default function AITutor() {
   }, [showQuickSuggestions, messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Improved scroll behavior to prevent viewport jump
+    if (messagesEndRef.current) {
+      // Find the scrollable container (messages area)
+      const container = messagesEndRef.current.closest('[data-testid="chat-container"]');
+      if (container) {
+        // Scroll the container, not the entire viewport
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback to scrollIntoView with block: 'nearest' to prevent viewport jump
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest"
+        });
+      }
+    }
   };
 
   // Phase 3: Speech Recognition Setup
