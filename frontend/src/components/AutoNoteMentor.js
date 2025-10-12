@@ -1477,11 +1477,11 @@ export default function AutoNoteMentor() {
               );
             }
             
-            // Regular content (clean paragraph style)
+            // Regular content (clean textbook-style paragraphs)
             if (trimmedLine.length > 15) {
               return (
                 <div key={lineIdx} className="mb-3">
-                  <p className="text-gray-700 leading-relaxed text-sm pl-4 border-l-2 border-gray-200">
+                  <p className="text-gray-800 leading-relaxed text-sm">
                     {trimmedLine}
                   </p>
                 </div>
