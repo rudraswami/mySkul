@@ -638,7 +638,7 @@ CRITICAL INSTRUCTIONS:
             logger.error(f"Save session message error: {str(e)}")
             return False
     
-    async def _safe_llm_call(self, chat_instance, message, role_type: str, subject: str, user_message: str, max_retries: int = 1, timeout_seconds: int = 10):
+    async def _safe_llm_call(self, chat_instance, message, role_type: str, subject: str, user_message: str, max_retries: int = 1, timeout_seconds: int = 25):
         """
         Safe LLM API call with timeout, retry, and intelligent fallbacks
         Ensures no blank responses ever reach the frontend
