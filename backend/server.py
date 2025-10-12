@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
+import asyncio
 import stripe
 import razorpay
 import json
@@ -115,7 +116,12 @@ validate_critical_env_vars()
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+mongo_timeout_ms = int(os.environ.get('MONGO_CONNECT_TIMEOUT_MS', '5000'))
+client = AsyncIOMotorClient(
+    mongo_url,
+    serverSelectionTimeoutMS=mongo_timeout_ms,
+    connectTimeoutMS=mongo_timeout_ms,
+)
 db = client[os.environ['DB_NAME']]
 
 # AI Chat Configuration - NO FALLBACK ALLOWED FOR SECURITY
@@ -151,6 +157,78 @@ if not STRIPE_API_KEY:
 
 app = FastAPI(title="Dhruv AI API", description="AI-Powered Competitive Exam Preparation Platform")
 api_router = APIRouter(prefix="/api")
+
+# ====== STARTUP HEALTH MONITORING ======
+startup_state: Dict[str, Dict[str, Optional[str]]] = {
+    "mongo": {"status": "pending", "last_error": None},
+    "embedding": {"status": "pending", "last_error": None},
+}
+startup_background_tasks: Dict[str, asyncio.Task] = {}
+
+EMBEDDING_INIT_TIMEOUT_SECONDS = float(os.environ.get("EMBEDDING_INIT_TIMEOUT_SECONDS", "10"))
+MONGO_PING_TIMEOUT_SECONDS = float(os.environ.get("MONGO_PING_TIMEOUT_SECONDS", "5"))
+
+
+async def _initialize_embedding_background() -> None:
+    """Initialize the embedding service without blocking the main startup."""
+    logger.info("startup step 3: initializing embedding service")
+    startup_state["embedding"]["status"] = "initializing"
+    try:
+        await asyncio.wait_for(get_embedding_service(), timeout=EMBEDDING_INIT_TIMEOUT_SECONDS)
+        startup_state["embedding"]["status"] = "ready"
+        startup_state["embedding"]["last_error"] = None
+        logger.info("startup step 3 complete: embedding service ready")
+    except asyncio.TimeoutError:
+        startup_state["embedding"]["status"] = "timeout"
+        startup_state["embedding"]["last_error"] = (
+            f"Initialization exceeded {EMBEDDING_INIT_TIMEOUT_SECONDS}s timeout"
+        )
+        logger.warning("Embedding service initialization timed out but startup continues")
+    except Exception as exc:
+        startup_state["embedding"]["status"] = "error"
+        startup_state["embedding"]["last_error"] = str(exc)
+        logger.exception("Embedding service initialization failed: %s", exc)
+
+
+async def _verify_mongo_connection() -> None:
+    """Verify MongoDB connection readiness in the background."""
+    logger.info("startup step 2: verifying MongoDB connectivity")
+    startup_state["mongo"]["status"] = "checking"
+    try:
+        await asyncio.wait_for(db.command("ping"), timeout=MONGO_PING_TIMEOUT_SECONDS)
+        startup_state["mongo"]["status"] = "ready"
+        startup_state["mongo"]["last_error"] = None
+        logger.info("startup step 2 complete: MongoDB reachable")
+    except asyncio.TimeoutError:
+        startup_state["mongo"]["status"] = "timeout"
+        startup_state["mongo"]["last_error"] = (
+            f"MongoDB ping exceeded {MONGO_PING_TIMEOUT_SECONDS}s timeout"
+        )
+        logger.warning("MongoDB ping timed out - check database availability")
+    except Exception as exc:
+        startup_state["mongo"]["status"] = "error"
+        startup_state["mongo"]["last_error"] = str(exc)
+        logger.exception("MongoDB connectivity check failed: %s", exc)
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    """Schedule background initialization tasks and log checkpoints."""
+    logger.info("startup step 1: FastAPI application startup initiated")
+    loop = asyncio.get_running_loop()
+    startup_background_tasks["mongo_check"] = loop.create_task(
+        _verify_mongo_connection(), name="mongo_startup_check"
+    )
+    startup_background_tasks["embedding_init"] = loop.create_task(
+        _initialize_embedding_background(), name="embedding_startup_init"
+    )
+    logger.info("Application startup complete.")
+
+
+@app.get("/ping", response_class=JSONResponse)
+async def ping() -> Dict[str, Any]:
+    """Lightweight health probe for local development and readiness checks."""
+    return {"status": "ok", "startup": startup_state}
 
 # ============= UTILITY FUNCTIONS =============
 

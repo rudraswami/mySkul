@@ -12,7 +12,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'
  */
 export const apiClient = axios.create({
   baseURL: `${BACKEND_URL}/api`,
-  timeout: 30000, // 30 seconds
+  timeout: 10000, // Reduce timeout during local debugging to surface hangs faster
   headers: {
     'Content-Type': 'application/json',
   },
