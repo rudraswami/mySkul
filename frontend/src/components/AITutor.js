@@ -685,8 +685,8 @@ export default function AITutor() {
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
       // Enhanced API call with timeout and retry logic
-      // Phase 1: Extended timeout to 40s (allows backend 25s + 25s sequential + processing buffer)
-      const timeoutDuration = 40000; // 40 second timeout for deep AI reasoning
+      // Optimized timeout to 45s (allows backend 20s + 15s sequential + processing buffer)
+      const timeoutDuration = 45000; // 45 second timeout for deep AI reasoning (optimized from 40s)
       const retryAttempts = 2;
       
       let lastError = null;
