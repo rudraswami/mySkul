@@ -31,6 +31,8 @@ from fastapi.encoders import jsonable_encoder
 import json as json_lib
 import secrets
 
+from .services.subscription_service import SubscriptionService
+
 # Logging configuration (moved up to be available for imports)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -44,23 +46,28 @@ except ImportError as e:
     logger.warning(f"Audio processing not available: {e}")
     AUDIO_PROCESSING_ENABLED = False
 
+# Placeholders for modular service singletons (ensures availability even if modular imports fail)
+modular_auth_service = None
+modular_subscription_service = None
+modular_ai_service = None
+deps = None
+
 # Import new modular components for backward compatibility
 try:
-    from api.auth import router as auth_router_new
-    from api.user import router as user_router_new
-    from api.subscription import router as subscription_router_new
-    from api.ai import router as ai_router_new
-    from api.analytics import router as analytics_router_new
-    from api.auto_notes import router as auto_notes_router_new
-    from api.mock_tests import router as mock_tests_router_new
-    from services.auth_service import AuthService
-    from services.subscription_service import SubscriptionService
-    from services.ai_service import AIService
-    from services.analytics_service import AnalyticsService
-    from services.mock_tests_service import MockTestsService
-    from api.jobs import router as jobs_router_new
-    from jobs.bootstrap import get_orchestrator as get_job_orchestrator
-    import dependencies as deps
+    from .api.auth import router as auth_router_new
+    from .api.user import router as user_router_new
+    from .api.subscription import router as subscription_router_new
+    from .api.ai import router as ai_router_new
+    from .api.analytics import router as analytics_router_new
+    from .api.auto_notes import router as auto_notes_router_new
+    from .api.mock_tests import router as mock_tests_router_new
+    from .services.auth_service import AuthService
+    from .services.ai_service import AIService
+    from .services.analytics_service import AnalyticsService
+    from .services.mock_tests_service import MockTestsService
+    from .api.jobs import router as jobs_router_new
+    from .jobs.bootstrap import get_orchestrator as get_job_orchestrator
+    from . import dependencies as deps
     MODULAR_COMPONENTS_AVAILABLE = True
     logger.info("✅ Modular components loaded successfully")
 except ImportError as e:
@@ -141,6 +148,10 @@ if MODULAR_COMPONENTS_AVAILABLE:
     deps.job_orchestrator = get_job_orchestrator()
     logger.info("✅ Modular auth, subscription, and AI services initialized with subscription integration")
     logger.info("✅ Job orchestrator initialized")
+else:
+    # Fallback to direct service instantiation to keep legacy endpoints operational
+    modular_subscription_service = SubscriptionService(db)
+    logger.info("ℹ️ Modular components unavailable - using direct SubscriptionService fallback")
 
 # Logging configuration already moved up
 
