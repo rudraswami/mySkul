@@ -247,11 +247,15 @@ class BackendAPITester:
         """Test Physics Query - Standard Mode with semantic validation"""
         print("   Testing Physics standard mode with Newton's second law")
         
+        # Generate a session ID for the request
+        session_id = str(uuid.uuid4())
+        
         physics_request_data = {
             "message": "What is Newton's second law?",
             "subject": "Physics",
             "depth_level": "standard", 
-            "exam_mode": "JEE"
+            "exam_mode": "JEE",
+            "session_id": session_id
         }
         
         print(f"   📝 Request: {json.dumps(physics_request_data, indent=2)}")
