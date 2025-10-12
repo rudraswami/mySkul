@@ -12,10 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { formatMathExpressions, formatProfessorMentorResponse } from './FormattedAIResponse';
 import { handleSubscriptionError, handlePostUpgradeRetry, animateSubscriptionUnlock } from '../utils/subscriptionErrorHandler';
 import SemanticAIResponse from './SemanticAIResponse'; // Phase 2/3 enhanced rendering
-import PersonaHeader from './PersonaHeader';
-import VisualConceptBlock from './VisualConceptBlock';
-import ProgressiveExplanation from './ProgressiveExplanation';
-import QuickActionTray from './QuickActionTray';
 import UpgradeModal from './UpgradeModal';
 import client from '../api/client';
 import { 
