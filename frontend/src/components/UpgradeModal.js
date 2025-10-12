@@ -156,14 +156,61 @@ const UpgradeModal = ({
                   </motion.div>
                 )}
 
+                {/* Target Plan & Pricing Info */}
+                {upgradeHint?.target_plan && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-5 border-2 border-blue-200"
+                  >
+                    <div className="text-center mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center justify-center">
+                        <Crown className="w-5 h-5 text-yellow-500 mr-2" />
+                        Recommended: {upgradeHint.target_plan} Plan
+                      </h3>
+                    </div>
+                    
+                    {/* Pricing Display */}
+                    {upgradeHint.pricing && (
+                      <div className="bg-white rounded-lg p-4 mb-3 border border-blue-200">
+                        <p className="text-center text-gray-600 text-sm mb-2">Starting at</p>
+                        <div className="text-center">
+                          <span className="text-3xl font-bold text-blue-600">
+                            ₹{upgradeHint.pricing.monthly || '99'}
+                          </span>
+                          <span className="text-gray-600 ml-1">/month</span>
+                        </div>
+                        {upgradeHint.pricing.quarterly && (
+                          <p className="text-center text-sm text-gray-600 mt-2">
+                            Save more with quarterly (₹{upgradeHint.pricing.quarterly}) or yearly (₹{upgradeHint.pricing.yearly}) plans
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Key Benefits */}
+                    {upgradeHint.benefits && upgradeHint.benefits.length > 0 && (
+                      <div className="space-y-2">
+                        {upgradeHint.benefits.slice(0, 3).map((benefit, idx) => (
+                          <div key={idx} className="flex items-start text-sm">
+                            <Zap className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                            <span className="text-gray-700">{benefit}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={handleUpgrade}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                   >
                     <span className="flex items-center justify-center">
-                      {upgradeHint?.cta || "Upgrade Now"}
+                      {upgradeHint?.cta || "View Plans & Upgrade"}
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </span>
                   </Button>
@@ -172,7 +219,7 @@ const UpgradeModal = ({
                     <Button
                       onClick={onClose}
                       variant="outline"
-                      className="flex-1 py-3 rounded-xl font-semibold"
+                      className="flex-1 py-3 rounded-xl font-semibold hover:bg-gray-50"
                     >
                       Maybe Later
                     </Button>
