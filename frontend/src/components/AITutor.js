@@ -2372,11 +2372,42 @@ export default function AITutor() {
                   <div className="flex justify-start">
                     <div className="max-w-5xl w-full">
                       {message.dual_response ? (
-                        /* AI Tutor 2.0 Enhanced Response */
-                        <AIResponseCardV2
-                          message={message}
-                          onQuickAction={handleQuickAction}
-                        />
+                        /* Phase 2/3: Semantic Rendering with Color-Coded Sections */
+                        <div className="space-y-6">
+                          {/* Professor Response (Primary) */}
+                          <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex items-center mb-4">
+                              <GraduationCap className="h-6 w-6 text-blue-600 mr-3" />
+                              <h3 className="text-lg font-bold text-gray-900">Professor's Deep Analysis</h3>
+                              {message.dual_response.primary?.confidence && (
+                                <Badge variant="outline" className="ml-auto text-xs">
+                                  {Math.round(message.dual_response.primary.confidence * 100)}% confident
+                                </Badge>
+                              )}
+                            </div>
+                            <SemanticAIResponse 
+                              content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
+                              type="professor"
+                            />
+                          </div>
+
+                          {/* Mentor Response (Secondary) */}
+                          <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg p-6">
+                            <div className="flex items-center mb-4">
+                              <Heart className="h-6 w-6 text-green-600 mr-3" />
+                              <h3 className="text-lg font-bold text-gray-900">Mentor's Strategic Guidance</h3>
+                              {message.dual_response.secondary?.confidence && (
+                                <Badge variant="outline" className="ml-auto text-xs">
+                                  {Math.round(message.dual_response.secondary.confidence * 100)}% confident
+                                </Badge>
+                              )}
+                            </div>
+                            <SemanticAIResponse 
+                              content={message.dual_response.secondary?.raw_text || message.dual_response.secondary?.response}
+                              type="mentor"
+                            />
+                          </div>
+                        </div>
                       ) : (
                         /* Single Response Layout (mentor-only or professor-only) */
                         <div>
