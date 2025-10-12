@@ -1414,17 +1414,17 @@ export default function AutoNoteMentor() {
             const trimmedLine = line.trim();
             if (!trimmedLine) return null;
             
-            // Main section headers (student-friendly style)
+            // Main section headers (clean academic style)
             if (lineIdx === 0 && (trimmedLine.length > 25 || trimmedLine.toLowerCase().includes('notes') || 
                 trimmedLine.toLowerCase().includes('concepts') || trimmedLine.toLowerCase().includes('important') ||
                 trimmedLine.includes(':'))) {
               const displayTitle = trimmedLine.replace(/:/g, '').trim();
               
               return (
-                <div key={lineIdx} className="mb-4">
-                  <div className="flex items-center mb-3">
-                    <div className={`w-2 h-8 bg-${theme.primary} rounded-full mr-3`}></div>
-                    <h3 className="text-lg font-semibold text-gray-800 leading-snug">
+                <div key={lineIdx} className="mb-5">
+                  <div className="flex items-center mb-3 pb-2 border-b-2 border-gray-200">
+                    <div className={`w-1.5 h-6 bg-${theme.accent} rounded-sm mr-2.5`}></div>
+                    <h3 className="text-base font-semibold text-gray-900 tracking-tight">
                       {displayTitle}
                     </h3>
                   </div>
