@@ -277,18 +277,7 @@ Depth Level: {depth_level}"""
             # This allows Mentor to truly complement rather than duplicate
             # Mentor system prompt will be created after Professor response is available
             
-            # Phase 1: Added explicit LLM parameters for quality and depth
-            mentor_chat = LlmChat(
-                api_key=self.emergent_llm_key,
-                session_id=f"mentor_{user_id}_{session_id}",
-                system_message=mentor_system
-            ).with_model("openai", "gpt-4o").with_params(
-                temperature=0.75,          # Balanced warmth and consistency
-                top_p=0.9,                # Nucleus sampling for natural tone
-                max_tokens=1600,          # Allow comprehensive guidance
-                presence_penalty=0.1,     # Reduce repetition
-                frequency_penalty=0.1     # Encourage natural variation
-            )
+            # Mentor chat will be created AFTER Professor response (Phase 2 sequential reflection)
             
             # Phase 1: SEQUENTIAL EXECUTION (Professor → Mentor chain)
             # This ensures Mentor can read and complement Professor's explanation
