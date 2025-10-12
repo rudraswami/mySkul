@@ -303,10 +303,30 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
     );
   }
 
-  // Render Mentor microcards
+  // Render Mentor microcards with collapsible container
   if (type === 'mentor') {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        {/* Collapsible Header */}
+        <button
+          onClick={() => setIsMentorExpanded(!isMentorExpanded)}
+          className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-green-100 to-blue-100 hover:from-green-200 hover:to-blue-200 rounded-lg transition-colors duration-200 border-2 border-green-300"
+        >
+          <div className="flex items-center space-x-2">
+            <Heart className="h-5 w-5 text-green-600" />
+            <span className="font-semibold text-gray-900">Mentor's Strategic Guidance</span>
+            <Badge variant="outline" className="text-xs">Click to {isMentorExpanded ? 'collapse' : 'expand'}</Badge>
+          </div>
+          {isMentorExpanded ? (
+            <ChevronUp className="h-5 w-5 text-gray-600" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-600" />
+          )}
+        </button>
+        
+        {/* Collapsible Content */}
+        {isMentorExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
         {/* Motivation Microcard */}
         {sections.motivation && (
           <Card className={`${mentorColors.motivation.bg} border-2 ${mentorColors.motivation.border}`}>
