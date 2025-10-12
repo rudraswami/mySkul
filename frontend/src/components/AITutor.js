@@ -2261,8 +2261,8 @@ export default function AITutor() {
           </div>
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-white" data-testid="chat-container">
+        {/* Messages Area - Fixed overflow */}
+        <div className="flex-1 overflow-y-auto p-6 bg-white scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" data-testid="chat-container" style={{ maxHeight: 'calc(100vh - 200px)' }}>
           <div className="max-w-5xl mx-auto space-y-8">
             {messages.length === 0 ? (
               // Clean Welcome State
