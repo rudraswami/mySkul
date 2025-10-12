@@ -1846,23 +1846,23 @@ export default function AutoNoteMentor() {
             {/* Main Notes Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Professor Analysis - Primary (Academic Style) */}
-              <Card className="shadow-sm border border-slate-200">
-                <CardHeader className="pb-4">
+              <Card className="shadow-md border border-gray-200 bg-white">
+                <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 to-white border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center text-lg font-medium">
-                      <GraduationCap className="h-5 w-5 mr-2.5 text-slate-600" />
+                    <CardTitle className="flex items-center text-lg font-semibold">
+                      <GraduationCap className="h-5 w-5 mr-2.5 text-blue-600" />
                       Professor's Academic Notes
                     </CardTitle>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 text-xs px-2.5 py-1">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border border-blue-200 text-xs px-2.5 py-1 font-medium">
                       Primary
                     </Badge>
                   </div>
-                  <p className="text-sm text-slate-600 mt-1.5">Structured educational content and key concepts</p>
+                  <p className="text-sm text-gray-600 mt-1.5">Structured educational content and key concepts</p>
                 </CardHeader>
-                <CardContent className="pt-0 px-6 pb-6">
-                  <div className="bg-white rounded-md p-4 shadow-inner border border-purple-100">
-                    <div className="text-gray-800 leading-relaxed space-y-3">
-                      {formatStudentFriendlyContent(dualAnalysis.professor_analysis.content, 'purple')}
+                <CardContent className="pt-5 px-6 pb-6">
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                    <div className="text-gray-800 leading-relaxed space-y-2">
+                      {formatStudentFriendlyContent(dualAnalysis.professor_analysis.content, 'academic')}
                     </div>
                   </div>
                 </CardContent>
