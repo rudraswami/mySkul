@@ -124,6 +124,17 @@ export function SubscriptionProvider({ children }) {
     }
   };
 
+  // Helper function to get plan pricing
+  const getPlanPricing = (planTier) => {
+    const pricingMap = {
+      'STARTER': { monthly: 99, quarterly: 249, yearly: 899 },
+      'SCHOLAR': { monthly: 299, quarterly: 799, yearly: 2799 },
+      'ACHIEVER': { monthly: 799, quarterly: 2199, yearly: 7999 },
+      'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
+    };
+    return pricingMap[planTier] || pricingMap['STARTER'];
+  };
+
   // Helper functions for market-standard messaging (updated for planConfig_ai_tutor.json)
   const getFeatureTitle = (featureName) => {
     const titles = {
