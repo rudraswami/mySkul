@@ -1360,8 +1360,8 @@ export default function AutoNoteMentor() {
       );
     });
   };
-  // Enhanced formatting function for Student-Friendly content (Beautiful & Accessible)
-  const formatStudentFriendlyContent = (content, colorTheme = 'purple') => {
+  // Enhanced formatting function for Student-Friendly content (Academic & Clean)
+  const formatStudentFriendlyContent = (content, colorTheme = 'academic') => {
     if (!content) return null;
     
     // Clean the content first - remove all special characters and normalize
@@ -1374,29 +1374,32 @@ export default function AutoNoteMentor() {
       .replace(/\n{3,}/g, '\n\n') // Normalize line breaks
       .trim();
     
-    // Color theme mapping
+    // Academic color theme mapping (student-friendly, clean, professional)
     const themes = {
-      purple: {
-        primary: 'purple-500',
-        secondary: 'purple-600',
-        light: 'purple-50',
-        border: 'purple-200'
+      academic: {
+        primary: 'blue-600',      // Softer blue for trust and focus
+        secondary: 'slate-700',   // Professional gray for hierarchy
+        light: 'blue-50',         // Very light blue background
+        border: 'blue-300',       // Subtle blue border
+        accent: 'blue-500'        // Medium blue for icons
       },
       emerald: {
-        primary: 'emerald-500',
-        secondary: 'emerald-600', 
+        primary: 'emerald-600',
+        secondary: 'emerald-700', 
         light: 'emerald-50',
-        border: 'emerald-200'
+        border: 'emerald-300',
+        accent: 'emerald-500'
       },
       blue: {
-        primary: 'blue-500',
-        secondary: 'blue-600',
+        primary: 'blue-600',
+        secondary: 'blue-700',
         light: 'blue-50', 
-        border: 'blue-200'
+        border: 'blue-300',
+        accent: 'blue-500'
       }
     };
     
-    const theme = themes[colorTheme] || themes.purple;
+    const theme = themes[colorTheme] || themes.academic;
     
     // Split into logical sections
     const sections = cleanContent.split('\n\n').filter(section => section.trim().length > 0);
