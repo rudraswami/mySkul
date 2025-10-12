@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain } from 'lucide-react';
+import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain, ChevronDown, ChevronUp } from 'lucide-react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
@@ -10,7 +10,20 @@ import 'katex/dist/katex.min.css';
  * Renders AI responses with color-coded sections, rich text emphasis, and semantic structure
  */
 const SemanticAIResponse = ({ content, type = 'professor' }) => {
+  const [isMentorExpanded, setIsMentorExpanded] = useState(false);
+  
   if (!content) return null;
+  
+  // Strip any remaining visible tags that weren't properly closed
+  const stripUnparsedTags = (text) => {
+    if (!text) return text;
+    // Remove any visible [SECTION:*] or [MICROCARD:*] tags that weren't parsed
+    return text
+      .replace(/\[SECTION:\w+\]/g, '')
+      .replace(/\[\/SECTION:\w+\]/g, '')
+      .replace(/\[MICROCARD:\w+\]/g, '')
+      .replace(/\[\/MICROCARD:\w+\]/g, '');
+  };
 
   // Parse section tags from backend with enhanced fallback logic
   const parseSections = (text) => {
