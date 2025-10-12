@@ -132,6 +132,19 @@ select:focus-visible {
   padding: 1rem;
 }
 
+/* Prevent viewport jump during scroll */
+[data-testid="chat-container"] {
+  overflow-anchor: auto;
+  scroll-behavior: smooth;
+  position: relative;
+  will-change: scroll-position;
+}
+
+/* Stable container dimensions to prevent layout shift */
+[data-testid="chat-container"] > div {
+  min-height: min-content;
+}
+
 .message-bubble {
   max-width: 70%;
   word-wrap: break-word;
