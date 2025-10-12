@@ -1743,24 +1743,28 @@
 
 # Main execution
 if __name__ == "__main__":
-    print("🚀 DHRUV AI AUTO-NOTES SUBSCRIPTION ENFORCEMENT TESTING - FRESH ACCOUNT")
+    print("🚀 DHRUV AI TUTOR PHASE 1 TESTING - SEQUENTIAL EXECUTION & LLM PARAMETERS")
     print("=" * 80)
     
     tester = DhruvAITester()
     
-    # Run the auto-notes subscription enforcement test
-    success = tester.test_auto_notes_subscription_enforcement_fresh_account()
+    # Run the AI Tutor Phase 1 testing
+    success = tester.test_ai_tutor_phase_1_sequential_execution_llm_parameters()
     
     print("\n" + "=" * 80)
-    print("🏁 AUTO-NOTES SUBSCRIPTION ENFORCEMENT TESTING COMPLETED")
+    print("🏁 AI TUTOR PHASE 1 TESTING COMPLETED")
     print("=" * 80)
     
     if success:
         print("✅ OVERALL RESULT: SUCCESS")
-        print("   Auto-Notes subscription enforcement working correctly!")
+        print("   AI Tutor Phase 1 enhancements working correctly!")
+        print("   ✅ Sequential execution (Professor → Mentor with context)")
+        print("   ✅ LLM parameters (temperature=0.75, top_p=0.9, max_tokens=1600)")
+        print("   ✅ Extended timeout (25s per call)")
+        print("   ✅ Deep, exam-level responses (not shallow overviews)")
     else:
         print("❌ OVERALL RESULT: FAILURE") 
-        print("   Auto-Notes subscription enforcement needs fixes.")
+        print("   AI Tutor Phase 1 enhancements need fixes.")
     
     print(f"\n📊 FINAL STATISTICS:")
     print(f"   Tests Run: {tester.tests_run}")
