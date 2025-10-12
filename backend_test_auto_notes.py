@@ -313,14 +313,20 @@ class DhruvAITester:
         )
         
         if success:
-            has_access = response.get('has_access', True)
-            upgrade_needed = response.get('upgrade_needed', False)
-            upsell_info = response.get('upsell_info', {})
+            # Handle the actual response structure with 'detail' field
+            detail = response.get('detail', {})
+            has_access = False  # 402 means no access
+            upgrade_needed = detail.get('upgrade_needed', False)
+            upsell_info = detail.get('upsell_info', {})
+            used = detail.get('current_usage', -1)
+            limit = detail.get('limit', -1)
             
             print(f"   📊 402 Response After 2nd Usage:")
-            print(f"      has_access: {has_access}")
+            print(f"      has_access: {has_access} (402 = no access)")
             print(f"      upgrade_needed: {upgrade_needed}")
             print(f"      upsell_info present: {bool(upsell_info)}")
+            print(f"      used: {used}")
+            print(f"      limit: {limit}")
             
             if not has_access and upgrade_needed and upsell_info:
                 test_results['access_check_after_second_usage_402'] = True
