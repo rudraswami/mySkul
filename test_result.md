@@ -96,7 +96,7 @@ backend:
 ##
 test_plan:
   current_focus:
-    - "AI Tutor Mathematical Accuracy Enhancement"
+    - "Auto-Notes Subscription Enforcement Testing - Fresh Account"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
