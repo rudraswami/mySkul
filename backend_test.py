@@ -265,7 +265,8 @@ class BackendAPITester:
             "message": "What is F=ma?",
             "subject": "Physics",
             "depth_level": "quick",
-            "exam_mode": "JEE"
+            "exam_mode": "JEE",
+            "session_id": session_id
         }
         
         print(f"   📝 Request: {json.dumps(quick_mode_request, indent=2)}")
