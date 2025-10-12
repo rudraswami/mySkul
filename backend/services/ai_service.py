@@ -470,7 +470,7 @@ Remember:
                 start_time = time.time()
                 mentor_response = await self._safe_llm_call(
                     mentor_chat, enhanced_mentor_message, "mentor", subject, message,
-                    max_retries=1, timeout_seconds=25  # Extended from 12s to 25s
+                    max_retries=1, timeout_seconds=15  # Optimized from 25s to 15s with reduced max_tokens
                 )
                 mentor_time = time.time() - start_time
                 
