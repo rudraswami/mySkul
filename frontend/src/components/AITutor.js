@@ -91,6 +91,10 @@ export default function AITutor() {
   const [lastScenarioType, setLastScenarioType] = useState('');
   const messagesEndRef = useRef(null);
   
+  // Phase 2: Depth and Exam mode controls
+  const [depthLevel, setDepthLevel] = useState('standard'); // 'quick', 'standard', 'deep'
+  const [examMode, setExamMode] = useState('JEE'); // 'JEE', 'NEET', 'CBSE'
+  
   // Input state management for proper phase separation
   const [pendingMessage, setPendingMessage] = useState(''); // Message being processed
   const [messagePhase, setMessagePhase] = useState('idle'); // 'idle', 'submit', 'streaming', 'reset'
