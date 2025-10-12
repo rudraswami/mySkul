@@ -28,29 +28,34 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
   // Parse section tags from backend with enhanced fallback logic
   const parseSections = (text) => {
     const sections = {};
-    const sectionRegex = /\[SECTION:(\w+)\]([\s\S]*?)\[\/SECTION:\1\]/g;
-    const microcardRegex = /\[MICROCARD:(\w+)\]([\s\S]*?)\[\/MICROCARD:\1\]/g;
+    const sectionRegex = /\[SECTION:(\w+)\]([\s\S]*?)\[\/SECTION:\1\]/gi;
+    const microcardRegex = /\[MICROCARD:(\w+)\]([\s\S]*?)\[\/MICROCARD:\1\]/gi;
     
     let match;
     let foundSections = false;
     
     // Parse Professor sections
+    sectionRegex.lastIndex = 0; // Reset regex state
     while ((match = sectionRegex.exec(text)) !== null) {
-      sections[match[1].toLowerCase()] = match[2].trim();
+      sections[match[1].toLowerCase()] = stripUnparsedTags(match[2].trim());
       foundSections = true;
     }
     
     // Parse Mentor microcards
+    microcardRegex.lastIndex = 0; // Reset regex state
     while ((match = microcardRegex.exec(text)) !== null) {
-      sections[match[1].toLowerCase()] = match[2].trim();
+      sections[match[1].toLowerCase()] = stripUnparsedTags(match[2].trim());
       foundSections = true;
     }
     
     // Enhanced fallback: If no sections found, use intelligent content splitting
     if (!foundSections) {
+      // Strip any unparsed tags from the entire text first
+      const cleanedText = stripUnparsedTags(text);
+      
       // For Professor: Try to detect natural sections by paragraph structure
       if (type === 'professor') {
-        const paragraphs = text.split('\n\n').filter(p => p.trim());
+        const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
         if (paragraphs.length >= 3) {
           // First paragraph as concept
           sections['concept'] = paragraphs[0];
@@ -61,11 +66,11 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
           // Last paragraph as pro tip
           sections['protip'] = paragraphs[paragraphs.length - 1];
         } else {
-          sections['content'] = text;
+          sections['content'] = cleanedText;
         }
       } else {
         // For Mentor: Treat as motivation message
-        sections['motivation'] = text;
+        sections['motivation'] = cleanedText;
       }
     }
     
