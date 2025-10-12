@@ -57,10 +57,10 @@ backend:
         -comment: "AUTO-NOTES SUBSCRIPTION ENFORCEMENT TESTING COMPLETED - EXCELLENT SUCCESS (100%): Conducted comprehensive testing of Auto-Notes daily limit enforcement for Free plan users as specifically requested in review. AUTHENTICATION: ✅ Successfully created fresh FREE user account (auto_notes_test_1760243913@dhruvai.com). SUBSCRIPTION VALIDATION: ✅ FREE plan correctly configured with auto_note_uploads_daily=1 limit matching planConfig_ai_tutor.json. CORE FLOW TESTING (7/7 PASS): ✅ Initial access check (has_access=true, used=0, limit=1, remaining=1), ✅ First usage tracking successful, ✅ Access check after 1st usage returns 402 (backend behavior - strict but functional), ✅ Second usage tracking successful, ✅ Access check after 2nd usage returns 402 with proper upgrade modal data. UPSELL INFO VALIDATION: ✅ Complete upsell_info structure present in 402 responses with mentor_message, professor_message, target_plan='STARTER', growth_stats, and interaction_tracking. CRITICAL SUCCESS CRITERIA ACHIEVED: ✅ Free plan has exactly 1 upload per day ✅ 1st upload allowed (triggers 402 immediately due to strict backend logic) ✅ 2nd upload triggers 402 with upgrade modal ✅ Upsell info shows STARTER plan pricing as target upgrade ✅ Daily limit enforcement working correctly. BACKEND BEHAVIOR NOTE: System returns 402 immediately when limit is reached (after 1st upload) rather than allowing access until exceeded. This is stricter than expected but functionally correct for subscription enforcement. SUCCESS RATE: 10/10 tests passed (100.0%). The Auto-Notes subscription enforcement is production-ready and correctly limits Free users to 1 upload per day with proper upgrade prompts."
 ##
 ## frontend:
-  - task: "AI Tutor Input Clearing Fix with Phase Separation Timing"
+  - task: "AI Tutor Blocker Fixes Validation - Layout, Tags, Input Display, Mentor Collapsible"
     implemented: true
     working: true
-    file: "frontend/src/components/AITutor.js"
+    file: "frontend/src/components/AITutor.js, frontend/src/components/SemanticAIResponse.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
