@@ -452,7 +452,7 @@ Depth Level: {depth_level}"""
                 ).with_model("openai", "gpt-4o").with_params(
                     temperature=0.75,
                     top_p=0.9,
-                    max_tokens=1600,
+                    max_tokens=1000,          # Optimized for speed - Mentor should be concise (reduced from 1600)
                     presence_penalty=0.15,  # Higher penalty for Mentor to avoid repetition
                     frequency_penalty=0.15
                 )
