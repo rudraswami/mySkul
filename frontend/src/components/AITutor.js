@@ -699,7 +699,9 @@ export default function AITutor() {
             response = await axios.post(`${API}/ai/dual-response`, {
               message: messageToSend,
               subject: selectedSubject,
-              session_id: sessionId
+              session_id: sessionId,
+              depth_level: depthLevel,
+              exam_mode: examMode
             }, { 
               headers,
               timeout: timeoutDuration
@@ -708,7 +710,9 @@ export default function AITutor() {
             response = await axios.post(`${API}/ai/mentor-only`, {
               message: messageToSend,
               subject: selectedSubject,
-              session_id: sessionId
+              session_id: sessionId,
+              depth_level: depthLevel,
+              exam_mode: examMode
             }, { 
               headers,
               timeout: timeoutDuration
@@ -717,7 +721,9 @@ export default function AITutor() {
             response = await axios.post(`${API}/ai/professor-only`, {
               message: messageToSend,
               subject: selectedSubject,
-              session_id: sessionId
+              session_id: sessionId,
+              depth_level: depthLevel,
+              exam_mode: examMode
             }, { 
               headers,
               timeout: timeoutDuration
