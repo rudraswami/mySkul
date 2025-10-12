@@ -9644,9 +9644,12 @@ async def get_mock_test_dashboard(user: User = Depends(get_current_user)):
         progress = await db.student_progress.find_one({"student_id": user.user_id})
         if not progress:
             # Initialize progress for new student
-            progress = StudentProgress(student_id=user.user_id, subject="General")
-            await db.student_progress.insert_one(progress.dict())
-        
+            progress_model = StudentProgress(student_id=user.user_id, subject="General")
+            progress = progress_model.dict()
+            await db.student_progress.insert_one(progress)
+        elif isinstance(progress, StudentProgress):
+            progress = progress.dict()
+
         # Get recent test attempts
         recent_attempts = await db.test_attempts.find(
             {"student_id": user.user_id}
@@ -9671,7 +9674,7 @@ async def get_mock_test_dashboard(user: User = Depends(get_current_user)):
             best_score = 0
             improvement = 0
             subject_performance = {}
-        
+
         return {
             "dashboard_metrics": {
                 "tests_taken": len(recent_attempts),
