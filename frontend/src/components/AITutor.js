@@ -861,6 +861,14 @@ export default function AITutor() {
       // Add BOTH user message and AI response to current conversation
       setMessages(prev => [...prev, userMessageObj, enhancedMessage]);
       
+      // Wait for content to render before scrolling to prevent viewport jump
+      // Using requestAnimationFrame + setTimeout combo for stable scroll
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 300); // Delay to allow content to fully render
+      });
+      
       // RESET PHASE: Clear user input only AFTER message is successfully appended to conversation
       // Use a delay to ensure DOM update and message visibility before clearing input
       setMessagePhase('reset');
