@@ -58,9 +58,18 @@ export function SubscriptionProvider({ children }) {
   const openUpsellModal = (featureName, detailLike) => {
     if (!detailLike) detailLike = {};
     const upsellInfo = detailLike.upsell_info || detailLike;
+    
+    // Get target plan and pricing from upsell_info
+    const targetPlan = upsellInfo?.target_plan || 'STARTER';
+    const pricing = getPlanPricing(targetPlan);
+    
     const modalData = {
       featureName,
-      upsellInfo,
+      upsellInfo: {
+        ...upsellInfo,
+        target_plan: targetPlan,
+        pricing: pricing
+      },
       currentUsage: detailLike.used || detailLike.current_usage || 0,
       limit: detailLike.limit || 0,
       title: getFeatureTitle(featureName),
