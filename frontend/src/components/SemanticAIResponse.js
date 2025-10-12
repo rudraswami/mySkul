@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
