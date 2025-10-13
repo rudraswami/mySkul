@@ -131,10 +131,10 @@
       "student_verification_discount": true
     },
     "upgrade_messages": {
-      "mentor": "You're in the top 10%! Unlock unlimited AI sessions with Legend tier.",
-      "professor": "Your analytical depth is exceptional. Legend provides priority AI and 24/7 learning lab.",
-      "growth_metric": "Legend users are 3x more likely to hit their target score",
-      "cta": "Unlock Legend for ₹1,499/month"
+      "mentor": "🏆 You're in the top 5%! Legend gives you UNLIMITED everything + dedicated mentor support. This is your path to AIR single-digit ranks - join elite achievers!",
+      "professor": "🌟 Your analytical depth is exceptional. Legend provides 24/7 learning lab, real-time personalized AI, and custom study plans - the ultimate competitive edge.",
+      "growth_metric": "Legend users achieve AIR ranks 5x more often",
+      "cta": "Join Elite - Legend at ₹1,999/month"
     },
     "student_verified_price": {
       "monthly": 799,
