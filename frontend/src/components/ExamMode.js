@@ -35,6 +35,23 @@ export default function ExamMode({
   const timerRef = useRef(null);
   const startTimeRef = useRef(Date.now());
 
+  // Lock body scroll when exam mode is active
+  useEffect(() => {
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    
+    return () => {
+      // Restore body scroll on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, []);
+
   // Timer countdown
   useEffect(() => {
     if (timerDuration && timeRemaining !== null) {
