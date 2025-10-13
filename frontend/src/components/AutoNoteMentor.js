@@ -2735,6 +2735,7 @@ export default function AutoNoteMentor() {
 
   // Main Dashboard (Default View)
   return (
+    <>
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
