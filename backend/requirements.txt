@@ -129,7 +129,7 @@ pytokens==0.1.10
 pytz==2025.2
 PyYAML==6.0.2
 razorpay==2.0.0
-redis==6.4.0
+# redis==6.4.0  # Not used - commented for deployment
 referencing==0.36.2
 regex==2025.9.18
 requests==2.32.5
