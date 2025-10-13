@@ -670,7 +670,7 @@ export default function AITutor() {
           'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
         };
         
-        setUpgradeHint({
+        const upgradeData = {
           type: upsellInfo.type || 'limit_reached',
           mentor_message: upsellInfo.mentor_message || 'You\'ve used all your AI sessions! Upgrade to continue learning and ace your exams! 🚀',
           professor_message: upsellInfo.professor_message || 'Consistent practice with AI guidance is essential for mastery. Premium plans offer unlimited sessions.',
@@ -682,9 +682,20 @@ export default function AITutor() {
             'Personalized learning paths'
           ],
           cta: upsellInfo.cta || 'View Plans & Upgrade'
+        };
+        
+        console.log('📊 Setting upgradeHint:', upgradeData);
+        console.log('📊 Setting accessInfo:', {
+          current_usage: used,
+          total: limit,
+          usage_percent: usagePercent,
+          current_tier: accessData.current_tier || currentTier || 'FREE'
         });
         
+        setUpgradeHint(upgradeData);
         setShowUpgradeModal(true);
+        
+        console.log('✅ Modal state set to TRUE');
         return;
       }
       
