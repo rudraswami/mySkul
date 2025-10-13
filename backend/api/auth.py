@@ -143,6 +143,119 @@ async def get_csrf_token(request: Request):
     return {"csrf_token": csrf_token}
 
 
+@router.get("/google/login")
+async def google_login(request: Request):
+    """
+    Initiate Google OAuth flow
+    Redirects user to Google sign-in
+    """
+    # Get the base URL from environment
+    redirect_uri = f"{os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')}/api/auth/google/callback"
+    
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/google/callback")
+async def google_callback(
+    request: Request,
+    response: Response,
+    db = Depends(get_database)
+):
+    """
+    Google OAuth callback handler
+    Receives authorization code and exchanges for user info
+    """
+    from models.core import User
+    from datetime import datetime, timezone, timedelta
+    import secrets
+    
+    try:
+        # Get access token from Google
+        token = await oauth.google.authorize_access_token(request)
+        
+        # Get user info from Google
+        user_info = token.get('userinfo')
+        if not user_info:
+            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+        
+        google_id = user_info['sub']
+        email = user_info['email']
+        name = user_info.get('name', email.split('@')[0])
+        picture = user_info.get('picture', '')
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({
+            "$or": [
+                {"google_id": google_id},
+                {"email": email}
+            ]
+        })
+        
+        # Generate session token
+        session_token = secrets.token_urlsafe(32)
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        
+        if existing_user:
+            # Update existing user
+            await db.users.update_one(
+                {"user_id": existing_user["user_id"]},
+                {"$set": {
+                    "session_token": session_token,
+                    "session_expiry": session_expiry,
+                    "google_id": google_id,
+                    "photo_url": picture,
+                    "auth_provider": "google"
+                }}
+            )
+            user = User(**existing_user)
+            user.session_token = session_token
+            user.session_expiry = session_expiry
+            user.google_id = google_id
+            user.photo_url = picture
+            profile_completed = existing_user.get('profile_completed', False)
+        else:
+            # Create new user
+            user = User(
+                full_name=name,
+                email=email,
+                google_id=google_id,
+                photo_url=picture,
+                auth_provider="google",
+                session_token=session_token,
+                session_expiry=session_expiry,
+                profile_completed=False
+            )
+            await db.users.insert_one(user.dict())
+            profile_completed = False
+        
+        # Set httpOnly cookie
+        is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+        response.set_cookie(
+            key="dhruv_ai_session",
+            value=session_token,
+            max_age=7 * 24 * 60 * 60,  # 7 days
+            httponly=True,
+            secure=is_production,
+            samesite="lax",
+            path="/"
+        )
+        
+        # Redirect to frontend based on profile completion
+        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        if not profile_completed:
+            redirect_url = f"{frontend_url}/profile-setup"
+        else:
+            redirect_url = f"{frontend_url}/dashboard"
+        
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        print(f"❌ Google OAuth error: {str(e)}")
+        # Redirect to login with error
+        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+
+
 @router.post("/google/session")
 async def exchange_google_session(
     request: Request,
