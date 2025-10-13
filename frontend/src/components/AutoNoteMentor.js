@@ -1899,6 +1899,7 @@ export default function AutoNoteMentor() {
   // Generated Notes Display
   if (sessionStatus === 'completed' && generatedNotes && dualAnalysis) {
     return (
+      <>
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
           {/* Notes Header */}
