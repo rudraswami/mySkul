@@ -110,3 +110,216 @@ async def get_csrf_token(request: Request):
     # and available in the request context
     csrf_token = request.scope.get('csrf_token', '')
     return {"csrf_token": csrf_token}
+
+
+@router.post("/google/callback")
+async def google_auth_callback(
+    auth_data: 'GoogleAuthCallback',
+    response: Response,
+    db = Depends(get_database)
+):
+    """
+    Handle Google OAuth callback from Emergent Social Login
+    Exchange session_id for user data and create/update user
+    """
+    from models.core import GoogleAuthCallback, User
+    from datetime import datetime, timezone, timedelta
+    
+    # Check if user exists by Google ID or email
+    existing_user = await db.users.find_one({
+        "$or": [
+            {"google_id": auth_data.id},
+            {"email": auth_data.email}
+        ]
+    })
+    
+    if existing_user:
+        # Update session token and expiry
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        await db.users.update_one(
+            {"user_id": existing_user["user_id"]},
+            {"$set": {
+                "session_token": auth_data.session_token,
+                "session_expiry": session_expiry,
+                "google_id": auth_data.id,  # Ensure google_id is set
+                "photo_url": auth_data.picture,  # Update photo
+                "auth_provider": "google"
+            }}
+        )
+        user = User(**existing_user)
+        user.session_token = auth_data.session_token
+        user.session_expiry = session_expiry
+        user.google_id = auth_data.id
+        user.photo_url = auth_data.picture
+    else:
+        # Create new user
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        user = User(
+            full_name=auth_data.name,
+            email=auth_data.email,
+            google_id=auth_data.id,
+            photo_url=auth_data.picture,
+            auth_provider="google",
+            session_token=auth_data.session_token,
+            session_expiry=session_expiry,
+            profile_completed=False  # Needs profile setup
+        )
+        await db.users.insert_one(user.dict())
+    
+    # Set httpOnly cookie with session token
+    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    response.set_cookie(
+        key="dhruv_ai_session",
+        value=auth_data.session_token,
+        max_age=7 * 24 * 60 * 60,  # 7 days
+        httponly=True,
+        secure=is_production,
+        samesite="lax",
+        path="/"
+    )
+    
+    return {
+        "message": "Authentication successful",
+        "user": {
+            "user_id": user.user_id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "photo_url": user.photo_url,
+            "exam_type": user.exam_type,
+            "profile_completed": user.profile_completed,
+            "subscription_type": user.subscription_type
+        }
+    }
+
+
+@router.get("/session")
+async def get_session(
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Check existing session from cookie or Authorization header
+    Returns current user if session is valid
+    """
+    from models.core import User
+    from datetime import datetime, timezone
+    
+    # Try cookie first
+    session_token = request.cookies.get("dhruv_ai_session")
+    
+    # Fallback to Authorization header
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.split(" ")[1]
+    
+    # Also check old JWT cookie for backward compatibility
+    if not session_token:
+        session_token = request.cookies.get("dhruv_ai_auth")
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="No active session")
+    
+    # Find user with valid session
+    user_doc = await db.users.find_one({
+        "$or": [
+            {
+                "session_token": session_token,
+                "session_expiry": {"$gt": datetime.now(timezone.utc)}
+            },
+            # Legacy JWT token support (for old users)
+            {"user_id": {"$exists": True}}  # Verify JWT separately below
+        ]
+    })
+    
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
+    
+    user = User(**user_doc)
+    
+    # Check if session expired (for new OAuth users)
+    if user.session_expiry and user.session_expiry < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    return {
+        "user": {
+            "user_id": user.user_id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "photo_url": user.photo_url,
+            "exam_type": user.exam_type,
+            "profile_completed": user.profile_completed,
+            "subscription_type": user.subscription_type
+        }
+    }
+
+
+@router.post("/profile/complete")
+async def complete_profile(
+    profile_data: 'ProfileCompleteRequest',
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Complete user profile after first Gmail login
+    Sets profile_completed to True
+    """
+    from models.core import ProfileCompleteRequest, User
+    from datetime import datetime, timezone
+    
+    # Get current user from session
+    session_token = request.cookies.get("dhruv_ai_session")
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.split(" ")[1]
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    user_doc = await db.users.find_one({
+        "session_token": session_token,
+        "session_expiry": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    # Update user profile
+    update_data = {
+        "exam_type": profile_data.exam_type,
+        "profile_completed": True
+    }
+    
+    if profile_data.study_goal:
+        update_data["study_goal"] = profile_data.study_goal
+    if profile_data.preferred_mode:
+        update_data["preferred_mode"] = profile_data.preferred_mode
+    if profile_data.timezone:
+        update_data["timezone"] = profile_data.timezone
+    if profile_data.country:
+        update_data["country"] = profile_data.country
+    if profile_data.target_year:
+        update_data["target_year"] = profile_data.target_year
+    
+    await db.users.update_one(
+        {"user_id": user_doc["user_id"]},
+        {"$set": update_data}
+    )
+    
+    # Fetch updated user
+    updated_user_doc = await db.users.find_one({"user_id": user_doc["user_id"]})
+    user = User(**updated_user_doc)
+    
+    return {
+        "message": "Profile completed successfully",
+        "user": {
+            "user_id": user.user_id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "photo_url": user.photo_url,
+            "exam_type": user.exam_type,
+            "profile_completed": user.profile_completed,
+            "subscription_type": user.subscription_type
+        }
+    }
