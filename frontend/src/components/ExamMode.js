@@ -178,8 +178,9 @@ export default function ExamMode({
     return <div className="p-8 text-center">Loading question...</div>;
   }
 
-  return (
-    <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
+  // Render exam mode using React Portal for true full-screen isolation
+  const examContent = (
+    <div className="fixed inset-0 z-[9999] bg-gray-50 overflow-y-auto" style={{ margin: 0, padding: 0 }}>
       {/* Top Bar */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
