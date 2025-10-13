@@ -179,74 +179,74 @@
     @apply spinner h-12 w-12;
   }
 
-/* ============================================
-   ERROR & EMPTY STATES
-   ============================================ */
+  /* ============================================
+     ERROR & EMPTY STATES
+     ============================================ */
 
-/* Error message box */
-.error-box {
-  @apply bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg;
-  @apply flex items-start space-x-3;
-}
+  /* Error message box */
+  .error-box {
+    @apply bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg;
+    @apply flex items-start space-x-3;
+  }
 
-.error-box-title {
-  @apply text-sm font-semibold text-red-800;
-}
+  .error-box-title {
+    @apply text-sm font-semibold text-red-800;
+  }
 
-.error-box-message {
-  @apply text-sm text-red-700 mt-1;
-}
+  .error-box-message {
+    @apply text-sm text-red-700 mt-1;
+  }
 
-.error-box-action {
-  @apply mt-2 text-sm font-medium text-red-800 hover:text-red-900 underline cursor-pointer;
-}
+  .error-box-action {
+    @apply mt-2 text-sm font-medium text-red-800 hover:text-red-900 underline cursor-pointer;
+  }
 
-/* Success message box */
-.success-box {
-  @apply bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg;
-  @apply flex items-start space-x-3;
-}
+  /* Success message box */
+  .success-box {
+    @apply bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg;
+    @apply flex items-start space-x-3;
+  }
 
-.success-box-message {
-  @apply text-sm text-green-700;
-}
+  .success-box-message {
+    @apply text-sm text-green-700;
+  }
 
-/* Warning message box */
-.warning-box {
-  @apply bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg;
-  @apply flex items-start space-x-3;
-}
+  /* Warning message box */
+  .warning-box {
+    @apply bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg;
+    @apply flex items-start space-x-3;
+  }
 
-.warning-box-message {
-  @apply text-sm text-yellow-700;
-}
+  .warning-box-message {
+    @apply text-sm text-yellow-700;
+  }
 
-/* Info message box */
-.info-box {
-  @apply bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg;
-  @apply flex items-start space-x-3;
-}
+  /* Info message box */
+  .info-box {
+    @apply bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg;
+    @apply flex items-start space-x-3;
+  }
 
-.info-box-message {
-  @apply text-sm text-blue-700;
-}
+  .info-box-message {
+    @apply text-sm text-blue-700;
+  }
 
-/* Empty state container */
-.empty-state {
-  @apply text-center py-12 px-4;
-}
+  /* Empty state container */
+  .empty-state {
+    @apply text-center py-12 px-4;
+  }
 
-.empty-state-icon {
-  @apply mx-auto h-24 w-24 text-gray-400 mb-4;
-}
+  .empty-state-icon {
+    @apply mx-auto h-24 w-24 text-gray-400 mb-4;
+  }
 
-.empty-state-title {
-  @apply text-lg font-semibold text-gray-900 mb-2;
-}
+  .empty-state-title {
+    @apply text-lg font-semibold text-gray-900 mb-2;
+  }
 
-.empty-state-message {
-  @apply text-sm text-gray-600 mb-6;
-}
+  .empty-state-message {
+    @apply text-sm text-gray-600 mb-6;
+  }
 
 /* ============================================
    PREMIUM ANIMATIONS
