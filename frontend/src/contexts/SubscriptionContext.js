@@ -104,11 +104,19 @@ export function SubscriptionProvider({ children }) {
           openUpsellModal(featureName, detail);
           console.log(`✅ Upsell modal triggered: ${featureName} (${detail.used || 0}/${detail.limit || 0})`);
         }
+        
+        // Return ALL the data from the backend 402 response
         return { 
           has_access: false, 
           upgrade_needed: true,
           reason: detail?.reason || 'limit_reached',
-          upsell_info: detail?.upsell_info
+          upsell_info: detail?.upsell_info,
+          used: detail?.used || detail?.current_usage || 0,
+          current_usage: detail?.current_usage || detail?.used || 0,
+          limit: detail?.limit || 0,
+          total: detail?.limit || 0,
+          remaining: detail?.remaining || 0,
+          subscription_tier: detail?.subscription_tier || 'FREE'
         };
       }
       
