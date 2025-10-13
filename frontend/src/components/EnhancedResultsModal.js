@@ -349,39 +349,49 @@ export default function EnhancedResultsModal({
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col md:flex-row gap-3">
-              <Button
-                onClick={onReview}
-                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <BookOpen className="w-4 h-4" />
-                Review Answers
-              </Button>
-              
-              <Button
-                onClick={onRetake}
-                variant="outline"
-                className="flex-1 flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Retake Test
-              </Button>
+            {/* Action Buttons - Enhanced Design */}
+            <Card className="bg-white shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={onReview}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    Review Answers
+                  </Button>
+                  
+                  <Button
+                    onClick={onRetake}
+                    variant="outline"
+                    className="flex-1 flex items-center justify-center gap-2 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 py-6 text-lg font-semibold transition-all"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                    Retake Test
+                  </Button>
 
-              {onBackToLibrary && (
-                <Button
-                  onClick={onBackToLibrary}
-                  variant="outline"
-                  className="flex-1 flex items-center justify-center gap-2"
-                >
-                  <Trophy className="w-4 h-4" />
-                  Test Library
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  {onBackToLibrary && (
+                    <Button
+                      onClick={onBackToLibrary}
+                      variant="outline"
+                      className="flex-1 flex items-center justify-center gap-2 border-2 border-purple-500 text-purple-600 hover:bg-purple-50 py-6 text-lg font-semibold transition-all"
+                    >
+                      <Trophy className="w-5 h-5" />
+                      Test Library
+                    </Button>
+                  )}
+                </div>
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  Review your performance, retake the test, or explore more challenges
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
+
+  // Use React Portal to render at document body level for full-screen display
+  return ReactDOM.createPortal(resultsContent, document.body);
 }
