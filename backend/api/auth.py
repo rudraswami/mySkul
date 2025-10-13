@@ -143,6 +143,7 @@ async def get_csrf_token(request: Request):
 @router.post("/google/session")
 async def exchange_google_session(
     request: Request,
+    response: Response,
     db = Depends(get_database)
 ):
     """
@@ -163,18 +164,32 @@ async def exchange_google_session(
             async with session.get(
                 'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data',
                 headers={'X-Session-ID': session_id}
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
+            ) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
                     raise HTTPException(
-                        status_code=response.status,
+                        status_code=resp.status,
                         detail=f"Emergent API error: {error_text}"
                     )
                 
-                session_data = await response.json()
+                session_data = await resp.json()
                 
                 # Now process the login
-                return await process_google_login(session_data, db)
+                result = await process_google_login(session_data, db)
+                
+                # Set httpOnly cookie with session token
+                is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+                response.set_cookie(
+                    key="dhruv_ai_session",
+                    value=session_data['session_token'],
+                    max_age=7 * 24 * 60 * 60,  # 7 days
+                    httponly=True,
+                    secure=is_production,
+                    samesite="lax",
+                    path="/"
+                )
+                
+                return result
                 
     except HTTPException:
         raise
