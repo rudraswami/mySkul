@@ -3037,46 +3037,37 @@ class BackendAPITester:
 
 # Main execution
 if __name__ == "__main__":
-    print("🚀 AI TUTOR RENDERING FIXES VALIDATION - BACKEND API TESTING")
+    print("🚀 GOOGLE OAUTH 2.0 AUTHENTICATION FLOW TESTING - BACKEND API TESTING")
     print("=" * 80)
     
     tester = BackendAPITester()
     
-    # Run the AI Tutor Rendering Fixes Validation (Primary Test for Review Request)
-    success = tester.test_ai_tutor_rendering_fixes_validation()
+    # Run the Google OAuth 2.0 Flow Testing (Primary Test for Review Request)
+    success = tester.test_google_oauth_flow_complete()
     
     print("\n" + "=" * 80)
-    print("🏁 AI TUTOR RENDERING FIXES VALIDATION COMPLETED")
+    print("🏁 GOOGLE OAUTH 2.0 AUTHENTICATION FLOW TESTING COMPLETED")
     print("=" * 80)
     
     if success:
         print("✅ OVERALL RESULT: SUCCESS")
-        print("   AI Tutor rendering fixes and performance optimizations validated!")
-        print("   ✅ Both Complete Parameters and Quick Mode tests returned 200 OK")
-        print("   ✅ Response time improved (~30% faster)")
-        print("   ✅ Semantic tags intact in raw_text")
-        print("   ✅ Professor response >800 chars (optimized from 2000+)")
-        print("   ✅ Mentor response >500 chars")
-        print("   ✅ Numbered lists present in STEPS section")
-        print("   ✅ Bullet points present")
-        print("   ✅ LaTeX delimiters present")
-        print("   ✅ Quality maintained despite token reduction")
+        print("   Google OAuth 2.0 authentication flow validated!")
+        print("   ✅ OAuth login initiation working with state creation")
+        print("   ✅ OAuth state stored in MongoDB with proper expiry")
+        print("   ✅ OAuth redirect to Google with correct parameters")
+        print("   ✅ OAuth callback state verification working")
+        print("   ✅ State management prevents reuse and handles expiry")
+        print("   ✅ Database integration functional")
+        print("   ✅ Error handling for invalid requests")
     else:
         print("❌ OVERALL RESULT: FAILURE") 
-        print("   AI Tutor rendering fixes validation failed.")
+        print("   Google OAuth 2.0 authentication flow validation failed.")
         print("   Check the detailed test results above for specific issues.")
     
     print(f"\n📊 FINAL STATISTICS:")
-    print(f"   Authentication: {'✅' if hasattr(tester, 'token') and tester.token else '❌'}")
-    print(f"   Complete Parameters Test: {'✅' if hasattr(tester, 'complete_params_response_time') else '❌'}")
-    print(f"   Quick Mode Test: {'✅' if hasattr(tester, 'quick_mode_response_time') else '❌'}")
-    
-    if hasattr(tester, 'complete_params_response_time') and hasattr(tester, 'quick_mode_response_time'):
-        complete_time = tester.complete_params_response_time
-        quick_time = tester.quick_mode_response_time
-        print(f"   Complete Parameters Response Time: {complete_time:.1f}s")
-        print(f"   Quick Mode Response Time: {quick_time:.1f}s")
-        print(f"   Performance Target: <45s for deep mode, <30s for quick mode")
+    print(f"   OAuth Login Initiation: {'✅' if hasattr(tester, 'oauth_state') and tester.oauth_state else '❌'}")
+    print(f"   State Management: {'✅' if success else '❌'}")
+    print(f"   Database Integration: {'✅' if success else '❌'}")
     
     import sys
     sys.exit(0 if success else 1)
