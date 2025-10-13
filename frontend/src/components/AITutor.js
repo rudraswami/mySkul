@@ -722,13 +722,47 @@ export default function AITutor() {
       // Fail open - allow message if check fails
     }
 
-    // Note: We still check access but the backend will also check
-    // This prevents most cases but backend is the final authority
-    // Use unified global trigger to ensure consistent modal hydration
-    // FIXED: Use ai_sessions_monthly (from planConfig_ai_tutor.json) instead of ai_tutor_daily
-    const wasTriggered = await triggerFeatureUpsell('ai_sessions_monthly');
-    if (wasTriggered) {
-      // Modal shown – stop flow here
+    // DOUBLE CHECK: Final subscription check before sending message
+    // (Backend is already checked above, but this ensures UI consistency)
+    const finalAccessCheck = await checkFeatureAccess('ai_sessions_monthly');
+    if (!finalAccessCheck.has_access) {
+      // Map to local modal state (same pattern as Mock Tests)
+      const used = finalAccessCheck.used || 0;
+      const limit = finalAccessCheck.limit || 0;
+      const usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+      
+      setAccessInfo({
+        current_usage: used,
+        total: limit,
+        usage_percent: usagePercent,
+        current_tier: finalAccessCheck.subscription_tier || currentTier || 'FREE'
+      });
+      
+      const upsellInfo = finalAccessCheck.upsell_info || {};
+      const targetPlan = upsellInfo.target_plan || 'STARTER';
+      const pricingMap = {
+        'STARTER': { monthly: 99, quarterly: 249, yearly: 899 },
+        'SCHOLAR': { monthly: 299, quarterly: 799, yearly: 2799 },
+        'ACHIEVER': { monthly: 799, quarterly: 2199, yearly: 7999 },
+        'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
+      };
+      
+      setUpgradeHint({
+        type: 'limit_reached',
+        mentor_message: upsellInfo.mentor_message || 'You\'ve used all your AI sessions! Upgrade to continue learning! 🚀',
+        professor_message: upsellInfo.professor_message || 'Consistent practice with AI guidance is essential for mastery.',
+        target_plan: targetPlan,
+        pricing: pricingMap[targetPlan] || pricingMap['STARTER'],
+        benefits: [
+          'Unlimited AI Tutor sessions',
+          'Advanced exam mode features',
+          'Personalized learning paths'
+        ],
+        cta: 'View Plans & Upgrade'
+      });
+      
+      setShowUpgradeModal(true);
+      console.log('✅ AI Tutor limit reached - showing LOCAL upgrade modal');
       return;
     }
 
