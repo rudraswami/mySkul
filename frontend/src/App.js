@@ -87,6 +87,12 @@ function AppContent() {
           element={!user ? <LoginScreen /> : <Navigate to="/dashboard" />} 
         />
         
+        {/* OAuth Callback Route - PUBLIC (must be accessible without auth) */}
+        <Route 
+          path="/auth/callback" 
+          element={<OAuthCallback />} 
+        />
+        
         {/* Profile Setup - Required after first Gmail login */}
         <Route 
           path="/profile-setup" 
