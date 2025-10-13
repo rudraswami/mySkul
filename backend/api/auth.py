@@ -189,6 +189,9 @@ async def google_callback(
     
     try:
         print("🔐 Starting Google OAuth callback processing...")
+        print(f"🍪 Session in callback: {request.session}")
+        print(f"🍪 Cookies in callback: {request.cookies}")
+        print(f"📥 Query params: {dict(request.query_params)}")
         
         # Get access token from Google
         print("📡 Exchanging authorization code for access token...")
