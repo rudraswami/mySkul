@@ -186,6 +186,10 @@ function AppContent() {
         {/* Protected Routes */}
         <Route path="/*" element={
           user ? (
+            // Check if profile setup is needed
+            !user.profile_completed ? (
+              <Navigate to="/profile-setup" />
+            ) : (
             <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
               <Navigation 
                 mobileMenuOpen={mobileMenuOpen} 
