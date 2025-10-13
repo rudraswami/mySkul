@@ -15,6 +15,7 @@ import Leaderboard from './Leaderboard';
 import BadgeUnlockAnimation from './BadgeUnlockAnimation';
 import MotivationalPopup from './MotivationalPopup';
 import TestGenerationProgress from './TestGenerationProgress';
+import UpgradeModal from './UpgradeModal';
 
 // #PHASE3-SECURITY-FRONTEND - React Query Migration
 import { 
