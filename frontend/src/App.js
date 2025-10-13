@@ -65,12 +65,73 @@ function App() {
 }
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, loginWithGoogle } = useAuth();
   const { upsellModal, setUpsellModal } = useSubscription();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [processingAuth, setProcessingAuth] = useState(false);
 
-  if (loading) {
-    return <PageLoader message="Authenticating..." />;
+  // Handle OAuth callback - check for session_id in URL fragment
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      // Check URL fragment for session_id
+      const fragment = window.location.hash.substring(1);
+      const params = new URLSearchParams(fragment);
+      const sessionId = params.get('session_id');
+
+      if (sessionId && !processingAuth) {
+        setProcessingAuth(true);
+        console.log('🔐 Processing OAuth callback...');
+
+        try {
+          // Exchange session_id for user data with Emergent
+          const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
+            headers: {
+              'X-Session-ID': sessionId
+            }
+          });
+
+          if (response.ok) {
+            const sessionData = await response.json();
+            console.log('✅ Session data received from Emergent');
+
+            // Send to our backend
+            const result = await loginWithGoogle(sessionData);
+
+            if (result.success) {
+              // Clean URL fragment
+              window.history.replaceState({}, document.title, window.location.pathname);
+
+              // Redirect based on profile completion
+              if (result.needsProfileSetup) {
+                window.location.href = '/profile-setup';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            } else {
+              console.error('❌ Backend login failed:', result.error);
+              alert('Authentication failed: ' + result.error);
+              window.location.href = '/login';
+            }
+          } else {
+            console.error('❌ Failed to get session data from Emergent');
+            alert('Authentication failed. Please try again.');
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          console.error('❌ OAuth callback error:', error);
+          alert('Authentication error. Please try again.');
+          window.location.href = '/login';
+        } finally {
+          setProcessingAuth(false);
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [loginWithGoogle, processingAuth]);
+
+  if (loading || processingAuth) {
+    return <PageLoader message={processingAuth ? "Completing sign in..." : "Authenticating..."} />;
   }
 
   return (
