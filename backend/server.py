@@ -1508,7 +1508,8 @@ def prepare_for_mongo(data: dict) -> dict:
 
 # ============= AUTO-NOTE MENTOR PROCESSING ENGINE =============
 
-import whisper
+# Import whisper only when needed (not at module level to avoid deployment issues)
+# import whisper  # Commented out - will be imported dynamically when needed
 import tempfile
 import os
 from pydub import AudioSegment
