@@ -1,0 +1,392 @@
+/**
+ * Premium UI/UX Styles for Dhruv AI
+ * Global utility classes for premium design system
+ */
+
+/* ============================================
+   TOUCH TARGETS - Mobile Accessibility
+   ============================================ */
+
+/* Ensure all interactive elements meet touch target minimum */
+button,
+.btn,
+[role="button"],
+.clickable,
+input[type="button"],
+input[type="submit"],
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon-only buttons */
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   BUTTON HIERARCHY - Consistent Styling
+   ============================================ */
+
+/* Primary CTA buttons - Always use blue/purple gradient */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white;
+  @apply hover:from-blue-700 hover:to-purple-700;
+  @apply active:from-blue-800 active:to-purple-800;
+  @apply transition-all duration-base;
+  @apply shadow-elevation-2 hover:shadow-elevation-3;
+  @apply rounded-lg px-6 py-3 font-semibold;
+  @apply focus:ring-4 focus:ring-blue-300;
+}
+
+/* Secondary buttons - Outlined */
+.btn-secondary {
+  @apply border-2 border-blue-600 text-blue-600 bg-transparent;
+  @apply hover:bg-blue-50;
+  @apply active:bg-blue-100;
+  @apply transition-all duration-base;
+  @apply rounded-lg px-6 py-3 font-semibold;
+  @apply focus:ring-4 focus:ring-blue-300;
+}
+
+/* Tertiary/Ghost buttons */
+.btn-ghost {
+  @apply text-gray-700 bg-transparent;
+  @apply hover:bg-gray-100;
+  @apply active:bg-gray-200;
+  @apply transition-all duration-base;
+  @apply rounded-lg px-4 py-2 font-medium;
+}
+
+/* Danger buttons */
+.btn-danger {
+  @apply bg-red-600 text-white;
+  @apply hover:bg-red-700;
+  @apply active:bg-red-800;
+  @apply transition-all duration-base;
+  @apply shadow-elevation-2 hover:shadow-elevation-3;
+  @apply rounded-lg px-6 py-3 font-semibold;
+  @apply focus:ring-4 focus:ring-red-300;
+}
+
+/* Success buttons */
+.btn-success {
+  @apply bg-green-600 text-white;
+  @apply hover:bg-green-700;
+  @apply active:bg-green-800;
+  @apply transition-all duration-base;
+  @apply shadow-elevation-2 hover:shadow-elevation-3;
+  @apply rounded-lg px-6 py-3 font-semibold;
+}
+
+/* Button loading state */
+.btn-loading {
+  @apply opacity-70 cursor-not-allowed pointer-events-none;
+  position: relative;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   ELEVATION & HOVER EFFECTS
+   ============================================ */
+
+/* Hover elevation effect for cards */
+.hover-elevate {
+  @apply transition-all duration-base;
+}
+
+.hover-elevate:hover {
+  transform: translateY(-2px);
+  @apply shadow-elevation-3;
+}
+
+/* Interactive cards */
+.card-interactive {
+  @apply bg-white rounded-xl shadow-elevation-2;
+  @apply hover:shadow-elevation-3;
+  @apply transition-all duration-base cursor-pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+  @apply shadow-elevation-2;
+}
+
+/* ============================================
+   LOADING STATES - Skeleton & Spinners
+   ============================================ */
+
+/* Skeleton loader */
+.skeleton {
+  @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200;
+  background-size: 200% 100%;
+  @apply animate-shimmer rounded;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-full mb-2;
+}
+
+.skeleton-title {
+  @apply skeleton h-6 w-3/4 mb-3;
+}
+
+.skeleton-avatar {
+  @apply skeleton h-12 w-12 rounded-full;
+}
+
+/* Spinner */
+.spinner {
+  @apply animate-spin rounded-full border-b-2 border-blue-600;
+}
+
+.spinner-sm {
+  @apply spinner h-4 w-4;
+}
+
+.spinner-md {
+  @apply spinner h-8 w-8;
+}
+
+.spinner-lg {
+  @apply spinner h-12 w-12;
+}
+
+/* ============================================
+   ERROR & EMPTY STATES
+   ============================================ */
+
+/* Error message box */
+.error-box {
+  @apply bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg;
+  @apply flex items-start space-x-3;
+}
+
+.error-box-title {
+  @apply text-sm font-semibold text-red-800;
+}
+
+.error-box-message {
+  @apply text-sm text-red-700 mt-1;
+}
+
+.error-box-action {
+  @apply mt-2 text-sm font-medium text-red-800 hover:text-red-900 underline cursor-pointer;
+}
+
+/* Success message box */
+.success-box {
+  @apply bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg;
+  @apply flex items-start space-x-3;
+}
+
+.success-box-message {
+  @apply text-sm text-green-700;
+}
+
+/* Warning message box */
+.warning-box {
+  @apply bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg;
+  @apply flex items-start space-x-3;
+}
+
+.warning-box-message {
+  @apply text-sm text-yellow-700;
+}
+
+/* Info message box */
+.info-box {
+  @apply bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg;
+  @apply flex items-start space-x-3;
+}
+
+.info-box-message {
+  @apply text-sm text-blue-700;
+}
+
+/* Empty state container */
+.empty-state {
+  @apply text-center py-12 px-4;
+}
+
+.empty-state-icon {
+  @apply mx-auto h-24 w-24 text-gray-400 mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-semibold text-gray-900 mb-2;
+}
+
+.empty-state-message {
+  @apply text-sm text-gray-600 mb-6;
+}
+
+/* ============================================
+   PREMIUM ANIMATIONS
+   ============================================ */
+
+/* Fade in animation */
+.fade-in {
+  @apply animate-fade-in;
+}
+
+/* Slide up animation */
+.slide-up {
+  @apply animate-slide-up;
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  @apply transition-all duration-base ease-smooth;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Hide on mobile */
+@media (max-width: 767px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  .desktop-hidden {
+    display: none !important;
+  }
+}
+
+/* Stack on mobile, row on desktop */
+.responsive-flex {
+  @apply flex flex-col;
+}
+
+@media (min-width: 768px) {
+  .responsive-flex {
+    @apply flex-row;
+  }
+}
+
+/* ============================================
+   FOCUS STATES - Accessibility
+   ============================================ */
+
+/* Enhanced focus ring for keyboard navigation */
+*:focus-visible {
+  @apply outline-none ring-4 ring-blue-300 ring-offset-2;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply outline-none ring-4 ring-blue-300 ring-offset-2;
+}
+
+/* ============================================
+   PREMIUM GRADIENTS
+   ============================================ */
+
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.gradient-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* ============================================
+   SCROLL BEHAVIOR
+   ============================================ */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+  @apply hover:bg-gray-500;
+}
+
+::-webkit-scrollbar-thumb:active {
+  @apply bg-gray-600;
+}
+
+/* ============================================
+   TEXT SELECTION
+   ============================================ */
+
+::selection {
+  @apply bg-blue-200 text-blue-900;
+}
+
+::-moz-selection {
+  @apply bg-blue-200 text-blue-900;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
