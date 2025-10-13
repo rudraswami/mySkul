@@ -14,7 +14,12 @@ export default function LoginScreen() {
     setError('');
     
     // Direct Google OAuth through our backend
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://dhruv-ai-fix.preview.emergentagent.com';
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    if (!backendUrl) {
+      setError('Backend URL not configured');
+      setLoading(false);
+      return;
+    }
     window.location.href = `${backendUrl}/api/auth/google/login`;
   };
 
