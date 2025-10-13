@@ -136,11 +136,7 @@ function AppContent() {
         } />
       </Routes>
       
-      {/* Global Upsell Modal */}
-      <UpsellModal 
-        isOpen={!!upsellModal} 
-        onClose={() => setUpsellModal(null)} 
-      />
+      {/* Global Upsell Modal removed - each component now manages its own UpgradeModal for better context */}
     </>
   );
 }
