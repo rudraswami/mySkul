@@ -88,100 +88,96 @@
     @apply rounded-lg px-6 py-3 font-semibold;
   }
 
-/* Button loading state */
-.btn-loading {
-  @apply opacity-70 cursor-not-allowed pointer-events-none;
-  position: relative;
-}
+  /* Button loading state */
+  .btn-loading {
+    @apply opacity-70 cursor-not-allowed pointer-events-none;
+    position: relative;
+  }
 
-.btn-loading::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: 50%;
-  left: 50%;
-  margin-left: -8px;
-  margin-top: -8px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
+  .btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+  /* ============================================
+     ELEVATION & HOVER EFFECTS
+     ============================================ */
 
-/* ============================================
-   ELEVATION & HOVER EFFECTS
-   ============================================ */
+  /* Hover elevation effect for cards */
+  .hover-elevate {
+    @apply transition-all duration-300;
+  }
 
-/* Hover elevation effect for cards */
-.hover-elevate {
-  @apply transition-all duration-base;
-}
+  .hover-elevate:hover {
+    transform: translateY(-2px);
+    @apply shadow-elevation-3;
+  }
 
-.hover-elevate:hover {
-  transform: translateY(-2px);
-  @apply shadow-elevation-3;
-}
+  /* Interactive cards */
+  .card-interactive {
+    @apply bg-white rounded-xl shadow-elevation-2;
+    @apply hover:shadow-elevation-3;
+    @apply transition-all duration-300 cursor-pointer;
+  }
 
-/* Interactive cards */
-.card-interactive {
-  @apply bg-white rounded-xl shadow-elevation-2;
-  @apply hover:shadow-elevation-3;
-  @apply transition-all duration-base cursor-pointer;
-}
+  .card-interactive:hover {
+    transform: translateY(-2px);
+  }
 
-.card-interactive:hover {
-  transform: translateY(-2px);
-}
+  .card-interactive:active {
+    transform: translateY(0);
+    @apply shadow-elevation-2;
+  }
 
-.card-interactive:active {
-  transform: translateY(0);
-  @apply shadow-elevation-2;
-}
+  /* ============================================
+     LOADING STATES - Skeleton & Spinners
+     ============================================ */
 
-/* ============================================
-   LOADING STATES - Skeleton & Spinners
-   ============================================ */
+  /* Skeleton loader */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200;
+    background-size: 200% 100%;
+    @apply animate-shimmer rounded;
+  }
 
-/* Skeleton loader */
-.skeleton {
-  @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200;
-  background-size: 200% 100%;
-  @apply animate-shimmer rounded;
-}
+  .skeleton-text {
+    @apply skeleton h-4 w-full mb-2;
+  }
 
-.skeleton-text {
-  @apply skeleton h-4 w-full mb-2;
-}
+  .skeleton-title {
+    @apply skeleton h-6 w-3/4 mb-3;
+  }
 
-.skeleton-title {
-  @apply skeleton h-6 w-3/4 mb-3;
-}
+  .skeleton-avatar {
+    @apply skeleton h-12 w-12 rounded-full;
+  }
 
-.skeleton-avatar {
-  @apply skeleton h-12 w-12 rounded-full;
-}
+  /* Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-b-2 border-blue-600;
+  }
 
-/* Spinner */
-.spinner {
-  @apply animate-spin rounded-full border-b-2 border-blue-600;
-}
+  .spinner-sm {
+    @apply spinner h-4 w-4;
+  }
 
-.spinner-sm {
-  @apply spinner h-4 w-4;
-}
+  .spinner-md {
+    @apply spinner h-8 w-8;
+  }
 
-.spinner-md {
-  @apply spinner h-8 w-8;
-}
-
-.spinner-lg {
-  @apply spinner h-12 w-12;
-}
+  .spinner-lg {
+    @apply spinner h-12 w-12;
+  }
 
 /* ============================================
    ERROR & EMPTY STATES
