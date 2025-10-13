@@ -200,54 +200,85 @@ export default function EnhancedResultsModal({
               </Card>
             </div>
 
-            {/* Subject-wise Performance Chart */}
+            {/* Subject-wise Performance Chart - Enhanced */}
             {subjectData.length > 0 && (
-              <div className={`mb-8 transform transition-all duration-500 delay-500 ${
-                animationStep >= 3 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-              }`}>
-                <Card className="bg-white overflow-visible">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <Target className="w-5 h-5 text-purple-600" />
-                      Subject-wise Performance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="overflow-x-auto">
-                    <div style={{ minWidth: '500px' }}>
-                      <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={subjectData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-200">
-                                  <p className="font-semibold text-gray-800">{payload[0].payload.name}</p>
-                                  <p className="text-sm text-gray-600">
-                                    {payload[0].payload.correct}/{payload[0].payload.total} correct
-                                  </p>
-                                  <p className="text-sm font-bold text-blue-600">
-                                    {payload[0].value}% accuracy
-                                  </p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Bar dataKey="accuracy" radius={[8, 8, 0, 0]}>
-                          {subjectData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={getBarColor(entry.accuracy)} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+              <Card className="bg-white shadow-xl border-2 border-purple-200 mb-8">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-purple-500 rounded-full">
+                      <Target className="w-6 h-6 text-white" />
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        Subject-wise Performance Analysis
+                      </CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">Your accuracy across different subjects</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="w-full overflow-x-auto">
+                    <div style={{ minWidth: '600px', minHeight: '300px' }}>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={subjectData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis 
+                            dataKey="name" 
+                            tick={{ fontSize: 14, fontWeight: 500 }} 
+                            angle={-15}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 14 }} 
+                            label={{ value: 'Accuracy (%)', angle: -90, position: 'insideLeft', style: { fontSize: 14, fontWeight: 600 } }}
+                            domain={[0, 100]}
+                          />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-white px-5 py-3 rounded-xl shadow-2xl border-2 border-purple-200">
+                                    <p className="font-bold text-gray-900 text-base mb-1">{data.name}</p>
+                                    <p className="text-lg font-semibold text-purple-600">Accuracy: {data.accuracy}%</p>
+                                    <p className="text-sm text-gray-600 mt-1">{data.correct}/{data.total} questions correct</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar dataKey="accuracy" radius={[8, 8, 0, 0]} maxBarSize={80}>
+                            {subjectData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={getBarColor(entry.accuracy)} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  {/* Legend */}
+                  <div className="flex flex-wrap justify-center gap-4 mt-6 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-green-500"></div>
+                      <span className="text-sm text-gray-700">Excellent (≥80%)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-blue-500"></div>
+                      <span className="text-sm text-gray-700">Good (60-79%)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-orange-500"></div>
+                      <span className="text-sm text-gray-700">Fair (40-59%)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-red-500"></div>
+                      <span className="text-sm text-gray-700">Needs Practice (<40%)</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Gamification Rewards */}
