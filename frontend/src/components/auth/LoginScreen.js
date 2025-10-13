@@ -13,13 +13,9 @@ export default function LoginScreen() {
     setLoading(true);
     setError('');
     
-    // CRITICAL: Redirect URL must be a PUBLIC route (not /dashboard which requires auth)
-    // OAuth will redirect back to this URL with #session_id=...
-    const redirectUrl = `${window.location.origin}/auth/callback`;
-    const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-    
-    // Redirect to Emergent OAuth
-    window.location.href = authUrl;
+    // Direct Google OAuth through our backend
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://dhruv-ai-fix.preview.emergentagent.com';
+    window.location.href = `${backendUrl}/api/auth/google/login`;
   };
 
   return (
