@@ -4,8 +4,13 @@
  */
 import axios from 'axios';
 
-// Get backend URL from environment
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// Get backend URL from environment - required for production
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+if (!BACKEND_URL) {
+  console.error('❌ REACT_APP_BACKEND_URL is not set in environment variables');
+  throw new Error('Backend URL not configured. Please set REACT_APP_BACKEND_URL environment variable.');
+}
 
 /**
  * Create axios instance with default configuration
