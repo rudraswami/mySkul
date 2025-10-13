@@ -461,4 +461,7 @@ export default function ExamMode({
       )}
     </div>
   );
+
+  // Use React Portal to render at document body level for true full-screen isolation
+  return ReactDOM.createPortal(examContent, document.body);
 }
