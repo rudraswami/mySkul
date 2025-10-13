@@ -712,8 +712,44 @@ export default function AutoNoteMentor() {
     // Both uploads and recordings use same feature quota from planConfig_ai_tutor.json
     const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
     if (!accessInfo.has_access) {
-      // Open the unified modal immediately
-      setUpsellModal(prev => prev || openUpsellModal('auto_note_uploads_daily', accessInfo));
+      // Map accessInfo to expected UpgradeModal structure
+      const used = accessInfo.used || accessInfo.current_usage || 0;
+      const limit = accessInfo.limit || accessInfo.total || 0;
+      const usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+      
+      setAccessInfo({
+        current_usage: used,
+        total: limit,
+        usage_percent: usagePercent,
+        current_tier: accessInfo.subscription_tier || currentTier || 'FREE'
+      });
+      
+      // Map upsell_info to upgradeHint structure with pricing
+      const upsellInfo = accessInfo.upsell_info || {};
+      const targetPlan = upsellInfo.target_plan || 'STARTER';
+      const pricingMap = {
+        'STARTER': { monthly: 99, quarterly: 249, yearly: 899 },
+        'SCHOLAR': { monthly: 299, quarterly: 799, yearly: 2799 },
+        'ACHIEVER': { monthly: 799, quarterly: 2199, yearly: 7999 },
+        'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
+      };
+      
+      setUpgradeHint({
+        type: 'limit_reached',
+        mentor_message: upsellInfo.mentor_message || 'You\'ve used all your daily Auto-Note sessions! Upgrade to unlock unlimited note-taking! 📚',
+        professor_message: upsellInfo.professor_message || 'Regular note-taking is fundamental to academic success. Premium plans offer unlimited sessions.',
+        target_plan: targetPlan,
+        pricing: pricingMap[targetPlan] || pricingMap['STARTER'],
+        benefits: upsellInfo.benefits || [
+          'Unlimited Auto-Note sessions daily',
+          'Advanced AI note processing',
+          'Flashcard and quiz generation',
+          'Smart concept detection'
+        ],
+        cta: 'View Plans & Upgrade'
+      });
+      
+      setShowUpgradeModal(true);
       return;
     }
 
