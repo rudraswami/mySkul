@@ -1,5 +1,11 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File, Form, Request, Query, Response, Cookie
 from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables FIRST before any other imports that need them
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
 from starlette.middleware.cors import CORSMiddleware
 from starlette_csrf import CSRFMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
