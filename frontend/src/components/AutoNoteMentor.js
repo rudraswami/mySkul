@@ -1830,6 +1830,7 @@ export default function AutoNoteMentor() {
   // Processing State
   if (sessionStatus === 'processing') {
     return (
+      <>
       <div className="p-8 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
         <div className="max-w-2xl mx-auto text-center">
           <div className="bg-white rounded-xl shadow-lg p-8">
