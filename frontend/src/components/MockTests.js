@@ -103,6 +103,11 @@ export default function MockTests() {
   const [examModeQuestions, setExamModeQuestions] = useState([]);
   const [enhancedResultsData, setEnhancedResultsData] = useState(null);
   
+  // Subscription modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeHint, setUpgradeHint] = useState(null);
+  const [mockAccessInfo, setMockAccessInfo] = useState(null);
+  
   // Phase 4: Gamification states
   const [showBadgeAnimation, setShowBadgeAnimation] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
