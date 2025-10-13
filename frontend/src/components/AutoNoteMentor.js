@@ -1597,6 +1597,7 @@ export default function AutoNoteMentor() {
   // Main Recording Interface
   if (sessionStatus === 'recording' || sessionStatus === 'ready') {
     return (
+      <>
       <div className="p-8 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
         <div className="max-w-4xl mx-auto">
           {/* Session Header */}
