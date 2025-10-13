@@ -717,7 +717,8 @@ export default function AITutor() {
         // Don't return - let user continue but show warning
       }
     } catch (error) {
-      console.error('Subscription check error:', error);
+      console.error('❌ Subscription check error:', error);
+      console.error('Error details:', error.response?.data || error.message);
       // Fail open - allow message if check fails
     }
 
