@@ -11367,6 +11367,17 @@ if not cors_origins or cors_origins == ['']:
     logger.error("CORS_ORIGINS environment variable is required for security")
     raise RuntimeError("CORS_ORIGINS must be explicitly configured")
 
+# Session Middleware for OAuth - MUST come before CORS
+from starlette.middleware.sessions import SessionMiddleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv('JWT_SECRET', 'fallback-secret-key-change-in-production'),
+    session_cookie="oauth_session",
+    max_age=3600,  # 1 hour
+    same_site="lax",
+    https_only=False  # Set to True in production with HTTPS
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -11380,13 +11391,6 @@ app.add_middleware(
         "Cache-Control"
     ],
     expose_headers=["X-CSRF-Token"]
-)
-
-# Session Middleware for OAuth
-from starlette.middleware.sessions import SessionMiddleware
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv('JWT_SECRET', 'fallback-secret-key-change-in-production')
 )
 
 # CSRF Protection - Re-enabled after implementing proper token flow
