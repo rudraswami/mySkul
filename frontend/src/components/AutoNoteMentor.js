@@ -2331,6 +2331,7 @@ export default function AutoNoteMentor() {
     const subjectsInSessions = [...new Set(sessions.map(s => s.subject).filter(Boolean))];
     
     return (
+      <>
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
           {/* Enhanced Professional Header */}
