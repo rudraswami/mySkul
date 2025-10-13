@@ -201,25 +201,78 @@ async def google_callback(
     from datetime import datetime, timezone, timedelta
     import secrets
     import traceback
+    import httpx
     
     try:
         print("🔐 Starting Google OAuth callback processing...")
-        print(f"🍪 Session in callback: {request.session}")
-        print(f"🍪 Cookies in callback: {request.cookies}")
-        print(f"📥 Query params: {dict(request.query_params)}")
         
-        # Get access token from Google
+        # Get state and code from query params
+        state = request.query_params.get('state')
+        code = request.query_params.get('code')
+        error = request.query_params.get('error')
+        
+        print(f"📥 Query params - state: {state[:20] if state else 'None'}..., code: {code[:20] if code else 'None'}..., error: {error}")
+        
+        if error:
+            print(f"❌ OAuth error from Google: {error}")
+            frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+            return RedirectResponse(url=f"{frontend_url}/login?error={error}")
+        
+        if not state or not code:
+            print("❌ Missing state or code parameter")
+            raise HTTPException(status_code=400, detail="Missing state or code parameter")
+        
+        # Verify state
+        state_store = OAuthStateStore(db)
+        is_valid = await state_store.verify_state(state)
+        
+        if not is_valid:
+            print(f"❌ Invalid or expired OAuth state: {state[:20]}...")
+            raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
+        
+        print("✅ OAuth state verified")
+        
+        # Exchange authorization code for tokens
+        token_url = "https://oauth2.googleapis.com/token"
+        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        redirect_uri = f"{backend_url}/api/auth/google/callback"
+        
+        token_data = {
+            "code": code,
+            "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+            "client_secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code"
+        }
+        
         print("📡 Exchanging authorization code for access token...")
-        token = await oauth.google.authorize_access_token(request)
-        print(f"✅ Token received: {list(token.keys())}")
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data=token_data)
+            
+            if token_response.status_code != 200:
+                print(f"❌ Token exchange failed: {token_response.text}")
+                raise HTTPException(status_code=400, detail="Failed to exchange authorization code")
+            
+            tokens = token_response.json()
+            access_token = tokens.get('access_token')
+            id_token = tokens.get('id_token')
+            
+            print(f"✅ Tokens received")
+            
+            # Get user info from Google
+            userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+            userinfo_response = await client.get(
+                userinfo_url,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            
+            if userinfo_response.status_code != 200:
+                print(f"❌ Failed to get user info: {userinfo_response.text}")
+                raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+            
+            user_info = userinfo_response.json()
         
-        # Get user info from Google
-        user_info = token.get('userinfo')
-        if not user_info:
-            print("❌ No userinfo in token")
-            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
-        
-        google_id = user_info['sub']
+        google_id = user_info['id']
         email = user_info['email']
         name = user_info.get('name', email.split('@')[0])
         picture = user_info.get('picture', '')
@@ -299,6 +352,8 @@ async def google_callback(
         print(f"🔄 Redirecting to: {redirect_url}")
         return RedirectResponse(url=redirect_url)
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Google OAuth error: {str(e)}")
         print(f"❌ Error type: {type(e).__name__}")
