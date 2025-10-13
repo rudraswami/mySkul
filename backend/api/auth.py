@@ -1,6 +1,7 @@
 """
 Authentication router for user registration, login, logout, and CSRF
 """
+import os
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
 
 from models.core import User, UserCreate, UserLogin
