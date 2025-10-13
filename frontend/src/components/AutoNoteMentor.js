@@ -775,7 +775,7 @@ export default function AutoNoteMentor() {
         'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
       };
       
-      setUpgradeHint({
+      const upgradeData = {
         type: 'limit_reached',
         mentor_message: upsellInfo.mentor_message || 'You\'ve used all your daily Auto-Note sessions! Upgrade to unlock unlimited note-taking! 📚',
         professor_message: upsellInfo.professor_message || 'Regular note-taking is fundamental to academic success. Premium plans offer unlimited sessions.',
@@ -788,9 +788,20 @@ export default function AutoNoteMentor() {
           'Smart concept detection'
         ],
         cta: 'View Plans & Upgrade'
+      };
+      
+      console.log('📊 Setting upgradeHint:', upgradeData);
+      console.log('📊 Setting accessInfo:', {
+        current_usage: used,
+        total: limit,
+        usage_percent: usagePercent,
+        current_tier: accessInfo.subscription_tier || currentTier || 'FREE'
       });
       
+      setUpgradeHint(upgradeData);
       setShowUpgradeModal(true);
+      
+      console.log('✅ Modal state set to TRUE');
       return;
     }
 
