@@ -444,16 +444,30 @@ export default function MockTests() {
   
   const handleOpenWizard = async () => {
     // Check subscription access BEFORE opening wizard
-    // FIXED: Use triggerFeatureUpsell to show modal when limit reached
-    const wasTriggered = await triggerFeatureUpsell('mock_tests_weekly');
-    if (wasTriggered) {
-      // Modal shown – stop flow here
-      console.log('Mock test limit reached - subscription modal displayed');
-      return;
+    try {
+      const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+      
+      if (!accessInfo.has_access) {
+        // Show upgrade modal when limit reached
+        setMockAccessInfo(accessInfo);
+        setUpgradeHint({
+          type: 'limit_reached',
+          message: accessInfo.upsell_info?.mentor_message || 'Upgrade to create more mock tests!',
+          current_usage: accessInfo.used || accessInfo.current_usage || 0,
+          limit: accessInfo.limit || 0
+        });
+        setShowUpgradeModal(true);
+        console.log('Mock test limit reached - showing upgrade modal');
+        return;
+      }
+      
+      // Access granted, open wizard
+      setShowWizard(true);
+    } catch (error) {
+      console.error('Error checking mock test access:', error);
+      // Fail open - allow wizard if check fails
+      setShowWizard(true);
     }
-    
-    // Access granted, open wizard
-    setShowWizard(true);
   };
 
   const handleWizardGenerate = async (config) => {
