@@ -146,7 +146,7 @@ async def get_csrf_token(request: Request):
 
 
 @router.get("/google/login")
-async def google_login(request: Request):
+async def google_login(request: Request, db = Depends(get_database)):
     """
     Initiate Google OAuth flow
     Redirects user to Google sign-in
@@ -159,14 +159,27 @@ async def google_login(request: Request):
         print(f"🔐 Initiating Google OAuth...")
         print(f"📍 Redirect URI: {redirect_uri}")
         print(f"🔑 Client ID: {os.getenv('GOOGLE_CLIENT_ID', 'NOT_SET')[:20]}...")
-        print(f"🍪 Session before OAuth: {request.session}")
-        print(f"🍪 Cookies: {request.cookies}")
         
-        # Redirect to Google OAuth
-        response = await oauth.google.authorize_redirect(request, redirect_uri)
+        # Create and store state in database
+        state_store = OAuthStateStore(db)
+        state = await state_store.create_state()
+        print(f"🎫 Created OAuth state: {state[:20]}...")
         
-        print(f"📤 Response cookies: {response.headers.get('set-cookie', 'None')}")
-        return response
+        # Build Google OAuth URL manually with our state
+        auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        params = {
+            "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "prompt": "select_account"
+        }
+        
+        google_oauth_url = f"{auth_url}?{urlencode(params)}"
+        print(f"🔄 Redirecting to Google...")
+        
+        return RedirectResponse(url=google_oauth_url)
     except Exception as e:
         print(f"❌ Error in google_login: {str(e)}")
         import traceback
