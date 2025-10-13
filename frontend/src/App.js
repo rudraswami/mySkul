@@ -8,6 +8,8 @@ import './App.css';
 import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import LoginScreen from './components/auth/LoginScreen';
+import ProfileSetup from './components/auth/ProfileSetup';
 import StudentDashboard from './components/StudentDashboard';
 import AITutor from './components/AITutor';
 import MockTests from './components/MockTests';
