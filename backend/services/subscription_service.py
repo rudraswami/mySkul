@@ -135,6 +135,7 @@ class SubscriptionService:
                     "limit": 0,
                     "remaining": 0,
                     "upgrade_needed": True,
+                    "subscription_tier": tier,
                     "upsell_info": upsell_info
                 }
             elif isinstance(feature_limit, int):
