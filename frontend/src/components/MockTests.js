@@ -2577,6 +2577,15 @@ export default function MockTests() {
         />
       )}
       
+      {/* Subscription Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        upgradeHint={upgradeHint}
+        accessInfo={mockAccessInfo}
+        currentTier={mockAccessInfo?.current_tier || currentTier || 'FREE'}
+      />
+      
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
