@@ -229,6 +229,7 @@ function AppContent() {
                 </Routes>
               </main>
             </div>
+            )
           ) : (
             <Navigate to="/login" />
           )
