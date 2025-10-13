@@ -64,6 +64,52 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [token]);
 
+  const loginWithGoogle = async (sessionData) => {
+    try {
+      // Send Google session data to our backend
+      const response = await fetch(`${BACKEND_URL}/api/auth/google/callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(sessionData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        
+        // Store temporary user info for ProfileSetup screen
+        sessionStorage.setItem('temp_user_info', JSON.stringify({
+          name: sessionData.name,
+          email: sessionData.email,
+          photo_url: sessionData.picture
+        }));
+        
+        return { 
+          success: true, 
+          user: data.user,
+          needsProfileSetup: !data.user.profile_completed 
+        };
+      } else {
+        const error = await response.json();
+        return { 
+          success: false, 
+          error: error.detail || 'Google login failed' 
+        };
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Google login error:', error);
+      }
+      return { 
+        success: false, 
+        error: error.message || 'Google login failed' 
+      };
+    }
+  };
+
   const login = async (email, password) => {
     try {
       // Use authAPI with CSRF token handling
