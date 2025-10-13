@@ -642,17 +642,61 @@ export default function AITutor() {
         usage_percent: accessData.usage_percent || 0
       });
       
-      // If limit reached, show upgrade modal
+      // If limit reached, show upgrade modal with properly formatted data
       if (!accessData.allowed) {
-        setAccessInfo(accessData);
-        setUpgradeHint(accessData.upgrade_hint);
+        const used = accessData.current_usage || 0;
+        const limit = accessData.total || 0;
+        const usagePercent = accessData.usage_percent || 0;
+        
+        // Map accessInfo to expected UpgradeModal structure
+        setAccessInfo({
+          current_usage: used,
+          total: limit,
+          usage_percent: usagePercent,
+          current_tier: accessData.current_tier || currentTier || 'FREE'
+        });
+        
+        // Map upgrade_hint to upgradeHint structure with pricing
+        const upsellInfo = accessData.upgrade_hint || {};
+        const targetPlan = upsellInfo.target_plan || 'STARTER';
+        const pricingMap = {
+          'STARTER': { monthly: 99, quarterly: 249, yearly: 899 },
+          'SCHOLAR': { monthly: 299, quarterly: 799, yearly: 2799 },
+          'ACHIEVER': { monthly: 799, quarterly: 2199, yearly: 7999 },
+          'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
+        };
+        
+        setUpgradeHint({
+          type: upsellInfo.type || 'limit_reached',
+          mentor_message: upsellInfo.mentor_message || 'You\'ve used all your AI sessions! Upgrade to continue learning and ace your exams! 🚀',
+          professor_message: upsellInfo.professor_message || 'Consistent practice with AI guidance is essential for mastery. Premium plans offer unlimited sessions.',
+          target_plan: targetPlan,
+          pricing: pricingMap[targetPlan] || pricingMap['STARTER'],
+          benefits: [
+            'Unlimited AI Tutor sessions',
+            'Advanced exam mode features',
+            'Personalized learning paths'
+          ],
+          cta: upsellInfo.cta || 'View Plans & Upgrade'
+        });
+        
         setShowUpgradeModal(true);
         return;
       }
       
       // If approaching limit (80%+), show warning in upgrade hint but allow message
       if (accessData.upgrade_hint && accessData.upgrade_hint.type === 'approaching_limit') {
-        setAccessInfo(accessData);
+        const used = accessData.current_usage || 0;
+        const limit = accessData.total || 0;
+        const usagePercent = accessData.usage_percent || 0;
+        
+        setAccessInfo({
+          current_usage: used,
+          total: limit,
+          usage_percent: usagePercent,
+          current_tier: accessData.current_tier || currentTier || 'FREE'
+        });
+        
         setUpgradeHint(accessData.upgrade_hint);
         setShowUpgradeModal(true);
         // Don't return - let user continue but show warning
