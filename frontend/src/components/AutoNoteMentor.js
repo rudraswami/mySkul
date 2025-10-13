@@ -2729,6 +2729,7 @@ export default function AutoNoteMentor() {
         accessInfo={accessInfo}
         currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
       />
+      </>
     );
   }
 
