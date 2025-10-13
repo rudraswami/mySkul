@@ -449,13 +449,34 @@ export default function MockTests() {
       
       if (!accessInfo.has_access) {
         // Show upgrade modal when limit reached
-        setMockAccessInfo(accessInfo);
+        const used = accessInfo.used || 0;
+        const limit = accessInfo.limit || 0;
+        const usagePercent = limit > 0 ? Math.round((used / limit) * 100) : 0;
+        
+        // Map accessInfo to expected UpgradeModal structure
+        setMockAccessInfo({
+          current_usage: used,
+          total: limit,
+          usage_percent: usagePercent,
+          current_tier: accessInfo.subscription_tier || currentTier || 'FREE'
+        });
+        
+        // Map upsell_info to upgradeHint structure
+        const upsellInfo = accessInfo.upsell_info || {};
         setUpgradeHint({
           type: 'limit_reached',
-          message: accessInfo.upsell_info?.mentor_message || 'Upgrade to create more mock tests!',
-          current_usage: accessInfo.used || accessInfo.current_usage || 0,
-          limit: accessInfo.limit || 0
+          mentor_message: upsellInfo.mentor_message || 'You\'ve explored all your free mock tests! Upgrade to unlock unlimited practice and ace your exams! 🚀',
+          professor_message: upsellInfo.professor_message || 'Consistent practice is the key to mastery. Premium plans offer unlimited mock tests.',
+          target_plan: upsellInfo.target_plan || 'STARTER',
+          pricing: upsellInfo.pricing || { monthly: 99, quarterly: 249, yearly: 899 },
+          benefits: upsellInfo.benefits || [
+            'Unlimited mock tests weekly',
+            'Detailed performance analytics',
+            'Custom test creation'
+          ],
+          cta: 'View Plans & Upgrade'
         });
+        
         setShowUpgradeModal(true);
         console.log('Mock test limit reached - showing upgrade modal');
         return;
