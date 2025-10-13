@@ -15,6 +15,10 @@ export default function OAuthCallback() {
       const params = new URLSearchParams(fragment);
       const sessionId = params.get('session_id');
 
+      console.log('🔍 OAuth Callback - Full URL:', window.location.href);
+      console.log('🔍 URL Fragment:', fragment);
+      console.log('🔍 Session ID:', sessionId);
+
       if (!sessionId) {
         console.error('❌ No session_id found in URL');
         setError('Authentication failed: No session ID received');
@@ -22,25 +26,39 @@ export default function OAuthCallback() {
         return;
       }
 
-      console.log('🔐 Processing OAuth callback with session_id...');
+      console.log('🔐 Processing OAuth callback with session_id:', sessionId);
 
       try {
         // Exchange session_id for user data with Emergent
+        console.log('📡 Calling Emergent API...');
         const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
+          method: 'GET',
           headers: {
-            'X-Session-ID': sessionId
-          }
+            'X-Session-ID': sessionId,
+            'Accept': 'application/json'
+          },
+          mode: 'cors'
         });
 
+        console.log('📥 Emergent API Response Status:', response.status);
+
         if (!response.ok) {
-          throw new Error(`Emergent API responded with status ${response.status}`);
+          const errorText = await response.text();
+          console.error('❌ Emergent API Error Response:', errorText);
+          throw new Error(`Emergent API responded with status ${response.status}: ${errorText}`);
         }
 
         const sessionData = await response.json();
-        console.log('✅ Session data received from Emergent');
+        console.log('✅ Session data received from Emergent:', {
+          email: sessionData.email,
+          name: sessionData.name,
+          hasSessionToken: !!sessionData.session_token
+        });
 
         // Send to our backend
+        console.log('📡 Calling our backend...');
         const result = await loginWithGoogle(sessionData);
+        console.log('📥 Backend response:', result);
 
         if (result.success) {
           console.log('✅ Login successful');
@@ -61,6 +79,11 @@ export default function OAuthCallback() {
         }
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
         setError(`Authentication failed: ${error.message}`);
         setTimeout(() => navigate('/login'), 3000);
       }
