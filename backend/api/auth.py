@@ -151,7 +151,7 @@ async def google_login(request: Request):
     """
     try:
         # Get the base URL from environment
-        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
         redirect_uri = f"{backend_url}/api/auth/google/callback"
         
         print(f"🔐 Initiating Google OAuth...")
@@ -253,7 +253,7 @@ async def google_callback(
         )
         
         # Redirect to frontend based on profile completion
-        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
         if not profile_completed:
             redirect_url = f"{frontend_url}/profile-setup"
         else:
@@ -264,7 +264,7 @@ async def google_callback(
     except Exception as e:
         print(f"❌ Google OAuth error: {str(e)}")
         # Redirect to login with error
-        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
         return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
 
 
