@@ -174,14 +174,6 @@ function AppContent() {
           path="/signup" 
           element={<Navigate to="/login" replace />} 
         />
-        <Route 
-          path="/login" 
-          element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} 
-        />
-        <Route 
-          path="/register" 
-          element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} 
-        />
         
         {/* Protected Routes */}
         <Route path="/*" element={
