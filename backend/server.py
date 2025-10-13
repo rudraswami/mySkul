@@ -4,7 +4,14 @@ from pathlib import Path
 
 # Load environment variables FIRST before any other imports that need them
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Only load .env file if it exists (for local development)
+# In Kubernetes/production, environment variables are injected directly
+env_file = ROOT_DIR / '.env'
+if env_file.exists():
+    load_dotenv(env_file)
+    print(f"✅ Loaded environment variables from {env_file}")
+else:
+    print("ℹ️  .env file not found - using environment variables from container")
 
 from starlette.middleware.cors import CORSMiddleware
 from starlette_csrf import CSRFMiddleware
