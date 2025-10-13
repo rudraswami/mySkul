@@ -8,6 +8,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { LoadingSpinner } from './ui/loading';
+import UpgradeModal from './UpgradeModal';
 
 // #PHASE3-SECURITY-FRONTEND - React Query Migration
 import { 
