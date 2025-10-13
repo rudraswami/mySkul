@@ -22,7 +22,7 @@ import { PageLoader } from './components/ui/loading';
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
-import UpsellModal from './components/UpsellModal';
+// UpsellModal removed - duplicate of UpgradeModal (now using unified UpgradeModal in components)
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
