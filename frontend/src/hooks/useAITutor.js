@@ -130,18 +130,29 @@ export const useCreateSession = () => {
 /**
  * Hook to send a message and get dual AI response
  * Includes sanitization and analytics tracking
+ * Supports depth_level and exam_mode parameters
  */
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ message, sessionId, subject }) => {
+    mutationFn: async ({ message, sessionId, subject, depthLevel, examMode, mode = 'dual' }) => {
       const startTime = Date.now();
       
-      const response = await client.post('/api/ai/dual-response', {
+      // Determine endpoint based on mode
+      let endpoint = '/api/ai/dual-response';
+      if (mode === 'mentor') {
+        endpoint = '/api/ai/mentor-only';
+      } else if (mode === 'professor') {
+        endpoint = '/api/ai/professor-only';
+      }
+      
+      const response = await client.post(endpoint, {
         message,
         session_id: sessionId,
-        subject
+        subject,
+        depth_level: depthLevel || 'standard',
+        exam_mode: examMode || 'JEE'
       });
       
       const responseTime = Date.now() - startTime;
@@ -153,6 +164,9 @@ export const useSendMessage = () => {
       trackEvent('ai_tutor_message_sent', {
         session_id: sessionId,
         subject,
+        mode,
+        depth_level: depthLevel,
+        exam_mode: examMode,
         response_time_ms: responseTime,
         has_formula: sanitizedData.dual_response?.primary?.micro_lesson_sections?.key_formula?.length > 0,
         has_visual: sanitizedData.visual?.generated || false
