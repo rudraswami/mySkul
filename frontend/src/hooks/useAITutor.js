@@ -300,6 +300,160 @@ export const useFormulaInteraction = () => {
   };
 };
 
+/**
+ * Hook to rename a session
+ */
+export const useRenameSession = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ sessionId, title }) => {
+      const response = await client.put(`/api/chat/${sessionId}/rename`, { title });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-tutor-sessions'] });
+    }
+  });
+};
+
+/**
+ * Hook to delete a session
+ */
+export const useDeleteSession = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (sessionId) => {
+      const response = await client.delete(`/api/chat/${sessionId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-tutor-sessions'] });
+    }
+  });
+};
+
+/**
+ * Hook to pin/unpin a session
+ */
+export const usePinSession = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ sessionId, isPinned }) => {
+      const response = await client.put(`/api/chat/${sessionId}/pin`, { is_pinned: isPinned });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-tutor-sessions'] });
+    }
+  });
+};
+
+/**
+ * Hook to bookmark a message
+ */
+export const useBookmarkMessage = () => {
+  return useMutation({
+    mutationFn: async ({ sessionId, messageId, isBookmarked }) => {
+      const response = await client.put(`/api/chat/${sessionId}/bookmark`, { 
+        message_id: messageId,
+        is_bookmarked: isBookmarked 
+      });
+      return response.data;
+    }
+  });
+};
+
+/**
+ * Hook to save message to notes
+ */
+export const useSaveToNotes = () => {
+  return useMutation({
+    mutationFn: async ({ content, subject, tags }) => {
+      const response = await client.post('/api/actions/add-to-notes', {
+        content,
+        subject,
+        tags: tags || ['ai-tutor', subject]
+      });
+      
+      trackEvent('note_saved', { subject, from: 'ai_tutor' });
+      return response.data;
+    }
+  });
+};
+
+/**
+ * Hook to generate practice problems
+ */
+export const useGeneratePractice = () => {
+  return useMutation({
+    mutationFn: async ({ topic, difficulty, concept }) => {
+      const response = await client.post('/api/actions/practice-more', {
+        topic,
+        difficulty: difficulty || 'medium',
+        concept
+      });
+      
+      trackEvent('practice_generated', { topic, difficulty });
+      return response.data;
+    }
+  });
+};
+
+/**
+ * Hook to create flashcards
+ */
+export const useCreateFlashcards = () => {
+  return useMutation({
+    mutationFn: async ({ content, subject }) => {
+      const response = await client.post('/api/actions/create-flashcards', {
+        content,
+        subject,
+        description: `Flashcards for ${subject}`
+      });
+      
+      trackEvent('flashcards_created', { subject });
+      return response.data;
+    }
+  });
+};
+
+/**
+ * Hook to schedule revision
+ */
+export const useScheduleRevision = () => {
+  return useMutation({
+    mutationFn: async ({ topic, date, content }) => {
+      const response = await client.post('/api/actions/schedule-revision', {
+        topic,
+        scheduled_date: date,
+        content
+      });
+      
+      trackEvent('revision_scheduled', { topic, date });
+      return response.data;
+    }
+  });
+};
+
+/**
+ * Hook to perform wellness check
+ */
+export const useWellnessCheck = () => {
+  return useMutation({
+    mutationFn: async ({ stressLevel, studyDuration }) => {
+      const response = await client.post('/api/analytics/wellness-check', {
+        stress_level: stressLevel,
+        study_duration_minutes: studyDuration
+      });
+      
+      return response.data;
+    }
+  });
+};
+
 export default {
   useAITutorSessions,
   useSessionMessages,
@@ -307,5 +461,14 @@ export default {
   useSendMessage,
   useQuickAction,
   useMentorInteraction,
-  useFormulaInteraction
+  useFormulaInteraction,
+  useRenameSession,
+  useDeleteSession,
+  usePinSession,
+  useBookmarkMessage,
+  useSaveToNotes,
+  useGeneratePractice,
+  useCreateFlashcards,
+  useScheduleRevision,
+  useWellnessCheck
 };
