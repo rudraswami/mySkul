@@ -181,6 +181,7 @@ export default function RegisterPage() {
                       <SelectItem value="JEE">JEE (Joint Entrance Examination)</SelectItem>
                       <SelectItem value="NEET">NEET (Medical Entrance)</SelectItem>
                       <SelectItem value="UPSC">UPSC (Civil Services)</SelectItem>
+                      <SelectItem value="Others">Others</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
