@@ -94,10 +94,10 @@
       "student_verification_discount": true
     },
     "upgrade_messages": {
-      "mentor": "You're crushing it! Ready for 300 sessions + unlimited mentor access with Achiever?",
-      "professor": "Your mastery rate is impressive. Achiever tier unlocks priority AI and offline mode.",
-      "growth_metric": "Achiever users score 15% higher on mock tests",
-      "cta": "Upgrade to Achiever for ₹699/month"
+      "mentor": "💪 You're crushing it! Your dedication deserves unlimited mock tests + 300 AI sessions. Achiever unlocks priority AI, offline mode, and deep analytics - your secret weapon for top ranks!",
+      "professor": "🎓 Your mastery rate indicates top-tier potential. Achiever provides emotion-aware AI, priority support, and unlimited resources - ideal for targeting AIR ranks.",
+      "growth_metric": "Achiever users achieve 3x higher success rate in competitive exams",
+      "cta": "Upgrade to Achiever - Premium at ₹999/month"
     },
     "student_verified_price": {
       "monthly": 399,
