@@ -3155,6 +3155,19 @@ export default function AutoNoteMentor() {
           ))}
         </div>
       )}
+
+      {/* Subscription Upgrade Modal */}
+      <UpgradeModal
+        show={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={() => {
+          setShowUpgradeModal(false);
+          window.location.href = '/pricing';
+        }}
+        upgradeHint={upgradeHint}
+        accessInfo={accessInfo}
+        currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
+      />
     </div>
   );
 }
