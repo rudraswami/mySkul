@@ -182,6 +182,7 @@ export function AuthProvider({ children }) {
     user,
     login,
     register,
+    loginWithGoogle,
     logout,
     updateUser,
     loading,
