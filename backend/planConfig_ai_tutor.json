@@ -70,13 +70,13 @@
   },
   "SCHOLAR": {
     "display_name": "🔵 Scholar - Master Concepts with Smart Guidance",
-    "price_monthly": 299,
-    "price_quarterly": 799,
-    "price_yearly": 2699,
-    "tagline": "Master concepts with smart guidance",
+    "price_monthly": 499,
+    "price_quarterly": 1299,
+    "price_yearly": 4499,
+    "tagline": "Master concepts with smart guidance - Most popular",
     "persona": "Regular exam-goer seeking consistent improvement",
     "core_emotion": "Progress & determination",
-    "description": "Ideal for students preparing for competitive exams",
+    "description": "Ideal for serious students preparing for competitive exams like JEE, NEET, UPSC",
     "features": {
       "ai_sessions_monthly": 100,
       "mentor_tips_daily": 5,
