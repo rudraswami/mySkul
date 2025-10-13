@@ -36,6 +36,14 @@ export default function EnhancedResultsModal({
   const [animationStep, setAnimationStep] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
 
+  // Lock body scroll when results modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   // Sanitize AI feedback text
   const sanitizeText = (text) => {
     if (!text) return '';
