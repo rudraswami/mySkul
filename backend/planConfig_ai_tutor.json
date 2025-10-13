@@ -25,10 +25,10 @@
       "student_verification_discount": false
     },
     "upgrade_messages": {
-      "mentor": "You've used {usage} of your {limit} free AI sessions! Ready to unlock more learning?",
-      "professor": "Your progress is promising. Upgrade to continue your analytical journey without limits.",
-      "growth_metric": "Free users learn 3x slower than Starter users",
-      "cta": "Start your AI journey for just ₹99/month"
+      "mentor": "🎯 Amazing! You've completed {usage}/{limit} free sessions! Your dedication is inspiring. Ready to unlock 20 sessions/month and dive deeper into your preparation?",
+      "professor": "📚 Your analytical skills are developing well. Upgrade to Starter for continuous learning and concept mastery - just ₹199/month (₹149 for verified students).",
+      "growth_metric": "Students using paid plans score 45% higher in their exams",
+      "cta": "Upgrade to Starter - Student-friendly at ₹199/month"
     }
   },
   "STARTER": {
