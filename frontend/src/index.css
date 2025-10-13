@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import premium design system */
+/* Premium design system is now imported AFTER Tailwind directives */
 @import './styles/premium.css';
 
 body {
