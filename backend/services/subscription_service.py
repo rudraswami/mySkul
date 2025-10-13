@@ -120,7 +120,8 @@ class SubscriptionService:
                     "used": current_usage,
                     "limit": -1,
                     "remaining": -1,
-                    "upgrade_needed": False
+                    "upgrade_needed": False,
+                    "subscription_tier": tier
                 }
             elif feature_limit == "locked":
                 # Feature is locked, user needs to upgrade
