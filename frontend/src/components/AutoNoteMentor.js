@@ -2306,16 +2306,16 @@ export default function AutoNoteMentor() {
             </Card>
           )}
         </div>
-
-        {/* Subscription Upgrade Modal */}
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          upgradeHint={upgradeHint}
-          accessInfo={accessInfo}
-          currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
-        />
       </div>
+
+      {/* Subscription Upgrade Modal - Rendered as sibling for proper z-index */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        upgradeHint={upgradeHint}
+        accessInfo={accessInfo}
+        currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
+      />
     );
   }
 
