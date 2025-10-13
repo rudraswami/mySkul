@@ -300,35 +300,49 @@ export default function EnhancedResultsModal({
               </div>
             )}
 
-            {/* AI Feedback Section */}
+            {/* AI Feedback Section - Enhanced with AI Tutor Style */}
             {results.dual_feedback && (
-              <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Professor Analysis */}
-                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base font-bold text-blue-900">
-                      <Brain className="w-5 h-5 text-blue-600" />
-                      Professor's Analysis
-                    </CardTitle>
+              <div className="mb-8 space-y-6">
+                {/* Professor's Deep Analysis - Matches AI Tutor Design */}
+                <Card className="bg-white shadow-xl border-2 border-blue-200 hover:shadow-2xl transition-shadow">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-blue-500 rounded-full">
+                        <GraduationCap className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-900">
+                          Professor's Deep Analysis
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">Detailed performance breakdown & improvement areas</p>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent className="max-h-64 overflow-y-auto">
-                    <div className="text-sm text-gray-800 leading-loose space-y-2" style={{ lineHeight: '1.8' }}>
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed space-y-3">
                       <LatexRenderer text={sanitizeText(results.dual_feedback.professor_analysis || 'Analysis not available')} />
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Mentor Feedback */}
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base font-bold text-green-900">
-                      <GraduationCap className="w-5 h-5 text-green-600" />
-                      Mentor's Encouragement
-                    </CardTitle>
+                {/* Mentor's Strategic Encouragement - Matches AI Tutor Design */}
+                <Card className="bg-white shadow-xl border-2 border-green-200 hover:shadow-2xl transition-shadow">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-teal-50 border-b border-green-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-gradient-to-br from-green-500 to-teal-500 rounded-full">
+                        <Heart className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-900">
+                          Mentor's Strategic Guidance
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">Motivational insights & next steps for success</p>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent className="max-h-64 overflow-y-auto">
-                    <div className="text-sm text-gray-800 leading-loose space-y-2" style={{ lineHeight: '1.8' }}>
-                      <LatexRenderer text={sanitizeText(results.dual_feedback.mentor_feedback || 'Keep practicing!')} />
+                  <CardContent className="p-6">
+                    <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed space-y-3">
+                      <LatexRenderer text={sanitizeText(results.dual_feedback.mentor_feedback || 'Great effort! Keep practicing and you\'ll achieve your goals.')} />
                     </div>
                   </CardContent>
                 </Card>
