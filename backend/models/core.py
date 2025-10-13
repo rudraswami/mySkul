@@ -133,3 +133,22 @@ class ProfileUpdateRequest(BaseModel):
     target_year: Optional[int] = None
     current_standard: Optional[str] = None
     institution: Optional[str] = None
+
+
+class ProfileCompleteRequest(BaseModel):
+    """Model for post-Gmail-login profile setup"""
+    exam_type: str  # Required: JEE, NEET, UPSC, Others
+    study_goal: Optional[str] = None
+    preferred_mode: Optional[str] = None
+    timezone: Optional[str] = None
+    country: Optional[str] = None
+    target_year: Optional[int] = None
+
+
+class GoogleAuthCallback(BaseModel):
+    """Model for Google OAuth session data from Emergent"""
+    id: str  # Google user ID
+    email: str
+    name: str
+    picture: str
+    session_token: str
