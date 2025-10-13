@@ -112,22 +112,19 @@ export default function EnhancedResultsModal({
     return '#ef4444'; // red
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4 overflow-y-auto">
-      <div className="max-w-4xl w-full my-8">
-        <Card className="shadow-2xl border-0 relative overflow-hidden">
-          {/* Animated Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-50"></div>
-
-          {/* Close Button */}
+  const resultsContent = (
+    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 z-[9999] overflow-y-auto">
+      <div className="min-h-screen py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Close Button - Top Right */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white shadow-lg hover:bg-gray-100 transition-colors"
+            className="fixed top-4 right-4 z-10 p-3 rounded-full bg-white shadow-lg hover:bg-gray-100 transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-6 h-6 text-gray-600" />
           </button>
 
-          <CardContent className="p-8 relative z-10">
+          <div className="space-y-6">
             {/* Hero Score Display */}
             <div className="text-center mb-8">
               <div className={`transform transition-all duration-500 ${animationStep >= 1 ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
