@@ -5,9 +5,11 @@ import os
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
+from urllib.parse import urlencode
 
 from models.core import User, UserCreate, UserLogin
 from services.auth_service import AuthService
+from services.oauth_state_store import OAuthStateStore
 from dependencies import get_auth_service, get_database
 from services.google_oauth import oauth
 
