@@ -57,10 +57,10 @@
       "student_verification_discount": true
     },
     "upgrade_messages": {
-      "mentor": "You're making great progress! Upgrade to Scholar for 100 sessions and mentor support.",
-      "professor": "Your learning velocity is increasing. Scholar tier would unlock adaptive AI guidance.",
-      "growth_metric": "Scholar users achieve 2.5x better retention",
-      "cta": "Upgrade to Scholar for ₹299/month"
+      "mentor": "🚀 You're on fire! 20 sessions aren't enough for your pace. Upgrade to Scholar for 100 sessions, daily mentor tips, and unlimited notes - perfect for serious exam prep!",
+      "professor": "📈 Your learning velocity is impressive. Scholar unlocks adaptive AI, advanced analytics, and unlimited auto-notes - essential for competitive exam success.",
+      "growth_metric": "Scholar users score in top 15% of their exam cohort",
+      "cta": "Upgrade to Scholar - Most popular at ₹499/month"
     },
     "student_verified_price": {
       "monthly": 149,
