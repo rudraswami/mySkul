@@ -6,7 +6,7 @@ from datetime import datetime
 
 class BackendAPITester:
     def __init__(self):
-        self.base_url = "https://dhruv-ai-fix.preview.emergentagent.com/api"
+        self.base_url = "http://localhost:8001/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
