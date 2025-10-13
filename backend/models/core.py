@@ -11,14 +11,30 @@ class User(BaseModel):
     user_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     full_name: str
     email: str
-    password_hash: str
-    exam_type: str  # JEE, NEET, UPSC
+    password_hash: Optional[str] = None  # Optional for Gmail-only users
+    exam_type: Optional[str] = None  # JEE, NEET, UPSC, Others - set in profile setup
     grade: Optional[str] = None
-    target_year: int
+    target_year: Optional[int] = None  # Optional until profile setup
     parent_email: Optional[str] = None
     subscription_type: str = "free"  # free, basic, premium, family
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
+    
+    # Gmail OAuth fields
+    google_id: Optional[str] = None  # Unique Google user ID
+    photo_url: Optional[str] = None  # Profile photo from Google
+    auth_provider: str = "google"  # google or email (legacy)
+    
+    # Profile setup tracking
+    profile_completed: bool = False  # True after completing profile setup
+    study_goal: Optional[str] = None
+    preferred_mode: Optional[str] = None  # AI Mentor, Mock Tests, Notes
+    timezone: Optional[str] = None
+    country: Optional[str] = None
+    
+    # Session management for Gmail OAuth
+    session_token: Optional[str] = None
+    session_expiry: Optional[datetime] = None
 
 
 class UserCreate(BaseModel):
