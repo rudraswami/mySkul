@@ -97,10 +97,37 @@ async def login_user(
 @router.post("/logout")
 async def logout_user(
     response: Response,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service),
+    db = Depends(get_database)
 ):
-    """Logout user by clearing the authentication cookie"""
+    """Logout user by clearing the authentication cookie and session"""
+    from datetime import datetime, timezone
+    
+    # Get session token
+    session_token = request.cookies.get("dhruv_ai_session") or request.cookies.get("dhruv_ai_auth")
+    
+    # Clear session from database if exists
+    if session_token:
+        await db.users.update_many(
+            {"session_token": session_token},
+            {"$set": {
+                "session_token": None,
+                "session_expiry": None
+            }}
+        )
+    
+    # Clear cookies
     auth_service.clear_secure_cookie(response)
+    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    response.delete_cookie(
+        key="dhruv_ai_session",
+        httponly=True,
+        secure=is_production,
+        samesite="lax",
+        path="/"
+    )
+    
     return {"message": "Logout successful"}
 
 
