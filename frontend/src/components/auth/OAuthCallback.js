@@ -84,7 +84,7 @@ export default function OAuthCallback() {
     };
 
     processCallback();
-  }, [loginWithGoogle, navigate]);
+  }, [navigate]);
 
   if (error) {
     return (
