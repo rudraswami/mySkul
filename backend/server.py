@@ -1518,19 +1518,32 @@ class AutoNoteMentorEngine:
     """Advanced Auto-Note Mentor with Whisper integration"""
     
     def __init__(self):
-        # Load Whisper model (using base model for balance of speed/accuracy)
+        # Don't load Whisper model at initialization - load only when needed
         self.whisper_model = None
-        self._load_whisper_model()
+        self.whisper_available = False
+        
+        # Check if whisper module is available
+        try:
+            import whisper
+            self.whisper_available = True
+            logger.info("✅ Whisper module available for audio transcription")
+        except ImportError:
+            logger.warning("⚠️  Whisper module not available - audio transcription will be limited")
     
     def _load_whisper_model(self):
-        """Load Whisper model lazily"""
+        """Load Whisper model lazily (only when first audio is processed)"""
+        if not self.whisper_available:
+            raise ImportError("Whisper module not available. Please install openai-whisper for audio transcription.")
+            
         try:
             if self.whisper_model is None:
+                import whisper
                 logger.info("Loading Whisper model for transcription...")
                 self.whisper_model = whisper.load_model("base")
                 logger.info("✅ Whisper model loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load Whisper model: {str(e)}")
+            raise
     
     async def process_audio_file(self, file_content: bytes, session: AutoNoteSession) -> ProcessedNote:
         """Process uploaded audio file through complete pipeline"""
