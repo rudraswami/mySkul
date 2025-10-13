@@ -140,6 +140,112 @@ async def get_csrf_token(request: Request):
     return {"csrf_token": csrf_token}
 
 
+@router.post("/google/session")
+async def exchange_google_session(
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Exchange Emergent session_id for user data
+    Acts as a proxy to avoid CORS issues
+    """
+    import aiohttp
+    
+    try:
+        body = await request.json()
+        session_id = body.get('session_id')
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="session_id is required")
+        
+        # Call Emergent API
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data',
+                headers={'X-Session-ID': session_id}
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise HTTPException(
+                        status_code=response.status,
+                        detail=f"Emergent API error: {error_text}"
+                    )
+                
+                session_data = await response.json()
+                
+                # Now process the login
+                return await process_google_login(session_data, db)
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Session exchange failed: {str(e)}"
+        )
+
+
+async def process_google_login(session_data: dict, db):
+    """Helper function to process Google login"""
+    from models.core import User
+    from datetime import datetime, timezone, timedelta
+    
+    # Check if user exists by Google ID or email
+    existing_user = await db.users.find_one({
+        "$or": [
+            {"google_id": session_data['id']},
+            {"email": session_data['email']}
+        ]
+    })
+    
+    if existing_user:
+        # Update session token and expiry
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        await db.users.update_one(
+            {"user_id": existing_user["user_id"]},
+            {"$set": {
+                "session_token": session_data['session_token'],
+                "session_expiry": session_expiry,
+                "google_id": session_data['id'],
+                "photo_url": session_data['picture'],
+                "auth_provider": "google"
+            }}
+        )
+        user = User(**existing_user)
+        user.session_token = session_data['session_token']
+        user.session_expiry = session_expiry
+        user.google_id = session_data['id']
+        user.photo_url = session_data['picture']
+    else:
+        # Create new user
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        user = User(
+            full_name=session_data['name'],
+            email=session_data['email'],
+            google_id=session_data['id'],
+            photo_url=session_data['picture'],
+            auth_provider="google",
+            session_token=session_data['session_token'],
+            session_expiry=session_expiry,
+            profile_completed=False
+        )
+        await db.users.insert_one(user.dict())
+    
+    return {
+        "message": "Authentication successful",
+        "session_token": session_data['session_token'],
+        "user": {
+            "user_id": user.user_id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "photo_url": user.photo_url,
+            "exam_type": user.exam_type,
+            "profile_completed": user.profile_completed,
+            "subscription_type": user.subscription_type
+        }
+    }
+
+
 @router.post("/google/callback")
 async def google_auth_callback(
     auth_data: 'GoogleAuthCallback',
