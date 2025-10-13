@@ -923,7 +923,8 @@ export default function AITutor() {
         setLastFailedAction(failedAction);
         
         // Trigger the shared upsell flow
-        await triggerFeatureUpsell('ai_tutor_daily');
+        // FIXED: Use ai_sessions_monthly (from planConfig_ai_tutor.json)
+        await triggerFeatureUpsell('ai_sessions_monthly');
         return;
       }
       
