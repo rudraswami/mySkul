@@ -18,10 +18,19 @@ const UpgradeModal = ({
 }) => {
   const navigate = useNavigate();
 
-  if (!isOpen) return null;
+  console.log('🎭 UpgradeModal render:', { isOpen, upgradeHint, accessInfo, currentTier });
+
+  if (!isOpen) {
+    console.log('🎭 Modal NOT open - returning null');
+    return null;
+  }
+
+  console.log('🎭 Modal IS open - rendering...');
 
   const limitReached = upgradeHint?.type === "limit_reached";
   const approachingLimit = upgradeHint?.type === "approaching_limit";
+  
+  console.log('🎭 Modal state:', { limitReached, approachingLimit });
 
   const handleUpgrade = () => {
     onClose();
