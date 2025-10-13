@@ -11380,6 +11380,13 @@ app.add_middleware(
     expose_headers=["X-CSRF-Token"]
 )
 
+# Session Middleware for OAuth
+from starlette.middleware.sessions import SessionMiddleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv('JWT_SECRET', 'fallback-secret-key-change-in-production')
+)
+
 # CSRF Protection - Re-enabled after implementing proper token flow
 # CSRF Protection - Temporarily disabled to debug login issues
 # app.add_middleware(
