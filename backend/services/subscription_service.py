@@ -165,7 +165,8 @@ class SubscriptionService:
                         "used": current_usage,
                         "limit": feature_limit,
                         "remaining": remaining,
-                        "upgrade_needed": False
+                        "upgrade_needed": False,
+                        "subscription_tier": tier
                     }
             else:
                 # Unknown feature limit type, deny access
