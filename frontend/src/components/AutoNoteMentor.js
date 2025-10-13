@@ -3207,15 +3207,15 @@ export default function AutoNoteMentor() {
           ))}
         </div>
       )}
-
-      {/* Subscription Upgrade Modal */}
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        upgradeHint={upgradeHint}
-        accessInfo={accessInfo}
-        currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
-      />
     </div>
+
+    {/* Subscription Upgrade Modal - Rendered outside main content for z-index */}
+    <UpgradeModal
+      isOpen={showUpgradeModal}
+      onClose={() => setShowUpgradeModal(false)}
+      upgradeHint={upgradeHint}
+      accessInfo={accessInfo}
+      currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
+    />
   );
 }
