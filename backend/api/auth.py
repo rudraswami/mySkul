@@ -3,10 +3,13 @@ Authentication router for user registration, login, logout, and CSRF
 """
 import os
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
+from fastapi.responses import RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 from models.core import User, UserCreate, UserLogin
 from services.auth_service import AuthService
 from dependencies import get_auth_service, get_database
+from services.google_oauth import oauth
 
 
 # Router instance
