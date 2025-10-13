@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { PageLoader } from '../ui/loading';
 
 export default function OAuthCallback() {
   const navigate = useNavigate();
-  const { loginWithGoogle } = useAuth();
   const [error, setError] = useState('');
 
   useEffect(() => {
