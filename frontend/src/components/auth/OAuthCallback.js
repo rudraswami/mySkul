@@ -29,53 +29,49 @@ export default function OAuthCallback() {
       console.log('🔐 Processing OAuth callback with session_id:', sessionId);
 
       try {
-        // Exchange session_id for user data with Emergent
-        console.log('📡 Calling Emergent API...');
-        const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
-          method: 'GET',
+        // Call our backend which will proxy to Emergent (avoids CORS issues)
+        console.log('📡 Calling backend proxy...');
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google/session`, {
+          method: 'POST',
           headers: {
-            'X-Session-ID': sessionId,
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
           },
-          mode: 'cors'
+          credentials: 'include',
+          body: JSON.stringify({ session_id: sessionId })
         });
 
-        console.log('📥 Emergent API Response Status:', response.status);
+        console.log('📥 Backend Response Status:', response.status);
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Emergent API Error Response:', errorText);
-          throw new Error(`Emergent API responded with status ${response.status}: ${errorText}`);
+          const errorData = await response.json();
+          console.error('❌ Backend Error Response:', errorData);
+          throw new Error(errorData.detail || `Backend responded with status ${response.status}`);
         }
 
-        const sessionData = await response.json();
-        console.log('✅ Session data received from Emergent:', {
-          email: sessionData.email,
-          name: sessionData.name,
-          hasSessionToken: !!sessionData.session_token
+        const result = await response.json();
+        console.log('✅ Authentication successful:', {
+          email: result.user?.email,
+          profile_completed: result.user?.profile_completed
         });
 
-        // Send to our backend
-        console.log('📡 Calling our backend...');
-        const result = await loginWithGoogle(sessionData);
-        console.log('📥 Backend response:', result);
+        // Clean URL fragment
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-        if (result.success) {
-          console.log('✅ Login successful');
+        // Redirect based on profile completion
+        if (!result.user.profile_completed) {
+          console.log('→ Redirecting to profile setup...');
           
-          // Clean URL fragment
-          window.history.replaceState({}, document.title, window.location.pathname);
-
-          // Redirect based on profile completion
-          if (result.needsProfileSetup) {
-            console.log('→ Redirecting to profile setup...');
-            navigate('/profile-setup', { replace: true });
-          } else {
-            console.log('→ Redirecting to dashboard...');
-            navigate('/dashboard', { replace: true });
-          }
+          // Store user info for profile setup screen
+          sessionStorage.setItem('temp_user_info', JSON.stringify({
+            name: result.user.full_name,
+            email: result.user.email,
+            photo_url: result.user.photo_url
+          }));
+          
+          navigate('/profile-setup', { replace: true });
         } else {
-          throw new Error(result.error || 'Backend login failed');
+          console.log('→ Redirecting to dashboard...');
+          navigate('/dashboard', { replace: true });
         }
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
