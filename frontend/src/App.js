@@ -142,6 +142,38 @@ function AppContent() {
           path="/" 
           element={<LandingPage />} 
         />
+        
+        {/* New Gmail-Only Auth Routes */}
+        <Route 
+          path="/login" 
+          element={!user ? <LoginScreen /> : <Navigate to="/dashboard" />} 
+        />
+        
+        {/* Profile Setup - Required after first Gmail login */}
+        <Route 
+          path="/profile-setup" 
+          element={
+            user ? (
+              !user.profile_completed ? <ProfileSetup /> : <Navigate to="/dashboard" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        
+        {/* Legacy routes - redirect to new login */}
+        <Route 
+          path="/register" 
+          element={<Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/signin" 
+          element={<Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/signup" 
+          element={<Navigate to="/login" replace />} 
+        />
         <Route 
           path="/login" 
           element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} 
