@@ -7,6 +7,7 @@ import './App.css';
 // Components
 import LandingPage from './components/LandingPage';
 import LoginScreen from './components/auth/LoginScreen';
+import OAuthCallback from './components/auth/OAuthCallback';
 import ProfileSetup from './components/auth/ProfileSetup';
 import StudentDashboard from './components/StudentDashboard';
 import AITutor from './components/AITutor';
