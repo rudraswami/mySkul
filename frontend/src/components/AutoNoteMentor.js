@@ -147,6 +147,11 @@ export default function AutoNoteMentor() {
   const [newSessionTitle, setNewSessionTitle] = useState('');
   const [newSessionSubject, setNewSessionSubject] = useState('Mathematics');
   
+  // Subscription Modal State
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeHint, setUpgradeHint] = useState(null);
+  const [accessInfo, setAccessInfo] = useState(null);
+  
   // Refs
   const mediaRecorderRef = useRef(null);
   const recordingTimerRef = useRef(null);
