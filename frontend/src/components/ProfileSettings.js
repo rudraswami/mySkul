@@ -251,7 +251,7 @@ export default function ProfileSettings() {
                       <option value="JEE">JEE (Engineering)</option>
                       <option value="NEET">NEET (Medical)</option>
                       <option value="UPSC">UPSC (Civil Services)</option>
-                      <option value="Other">Other</option>
+                      <option value="Others">Others</option>
                     </select>
                   </div>
 
