@@ -746,8 +746,13 @@ export default function AutoNoteMentor() {
   const startRecording = async () => {
     // CRITICAL: Check subscription access FIRST
     // Both uploads and recordings use same feature quota from planConfig_ai_tutor.json
+    console.log('🔍 Checking Auto-Note access...');
     const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
+    console.log('✅ Access check response:', accessInfo);
+    
     if (!accessInfo.has_access) {
+      console.log('🚫 LIMIT REACHED - Showing modal');
+      console.log('Access info:', JSON.stringify(accessInfo, null, 2));
       // Map accessInfo to expected UpgradeModal structure
       const used = accessInfo.used || accessInfo.current_usage || 0;
       const limit = accessInfo.limit || accessInfo.total || 0;
