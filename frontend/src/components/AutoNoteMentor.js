@@ -1812,6 +1812,15 @@ export default function AutoNoteMentor() {
             </div>
           )}
         </div>
+
+        {/* Subscription Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          upgradeHint={upgradeHint}
+          accessInfo={accessInfo}
+          currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
+        />
       </div>
     );
   }
