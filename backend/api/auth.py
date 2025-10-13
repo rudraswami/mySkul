@@ -149,10 +149,22 @@ async def google_login(request: Request):
     Initiate Google OAuth flow
     Redirects user to Google sign-in
     """
-    # Get the base URL from environment
-    redirect_uri = f"{os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')}/api/auth/google/callback"
-    
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    try:
+        # Get the base URL from environment
+        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        redirect_uri = f"{backend_url}/api/auth/google/callback"
+        
+        print(f"🔐 Initiating Google OAuth...")
+        print(f"📍 Redirect URI: {redirect_uri}")
+        print(f"🔑 Client ID: {os.getenv('GOOGLE_CLIENT_ID', 'NOT_SET')[:20]}...")
+        
+        # Redirect to Google OAuth
+        return await oauth.google.authorize_redirect(request, redirect_uri)
+    except Exception as e:
+        print(f"❌ Error in google_login: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"OAuth initialization failed: {str(e)}")
 
 
 @router.get("/google/callback")
