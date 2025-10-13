@@ -3,89 +3,90 @@
  * Global utility classes for premium design system
  */
 
-/* ============================================
-   TOUCH TARGETS - Mobile Accessibility
-   ============================================ */
+@layer components {
+  /* ============================================
+     TOUCH TARGETS - Mobile Accessibility
+     ============================================ */
 
-/* Ensure all interactive elements meet touch target minimum */
-button,
-.btn,
-[role="button"],
-.clickable,
-input[type="button"],
-input[type="submit"],
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+  /* Ensure all interactive elements meet touch target minimum */
+  button,
+  .btn,
+  [role="button"],
+  .clickable,
+  input[type="button"],
+  input[type="submit"],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-/* Icon-only buttons */
-.icon-btn {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+  /* Icon-only buttons */
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
 
-/* ============================================
-   BUTTON HIERARCHY - Consistent Styling
-   ============================================ */
+  /* ============================================
+     BUTTON HIERARCHY - Consistent Styling
+     ============================================ */
 
-/* Primary CTA buttons - Always use blue/purple gradient */
-.btn-primary {
-  @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white;
-  @apply hover:from-blue-700 hover:to-purple-700;
-  @apply active:from-blue-800 active:to-purple-800;
-  @apply transition-all duration-base;
-  @apply shadow-elevation-2 hover:shadow-elevation-3;
-  @apply rounded-lg px-6 py-3 font-semibold;
-  @apply focus:ring-4 focus:ring-blue-300;
-}
+  /* Primary CTA buttons - Always use blue/purple gradient */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white;
+    @apply hover:from-blue-700 hover:to-purple-700;
+    @apply active:from-blue-800 active:to-purple-800;
+    @apply transition-all duration-300;
+    @apply shadow-elevation-2 hover:shadow-elevation-3;
+    @apply rounded-lg px-6 py-3 font-semibold;
+    @apply focus:ring-4 focus:ring-blue-300;
+  }
 
-/* Secondary buttons - Outlined */
-.btn-secondary {
-  @apply border-2 border-blue-600 text-blue-600 bg-transparent;
-  @apply hover:bg-blue-50;
-  @apply active:bg-blue-100;
-  @apply transition-all duration-base;
-  @apply rounded-lg px-6 py-3 font-semibold;
-  @apply focus:ring-4 focus:ring-blue-300;
-}
+  /* Secondary buttons - Outlined */
+  .btn-secondary {
+    @apply border-2 border-blue-600 text-blue-600 bg-transparent;
+    @apply hover:bg-blue-50;
+    @apply active:bg-blue-100;
+    @apply transition-all duration-300;
+    @apply rounded-lg px-6 py-3 font-semibold;
+    @apply focus:ring-4 focus:ring-blue-300;
+  }
 
-/* Tertiary/Ghost buttons */
-.btn-ghost {
-  @apply text-gray-700 bg-transparent;
-  @apply hover:bg-gray-100;
-  @apply active:bg-gray-200;
-  @apply transition-all duration-base;
-  @apply rounded-lg px-4 py-2 font-medium;
-}
+  /* Tertiary/Ghost buttons */
+  .btn-ghost {
+    @apply text-gray-700 bg-transparent;
+    @apply hover:bg-gray-100;
+    @apply active:bg-gray-200;
+    @apply transition-all duration-300;
+    @apply rounded-lg px-4 py-2 font-medium;
+  }
 
-/* Danger buttons */
-.btn-danger {
-  @apply bg-red-600 text-white;
-  @apply hover:bg-red-700;
-  @apply active:bg-red-800;
-  @apply transition-all duration-base;
-  @apply shadow-elevation-2 hover:shadow-elevation-3;
-  @apply rounded-lg px-6 py-3 font-semibold;
-  @apply focus:ring-4 focus:ring-red-300;
-}
+  /* Danger buttons */
+  .btn-danger {
+    @apply bg-red-600 text-white;
+    @apply hover:bg-red-700;
+    @apply active:bg-red-800;
+    @apply transition-all duration-300;
+    @apply shadow-elevation-2 hover:shadow-elevation-3;
+    @apply rounded-lg px-6 py-3 font-semibold;
+    @apply focus:ring-4 focus:ring-red-300;
+  }
 
-/* Success buttons */
-.btn-success {
-  @apply bg-green-600 text-white;
-  @apply hover:bg-green-700;
-  @apply active:bg-green-800;
-  @apply transition-all duration-base;
-  @apply shadow-elevation-2 hover:shadow-elevation-3;
-  @apply rounded-lg px-6 py-3 font-semibold;
-}
+  /* Success buttons */
+  .btn-success {
+    @apply bg-green-600 text-white;
+    @apply hover:bg-green-700;
+    @apply active:bg-green-800;
+    @apply transition-all duration-300;
+    @apply shadow-elevation-2 hover:shadow-elevation-3;
+    @apply rounded-lg px-6 py-3 font-semibold;
+  }
 
 /* Button loading state */
 .btn-loading {
