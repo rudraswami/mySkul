@@ -665,7 +665,8 @@ export default function AITutor() {
     // Note: We still check access but the backend will also check
     // This prevents most cases but backend is the final authority
     // Use unified global trigger to ensure consistent modal hydration
-    const wasTriggered = await triggerFeatureUpsell('ai_tutor_daily');
+    // FIXED: Use ai_sessions_monthly (from planConfig_ai_tutor.json) instead of ai_tutor_daily
+    const wasTriggered = await triggerFeatureUpsell('ai_sessions_monthly');
     if (wasTriggered) {
       // Modal shown – stop flow here
       return;
