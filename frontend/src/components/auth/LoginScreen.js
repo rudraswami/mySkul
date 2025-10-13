@@ -13,12 +13,10 @@ export default function LoginScreen() {
     setLoading(true);
     setError('');
     
-    // Redirect to Emergent Auth with our dashboard as redirect URL
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    // CRITICAL: Redirect URL must be a PUBLIC route (not /dashboard which requires auth)
+    // OAuth will redirect back to this URL with #session_id=...
+    const redirectUrl = `${window.location.origin}/auth/callback`;
     const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-    
-    // Store intended destination before redirect
-    sessionStorage.setItem('auth_redirect', 'dashboard');
     
     // Redirect to Emergent OAuth
     window.location.href = authUrl;
