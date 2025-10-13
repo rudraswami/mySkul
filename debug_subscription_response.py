@@ -8,7 +8,7 @@ import json
 import time
 
 def debug_subscription_response():
-    base_url = "https://dhruv-ai-tutor-2.preview.emergentagent.com/api"
+    base_url = "https://dhruv-ai-fix.preview.emergentagent.com/api"
     
     # Create fresh user
     fresh_user_email = f"debug_user_{int(time.time())}@dhruvai.com"

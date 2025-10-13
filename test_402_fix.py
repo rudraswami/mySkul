@@ -14,7 +14,7 @@ from datetime import datetime
 class Test402PaymentRequiredFix:
     def __init__(self):
         # Get backend URL from environment
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://dhruv-ai-tutor-2.preview.emergentagent.com')
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
         self.base_url = f"{backend_url}/api"
         self.token = None
         self.last_response_status = None

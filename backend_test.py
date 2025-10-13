@@ -6,7 +6,7 @@ from datetime import datetime
 
 class BackendAPITester:
     def __init__(self):
-        self.base_url = "https://dhruv-ai-tutor-2.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-ai-fix.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
@@ -2769,7 +2769,7 @@ import io
 import uuid
 
 class DhruvAITester:
-    def __init__(self, base_url="https://dhruv-ai-tutor-2.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://dhruv-ai-fix.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
@@ -5555,7 +5555,7 @@ class DhruvAITester:
         print("\n🚨 URGENT: AUTHENTICATION APIS COMPREHENSIVE TESTING")
         print("   User reports: Login API returning 429, Registration APIs failing")
         print("   Testing: /api/auth/login and /api/auth/register endpoints")
-        print("   Backend URL: https://dhruv-ai-tutor-2.preview.emergentagent.com")
+        print("   Backend URL: https://dhruv-ai-fix.preview.emergentagent.com")
         
         auth_test_results = {
             'login_valid_credentials': False,
@@ -23786,7 +23786,7 @@ if __name__ == "__main__":
     print("🧮 MATHEMATICAL ACCURACY VERIFICATION TESTING")
     print("=" * 80)
     print("Focus: Enhanced mathematical accuracy in AI Tutor responses")
-    print("Backend URL: https://dhruv-ai-tutor-2.preview.emergentagent.com/api")
+    print("Backend URL: https://dhruv-ai-fix.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     
@@ -23843,7 +23843,7 @@ if __name__ == "__main__":
     
     sys.exit(0 if accuracy_success else 1)
     print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
-    print("Backend URL: https://dhruv-ai-tutor-2.preview.emergentagent.com/api")
+    print("Backend URL: https://dhruv-ai-fix.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     

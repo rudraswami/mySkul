@@ -1,92 +1,77 @@
 <analysis>
-The trajectory details the AI engineer's multi-phase efforts on the Dhruv AI platform. Initially, the focus was on improving AI Tutor rendering and performance, resolving critical bugs, and integrating GPT-4o. This involved extensive frontend (semantic rendering, LaTeX) and backend (multi-pass reasoning, LLM parameter tuning) modifications. Subsequently, the engineer addressed subscription logic, identified and removed duplicate plan configurations, updated pricing, and streamlined upsell modals. The latest significant effort targeted overhauling the Mock Test flow, aiming for a distraction-free exam experience and a visually clean, functional results screen, culminating in resolving a syntax error and a critical subscription modal issue for the Create Custom Mock Test button. The approach was iterative, incorporating continuous user feedback and systematic debugging.
+The trajectory details an iterative debugging and feature enhancement process for the Dhruv AI platform. Initially, the AI engineer addressed a critical subscription modal issue in Mock Tests, involving data mapping and backend response consistency. Subsequently, a comprehensive set of pending tasks was tackled, including deferred React Query migration, CSRF verification, significant MongoDB performance indexing, and extensive UI/UX enhancements with Tailwind CSS, which involved resolving multiple CSS compilation errors. The latest, and still unresolved, critical issue involves the subscription modal not appearing for AI Tutor and Auto-Note Generator when limits are reached. Debugging revealed a persistent browser caching issue leading to 404s for AI Tutor's API calls and the global  not being rendered in , even though local modals were added to components. The current focus is on resolving caching and ensuring correct modal triggering.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform's core problem is delivering a visually rich, context-aware, and academically precise learning experience through its AI Tutor, Auto-Note Mentor, and Mock Tests. Initial requirements focused on robust input handling, historical message display, and addressing generic AI responses, performance bottlenecks (60+ sec timeouts), and subscription/monetization. Efforts improved Auto Notes' visual appeal and ensured correct subscription limit triggers.
-
-Recent critical problems centered on the AI Tutor's shallow, repetitive, and generic responses and visually flat output, with markdown/LaTeX stripping despite deep backend reasoning. The goal was to transform the AI Tutor into a deeply reasoning, visually impactful, exam-smart learning assistant with multi-pass reasoning, adaptive personas, RAG infrastructure, and semantic rendering. Further requirements involved standardizing subscription plans, making the Mentor section collapsible, fixing viewport jump issues, ensuring the Mock Test exam screen is distraction-free, results are clean, and all buttons are functional.
+The Dhruv AI platform aims to provide a rich, context-aware, and academically precise learning experience via its AI Tutor, Auto-Note Mentor, and Mock Tests. Core requirements included robust input handling, historical message display, and resolving generic AI responses, performance issues, and subscription/monetization flows.
+Recent efforts focused on transforming the AI Tutor to deliver deep, visually impactful, and exam-smart responses using multi-pass reasoning, adaptive personas, and semantic rendering. This also involved standardizing subscription plans, making the Mentor section collapsible, fixing UI viewport jumps, creating distraction-free Mock Test exams with clean results, and ensuring all subscription-related buttons function correctly, triggering upgrade modals when limits are met. The ultimate goal is a premium, responsive UI/UX across devices.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack**: React, FastAPI, MongoDB.
-- **AI/LLM**: OpenAI GPT-4o, Emergent LLM Key.
-- **Backend**: FastAPI (routers, services, models), Pydantic,  (retry).
-- **Frontend UI**: , , KaTeX, Tailwind CSS, React Portal, .
-- **Deployment**: Supervisor, Kubernetes ingress.
-- **Subscription**: Usage-based quotas, .
+-   **Full-stack**: React.js (frontend), FastAPI (backend), MongoDB (database).
+-   **AI/LLM**: OpenAI GPT-4o, multi-pass reasoning, RAG infrastructure.
+-   **Frontend UI**: React Query (for state/data management), KaTeX (LaTeX rendering), Tailwind CSS, React Portal, .
+-   **Backend**: Pydantic,  (retry logic), MongoDB indexing.
+-   **Deployment**: Supervisor, Kubernetes ingress.
+-   **Subscription**: Usage-based quotas, .
+-   **Security**: CSRF middleware.
 </key_technical_concepts>
 
 <code_architecture>
-The application uses a React frontend, a FastAPI backend, and MongoDB. The backend is modular with  routers,  for logic, and  for data schemas.
+The application employs a React frontend, a FastAPI backend, and MongoDB. The backend is structured with  routers,  for business logic, and  for data schemas.
 
 
 
+-   ****: Central for AI response generation, using GPT-4o, and multi-pass reasoning.  reduced from 1600 to 800,  to 15s for performance.
+-   ****: Central source for AI Tutor subscription plan configurations, updated with new pricing.
 -   ****:
-    -   **Importance**: Central for AI response generation and LLM interaction.
-    -   **Changes**: Re-enabled LLM calls (from fallback), migrated to GPT-4o, enhanced prompts. Implemented sequential Professor-Mentor execution, set explicit LLM parameters (temp, top_p, max_tokens), updated . Most recently,  reduced from 1600 to 800, and  reduced to 15s for performance optimization.
--   ****:
-    -   **Importance**: Contains subscription plan configurations.
-    -   **Changes**: **DELETED** as it was a duplicate and conflicting with .
--   ****:
-    -   **Importance**: Central source for AI Tutor-specific subscription plan configurations.
-    -   **Changes**: Updated with market-competitive, student-centric pricing values.
--   ****:
-    -   **Importance**: Handles parsing and sanitization of AI responses.
-    -   **Changes**: Confirmed  was not stripping  tags, ensuring raw content integrity.
+    -   **Importance**: Manages subscription logic and feature access checks.
+    -   **Changes**: Modified  and  methods to consistently return  in all response paths (unlimited, locked, limit reached, access granted), ensuring frontend modals receive complete data for rendering.
 -   ****:
     -   **Importance**: Main AI Tutor UI component.
-    -   **Changes**:  import removed (unused). , , ,  imports removed. Added  and  UI controls. Switched rendering to . Critical fix:  and  added to API payload. Frontend API  adjusted to 20s. Fixed user input being overridden by explicitly adding user message to conversation array. Fixed viewport jump issue by refactoring  behavior to be more controlled and delayed.
--   ****:
-    -   **Importance**: New component created to semantically render AI responses.
-    -   **Changes**: Initial implementation to process , render LaTeX using KaTeX, and handle  terms and section tags. Enhanced  to properly handle markdown formatting (newlines, bullets) instead of . Added  function and integrated it into  to remove any lingering raw  tags. Implemented a collapsible Mentor section, default collapsed.
+    -   **Changes**: Refactored to use . Added  and  to API payload. Updated  to correctly format  and  for the local , mapping backend / to frontend /. Debugging involved removing  prefix from  call to avoid double  in URL.
+-   ****: Renders rich AI responses with LaTeX and handles markdown, now includes a collapsible Mentor section.
 -   ****:
     -   **Importance**: Displays subscription upgrade options.
-    -   **Changes**: (Implicitly) updated to display pricing information passed from  and student-centric upgrade messages.
+    -   **Changes**: It now expects ,  (with , , , ), and  (with , , , , ).
 -   ****:
-    -   **Importance**: Another modal for upsell (found duplicate).
-    -   **Changes**: **DELETED** as it was a duplicate and  is the canonical component.
+    -   **Importance**: Manages Mock Test features.
+    -   **Changes**: Fixed Create Custom Mock Test button by importing  locally, managing its  state, and mapping  results (backend / to frontend /) into the modal's props.
 -   ****:
-    -   **Importance**: Main application entry point.
-    -   **Changes**: Removed import and usage of  component, as the file was deleted. Added CSS for layout shift prevention.
+    -   **Importance**: Auto-Note generation component.
+    -   **Changes**: Added local  component and its state (, , ) as the global  was removed from . Modified  and  to trigger this local modal and properly map  and  data.
 -   ****:
-    -   **Importance**: Global CSS styling.
-    -   **Changes**: Added CSS rules to prevent layout shift and improve scroll behavior, ensuring stable dimensions for message containers.
--   ****:
-    -   **Importance**: Renders the mock test exam interface.
-    -   **Changes**: Updated to use  for true full-screen isolation and added  to prevent background scrolling.
--   ****:
-    -   **Importance**: Renders the mock test results.
-    -   **Changes**: Updated to use  for full-screen display. Applied AI Tutor-style Professor/Mentor cards, enhanced the chart section for better responsiveness, and fixed a  by replacing  with .
--   ****:
-    -   **Importance**: Manages the Mock Test feature, including test generation and results display.
-    -   **Changes**: Fixed Create Custom Mock Test button issue by adding the  component directly and updating  to trigger this modal when subscription limits are reached.
+    -   **Importance**: Provides subscription information and feature access checks.
+    -   **Changes**: Modified  to return a more complete  object (including , , , ) when a 402  error is caught, ensuring the modal receives full data.
+-   ****: Removed global  import and usage.
+-   ****: Enhanced with premium design tokens (colors, fonts, animations).
+-   ****: Modified to directly embed premium CSS styles (previously in ) within  and  directives to resolve compilation issues.
+-   ****: Created, then its content was merged into .
+-   ****: Configured with .
 </code_architecture>
 
 <pending_tasks>
-- Complete React Query migration for remaining frontend components.
-- Update  integration with React Query.
-- Re-enable CSRF middleware in the backend and implement frontend token exchange.
-- Test cookie-based authentication with CSRF and visually verify UI.
-- Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
-- Obtain and update Razorpay production API keys.
-- Address the  vs.  entry point architectural issue (cleanup/migration plan separately).
+-   Complete React Query migration for remaining frontend components, especially  (deferred due to complexity).
+-   Update  integration with React Query.
+-   Re-enable CSRF middleware in the backend and implement frontend token exchange (CSRF middleware is enabled, but explicit token exchange for cookies might be a pending step if not implicitly handled).
+-   Test cookie-based authentication with CSRF and visually verify UI.
+-   Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
+-   Obtain and update Razorpay production API keys.
+-   Address the  vs.  entry point architectural issue (cleanup/migration plan separately).
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was addressing a critical blocker in the Mock Test flow: the Create Custom Mock Test button was not clickable when subscription limits were reached, failing to display the subscription modal.
+Immediately prior to this summary, the AI engineer was debugging why the subscription modal was not appearing for the AI Tutor and Auto-Note Generator, despite previous fixes for the Mock Tests. The user reported persistent issues:
+1.  **AI Tutor**: A  error for , indicating a double  in the URL.
+2.  **Auto-Note Generator**: A  response (which is correct), but the subscription modal still did not appear. Console logs showed Upsell modal triggered from  (actually ).
 
-The investigation in  revealed that while  checked for feature access, it did not explicitly trigger the  if access was denied. The  managed the upsell modal state, but  itself lacked the  component in its render tree, unlike  which had its own.
+Investigation revealed that:
+-   The AI Tutor  was due to persistent browser caching of an old frontend build, which was still sending a request with the incorrect double  prefix, despite the code fix in .
+-   The Upsell modal triggered message originated from  calling , which attempts to set a GLOBAL  state. However, the global  component that rendered this state was previously removed from . Although  and  now have their own *local*  components, the  was still trying to trigger the unrendered global one, leading to the modal not showing despite the access check failing correctly.
 
-To fix this, the following changes were made in :
-1.  **Import **: Added .
-2.  **Add Modal State**: Introduced local state  to control the visibility of the modal.
-3.  **Render **: The  component was rendered conditionally within , bound to the  state and providing handlers to close it and redirect to pricing.
-4.  **Trigger Modal**: The  function was modified to set  when  returns  for 'mock_tests_custom_daily', ensuring the upsell modal appears correctly.
-
-After these changes, the frontend was restarted. The next logical step is to verify this fix by testing the Create Custom Mock Test button under subscription limit conditions.
+The engineer has created  and  to address these issues.
 </current_work>
 
 <optional_next_step>
-Verify the fix for the Create Custom Mock Test button and the subscription modal triggering.
+Implement cache-busting mechanisms for the frontend and ensure local  components are correctly triggered by  data.
 </optional_next_step>
