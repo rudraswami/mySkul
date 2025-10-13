@@ -632,8 +632,10 @@ export default function AITutor() {
 
     // Check AI Tutor subscription access BEFORE sending
     try {
+      console.log('🔍 Checking AI Tutor access...');
       const accessCheckResponse = await client.get('/api/subscription/check-ai-tutor-access');
       const accessData = accessCheckResponse.data;
+      console.log('✅ Access check response:', accessData);
       
       // Update session usage display
       setSessionUsage({
@@ -644,6 +646,8 @@ export default function AITutor() {
       
       // If limit reached, show upgrade modal with properly formatted data
       if (!accessData.allowed) {
+        console.log('🚫 LIMIT REACHED - Showing modal');
+        console.log('Access data:', JSON.stringify(accessData, null, 2));
         const used = accessData.current_usage || 0;
         const limit = accessData.total || 0;
         const usagePercent = accessData.usage_percent || 0;
