@@ -154,6 +154,7 @@ class SubscriptionService:
                         "limit": feature_limit,
                         "remaining": 0,
                         "upgrade_needed": True,
+                        "subscription_tier": tier,
                         "upsell_info": upsell_info
                     }
                 else:
