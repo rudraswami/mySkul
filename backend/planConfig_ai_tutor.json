@@ -33,13 +33,13 @@
   },
   "STARTER": {
     "display_name": "🟢 Starter - Begin Your AI Journey",
-    "price_monthly": 99,
-    "price_quarterly": 269,
-    "price_yearly": 899,
-    "tagline": "Begin your AI journey",
+    "price_monthly": 199,
+    "price_quarterly": 499,
+    "price_yearly": 1699,
+    "tagline": "Begin your AI journey - Student friendly",
     "persona": "Casual learner getting started",
     "core_emotion": "Confidence & curiosity",
-    "description": "Perfect for students exploring AI-powered learning",
+    "description": "Perfect for students exploring AI-powered learning without breaking the bank",
     "features": {
       "ai_sessions_monthly": 20,
       "mentor_tips_daily": 0,
