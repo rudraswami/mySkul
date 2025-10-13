@@ -3174,12 +3174,8 @@ export default function AutoNoteMentor() {
 
       {/* Subscription Upgrade Modal */}
       <UpgradeModal
-        show={showUpgradeModal}
+        isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        onUpgrade={() => {
-          setShowUpgradeModal(false);
-          window.location.href = '/pricing';
-        }}
         upgradeHint={upgradeHint}
         accessInfo={accessInfo}
         currentTier={accessInfo?.current_tier || currentTier || 'FREE'}
