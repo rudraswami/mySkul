@@ -180,14 +180,20 @@ async def google_callback(
     from models.core import User
     from datetime import datetime, timezone, timedelta
     import secrets
+    import traceback
     
     try:
+        print("🔐 Starting Google OAuth callback processing...")
+        
         # Get access token from Google
+        print("📡 Exchanging authorization code for access token...")
         token = await oauth.google.authorize_access_token(request)
+        print(f"✅ Token received: {list(token.keys())}")
         
         # Get user info from Google
         user_info = token.get('userinfo')
         if not user_info:
+            print("❌ No userinfo in token")
             raise HTTPException(status_code=400, detail="Failed to get user info from Google")
         
         google_id = user_info['sub']
@@ -195,7 +201,10 @@ async def google_callback(
         name = user_info.get('name', email.split('@')[0])
         picture = user_info.get('picture', '')
         
+        print(f"👤 User info - Email: {email}, Name: {name}, Google ID: {google_id[:10]}...")
+        
         # Check if user exists
+        print("🔍 Checking if user exists in database...")
         existing_user = await db.users.find_one({
             "$or": [
                 {"google_id": google_id},
@@ -208,24 +217,22 @@ async def google_callback(
         session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
         
         if existing_user:
+            print(f"✅ Existing user found: {existing_user.get('user_id')}")
             # Update existing user
             await db.users.update_one(
                 {"user_id": existing_user["user_id"]},
                 {"$set": {
                     "session_token": session_token,
-                    "session_expiry": session_expiry,
+                    "session_expiry": session_expiry.isoformat(),
                     "google_id": google_id,
                     "photo_url": picture,
                     "auth_provider": "google"
                 }}
             )
-            user = User(**existing_user)
-            user.session_token = session_token
-            user.session_expiry = session_expiry
-            user.google_id = google_id
-            user.photo_url = picture
             profile_completed = existing_user.get('profile_completed', False)
+            print(f"📝 Profile completed status: {profile_completed}")
         else:
+            print("➕ Creating new user...")
             # Create new user
             user = User(
                 full_name=name,
@@ -237,8 +244,14 @@ async def google_callback(
                 session_expiry=session_expiry,
                 profile_completed=False
             )
-            await db.users.insert_one(user.dict())
+            user_dict = user.dict()
+            # Convert datetime to ISO string for MongoDB
+            if isinstance(user_dict.get('session_expiry'), datetime):
+                user_dict['session_expiry'] = user_dict['session_expiry'].isoformat()
+            
+            await db.users.insert_one(user_dict)
             profile_completed = False
+            print(f"✅ New user created: {user.user_id}")
         
         # Set httpOnly cookie
         is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
@@ -251,20 +264,26 @@ async def google_callback(
             samesite="lax",
             path="/"
         )
+        print("🍪 Session cookie set")
         
         # Redirect to frontend based on profile completion
-        frontend_url = os.getenv('FRONTEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
         if not profile_completed:
             redirect_url = f"{frontend_url}/profile-setup"
         else:
             redirect_url = f"{frontend_url}/dashboard"
         
+        print(f"🔄 Redirecting to: {redirect_url}")
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:
         print(f"❌ Google OAuth error: {str(e)}")
+        print(f"❌ Error type: {type(e).__name__}")
+        print(f"❌ Full traceback:")
+        traceback.print_exc()
+        
         # Redirect to login with error
-        frontend_url = os.getenv('FRONTEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
         return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
 
 
