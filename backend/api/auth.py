@@ -151,15 +151,20 @@ async def google_login(request: Request):
     """
     try:
         # Get the base URL from environment
-        backend_url = os.getenv('BACKEND_URL', 'https://seamless-auth-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
         redirect_uri = f"{backend_url}/api/auth/google/callback"
         
         print(f"🔐 Initiating Google OAuth...")
         print(f"📍 Redirect URI: {redirect_uri}")
         print(f"🔑 Client ID: {os.getenv('GOOGLE_CLIENT_ID', 'NOT_SET')[:20]}...")
+        print(f"🍪 Session before OAuth: {request.session}")
+        print(f"🍪 Cookies: {request.cookies}")
         
         # Redirect to Google OAuth
-        return await oauth.google.authorize_redirect(request, redirect_uri)
+        response = await oauth.google.authorize_redirect(request, redirect_uri)
+        
+        print(f"📤 Response cookies: {response.headers.get('set-cookie', 'None')}")
+        return response
     except Exception as e:
         print(f"❌ Error in google_login: {str(e)}")
         import traceback
