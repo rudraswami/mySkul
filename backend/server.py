@@ -83,10 +83,6 @@ class JSONResponse(FastAPIJSONResponse):
             default=lambda obj: str(obj) if isinstance(obj, ObjectId) else obj,
         ).encode("utf-8")
 
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
 # Critical Environment Variable Validation
 def validate_critical_env_vars():
     """Validate critical environment variables on startup - fail fast if missing"""
