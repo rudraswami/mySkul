@@ -76,15 +76,18 @@ class AuthService:
 
     def set_secure_cookie(self, response, token: str):
         """Set secure httpOnly cookie for authentication"""
-        is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+        is_https = backend_url.startswith('https://')
         response.set_cookie(
             key="dhruv_ai_auth",
             value=token,
             max_age=7 * 24 * 60 * 60,  # 7 days in seconds
             expires=7 * 24 * 60 * 60,  # 7 days in seconds
             httponly=True,
-            secure=is_production,  # HTTPS only in production
-            samesite="lax"  # CSRF protection
+            secure=is_https,  # True for HTTPS
+            samesite="none",  # Allow cross-domain
+            path="/",
+            domain=".emergent.host" if is_https else None
         )
 
     def clear_secure_cookie(self, response):
