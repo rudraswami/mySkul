@@ -109,7 +109,7 @@ async def logout_user(
     """Logout user by clearing the authentication cookie and session"""
     from datetime import datetime, timezone
     
-    # Get session token
+    # Get session token from standardized cookie (or legacy for backward compatibility)
     session_token = request.cookies.get("dhruv_ai_session") or request.cookies.get("dhruv_ai_auth")
     
     # Clear session from database if exists
@@ -122,16 +122,8 @@ async def logout_user(
             }}
         )
     
-    # Clear cookies
+    # Clear cookies using auth service (handles cross-domain settings)
     auth_service.clear_secure_cookie(response)
-    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-    response.delete_cookie(
-        key="dhruv_ai_session",
-        httponly=True,
-        secure=is_production,
-        samesite="lax",
-        path="/"
-    )
     
     return {"message": "Logout successful"}
 
