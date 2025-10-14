@@ -217,7 +217,9 @@ async def google_callback(
         
         if error:
             print(f"❌ OAuth error from Google: {error}")
-            frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+            frontend_url = os.getenv('FRONTEND_URL')
+            if not frontend_url:
+                frontend_url = os.getenv('BACKEND_URL', 'http://localhost:3000')
             return RedirectResponse(url=f"{frontend_url}/login?error={error}")
         
         if not state or not code:
@@ -236,7 +238,9 @@ async def google_callback(
         
         # Exchange authorization code for tokens
         token_url = "https://oauth2.googleapis.com/token"
-        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL')
+        if not backend_url:
+            raise ValueError("BACKEND_URL environment variable is required for OAuth")
         redirect_uri = f"{backend_url}/api/auth/google/callback"
         
         token_data = {
