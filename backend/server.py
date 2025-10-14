@@ -1405,7 +1405,7 @@ async def get_current_user(request: Request, authorization: str = Header(None)):
     Prioritizes cookies (more secure) but falls back to Bearer tokens for compatibility
     """
     # Try cookie-based authentication first (more secure)
-    token = request.cookies.get("dhruv_ai_auth")
+    token = request.cookies.get("dhruv_ai_session")
     
     # Fall back to Bearer token for backward compatibility
     if not token and authorization and authorization.startswith('Bearer '):
