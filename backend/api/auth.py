@@ -554,17 +554,25 @@ async def google_auth_callback(
         )
         await db.users.insert_one(user.dict())
     
-    # Set httpOnly cookie with session token
+    # Set httpOnly cookie with cross-domain support
     is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-    response.set_cookie(
-        key="dhruv_ai_session",
-        value=auth_data.session_token,
-        max_age=7 * 24 * 60 * 60,  # 7 days
-        httponly=True,
-        secure=is_production,
-        samesite="lax",
-        path="/"
-    )
+    cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')
+    cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')
+    
+    cookie_config = {
+        "key": "dhruv_ai_session",
+        "value": auth_data.session_token,
+        "max_age": 7 * 24 * 60 * 60,  # 7 days
+        "httponly": True,
+        "secure": is_production or cookie_samesite.lower() == 'none',
+        "samesite": cookie_samesite.lower(),
+        "path": "/"
+    }
+    
+    if cookie_domain:
+        cookie_config["domain"] = cookie_domain
+        
+    response.set_cookie(**cookie_config)
     
     return {
         "message": "Authentication successful",
