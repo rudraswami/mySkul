@@ -339,7 +339,8 @@ async def google_callback(
         # For cross-domain support (preview frontend + production backend):
         # - SameSite=None allows cross-site cookie sending
         # - Secure=True required for SameSite=None and HTTPS
-        # - domain=None lets browser determine (most compatible)
+        # - domain=.emergent.host for cross-subdomain access
+        # - path=/ ensures cookie is sent to all API routes
         backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
         is_https = backend_url.startswith('https://')
         
@@ -350,8 +351,8 @@ async def google_callback(
             httponly=True,
             secure=is_https,  # True for HTTPS domains
             samesite="none",  # Allow cross-site requests (preview → production)
-            path="/",
-            domain=None  # Let browser determine domain
+            path="/",  # Required for all API routes
+            domain=".emergent.host" if is_https else None  # Cross-subdomain for production
         )
         print(f"🍪 Session cookie set (secure={is_https}, samesite=none, token={session_token[:20]}...)")
         
