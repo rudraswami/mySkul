@@ -49,8 +49,12 @@ class AuthService:
         Hybrid authentication: Secure cookie-based OR Bearer token authentication
         Prioritizes cookies (more secure) but falls back to Bearer tokens for compatibility
         """
-        # Try cookie-based authentication first (more secure)
-        token = request.cookies.get("dhruv_ai_auth")
+        # Try standardized session cookie first (OAuth + password auth)
+        token = request.cookies.get("dhruv_ai_session")
+        
+        # Backward compatibility: check old cookie name
+        if not token:
+            token = request.cookies.get("dhruv_ai_auth")
         
         # Fall back to Bearer token for backward compatibility
         if not token and authorization and authorization.startswith('Bearer '):
