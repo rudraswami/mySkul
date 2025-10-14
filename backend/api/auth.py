@@ -152,8 +152,10 @@ async def google_login(request: Request, db = Depends(get_database)):
     Redirects user to Google sign-in
     """
     try:
-        # Get the base URL from environment
-        backend_url = os.getenv('BACKEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        # Get the base URL from environment - MUST be production domain
+        backend_url = os.getenv('BACKEND_URL')
+        if not backend_url:
+            raise ValueError("BACKEND_URL environment variable is required for OAuth")
         redirect_uri = f"{backend_url}/api/auth/google/callback"
         
         print(f"🔐 Initiating Google OAuth...")
