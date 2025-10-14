@@ -336,33 +336,16 @@ async def google_callback(
             profile_completed = False
             print(f"✅ New user created: {user.user_id}")
         
-        # Set httpOnly cookie
-        # For cross-domain support (preview frontend + production backend):
-        # - SameSite=None allows cross-site cookie sending
-        # - Secure=True required for SameSite=None and HTTPS
-        # - domain=.emergent.host for cross-subdomain access
-        # - path=/ ensures cookie is sent to all API routes
-        backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
-        is_https = backend_url.startswith('https://')
-        
-        response.set_cookie(
-            key="dhruv_ai_session",
-            value=session_token,
-            max_age=7 * 24 * 60 * 60,  # 7 days
-            httponly=True,
-            secure=is_https,  # True for HTTPS domains
-            samesite="none",  # Allow cross-site requests (preview → production)
-            path="/",  # Required for all API routes
-            domain=".emergent.host" if is_https else None  # Cross-subdomain for production
-        )
-        print(f"🍪 Session cookie set (secure={is_https}, samesite=none, token={session_token[:20]}...)")
+        # MODERN OAUTH APPROACH: Return session token via URL parameter
+        # This is more reliable than cookies in redirect responses
+        # Frontend will capture the token and set it properly
         
         # Redirect to frontend based on profile completion
         frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
         if not profile_completed:
-            redirect_url = f"{frontend_url}/profile-setup"
+            redirect_url = f"{frontend_url}/profile-setup?session_token={session_token}"
         else:
-            redirect_url = f"{frontend_url}/dashboard"
+            redirect_url = f"{frontend_url}/dashboard?session_token={session_token}"
         
         print(f"🔄 Redirecting to: {redirect_url}")
         return RedirectResponse(url=redirect_url)
