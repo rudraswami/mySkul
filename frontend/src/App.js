@@ -93,11 +93,11 @@ function AppContent() {
           element={<OAuthCallback />} 
         />
         
-        {/* Profile Setup - Required after first Gmail login */}
+        {/* Profile Setup - Required after first Gmail login (Allow loading state) */}
         <Route 
           path="/profile-setup" 
           element={
-            user ? (
+            loading ? <PageLoader message="Loading your profile..." /> : user ? (
               !user.profile_completed ? <ProfileSetup /> : <Navigate to="/dashboard" />
             ) : (
               <Navigate to="/login" />
