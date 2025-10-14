@@ -327,18 +327,26 @@ async def google_callback(
             profile_completed = False
             print(f"✅ New user created: {user.user_id}")
         
-        # Set httpOnly cookie
+        # Set httpOnly cookie with cross-domain support
         is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-        response.set_cookie(
-            key="dhruv_ai_session",
-            value=session_token,
-            max_age=7 * 24 * 60 * 60,  # 7 days
-            httponly=True,
-            secure=is_production,
-            samesite="lax",
-            path="/"
-        )
-        print("🍪 Session cookie set")
+        cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')
+        cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')
+        
+        cookie_config = {
+            "key": "dhruv_ai_session",
+            "value": session_token,
+            "max_age": 7 * 24 * 60 * 60,  # 7 days
+            "httponly": True,
+            "secure": is_production or cookie_samesite.lower() == 'none',
+            "samesite": cookie_samesite.lower(),
+            "path": "/"
+        }
+        
+        if cookie_domain:
+            cookie_config["domain"] = cookie_domain
+            
+        response.set_cookie(**cookie_config)
+        print(f"🍪 Session cookie set (domain={cookie_domain}, samesite={cookie_samesite})")
         
         # Redirect to frontend based on profile completion
         frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
