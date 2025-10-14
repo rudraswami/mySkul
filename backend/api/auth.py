@@ -605,25 +605,16 @@ async def get_session(
         raise HTTPException(status_code=401, detail="No active session")
     
     # Find user with valid session
+    current_time_iso = datetime.now(timezone.utc).isoformat()
     user_doc = await db.users.find_one({
-        "$or": [
-            {
-                "session_token": session_token,
-                "session_expiry": {"$gt": datetime.now(timezone.utc)}
-            },
-            # Legacy JWT token support (for old users)
-            {"user_id": {"$exists": True}}  # Verify JWT separately below
-        ]
+        "session_token": session_token,
+        "session_expiry": {"$gt": current_time_iso}
     })
     
     if not user_doc:
         raise HTTPException(status_code=401, detail="Session expired or invalid")
     
     user = User(**user_doc)
-    
-    # Check if session expired (for new OAuth users)
-    if user.session_expiry and user.session_expiry < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Session expired")
     
     return {
         "user": {
