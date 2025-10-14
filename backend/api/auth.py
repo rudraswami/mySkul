@@ -417,15 +417,17 @@ async def exchange_google_session(
                 result = await process_google_login(session_data, db)
                 
                 # Set httpOnly cookie with session token
-                is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+                backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+                is_https = backend_url.startswith('https://')
                 response.set_cookie(
                     key="dhruv_ai_session",
                     value=session_data['session_token'],
                     max_age=7 * 24 * 60 * 60,  # 7 days
                     httponly=True,
-                    secure=is_production,
-                    samesite="lax",
-                    path="/"
+                    secure=is_https,
+                    samesite="none",
+                    path="/",
+                    domain=".emergent.host" if is_https else None
                 )
                 
                 return result
