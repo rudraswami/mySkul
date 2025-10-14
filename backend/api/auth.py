@@ -336,17 +336,21 @@ async def google_callback(
             print(f"✅ New user created: {user.user_id}")
         
         # Set httpOnly cookie
-        is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+        # Use secure=True for HTTPS (production), False for HTTP (local dev)
+        backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+        is_https = backend_url.startswith('https://')
+        
         response.set_cookie(
             key="dhruv_ai_session",
             value=session_token,
             max_age=7 * 24 * 60 * 60,  # 7 days
             httponly=True,
-            secure=is_production,
+            secure=is_https,  # True for HTTPS domains
             samesite="lax",
-            path="/"
+            path="/",
+            domain=None  # Let browser determine domain
         )
-        print("🍪 Session cookie set")
+        print(f"🍪 Session cookie set (secure={is_https}, token={session_token[:20]}...)")
         
         # Redirect to frontend based on profile completion
         frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
