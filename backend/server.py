@@ -4942,7 +4942,9 @@ async def register_user(user_data: UserCreate, response: Response):
         expires=7 * 24 * 60 * 60,  # 7 days in seconds
         httponly=True,
         secure=is_https,  # True for HTTPS domains
-        samesite="none"  # Allow cross-domain cookie sending
+        samesite="none",  # Allow cross-domain cookie sending
+        path="/",
+        domain=".emergent.host" if is_https else None
     )
     
     return {
@@ -4986,7 +4988,9 @@ async def login_user(login_data: UserLogin, response: Response):
         expires=7 * 24 * 60 * 60,  # 7 days in seconds
         httponly=True,
         secure=is_https,  # True for HTTPS domains
-        samesite="none"  # Allow cross-domain cookie sending
+        samesite="none",  # Allow cross-domain cookie sending
+        path="/",
+        domain=".emergent.host" if is_https else None
     )
     
     return {
