@@ -124,12 +124,13 @@ async def logout_user(
     
     # Clear cookies
     auth_service.clear_secure_cookie(response)
-    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+    is_https = backend_url.startswith('https://')
     response.delete_cookie(
         key="dhruv_ai_session",
         httponly=True,
-        secure=is_production,
-        samesite="lax",
+        secure=is_https,
+        samesite="none",
         path="/"
     )
     
