@@ -79,24 +79,50 @@ class AuthService:
             return None
 
     def set_secure_cookie(self, response, token: str):
-        """Set secure httpOnly cookie for authentication"""
+        """Set secure httpOnly cookie for authentication with cross-domain support"""
+        # Get configuration from environment
         is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-        response.set_cookie(
-            key="dhruv_ai_auth",
-            value=token,
-            max_age=7 * 24 * 60 * 60,  # 7 days in seconds
-            expires=7 * 24 * 60 * 60,  # 7 days in seconds
-            httponly=True,
-            secure=is_production,  # HTTPS only in production
-            samesite="lax"  # CSRF protection
-        )
+        cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')  # e.g., .emergentagent.com
+        cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')  # 'none' for cross-domain
+        
+        # Standardized cookie name for all auth flows
+        cookie_config = {
+            "key": "dhruv_ai_session",
+            "value": token,
+            "max_age": 7 * 24 * 60 * 60,  # 7 days in seconds
+            "expires": 7 * 24 * 60 * 60,  # 7 days in seconds
+            "httponly": True,
+            "secure": is_production or cookie_samesite.lower() == 'none',  # HTTPS required for SameSite=None
+            "samesite": cookie_samesite.lower(),
+            "path": "/"
+        }
+        
+        # Add domain only if specified (for cross-subdomain support)
+        if cookie_domain:
+            cookie_config["domain"] = cookie_domain
+        
+        response.set_cookie(**cookie_config)
 
     def clear_secure_cookie(self, response):
-        """Clear the authentication cookie"""
+        """Clear the authentication cookie with same settings"""
         is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-        response.delete_cookie(
-            key="dhruv_ai_auth",
-            httponly=True,
-            secure=is_production,
-            samesite="lax"
-        )
+        cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')
+        cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')
+        
+        delete_config = {
+            "key": "dhruv_ai_session",
+            "httponly": True,
+            "secure": is_production or cookie_samesite.lower() == 'none',
+            "samesite": cookie_samesite.lower(),
+            "path": "/"
+        }
+        
+        if cookie_domain:
+            delete_config["domain"] = cookie_domain
+            
+        response.delete_cookie(**delete_config)
+        
+        # Also clear legacy cookie for backward compatibility
+        legacy_config = delete_config.copy()
+        legacy_config["key"] = "dhruv_ai_auth"
+        response.delete_cookie(**legacy_config)
