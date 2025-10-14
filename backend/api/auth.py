@@ -557,15 +557,17 @@ async def google_auth_callback(
         await db.users.insert_one(user.dict())
     
     # Set httpOnly cookie with session token
-    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+    is_https = backend_url.startswith('https://')
     response.set_cookie(
         key="dhruv_ai_session",
         value=auth_data.session_token,
         max_age=7 * 24 * 60 * 60,  # 7 days
         httponly=True,
-        secure=is_production,
-        samesite="lax",
-        path="/"
+        secure=is_https,
+        samesite="none",
+        path="/",
+        domain=".emergent.host" if is_https else None
     )
     
     return {
