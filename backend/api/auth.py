@@ -336,7 +336,10 @@ async def google_callback(
             print(f"✅ New user created: {user.user_id}")
         
         # Set httpOnly cookie
-        # Use secure=True for HTTPS (production), False for HTTP (local dev)
+        # For cross-domain support (preview frontend + production backend):
+        # - SameSite=None allows cross-site cookie sending
+        # - Secure=True required for SameSite=None and HTTPS
+        # - domain=None lets browser determine (most compatible)
         backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
         is_https = backend_url.startswith('https://')
         
@@ -346,11 +349,11 @@ async def google_callback(
             max_age=7 * 24 * 60 * 60,  # 7 days
             httponly=True,
             secure=is_https,  # True for HTTPS domains
-            samesite="lax",
+            samesite="none",  # Allow cross-site requests (preview → production)
             path="/",
             domain=None  # Let browser determine domain
         )
-        print(f"🍪 Session cookie set (secure={is_https}, token={session_token[:20]}...)")
+        print(f"🍪 Session cookie set (secure={is_https}, samesite=none, token={session_token[:20]}...)")
         
         # Redirect to frontend based on profile completion
         frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
