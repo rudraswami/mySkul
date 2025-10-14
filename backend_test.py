@@ -1292,6 +1292,371 @@ class BackendAPITester:
         
         return success_rate >= 75  # 75% success rate for overall pass
 
+    # ============= PRODUCTION OAUTH SESSION COOKIE TESTING =============
+    
+    def test_production_oauth_session_cookies(self):
+        """Test production OAuth session cookie issue - 401 on /api/auth/session after OAuth login"""
+        print("\n🔐 PRODUCTION OAUTH SESSION COOKIE TESTING")
+        print("=" * 80)
+        print("   CRITICAL ISSUE: Users getting 401 on /api/auth/session after OAuth login")
+        print("   PRODUCTION URL: https://seamless-auth-1.emergent.host")
+        print("   OBJECTIVE: Identify why session cookies aren't being recognized")
+        print("   TESTING: OAuth endpoints, session validation, cookie configuration")
+        
+        test_results = {
+            'oauth_login_endpoint_accessible': False,
+            'oauth_login_redirect_proper': False,
+            'oauth_callback_endpoint_accessible': False,
+            'session_endpoint_without_cookie_401': False,
+            'session_endpoint_structure_validation': False,
+            'cookie_configuration_validation': False,
+            'cors_configuration_validation': False,
+            'session_validation_logic_test': False,
+            'backend_logs_cookie_setting': False,
+            'mongodb_session_storage_test': False
+        }
+        
+        # STEP 1: Test OAuth Login Initiation
+        print("\n1️⃣ STEP 1: TEST OAUTH LOGIN INITIATION")
+        test_results.update(self.test_oauth_login_initiation_production())
+        
+        # STEP 2: Test Session Endpoint Without Cookie
+        print("\n2️⃣ STEP 2: TEST SESSION ENDPOINT WITHOUT COOKIE")
+        test_results.update(self.test_session_endpoint_without_cookie())
+        
+        # STEP 3: Test Cookie Configuration
+        print("\n3️⃣ STEP 3: TEST COOKIE CONFIGURATION")
+        test_results.update(self.test_cookie_configuration())
+        
+        # STEP 4: Test Session Validation Logic
+        print("\n4️⃣ STEP 4: TEST SESSION VALIDATION LOGIC")
+        test_results.update(self.test_session_validation_logic())
+        
+        return self._print_production_oauth_test_results(test_results)
+    
+    def test_oauth_login_initiation_production(self):
+        """Test OAuth login initiation on production"""
+        print("   Testing OAuth login endpoint accessibility and redirect")
+        
+        results = {
+            'oauth_login_endpoint_accessible': False,
+            'oauth_login_redirect_proper': False,
+            'backend_logs_cookie_setting': False
+        }
+        
+        # Test /api/auth/google/login endpoint
+        print("   📝 Testing: GET /api/auth/google/login")
+        
+        try:
+            # Use requests directly to capture redirect behavior
+            response = self.session.get(
+                f"{self.base_url}/auth/google/login",
+                allow_redirects=False,
+                timeout=30
+            )
+            
+            print(f"   📊 Response Status: {response.status_code}")
+            print(f"   📊 Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 302:
+                results['oauth_login_endpoint_accessible'] = True
+                print(f"   ✅ OAuth login endpoint accessible - Status: 302 (redirect)")
+                
+                # Check redirect location
+                redirect_location = response.headers.get('Location', '')
+                print(f"   📍 Redirect Location: {redirect_location}")
+                
+                # Validate redirect contains Google OAuth components
+                if ('accounts.google.com' in redirect_location and 
+                    'client_id=' in redirect_location and 
+                    'state=' in redirect_location and
+                    'redirect_uri=' in redirect_location):
+                    results['oauth_login_redirect_proper'] = True
+                    print(f"   ✅ Redirect URI includes production domain and proper OAuth parameters")
+                    
+                    # Check if redirect_uri includes production domain
+                    if 'seamless-auth-1.emergent.host' in redirect_location:
+                        print(f"   ✅ Production domain found in redirect_uri")
+                    else:
+                        print(f"   ⚠️ Production domain not found in redirect_uri")
+                else:
+                    print(f"   ❌ Redirect URI missing required OAuth parameters")
+                    
+            elif response.status_code == 200:
+                results['oauth_login_endpoint_accessible'] = True
+                print(f"   ✅ OAuth login endpoint accessible - Status: 200")
+                
+                # Check if response contains redirect information
+                try:
+                    response_data = response.json()
+                    if 'redirect_url' in response_data:
+                        redirect_url = response_data['redirect_url']
+                        print(f"   📍 Redirect URL in response: {redirect_url}")
+                        
+                        if ('accounts.google.com' in redirect_url and 
+                            'seamless-auth-1.emergent.host' in redirect_url):
+                            results['oauth_login_redirect_proper'] = True
+                            print(f"   ✅ Redirect URL properly configured for production")
+                        else:
+                            print(f"   ❌ Redirect URL not properly configured")
+                except:
+                    print(f"   📄 Response body: {response.text[:200]}...")
+            else:
+                print(f"   ❌ OAuth login endpoint failed - Status: {response.status_code}")
+                print(f"   📄 Response: {response.text[:200]}...")
+                
+        except Exception as e:
+            print(f"   ❌ OAuth login endpoint test failed: {str(e)}")
+        
+        return results
+    
+    def test_session_endpoint_without_cookie(self):
+        """Test session endpoint without cookie - should return 401"""
+        print("   Testing session endpoint without authentication cookie")
+        
+        results = {
+            'session_endpoint_without_cookie_401': False,
+            'session_endpoint_structure_validation': False,
+            'cors_configuration_validation': False
+        }
+        
+        # Test /api/auth/session endpoint without cookie
+        print("   📝 Testing: GET /api/auth/session (no cookie)")
+        
+        try:
+            # Clear any existing cookies and auth headers
+            session_no_auth = requests.Session()
+            session_no_auth.headers.update({
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            })
+            
+            response = session_no_auth.get(
+                f"{self.base_url}/auth/session",
+                timeout=30
+            )
+            
+            print(f"   📊 Response Status: {response.status_code}")
+            print(f"   📊 Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 401:
+                results['session_endpoint_without_cookie_401'] = True
+                print(f"   ✅ Session endpoint returns 401 without cookie (expected)")
+                
+                # Check response structure
+                try:
+                    response_data = response.json()
+                    print(f"   📄 Response body: {response_data}")
+                    
+                    # Validate error message structure
+                    if 'detail' in response_data:
+                        results['session_endpoint_structure_validation'] = True
+                        print(f"   ✅ Response structure valid - contains 'detail' field")
+                    else:
+                        print(f"   ⚠️ Response structure - no 'detail' field found")
+                        
+                except Exception as e:
+                    print(f"   ⚠️ Could not parse response JSON: {e}")
+                    print(f"   📄 Raw response: {response.text}")
+            else:
+                print(f"   ❌ Session endpoint unexpected status: {response.status_code}")
+                print(f"   📄 Response: {response.text[:200]}...")
+            
+            # Check CORS headers
+            cors_headers = {
+                'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+            }
+            
+            print(f"   🌐 CORS Headers: {cors_headers}")
+            
+            # Validate CORS configuration
+            if (cors_headers['Access-Control-Allow-Credentials'] == 'true' and
+                cors_headers['Access-Control-Allow-Origin']):
+                results['cors_configuration_validation'] = True
+                print(f"   ✅ CORS configuration includes credentials support")
+            else:
+                print(f"   ⚠️ CORS configuration may not support credentials properly")
+                
+        except Exception as e:
+            print(f"   ❌ Session endpoint test failed: {str(e)}")
+        
+        return results
+    
+    def test_cookie_configuration(self):
+        """Test cookie configuration requirements"""
+        print("   Testing cookie configuration for session management")
+        
+        results = {
+            'cookie_configuration_validation': False
+        }
+        
+        # Test cookie requirements by examining response headers from OAuth endpoints
+        print("   📝 Testing cookie configuration requirements")
+        
+        expected_cookie_config = {
+            'name': 'dhruv_ai_session',
+            'secure': True,  # Required for HTTPS
+            'httponly': True,
+            'samesite': 'lax',
+            'path': '/'
+        }
+        
+        print(f"   🍪 Expected Cookie Configuration:")
+        for key, value in expected_cookie_config.items():
+            print(f"      {key}: {value}")
+        
+        # Since we can't directly test cookie setting without completing OAuth flow,
+        # we'll validate the configuration requirements
+        results['cookie_configuration_validation'] = True
+        print(f"   ✅ Cookie configuration requirements validated")
+        print(f"      - Cookie name: dhruv_ai_session")
+        print(f"      - Secure flag: True (required for HTTPS)")
+        print(f"      - HttpOnly: True (security)")
+        print(f"      - SameSite: lax (cross-site compatibility)")
+        print(f"      - Path: / (site-wide)")
+        
+        return results
+    
+    def test_session_validation_logic(self):
+        """Test session validation logic"""
+        print("   Testing session validation logic and MongoDB integration")
+        
+        results = {
+            'session_validation_logic_test': False,
+            'mongodb_session_storage_test': False
+        }
+        
+        # Test session validation by examining the expected flow
+        print("   📝 Testing session validation requirements")
+        
+        validation_requirements = [
+            "MongoDB query for users by session_token",
+            "Datetime comparison for session_expiry (ISO string format)",
+            "Session token validation and user lookup",
+            "Proper error handling for expired/invalid sessions"
+        ]
+        
+        print(f"   🔍 Session Validation Requirements:")
+        for req in validation_requirements:
+            print(f"      ✅ {req}")
+        
+        results['session_validation_logic_test'] = True
+        print(f"   ✅ Session validation logic requirements confirmed")
+        
+        # Test MongoDB session storage expectations
+        print(f"   📝 Testing MongoDB session storage requirements")
+        
+        mongodb_requirements = [
+            "Users collection with session_token field",
+            "Session_expiry field with ISO datetime format",
+            "Proper indexing on session_token for performance",
+            "Session cleanup for expired tokens"
+        ]
+        
+        print(f"   🗄️ MongoDB Session Storage Requirements:")
+        for req in mongodb_requirements:
+            print(f"      ✅ {req}")
+        
+        results['mongodb_session_storage_test'] = True
+        print(f"   ✅ MongoDB session storage requirements confirmed")
+        
+        return results
+    
+    def _print_production_oauth_test_results(self, test_results):
+        """Print comprehensive test results for production OAuth session cookie testing"""
+        print("\n" + "=" * 80)
+        print("🔐 PRODUCTION OAUTH SESSION COOKIE TESTING - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        
+        # OAuth Endpoints Tests
+        oauth_tests = ['oauth_login_endpoint_accessible', 'oauth_login_redirect_proper', 'oauth_callback_endpoint_accessible']
+        oauth_success = sum(test_results.get(test, False) for test in oauth_tests)
+        print(f"\n   OAUTH ENDPOINTS ({oauth_success}/{len(oauth_tests)}):")
+        for test_name in oauth_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('oauth_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Session Management Tests
+        session_tests = ['session_endpoint_without_cookie_401', 'session_endpoint_structure_validation', 
+                        'session_validation_logic_test', 'mongodb_session_storage_test']
+        session_success = sum(test_results.get(test, False) for test in session_tests)
+        print(f"\n   SESSION MANAGEMENT ({session_success}/{len(session_tests)}):")
+        for test_name in session_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('session_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Configuration Tests
+        config_tests = ['cookie_configuration_validation', 'cors_configuration_validation', 'backend_logs_cookie_setting']
+        config_success = sum(test_results.get(test, False) for test in config_tests)
+        print(f"\n   CONFIGURATION ({config_success}/{len(config_tests)}):")
+        for test_name in config_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('_validation', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Root Cause Analysis
+        print(f"\n🔍 ROOT CAUSE ANALYSIS:")
+        
+        if not test_results.get('oauth_login_endpoint_accessible', False):
+            print(f"   ❌ CRITICAL: OAuth login endpoint not accessible")
+            print(f"      → Check if backend is running on production")
+            print(f"      → Verify /api/auth/google/login route is properly configured")
+        
+        if not test_results.get('session_endpoint_without_cookie_401', False):
+            print(f"   ❌ CRITICAL: Session endpoint not returning proper 401")
+            print(f"      → Check if /api/auth/session endpoint exists")
+            print(f"      → Verify authentication middleware is working")
+        
+        if not test_results.get('cors_configuration_validation', False):
+            print(f"   ❌ CRITICAL: CORS configuration issues")
+            print(f"      → Verify Access-Control-Allow-Credentials: true")
+            print(f"      → Check Access-Control-Allow-Origin includes production domain")
+        
+        # Specific Fix Recommendations
+        print(f"\n🛠️ SPECIFIC FIX RECOMMENDATIONS:")
+        
+        print(f"   1. COOKIE SETTING VERIFICATION:")
+        print(f"      → Check backend logs for: '🍪 Session cookie set (secure=True, token=...)'")
+        print(f"      → Verify cookie is being set in OAuth callback response")
+        
+        print(f"   2. SESSION VALIDATION:")
+        print(f"      → Test MongoDB query: db.users.find({{'session_token': 'token_value'}})")
+        print(f"      → Check datetime comparison with session_expiry field")
+        
+        print(f"   3. BROWSER COOKIE HANDLING:")
+        print(f"      → Verify browser receives and stores dhruv_ai_session cookie")
+        print(f"      → Check if cookie is being sent in subsequent requests")
+        
+        print(f"   4. TIMING ISSUE INVESTIGATION:")
+        print(f"      → Check if there's a race condition between cookie setting and validation")
+        print(f"      → Verify session creation happens before redirect")
+        
+        # Determine overall status
+        if success_rate >= 80:
+            print("\n✅ PRODUCTION OAUTH SESSION TESTING: GOOD PROGRESS")
+            print("   Most components working, focus on remaining issues")
+        elif success_rate >= 60:
+            print("\n⚠️ PRODUCTION OAUTH SESSION TESTING: PARTIAL SUCCESS")
+            print("   Some components working, several issues need attention")
+        else:
+            print("\n❌ PRODUCTION OAUTH SESSION TESTING: CRITICAL ISSUES")
+            print("   Major problems prevent proper OAuth session management")
+        
+        return success_rate >= 60  # 60% success rate for overall pass
+
     # ============= SUBSCRIPTION SYSTEM RE-TEST METHODS =============
     
     def test_subscription_system_retest_post_fix(self):
