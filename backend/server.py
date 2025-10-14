@@ -11403,13 +11403,28 @@ if not cors_origins or cors_origins == ['']:
 
 # Session Middleware for OAuth - MUST come before CORS
 from starlette.middleware.sessions import SessionMiddleware
+
+# Session Middleware Configuration - Environment-aware
+backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+is_https = backend_url.startswith('https://')
+session_cookie_same_site = os.getenv('SESSION_COOKIE_SAMESITE', 'none').lower()
+session_cookie_domain = os.getenv('SESSION_COOKIE_DOMAIN', '.emergent.host') if is_https else None
+
+print(f"🍪 SessionMiddleware Config:")
+print(f"   - same_site: {session_cookie_same_site}")
+print(f"   - https_only: {is_https}")
+print(f"   - domain: {session_cookie_domain}")
+print(f"   - BACKEND_URL: {backend_url}")
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv('JWT_SECRET', 'fallback-secret-key-change-in-production'),
     session_cookie="oauth_session",
     max_age=3600,  # 1 hour
-    same_site="lax",
-    https_only=False  # Set to True in production with HTTPS
+    same_site=session_cookie_same_site,  # none for cross-domain
+    https_only=is_https,  # True for HTTPS production
+    domain=session_cookie_domain,
+    path="/"
 )
 
 app.add_middleware(
