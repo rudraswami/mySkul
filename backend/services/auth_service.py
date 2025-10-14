@@ -92,10 +92,11 @@ class AuthService:
 
     def clear_secure_cookie(self, response):
         """Clear the authentication cookie"""
-        is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+        is_https = backend_url.startswith('https://')
         response.delete_cookie(
             key="dhruv_ai_auth",
             httponly=True,
-            secure=is_production,
-            samesite="lax"
+            secure=is_https,
+            samesite="none"
         )
