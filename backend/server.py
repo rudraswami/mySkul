@@ -4930,18 +4930,26 @@ async def register_user(user_data: UserCreate, response: Response):
     # Create JWT token
     token = create_jwt_token(user.user_id, user.email)
     
-    # Set secure httpOnly cookie
-    # Use secure=False for development (HTTP), secure=True for production (HTTPS)
+    # Set secure httpOnly cookie with cross-domain support
     is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-    response.set_cookie(
-        key="dhruv_ai_auth",
-        value=token,
-        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
-        expires=7 * 24 * 60 * 60,  # 7 days in seconds
-        httponly=True,
-        secure=is_production,  # HTTPS only in production
-        samesite="lax"  # CSRF protection
-    )
+    cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')
+    cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')
+    
+    cookie_config = {
+        "key": "dhruv_ai_session",
+        "value": token,
+        "max_age": 7 * 24 * 60 * 60,  # 7 days in seconds
+        "expires": 7 * 24 * 60 * 60,  # 7 days in seconds
+        "httponly": True,
+        "secure": is_production or cookie_samesite.lower() == 'none',
+        "samesite": cookie_samesite.lower(),
+        "path": "/"
+    }
+    
+    if cookie_domain:
+        cookie_config["domain"] = cookie_domain
+        
+    response.set_cookie(**cookie_config)
     
     return {
         "message": "User registered successfully",
@@ -4972,18 +4980,26 @@ async def login_user(login_data: UserLogin, response: Response):
     # Create JWT token
     token = create_jwt_token(user.user_id, user.email)
     
-    # Set secure httpOnly cookie
-    # Use secure=False for development (HTTP), secure=True for production (HTTPS)
+    # Set secure httpOnly cookie with cross-domain support
     is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
-    response.set_cookie(
-        key="dhruv_ai_auth",
-        value=token,
-        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
-        expires=7 * 24 * 60 * 60,  # 7 days in seconds
-        httponly=True,
-        secure=is_production,  # HTTPS only in production
-        samesite="lax"  # CSRF protection
-    )
+    cookie_domain = os.environ.get('SESSION_COOKIE_DOMAIN')
+    cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'lax')
+    
+    cookie_config = {
+        "key": "dhruv_ai_session",
+        "value": token,
+        "max_age": 7 * 24 * 60 * 60,  # 7 days in seconds
+        "expires": 7 * 24 * 60 * 60,  # 7 days in seconds
+        "httponly": True,
+        "secure": is_production or cookie_samesite.lower() == 'none',
+        "samesite": cookie_samesite.lower(),
+        "path": "/"
+    }
+    
+    if cookie_domain:
+        cookie_config["domain"] = cookie_domain
+        
+    response.set_cookie(**cookie_config)
     
     return {
         "message": "Login successful",
