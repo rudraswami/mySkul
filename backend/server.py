@@ -4931,16 +4931,18 @@ async def register_user(user_data: UserCreate, response: Response):
     token = create_jwt_token(user.user_id, user.email)
     
     # Set secure httpOnly cookie
-    # Use secure=False for development (HTTP), secure=True for production (HTTPS)
-    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    # Auto-detect HTTPS from BACKEND_URL for proper secure flag
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+    is_https = backend_url.startswith('https://')
+    
     response.set_cookie(
         key="dhruv_ai_auth",
         value=token,
         max_age=7 * 24 * 60 * 60,  # 7 days in seconds
         expires=7 * 24 * 60 * 60,  # 7 days in seconds
         httponly=True,
-        secure=is_production,  # HTTPS only in production
-        samesite="lax"  # CSRF protection
+        secure=is_https,  # True for HTTPS domains
+        samesite="none"  # Allow cross-domain cookie sending
     )
     
     return {
@@ -4973,16 +4975,18 @@ async def login_user(login_data: UserLogin, response: Response):
     token = create_jwt_token(user.user_id, user.email)
     
     # Set secure httpOnly cookie
-    # Use secure=False for development (HTTP), secure=True for production (HTTPS)
-    is_production = os.environ.get('ENVIRONMENT', 'development') == 'production'
+    # Auto-detect HTTPS from BACKEND_URL for proper secure flag
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+    is_https = backend_url.startswith('https://')
+    
     response.set_cookie(
         key="dhruv_ai_auth",
         value=token,
         max_age=7 * 24 * 60 * 60,  # 7 days in seconds
         expires=7 * 24 * 60 * 60,  # 7 days in seconds
         httponly=True,
-        secure=is_production,  # HTTPS only in production
-        samesite="lax"  # CSRF protection
+        secure=is_https,  # True for HTTPS domains
+        samesite="none"  # Allow cross-domain cookie sending
     )
     
     return {
