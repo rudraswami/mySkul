@@ -5023,8 +5023,8 @@ async def get_csrf_token(request: Request, response: Response):
         key="csrftoken",
         value=csrf_token,
         httponly=False,  # Frontend needs to read this
-        secure=False,    # Set to True in production with HTTPS
-        samesite="lax"
+        secure=True,    # Set to True in production with HTTPS
+        samesite="none"
     )
     
     return {"csrf_token": csrf_token}
