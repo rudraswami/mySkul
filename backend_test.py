@@ -6,7 +6,7 @@ from datetime import datetime
 
 class BackendAPITester:
     def __init__(self):
-        self.base_url = "http://localhost:8001/api"
+        self.base_url = "https://seamless-auth-1.emergent.host/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
