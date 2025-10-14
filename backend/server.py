@@ -5016,7 +5016,9 @@ async def logout_user(response: Response):
         key="dhruv_ai_auth",
         httponly=True,
         secure=is_https,
-        samesite="none"
+        samesite="none",
+        path="/",
+        domain=".emergent.host" if is_https else None
     )
     return {"message": "Logout successful"}
 
