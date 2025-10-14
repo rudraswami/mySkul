@@ -349,7 +349,7 @@ async def google_callback(
         print("🍪 Session cookie set")
         
         # Redirect to frontend based on profile completion
-        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
         if not profile_completed:
             redirect_url = f"{frontend_url}/profile-setup"
         else:
@@ -367,7 +367,7 @@ async def google_callback(
         traceback.print_exc()
         
         # Redirect to login with error
-        frontend_url = os.getenv('FRONTEND_URL', 'https://dhruv-ai-fix.preview.emergentagent.com')
+        frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
         return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
 
 
