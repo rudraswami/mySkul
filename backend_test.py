@@ -24458,129 +24458,59 @@ class DhruvAITester:
         return success_rate >= 60  # 60% success rate for overall pass
 
 if __name__ == "__main__":
-    tester = DhruvAITester()
+    import sys
     
-    print("🧮 MATHEMATICAL ACCURACY VERIFICATION TESTING")
+    tester = BackendAPITester()
+    
+    print("🔐 PRODUCTION OAUTH SESSION COOKIE TESTING")
     print("=" * 80)
-    print("Focus: Enhanced mathematical accuracy in AI Tutor responses")
-    print("Backend URL: https://seamless-auth-1.preview.emergentagent.com/api")
-    print("Test Credentials: test@dhruvai.com / password123")
+    print("CRITICAL ISSUE: Users getting 401 on /api/auth/session after OAuth login")
+    print("Production URL: https://seamless-auth-1.emergent.host")
+    print("Focus: OAuth endpoints, session cookies, CORS, session validation")
     print("=" * 80)
     
-    # Authenticate first
-    print("\n🔐 AUTHENTICATION SETUP")
-    login_success = tester.test_auth_router_login()
-    
-    if not login_success:
-        print("❌ Authentication failed - cannot proceed with testing")
-        sys.exit(1)
-    
-    # Run the mathematical accuracy verification tests
-    print("\n🎯 RUNNING MATHEMATICAL ACCURACY VERIFICATION TESTS")
-    accuracy_success = tester.test_mathematical_accuracy_verification()
+    # Run the production OAuth session cookie tests
+    print("\n🎯 RUNNING PRODUCTION OAUTH SESSION COOKIE TESTS")
+    oauth_success = tester.test_production_oauth_session_cookies()
     
     # Final Summary
     print("\n" + "=" * 80)
-    print("🧮 MATHEMATICAL ACCURACY VERIFICATION - FINAL SUMMARY")
+    print("🔐 PRODUCTION OAUTH SESSION COOKIE TESTING - FINAL SUMMARY")
     print("=" * 80)
     
-    print(f"\n📊 TEST EXECUTION SUMMARY:")
-    print(f"   Total Tests Run: {tester.tests_run}")
-    print(f"   Tests Passed: {tester.tests_passed}")
-    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
-    
-    print(f"\n🎯 MATHEMATICAL ACCURACY STATUS:")
-    if accuracy_success:
-        print("   ✅ MATHEMATICAL ACCURACY: WORKING")
-        print("   Enhanced system prompts are functioning correctly")
-        print("   Mathematical responses show complete solutions")
-        print("   Step-by-step work and verification included")
+    print(f"\n🎯 OAUTH SESSION COOKIE STATUS:")
+    if oauth_success:
+        print("   ✅ OAUTH SESSION TESTING: GOOD PROGRESS")
+        print("   Most OAuth components are accessible and working")
+        print("   Session validation logic appears correct")
+        print("   Cookie configuration requirements validated")
     else:
-        print("   ❌ MATHEMATICAL ACCURACY: NEEDS IMPROVEMENT")
-        print("   Mathematical accuracy issues persist")
-        print("   System prompts may need further enhancement")
+        print("   ❌ OAUTH SESSION TESTING: CRITICAL ISSUES IDENTIFIED")
+        print("   Major problems prevent proper OAuth session management")
+        print("   Immediate attention required for production functionality")
     
     print(f"\n🔍 KEY TESTING AREAS COVERED:")
-    print("   - Quadratic equation factoring (x² + 5x + 6 = 0)")
-    print("   - Physics force and acceleration (F=ma)")
-    print("   - Complete factoring form verification")
-    print("   - Step-by-step solution methodology")
-    print("   - Units and verification inclusion")
+    print("   - OAuth login endpoint accessibility (/api/auth/google/login)")
+    print("   - OAuth redirect URL validation (Google OAuth parameters)")
+    print("   - Session endpoint behavior without cookies (/api/auth/session)")
+    print("   - CORS configuration for credentials support")
+    print("   - Cookie configuration requirements (dhruv_ai_session)")
+    print("   - Session validation logic and MongoDB integration")
     
-    print(f"\n📋 RECOMMENDATIONS:")
-    if accuracy_success:
-        print("   - Mathematical accuracy enhancements are working")
-        print("   - System prompts are producing complete solutions")
-        print("   - Continue monitoring mathematical response quality")
-    else:
-        print("   - Review and enhance system prompts further")
-        print("   - Focus on complete factoring solutions")
-        print("   - Ensure step-by-step methodology is enforced")
-        print("   - Add verification requirements to prompts")
+    print(f"\n🛠️ IMMEDIATE ACTION ITEMS:")
+    print("   1. Verify OAuth login endpoint returns proper 302 redirect")
+    print("   2. Check session endpoint returns 401 without authentication")
+    print("   3. Validate CORS headers include Access-Control-Allow-Credentials")
+    print("   4. Confirm cookie setting in OAuth callback response")
+    print("   5. Test MongoDB session token storage and retrieval")
+    print("   6. Check for timing issues between cookie setting and validation")
     
-    sys.exit(0 if accuracy_success else 1)
-    print("Focus: Text sanitization, GPT-5 prompt enforcement, database storage")
-    print("Backend URL: https://seamless-auth-1.preview.emergentagent.com/api")
-    print("Test Credentials: test@dhruvai.com / password123")
-    print("=" * 80)
+    print(f"\n📋 ROOT CAUSE INVESTIGATION:")
+    print("   The 401 error on /api/auth/session after OAuth login suggests:")
+    print("   - Cookie may not be set properly in OAuth callback")
+    print("   - Cookie may not be sent by browser in subsequent requests")
+    print("   - Session validation logic may have issues")
+    print("   - CORS configuration may prevent cookie transmission")
+    print("   - Timing issue between cookie setting and session validation")
     
-    # Authenticate first
-    print("\n🔐 AUTHENTICATION SETUP")
-    login_success = tester.test_auth_router_login()
-    
-    if not login_success:
-        print("❌ Authentication failed - cannot proceed with testing")
-        exit(1)
-    
-    # Run the AI Tutor text sanitization tests
-    print("\n🎯 RUNNING AI TUTOR PHASE 1 SANITIZATION TESTS")
-    sanitization_success = tester.test_ai_tutor_text_sanitization_phase1()
-    
-    # Final Summary
-    print("\n" + "=" * 80)
-    print("🎯 AI TUTOR PHASE 1 TESTING - FINAL SUMMARY")
-    print("=" * 80)
-    
-    print(f"\n📊 TEST EXECUTION SUMMARY:")
-    print(f"   Total Tests Run: {tester.tests_run}")
-    print(f"   Tests Passed: {tester.tests_passed}")
-    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "   Success Rate: 0%")
-    
-    print(f"\n🎯 AI TUTOR PHASE 1 STATUS:")
-    if sanitization_success:
-        print("   ✅ PHASE 1 FIXES: WORKING")
-        print("   Text sanitization and formatting fixes are functional")
-        print("   GPT-5 prompt enforcement is working correctly")
-        print("   Database storage contains sanitized content")
-        print("   Mentor response splitting is operational")
-    else:
-        print("   ❌ PHASE 1 FIXES: NEED ATTENTION")
-        print("   Critical text sanitization issues identified")
-        print("   Some formatting fixes may not be working properly")
-    
-    print(f"\n🔍 KEY TESTING AREAS COVERED:")
-    print("   - Text sanitization (special chars, emojis, escaped sequences)")
-    print("   - LaTeX delimiter preservation for math rendering")
-    print("   - GPT-5 prompt enforcement (no markdown, emojis)")
-    print("   - Database storage with sanitized content")
-    print("   - Mentor response structured sections")
-    print("   - Raw text field availability")
-    
-    print(f"\n📋 RECOMMENDATIONS:")
-    if sanitization_success:
-        print("   - Phase 1 text sanitization fixes are production-ready")
-        print("   - Continue with frontend integration testing")
-        print("   - Monitor text quality in production usage")
-    else:
-        print("   - Fix identified text sanitization issues")
-        print("   - Re-test GPT-5 prompt enforcement")
-        print("   - Verify database storage sanitization")
-        print("   - Check mentor response splitting logic")
-    
-    exit(0 if sanitization_success else 1)
-    
-    print("\n" + "=" * 60)
-    print(f"🏁 Testing Complete: {tester.tests_passed}/{tester.tests_run} tests passed")
-    print("=" * 60)
-    
-    sys.exit(0 if success else 1)
+    sys.exit(0 if oauth_success else 1)
