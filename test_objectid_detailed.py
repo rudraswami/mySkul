@@ -10,7 +10,7 @@ import time
 
 class DetailedObjectIdTester:
     def __init__(self):
-        self.base_url = "https://seamless-auth-1.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-seamless-login.preview.emergentagent.com/api"
         self.token = None
         
     def login(self):

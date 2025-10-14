@@ -19,7 +19,7 @@
 ```env
 MONGO_URL="mongodb://localhost:27017"
 DB_NAME="dhruv_ai_database"
-CORS_ORIGINS="http://localhost:3000,https://dhruv-ai-fix.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
+CORS_ORIGINS="http://localhost:3000,https://dhruv-seamless-login.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
 EMERGENT_LLM_KEY=sk-emergent-6A354313e1fBb08539
 STRIPE_API_KEY=sk_test_emergent
 RAZORPAY_KEY_ID=rzp_test_123456789
@@ -31,13 +31,13 @@ CSRF_SECRET=dhruv-ai-csrf-secret-key-2025-production-change
 # Google OAuth Credentials
 GOOGLE_CLIENT_ID=401989768341-cs8oaj25c4jik3ai23did8u5fghj7v74.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=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
-BACKEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
-FRONTEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
+BACKEND_URL=https://dhruv-seamless-login.preview.emergentagent.com
+FRONTEND_URL=https://dhruv-seamless-login.preview.emergentagent.com
 ```
 
 **Frontend (`/app/frontend/.env`):**
 ```env
-REACT_APP_BACKEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://dhruv-seamless-login.preview.emergentagent.com
 WDS_SOCKET_PORT=443
 REACT_APP_RAZORPAY_KEY_ID=rzp_test_123456789
 ```
@@ -45,7 +45,7 @@ REACT_APP_RAZORPAY_KEY_ID=rzp_test_123456789
 ### 4. Google Cloud Console Configuration
 **Required Authorized Redirect URI:**
 ```
-https://dhruv-ai-fix.preview.emergentagent.com/api/auth/google/callback
+https://dhruv-seamless-login.preview.emergentagent.com/api/auth/google/callback
 ```
 
 ⚠️ **IMPORTANT:** Make sure this exact URI is added to your Google OAuth 2.0 Client in Google Cloud Console.

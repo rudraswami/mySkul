@@ -3,7 +3,7 @@
 import requests
 import json
 
-BACKEND_URL = "https://seamless-auth-1.preview.emergentagent.com"
+BACKEND_URL = "https://dhruv-seamless-login.preview.emergentagent.com"
 
 print("=" * 60)
 print("Testing Subscription Modal Flow")
