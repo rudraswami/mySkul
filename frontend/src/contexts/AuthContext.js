@@ -32,10 +32,19 @@ export function AuthProvider({ children }) {
   // Check if user is logged in on app load
   useEffect(() => {
     const checkAuth = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionToken = params.get('session_token');
+      if(!sessionToken){
+        console.log("Auth Check failed: No session token")
+      }
       try {
         // Check for session via new endpoint (supports both OAuth and JWT)
         const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`,
+            'Content-Type': 'application/json',
+          },
         });
         
         if (response.ok) {

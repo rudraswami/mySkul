@@ -8,7 +8,7 @@ import json
 import sys
 
 def test_ai_endpoint():
-    base_url = "https://seamless-auth-1.preview.emergentagent.com/api"
+    base_url = "https://gmail-auth-dhruv.preview.emergentagent.com/api"
     
     # Authenticate first
     login_data = {

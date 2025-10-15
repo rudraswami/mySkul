@@ -7,7 +7,7 @@ from datetime import datetime
 
 class Phase4Tester:
     def __init__(self):
-        self.base_url = "https://seamless-auth-1.preview.emergentagent.com/api"
+        self.base_url = "https://gmail-auth-dhruv.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         self.test_ids = []

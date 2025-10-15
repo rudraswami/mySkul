@@ -12,7 +12,7 @@ from datetime import datetime
 import uuid
 
 class AuthSecurityTester:
-    def __init__(self, base_url="https://seamless-auth-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://gmail-auth-dhruv.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.test_email = "test@dhruvai.com"
@@ -130,7 +130,7 @@ class AuthSecurityTester:
         # Test allowed origins
         allowed_origins = [
             "http://localhost:3000",
-            "https://seamless-auth-1.preview.emergentagent.com"
+            "https://gmail-auth-dhruv.preview.emergentagent.com"
         ]
         
         # Test disallowed origins

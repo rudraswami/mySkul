@@ -87,16 +87,16 @@ async with httpx.AsyncClient() as client:
 **Backend `.env` (`/app/backend/.env`):**
 ```env
 # Updated domain
-BACKEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
-FRONTEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
+BACKEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
+FRONTEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
 
 # Added static preview domain to CORS
-CORS_ORIGINS="http://localhost:3000,https://dhruv-ai-fix.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
+CORS_ORIGINS="http://localhost:3000,https://gmail-auth-dhruv.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
 ```
 
 **Frontend `.env` (`/app/frontend/.env`):**
 ```env
-REACT_APP_BACKEND_URL=https://dhruv-ai-fix.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
 ```
 
 #### 5. Middleware Reordering (`/app/backend/server.py`)
@@ -144,7 +144,7 @@ app.add_middleware(CORSMiddleware, ...)
 👤 User info - Email: test@gmail.com, Name: Test User
 ✅ New user created: ...
 🍪 Session cookie set
-🔄 Redirecting to: https://dhruv-ai-fix.preview.emergentagent.com/profile-setup
+🔄 Redirecting to: https://gmail-auth-dhruv.preview.emergentagent.com/profile-setup
 ```
 
 ## Architecture Benefits
@@ -162,7 +162,7 @@ app.add_middleware(CORSMiddleware, ...)
 
 **Required Authorized Redirect URI:**
 ```
-https://dhruv-ai-fix.preview.emergentagent.com/api/auth/google/callback
+https://gmail-auth-dhruv.preview.emergentagent.com/api/auth/google/callback
 ```
 
 **OAuth 2.0 Credentials:**
