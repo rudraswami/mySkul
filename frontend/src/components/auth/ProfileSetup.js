@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { User, Target, BookOpen, Globe, Calendar, Check } from 'lucide-react';
 import '../../styles/auth.css';
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [formData, setFormData] = useState({
