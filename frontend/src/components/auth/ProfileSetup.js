@@ -95,12 +95,18 @@ export default function ProfileSetup() {
         const data = await response.json();
         console.log('✅ Profile completed successfully:', data);
         
+        // Update user context with new profile data
+        if (data.user) {
+          updateUser(data.user);
+          console.log('✅ User context updated with profile_completed:', data.user.profile_completed);
+        }
+        
         // Clear temp storage
         sessionStorage.removeItem('temp_user_info');
         
         console.log('🔄 Navigating to dashboard...');
         // Navigate to dashboard
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       } else {
         const error = await response.json();
         console.error('❌ Profile completion failed:', error);
