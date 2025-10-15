@@ -17,6 +17,27 @@ export default function ProfileSetup() {
   });
 
   useEffect(() => {
+    // Check if session_token is in URL (direct redirect from OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionToken = urlParams.get('session_token');
+    
+    if (sessionToken) {
+      console.log('🍪 Setting session cookie from URL parameter');
+      
+      // Set session cookie client-side
+      const domain = window.location.hostname.includes('emergent.host') 
+        ? '.emergent.host' 
+        : window.location.hostname;
+      
+      const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
+      document.cookie = cookieString;
+      
+      console.log('✅ Session cookie set');
+      
+      // Clean URL by removing session_token parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     // Get user info from session storage (set during OAuth callback)
     const storedUser = sessionStorage.getItem('temp_user_info');
     if (storedUser) {
