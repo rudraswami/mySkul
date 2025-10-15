@@ -445,7 +445,7 @@ async def process_google_login(session_data: dict, db):
             {"user_id": existing_user["user_id"]},
             {"$set": {
                 "session_token": session_data['session_token'],
-                "session_expiry": session_expiry,
+                "session_expiry": session_expiry.isoformat(),
                 "google_id": session_data['id'],
                 "photo_url": session_data['picture'],
                 "auth_provider": "google"
@@ -469,7 +469,11 @@ async def process_google_login(session_data: dict, db):
             session_expiry=session_expiry,
             profile_completed=False
         )
-        await db.users.insert_one(user.dict())
+        user_dict = user.dict()
+        # Convert datetime to ISO string for MongoDB
+        if isinstance(user_dict.get('session_expiry'), datetime):
+            user_dict['session_expiry'] = user_dict['session_expiry'].isoformat()
+        await db.users.insert_one(user_dict)
     
     return {
         "message": "Authentication successful",
