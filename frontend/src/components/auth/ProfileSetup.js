@@ -75,6 +75,8 @@ export default function ProfileSetup() {
     setLoading(true);
 
     try {
+      console.log('📤 Submitting profile data:', formData);
+      
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/profile/complete`, {
         method: 'POST',
         headers: {
@@ -84,20 +86,26 @@ export default function ProfileSetup() {
         body: JSON.stringify(formData)
       });
 
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response ok:', response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Profile completed successfully:', data);
         
         // Clear temp storage
         sessionStorage.removeItem('temp_user_info');
         
+        console.log('🔄 Navigating to dashboard...');
         // Navigate to dashboard
         navigate('/dashboard');
       } else {
         const error = await response.json();
+        console.error('❌ Profile completion failed:', error);
         alert(error.detail || 'Failed to complete profile setup');
       }
     } catch (error) {
-      console.error('Profile setup error:', error);
+      console.error('❌ Profile setup error:', error);
       alert('An error occurred. Please try again.');
     } finally {
       setLoading(false);
