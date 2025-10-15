@@ -623,8 +623,8 @@ async def get_session(
 
 @router.post("/profile/complete")
 async def complete_profile(
-    profile_data: 'ProfileCompleteRequest',
     request: Request,
+    profile_data: 'ProfileCompleteRequest',
     db = Depends(get_database)
 ):
     """
