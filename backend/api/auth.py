@@ -518,7 +518,7 @@ async def google_auth_callback(
             {"user_id": existing_user["user_id"]},
             {"$set": {
                 "session_token": auth_data.session_token,
-                "session_expiry": session_expiry,
+                "session_expiry": session_expiry.isoformat(),
                 "google_id": auth_data.id,  # Ensure google_id is set
                 "photo_url": auth_data.picture,  # Update photo
                 "auth_provider": "google"
@@ -542,7 +542,11 @@ async def google_auth_callback(
             session_expiry=session_expiry,
             profile_completed=False  # Needs profile setup
         )
-        await db.users.insert_one(user.dict())
+        user_dict = user.dict()
+        # Convert datetime to ISO string for MongoDB
+        if isinstance(user_dict.get('session_expiry'), datetime):
+            user_dict['session_expiry'] = user_dict['session_expiry'].isoformat()
+        await db.users.insert_one(user_dict)
     
     # Set httpOnly cookie with session token
     backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
