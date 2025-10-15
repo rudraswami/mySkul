@@ -60,6 +60,27 @@ export default function Dashboard() {
   const [showWellnessToast, setShowWellnessToast] = useState(false);
 
   useEffect(() => {
+    // Check if session_token is in URL (direct redirect from OAuth callback for returning users)
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionToken = urlParams.get('session_token');
+    
+    if (sessionToken) {
+      console.log('🍪 Setting session cookie from URL parameter');
+      
+      // Set session cookie client-side
+      const domain = window.location.hostname.includes('emergent.host') 
+        ? '.emergent.host' 
+        : window.location.hostname;
+      
+      const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
+      document.cookie = cookieString;
+      
+      console.log('✅ Session cookie set');
+      
+      // Clean URL by removing session_token parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('dhruv_ai_token');
