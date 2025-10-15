@@ -1,58 +1,65 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageLoader } from '../ui/loading';
 
 export default function OAuthCallback() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
 
   useEffect(() => {
     const processCallback = async () => {
-      // Get session_id from URL fragment
-      const fragment = window.location.hash.substring(1);
-      const params = new URLSearchParams(fragment);
-      const sessionId = params.get('session_id');
+      // Get session_token from URL query parameters
+      const sessionToken = searchParams.get('session_token');
 
       console.log('🔍 OAuth Callback - Full URL:', window.location.href);
-      console.log('🔍 URL Fragment:', fragment);
-      console.log('🔍 Session ID:', sessionId);
+      console.log('🔍 Session Token:', sessionToken ? '✓ Found' : '✗ Missing');
 
-      if (!sessionId) {
-        console.error('❌ No session_id found in URL');
-        setError('Authentication failed: No session ID received');
+      if (!sessionToken) {
+        console.error('❌ No session_token found in URL');
+        setError('Authentication failed: No session token received');
         setTimeout(() => navigate('/login'), 3000);
         return;
       }
 
-      console.log('🔐 Processing OAuth callback with session_id:', sessionId);
+      console.log('🔐 Processing OAuth callback with session_token');
 
       try {
-        // Call our backend which will proxy to Emergent (avoids CORS issues)
-        console.log('📡 Calling backend proxy...');
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google/session`, {
-          method: 'POST',
+        // Set session cookie client-side
+        const domain = window.location.hostname.includes('emergent.host') 
+          ? '.emergent.host' 
+          : window.location.hostname;
+        
+        const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
+        document.cookie = cookieString;
+        
+        console.log('🍪 Session cookie set with domain:', domain);
+
+        // Now fetch user session to verify and get user data
+        console.log('📡 Fetching user session...');
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/session`, {
+          method: 'GET',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ session_id: sessionId })
+          }
         });
 
-        console.log('📥 Backend Response Status:', response.status);
+        console.log('📥 Session Response Status:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('❌ Backend Error Response:', errorData);
-          throw new Error(errorData.detail || `Backend responded with status ${response.status}`);
+          console.error('❌ Session Verification Failed:', errorData);
+          throw new Error(errorData.detail || `Failed to verify session: ${response.status}`);
         }
 
         const result = await response.json();
-        console.log('✅ Authentication successful:', {
+        console.log('✅ Session verified:', {
           email: result.user?.email,
           profile_completed: result.user?.profile_completed
         });
 
-        // Clean URL fragment
+        // Clean URL query parameters
         window.history.replaceState({}, document.title, window.location.pathname);
 
         // Redirect based on profile completion
@@ -84,7 +91,7 @@ export default function OAuthCallback() {
     };
 
     processCallback();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   if (error) {
     return (
