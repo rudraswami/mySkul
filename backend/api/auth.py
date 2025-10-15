@@ -652,9 +652,11 @@ async def complete_profile(
     if not session_token:
         raise HTTPException(status_code=401, detail="Authentication required")
     
+    # Compare with ISO string format (consistent with storage)
+    current_time_iso = datetime.now(timezone.utc).isoformat()
     user_doc = await db.users.find_one({
         "session_token": session_token,
-        "session_expiry": {"$gt": datetime.now(timezone.utc)}
+        "session_expiry": {"$gt": current_time_iso}
     })
     
     if not user_doc:
