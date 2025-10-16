@@ -85,6 +85,12 @@ To enable CSRF protection, uncomment the CSRF middleware section in `/app/backen
 - [ ] State-changing requests work with CSRF tokens
 - [ ] CSRF validation blocks invalid tokens
 
+**Testing Results (Backend Testing Agent - January 2025)**:
+- ✅ `/api/auth/csrf-token` - Endpoint accessible and returns 200 OK
+- ⚠️ **Issue**: CSRF token returns empty string because middleware is disabled
+- ✅ **CSRF Middleware**: Available but disabled by default for gradual rollout
+- 📝 **Note**: CSRF protection can be enabled by uncommenting lines 122-136 in server.py
+
 ### Task 4: Backend Optimization ✅
 **Status**: COMPLETED
 
