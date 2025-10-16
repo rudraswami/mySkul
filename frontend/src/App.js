@@ -23,6 +23,13 @@ const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
 const Subscription = lazy(() => import('./components/Subscription'));
 const ProfileSettings = lazy(() => import('./components/ProfileSettings'));
 
+// Policy pages (lazy loaded)
+const PrivacyPolicy = lazy(() => import('./pages/policies/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/policies/TermsAndConditions'));
+const RefundPolicy = lazy(() => import('./pages/policies/RefundPolicy'));
+const ShippingPolicy = lazy(() => import('./pages/policies/ShippingPolicy'));
+const ContactUs = lazy(() => import('./pages/policies/ContactUs'));
+
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
