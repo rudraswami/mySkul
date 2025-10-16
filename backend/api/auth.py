@@ -635,6 +635,28 @@ async def get_session(
     }
 
 
+
+@router.get("/csrf-token")
+async def get_csrf_token(request: Request):
+    """
+    Get CSRF token for state-changing requests
+    The token is automatically generated and sent in the X-CSRF-Token header
+    """
+    import secrets
+    
+    # Generate new CSRF token
+    csrf_token = secrets.token_urlsafe(32)
+    
+    # Store in session
+    if hasattr(request, "session"):
+        request.session["csrf_token"] = csrf_token
+    
+    return {
+        "csrf_token": csrf_token,
+        "message": "CSRF token generated. Include this token in X-CSRF-Token header for all POST/PUT/PATCH/DELETE requests."
+    }
+
+
 @router.post("/profile/complete")
 async def complete_profile(
     profile_data: ProfileCompleteRequest,
