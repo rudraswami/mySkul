@@ -145,13 +145,13 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
             {/* User Info */}
             <div className="flex items-center mb-4">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-blue-100 text-blue-700">
+                <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                   {user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-gray-700">{user?.full_name}</p>
-                <p className="text-xs text-gray-500">{user?.subscription_type || 'Free'} Plan</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.full_name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.subscription_type || 'Free'} Plan</p>
               </div>
             </div>
 
