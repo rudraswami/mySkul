@@ -327,33 +327,53 @@ async def check_ai_tutor_access(
 @router.post("/track-ai-tutor-session")
 async def track_ai_tutor_session(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Track an AI Tutor session usage"""
+    """Track an AI Tutor session usage (MIGRATED to Unified Service)"""
     try:
         # First check if user has access
-        access_info = await subscription_service.check_ai_tutor_access(user.user_id)
+        access_result = await unified_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
         
-        if not access_info.get("allowed", False):
+        if not access_result.allowed:
             raise HTTPException(
                 status_code=402,
                 detail={
                     "message": "AI Tutor session limit reached",
-                    "upgrade_hint": access_info.get("upgrade_hint"),
-                    "needs_upgrade": True
+                    "upgrade_hint": access_result.upgrade_message,
+                    "needs_upgrade": True,
+                    "used": access_result.used,
+                    "limit": access_result.limit
                 }
             )
         
         # Track the session
-        success = await subscription_service.track_ai_tutor_session(user.user_id)
+        success = await unified_service.track_feature_use(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            amount=1
+        )
         if not success:
             raise HTTPException(status_code=500, detail="Failed to track session")
         
         # Return updated access info
-        updated_access = await subscription_service.check_ai_tutor_access(user.user_id)
+        updated_access = await unified_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=0
+        )
+        
         return {
             "message": "Session tracked successfully",
-            "access_info": updated_access
+            "access_info": {
+                "allowed": updated_access.allowed,
+                "remaining": updated_access.remaining,
+                "total": updated_access.limit,
+                "used": updated_access.used
+            }
         }
     except HTTPException:
         raise
