@@ -706,3 +706,138 @@ async def complete_profile(
             "subscription_type": user.subscription_type
         }
     }
+
+
+# =============================================================================
+# JWT REFRESH TOKEN ENDPOINTS
+# =============================================================================
+
+@router.post("/token/refresh")
+async def refresh_access_token(
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Refresh access token using refresh token
+    Implements token rotation for security
+    
+    Expects refresh_token in request body:
+    {
+        "refresh_token": "..."
+    }
+    
+    Returns new access and refresh tokens
+    """
+    from services.jwt_service import JWTService
+    from datetime import datetime, timezone
+    import json
+    
+    # Get refresh token from request body
+    try:
+        body = await request.json()
+        refresh_token = body.get("refresh_token")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="Refresh token required")
+    
+    # Initialize JWT service
+    jwt_service = JWTService(db)
+    
+    # Verify and rotate refresh token
+    payload = await jwt_service.verify_refresh_token(refresh_token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    
+    user_id = payload.get("sub")
+    
+    # Create new token pair with rotation
+    result = await jwt_service.rotate_refresh_token(refresh_token, user_id)
+    if not result:
+        raise HTTPException(status_code=401, detail="Token rotation failed")
+    
+    new_access_token, new_refresh_token = result
+    
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+        "expires_in": jwt_service.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    }
+
+
+@router.post("/token/revoke")
+async def revoke_refresh_token(
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Revoke a refresh token (logout from specific device)
+    
+    Expects refresh_token in request body:
+    {
+        "refresh_token": "..."
+    }
+    """
+    from services.jwt_service import JWTService
+    
+    # Get refresh token from request body
+    try:
+        body = await request.json()
+        refresh_token = body.get("refresh_token")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="Refresh token required")
+    
+    # Initialize JWT service
+    jwt_service = JWTService(db)
+    
+    # Revoke token
+    success = await jwt_service.revoke_refresh_token(refresh_token)
+    
+    if not success:
+        # Don't reveal whether token exists
+        return {"message": "Token revoked successfully"}
+    
+    return {"message": "Token revoked successfully"}
+
+
+@router.post("/token/revoke-all")
+async def revoke_all_tokens(
+    request: Request,
+    db = Depends(get_database)
+):
+    """
+    Revoke all refresh tokens for current user (logout from all devices)
+    Requires valid authentication
+    """
+    from services.jwt_service import JWTService
+    from datetime import datetime, timezone
+    
+    # Get current user from session
+    session_token = request.cookies.get("dhruv_ai_session")
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # Find user by session
+    current_time_iso = datetime.now(timezone.utc).isoformat()
+    user_doc = await db.users.find_one({
+        "session_token": session_token,
+        "session_expiry": {"$gt": current_time_iso}
+    })
+    
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    # Revoke all tokens
+    jwt_service = JWTService(db)
+    count = await jwt_service.revoke_all_user_tokens(user_doc["user_id"])
+    
+    return {
+        "message": f"Revoked {count} refresh token(s)",
+        "count": count
+
+    }
