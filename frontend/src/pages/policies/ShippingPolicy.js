@@ -162,7 +162,7 @@ export default function ShippingPolicy() {
               <div className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Web Platform</h3>
                 <p className="text-gray-700 dark:text-gray-300 mb-0">
-                  Access via https://seamless-auth-1.emergent.host from any web browser
+                  Access via <span className="font-mono text-blue-600 dark:text-blue-400">{window.location.origin}</span> from any web browser
                 </p>
               </div>
 
