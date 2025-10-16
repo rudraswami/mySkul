@@ -4,7 +4,7 @@ import time
 import uuid
 from datetime import datetime
 
-class Phase1StabilityTester:
+class ProductionDeploymentTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
         self.base_url = "https://dhruv-ai-deploy.preview.emergentagent.com/api"
