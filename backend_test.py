@@ -333,7 +333,7 @@ class Phase1StabilityTester:
             "POST",
             "subscription/check-access",
             [200, 402],
-            data={"feature": "auto_notes"},
+            data={"feature_name": "auto_notes"},
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
