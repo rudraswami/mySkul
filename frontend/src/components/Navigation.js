@@ -157,10 +157,16 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
 
             {/* Action Buttons */}
             <div className="space-y-2">
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Theme</span>
+                <ThemeToggle />
+              </div>
+              
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="w-full justify-start text-gray-600 hover:text-gray-900"
+                className="w-full justify-start text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                 onClick={() => handleNavigation('/profile', 'Profile Settings')}
               >
                 <User className="h-4 w-4 mr-2" />
@@ -170,7 +176,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="w-full justify-start text-gray-600 hover:text-red-600"
+                className="w-full justify-start text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
