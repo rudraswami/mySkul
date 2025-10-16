@@ -207,55 +207,29 @@ export function SubscriptionProvider({ children }) {
     return featureBenefits[featureName] || baseBenefits;
   };
 
-  const trackFeatureUsage = async (featureName) => {
+  const trackFeatureUsage = useCallback(async (featureName) => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return;
-
-      await axios.post(`${API}/subscription/track-usage`, 
-        { feature_name: featureName }, 
-        { headers: { 'Authorization': `Bearer ${token}` } }
+      await apiClient.post('/subscription/track-usage', 
+        { feature_name: featureName }
       );
 
-      // Refresh usage after tracking
-      await fetchDailyUsage();
+      // Refresh subscription info after tracking
+      await refetchSubscription();
     } catch (error) {
       console.error('Usage tracking failed:', error);
     }
-  };
+  }, [refetchSubscription]);
 
-  const fetchDailyUsage = async () => {
+  const upgradeSubscription = useCallback(async (targetTier, billingCycle = 'monthly') => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return;
-
-      const response = await axios.get(`${API}/subscription/usage`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.data) {
-        setDailyUsage(response.data.daily_usage || {});
-      }
-    } catch (error) {
-      console.error('Failed to fetch daily usage:', error);
-    }
-  };
-
-  const upgradeSubscription = async (targetTier, billingCycle = 'monthly') => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) throw new Error('Not authenticated');
-
-      const response = await axios.post(`${API}/subscription/upgrade`, {
+      const response = await apiClient.post('/subscription/upgrade', {
         target_tier: targetTier,
         billing_cycle: billingCycle
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.data.upgraded) {
         // Refresh subscription info
-        await fetchSubscriptionInfo();
+        await refetchSubscription();
         setUpsellModal(null); // Close upsell modal
         
         return {
@@ -271,18 +245,13 @@ export function SubscriptionProvider({ children }) {
         message: error.response?.data?.detail || 'Upgrade failed'
       };
     }
-  };
+  }, [refetchSubscription]);
 
-  const handleUpsellResponse = async (interactionId, response) => {
+  const handleUpsellResponse = useCallback(async (interactionId, response) => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return;
-
-      await axios.post(`${API}/subscription/upsell-response`, {
+      await apiClient.post('/subscription/upsell-response', {
         interaction_id: interactionId,
         response: response
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response === 'dismissed' || response === 'later') {
@@ -291,7 +260,7 @@ export function SubscriptionProvider({ children }) {
     } catch (error) {
       console.error('Upsell response failed:', error);
     }
-  };
+  }, []);
 
   const getFeatureLimit = (featureName) => {
     if (!subscriptionInfo?.plan_info?.features) return 0;
