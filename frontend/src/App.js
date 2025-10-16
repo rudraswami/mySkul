@@ -85,7 +85,11 @@ function AppContent() {
         {/* New Gmail-Only Auth Routes */}
         <Route 
           path="/login" 
-          element={!user ? <LoginScreen /> : <Navigate to="/dashboard" />} 
+          element={
+            <PublicRoute>
+              <LoginScreen />
+            </PublicRoute>
+          } 
         />
         
         {/* OAuth Callback Route - PUBLIC (must be accessible without auth) */}
@@ -120,13 +124,9 @@ function AppContent() {
           element={<Navigate to="/login" replace />} 
         />
         
-        {/* Protected Routes */}
+        {/* Protected Routes - All require authentication */}
         <Route path="/*" element={
-          user ? (
-            // Check if profile setup is needed
-            !user.profile_completed ? (
-              <Navigate to="/profile-setup" />
-            ) : (
+          <ProtectedRoute>
             <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
               <Navigation 
                 mobileMenuOpen={mobileMenuOpen} 
