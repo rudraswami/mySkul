@@ -8,6 +8,7 @@ from typing import Optional
 
 from services.auth_service import AuthService
 from services.subscription_service import SubscriptionService
+from services.unified_subscription_service import UnifiedSubscriptionService
 from services.ai_service import AIService
 from models.core import User
 
@@ -18,7 +19,8 @@ from models.core import User
 
 db: AsyncIOMotorDatabase = None
 auth_service: AuthService = None
-subscription_service: SubscriptionService = None
+subscription_service: SubscriptionService = None  # Legacy - being phased out
+unified_subscription_service: UnifiedSubscriptionService = None  # New unified service
 ai_service: AIService = None
 
 
