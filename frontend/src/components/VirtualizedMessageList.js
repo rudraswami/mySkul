@@ -5,7 +5,6 @@
  */
 import React, { useRef, useEffect, memo } from 'react';
 import { VariableSizeList as List } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 /**
  * Individual Message Row Component
@@ -40,12 +39,13 @@ export function VirtualizedMessageList({
   messages = [],
   renderMessage,
   getMessageHeight,
-  defaultItemSize = 100,
+  defaultItemSize = 150,
   onScroll,
   scrollToBottom = true,
   className = ''
 }) {
   const listRef = useRef(null);
+  const containerRef = useRef(null);
   const previousMessageCountRef = useRef(messages.length);
   
   // Auto-scroll to bottom when new messages arrive
@@ -76,58 +76,48 @@ export function VirtualizedMessageList({
 
   if (!messages || messages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
         No messages yet
       </div>
     );
   }
 
-  return (
-    <div className={`w-full h-full ${className}`}>
-      <AutoSizer>
-        {({ height, width }) => (
-          <List
-            ref={listRef}
-            height={height}
-            width={width}
-            itemCount={messages.length}
-            itemSize={getItemSize}
-            itemData={{
-              messages,
-              renderMessage
-            }}
-            onScroll={handleScroll}
-            overscanCount={5} // Render 5 extra items above/below viewport
-          >
-            {MessageRow}
-          </List>
-        )}
-      </AutoSizer>
-    </div>
-  );
-}
+  // Get container dimensions
+  const [dimensions, setDimensions] = React.useState({ width: 800, height: 600 });
 
-/**
- * Simple Message List with Fixed Height
- * For uniform message sizes
- */
-export function FixedHeightMessageList({
-  messages = [],
-  renderMessage,
-  itemHeight = 100,
-  onScroll,
-  scrollToBottom = true,
-  className = ''
-}) {
+  React.useEffect(() => {
+    if (containerRef.current) {
+      const updateDimensions = () => {
+        setDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight
+        });
+      };
+
+      updateDimensions();
+      window.addEventListener('resize', updateDimensions);
+      return () => window.removeEventListener('resize', updateDimensions);
+    }
+  }, []);
+
   return (
-    <VirtualizedMessageList
-      messages={messages}
-      renderMessage={renderMessage}
-      defaultItemSize={itemHeight}
-      onScroll={onScroll}
-      scrollToBottom={scrollToBottom}
-      className={className}
-    />
+    <div ref={containerRef} className={`w-full h-full ${className}`}>
+      <List
+        ref={listRef}
+        height={dimensions.height}
+        width={dimensions.width}
+        itemCount={messages.length}
+        itemSize={getItemSize}
+        itemData={{
+          messages,
+          renderMessage
+        }}
+        onScroll={handleScroll}
+        overscanCount={5} // Render 5 extra items above/below viewport
+      >
+        {MessageRow}
+      </List>
+    </div>
   );
 }
 
