@@ -498,7 +498,7 @@ async def process_google_login(session_data: dict, db):
 
 @router.post("/google/callback")
 async def google_auth_callback(
-    auth_data: 'GoogleAuthCallback',
+    auth_data: GoogleAuthCallback,
     response: Response,
     db = Depends(get_database)
 ):
