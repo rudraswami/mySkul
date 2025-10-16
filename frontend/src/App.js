@@ -10,7 +10,7 @@ import LoginScreen from './components/auth/LoginScreen';
 import OAuthCallback from './components/auth/OAuthCallback';
 import ProfileSetup from './components/auth/ProfileSetup';
 import StudentDashboard from './components/StudentDashboard';
-import AITutor from './components/AITutor';
+import AITutor from './components/AITutor'; // Now using modular version
 import MockTests from './components/MockTests';
 // Removed: Analytics and StressManagement components - not essential for core exam preparation
 import AutoNoteMentor from './components/AutoNoteMentor';
