@@ -33,7 +33,7 @@ export default function PrivacyPolicy() {
               educational platform and services.
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              By using Dhruv AI (available at https://seamless-auth-1.emergent.host), you agree to the collection and use of information 
+              By using Dhruv AI, you agree to the collection and use of information 
               in accordance with this policy.
             </p>
           </section>
