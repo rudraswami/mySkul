@@ -289,7 +289,7 @@ export function SubscriptionProvider({ children }) {
   };
 
   // Helper to programmatically trigger upsell modal for a feature
-  const triggerFeatureUpsell = async (featureName) => {
+  const triggerFeatureUpsell = useCallback(async (featureName) => {
     try {
       const accessInfo = await checkFeatureAccess(featureName);
       if (!accessInfo.has_access && accessInfo.upsell_info) {
@@ -310,11 +310,7 @@ export function SubscriptionProvider({ children }) {
       console.error('Failed to trigger upsell modal:', error);
       return false;
     }
-  };
-
-  useEffect(() => {
-    fetchSubscriptionInfo();
-  }, []);
+  }, [checkFeatureAccess]);
 
   const value = {
     // State
@@ -322,12 +318,12 @@ export function SubscriptionProvider({ children }) {
     dailyUsage,
     loading,
     upsellModal,
+    error,
     
     // Actions
-    fetchSubscriptionInfo,
+    refetchSubscription,
     checkFeatureAccess,
     trackFeatureUsage,
-    fetchDailyUsage,
     upgradeSubscription,
     handleUpsellResponse,
     setUpsellModal,
