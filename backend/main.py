@@ -79,6 +79,8 @@ def create_app() -> FastAPI:
     # Session Middleware (MUST be before CORS for cookie handling)
     logger.info("🍪 Configuring SessionMiddleware...")
     is_https = settings.BACKEND_URL.startswith('https://')
+    cookie_domain = settings.SESSION_COOKIE_DOMAIN
+    
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.JWT_SECRET,
@@ -88,7 +90,7 @@ def create_app() -> FastAPI:
     )
     logger.info(f"   - same_site: {settings.SESSION_COOKIE_SAMESITE}")
     logger.info(f"   - https_only: {is_https}")
-    logger.info(f"   - domain: {settings.SESSION_COOKIE_DOMAIN}")
+    logger.info(f"   - domain: {cookie_domain or 'auto (no restriction)'}")
     logger.info(f"   - BACKEND_URL: {settings.BACKEND_URL}")
     
     # CORS Middleware
