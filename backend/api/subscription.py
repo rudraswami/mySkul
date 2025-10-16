@@ -292,15 +292,34 @@ async def get_usage_info(
 @router.get("/check-ai-tutor-access")
 async def check_ai_tutor_access(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
     """
-    Check if user can access AI Tutor
+    Check if user can access AI Tutor (MIGRATED to Unified Service)
     Returns: {allowed, remaining, total, usage_percent, needs_upgrade, upgrade_hint}
     """
     try:
-        access_info = await subscription_service.check_ai_tutor_access(user.user_id)
-        return access_info
+        access_result = await unified_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
+        
+        # Calculate usage percentage
+        usage_percent = 0
+        if access_result.limit > 0:
+            usage_percent = int((access_result.used / access_result.limit) * 100)
+        
+        return {
+            "allowed": access_result.allowed,
+            "remaining": access_result.remaining if access_result.remaining >= 0 else "unlimited",
+            "total": access_result.limit if access_result.limit >= 0 else "unlimited",
+            "used": access_result.used,
+            "usage_percent": usage_percent,
+            "needs_upgrade": not access_result.allowed,
+            "upgrade_hint": access_result.upgrade_message if not access_result.allowed else None,
+            "message": access_result.message
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to check AI Tutor access: {str(e)}")
 
