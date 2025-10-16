@@ -203,6 +203,65 @@ async def generate_dual_ai_response_streaming(
                 "X-Accel-Buffering": "no"  # Disable nginx buffering
             }
         )
+
+
+
+@router.get("/mentor-tip/{subject}/{topic}")
+async def get_mentor_tip(
+    subject: str,
+    topic: str,
+    user: User = Depends(get_current_user),
+    tips_cache: MentorTipsCache = Depends(get_mentor_tips_cache),
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
+):
+    """
+    Get pre-generated mentor tip for a topic
+    PERFORMANCE OPTIMIZATION: Pre-generated tips for popular topics
+    """
+    try:
+        start_time = time.time()
+        
+        # Check cached tip first
+        cached_tip = await tips_cache.get_tip(subject, topic)
+        
+        if cached_tip:
+            latency = (time.time() - start_time) * 1000
+            return {
+                "tip": cached_tip,
+                "subject": subject,
+                "topic": topic,
+                "cached": True,
+                "latency_ms": latency
+            }
+        
+        # If not cached, return indication to generate
+        return {
+            "tip": None,
+            "subject": subject,
+            "topic": topic,
+            "cached": False,
+            "message": "Tip not pre-generated. Use AI generation endpoint."
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mentor tip lookup failed: {str(e)}")
+
+
+@router.get("/cache/stats")
+async def get_cache_statistics(
+    user: User = Depends(get_current_user),
+    cache_service: AICacheService = Depends(get_ai_cache_service)
+):
+    """Get AI response cache statistics (admin endpoint)"""
+    try:
+        stats = await cache_service.get_cache_stats()
+        return {
+            "cache_stats": stats,
+            "user_id": user.user_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache stats failed: {str(e)}")
+
         
     except HTTPException:
         raise
