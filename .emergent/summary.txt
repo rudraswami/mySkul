@@ -1,77 +1,55 @@
 <analysis>
-The trajectory details an iterative debugging and feature enhancement process for the Dhruv AI platform. Initially, the AI engineer addressed a critical subscription modal issue in Mock Tests, involving data mapping and backend response consistency. Subsequently, a comprehensive set of pending tasks was tackled, including deferred React Query migration, CSRF verification, significant MongoDB performance indexing, and extensive UI/UX enhancements with Tailwind CSS, which involved resolving multiple CSS compilation errors. The latest, and still unresolved, critical issue involves the subscription modal not appearing for AI Tutor and Auto-Note Generator when limits are reached. Debugging revealed a persistent browser caching issue leading to 404s for AI Tutor's API calls and the global  not being rendered in , even though local modals were added to components. The current focus is on resolving caching and ensuring correct modal triggering.
+The AI engineer successfully guided the Dhruv AI application from an initial state through significant feature development and debugging. The journey began with frontend modal display and refactoring, quickly pivoting to a comprehensive Gmail-only authentication system. This involved extensive backend Google OAuth implementation (Authlib, MongoDB state store, new user model) and corresponding frontend integration. Persistent challenges included ,  errors, and  cookie issues, often stemming from environment variable conflicts and hardcoded URLs. The engineer systematically addressed these, transitioning to a  URL parameter flow. Subsequent work focused on fixing profile setup ( vs ,  due to unhandled session token,  from inconsistent datetime storage), re-login issues (race conditions,  typo), and then initiated a major refactoring phase (Phase 0: modularization to , centralized config, index scripts) and stability phase (Phase 1: CORS/cookie, JWT refresh, OpenAPI). The current work involves unifying subscription logic.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform aims to provide a rich, context-aware, and academically precise learning experience via its AI Tutor, Auto-Note Mentor, and Mock Tests. Core requirements included robust input handling, historical message display, and resolving generic AI responses, performance issues, and subscription/monetization flows.
-Recent efforts focused on transforming the AI Tutor to deliver deep, visually impactful, and exam-smart responses using multi-pass reasoning, adaptive personas, and semantic rendering. This also involved standardizing subscription plans, making the Mentor section collapsible, fixing UI viewport jumps, creating distraction-free Mock Test exams with clean results, and ensuring all subscription-related buttons function correctly, triggering upgrade modals when limits are met. The ultimate goal is a premium, responsive UI/UX across devices.
+The Dhruv AI platform offers AI Tutor, Auto-Note Mentor, and Mock Tests, requiring robust input, historical storage, performance, and a strong monetization model. Recent efforts enhanced AI Tutor with visual, exam-smart responses using multi-pass reasoning and semantic rendering, standardized subscription plans, and improved UI/UX elements. The current critical focus is a user login/onboarding overhaul: implementing a visually premium showcase, transitioning to Gmail-Only authentication (auto-fetching user details, auto-login for returning users, no email verification), introducing a post-login  screen for first-time users (capturing Exam Type, Study Goal, Preferred Mode, Timezone, Country), consistently integrating an Others exam type, and ensuring UI/UX consistency across all screens. The goal is a passwordless, premium, and seamless onboarding experience.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack**: React.js (frontend), FastAPI (backend), MongoDB (database).
--   **AI/LLM**: OpenAI GPT-4o, multi-pass reasoning, RAG infrastructure.
--   **Frontend UI**: React Query (for state/data management), KaTeX (LaTeX rendering), Tailwind CSS, React Portal, .
--   **Backend**: Pydantic,  (retry logic), MongoDB indexing.
--   **Deployment**: Supervisor, Kubernetes ingress.
--   **Subscription**: Usage-based quotas, .
--   **Security**: CSRF middleware.
+- **Full-stack**: React.js (frontend), FastAPI (backend), MongoDB (database).
+- **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies (), centralized AuthContext.
+- **Backend**: Pydantic, Starlette SessionMiddleware, environment variables, modular architecture.
+- **Frontend**: React Router,  for client-side cookie management.
+- **Deployment**: Supervisor, Kubernetes ingress,  for configuration.
+- **Services**:  for feature access.
 </key_technical_concepts>
 
 <code_architecture>
-The application employs a React frontend, a FastAPI backend, and MongoDB. The backend is structured with  routers,  for business logic, and  for data schemas.
 
-
-
--   ****: Central for AI response generation, using GPT-4o, and multi-pass reasoning.  reduced from 1600 to 800,  to 15s for performance.
--   ****: Central source for AI Tutor subscription plan configurations, updated with new pricing.
--   ****:
-    -   **Importance**: Manages subscription logic and feature access checks.
-    -   **Changes**: Modified  and  methods to consistently return  in all response paths (unlimited, locked, limit reached, access granted), ensuring frontend modals receive complete data for rendering.
--   ****:
-    -   **Importance**: Main AI Tutor UI component.
-    -   **Changes**: Refactored to use . Added  and  to API payload. Updated  to correctly format  and  for the local , mapping backend / to frontend /. Debugging involved removing  prefix from  call to avoid double  in URL.
--   ****: Renders rich AI responses with LaTeX and handles markdown, now includes a collapsible Mentor section.
--   ****:
-    -   **Importance**: Displays subscription upgrade options.
-    -   **Changes**: It now expects ,  (with , , , ), and  (with , , , , ).
--   ****:
-    -   **Importance**: Manages Mock Test features.
-    -   **Changes**: Fixed Create Custom Mock Test button by importing  locally, managing its  state, and mapping  results (backend / to frontend /) into the modal's props.
--   ****:
-    -   **Importance**: Auto-Note generation component.
-    -   **Changes**: Added local  component and its state (, , ) as the global  was removed from . Modified  and  to trigger this local modal and properly map  and  data.
--   ****:
-    -   **Importance**: Provides subscription information and feature access checks.
-    -   **Changes**: Modified  to return a more complete  object (including , , , ) when a 402  error is caught, ensuring the modal receives full data.
--   ****: Removed global  import and usage.
--   ****: Enhanced with premium design tokens (colors, fonts, animations).
--   ****: Modified to directly embed premium CSS styles (previously in ) within  and  directives to resolve compilation issues.
--   ****: Created, then its content was merged into .
--   ****: Configured with .
+-   ****: Central to environment configuration. Continuously updated with , , , , and cookie settings (, , ).
+-   ****: **NEW** primary entry point. Orchestrates FastAPI app, registers all API routers, configures middleware (CORS, Session), connects to MongoDB, and initializes services. It replaced  for a modular approach.
+-   ****: Original FastAPI entry point. Refactored  parameters, removed ML dependencies for faster startup, and standardized cookie settings. **Later symlinked to ** and effectively deprecated. Fixed  typo.
+-   ****: Defines core Pydantic models.  model updated to support Gmail auth (e.g., , , ). Contains .
+-   ****: Handles user authentication and OAuth. Implemented Google OAuth endpoints (, ). Refactored OAuth callback to return  as a URL parameter. Fixed  endpoint to accept  in the request body and consistent ISO string comparison for . Added JWT refresh endpoints.
+-   ****: Handles Google OAuth logic using Authlib.
+-   ****: Manages OAuth state using MongoDB, replacing session-based state in containerized environments.
+-   ****: **NEW** service to handle JWT token generation, refresh, and invalidation.
+-   ****: **NEW** service created to consolidate subscription and feature access logic for consistency.
+-   ****: **NEW** file for centralized environment variable loading and configuration.
+-   ****: **NEW** file for managing MongoDB connection.
+-   ****: **NEW** script to ensure database indexes are created idempotently.
+-   ****: Defines main React routes. Updated to handle , ,  based on  state ().
+-   ****: Manages user authentication state. Centralized  extraction from URL parameters and client-side cookie setting. Includes  function for profile completion.
+-   ****: Post-login onboarding screen. Updated to correctly submit data to the backend, call  from AuthContext, and read user info from URL parameters.
+-   ****: Initially processed  from URL. Later, this logic was **centralized to **.
+-   ****: Initially handled  from URL. Later, this logic was **removed** as it's centralized in .
 </code_architecture>
 
 <pending_tasks>
--   Complete React Query migration for remaining frontend components, especially  (deferred due to complexity).
+-   Complete React Query migration for remaining frontend components.
 -   Update  integration with React Query.
--   Re-enable CSRF middleware in the backend and implement frontend token exchange (CSRF middleware is enabled, but explicit token exchange for cookies might be a pending step if not implicitly handled).
+-   Re-enable CSRF middleware in the backend and implement frontend token exchange.
 -   Test cookie-based authentication with CSRF and visually verify UI.
 -   Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
 -   Obtain and update Razorpay production API keys.
--   Address the  vs.  entry point architectural issue (cleanup/migration plan separately).
+-   Continue migrating other API routers and frontend components to use the .
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was debugging why the subscription modal was not appearing for the AI Tutor and Auto-Note Generator, despite previous fixes for the Mock Tests. The user reported persistent issues:
-1.  **AI Tutor**: A  error for , indicating a double  in the URL.
-2.  **Auto-Note Generator**: A  response (which is correct), but the subscription modal still did not appear. Console logs showed Upsell modal triggered from  (actually ).
-
-Investigation revealed that:
--   The AI Tutor  was due to persistent browser caching of an old frontend build, which was still sending a request with the incorrect double  prefix, despite the code fix in .
--   The Upsell modal triggered message originated from  calling , which attempts to set a GLOBAL  state. However, the global  component that rendered this state was previously removed from . Although  and  now have their own *local*  components, the  was still trying to trigger the unrendered global one, leading to the modal not showing despite the access check failing correctly.
-
-The engineer has created  and  to address these issues.
+Immediately before this summary, the AI engineer was executing Phase 1 – Stability tasks, specifically focusing on JWT refresh and the unification of subscription and feature-access logic. A new service, , was created for JWT refresh. The primary focus then shifted to centralizing subscription logic, leading to the creation of . This new service was then integrated into  and subsequently into , replacing previous access checks. During this integration, an import error for  in  was identified and fixed. The backend was successfully restarted and confirmed to be running and healthy, indicating that the initial integration of the unified subscription service is complete for the AI router.
 </current_work>
 
 <optional_next_step>
-Implement cache-busting mechanisms for the frontend and ensure local  components are correctly triggered by  data.
+Continue migrating other API routers and frontend components to use the  to replace duplicate plan checks.
 </optional_next_step>

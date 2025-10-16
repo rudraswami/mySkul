@@ -99,7 +99,7 @@ Status: **PRODUCTION READY**
 ### 1. Update Google Cloud Console (CRITICAL)
 **Current Redirect URI:**
 ```
-https://gmail-auth-dhruv.preview.emergentagent.com/api/auth/google/callback
+https://auth-gateway-dhruv.preview.emergentagent.com/api/auth/google/callback
 ```
 
 **After deployment, add production URI:**

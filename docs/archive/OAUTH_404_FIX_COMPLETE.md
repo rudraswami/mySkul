@@ -13,7 +13,7 @@ The OAuth callback was returning 404 because:
 ```
 User clicks "Continue with Google"
   ↓
-Backend sends redirect_uri: https://gmail-auth-dhruv.preview.emergentagent.com/api/auth/google/callback
+Backend sends redirect_uri: https://auth-gateway-dhruv.preview.emergentagent.com/api/auth/google/callback
   ↓
 Google redirects user to that URL after authentication
   ↓
@@ -44,7 +44,7 @@ Production domain routes to backend on port 8001
 **File:** `/app/backend/api/auth.py`
 
 **Changed Lines:**
-- Line 156: Removed fallback `'https://gmail-auth-dhruv.preview.emergentagent.com'`
+- Line 156: Removed fallback `'https://auth-gateway-dhruv.preview.emergentagent.com'`
 - Line 220: Replaced with proper fallback logic
 - Line 239: Removed fallback, made BACKEND_URL required
 - Line 352: Replaced with proper fallback logic
@@ -52,7 +52,7 @@ Production domain routes to backend on port 8001
 
 **Before:**
 ```python
-backend_url = os.getenv('BACKEND_URL', 'https://gmail-auth-dhruv.preview.emergentagent.com')
+backend_url = os.getenv('BACKEND_URL', 'https://auth-gateway-dhruv.preview.emergentagent.com')
 ```
 
 **After:**
@@ -69,14 +69,14 @@ if not backend_url:
 **Changed:**
 ```env
 # OLD (WRONG - Preview Domain)
-BACKEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
-FRONTEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
-CORS_ORIGINS="http://localhost:3000,https://gmail-auth-dhruv.preview.emergentagent.com,..."
+BACKEND_URL=https://auth-gateway-dhruv.preview.emergentagent.com
+FRONTEND_URL=https://auth-gateway-dhruv.preview.emergentagent.com
+CORS_ORIGINS="http://localhost:3000,https://auth-gateway-dhruv.preview.emergentagent.com,..."
 
 # NEW (CORRECT - Production Domain)
 BACKEND_URL=https://seamless-auth-1.emergent.host
 FRONTEND_URL=https://seamless-auth-1.emergent.host
-CORS_ORIGINS="http://localhost:3000,https://seamless-auth-1.emergent.host,https://gmail-auth-dhruv.preview.emergentagent.com,..."
+CORS_ORIGINS="http://localhost:3000,https://seamless-auth-1.emergent.host,https://auth-gateway-dhruv.preview.emergentagent.com,..."
 ```
 
 **Note:** Both production and preview domains are in CORS for flexibility, but production domain is primary.
@@ -88,7 +88,7 @@ CORS_ORIGINS="http://localhost:3000,https://seamless-auth-1.emergent.host,https:
 **Changed:**
 ```env
 # OLD (WRONG - Preview Domain)
-REACT_APP_BACKEND_URL=https://gmail-auth-dhruv.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://auth-gateway-dhruv.preview.emergentagent.com
 
 # NEW (CORRECT - Production Domain)
 REACT_APP_BACKEND_URL=https://seamless-auth-1.emergent.host
@@ -110,7 +110,7 @@ REACT_APP_BACKEND_URL=https://seamless-auth-1.emergent.host
    ```
 6. You can keep the preview URL as well for testing:
    ```
-   https://gmail-auth-dhruv.preview.emergentagent.com/api/auth/google/callback
+   https://auth-gateway-dhruv.preview.emergentagent.com/api/auth/google/callback
    ```
 7. Click **SAVE**
 8. **Wait 5-10 minutes** for Google's changes to propagate globally

@@ -9,7 +9,7 @@ import json
 import sys
 
 class CSRFTester:
-    def __init__(self, base_url="https://gmail-auth-dhruv.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://auth-gateway-dhruv.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session = requests.Session()
         self.csrf_token = None

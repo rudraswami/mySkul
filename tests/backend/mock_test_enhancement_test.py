@@ -6,7 +6,7 @@ import time
 import uuid
 
 class MockTestEnhancementTester:
-    def __init__(self, base_url="https://gmail-auth-dhruv.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://auth-gateway-dhruv.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
