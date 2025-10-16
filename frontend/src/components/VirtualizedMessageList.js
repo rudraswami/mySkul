@@ -3,7 +3,7 @@
  * Efficiently renders large chat histories with virtual scrolling
  * Only renders visible messages in the viewport
  */
-import React, { useRef, useEffect, memo } from 'react';
+import React, { useRef, useEffect, memo, useState } from 'react';
 import { VariableSizeList as List } from 'react-window';
 
 /**
