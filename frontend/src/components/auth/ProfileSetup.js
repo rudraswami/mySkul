@@ -21,10 +21,27 @@ export default function ProfileSetup() {
   useEffect(() => {
     // Note: Session token from URL is now handled by AuthContext
     
-    // Get user info from session storage (set during OAuth callback)
-    const storedUser = sessionStorage.getItem('temp_user_info');
-    if (storedUser) {
-      setUserInfo(JSON.parse(storedUser));
+    // Get user info from URL parameters (passed by OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name');
+    const email = urlParams.get('email');
+    const photoUrl = urlParams.get('photo_url');
+    
+    if (name && email) {
+      setUserInfo({
+        name: decodeURIComponent(name),
+        email: decodeURIComponent(email),
+        photo_url: photoUrl ? decodeURIComponent(photoUrl) : null
+      });
+      
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      // Fallback: try session storage
+      const storedUser = sessionStorage.getItem('temp_user_info');
+      if (storedUser) {
+        setUserInfo(JSON.parse(storedUser));
+      }
     }
     
     // Auto-detect country from timezone
