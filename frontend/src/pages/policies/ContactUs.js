@@ -85,10 +85,10 @@ export default function ContactUs() {
                       Customer support hotline
                     </p>
                     <p className="text-green-600 dark:text-green-400 font-medium">
-                      +91-XXXX-XXXXXX
+                      +91-8660838896
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Toll-free: 1800-XXX-XXXX
+                      Customer support hotline
                     </p>
                   </div>
                 </div>
