@@ -27,6 +27,34 @@ async def create_indexes():
     client = AsyncIOMotorClient(settings.MONGO_URL)
     db = client[settings.DB_NAME]
     
+    def safe_create_index(collection, index_spec, collection_name):
+        """Helper to create index with proper error handling"""
+        try:
+            if isinstance(index_spec[0], list):
+                # Compound index
+                collection.create_index(index_spec[0], **index_spec[1])
+                index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
+            else:
+                # Single field index
+                collection.create_index(index_spec[0], **index_spec[1])
+                index_name = index_spec[0]
+            
+            print(f"   ✓ {index_name}")
+        except Exception as e:
+            error_msg = str(e)
+            if isinstance(index_spec[0], list):
+                index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
+            else:
+                index_name = index_spec[0]
+            
+            if "DuplicateKey" in error_msg:
+                print(f"   ⚠️  {index_name} (unique constraint violated - clean {collection_name} data)")
+            elif "IndexOptionsConflict" in error_msg or "already exists" in error_msg:
+                print(f"   ℹ️  {index_name} (already exists)")
+            else:
+                print(f"   ❌ {index_name} failed: {error_msg}")
+                raise
+    
     try:
         # =========================================================================
         # USERS COLLECTION
@@ -50,16 +78,7 @@ async def create_indexes():
         ]
         
         for index_spec in users_indexes:
-            if isinstance(index_spec[0], list):
-                # Compound index
-                await db.users.create_index(index_spec[0], **index_spec[1])
-                index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
-            else:
-                # Single field index
-                await db.users.create_index(index_spec[0], **index_spec[1])
-                index_name = index_spec[0]
-            
-            print(f"   ✓ {index_name}")
+            await safe_create_index(db.users, index_spec, "users")
         
         # =========================================================================
         # CHAT SESSIONS COLLECTION
