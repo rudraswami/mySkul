@@ -411,25 +411,33 @@ async def check_mentor_tip_access(
 @router.post("/track-mentor-tip-usage")
 async def track_mentor_tip_usage(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Track mentor tip usage"""
+    """Track mentor tip usage (MIGRATED to Unified Service)"""
     try:
         # Check access first
-        access_info = await subscription_service.check_mentor_tip_access(user.user_id)
+        access_result = await unified_service.check_feature_access(
+            user.user_id,
+            FeatureName.DOUBT_SOLVING.value,
+            requested_amount=1
+        )
         
-        if not access_info.get("allowed", False):
+        if not access_result.allowed:
             raise HTTPException(
                 status_code=402,
                 detail={
                     "message": "Mentor tip limit reached for today",
-                    "upgrade_hint": access_info.get("upgrade_hint"),
-                    "needs_upgrade": access_info.get("needs_upgrade", False)
+                    "upgrade_hint": access_result.upgrade_message,
+                    "needs_upgrade": True
                 }
             )
         
         # Track usage
-        success = await subscription_service.track_mentor_tip_usage(user.user_id)
+        success = await unified_service.track_feature_use(
+            user.user_id,
+            FeatureName.DOUBT_SOLVING.value,
+            amount=1
+        )
         if not success:
             raise HTTPException(status_code=500, detail="Failed to track usage")
         
