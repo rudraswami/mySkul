@@ -83,7 +83,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
       {/* Sidebar */}
       <div className={`${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      } fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+      } fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         
         {/* Mobile Close Button */}
         <div className="lg:hidden absolute top-0 right-0 -mr-12 pt-2">
@@ -99,11 +99,11 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
         </div>
 
         {/* Logo */}
-        <div className="flex items-center justify-start px-6 py-4 border-b border-gray-200">
-          <Brain className="h-8 w-8 text-blue-600 mr-3" />
+        <div className="flex items-center justify-start px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <Brain className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Dhruv AI</h1>
-            <p className="text-xs text-gray-500">{user?.exam_type} Preparation</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dhruv AI</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.exam_type} Preparation</p>
           </div>
         </div>
 
