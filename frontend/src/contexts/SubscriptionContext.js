@@ -1,59 +1,64 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/client';
 
 const SubscriptionContext = createContext();
 
+// Centralized subscription data fetching with React Query
+const fetchSubscriptionInfo = async () => {
+  try {
+    const response = await apiClient.get('/subscription/info');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch subscription info:', error);
+    // Return default FREE tier on error
+    return {
+      subscription_tier: 'FREE',
+      plan_info: {
+        display_name: '🆓 Free - Try Before You Commit',
+        features: {
+          ai_sessions_monthly: 10,
+          mentor_tips_daily: 0,
+          mock_tests_weekly: 1,
+          auto_note_uploads_daily: 1,
+          focus_engine_type: 'static',
+          ai_insights: 'locked',
+          voice_mode: 'locked',
+          offline_mode: false,
+          analytics_tier: 'basic',
+          visuals: 'standard',
+          priority_support: false,
+          export_notes: false,
+          concept_tagging: false
+        }
+      },
+      daily_usage: {},
+      usage_summary: { features: {} }
+    };
+  }
+};
+
 export function SubscriptionProvider({ children }) {
-  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
-  const [dailyUsage, setDailyUsage] = useState({});
-  const [loading, setLoading] = useState(true);
   const [upsellModal, setUpsellModal] = useState(null);
+  const queryClient = useQueryClient();
 
-  const fetchSubscriptionInfo = async () => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return;
+  // Use React Query for subscription data - fetched once per session, cached
+  const {
+    data: subscriptionInfo,
+    isLoading: loading,
+    refetch: refetchSubscription,
+    error
+  } = useQuery({
+    queryKey: ['subscription', 'info'],
+    queryFn: fetchSubscriptionInfo,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh
+    cacheTime: 30 * 60 * 1000, // 30 minutes - keep in cache
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    retry: 1, // Only retry once on failure
+  });
 
-      const response = await axios.get(`${API}/subscription/info`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.data) {
-        setSubscriptionInfo(response.data);
-        setDailyUsage(response.data.daily_usage || {});
-      }
-    } catch (error) {
-      console.error('Failed to fetch subscription info:', error);
-      // Set default FREE tier on error - use planConfig_ai_tutor.json values
-      setSubscriptionInfo({
-        subscription_tier: 'FREE',
-        plan_info: {
-          display_name: '🆓 Free - Try Before You Commit',
-          features: {
-            ai_sessions_monthly: 10,
-            mentor_tips_daily: 0,
-            mock_tests_weekly: 1,
-            auto_note_uploads_daily: 1,
-            focus_engine_type: 'static',
-            ai_insights: 'locked',
-            voice_mode: 'locked',
-            offline_mode: false,
-            analytics_tier: 'basic',
-            visuals: 'standard',
-            priority_support: false,
-            export_notes: false,
-            concept_tagging: false
-          }
-        },
-        daily_usage: {}
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dailyUsage = subscriptionInfo?.daily_usage || subscriptionInfo?.usage_summary?.features || {};
 
   const openUpsellModal = (featureName, detailLike) => {
     if (!detailLike) detailLike = {};
