@@ -1,5 +1,6 @@
 """
 Subscription service for managing user subscriptions, plans, and access control
+NOW WITH CACHING for improved performance (P3 optimization)
 """
 import json
 import logging
@@ -9,6 +10,7 @@ from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from models.subscription import UserSubscription
+from services.cache_service import get_plan_config_cache, get_user_profile_cache
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +22,24 @@ class SubscriptionService:
         self.db = db
         self.plan_config = None
         self.config_path = config_path or str(Path(__file__).parent.parent / 'planConfig.json')
+        self._plan_cache = None  # Will be initialized async
+    
+    async def _init_cache(self):
+        """Initialize cache (called lazily)"""
+        if self._plan_cache is None:
+            self._plan_cache = await get_plan_config_cache()
     
     async def load_plan_config(self):
-        """Load plan configuration from JSON file"""
+        """Load plan configuration from JSON file with caching"""
+        await self._init_cache()
+        
+        # Try cache first
+        cached_config = await self._plan_cache.get("plan_config")
+        if cached_config:
+            logger.debug("Plan config loaded from cache")
+            return cached_config
+        
+        # Load from file if not cached
         if self.plan_config is None:
             # Try AI Tutor config first, fallback to legacy
             ai_tutor_config_path = str(Path(__file__).parent.parent / 'planConfig_ai_tutor.json')
@@ -34,6 +51,10 @@ class SubscriptionService:
                 with open(self.config_path, 'r') as f:
                     self.plan_config = json.load(f)
                 logger.info("✅ Loaded legacy subscription configuration")
+            
+            # Cache the config for 1 hour
+            await self._plan_cache.set("plan_config", self.plan_config, ttl=3600)
+        
         return self.plan_config
     
     async def get_user_subscription_info(self, user_id: str) -> Dict[str, Any]:
