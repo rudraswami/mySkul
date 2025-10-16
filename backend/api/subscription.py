@@ -1,5 +1,6 @@
 """
 Subscription router for managing user subscriptions, plans, and access control
+MIGRATED TO USE UNIFIED SUBSCRIPTION SERVICE (Phase 1 - Stability)
 """
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
@@ -9,17 +10,18 @@ from models.core import User
 from models.subscription import (
     SubscriptionRequest, FeatureAccessRequest
 )
-from services.subscription_service import SubscriptionService
-from dependencies import get_current_user, get_database
+from services.subscription_service import SubscriptionService  # Legacy - kept for plan config
+from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
+from dependencies import get_current_user, get_database, get_unified_subscription_service
 
 
 # Router instance
 router = APIRouter(prefix="/subscription", tags=["subscription"])
 
 
-# Dependency to get subscription service
+# Dependency to get subscription service (Legacy - for plan config only)
 async def get_subscription_service(db = Depends(get_database)) -> SubscriptionService:
-    """Get subscription service instance"""
+    """Get legacy subscription service instance (for plan config only)"""
     return SubscriptionService(db)
 
 
