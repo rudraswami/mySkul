@@ -166,10 +166,7 @@ function AppContent() {
                 </Routes>
               </main>
             </div>
-            )
-          ) : (
-            <Navigate to="/login" />
-          )
+          </ProtectedRoute>
         } />
       </Routes>
       
