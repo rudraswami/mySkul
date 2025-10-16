@@ -91,17 +91,48 @@ class Settings:
     # =============================================================================
     # CORS SETTINGS
     # =============================================================================
+    CORS_ALLOW_ALL_SUBDOMAINS: bool = os.getenv("CORS_ALLOW_ALL_SUBDOMAINS", "false").lower() == "true"
+    
     @property
     def CORS_ORIGINS(self) -> List[str]:
-        """Parse CORS origins from comma-separated string"""
+        """
+        Parse CORS origins from comma-separated string
+        Automatically includes frontend URL and localhost for development
+        """
+        origins = []
+        
+        # Parse explicit origins from environment
         origins_str = os.getenv("CORS_ORIGINS", "")
-        if not origins_str:
-            return [
-                self.FRONTEND_URL,
-                "http://localhost:3000",
-                "http://localhost:8001"
-            ]
-        return [origin.strip() for origin in origins_str.split(",") if origin.strip()]
+        if origins_str:
+            for origin in origins_str.split(","):
+                origin = origin.strip()
+                if origin:
+                    origins.append(origin)
+        
+        # Always include configured frontend URL
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        
+        # Include localhost for development
+        if self.DEBUG or self.ENVIRONMENT == "development":
+            for local_origin in ["http://localhost:3000", "http://localhost:8001", "http://127.0.0.1:3000"]:
+                if local_origin not in origins:
+                    origins.append(local_origin)
+        
+        # Add subdomain wildcard if enabled (for preview environments)
+        if self.CORS_ALLOW_ALL_SUBDOMAINS:
+            from urllib.parse import urlparse
+            parsed = urlparse(self.FRONTEND_URL)
+            if parsed.hostname and "." in parsed.hostname:
+                # Extract parent domain
+                parts = parsed.hostname.split(".")
+                if len(parts) >= 2:
+                    parent_domain = ".".join(parts[-2:])
+                    # Note: Actual wildcard regex would need middleware implementation
+                    # For now, we'll document this limitation
+                    pass
+        
+        return origins
     
     # =============================================================================
     # AI / LLM SETTINGS
