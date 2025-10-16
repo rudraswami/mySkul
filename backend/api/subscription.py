@@ -255,37 +255,31 @@ async def track_feature_usage(
 @router.get("/usage")
 async def get_usage_info(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Get user's current usage statistics"""
+    """Get user's current usage statistics (MIGRATED to Unified Service)"""
     try:
-        info = await subscription_service.get_user_subscription_info(user.user_id)
-        daily_usage = info["daily_usage"]
-        plan_features = info["plan_info"]["features"]
+        # Get comprehensive usage summary from unified service
+        usage_summary = await unified_service.get_usage_summary(user.user_id)
         
-        usage_summary = {}
-        for feature_name, limit in plan_features.items():
-            if isinstance(limit, int):
-                used = daily_usage.get(feature_name, 0)
-                remaining = max(0, limit - used)
-            elif limit == "unlimited":
-                used = daily_usage.get(feature_name, 0)
-                remaining = -1  # Unlimited
-            else:
-                used = 0
-                remaining = 0
-            
-            usage_summary[feature_name] = {
-                "used": used,
-                "limit": limit,
-                "remaining": remaining,
-                "has_access": remaining != 0
+        # Format for backward compatibility
+        tier = usage_summary.get("tier", "free")
+        features = usage_summary.get("features", {})
+        
+        # Convert to expected format
+        usage_by_feature = {}
+        for feature_name, feature_data in features.items():
+            usage_by_feature[feature_name] = {
+                "used": feature_data.get("used", 0),
+                "limit": feature_data.get("limit", 0),
+                "remaining": feature_data.get("remaining", 0),
+                "has_access": feature_data.get("status") in ["active", "unlimited"]
             }
         
         return {
-            "subscription_tier": info["subscription_tier"],
-            "usage": usage_summary,
-            "daily_usage": daily_usage
+            "subscription_tier": tier,
+            "usage": usage_by_feature,
+            "next_reset": usage_summary.get("next_reset")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get usage info: {str(e)}")
