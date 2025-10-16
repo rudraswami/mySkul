@@ -64,25 +64,15 @@ export default function ContactUs() {
                       For general inquiries and support
                     </p>
                     <a 
-                      href="mailto:support@dhruvai.com" 
+                      href="mailto:support@druvai.in" 
                       className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
-                      support@dhruvai.com
+                      support@druvai.in
                     </a>
                     <br />
-                    <a 
-                      href="mailto:refunds@dhruvai.com" 
-                      className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-                    >
-                      refunds@dhruvai.com
-                    </a>
-                    <br />
-                    <a 
-                      href="mailto:legal@dhruvai.com" 
-                      className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-                    >
-                      legal@dhruvai.com
-                    </a>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      (For all inquiries: general, refunds, legal, privacy)
+                    </span>
                   </div>
                 </div>
 
