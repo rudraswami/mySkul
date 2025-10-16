@@ -1,32 +1,39 @@
 """
-Main FastAPI application with modular architecture
+Main FastAPI application entry point - Modular Architecture
+Single source of truth for application initialization
 """
-import os
 import logging
-import secrets
-from pathlib import Path
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-from starlette_csrf import CSRFMiddleware
-from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
 from bson.objectid import ObjectId
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse as FastAPIJSONResponse
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import json as json_lib
 
-# Import modular components
-from api import auth, user, subscription, ai
+# Core imports
+from core.config import settings
+from core.database import init_database, close_database, get_database
+
+# API routers
+from api import auth, user, subscription, ai, analytics, auto_notes, mock_tests
+
+# Services for dependency injection
 from services.auth_service import AuthService
 from services.subscription_service import SubscriptionService
 from services.ai_service import AIService
 import dependencies
 
 # Logging configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
 
 # Custom JSONResponse that handles MongoDB ObjectId serialization
 class JSONResponse(FastAPIJSONResponse):
+    """Custom JSON response handler for MongoDB ObjectId"""
     def render(self, content: any) -> bytes:
         return json_lib.dumps(
             content,
@@ -37,123 +44,180 @@ class JSONResponse(FastAPIJSONResponse):
             default=lambda obj: str(obj) if isinstance(obj, ObjectId) else obj,
         ).encode("utf-8")
 
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-
-def validate_critical_env_vars():
-    """Validate critical environment variables on startup - fail fast if missing"""
-    required_vars = {
-        'JWT_SECRET': 'JWT signing secret is required for authentication security',
-        'MONGO_URL': 'MongoDB connection URL is required',
-        'DB_NAME': 'Database name is required',
-        'EMERGENT_LLM_KEY': 'Emergent LLM API key is required for AI functionality'
-    }
-    
-    missing_vars = []
-    for var, description in required_vars.items():
-        if not os.environ.get(var):
-            missing_vars.append(f"{var}: {description}")
-    
-    # Generate CSRF secret if not provided
-    if not os.environ.get('CSRF_SECRET'):
-        csrf_secret = secrets.token_hex(32)
-        os.environ['CSRF_SECRET'] = csrf_secret
-        logger.warning(f"CSRF_SECRET not found - generated temporary secret: {csrf_secret[:16]}...")
-        logger.warning("Add CSRF_SECRET to your .env file for production use")
-    
-    if missing_vars:
-        logger.error("CRITICAL: Missing required environment variables:")
-        for var in missing_vars:
-            logger.error(f"  - {var}")
-        logger.error("Application startup aborted for security reasons.")
-        raise RuntimeError("Missing critical environment variables")
-
 
 def create_app() -> FastAPI:
-    """Create and configure FastAPI application"""
+    """
+    Create and configure FastAPI application
+    Single entry point for the entire application
+    """
     
-    # Validate environment variables before starting
-    validate_critical_env_vars()
+    # Validate configuration
+    validation_errors = settings.validate()
+    if validation_errors:
+        logger.error("❌ Critical configuration errors detected:")
+        for error in validation_errors:
+            logger.error(f"   - {error}")
+        raise RuntimeError("Application configuration invalid. Check .env file.")
+    
+    logger.info(f"🚀 Starting {settings.APP_NAME} v{settings.VERSION}")
+    logger.info(f"📊 Environment: {settings.ENVIRONMENT}")
+    logger.info(f"🔐 Debug mode: {settings.DEBUG}")
     
     # Create FastAPI app
     app = FastAPI(
-        title="Dhruv AI API", 
-        description="AI-Powered Competitive Exam Preparation Platform"
+        title=settings.APP_NAME,
+        description=settings.APP_DESCRIPTION,
+        version=settings.VERSION,
+        debug=settings.DEBUG,
+        default_response_class=JSONResponse
     )
     
-    # MongoDB connection
-    mongo_url = os.environ['MONGO_URL']
-    client = AsyncIOMotorClient(mongo_url)
-    db = client[os.environ['DB_NAME']]
+    # =============================================================================
+    # MIDDLEWARE CONFIGURATION
+    # =============================================================================
     
-    # Initialize services
-    jwt_secret = os.environ['JWT_SECRET']
-    emergent_llm_key = os.environ['EMERGENT_LLM_KEY']
-    auth_service = AuthService(db, jwt_secret)
-    subscription_service = SubscriptionService(db)
-    # Inject subscription service into AI service for usage tracking
-    ai_service = AIService(db, emergent_llm_key, subscription_service=subscription_service)
+    # Session Middleware (MUST be before CORS for cookie handling)
+    logger.info("🍪 Configuring SessionMiddleware...")
+    is_https = settings.BACKEND_URL.startswith('https://')
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.JWT_SECRET,
+        same_site=settings.SESSION_COOKIE_SAMESITE,
+        https_only=is_https,
+        max_age=settings.SESSION_EXPIRY_DAYS * 24 * 60 * 60  # Convert days to seconds
+    )
+    logger.info(f"   - same_site: {settings.SESSION_COOKIE_SAMESITE}")
+    logger.info(f"   - https_only: {is_https}")
+    logger.info(f"   - domain: {settings.SESSION_COOKIE_DOMAIN}")
+    logger.info(f"   - BACKEND_URL: {settings.BACKEND_URL}")
     
-    # Set dependencies
-    dependencies.db = db
-    dependencies.auth_service = auth_service
+    # CORS Middleware
+    logger.info("🌐 Configuring CORS...")
+    cors_origins = settings.CORS_ORIGINS
+    logger.info(f"   - Allowed origins: {cors_origins}")
     
-    # Security Middleware Configuration
-    cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
-    if not cors_origins or cors_origins == ['']:
-        logger.error("CORS_ORIGINS environment variable is required for security")
-        raise RuntimeError("CORS_ORIGINS must be explicitly configured")
-
     app.add_middleware(
         CORSMiddleware,
         allow_credentials=True,
-        allow_origins=[origin.strip() for origin in cors_origins if origin.strip()],
+        allow_origins=cors_origins,
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=[
-            "Content-Type", 
-            "Authorization", 
+            "Content-Type",
+            "Authorization",
             "X-Requested-With",
             "X-CSRF-Token",
-            "Cache-Control"
+            "Cache-Control",
+            "Cookie"
         ],
-        expose_headers=["X-CSRF-Token"]
-    )
-
-    # CSRF Protection - Re-enabled with proper token flow
-    app.add_middleware(
-        CSRFMiddleware,
-        secret=os.environ['CSRF_SECRET'],
-        cookie_name="csrftoken",
-        header_name="x-csrftoken"
+        expose_headers=["X-CSRF-Token", "Set-Cookie"]
     )
     
-    # Register routers with API prefix
-    app.include_router(auth.router, prefix="/api")
-    app.include_router(user.router, prefix="/api")
-    app.include_router(subscription.router, prefix="/api")
-    app.include_router(ai.router, prefix="/api")
-    app.include_router(analytics.router, prefix="/api")
+    # =============================================================================
+    # STARTUP EVENT
+    # =============================================================================
     
-    # Health check endpoint
-    @app.get("/api/health")
-    async def health_check():
-        """Health check endpoint for monitoring"""
-        return {"status": "healthy", "service": "dhruv-ai-backend"}
+    @app.on_event("startup")
+    async def startup_event():
+        """Initialize database and services on startup"""
+        logger.info("⚡ Application startup initiated...")
+        
+        # Initialize database
+        db = await init_database()
+        
+        # Initialize services and inject dependencies
+        logger.info("🔧 Initializing services...")
+        auth_service = AuthService(db, settings.JWT_SECRET)
+        subscription_service = SubscriptionService(db)
+        ai_service = AIService(
+            db,
+            settings.EMERGENT_LLM_KEY,
+            subscription_service=subscription_service
+        )
+        
+        # Set global dependencies
+        dependencies.db = db
+        dependencies.auth_service = auth_service
+        dependencies.subscription_service = subscription_service
+        dependencies.ai_service = ai_service
+        
+        logger.info("✅ All services initialized successfully")
+        logger.info(f"🎯 Server ready at {settings.BACKEND_URL}")
     
-    # Shutdown event
+    # =============================================================================
+    # SHUTDOWN EVENT
+    # =============================================================================
+    
     @app.on_event("shutdown")
-    async def shutdown_db_client():
-        client.close()
+    async def shutdown_event():
+        """Clean up resources on shutdown"""
+        logger.info("🛑 Application shutdown initiated...")
+        await close_database()
+        logger.info("✅ Shutdown complete")
+    
+    # =============================================================================
+    # REGISTER ROUTERS
+    # =============================================================================
+    
+    logger.info("📡 Registering API routers...")
+    
+    app.include_router(auth.router, prefix="/api", tags=["Authentication"])
+    app.include_router(user.router, prefix="/api", tags=["User"])
+    app.include_router(subscription.router, prefix="/api", tags=["Subscription"])
+    app.include_router(ai.router, prefix="/api", tags=["AI Tutor"])
+    app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
+    app.include_router(auto_notes.router, prefix="/api", tags=["Auto Notes"])
+    app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])
+    
+    logger.info("✅ All routers registered")
+    
+    # =============================================================================
+    # HEALTH CHECK ENDPOINTS
+    # =============================================================================
+    
+    @app.get("/api/health", tags=["System"])
+    async def health_check():
+        """Health check endpoint for monitoring and load balancers"""
+        return {
+            "status": "healthy",
+            "service": settings.APP_NAME,
+            "version": settings.VERSION,
+            "environment": settings.ENVIRONMENT
+        }
+    
+    @app.get("/", tags=["System"])
+    async def root():
+        """Root endpoint with API information"""
+        return {
+            "message": f"Welcome to {settings.APP_NAME} API",
+            "version": settings.VERSION,
+            "docs": f"{settings.BACKEND_URL}/docs",
+            "health": f"{settings.BACKEND_URL}/api/health"
+        }
     
     return app
 
 
-# Create app instance
+# =============================================================================
+# APPLICATION INSTANCE
+# =============================================================================
+
+# Create the application instance
 app = create_app()
 
 
+# =============================================================================
+# DEVELOPMENT SERVER
+# =============================================================================
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    
+    logger.info(f"🔥 Starting development server on {settings.HOST}:{settings.PORT}")
+    
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        log_level=settings.LOG_LEVEL.lower()
+    )
