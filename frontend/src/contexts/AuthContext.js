@@ -32,17 +32,32 @@ export function AuthProvider({ children }) {
   // Check if user is logged in on app load
   useEffect(() => {
     const checkAuth = async () => {
+      // CRITICAL: Check if session_token is in URL (OAuth redirect)
       const params = new URLSearchParams(window.location.search);
       const sessionToken = params.get('session_token');
-      if(!sessionToken){
-        console.log("Auth Check failed: No session token")
+      
+      if (sessionToken) {
+        console.log('🍪 OAuth redirect detected - setting session cookie from URL');
+        
+        // Set session cookie client-side BEFORE checking session
+        const domain = window.location.hostname.includes('emergent.host') 
+          ? '.emergent.host' 
+          : window.location.hostname;
+        
+        const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
+        document.cookie = cookieString;
+        
+        console.log('✅ Session cookie set in AuthContext');
+        
+        // Clean URL by removing session_token parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
+      
       try {
         // Check for session via new endpoint (supports both OAuth and JWT)
         const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
           credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${sessionToken}`,
             'Content-Type': 'application/json',
           },
         });
@@ -50,6 +65,7 @@ export function AuthProvider({ children }) {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+          console.log('✅ Session validated, user loaded:', data.user.email);
         } else if (token) {
           // Fallback to old JWT method
           try {
@@ -60,6 +76,8 @@ export function AuthProvider({ children }) {
               logout();
             }
           }
+        } else {
+          console.log('ℹ️ No active session found');
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
