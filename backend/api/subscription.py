@@ -233,11 +233,15 @@ async def check_feature_access(
 async def track_feature_usage(
     request: FeatureAccessRequest,
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Track usage for a specific feature"""
+    """Track usage for a specific feature (MIGRATED to Unified Service)"""
     try:
-        success = await subscription_service.track_usage(user.user_id, request.feature_name)
+        success = await unified_service.track_feature_use(
+            user.user_id,
+            request.feature_name,
+            amount=1
+        )
         if not success:
             raise HTTPException(status_code=500, detail="Failed to track usage")
         
