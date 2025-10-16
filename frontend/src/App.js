@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'; // Temporarily disabled
 import './App.css';
 
-// Components
+// Eagerly loaded components (critical path)
 import LandingPage from './components/LandingPage';
 import LoginScreen from './components/auth/LoginScreen';
 import OAuthCallback from './components/auth/OAuthCallback';
 import ProfileSetup from './components/auth/ProfileSetup';
-import StudentDashboard from './components/StudentDashboard';
-import AITutor from './components/AITutor'; // Now using modular version
-import MockTests from './components/MockTests';
-// Removed: Analytics and StressManagement components - not essential for core exam preparation
-import AutoNoteMentor from './components/AutoNoteMentor';
-import Subscription from './components/Subscription';
-import ProfileSettings from './components/ProfileSettings';
 import Navigation from './components/Navigation';
 import { Toaster } from './components/ui/toaster';
 import { PageLoader } from './components/ui/loading';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import { SkipToContent } from './utils/accessibility';
+
+// Lazy loaded components (code splitting for better initial load)
+const StudentDashboard = lazy(() => import('./components/StudentDashboard'));
+const AITutor = lazy(() => import('./components/AITutor')); // Large component - lazy load
+const MockTests = lazy(() => import('./components/MockTests'));
+const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
+const Subscription = lazy(() => import('./components/Subscription'));
+const ProfileSettings = lazy(() => import('./components/ProfileSettings'));
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
