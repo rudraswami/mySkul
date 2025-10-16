@@ -230,12 +230,12 @@ export default function ShippingPolicy() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    Email: <a href="mailto:support@dhruvai.com" className="text-blue-600 dark:text-blue-400 hover:underline">support@dhruvai.com</a>
+                    Email: <a href="mailto:support@druvai.in" className="text-blue-600 dark:text-blue-400 hover:underline">support@druvai.in</a>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-700 dark:text-gray-300">Phone: +91-XXXX-XXXXXX</span>
+                  <span className="text-gray-700 dark:text-gray-300">Phone: +91-8660838896</span>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-white dark:bg-gray-700 rounded border border-blue-200 dark:border-blue-700">
