@@ -83,9 +83,9 @@ export function VirtualizedMessageList({
   }
 
   // Get container dimensions
-  const [dimensions, setDimensions] = React.useState({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (containerRef.current) {
       const updateDimensions = () => {
         setDimensions({
