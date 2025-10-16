@@ -50,12 +50,22 @@ def get_auth_service() -> AuthService:
 
 def get_subscription_service() -> SubscriptionService:
     """
-    Get subscription service
+    Get subscription service (Legacy)
     Used as: sub_svc = Depends(get_subscription_service)
     """
     if subscription_service is None:
         raise RuntimeError("Subscription service not initialized")
     return subscription_service
+
+
+def get_unified_subscription_service() -> UnifiedSubscriptionService:
+    """
+    Get unified subscription service (Recommended)
+    Used as: sub_svc = Depends(get_unified_subscription_service)
+    """
+    if unified_subscription_service is None:
+        raise RuntimeError("Unified subscription service not initialized")
+    return unified_subscription_service
 
 
 def get_ai_service() -> AIService:
