@@ -148,17 +148,24 @@ async def get_subscription_info(
 @router.get("/current")
 async def get_current_subscription(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service),
+    legacy_service: SubscriptionService = Depends(get_subscription_service)
 ):
-    """Get current subscription details"""
+    """Get current subscription details (MIGRATED to Unified Service)"""
     try:
-        info = await subscription_service.get_user_subscription_info(user.user_id)
+        # Get tier from unified service
+        tier = await unified_service.get_user_tier(user.user_id)
+        
+        # Get plan info from legacy service
+        plan_config = await legacy_service.load_plan_config()
+        plan_info = plan_config.get(tier.upper(), {})
+        
         return {
-            "plan_name": info["subscription_tier"],
-            "status": info["subscription_status"],
-            "current_period_end": info.get("current_period_end"),
-            "auto_renew": info.get("auto_renew", True),
-            "plan_info": info["plan_info"]
+            "plan_name": tier,
+            "status": "active",
+            "current_period_end": None,  # TODO: Add subscription expiry tracking
+            "auto_renew": True,
+            "plan_info": plan_info
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get current subscription: {str(e)}")
