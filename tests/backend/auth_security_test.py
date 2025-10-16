@@ -12,7 +12,7 @@ from datetime import datetime
 import uuid
 
 class AuthSecurityTester:
-    def __init__(self, base_url="https://auth-gateway-dhruv.preview.emergentagent.com"):
+    def __init__(self, base_url="https://dhruv-ai-deploy.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.test_email = "test@dhruvai.com"
@@ -130,7 +130,7 @@ class AuthSecurityTester:
         # Test allowed origins
         allowed_origins = [
             "http://localhost:3000",
-            "https://auth-gateway-dhruv.preview.emergentagent.com"
+            "https://dhruv-ai-deploy.preview.emergentagent.com"
         ]
         
         # Test disallowed origins

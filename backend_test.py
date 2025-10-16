@@ -7,7 +7,7 @@ from datetime import datetime
 class Phase1StabilityTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://auth-gateway-dhruv.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-ai-deploy.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({

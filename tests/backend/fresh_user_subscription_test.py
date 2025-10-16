@@ -6,7 +6,7 @@ import time
 
 class FreshUserSubscriptionTester:
     def __init__(self):
-        self.base_url = "https://auth-gateway-dhruv.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-ai-deploy.preview.emergentagent.com/api"
         self.token = None
         self.user_id = None
         self.fresh_email = f"subscription_test_{int(time.time())}@dhruvai.com"

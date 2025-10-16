@@ -521,7 +521,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 
 #### 📋 **TESTING METHODOLOGY**
 - **Authentication**: test@dhruvai.com / password123
-- **Backend URL**: https://auth-gateway-dhruv.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-ai-deploy.preview.emergentagent.com/api
 - **Test Coverage**: Health, CSRF, Subscription Migration, Feature Access
 - **Response Validation**: Status codes, JSON structure, field presence
 
@@ -637,7 +637,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 ---
 
 **Testing Environment**: 
-- Frontend URL: https://auth-gateway-dhruv.preview.emergentagent.com
+- Frontend URL: https://dhruv-ai-deploy.preview.emergentagent.com
 - Authentication: Google OAuth only
 - Browser: Playwright (Desktop 1920x1080)
 - Test Date: January 16, 2025

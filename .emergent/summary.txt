@@ -1,55 +1,63 @@
 <analysis>
-The AI engineer successfully guided the Dhruv AI application from an initial state through significant feature development and debugging. The journey began with frontend modal display and refactoring, quickly pivoting to a comprehensive Gmail-only authentication system. This involved extensive backend Google OAuth implementation (Authlib, MongoDB state store, new user model) and corresponding frontend integration. Persistent challenges included ,  errors, and  cookie issues, often stemming from environment variable conflicts and hardcoded URLs. The engineer systematically addressed these, transitioning to a  URL parameter flow. Subsequent work focused on fixing profile setup ( vs ,  due to unhandled session token,  from inconsistent datetime storage), re-login issues (race conditions,  typo), and then initiated a major refactoring phase (Phase 0: modularization to , centralized config, index scripts) and stability phase (Phase 1: CORS/cookie, JWT refresh, OpenAPI). The current work involves unifying subscription logic.
+The AI engineer's trajectory shows a systematic approach to enhancing the Dhruv AI application. Initially, it involved migrating backend subscription checks, implementing CSRF (though partially), and optimizing mock test database queries with indexes. A significant effort was then directed towards frontend stability and modularity, addressing route guards, centralized subscription state, HTML sanitization, virtual scrolling, and accessibility/theming. Crucially, the large  component was successfully refactored into smaller, modular components and hooks. Subsequent work focused on performance, introducing AI response caching, streaming, bundle size optimization via lazy loading, and a general caching layer. Most recently, legally compliant policy pages were created and integrated for Razorpay, followed by debugging deployment-related hardcoded URL issues in these newly created policy pages, which is the current ongoing task.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform offers AI Tutor, Auto-Note Mentor, and Mock Tests, requiring robust input, historical storage, performance, and a strong monetization model. Recent efforts enhanced AI Tutor with visual, exam-smart responses using multi-pass reasoning and semantic rendering, standardized subscription plans, and improved UI/UX elements. The current critical focus is a user login/onboarding overhaul: implementing a visually premium showcase, transitioning to Gmail-Only authentication (auto-fetching user details, auto-login for returning users, no email verification), introducing a post-login  screen for first-time users (capturing Exam Type, Study Goal, Preferred Mode, Timezone, Country), consistently integrating an Others exam type, and ensuring UI/UX consistency across all screens. The goal is a passwordless, premium, and seamless onboarding experience.
+The Dhruv AI platform, an EdTech application, aims to provide AI Tutor, Auto-Note Mentor, and Mock Tests with robust features and a strong monetization model. The core problem is enhancing user login and onboarding. This includes a premium visual experience, Gmail-Only authentication for seamless login (auto-fetching details, no email verification), and a mandatory post-login  screen for first-time users. This screen captures critical details like Exam Type, Study Goal, Preferred Mode, Timezone, and Country, with an Others option for exam type. UI/UX consistency across all screens is paramount to ensure a passwordless, premium, and seamless onboarding experience. The application has already implemented AI Tutor enhancements (multi-pass reasoning, semantic rendering), standardized subscription plans, and improved UI/UX elements.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack**: React.js (frontend), FastAPI (backend), MongoDB (database).
-- **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies (), centralized AuthContext.
-- **Backend**: Pydantic, Starlette SessionMiddleware, environment variables, modular architecture.
-- **Frontend**: React Router,  for client-side cookie management.
-- **Deployment**: Supervisor, Kubernetes ingress,  for configuration.
-- **Services**:  for feature access.
+- **Full-stack**: React.js, FastAPI, MongoDB.
+- **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies, CSRF.
+- **Backend**: Pydantic, Starlette SessionMiddleware, modular architecture, caching, streaming.
+- **Frontend**: React Router, React Query, , lazy loading, virtualized lists, DOMPurify, theming.
+- **Deployment**: Supervisor, Kubernetes ingress, .
+- **Services**: Unified subscription, AI caching, streaming.
 </key_technical_concepts>
 
 <code_architecture>
 
--   ****: Central to environment configuration. Continuously updated with , , , , and cookie settings (, , ).
--   ****: **NEW** primary entry point. Orchestrates FastAPI app, registers all API routers, configures middleware (CORS, Session), connects to MongoDB, and initializes services. It replaced  for a modular approach.
--   ****: Original FastAPI entry point. Refactored  parameters, removed ML dependencies for faster startup, and standardized cookie settings. **Later symlinked to ** and effectively deprecated. Fixed  typo.
--   ****: Defines core Pydantic models.  model updated to support Gmail auth (e.g., , , ). Contains .
--   ****: Handles user authentication and OAuth. Implemented Google OAuth endpoints (, ). Refactored OAuth callback to return  as a URL parameter. Fixed  endpoint to accept  in the request body and consistent ISO string comparison for . Added JWT refresh endpoints.
--   ****: Handles Google OAuth logic using Authlib.
--   ****: Manages OAuth state using MongoDB, replacing session-based state in containerized environments.
--   ****: **NEW** service to handle JWT token generation, refresh, and invalidation.
--   ****: **NEW** service created to consolidate subscription and feature access logic for consistency.
--   ****: **NEW** file for centralized environment variable loading and configuration.
--   ****: **NEW** file for managing MongoDB connection.
--   ****: **NEW** script to ensure database indexes are created idempotently.
--   ****: Defines main React routes. Updated to handle , ,  based on  state ().
--   ****: Manages user authentication state. Centralized  extraction from URL parameters and client-side cookie setting. Includes  function for profile completion.
--   ****: Post-login onboarding screen. Updated to correctly submit data to the backend, call  from AuthContext, and read user info from URL parameters.
--   ****: Initially processed  from URL. Later, this logic was **centralized to **.
--   ****: Initially handled  from URL. Later, this logic was **removed** as it's centralized in .
+
+-   ****: Contains , , , , , , .
+-   ****: Central FastAPI entry, registers routers, middleware (CORS, Session, **CSRF - commented out**), MongoDB connection, and services.
+-   ****: Includes Google OAuth endpoints, , JWT refresh, and a **new  endpoint** for CSRF token retrieval.
+-   ****: **Migrated** to use  for feature access checks across , , and .
+-   ****: **Updated** to use  for response caching,  for streaming, and includes a mentor tips endpoint.
+-   ****: **New file** defining the CSRF protection middleware.
+-   ****: Consolidates subscription and feature access logic.
+-   ****: **New service** for caching AI responses.
+-   ****: **New service** for handling streaming AI responses.
+-   ****: **New simple in-memory cache** for frequently accessed data like plan configurations, integrated into .
+-   ****: **Updated** to create specific indexes for the  collection (e.g., , , , , ) for performance optimization.
+-   ****: **New file** with a decorator for consistent async error handling.
+-   ****: Main React router. **Updated** to use  for authentication/subscription checks,  and  for route lazy loading, , and accessibility features (Skip to Content).
+-   ****: Manages user auth state. No explicit React Query migration, but implicitly works with .
+-   ****: **Refactored** to centralize subscription data fetching once per session using .
+-   ****: **New file** for managing dark mode and theming.
+-   ****: **New component** for unifying route protection based on auth and subscription state.
+-   ****: **New component** implementing virtual scrolling for chat messages, fixing several import and usage errors related to .
+-   ****: **New modular entry point** for the refactored AI Tutor, replacing the monolithic .
+-   **, , **: **New modular components** for the AI Tutor.
+-   **, , **: **New React hooks** extracting logic from the original .
+-   ****: **New utility** using  for HTML sanitization of AI responses.
+-   ****: **New utility** for accessibility features.
+-   ****: **Updated** with dark mode CSS variables and scrollbar styles.
+-   ****: **Updated** to include  button and dark mode classes.
+-   ****: **New policy pages** (Privacy, Terms, Refund, Shipping, Contact Us) created with company details, email, phone, and digital-only shipping clarification.
+-   ****: **Updated** to include links to the new policy pages in the footer.
 </code_architecture>
 
 <pending_tasks>
--   Complete React Query migration for remaining frontend components.
--   Update  integration with React Query.
--   Re-enable CSRF middleware in the backend and implement frontend token exchange.
--   Test cookie-based authentication with CSRF and visually verify UI.
--   Address remaining minor backend issues: Mock-Tests dashboard/detailed-review query optimization.
--   Obtain and update Razorpay production API keys.
--   Continue migrating other API routers and frontend components to use the .
+- Complete React Query migration for remaining frontend components (specifically  to ensure full integration).
+- Re-enable CSRF middleware in the backend and implement frontend token exchange (currently disabled).
+- Obtain and update Razorpay production API keys (mentioned in initial pending tasks, but not addressed).
+- Debug and fix any remaining deployment issues related to hardcoded URLs in policy pages.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was executing Phase 1 – Stability tasks, specifically focusing on JWT refresh and the unification of subscription and feature-access logic. A new service, , was created for JWT refresh. The primary focus then shifted to centralizing subscription logic, leading to the creation of . This new service was then integrated into  and subsequently into , replacing previous access checks. During this integration, an import error for  in  was identified and fixed. The backend was successfully restarted and confirmed to be running and healthy, indicating that the initial integration of the unified subscription service is complete for the AI router.
+Immediately before this summary request, the AI engineer was engaged in debugging deployment failures. The user provided deployment error logs, which the  analyzed. The agent identified the root cause as hardcoded URLs within the newly created policy pages (e.g., , , etc.) that were not adhering to the environment variable usage rules and were causing issues during deployment to a production Kubernetes environment. The engineer had just started to address this by modifying the policy pages to use environment variables for URLs, ensuring they are dynamically configured and compliant with the deployment environment's URL handling protocol. The last action was to continue fixing these hardcoded URLs.
 </current_work>
 
 <optional_next_step>
-Continue migrating other API routers and frontend components to use the  to replace duplicate plan checks.
+Continue modifying the policy pages to remove all hardcoded URLs, replacing them with dynamically configured environment variables.
 </optional_next_step>

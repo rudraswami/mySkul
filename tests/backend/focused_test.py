@@ -6,7 +6,7 @@ import time
 
 class FocusedSubscriptionTester:
     def __init__(self):
-        self.base_url = "https://auth-gateway-dhruv.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-ai-deploy.preview.emergentagent.com/api"
         self.token = None
         self.test_user_email = "test@dhruvai.com"
         self.test_user_password = "password123"

@@ -7,7 +7,7 @@ import requests
 import json
 
 # Test credentials
-base_url = "https://auth-gateway-dhruv.preview.emergentagent.com/api"
+base_url = "https://dhruv-ai-deploy.preview.emergentagent.com/api"
 test_email = "test@dhruvai.com"
 test_password = "password123"
 
