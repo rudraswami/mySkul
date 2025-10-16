@@ -384,12 +384,26 @@ async def track_ai_tutor_session(
 @router.get("/check-mentor-tip-access")
 async def check_mentor_tip_access(
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Check if user can access mentor tips today"""
+    """Check if user can access mentor tips today (MIGRATED to Unified Service)"""
     try:
-        access_info = await subscription_service.check_mentor_tip_access(user.user_id)
-        return access_info
+        # Note: DOUBT_SOLVING is used as mentor tips feature
+        access_result = await unified_service.check_feature_access(
+            user.user_id,
+            FeatureName.DOUBT_SOLVING.value,
+            requested_amount=1
+        )
+        
+        return {
+            "allowed": access_result.allowed,
+            "remaining": access_result.remaining if access_result.remaining >= 0 else "unlimited",
+            "total": access_result.limit if access_result.limit >= 0 else "unlimited",
+            "used": access_result.used,
+            "needs_upgrade": not access_result.allowed,
+            "upgrade_hint": access_result.upgrade_message if not access_result.allowed else None,
+            "message": access_result.message
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to check mentor tip access: {str(e)}")
 
