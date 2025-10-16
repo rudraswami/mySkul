@@ -20,6 +20,7 @@ from api import auth, user, subscription, ai, analytics, auto_notes, mock_tests
 # Services for dependency injection
 from services.auth_service import AuthService
 from services.subscription_service import SubscriptionService
+from services.unified_subscription_service import UnifiedSubscriptionService
 from services.ai_service import AIService
 import dependencies
 
