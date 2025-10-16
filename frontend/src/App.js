@@ -137,6 +137,34 @@ function AppContent() {
           element={<Navigate to="/login" replace />} 
         />
         
+        {/* Policy Pages - Public Routes */}
+        <Route path="/policies/privacy" element={
+          <Suspense fallback={<PageLoader message="Loading Privacy Policy..." />}>
+            <PrivacyPolicy />
+          </Suspense>
+        } />
+        <Route path="/policies/terms" element={
+          <Suspense fallback={<PageLoader message="Loading Terms..." />}>
+            <TermsAndConditions />
+          </Suspense>
+        } />
+        <Route path="/policies/refund" element={
+          <Suspense fallback={<PageLoader message="Loading Refund Policy..." />}>
+            <RefundPolicy />
+          </Suspense>
+        } />
+        <Route path="/policies/shipping" element={
+          <Suspense fallback={<PageLoader message="Loading Shipping Policy..." />}>
+            <ShippingPolicy />
+          </Suspense>
+        } />
+        <Route path="/policies/contact" element={
+          <Suspense fallback={<PageLoader message="Loading Contact Page..." />}>
+            <ContactUs />
+          </Suspense>
+        } />
+        <Route path="/contact" element={<Navigate to="/policies/contact" replace />} />
+        
         {/* Protected Routes - All require authentication */}
         <Route path="/*" element={
           <ProtectedRoute>
