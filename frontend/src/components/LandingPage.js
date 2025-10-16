@@ -1080,12 +1080,13 @@ const LandingPage = () => {
 
             {/* Support */}
             <div>
-              <h4 className="font-bold text-white mb-4">Support</h4>
+              <h4 className="font-bold text-white mb-4">Legal & Support</h4>
               <div className="space-y-2">
-                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Help Center</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Contact Us</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Privacy Policy</a>
-                <a href="#" className="block text-gray-300 hover:text-blue-400 transition-colors">Terms of Service</a>
+                <Link to="/policies/contact" className="block text-gray-300 hover:text-blue-400 transition-colors">Contact Us</Link>
+                <Link to="/policies/privacy" className="block text-gray-300 hover:text-blue-400 transition-colors">Privacy Policy</Link>
+                <Link to="/policies/terms" className="block text-gray-300 hover:text-blue-400 transition-colors">Terms & Conditions</Link>
+                <Link to="/policies/refund" className="block text-gray-300 hover:text-blue-400 transition-colors">Refund Policy</Link>
+                <Link to="/policies/shipping" className="block text-gray-300 hover:text-blue-400 transition-colors">Shipping Policy</Link>
               </div>
             </div>
           </div>
