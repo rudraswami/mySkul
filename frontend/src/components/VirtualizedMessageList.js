@@ -59,13 +59,8 @@ export function VirtualizedMessageList({
     previousMessageCountRef.current = messages.length;
   }, [messages.length, scrollToBottom]);
 
-  // Calculate item size for variable height messages
-  const getItemSize = (index) => {
-    if (getMessageHeight) {
-      return getMessageHeight(messages[index], index);
-    }
-    return defaultItemSize;
-  };
+  // Calculate item size - use fixed size for now
+  const itemSize = defaultItemSize;
 
   // Handle scroll events
   const handleScroll = ({ scrollDirection, scrollOffset, scrollUpdateWasRequested }) => {
