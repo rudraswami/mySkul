@@ -236,19 +236,20 @@ export default function TermsAndConditions() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    Email: <a href="mailto:legal@dhruvai.com" className="text-blue-600 dark:text-blue-400 hover:underline">legal@dhruvai.com</a>
+                    Email: <a href="mailto:support@druvai.in" className="text-blue-600 dark:text-blue-400 hover:underline">support@druvai.in</a>
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-700 dark:text-gray-300">Phone: +91-XXXX-XXXXXX</span>
+                  <span className="text-gray-700 dark:text-gray-300">Phone: +91-8660838896</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    Dhruv AI<br />
-                    [Business Address]<br />
-                    India
+                    Druv AI<br />
+                    Near Laksmi Hospital<br />
+                    Kaggadasapur, Bangalore - 560093<br />
+                    Karnataka, India
                   </span>
                 </div>
               </div>
