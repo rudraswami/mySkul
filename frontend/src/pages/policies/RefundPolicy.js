@@ -46,7 +46,7 @@ export default function RefundPolicy() {
             <p className="text-gray-700 dark:text-gray-300 mb-3">You can cancel your subscription anytime through:</p>
             <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
               <li>Your account settings → Subscription → Cancel Subscription</li>
-              <li>Contacting our support team at <a href="mailto:support@dhruvai.com" className="text-blue-600 dark:text-blue-400 hover:underline">support@dhruvai.com</a></li>
+              <li>Contacting our support team at <a href="mailto:support@druvai.in" className="text-blue-600 dark:text-blue-400 hover:underline">support@druvai.in</a></li>
               <li>Calling us at +91-XXXX-XXXXXX</li>
             </ul>
 
