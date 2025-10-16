@@ -102,7 +102,7 @@ export function VirtualizedMessageList({
         height={dimensions.height}
         width={dimensions.width}
         itemCount={messages.length}
-        itemSize={getItemSize}
+        itemSize={itemSize}
         itemData={{
           messages,
           renderMessage
