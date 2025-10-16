@@ -13,7 +13,7 @@ if env_file.exists():
 else:
     print("ℹ️  .env file not found - using environment variables from container")
 
-from starlette.middleware.cors import CORSMiddlewareessi
+from starlette.middleware.cors import CORSMiddleware
 from starlette_csrf import CSRFMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
