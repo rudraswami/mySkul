@@ -79,6 +79,7 @@ function AppContent() {
 
   return (
     <>
+      <SkipToContent />
       <Routes>
         {/* Landing Page - Public Home Route */}
         <Route 
