@@ -58,8 +58,35 @@ class Settings:
     # Session settings
     SESSION_COOKIE_NAME: str = "dhruv_ai_session"
     SESSION_COOKIE_SAMESITE: str = os.getenv("SESSION_COOKIE_SAMESITE", "none")
-    SESSION_COOKIE_DOMAIN: str = os.getenv("SESSION_COOKIE_DOMAIN", ".emergent.host")
     SESSION_EXPIRY_DAYS: int = int(os.getenv("SESSION_EXPIRY_DAYS", "7"))
+    
+    @property
+    def SESSION_COOKIE_DOMAIN(self) -> Optional[str]:
+        """
+        Extract cookie domain from BACKEND_URL automatically
+        Returns None for localhost (allows cookie to work on any local port)
+        """
+        # Check if explicitly set in environment
+        explicit_domain = os.getenv("SESSION_COOKIE_DOMAIN")
+        if explicit_domain:
+            return explicit_domain
+        
+        # Auto-detect from BACKEND_URL
+        if "localhost" in self.BACKEND_URL or "127.0.0.1" in self.BACKEND_URL:
+            return None  # No domain restriction for localhost
+        
+        # Extract domain from URL
+        from urllib.parse import urlparse
+        parsed = urlparse(self.BACKEND_URL)
+        hostname = parsed.hostname
+        
+        if hostname and "." in hostname:
+            # For emergent.host, dhruv.ai, etc., use parent domain
+            parts = hostname.split(".")
+            if len(parts) >= 2:
+                return f".{'.'.join(parts[-2:])}"  # e.g., .emergent.host
+        
+        return None  # Fallback to no domain restriction
     
     # =============================================================================
     # CORS SETTINGS
