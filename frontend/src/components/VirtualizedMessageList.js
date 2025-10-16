@@ -4,7 +4,7 @@
  * Only renders visible messages in the viewport
  */
 import React, { useRef, useEffect, memo, useState } from 'react';
-import { List } from 'react-window';
+const { FixedSizeList } = require('react-window');
 
 /**
  * Individual Message Row Component
