@@ -173,7 +173,8 @@ CSRF middleware is implemented but disabled by default to ensure:
 5. Monitor performance metrics
 
 ### Known Issues
-- None identified yet
+- CSRF token endpoint returns empty string (middleware disabled by design)
+- Subscription info response uses `subscription_tier` instead of `subscription` field (minor compatibility issue)
 
 ### Performance Improvements Expected
 - Mock Tests dashboard: 50-70% faster (indexed queries)
