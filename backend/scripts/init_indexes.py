@@ -178,16 +178,27 @@ async def create_indexes():
                     raise
         
         # =========================================================================
-        # MOCK TESTS COLLECTION
+        # MOCK TESTS COLLECTION (Enhanced for Phase 1 - Stability)
         # =========================================================================
         print("\n📝 Creating indexes for 'mock_tests' collection...")
         
         mock_tests_indexes = [
+            # Primary queries
+            ("test_id", {"unique": True}),
             ("user_id", {}),
-            ("subject", {}),
-            ("created_at", {}),
-            ("completed", {}),
-            ([("user_id", 1), ("created_at", -1)], {}),
+            ("student_id", {}),  # Legacy field support
+            ("status", {}),
+            ("generated_at", {}),
+            
+            # Dashboard optimization - most common query patterns
+            ([("user_id", 1), ("status", 1)], {}),
+            ([("student_id", 1), ("status", 1)], {}),
+            ([("user_id", 1), ("generated_at", -1)], {}),
+            ([("student_id", 1), ("generated_at", -1)], {}),
+            
+            # Detailed review optimization
+            ([("test_id", 1), ("user_id", 1)], {}),
+            ([("test_id", 1), ("student_id", 1)], {}),
         ]
         
         for index_spec in mock_tests_indexes:
@@ -196,6 +207,32 @@ async def create_indexes():
                 index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
             else:
                 await db.mock_tests.create_index(index_spec[0], **index_spec[1])
+                index_name = index_spec[0]
+            
+            print(f"   ✓ {index_name}")
+        
+        # =========================================================================
+        # TEST ATTEMPTS COLLECTION (NEW - Phase 1 Optimization)
+        # =========================================================================
+        print("\n📊 Creating indexes for 'test_attempts' collection...")
+        
+        test_attempts_indexes = [
+            ("test_id", {}),
+            ("student_id", {}),
+            ("submitted_at", {}),
+            
+            # Performance trends optimization
+            ([("student_id", 1), ("submitted_at", 1)], {}),
+            ([("test_id", 1), ("student_id", 1)], {}),
+            ([("test_id", 1), ("submitted_at", -1)], {}),
+        ]
+        
+        for index_spec in test_attempts_indexes:
+            if isinstance(index_spec[0], list):
+                await db.test_attempts.create_index(index_spec[0], **index_spec[1])
+                index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
+            else:
+                await db.test_attempts.create_index(index_spec[0], **index_spec[1])
                 index_name = index_spec[0]
             
             print(f"   ✓ {index_name}")
