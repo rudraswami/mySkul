@@ -203,6 +203,11 @@ async def generate_dual_ai_response_streaming(
                 "X-Accel-Buffering": "no"  # Disable nginx buffering
             }
         )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Streaming AI generation failed: {str(e)}")
 
 
 
