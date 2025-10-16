@@ -141,14 +141,22 @@ async def create_indexes():
         ]
         
         for index_spec in usage_tracking_indexes:
-            if isinstance(index_spec[0], list):
-                await db.usage_tracking.create_index(index_spec[0], **index_spec[1])
-                index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
-            else:
-                await db.usage_tracking.create_index(index_spec[0], **index_spec[1])
-                index_name = index_spec[0]
-            
-            print(f"   ✓ {index_name}")
+            try:
+                if isinstance(index_spec[0], list):
+                    await db.usage_tracking.create_index(index_spec[0], **index_spec[1])
+                    index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
+                else:
+                    await db.usage_tracking.create_index(index_spec[0], **index_spec[1])
+                    index_name = index_spec[0]
+                
+                print(f"   ✓ {index_name}")
+            except Exception as e:
+                if "DuplicateKey" in str(e):
+                    print(f"   ⚠️  {index_name} (skipped - unique constraint violated, clean data first)")
+                elif "IndexOptionsConflict" in str(e) or "already exists" in str(e):
+                    print(f"   ℹ️  {index_name} (already exists)")
+                else:
+                    raise
         
         # =========================================================================
         # MOCK TESTS COLLECTION
