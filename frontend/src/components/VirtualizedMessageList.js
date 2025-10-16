@@ -97,7 +97,7 @@ export function VirtualizedMessageList({
 
   return (
     <div ref={containerRef} className={`w-full h-full ${className}`}>
-      <List
+      <FixedSizeList
         ref={listRef}
         height={dimensions.height}
         width={dimensions.width}
@@ -111,7 +111,7 @@ export function VirtualizedMessageList({
         overscanCount={5} // Render 5 extra items above/below viewport
       >
         {MessageRow}
-      </List>
+      </FixedSizeList>
     </div>
   );
 }
