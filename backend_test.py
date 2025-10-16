@@ -210,11 +210,14 @@ class Phase1StabilityTester:
             print(f"   ✅ Subscription info endpoint working")
             
             # Check response structure
+            print(f"      Response keys: {list(response.keys())}")
             if 'subscription' in response and 'usage_summary' in response:
                 results['backward_compatibility'] = True
                 print(f"      ✅ Response structure includes subscription and usage_summary")
             else:
                 print(f"      ⚠️ Response structure may not be backward compatible")
+                print(f"      Expected: subscription, usage_summary")
+                print(f"      Actual: {list(response.keys())}")
         else:
             print(f"   ❌ Subscription info failed - Status: {status_code}")
         
