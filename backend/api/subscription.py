@@ -175,43 +175,54 @@ async def get_current_subscription(
 async def check_feature_access(
     request: FeatureAccessRequest,
     user: User = Depends(get_current_user),
-    subscription_service: SubscriptionService = Depends(get_subscription_service)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
     """
-    Check if user has access to a specific feature
-    #BACKEND-FIX-PHASE3 - Returns 200 OK with access info if access granted,
+    Check if user has access to a specific feature (MIGRATED to Unified Service)
+    Returns 200 OK with access info if access granted,
     402 Payment Required with upsell info if access denied
     """
     try:
-        access_info = await subscription_service.check_feature_access(user.user_id, request.feature_name)
+        # Map old feature names to new FeatureName enum if needed
+        feature_name = request.feature_name
+        
+        # Check access using unified service
+        access_result = await unified_service.check_feature_access(
+            user.user_id,
+            feature_name,
+            requested_amount=1
+        )
         
         # Return 200 OK with access info if user has access
-        if access_info.get("has_access", False):
+        if access_result.allowed:
             return {
                 "has_access": True,
-                "feature": request.feature_name,
-                "remaining": access_info.get("remaining", 0),
-                "limit": access_info.get("limit", 0),
-                "used": access_info.get("used", 0),
-                "subscription_tier": access_info.get("subscription_tier", "FREE")
+                "feature": feature_name,
+                "remaining": access_result.remaining,
+                "limit": access_result.limit,
+                "used": access_result.used,
+                "subscription_tier": access_result.current_tier,
+                "message": access_result.message
             }
         
-        # Return 402 Payment Required if access is denied and upgrade needed
-        if access_info.get("upgrade_needed", False):
-            raise HTTPException(
-                status_code=402,
-                detail={
-                    "message": f"Access denied for {request.feature_name}",
-                    "reason": access_info.get("reason", "limit_reached"),
-                    "upsell_info": access_info.get("upsell_info", {}),
-                    "has_access": False,
-                    "upgrade_needed": True,
-                    **access_info
-                }
-            )
-        
-        # Default: return access info with 200 OK
-        return access_info
+        # Return 402 Payment Required if access is denied
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "message": access_result.message,
+                "reason": "limit_reached" if access_result.used >= access_result.limit else "feature_locked",
+                "upsell_info": {
+                    "upgrade_message": access_result.upgrade_message,
+                    "current_tier": access_result.current_tier,
+                    "next_reset": access_result.next_reset.isoformat() if access_result.next_reset else None
+                },
+                "has_access": False,
+                "upgrade_needed": True,
+                "used": access_result.used,
+                "limit": access_result.limit,
+                "remaining": 0
+            }
+        )
     except HTTPException:
         raise
     except Exception as e:
