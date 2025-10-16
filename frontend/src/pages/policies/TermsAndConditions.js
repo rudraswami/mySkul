@@ -28,7 +28,7 @@ export default function TermsAndConditions() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              Welcome to Dhruv AI. By accessing or using our AI-powered educational platform at https://seamless-auth-1.emergent.host 
+              Welcome to Dhruv AI. By accessing or using our AI-powered educational platform 
               ("Platform"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, 
               please do not use our services.
             </p>
