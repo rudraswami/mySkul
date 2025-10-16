@@ -119,8 +119,8 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
                     disabled={navigating === item.name}
                     className={`navigation-item group flex items-center w-full min-h-12 px-3 py-3 text-sm font-medium rounded-lg mobile-transition ${
                       item.current
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600 dark:border-blue-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     } ${navigating === item.name ? 'opacity-75 cursor-not-allowed' : ''}`}
                   >
                     {navigating === item.name ? (
@@ -128,7 +128,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
                     ) : (
                         <Icon 
                           className={`mr-3 h-5 w-5 ${
-                            item.current ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                            item.current ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
                           }`}
                         />
                       )}
@@ -141,7 +141,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen }) {
           </nav>
 
           {/* User Profile & Logout */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             {/* User Info */}
             <div className="flex items-center mb-4">
               <Avatar className="h-10 w-10">
