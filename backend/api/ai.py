@@ -23,6 +23,26 @@ async def get_ai_service(db = Depends(get_database)) -> AIService:
     return AIService(db, emergent_llm_key)
 
 
+# Dependencies for caching and streaming
+from services.ai_cache_service import AICacheService, MentorTipsCache
+from services.streaming_service import StreamingResponseService, create_sse_response
+from fastapi.responses import StreamingResponse
+import time
+
+async def get_ai_cache_service(db = Depends(get_database)) -> AICacheService:
+    """Get AI cache service instance"""
+    service = AICacheService(db)
+    await service.initialize()
+    return service
+
+async def get_mentor_tips_cache(db = Depends(get_database)) -> MentorTipsCache:
+    """Get mentor tips cache instance"""
+    service = MentorTipsCache(db)
+    await service.initialize()
+    return service
+
+
+
 @router.post("/dual-response")
 async def generate_dual_ai_response(
     request: DualAIRequest,
