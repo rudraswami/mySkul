@@ -342,8 +342,17 @@ async def google_callback(
         
         # Redirect to frontend based on profile completion
         frontend_url = os.getenv('FRONTEND_URL') or os.getenv('BACKEND_URL', 'http://localhost:3000')
+        
+        # For new users, pass user info in URL for ProfileSetup display
         if not profile_completed:
-            redirect_url = f"{frontend_url}/profile-setup?session_token={session_token}"
+            from urllib.parse import quote
+            redirect_url = (
+                f"{frontend_url}/profile-setup?"
+                f"session_token={session_token}&"
+                f"name={quote(name)}&"
+                f"email={quote(email)}&"
+                f"photo_url={quote(picture)}"
+            )
         else:
             redirect_url = f"{frontend_url}/dashboard?session_token={session_token}"
         
