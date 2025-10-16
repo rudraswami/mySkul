@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from fastapi.responses import RedirectResponse
 from urllib.parse import urlencode
 
-from models.core import User, UserCreate, UserLogin, ProfileCompleteRequest
+from models.core import User, UserCreate, UserLogin, ProfileCompleteRequest, GoogleAuthCallback
 from services.auth_service import AuthService
 from services.oauth_state_store import OAuthStateStore
 from dependencies import get_auth_service, get_database
