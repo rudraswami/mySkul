@@ -84,57 +84,83 @@ class ProductionDeploymentTester:
             print(f"   ❌ Authentication failed")
             return False
 
-    def test_phase1_stability_implementation(self):
-        """Test Phase 1 Stability Implementation"""
-        print("\n🔧 PHASE 1 STABILITY IMPLEMENTATION TESTING")
+    def test_production_deployment(self):
+        """Comprehensive Backend Testing for Production Deployment"""
+        print("\n🚀 PRODUCTION DEPLOYMENT BACKEND TESTING")
         print("=" * 80)
-        print("   OBJECTIVE: Test Subscription Service Migration, Feature Access, CSRF, Health Check")
+        print("   OBJECTIVE: Verify production readiness - API health, auth, subscriptions, AI services")
         print("   BACKEND URL:", self.base_url)
-        print("   AUTH: test@dhruvai.com / password123")
+        print("   AUTH: test@dhruvai.com / password123 (if available)")
         
         test_results = {
-            'authentication': False,
+            # Core API Health
             'health_check': False,
-            'csrf_token_endpoint': False,
-            'subscription_info_endpoint': False,
-            'subscription_current_endpoint': False,
-            'subscription_usage_endpoint': False,
-            'subscription_plans_endpoint': False,
-            'feature_access_ai_mentor': False,
-            'feature_access_mock_tests': False,
-            'feature_access_auto_notes': False,
-            'feature_access_denied_402': False,
-            'backward_compatibility': False
+            'cors_headers': False,
+            
+            # Authentication Flow
+            'auth_session_unauthenticated': False,
+            'auth_login_attempt': False,
+            
+            # Subscription System
+            'subscription_info': False,
+            'subscription_current': False,
+            'subscription_plans': False,
+            'subscription_structure': False,
+            
+            # AI Service Endpoints
+            'ai_cache_stats': False,
+            'ai_endpoints_accessible': False,
+            
+            # Mock Tests Endpoints
+            'mock_tests_endpoints': False,
+            'database_indexes': False,
+            
+            # Error Handling
+            'error_404_handling': False,
+            'error_401_handling': False,
+            'error_500_handling': False,
+            
+            # Configuration Validation
+            'environment_variables': False,
+            'mongodb_connection': False
         }
         
-        # AUTHENTICATION
-        print("\n1️⃣ AUTHENTICATION SETUP")
-        auth_success = self.authenticate()
-        if not auth_success:
-            print("   ❌ Authentication failed - cannot proceed with subscription tests")
-            return False
-        
-        test_results['authentication'] = True
-        
-        # BACKEND HEALTH CHECK
-        print("\n2️⃣ BACKEND HEALTH CHECK")
+        # 1. CORE API HEALTH
+        print("\n1️⃣ CORE API HEALTH")
         test_results['health_check'] = self.test_health_endpoint()
+        test_results['cors_headers'] = self.test_cors_configuration()
         
-        # CSRF TOKEN ENDPOINT
-        print("\n3️⃣ CSRF TOKEN ENDPOINT")
-        test_results['csrf_token_endpoint'] = self.test_csrf_token_endpoint()
+        # 2. AUTHENTICATION FLOW
+        print("\n2️⃣ AUTHENTICATION FLOW")
+        test_results['auth_session_unauthenticated'] = self.test_unauthenticated_session()
+        test_results['auth_login_attempt'] = self.test_authentication_attempt()
         
-        # SUBSCRIPTION SERVICE MIGRATION TESTING
-        print("\n4️⃣ SUBSCRIPTION SERVICE MIGRATION TESTING")
-        subscription_results = self.test_subscription_endpoints()
+        # 3. SUBSCRIPTION SYSTEM
+        print("\n3️⃣ SUBSCRIPTION SYSTEM")
+        subscription_results = self.test_subscription_system()
         test_results.update(subscription_results)
         
-        # FEATURE ACCESS TESTING
-        print("\n5️⃣ FEATURE ACCESS TESTING")
-        feature_access_results = self.test_feature_access_endpoints()
-        test_results.update(feature_access_results)
+        # 4. AI SERVICE ENDPOINTS
+        print("\n4️⃣ AI SERVICE ENDPOINTS")
+        ai_results = self.test_ai_service_endpoints()
+        test_results.update(ai_results)
         
-        return self._print_phase1_test_results(test_results)
+        # 5. MOCK TESTS ENDPOINTS
+        print("\n5️⃣ MOCK TESTS ENDPOINTS")
+        mock_results = self.test_mock_tests_endpoints()
+        test_results.update(mock_results)
+        
+        # 6. ERROR HANDLING
+        print("\n6️⃣ ERROR HANDLING")
+        error_results = self.test_error_handling()
+        test_results.update(error_results)
+        
+        # 7. CONFIGURATION VALIDATION
+        print("\n7️⃣ CONFIGURATION VALIDATION")
+        config_results = self.test_configuration_validation()
+        test_results.update(config_results)
+        
+        return self._print_production_test_results(test_results)
     
     def test_health_endpoint(self):
         """Test /api/health endpoint"""
