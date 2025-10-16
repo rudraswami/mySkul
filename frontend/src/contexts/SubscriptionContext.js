@@ -60,7 +60,7 @@ export function SubscriptionProvider({ children }) {
 
   const dailyUsage = subscriptionInfo?.daily_usage || subscriptionInfo?.usage_summary?.features || {};
 
-  const openUpsellModal = (featureName, detailLike) => {
+  const openUpsellModal = useCallback((featureName, detailLike) => {
     if (!detailLike) detailLike = {};
     const upsellInfo = detailLike.upsell_info || detailLike;
     
@@ -83,16 +83,12 @@ export function SubscriptionProvider({ children }) {
     };
     setUpsellModal(modalData);
     return modalData;
-  };
+  }, []);
 
-  const checkFeatureAccess = async (featureName) => {
+  const checkFeatureAccess = useCallback(async (featureName) => {
     try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return { has_access: false, upgrade_needed: true };
-
-      const response = await axios.post(`${API}/subscription/check-access`, 
-        { feature_name: featureName }, 
-        { headers: { 'Authorization': `Bearer ${token}` } }
+      const response = await apiClient.post('/subscription/check-access', 
+        { feature_name: featureName }
       );
 
       return response.data;
@@ -126,7 +122,6 @@ export function SubscriptionProvider({ children }) {
       }
       
       // SECURITY FIX: Don't fail open on errors - deny access by default
-      // This prevents bypassing limits when there are network/server errors
       console.error('❌ Feature access check error - denying access by default');
       return { 
         has_access: false, 
@@ -135,7 +130,7 @@ export function SubscriptionProvider({ children }) {
         message: 'Unable to verify access. Please try again.'
       };
     }
-  };
+  }, [openUpsellModal]);
 
   // Helper function to get plan pricing
   const getPlanPricing = (planTier) => {
