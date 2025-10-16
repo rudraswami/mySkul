@@ -27,14 +27,40 @@ async def get_ai_service(db = Depends(get_database)) -> AIService:
 async def generate_dual_ai_response(
     request: DualAIRequest,
     user: User = Depends(get_current_user),
-    ai_service: AIService = Depends(get_ai_service)
+    ai_service: AIService = Depends(get_ai_service),
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Generate dual AI response (Professor + Mentor)"""
+    """
+    Generate dual AI response (Professor + Mentor)
+    Checks subscription access before generating response
+    """
     try:
+        # Check feature access
+        access_result = await sub_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
+        
+        if not access_result.allowed:
+            # Return 402 with student-friendly upgrade message
+            raise HTTPException(
+                status_code=402,
+                detail=access_result.to_dict()
+            )
+        
+        # Generate response
         response = await ai_service.generate_dual_ai_response(
             user.user_id, request.message, request.session_id, request.subject
         )
+        
+        # Track usage AFTER successful generation
+        await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
+        
         return response
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate dual AI response: {str(e)}")
 
