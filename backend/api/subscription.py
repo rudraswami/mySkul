@@ -452,31 +452,22 @@ async def track_mentor_tip_usage(
 async def upgrade_subscription(
     request: SubscriptionRequest,
     user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
 ):
-    """Upgrade user subscription (placeholder for payment integration)"""
+    """Upgrade user subscription (MIGRATED to Unified Service)"""
     try:
-        # This is a simplified upgrade endpoint
-        # In production, this would integrate with payment processors
-        
-        # Update user subscription
-        update_result = await db.user_subscriptions.update_one(
-            {"user_id": user.user_id},
-            {
-                "$set": {
-                    "plan_name": request.plan_name.upper(),
-                    "billing_cycle": request.billing_cycle,
-                    "status": "active",
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                }
-            }
+        # Use unified service to upgrade
+        success, message = await unified_service.upgrade_subscription(
+            user.user_id,
+            request.plan_name.lower(),  # Normalize to lowercase
+            payment_method="manual"
         )
         
-        if update_result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="Subscription not found")
+        if not success:
+            raise HTTPException(status_code=400, detail=message)
         
         return {
-            "message": "Subscription upgraded successfully",
+            "message": message,
             "plan_name": request.plan_name.upper(),
             "billing_cycle": request.billing_cycle
         }
