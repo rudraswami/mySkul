@@ -161,13 +161,37 @@ function AppContent() {
                 </div>
                 
                 <Routes>
-                  <Route path="/dashboard" element={<StudentDashboard />} />
-                  <Route path="/tutor" element={<AITutor />} />
-                  <Route path="/tests" element={<MockTests />} />
+                  <Route path="/dashboard" element={
+                    <Suspense fallback={<PageLoader message="Loading dashboard..." />}>
+                      <StudentDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="/tutor" element={
+                    <Suspense fallback={<PageLoader message="Loading AI Tutor..." />}>
+                      <AITutor />
+                    </Suspense>
+                  } />
+                  <Route path="/tests" element={
+                    <Suspense fallback={<PageLoader message="Loading Mock Tests..." />}>
+                      <MockTests />
+                    </Suspense>
+                  } />
                   {/* Removed: Analytics and Wellness routes - not essential for core exam preparation */}
-                  <Route path="/auto-notes" element={<AutoNoteMentor />} />
-                  <Route path="/subscription" element={<Subscription />} />
-                  <Route path="/profile" element={<ProfileSettings />} />
+                  <Route path="/auto-notes" element={
+                    <Suspense fallback={<PageLoader message="Loading Auto Notes..." />}>
+                      <AutoNoteMentor />
+                    </Suspense>
+                  } />
+                  <Route path="/subscription" element={
+                    <Suspense fallback={<PageLoader message="Loading Subscription..." />}>
+                      <Subscription />
+                    </Suspense>
+                  } />
+                  <Route path="/profile" element={
+                    <Suspense fallback={<PageLoader message="Loading Profile..." />}>
+                      <ProfileSettings />
+                    </Suspense>
+                  } />
                   <Route path="*" element={<Navigate to="/dashboard" />} />
                 </Routes>
               </main>
