@@ -1,5 +1,6 @@
 """
 AI router for chat sessions, dual AI responses, guardrails, and AI-powered features
+Now with unified subscription service for consistent access control
 """
 import os
 from fastapi import APIRouter, HTTPException, Depends
@@ -7,7 +8,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from models.core import User, SessionCreateRequest, SessionRenameRequest, SessionPinRequest, SessionBookmarkRequest
 from models.ai import DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
 from services.ai_service import AIService
-from dependencies import get_current_user, get_database
+from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
+from dependencies import get_current_user, get_database, get_unified_subscription_service
 
 
 # Router instance
