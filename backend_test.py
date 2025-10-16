@@ -311,7 +311,7 @@ class Phase1StabilityTester:
             "POST",
             "subscription/check-access",
             [200, 402],
-            data={"feature": "mock_tests"},
+            data={"feature_name": "mock_tests"},
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
