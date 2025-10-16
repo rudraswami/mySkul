@@ -27,16 +27,16 @@ async def create_indexes():
     client = AsyncIOMotorClient(settings.MONGO_URL)
     db = client[settings.DB_NAME]
     
-    def safe_create_index(collection, index_spec, collection_name):
+    async def safe_create_index(collection, index_spec, collection_name):
         """Helper to create index with proper error handling"""
         try:
             if isinstance(index_spec[0], list):
                 # Compound index
-                collection.create_index(index_spec[0], **index_spec[1])
+                await collection.create_index(index_spec[0], **index_spec[1])
                 index_name = "_".join([f"{f[0]}_{f[1]}" for f in index_spec[0]])
             else:
                 # Single field index
-                collection.create_index(index_spec[0], **index_spec[1])
+                await collection.create_index(index_spec[0], **index_spec[1])
                 index_name = index_spec[0]
             
             print(f"   ✓ {index_name}")
