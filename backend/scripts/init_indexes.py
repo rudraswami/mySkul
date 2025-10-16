@@ -283,7 +283,7 @@ async def create_indexes():
         # Print index statistics
         collections = [
             "users", "chat_sessions", "messages", "subscriptions",
-            "usage_tracking", "mock_tests", "auto_notes", "oauth_states"
+            "usage_tracking", "mock_tests", "test_attempts", "auto_notes", "oauth_states"
         ]
         
         print("\n📈 Index Statistics:")
