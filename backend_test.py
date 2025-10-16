@@ -290,7 +290,7 @@ class Phase1StabilityTester:
             "POST",
             "subscription/check-access",
             [200, 402],
-            data={"feature": "ai_mentor"},
+            data={"feature_name": "ai_mentor"},
             headers={'Authorization': f'Bearer {self.token}'}
         )
         
