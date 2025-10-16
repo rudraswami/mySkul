@@ -17,6 +17,9 @@ from core.database import init_database, close_database, get_database
 # API routers
 from api import auth, user, subscription, ai, analytics, auto_notes, mock_tests
 
+# Middleware
+from middleware.csrf import CSRFMiddleware
+
 # Services for dependency injection
 from services.auth_service import AuthService
 from services.subscription_service import SubscriptionService
