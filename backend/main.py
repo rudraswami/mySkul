@@ -129,7 +129,8 @@ def create_app() -> FastAPI:
         # Initialize services and inject dependencies
         logger.info("🔧 Initializing services...")
         auth_service = AuthService(db, settings.JWT_SECRET)
-        subscription_service = SubscriptionService(db)
+        subscription_service = SubscriptionService(db)  # Legacy
+        unified_subscription_service = UnifiedSubscriptionService(db)  # New unified service
         ai_service = AIService(
             db,
             settings.EMERGENT_LLM_KEY,
@@ -139,8 +140,11 @@ def create_app() -> FastAPI:
         # Set global dependencies
         dependencies.db = db
         dependencies.auth_service = auth_service
-        dependencies.subscription_service = subscription_service
+        dependencies.subscription_service = subscription_service  # Legacy
+        dependencies.unified_subscription_service = unified_subscription_service  # New
         dependencies.ai_service = ai_service
+        
+        logger.info("✅ Unified Subscription Service initialized")
         
         logger.info("✅ All services initialized successfully")
         logger.info(f"🎯 Server ready at {settings.BACKEND_URL}")
