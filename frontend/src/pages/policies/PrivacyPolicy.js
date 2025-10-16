@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
               <li><strong>Restriction:</strong> Request limitation of data processing</li>
             </ul>
             <p className="text-gray-700 dark:text-gray-300 mt-3">
-              To exercise these rights, contact us at <a href="mailto:privacy@dhruvai.com" className="text-blue-600 dark:text-blue-400 hover:underline">privacy@dhruvai.com</a>
+              To exercise these rights, contact us at <a href="mailto:support@druvai.in" className="text-blue-600 dark:text-blue-400 hover:underline">support@druvai.in</a>
             </p>
           </section>
 
