@@ -137,12 +137,12 @@ function AppContent() {
                 mobileMenuOpen={mobileMenuOpen} 
                 setMobileMenuOpen={setMobileMenuOpen} 
               />
-              <main className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm lg:ml-0">
+              <main id="main-content" className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm lg:ml-0 dark:from-gray-900/40 dark:to-gray-800/60">
                 {/* Mobile Header with Hamburger */}
-                <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
                   <button
                     onClick={() => setMobileMenuOpen(true)}
-                    className="hamburger-menu min-h-12 min-w-12 p-3 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center mobile-transition"
+                    className="hamburger-menu min-h-12 min-w-12 p-3 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center mobile-transition"
                     aria-label="Open navigation menu"
                     aria-controls="mobile-menu"
                   >
@@ -151,10 +151,10 @@ function AppContent() {
                     </svg>
                   </button>
                   <div className="flex items-center">
-                    <svg className="h-8 w-8 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <h1 className="text-lg font-bold text-gray-900">Dhruv AI</h1>
+                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">Dhruv AI</h1>
                   </div>
                   <div className="w-10" /> {/* Spacer for centering */}
                 </div>
