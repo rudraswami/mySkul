@@ -2,7 +2,6 @@
 Analytics router for dashboard analytics, performance metrics, and wellness tracking
 """
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, Any
 
 from models.core import User
 from models.ai import WellnessCheckRequest

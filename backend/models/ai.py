@@ -1,10 +1,8 @@
 """
 AI and Chat-related models for Dhruv AI application
 """
-from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from pydantic import BaseModel, Field
-import uuid
 
 
 class ChatRequest(BaseModel):

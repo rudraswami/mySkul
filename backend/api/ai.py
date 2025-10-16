@@ -2,11 +2,10 @@
 AI router for chat sessions, dual AI responses, guardrails, and AI-powered features
 """
 import os
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, Depends
 
-from models.core import User, ChatSession, SessionCreateRequest, SessionRenameRequest, SessionPinRequest, SessionBookmarkRequest
-from models.ai import ChatRequest, DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
+from models.core import User, SessionCreateRequest, SessionRenameRequest, SessionPinRequest, SessionBookmarkRequest
+from models.ai import DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
 from services.ai_service import AIService
 from dependencies import get_current_user, get_database
 

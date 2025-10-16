@@ -4,14 +4,12 @@ Authentication router for user registration, login, logout, and CSRF
 import os
 from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from fastapi.responses import RedirectResponse
-from starlette.middleware.sessions import SessionMiddleware
 from urllib.parse import urlencode
 
 from models.core import User, UserCreate, UserLogin, ProfileCompleteRequest
 from services.auth_service import AuthService
 from services.oauth_state_store import OAuthStateStore
 from dependencies import get_auth_service, get_database
-from services.google_oauth import oauth
 
 
 # Router instance
@@ -107,7 +105,6 @@ async def logout_user(
     db = Depends(get_database)
 ):
     """Logout user by clearing the authentication cookie and session"""
-    from datetime import datetime, timezone
     
     # Get session token
     session_token = request.cookies.get("dhruv_ai_session") or request.cookies.get("dhruv_ai_auth")
@@ -509,7 +506,7 @@ async def google_auth_callback(
     Handle Google OAuth callback from Emergent Social Login
     Exchange session_id for user data and create/update user
     """
-    from models.core import GoogleAuthCallback, User
+    from models.core import User
     from datetime import datetime, timezone, timedelta
     
     # Check if user exists by Google ID or email

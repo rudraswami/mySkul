@@ -2,11 +2,11 @@
 Auto-Notes service for session management, audio processing, and note generation
 """
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from models.auto_notes import AutoNoteSession, NoteSessionRequest
+from models.auto_notes import AutoNoteSession
 
 logger = logging.getLogger(__name__)
 

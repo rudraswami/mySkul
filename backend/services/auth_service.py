@@ -4,7 +4,7 @@ Authentication service for business logic and utilities
 import os
 import bcrypt
 import jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from fastapi import HTTPException, Request, Header
 from motor.motor_asyncio import AsyncIOMotorClient

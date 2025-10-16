@@ -2,14 +2,13 @@
 Subscription service for managing user subscriptions, plans, and access control
 """
 import json
-import os
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from models.subscription import UserSubscription, UsageTracking
+from models.subscription import UserSubscription
 
 logger = logging.getLogger(__name__)
 

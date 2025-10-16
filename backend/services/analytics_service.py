@@ -3,7 +3,7 @@ Analytics service for dashboard metrics, performance tracking, and user analytic
 """
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from motor.motor_asyncio import AsyncIOMotorClient
 
 logger = logging.getLogger(__name__)

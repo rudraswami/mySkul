@@ -2,11 +2,10 @@
 Mock Tests service for test generation, submission, and performance tracking
 """
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from models.mock_tests import MockTest, TestAttempt, StudentProgress
 
 logger = logging.getLogger(__name__)
 

@@ -7,11 +7,10 @@ import logging
 import sys
 import asyncio
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
-from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
-import base64
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 # Add utils to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -21,11 +20,7 @@ from utils.response_parser import ResponseParser
 from utils.motivational_generator import MotivationalGenerator
 from utils.format_validator import format_validator
 
-from models.core import User, ChatSession, ChatMessage
-from models.ai import (
-    ChatRequest, DualAIRequest, MathValidationRequest, 
-    FactVerificationRequest, StudyPlanRequest
-)
+from models.core import ChatSession, ChatMessage
 
 logger = logging.getLogger(__name__)
 

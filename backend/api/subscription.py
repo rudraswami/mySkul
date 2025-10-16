@@ -1,14 +1,13 @@
 """
 Subscription router for managing user subscriptions, plans, and access control
 """
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 from datetime import datetime, timezone
 
 from models.core import User
 from models.subscription import (
-    SubscriptionRequest, FeatureAccessRequest, CheckoutRequest,
-    SubscriptionPlan, UserSubscription, UsageTracking
+    SubscriptionRequest, FeatureAccessRequest
 )
 from services.subscription_service import SubscriptionService
 from dependencies import get_current_user, get_database

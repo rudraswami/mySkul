@@ -1,14 +1,11 @@
 """
 Auto-Notes router for session management, audio processing, and note generation
 """
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
-from typing import Dict, Any, List
+from fastapi import APIRouter, HTTPException, Depends
 
 from models.core import User
 from models.auto_notes import (
-    NoteSessionRequest, EndSessionRequest, ExplainPointRequest,
-    GenerateFlashcardsRequest, CreateSpacedRepetitionRequest,
-    ReviewCardRequest, SemanticSearchRequest, ClassSeriesRequest
+    NoteSessionRequest
 )
 from services.auto_notes_service import AutoNotesService
 from dependencies import get_current_user, get_database

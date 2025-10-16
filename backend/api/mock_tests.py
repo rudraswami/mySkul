@@ -2,13 +2,8 @@
 Mock Tests router for test generation, submission, and performance tracking
 """
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, Any, List
 
 from models.core import User
-from models.mock_tests import (
-    TestGenerationRequest, TestSubmissionRequest, TestRetakeRequest,
-    BookmarkQuestionRequest
-)
 from services.mock_tests_service import MockTestsService
 from dependencies import get_current_user, get_database
 
