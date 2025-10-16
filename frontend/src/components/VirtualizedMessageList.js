@@ -4,7 +4,7 @@
  * Only renders visible messages in the viewport
  */
 import React, { useRef, useEffect, memo, useState } from 'react';
-import { VariableSizeList as List } from 'react-window';
+import { FixedSizeList as List } from 'react-window';
 
 /**
  * Individual Message Row Component
