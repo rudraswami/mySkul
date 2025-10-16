@@ -124,7 +124,7 @@ export default function RefundPolicy() {
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">4.1 How to Request a Refund</h3>
             <p className="text-gray-700 dark:text-gray-300 mb-3">To request a refund:</p>
             <ol className="list-decimal pl-6 text-gray-700 dark:text-gray-300 space-y-2">
-              <li>Email us at <a href="mailto:refunds@dhruvai.com" className="text-blue-600 dark:text-blue-400 hover:underline">refunds@dhruvai.com</a></li>
+              <li>Email us at <a href="mailto:support@druvai.in" className="text-blue-600 dark:text-blue-400 hover:underline">support@druvai.in</a></li>
               <li>Include your account email, order ID, and reason for refund</li>
               <li>Our team will review within 2-3 business days</li>
               <li>If approved, refund will be processed within 5-7 business days</li>
