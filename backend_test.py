@@ -176,9 +176,11 @@ class Phase1StabilityTester:
                 return True
             else:
                 print(f"   ❌ CSRF token invalid or missing")
+                print(f"      Response: {response}")
                 return False
         else:
             print(f"   ❌ CSRF token endpoint failed - Status: {status_code}")
+            print(f"      Response: {response}")
             return False
     
     def test_subscription_endpoints(self):
