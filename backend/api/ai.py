@@ -43,6 +43,172 @@ async def get_mentor_tips_cache(db = Depends(get_database)) -> MentorTipsCache:
 
 
 
+
+
+@router.post("/dual-response-cached")
+async def generate_dual_ai_response_with_cache(
+    request: DualAIRequest,
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service),
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service),
+    cache_service: AICacheService = Depends(get_ai_cache_service)
+):
+    """
+    Generate dual AI response with caching
+    Returns cached response if available, otherwise generates new response
+    PERFORMANCE OPTIMIZATION: Reduces latency for repeated questions
+    """
+    try:
+        # Start latency timer
+        start_time = time.time()
+        
+        # Check feature access
+        access_result = await sub_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
+        
+        if not access_result.allowed:
+            raise HTTPException(
+                status_code=402,
+                detail=access_result.to_dict()
+            )
+        
+        # Prepare context for caching
+        context = {
+            "subject": request.subject,
+            "exam_type": request.exam_type,
+            "mode": request.mode,
+            "depth_level": request.depth_level
+        }
+        
+        # Check cache
+        cached_response = await cache_service.get_cached_response(
+            request.user_message,
+            user.user_id,
+            context
+        )
+        
+        if cached_response:
+            cache_latency = (time.time() - start_time) * 1000
+            return {
+                **cached_response,
+                "cached": True,
+                "latency_ms": cache_latency,
+                "cache_hit": True
+            }
+        
+        # Generate new response
+        response = await ai_service.generate_dual_response(
+            user_message=request.user_message,
+            subject=request.subject,
+            exam_type=request.exam_type,
+            mode=request.mode,
+            depth_level=request.depth_level,
+            visuals_enabled=request.visuals_enabled,
+            conversation_history=request.conversation_history
+        )
+        
+        # Cache the response
+        await cache_service.cache_response(
+            request.user_message,
+            user.user_id,
+            response,
+            context
+        )
+        
+        # Track usage
+        await sub_service.track_feature_use(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            amount=1
+        )
+        
+        generation_latency = (time.time() - start_time) * 1000
+        
+        return {
+            **response,
+            "cached": False,
+            "latency_ms": generation_latency,
+            "cache_hit": False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+
+@router.post("/dual-response-stream")
+async def generate_dual_ai_response_streaming(
+    request: DualAIRequest,
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service),
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service),
+    cache_service: AICacheService = Depends(get_ai_cache_service)
+):
+    """
+    Generate dual AI response with streaming
+    Returns response incrementally as tokens are generated
+    PERFORMANCE OPTIMIZATION: Reduces perceived latency
+    """
+    try:
+        # Check feature access
+        access_result = await sub_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
+        
+        if not access_result.allowed:
+            raise HTTPException(
+                status_code=402,
+                detail=access_result.to_dict()
+            )
+        
+        # Prepare context
+        context = {
+            "subject": request.subject,
+            "exam_type": request.exam_type,
+            "mode": request.mode,
+            "depth_level": request.depth_level
+        }
+        
+        # Create streaming service
+        streaming_service = StreamingResponseService(ai_service)
+        
+        # Stream with cache check
+        stream_generator = streaming_service.stream_with_cache(
+            request.user_message,
+            user.user_id,
+            context,
+            cache_service
+        )
+        
+        # Track usage
+        await sub_service.track_feature_use(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            amount=1
+        )
+        
+        # Return SSE streaming response
+        return StreamingResponse(
+            create_sse_response(stream_generator),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"  # Disable nginx buffering
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Streaming failed: {str(e)}")
+
 @router.post("/dual-response")
 async def generate_dual_ai_response(
     request: DualAIRequest,
