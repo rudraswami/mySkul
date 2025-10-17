@@ -166,10 +166,10 @@ class Settings:
     # =============================================================================
     # SUBSCRIPTION LIMITS
     # =============================================================================
-    # Free Tier
-    FREE_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("FREE_TIER_AI_MENTOR_LIMIT", "5"))
-    FREE_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("FREE_TIER_MOCK_TEST_LIMIT", "2"))
-    FREE_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("FREE_TIER_AUTO_NOTES_LIMIT", "3"))
+    # Free Tier - Updated to match planConfig_ai_tutor.json (January 17, 2025)
+    FREE_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("FREE_TIER_AI_MENTOR_LIMIT", "10"))
+    FREE_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("FREE_TIER_MOCK_TEST_LIMIT", "1"))
+    FREE_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("FREE_TIER_AUTO_NOTES_LIMIT", "1"))
     
     # Basic Tier
     BASIC_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("BASIC_TIER_AI_MENTOR_LIMIT", "50"))
