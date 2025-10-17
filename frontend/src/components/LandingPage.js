@@ -26,6 +26,7 @@ import {
   Coffee,
   Sparkles
 } from 'lucide-react';
+import { PLANS_CONFIG, formatPrice } from '../config/plans';
 
 const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
