@@ -26,6 +26,9 @@ import {
   useUpgradeSubscription
 } from '../hooks/useSubscription';
 
+// Import centralized plans configuration
+import { PLANS_CONFIG, getAllPlans } from '../config/plans';
+
 export default function Subscription() {
   const { user } = useAuth();
   
