@@ -320,7 +320,6 @@ export default function ProfileSettings() {
 
           {/* Account Info Only - Subscription moved to dedicated /subscription page */}
           <div className="space-y-6">
-                {/* Current Plan */}
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full px-4 py-2 mb-4">
                     <span className="text-2xl mr-2">
