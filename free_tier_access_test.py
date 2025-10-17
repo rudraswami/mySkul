@@ -11,7 +11,7 @@ from datetime import datetime
 
 class FreeTierAccessTester:
     def __init__(self):
-        self.base_url = "https://dhruvai-upgrade.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-learn-assist.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

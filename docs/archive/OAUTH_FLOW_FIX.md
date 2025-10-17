@@ -144,7 +144,7 @@ This is **one extra click** but ensures:
 ## 🧪 Testing the Fix
 
 ### Test Steps:
-1. Go to: https://dhruvai-upgrade.preview.emergentagent.com/login
+1. Go to: https://dhruv-learn-assist.preview.emergentagent.com/login
 2. Click "Continue with Google"
 3. **You'll see Emergent consent screen** (expected)
 4. Click "Continue"

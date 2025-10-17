@@ -521,7 +521,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 
 #### 📋 **TESTING METHODOLOGY**
 - **Authentication**: test@dhruvai.com / password123
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Test Coverage**: Health, CSRF, Subscription Migration, Feature Access
 - **Response Validation**: Status codes, JSON structure, field presence
 
@@ -637,7 +637,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 ---
 
 **Testing Environment**: 
-- Frontend URL: https://dhruvai-upgrade.preview.emergentagent.com
+- Frontend URL: https://dhruv-learn-assist.preview.emergentagent.com
 - Authentication: Google OAuth only
 - Browser: Playwright (Desktop 1920x1080)
 - Test Date: January 16, 2025
@@ -1013,7 +1013,7 @@ results = await run_sequential(
 ### Deployment Verification:
 
 **Backend Status**: ✅ Running
-- Health endpoint: https://dhruvai-upgrade.preview.emergentagent.com/api/health
+- Health endpoint: https://dhruv-learn-assist.preview.emergentagent.com/api/health
 - All services initialized successfully
 - Database indexes: All 63 indexes created across 9 collections
 - Configuration: All environment variables properly set
@@ -1136,7 +1136,7 @@ mongodb    RUNNING   (Port 27017)
 ✅ **Configuration Valid** - Environment variables and MongoDB working
 
 #### 📋 **TESTING METHODOLOGY**
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Test Coverage**: Health, CORS, Authentication, Subscription, AI Services, Mock Tests, Error Handling, Configuration
 - **Authentication**: OAuth-only (Google) - email/password not supported (expected)
 - **Response Validation**: Status codes, JSON structure, security headers
@@ -1231,7 +1231,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📊 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Authentication**: OAuth-only (Google) - test credentials not applicable
 - **Test Coverage**: 15 endpoints across 5 categories
 - **Response Validation**: Status codes, JSON structure, authentication security
@@ -1326,7 +1326,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Test Coverage**: Feature name mapping, new feature names, payment error verification
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 402 errors, proper feature recognition
@@ -1430,7 +1430,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Test Coverage**: Feature name mapping, new feature names, payment error verification
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 402 errors, proper feature recognition
@@ -1580,7 +1580,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
+- **Backend URL**: https://dhruv-learn-assist.preview.emergentagent.com/api
 - **Test Coverage**: Session validation, subscription endpoints, feature access, AI endpoints, error handling
 - **Authentication**: OAuth-only (Google) - unauthenticated testing appropriate
 - **Response Validation**: Status codes, error messages, consistency checks

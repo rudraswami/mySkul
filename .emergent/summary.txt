@@ -1,59 +1,62 @@
 <analysis>
-The AI engineer's work trajectory demonstrates a focused effort to stabilize, secure, and modularize the Dhruv AI application. Initial tasks involved fixing critical deployment blockers such as hardcoded URLs in Razorpay policy pages and resolving a syntax error in the backend's AI API. After ensuring policy pages were production-ready, a critical bug was identified where the newly refactored AI Tutor UI was broken; this led to a temporary reversion to the legacy AITutor component. Subsequently, the engineer addressed user feedback regarding inconsistent subscription pricing by creating a single source of truth for plans and updated relevant components. The current ongoing task is the re-modularization of the AI Tutor, where all necessary custom hooks and UI components have been created and the next step is their integration. Key decisions include using environment variables for URLs, consolidating pricing data, and adopting a component-based architecture for the AI Tutor.
+The AI engineer's trajectory shows an iterative process of development and critical bug fixing for the Dhruv AI application. Initial efforts focused on stabilizing core components, including fixing hardcoded URLs in policy pages and a backend AI API syntax error. A significant task was the modularization of the AI Tutor, which, despite initial completion of components and hooks, led to critical bugs and a subsequent reversion to the legacy version. Concurrently, issues with inconsistent subscription pricing were resolved by centralizing plan data. The trajectory highlights a recurring challenge with authentication, specifically related to secure cookie handling in production, which caused widespread 401 errors across features. This was addressed in . Another major focus was robustly implementing the Free Plan's feature gating, clarifying that it should enforce quotas rather than a separate trial period, with multiple fixes applied to  and . The last successfully addressed issue was a critical, pervasive authentication problem.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform is an EdTech application designed to offer AI Tutor, Auto-Note Mentor, and Mock Tests. The primary objective is to enhance user login and onboarding by providing a premium visual experience. Authentication is exclusively Gmail-Only, aiming for seamless login with auto-fetched details and no email verification. Post-login, first-time users must complete a mandatory  screen to capture crucial details like Exam Type, Study Goal, Preferred Mode, Timezone, and Country, including an Others option for exam type. Maintaining UI/UX consistency across all screens is paramount for a passwordless, premium, and seamless onboarding. The application has already implemented multi-pass reasoning and semantic rendering for the AI Tutor, standardized subscription plans, and improved general UI/UX elements.
+The Dhruv AI platform is an EdTech application offering an AI Tutor, Auto-Note Mentor, and Mock Tests. The core user experience prioritizes seamless Gmail-Only authentication and a mandatory  for first-time users to collect details like Exam Type, Study Goal, and Timezone, ensuring UI/UX consistency throughout a passwordless, premium onboarding. The application has implemented multi-pass reasoning and semantic rendering for the AI Tutor, standardized subscription plans, and improved general UI/UX. Critically, the Free Plan is designed to automatically assign new users upon signup, providing access to core features (10 AI sessions, 1 mock test, 1 file upload monthly) without an upfront subscription modal. The modal should only appear when these free limits are reached, not as a separate trial. All paid plans (Basic, Pro, Enterprise) must correctly gate features, and the backend and frontend logic must be consistent for upgrades, downgrades, and expiry.
 </product_requirements>
 
 <key_technical_concepts>
-- **Full-stack**: React.js, FastAPI, MongoDB.
-- **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies, CSRF.
-- **Backend**: Pydantic, Starlette SessionMiddleware, caching, streaming, modular architecture.
-- **Frontend**: React Router, React Query, lazy loading, virtualized lists, DOMPurify, theming, React hooks.
-- **Deployment**: Supervisor, Kubernetes ingress, .
-- **Services**: Unified subscription, AI caching, streaming.
+-   **Full-stack**: React.js, FastAPI, MongoDB.
+-   **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies, CSRF.
+-   **Backend**: Pydantic, Starlette SessionMiddleware, caching, streaming, modular architecture.
+-   **Frontend**: React Router, React Query, lazy loading, virtualized lists, DOMPurify, theming, React hooks.
+-   **Deployment**: Supervisor, Kubernetes ingress, .
+-   **Services**: Unified subscription, AI caching, streaming.
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   ****: Central FastAPI entry, registers routers and middleware. CSRF middleware is commented out.
--   ****: Updated to use  and . Recently fixed for a  by adding  blocks to a  statement in .
--   ****: New policy pages (Privacy, Terms, Refund, Shipping, Contact Us) created for Razorpay compliance. They were initially found to have hardcoded URLs but were subsequently fixed to use environment variables ().
--   ****: This is the *legacy* monolithic AI Tutor component. It was previously attempted to be replaced by modular components but was restored after a critical bug rendered the modular version non-functional.
--   ****: This component's subscription management section was recently removed to centralize subscription display logic.
--   ****: **NEW file**. Created to serve as a single, consistent source of truth for all subscription plan details across the frontend.
--   ****: Updated to use  for displaying consistent pricing information.
--   ****: Updated to use  for consistent pricing display within the upgrade modal.
--   ****: Updated to use  for consistent pricing and plan details.
--   ****: **NEW file**. A custom hook created as part of the AI Tutor modularization.
--   ****: **NEW file**. A custom hook created as part of the AI Tutor modularization.
--   ****: **NEW file**. A custom hook for handling AI response generation, recreated as part of the AI Tutor modularization.
--   ****: **NEW file**. A custom hook for handling voice input in the AI Tutor.
--   ****: **NEW file**. A custom hook for managing user personalization settings.
--   ****: **NEW file**. A custom hook for checking subscription status.
--   ****: **NEW file**. A modular UI component for displaying individual chat messages in the AI Tutor.
--   ****: **NEW file**. A modular UI component for the chat input field and send button in the AI Tutor.
--   ****: **NEW file**. A modular UI component representing the main chat window for the AI Tutor.
--   ****: **NEW file**. A modular UI component for displaying and managing chat sessions in the AI Tutor.
--   ****: **NEW file**. A modular UI component for selecting subjects in the AI Tutor.
--   ****: **NEW file**. A modular UI component for displaying personalization options.
--   ****: **NEW file**. The main entry point for the modular AI Tutor, designed to orchestrate the new hooks and UI components.
+-   ****: Central FastAPI entry point, registers routers and middleware. CSRF middleware is commented out. No direct changes in trajectory, but conceptually orchestrates backend.
+-   ****: Handles AI-related API requests. Previously fixed for a  in . No recent direct modifications but relies on other services.
+-   ****: New policy pages. Fixed to use environment variables () instead of hardcoded URLs for Razorpay compliance.
+-   ****: The *legacy* monolithic AI Tutor component. It was replaced by modular components () but *restored* after critical bugs appeared in the modular version. This restoration means the legacy component is currently active.
+-   ****: **NEW file**. Serves as a single source of truth for all subscription plan details across the frontend. Updated to reflect consistent pricing and feature details.
+-   ****, ****, ****: These files were updated to consume plan details from  for consistent pricing and plan display.
+-   ****: Centralizes subscription logic. This file was repeatedly modified to correctly implement the Free Plan's feature gating and usage limits, ensuring the subscription modal appears only after free limits are reached. Changes were made to  and related logic.
+-   ****: Handles subscription-related API endpoints. Modified to integrate with  and correctly report feature access results.
+-   ****: Handles user authentication and session management. Inspected to ensure correct assignment of default subscription () to new users.
+-   ****: Manages JWTs and secure cookie handling. Critically modified to fix a widespread authentication issue by ensuring correct  (True for HTTPS) and  (none) attributes for cookies in a production environment, preventing 401 Unauthorized errors.
+    secure=Truesamesite=none
+-   ****, ****, ****, ****, ****, ****: These are **NEW** custom hooks created as part of the AI Tutor modularization. Although created, their integration was rolled back. Error handling in some of these was refined (e.g., , , ) during attempts to stabilize the modular AI Tutor.
+-   ****, ****, ****, ****, ****, ****, ****: These are **NEW** modular UI components for the AI Tutor.  is the orchestrator. These were created but are currently *inactive* due to the reversion to .  was inspected for  messages during debugging.
+-   ****: Manages subscription state and feature access checks on the frontend. Modified to correctly utilize the  logic from the backend and ensure the Free Plan bypasses the subscription modal during quota.
+-   ****: Shared API client. Reviewed during authentication issues to ensure proper handling of API calls and potential token refreshes.
+
 </code_architecture>
 
 <pending_tasks>
-- **CRITICAL**: Replace placeholder Razorpay test keys () with live production keys in  and  to enable payments.
-- **HIGH PRIORITY**: Re-enable CSRF protection by uncommenting the middleware in  to enhance security.
-- **LOW PRIORITY**: Complete the React Query migration for the  in the frontend.
-- **ONGOING**: Integrate and thoroughly test the newly created custom hooks and UI components to complete the modularization of the AI Tutor.
+-   **CRITICAL**: Replace placeholder Razorpay test keys () with live production keys in  and  to enable payments.
+-   **HIGH PRIORITY**: Re-enable CSRF protection by uncommenting the middleware in  to enhance security.
+-   **LOW PRIORITY**: Complete the React Query migration for the  in the frontend.
+-   **ONGOING**: Integrate and thoroughly test the newly created custom hooks and UI components to complete the modularization of the AI Tutor. (This task was attempted, but the modular component was reverted due to bugs).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively working on re-modularizing the  component, as explicitly requested by the user, after a previous attempt resulted in a critical bug and a reversion to the legacy . This modularization effort is currently in its initial phases, focusing on splitting the monolithic  into smaller, reusable pieces. The engineer has successfully completed **Phase 1: Extract Custom Hooks**, by creating six new React hooks: , , , , , and . Following this, **Phase 2: Create UI Components** was initiated and completed, with the creation of seven new modular UI components: , , , , , , and the main  file for the  directory. All these components and hooks reside under  and  respectively. The current state is that all building blocks for the modular AITutor have been created, but they have not yet been integrated or tested to replace the currently active legacy . This work follows recent fixes for hardcoded URLs in policy pages and addressing inconsistent subscription pricing across the frontend.
+Immediately before this summary request, the AI engineer was actively working on resolving critical, widespread authentication issues that affected all features (AI Tutor, Mock Tests, Auto Notes). These issues manifested as Please login again or unexpected error messages and 401 Unauthorized responses from backend APIs across the application.
+
+Root cause analysis traced the problem to incorrect cookie handling in the backend's authentication service, specifically the  and  attributes of session cookies. In a production HTTPS environment,  was preventing cookies from being properly transmitted, leading to session loss.
+
+The AI engineer's last successful action was to fix this critical authentication bug by modifying  to correctly set cookie attributes:
+-    when the application is running over HTTPS.
+-    to allow cross-site cookie transmission.
+
+This fix was followed by a backend restart, and a comprehensive frontend testing confirmed that the authentication issues were resolved, and all features were accessible without login prompts.
+
+The previous work on modularizing the AI Tutor was temporarily rolled back to the legacy  component because the modular version introduced new bugs, including authentication problems. The AI Tutor is currently running on its legacy, monolithic component, but the building blocks (hooks and UI components) for the modular version still exist in the codebase.
 </current_work>
 
 <optional_next_step>
-The next step is to integrate the newly created custom hooks and UI components to fully modularize the AI Tutor.
+Re-attempt the integration and thorough testing of the modular AI Tutor components now that core authentication is fixed.
 </optional_next_step>
-

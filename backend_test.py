@@ -7,7 +7,7 @@ from datetime import datetime
 class ProductionDeploymentTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://dhruvai-upgrade.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-learn-assist.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
@@ -398,7 +398,7 @@ class ProductionDeploymentTester:
                 preflight_response = requests.options(
                     f"{self.base_url}/health",
                     headers={
-                        'Origin': 'https://dhruvai-upgrade.preview.emergentagent.com',
+                        'Origin': 'https://dhruv-learn-assist.preview.emergentagent.com',
                         'Access-Control-Request-Method': 'GET'
                     },
                     timeout=10
@@ -830,7 +830,7 @@ class ProductionDeploymentTester:
 class AITutorBackendTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://dhruvai-upgrade.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-learn-assist.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
@@ -1413,7 +1413,7 @@ class AITutorBackendTester:
 class FREETierAccessTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://dhruvai-upgrade.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-learn-assist.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({
