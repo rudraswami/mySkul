@@ -1015,7 +1015,7 @@ const LandingPage = () => {
                 to="/register"
                 className="block w-full text-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 no-underline"
               >
-                Start Pro
+                Start {PLANS_CONFIG.ACHIEVER.short_name}
               </Link>
               <p className="text-center text-xs text-purple-300 mt-3">Start free → Upgrade anytime</p>
             </div>
