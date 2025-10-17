@@ -300,12 +300,22 @@
   
   /* Modal */
   .modal,
-  .upgrade-modal {
+  .upgrade-modal,
+  [class*="max-w-2xl"],
+  [class*="max-w-xl"],
+  [class*="max-w-lg"] {
     width: 95vw !important;
     max-width: 95vw !important;
     max-height: 90vh !important;
-    padding: 20px !important;
-    margin: 20px auto !important;
+    padding: 16px !important;
+    margin: 16px auto !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Ensure modal content is scrollable */
+  .modal-content,
+  [role="dialog"] > div {
+    max-height: 85vh !important;
     overflow-y: auto !important;
   }
   
