@@ -28,7 +28,9 @@ export const useSubscriptionCheck = () => {
       setLoading(true);
       setError(null);
 
-      const response = await client.get(`/subscription/features/${featureName}`);
+      const response = await client.post('/subscription/check-access', {
+        feature_name: featureName
+      });
       const accessData = response.data;
 
       // Update state
