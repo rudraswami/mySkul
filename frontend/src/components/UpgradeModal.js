@@ -4,6 +4,7 @@ import { X, Crown, Zap, TrendingUp, Star, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { useNavigate } from 'react-router-dom';
+import { PLANS_CONFIG, getPlanByTier } from '../config/plans';
 
 /**
  * UpgradeModal - Shows when user reaches AI Tutor session limit
