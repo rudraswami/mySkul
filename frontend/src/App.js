@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'; // Temporarily disabled
 import './App.css';
+import './styles/mobile.css';
 
 // Eagerly loaded components (critical path)
 import LandingPage from './components/LandingPage';
