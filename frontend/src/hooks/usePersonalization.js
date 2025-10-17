@@ -61,7 +61,14 @@ export const usePersonalization = () => {
       }
     } catch (err) {
       console.error('Failed to load personalization data:', err);
-      setError(err.message || 'Failed to load personalization data');
+      
+      // Don't show error for authentication issues or missing endpoint
+      if (err.response?.status === 401 || err.response?.status === 403 || err.response?.status === 404) {
+        console.log('ℹ️ Personalization data not available - using defaults');
+      } else {
+        setError(err.message || 'Failed to load personalization data');
+      }
+      
       // Set default values on error
       setXPInfo({ total_xp: 0, current_level: 1, progress_percentage: 0, xp_for_next_level: 100 });
       setStreakInfo({ current_streak: 0, longest_streak: 0, last_activity_date: null });
