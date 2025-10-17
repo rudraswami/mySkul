@@ -521,7 +521,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 
 #### 📋 **TESTING METHODOLOGY**
 - **Authentication**: test@dhruvai.com / password123
-- **Backend URL**: https://dhruv-ai-deploy.preview.emergentagent.com/api
+- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
 - **Test Coverage**: Health, CSRF, Subscription Migration, Feature Access
 - **Response Validation**: Status codes, JSON structure, field presence
 
@@ -637,7 +637,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 ---
 
 **Testing Environment**: 
-- Frontend URL: https://dhruv-ai-deploy.preview.emergentagent.com
+- Frontend URL: https://dhruvai-upgrade.preview.emergentagent.com
 - Authentication: Google OAuth only
 - Browser: Playwright (Desktop 1920x1080)
 - Test Date: January 16, 2025
@@ -1013,7 +1013,7 @@ results = await run_sequential(
 ### Deployment Verification:
 
 **Backend Status**: ✅ Running
-- Health endpoint: https://dhruv-ai-deploy.preview.emergentagent.com/api/health
+- Health endpoint: https://dhruvai-upgrade.preview.emergentagent.com/api/health
 - All services initialized successfully
 - Database indexes: All 63 indexes created across 9 collections
 - Configuration: All environment variables properly set
@@ -1136,7 +1136,7 @@ mongodb    RUNNING   (Port 27017)
 ✅ **Configuration Valid** - Environment variables and MongoDB working
 
 #### 📋 **TESTING METHODOLOGY**
-- **Backend URL**: https://dhruv-ai-deploy.preview.emergentagent.com/api
+- **Backend URL**: https://dhruvai-upgrade.preview.emergentagent.com/api
 - **Test Coverage**: Health, CORS, Authentication, Subscription, AI Services, Mock Tests, Error Handling, Configuration
 - **Authentication**: OAuth-only (Google) - email/password not supported (expected)
 - **Response Validation**: Status codes, JSON structure, security headers

@@ -1,16 +1,16 @@
 <analysis>
-The AI engineer's trajectory shows a systematic approach to enhancing the Dhruv AI application. Initially, it involved migrating backend subscription checks, implementing CSRF (though partially), and optimizing mock test database queries with indexes. A significant effort was then directed towards frontend stability and modularity, addressing route guards, centralized subscription state, HTML sanitization, virtual scrolling, and accessibility/theming. Crucially, the large  component was successfully refactored into smaller, modular components and hooks. Subsequent work focused on performance, introducing AI response caching, streaming, bundle size optimization via lazy loading, and a general caching layer. Most recently, legally compliant policy pages were created and integrated for Razorpay, followed by debugging deployment-related hardcoded URL issues in these newly created policy pages, which is the current ongoing task.
+The AI engineer's work trajectory demonstrates a focused effort to stabilize, secure, and modularize the Dhruv AI application. Initial tasks involved fixing critical deployment blockers such as hardcoded URLs in Razorpay policy pages and resolving a syntax error in the backend's AI API. After ensuring policy pages were production-ready, a critical bug was identified where the newly refactored AI Tutor UI was broken; this led to a temporary reversion to the legacy AITutor component. Subsequently, the engineer addressed user feedback regarding inconsistent subscription pricing by creating a single source of truth for plans and updated relevant components. The current ongoing task is the re-modularization of the AI Tutor, where all necessary custom hooks and UI components have been created and the next step is their integration. Key decisions include using environment variables for URLs, consolidating pricing data, and adopting a component-based architecture for the AI Tutor.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform, an EdTech application, aims to provide AI Tutor, Auto-Note Mentor, and Mock Tests with robust features and a strong monetization model. The core problem is enhancing user login and onboarding. This includes a premium visual experience, Gmail-Only authentication for seamless login (auto-fetching details, no email verification), and a mandatory post-login  screen for first-time users. This screen captures critical details like Exam Type, Study Goal, Preferred Mode, Timezone, and Country, with an Others option for exam type. UI/UX consistency across all screens is paramount to ensure a passwordless, premium, and seamless onboarding experience. The application has already implemented AI Tutor enhancements (multi-pass reasoning, semantic rendering), standardized subscription plans, and improved UI/UX elements.
+The Dhruv AI platform is an EdTech application designed to offer AI Tutor, Auto-Note Mentor, and Mock Tests. The primary objective is to enhance user login and onboarding by providing a premium visual experience. Authentication is exclusively Gmail-Only, aiming for seamless login with auto-fetched details and no email verification. Post-login, first-time users must complete a mandatory  screen to capture crucial details like Exam Type, Study Goal, Preferred Mode, Timezone, and Country, including an Others option for exam type. Maintaining UI/UX consistency across all screens is paramount for a passwordless, premium, and seamless onboarding. The application has already implemented multi-pass reasoning and semantic rendering for the AI Tutor, standardized subscription plans, and improved general UI/UX elements.
 </product_requirements>
 
 <key_technical_concepts>
 - **Full-stack**: React.js, FastAPI, MongoDB.
 - **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies, CSRF.
-- **Backend**: Pydantic, Starlette SessionMiddleware, modular architecture, caching, streaming.
-- **Frontend**: React Router, React Query, , lazy loading, virtualized lists, DOMPurify, theming.
+- **Backend**: Pydantic, Starlette SessionMiddleware, caching, streaming, modular architecture.
+- **Frontend**: React Router, React Query, lazy loading, virtualized lists, DOMPurify, theming, React hooks.
 - **Deployment**: Supervisor, Kubernetes ingress, .
 - **Services**: Unified subscription, AI caching, streaming.
 </key_technical_concepts>
@@ -18,46 +18,42 @@ The Dhruv AI platform, an EdTech application, aims to provide AI Tutor, Auto-Not
 <code_architecture>
 
 
--   ****: Contains , , , , , , .
--   ****: Central FastAPI entry, registers routers, middleware (CORS, Session, **CSRF - commented out**), MongoDB connection, and services.
--   ****: Includes Google OAuth endpoints, , JWT refresh, and a **new  endpoint** for CSRF token retrieval.
--   ****: **Migrated** to use  for feature access checks across , , and .
--   ****: **Updated** to use  for response caching,  for streaming, and includes a mentor tips endpoint.
--   ****: **New file** defining the CSRF protection middleware.
--   ****: Consolidates subscription and feature access logic.
--   ****: **New service** for caching AI responses.
--   ****: **New service** for handling streaming AI responses.
--   ****: **New simple in-memory cache** for frequently accessed data like plan configurations, integrated into .
--   ****: **Updated** to create specific indexes for the  collection (e.g., , , , , ) for performance optimization.
--   ****: **New file** with a decorator for consistent async error handling.
--   ****: Main React router. **Updated** to use  for authentication/subscription checks,  and  for route lazy loading, , and accessibility features (Skip to Content).
--   ****: Manages user auth state. No explicit React Query migration, but implicitly works with .
--   ****: **Refactored** to centralize subscription data fetching once per session using .
--   ****: **New file** for managing dark mode and theming.
--   ****: **New component** for unifying route protection based on auth and subscription state.
--   ****: **New component** implementing virtual scrolling for chat messages, fixing several import and usage errors related to .
--   ****: **New modular entry point** for the refactored AI Tutor, replacing the monolithic .
--   **, , **: **New modular components** for the AI Tutor.
--   **, , **: **New React hooks** extracting logic from the original .
--   ****: **New utility** using  for HTML sanitization of AI responses.
--   ****: **New utility** for accessibility features.
--   ****: **Updated** with dark mode CSS variables and scrollbar styles.
--   ****: **Updated** to include  button and dark mode classes.
--   ****: **New policy pages** (Privacy, Terms, Refund, Shipping, Contact Us) created with company details, email, phone, and digital-only shipping clarification.
--   ****: **Updated** to include links to the new policy pages in the footer.
+-   ****: Central FastAPI entry, registers routers and middleware. CSRF middleware is commented out.
+-   ****: Updated to use  and . Recently fixed for a  by adding  blocks to a  statement in .
+-   ****: New policy pages (Privacy, Terms, Refund, Shipping, Contact Us) created for Razorpay compliance. They were initially found to have hardcoded URLs but were subsequently fixed to use environment variables ().
+-   ****: This is the *legacy* monolithic AI Tutor component. It was previously attempted to be replaced by modular components but was restored after a critical bug rendered the modular version non-functional.
+-   ****: This component's subscription management section was recently removed to centralize subscription display logic.
+-   ****: **NEW file**. Created to serve as a single, consistent source of truth for all subscription plan details across the frontend.
+-   ****: Updated to use  for displaying consistent pricing information.
+-   ****: Updated to use  for consistent pricing display within the upgrade modal.
+-   ****: Updated to use  for consistent pricing and plan details.
+-   ****: **NEW file**. A custom hook created as part of the AI Tutor modularization.
+-   ****: **NEW file**. A custom hook created as part of the AI Tutor modularization.
+-   ****: **NEW file**. A custom hook for handling AI response generation, recreated as part of the AI Tutor modularization.
+-   ****: **NEW file**. A custom hook for handling voice input in the AI Tutor.
+-   ****: **NEW file**. A custom hook for managing user personalization settings.
+-   ****: **NEW file**. A custom hook for checking subscription status.
+-   ****: **NEW file**. A modular UI component for displaying individual chat messages in the AI Tutor.
+-   ****: **NEW file**. A modular UI component for the chat input field and send button in the AI Tutor.
+-   ****: **NEW file**. A modular UI component representing the main chat window for the AI Tutor.
+-   ****: **NEW file**. A modular UI component for displaying and managing chat sessions in the AI Tutor.
+-   ****: **NEW file**. A modular UI component for selecting subjects in the AI Tutor.
+-   ****: **NEW file**. A modular UI component for displaying personalization options.
+-   ****: **NEW file**. The main entry point for the modular AI Tutor, designed to orchestrate the new hooks and UI components.
 </code_architecture>
 
 <pending_tasks>
-- Complete React Query migration for remaining frontend components (specifically  to ensure full integration).
-- Re-enable CSRF middleware in the backend and implement frontend token exchange (currently disabled).
-- Obtain and update Razorpay production API keys (mentioned in initial pending tasks, but not addressed).
-- Debug and fix any remaining deployment issues related to hardcoded URLs in policy pages.
+- **CRITICAL**: Replace placeholder Razorpay test keys () with live production keys in  and  to enable payments.
+- **HIGH PRIORITY**: Re-enable CSRF protection by uncommenting the middleware in  to enhance security.
+- **LOW PRIORITY**: Complete the React Query migration for the  in the frontend.
+- **ONGOING**: Integrate and thoroughly test the newly created custom hooks and UI components to complete the modularization of the AI Tutor.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was engaged in debugging deployment failures. The user provided deployment error logs, which the  analyzed. The agent identified the root cause as hardcoded URLs within the newly created policy pages (e.g., , , etc.) that were not adhering to the environment variable usage rules and were causing issues during deployment to a production Kubernetes environment. The engineer had just started to address this by modifying the policy pages to use environment variables for URLs, ensuring they are dynamically configured and compliant with the deployment environment's URL handling protocol. The last action was to continue fixing these hardcoded URLs.
+Immediately before this summary request, the AI engineer was actively working on re-modularizing the  component, as explicitly requested by the user, after a previous attempt resulted in a critical bug and a reversion to the legacy . This modularization effort is currently in its initial phases, focusing on splitting the monolithic  into smaller, reusable pieces. The engineer has successfully completed **Phase 1: Extract Custom Hooks**, by creating six new React hooks: , , , , , and . Following this, **Phase 2: Create UI Components** was initiated and completed, with the creation of seven new modular UI components: , , , , , , and the main  file for the  directory. All these components and hooks reside under  and  respectively. The current state is that all building blocks for the modular AITutor have been created, but they have not yet been integrated or tested to replace the currently active legacy . This work follows recent fixes for hardcoded URLs in policy pages and addressing inconsistent subscription pricing across the frontend.
 </current_work>
 
 <optional_next_step>
-Continue modifying the policy pages to remove all hardcoded URLs, replacing them with dynamically configured environment variables.
+The next step is to integrate the newly created custom hooks and UI components to fully modularize the AI Tutor.
 </optional_next_step>
+
