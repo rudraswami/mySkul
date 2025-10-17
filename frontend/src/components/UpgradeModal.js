@@ -182,22 +182,25 @@ const UpgradeModal = ({
                     </div>
                     
                     {/* Pricing Display */}
-                    {upgradeHint.pricing && (
-                      <div className="bg-white rounded-lg p-4 mb-3 border border-blue-200">
-                        <p className="text-center text-gray-600 text-sm mb-2">Starting at</p>
-                        <div className="text-center">
-                          <span className="text-3xl font-bold text-blue-600">
-                            ₹{upgradeHint.pricing.monthly || '99'}
-                          </span>
-                          <span className="text-gray-600 ml-1">/month</span>
+                    {(() => {
+                      const targetPlan = getPlanByTier(upgradeHint.target_plan);
+                      return (
+                        <div className="bg-white rounded-lg p-4 mb-3 border border-blue-200">
+                          <p className="text-center text-gray-600 text-sm mb-2">Starting at</p>
+                          <div className="text-center">
+                            <span className="text-3xl font-bold text-blue-600">
+                              ₹{targetPlan.price_monthly}
+                            </span>
+                            <span className="text-gray-600 ml-1">/month</span>
+                          </div>
+                          {targetPlan.savings && (
+                            <p className="text-center text-sm text-gray-600 mt-2">
+                              Save with quarterly (₹{targetPlan.price_quarterly}) or yearly (₹{targetPlan.price_yearly})
+                            </p>
+                          )}
                         </div>
-                        {upgradeHint.pricing.quarterly && (
-                          <p className="text-center text-sm text-gray-600 mt-2">
-                            Save more with quarterly (₹{upgradeHint.pricing.quarterly}) or yearly (₹{upgradeHint.pricing.yearly}) plans
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
                     
                     {/* Key Benefits */}
                     {upgradeHint.benefits && upgradeHint.benefits.length > 0 && (
