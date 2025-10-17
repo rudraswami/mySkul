@@ -95,6 +95,23 @@ export function SubscriptionProvider({ children }) {
     } catch (error) {
       console.error('Feature access check failed:', error);
       
+      // Handle authentication errors (401 = not authenticated, 403 = forbidden)
+      // Fail open for auth errors since user might not be logged in yet
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('⚠️ Authentication required - failing open (allowing access)');
+        return {
+          has_access: true, // Fail open - don't block users with auth errors
+          auth_required: true,
+          used: 0,
+          current_usage: 0,
+          limit: 10,
+          total: 10,
+          remaining: 10,
+          subscription_tier: 'FREE',
+          message: 'Please log in to check your subscription status'
+        };
+      }
+      
       // Handle subscription errors (402 = payment required, 429 = rate limit)
       if (error.response?.status === 402 || error.response?.status === 429) {
         const errorData = error.response.data;
@@ -121,13 +138,18 @@ export function SubscriptionProvider({ children }) {
         };
       }
       
-      // SECURITY FIX: Don't fail open on errors - deny access by default
-      console.error('❌ Feature access check error - denying access by default');
+      // For other errors (network, server errors, etc), fail open for better UX
+      console.log('⚠️ Feature access check error - failing open (allowing access)');
       return { 
-        has_access: false, 
-        upgrade_needed: false,
+        has_access: true, // Fail open for better UX
         error: true,
-        message: 'Unable to verify access. Please try again.'
+        used: 0,
+        current_usage: 0,
+        limit: 10,
+        total: 10,
+        remaining: 10,
+        subscription_tier: 'FREE',
+        message: 'Unable to verify access. Access granted by default.'
       };
     }
   }, [openUpsellModal]);
