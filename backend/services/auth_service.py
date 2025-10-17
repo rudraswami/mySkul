@@ -46,26 +46,49 @@ class AuthService:
 
     async def get_current_user(self, request: Request, authorization: Optional[str] = Header(None)) -> User:
         """
-        Hybrid authentication: Secure cookie-based OR Bearer token authentication
-        Prioritizes cookies (more secure) but falls back to Bearer tokens for compatibility
+        Hybrid authentication: Session token (OAuth) OR JWT token authentication
+        Priority: dhruv_ai_session > Authorization Bearer > dhruv_ai_auth (JWT)
         """
-        # Try cookie-based authentication first (more secure)
-        token = request.cookies.get("dhruv_ai_auth")
+        from datetime import datetime, timezone
         
-        # Fall back to Bearer token for backward compatibility
-        if not token and authorization and authorization.startswith('Bearer '):
+        # Priority 1: Check for OAuth session token (dhruv_ai_session cookie)
+        session_token = request.cookies.get("dhruv_ai_session")
+        
+        if session_token:
+            # Validate session token against database (OAuth flow)
+            current_time_iso = datetime.now(timezone.utc).isoformat()
+            user_doc = await self.db.users.find_one({
+                "session_token": session_token,
+                "session_expiry": {"$gt": current_time_iso}
+            })
+            
+            if user_doc:
+                return User(**user_doc)
+            # Session token exists but invalid/expired - continue to other methods
+        
+        # Priority 2: Check Authorization Bearer header
+        token = None
+        if authorization and authorization.startswith('Bearer '):
             token = authorization.split(' ')[1]
         
+        # Priority 3: Check JWT cookie (dhruv_ai_auth) for backward compatibility
         if not token:
-            raise HTTPException(status_code=401, detail="Authentication required - no session cookie or Bearer token")
+            token = request.cookies.get("dhruv_ai_auth")
         
-        payload = self.verify_jwt_token(token)
-        user = await self.db.users.find_one({"user_id": payload['user_id']})
+        # If we have a JWT token, validate it
+        if token:
+            try:
+                payload = self.verify_jwt_token(token)
+                user = await self.db.users.find_one({"user_id": payload['user_id']})
+                
+                if user:
+                    return User(**user)
+            except HTTPException:
+                # JWT validation failed, continue to error below
+                pass
         
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        
-        return User(**user)
+        # No valid authentication method found
+        raise HTTPException(status_code=401, detail="Authentication required - no valid session or token")
 
     async def get_current_user_optional(self, request: Request) -> Optional[User]:
         """Optional authentication - returns None if no valid token"""
