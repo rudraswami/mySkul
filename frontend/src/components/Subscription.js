@@ -115,58 +115,63 @@ export default function Subscription() {
     setPaymentDetails(null);
   };
 
-  // Use API data if available, fallback to hardcoded plans for backward compatibility
-  const subscriptionPlans = plansData?.plans || [
-    {
-      name: 'Free',
-      price_monthly: 0,
-      price_yearly: 0,
-      features: [
-        '🎯 5 AI tutor queries daily - Perfect for quick doubts',
-        '📝 2 mock tests weekly - Build exam confidence gradually',
-        '📁 1 file upload daily - Try our note generation',
-        '📊 Basic performance tracking - See your progress',
-        '💬 Community support - Learn with peers'
-      ],
-      current: currentSubscription?.plan_name === 'FREE',
-      popular: false,
-      tier: 'FREE'
-    },
-    {
-      name: 'Premium',
-      price_monthly: 499,
-      price_yearly: 4999,
-      features: [
-        '🚀 Unlimited AI tutor queries - Ask anything, anytime',
-        '🎯 3 mock tests weekly - Adaptive difficulty matching your level',
-        '📁 Unlimited file uploads - Convert all your study material',
-        '📊 Advanced analytics - Detailed performance insights & trends',
-        '⚡ Priority support - Faster responses when you need help',
-        '🧠 Weekly AI insights - Personalized study recommendations',
-        '🔍 Smart concept tracking - See connections between topics'
-      ],
-      current: currentSubscription?.plan_name === 'PREMIUM',
-      popular: true,
-      tier: 'PREMIUM'
-    },
-    {
-      name: 'Pro',
-      price_monthly: 999,
-      price_yearly: 9999,
-      features: [
-        '⭐ Everything in Premium - All unlimited features',
-        '🏆 Unlimited mock tests - Practice as much as you want',
-        '🤖 Emotion-aware AI - Adapts to your stress & confidence levels',
-        '📈 Daily personalized insights - AI coach tracking your progress',
-        '🔗 Advanced concept tagging - Deep topic interconnections',
-        '👨‍👩‍👧‍👦 Parent dashboard - Detailed reports for family involvement',
-        '🚅 Priority model access - Fastest AI responses available'
-      ],
-      current: currentSubscription?.plan_name === 'PRO',
-      popular: false,
-      tier: 'PRO'
+  // Use centralized plans configuration
+  const subscriptionPlans = getAllPlans().map(plan => ({
+    name: plan.short_name,
+    price_monthly: plan.price_monthly,
+    price_yearly: plan.price_yearly,
+    price_quarterly: plan.price_quarterly,
+    features: formatPlanFeatures(plan),
+    current: currentSubscription?.plan_name === plan.id,
+    popular: plan.highlight,
+    tier: plan.id,
+    badge: plan.badge,
+    tagline: plan.tagline
+  }));
+
+  // Helper function to format plan features for display
+  function formatPlanFeatures(plan) {
+    const features = [];
+    const { features: planFeatures } = plan;
+    
+    if (plan.id === 'FREE') {
+      features.push(`🎯 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Perfect for trying`);
+      features.push(`📝 ${planFeatures.mock_tests_weekly} mock test weekly - Build confidence`);
+      features.push(`📁 ${planFeatures.auto_note_uploads_daily} file upload daily - Try note generation`);
+      features.push('📊 Basic analytics - See your progress');
+    } else if (plan.id === 'STARTER') {
+      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Get started`);
+      features.push(`📝 ${planFeatures.mock_tests_weekly} mock tests weekly - Regular practice`);
+      features.push(`📁 ${planFeatures.auto_note_uploads_daily} uploads daily - More content`);
+      features.push('📊 Basic analytics - Track improvement');
+      features.push('📤 Export notes - Save your work');
+    } else if (plan.id === 'SCHOLAR') {
+      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Serious learning`);
+      features.push(`📝 ${planFeatures.mock_tests_weekly} mock tests weekly - Intensive practice`);
+      features.push('📁 Unlimited uploads - All your material');
+      features.push(`💡 ${planFeatures.mentor_tips_daily} mentor tips daily - Expert guidance`);
+      features.push('📊 Advanced analytics - Deep insights');
+      features.push('🔍 Concept tagging - Connect topics');
+    } else if (plan.id === 'ACHIEVER') {
+      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Heavy usage`);
+      features.push(`💡 ${planFeatures.mentor_tips_daily} mentor tips daily - Constant guidance`);
+      features.push('🏆 Unlimited mock tests - Practice freely');
+      features.push('📁 Unlimited uploads - Everything');
+      features.push('⚡ Priority support - Fast responses');
+      features.push('🎙️ Voice mode - Hands-free learning');
+      features.push('📱 Offline mode - Learn anywhere');
+    } else if (plan.id === 'LEGEND') {
+      features.push('🚀 Unlimited AI sessions - No limits');
+      features.push('💡 Unlimited mentor tips - 24×7 guidance');
+      features.push('🏆 Unlimited everything - Full access');
+      features.push('👨‍🏫 Dedicated AI mentor - Personal coach');
+      features.push('📋 Custom study plans - Tailored for you');
+      features.push('📊 Premium analytics - Deepest insights');
+      features.push('🎯 AIR single-digit training - Elite prep');
     }
-  ];
+    
+    return features;
+  }
 
   if (loading || plansLoading) {
     return (
