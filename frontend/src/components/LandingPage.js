@@ -915,7 +915,7 @@ const LandingPage = () => {
               <p className="text-center text-xs text-gray-400 mt-3">No credit card needed</p>
             </div>
 
-            {/* Premium Plan - Most Popular */}
+            {/* Scholar Plan - Most Popular */}
             <div className="relative bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-2 border-blue-400 rounded-3xl p-8 backdrop-blur-sm transform scale-105 shadow-2xl">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 rounded-full border border-blue-400 shadow-lg">
@@ -924,36 +924,39 @@ const LandingPage = () => {
               </div>
 
               <div className="text-center mb-8 mt-4">
-                <h3 className="text-2xl font-bold text-white mb-4">Premium</h3>
-                <div className="text-5xl font-bold text-white mb-2">₹499<span className="text-lg text-blue-300">/month</span></div>
-                <p className="text-blue-300">Best for serious JEE/NEET prep</p>
+                <h3 className="text-2xl font-bold text-white mb-4">{PLANS_CONFIG.SCHOLAR.short_name}</h3>
+                <div className="text-5xl font-bold text-white mb-2">
+                  {formatPrice(PLANS_CONFIG.SCHOLAR.price_monthly)}
+                  <span className="text-lg text-blue-300">/month</span>
+                </div>
+                <p className="text-blue-300">{PLANS_CONFIG.SCHOLAR.tagline}</p>
                 <p className="text-xs text-green-400 mt-2">Less than ₹17/day - cheaper than a coffee!</p>
               </div>
               
               <div className="space-y-4 mb-8">
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white font-semibold">Unlimited AI tutor queries</span>
+                  <span className="text-white font-semibold">{PLANS_CONFIG.SCHOLAR.features.ai_sessions_monthly} AI sessions/month</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">3 mock tests weekly (adaptive difficulty)</span>
+                  <span className="text-white">{PLANS_CONFIG.SCHOLAR.features.mock_tests_weekly} mock tests weekly</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Unlimited file uploads & OCR</span>
+                  <span className="text-white">Unlimited auto-notes & uploads</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Advanced analytics & progress tracking</span>
+                  <span className="text-white">Advanced analytics & insights</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Priority support</span>
+                  <span className="text-white">{PLANS_CONFIG.SCHOLAR.features.mentor_tips_daily} mentor tips daily</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Weekly AI insights</span>
+                  <span className="text-white">Concept tagging & tracking</span>
                 </div>
               </div>
 
@@ -961,23 +964,30 @@ const LandingPage = () => {
                 to="/register"
                 className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 no-underline"
               >
-                Start Premium
+                Start {PLANS_CONFIG.SCHOLAR.short_name}
               </Link>
               <p className="text-center text-xs text-blue-300 mt-3">Start free → Upgrade anytime</p>
             </div>
 
-            {/* Pro Plan */}
+            {/* Achiever Plan */}
             <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border border-purple-400/30 rounded-3xl p-8 backdrop-blur-sm">
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-white mb-4">Pro</h3>
-                <div className="text-5xl font-bold text-white mb-2">₹999<span className="text-lg text-purple-300">/month</span></div>
+                <h3 className="text-2xl font-bold text-white mb-4">{PLANS_CONFIG.ACHIEVER.short_name}</h3>
+                <div className="text-5xl font-bold text-white mb-2">
+                  {formatPrice(PLANS_CONFIG.ACHIEVER.price_monthly)}
+                  <span className="text-lg text-purple-300">/month</span>
+                </div>
                 <p className="text-purple-300">For top rankers</p>
               </div>
               
               <div className="space-y-4 mb-8">
                 <div className="flex items-start">
                   <Star className="h-5 w-5 text-yellow-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white font-semibold">Everything in Premium</span>
+                  <span className="text-white font-semibold">Everything in Scholar</span>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
+                  <span className="text-white">{PLANS_CONFIG.ACHIEVER.features.ai_sessions_monthly} AI sessions/month</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
@@ -985,19 +995,15 @@ const LandingPage = () => {
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Emotion-aware AI (adapts to stress)</span>
+                  <span className="text-white">Priority AI support</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Daily personalized AI insights</span>
+                  <span className="text-white">Voice mode & offline access</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Advanced concept tagging</span>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-white">Parent dashboard with reports</span>
+                  <span className="text-white">Deep analytics & reports</span>
                 </div>
                 <div className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0 mt-1" />
