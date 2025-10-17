@@ -36,8 +36,15 @@ export const useAITutorSession = () => {
       setSessions(response.data.sessions || []);
     } catch (err) {
       console.error('Failed to fetch chat sessions:', err);
-      setError(err.message || 'Failed to load sessions');
-      setSessions([]);
+      
+      // Don't show error for authentication issues - user might not be logged in yet
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log('ℹ️ Sessions fetch requires authentication');
+        setSessions([]);
+      } else {
+        setError(err.message || 'Failed to load sessions');
+        setSessions([]);
+      }
     } finally {
       setLoading(false);
     }
