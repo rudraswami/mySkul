@@ -318,17 +318,8 @@ export default function ProfileSettings() {
             </Card>
           </div>
 
-          {/* Subscription & Account Info */}
+          {/* Account Info Only - Subscription moved to dedicated /subscription page */}
           <div className="space-y-6">
-            {/* Enhanced Subscription Management */}
-            <Card className="border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
-                <CardTitle className="flex items-center">
-                  <Crown className="h-5 w-5 mr-2 text-purple-600" />
-                  Subscription Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
                 {/* Current Plan */}
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full px-4 py-2 mb-4">
