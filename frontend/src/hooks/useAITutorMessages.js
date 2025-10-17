@@ -45,8 +45,15 @@ export const useAITutorMessages = (sessionId) => {
       setMessages(transformedMessages);
     } catch (err) {
       console.error('Failed to load messages:', err);
-      setError(err.message || 'Failed to load messages');
-      setMessages([]);
+      
+      // Don't show error for authentication issues
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log('ℹ️ Messages fetch requires authentication');
+        setMessages([]);
+      } else {
+        setError(err.message || 'Failed to load messages');
+        setMessages([]);
+      }
     } finally {
       setLoading(false);
     }
