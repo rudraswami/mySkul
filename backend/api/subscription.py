@@ -183,8 +183,17 @@ async def check_feature_access(
     402 Payment Required with upsell info if access denied
     """
     try:
-        # Map old feature names to new FeatureName enum if needed
-        feature_name = request.feature_name
+        # Map old feature names to new FeatureName enum for backward compatibility
+        feature_name_mapping = {
+            "ai_sessions_monthly": "ai_mentor",
+            "ai_tutor": "ai_mentor",
+            "mentor_tips_daily": "ai_mentor",
+            "mock_tests_weekly": "mock_tests",
+            "auto_note_uploads_daily": "auto_notes",
+            "file_uploads": "auto_notes"
+        }
+        
+        feature_name = feature_name_mapping.get(request.feature_name, request.feature_name)
         
         # Check access using unified service
         access_result = await unified_service.check_feature_access(
