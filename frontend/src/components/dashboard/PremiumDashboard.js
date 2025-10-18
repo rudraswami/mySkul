@@ -388,6 +388,9 @@ const PremiumDashboard = () => {
             {/* Achievement Badges */}
             <AchievementBadges userXP={userXP} userLevel={userLevel} />
 
+            {/* Live Leaderboard */}
+            <LiveLeaderboard />
+
             {/* Weekly Challenge Card */}
             <div className="glass-card rounded-2xl p-6 shadow-premium animate-fade-in">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
