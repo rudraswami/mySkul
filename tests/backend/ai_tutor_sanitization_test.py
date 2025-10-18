@@ -11,7 +11,7 @@ import time
 
 def test_ai_tutor_sanitization():
     """Test AI Tutor text sanitization fixes"""
-    base_url = "https://dhruv-learn-assist.preview.emergentagent.com/api"
+    base_url = "https://eduai-revamp.preview.emergentagent.com/api"
     
     print("🤖 AI TUTOR PHASE 1 TEXT SANITIZATION TESTING")
     print("=" * 80)

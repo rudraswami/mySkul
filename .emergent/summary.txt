@@ -1,62 +1,50 @@
 <analysis>
-The AI engineer's trajectory shows an iterative process of development and critical bug fixing for the Dhruv AI application. Initial efforts focused on stabilizing core components, including fixing hardcoded URLs in policy pages and a backend AI API syntax error. A significant task was the modularization of the AI Tutor, which, despite initial completion of components and hooks, led to critical bugs and a subsequent reversion to the legacy version. Concurrently, issues with inconsistent subscription pricing were resolved by centralizing plan data. The trajectory highlights a recurring challenge with authentication, specifically related to secure cookie handling in production, which caused widespread 401 errors across features. This was addressed in . Another major focus was robustly implementing the Free Plan's feature gating, clarifying that it should enforce quotas rather than a separate trial period, with multiple fixes applied to  and . The last successfully addressed issue was a critical, pervasive authentication problem.
+The AI engineer's work trajectory focused on a series of significant application enhancements and critical bug fixes for the Dhruv AI platform. Initial efforts stabilized core functions, resolved subscription pricing inconsistencies, and crucially fixed a widespread authentication issue by correctly configuring secure cookies in . A major attempt at modularizing the AI Tutor was made but subsequently reverted due to new bugs. Following this, the engineer tackled mobile responsiveness across the entire frontend, meticulously auditing and applying CSS fixes, culminating in successful E2E testing. The project then shifted to a comprehensive revamp of the dashboard, implementing numerous premium UI/UX features, dynamic data integration via new backend APIs, and rigorous cleanup of legacy code. Most recently, the engineer initiated a complete rebuild of the AI Tutor component to address critical chat rendering bugs and introduce extensive UI/UX and functional upgrades, marking the current point of work.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform is an EdTech application offering an AI Tutor, Auto-Note Mentor, and Mock Tests. The core user experience prioritizes seamless Gmail-Only authentication and a mandatory  for first-time users to collect details like Exam Type, Study Goal, and Timezone, ensuring UI/UX consistency throughout a passwordless, premium onboarding. The application has implemented multi-pass reasoning and semantic rendering for the AI Tutor, standardized subscription plans, and improved general UI/UX. Critically, the Free Plan is designed to automatically assign new users upon signup, providing access to core features (10 AI sessions, 1 mock test, 1 file upload monthly) without an upfront subscription modal. The modal should only appear when these free limits are reached, not as a separate trial. All paid plans (Basic, Pro, Enterprise) must correctly gate features, and the backend and frontend logic must be consistent for upgrades, downgrades, and expiry.
+The Dhruv AI platform is an EdTech application offering an AI Tutor, Auto-Note Mentor, and Mock Tests. It uses Gmail-Only authentication and a mandatory profile setup for new users. The Free Plan assigns new users access to core features (10 AI sessions, 1 mock test, 1 file upload monthly), with the subscription modal appearing only after limits are reached.
+User requests included:
+1.  **Mobile Compatibility**: Ensure all UI is fully responsive across mobile devices without breaking existing functionality.
+2.  **Premium Dhruv AI Dashboard Revamp**: Implement a modern, intelligent dashboard with glassmorphism, dynamic greetings, AI-driven focus summaries, mood AI, interactive analytics (radial progress, streak heatmap), gamification (badges, leaderboard, XP), AI Mentor (chat, voice), quick actions toolbar, smart recommendations, note summaries, dark mode, performance optimization, and accessibility (WCAG 2.1 AA). All data must be dynamic from backend APIs.
+3.  **AI Tutor Enhancements & Critical Bug Fixes**: UI/UX upgrades (expanded chat, auto-resize input, gradient bubbles, animations, inline timestamps, feedback options). Fix chat history persistence and dynamic header metrics. Resolve a critical message mapping bug where user input disappears and AI provides empty/duplicate responses.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack**: React.js, FastAPI, MongoDB.
--   **Authentication**: Google OAuth (Authlib), JWTs, session management, secure cookies, CSRF.
+-   **Authentication**: Google OAuth (Authlib), JWTs, secure cookies, CSRF.
 -   **Backend**: Pydantic, Starlette SessionMiddleware, caching, streaming, modular architecture.
--   **Frontend**: React Router, React Query, lazy loading, virtualized lists, DOMPurify, theming, React hooks.
+-   **Frontend**: React Router, React Query, lazy loading, virtualized lists, styled-jsx, React hooks.
 -   **Deployment**: Supervisor, Kubernetes ingress, .
--   **Services**: Unified subscription, AI caching, streaming.
 </key_technical_concepts>
 
 <code_architecture>
 
-
--   ****: Central FastAPI entry point, registers routers and middleware. CSRF middleware is commented out. No direct changes in trajectory, but conceptually orchestrates backend.
--   ****: Handles AI-related API requests. Previously fixed for a  in . No recent direct modifications but relies on other services.
--   ****: New policy pages. Fixed to use environment variables () instead of hardcoded URLs for Razorpay compliance.
--   ****: The *legacy* monolithic AI Tutor component. It was replaced by modular components () but *restored* after critical bugs appeared in the modular version. This restoration means the legacy component is currently active.
--   ****: **NEW file**. Serves as a single source of truth for all subscription plan details across the frontend. Updated to reflect consistent pricing and feature details.
--   ****, ****, ****: These files were updated to consume plan details from  for consistent pricing and plan display.
--   ****: Centralizes subscription logic. This file was repeatedly modified to correctly implement the Free Plan's feature gating and usage limits, ensuring the subscription modal appears only after free limits are reached. Changes were made to  and related logic.
--   ****: Handles subscription-related API endpoints. Modified to integrate with  and correctly report feature access results.
--   ****: Handles user authentication and session management. Inspected to ensure correct assignment of default subscription () to new users.
--   ****: Manages JWTs and secure cookie handling. Critically modified to fix a widespread authentication issue by ensuring correct  (True for HTTPS) and  (none) attributes for cookies in a production environment, preventing 401 Unauthorized errors.
-    secure=Truesamesite=none
--   ****, ****, ****, ****, ****, ****: These are **NEW** custom hooks created as part of the AI Tutor modularization. Although created, their integration was rolled back. Error handling in some of these was refined (e.g., , , ) during attempts to stabilize the modular AI Tutor.
--   ****, ****, ****, ****, ****, ****, ****: These are **NEW** modular UI components for the AI Tutor.  is the orchestrator. These were created but are currently *inactive* due to the reversion to .  was inspected for  messages during debugging.
--   ****: Manages subscription state and feature access checks on the frontend. Modified to correctly utilize the  logic from the backend and ensure the Free Plan bypasses the subscription modal during quota.
--   ****: Shared API client. Reviewed during authentication issues to ensure proper handling of API calls and potential token refreshes.
-
+-   ****: Central frontend entry point. Updated to import  and , and replaced  with  in its routing configuration. This is crucial for integrating new styles and the new dashboard.
+-   ****: A new stylesheet created to house mobile-specific CSS overrides, ensuring responsive design across the application, especially for modals and text sizing.
+-   ****: A new stylesheet to define the aesthetic and layout for the revamped premium dashboard, including glassmorphism and gradient effects.
+-   ****: A new backend router created to expose APIs for dynamic dashboard data, including streaks, achievements, and leaderboard information. It's integrated into .
+-   ****: Updated to potentially handle user-related metrics like XP and level, although specific code changes weren't shown, the intent was to support dashboard features.
+-   ****: Modified to correct an import path for , resolving a backend startup error.
+-   ****: A new directory containing several modular components (e.g., , , , , , ) that collectively form the new premium dashboard experience.  acts as the orchestrator. These components fetch data dynamically.
+-   ****: A newly created, optimized AI Tutor component designed to replace the legacy . It's being built to address critical rendering bugs, improve chat functionality, and implement UI/UX enhancements outlined by the user. The old  has been backed up.
+-   **Legacy Code Removal**: Old dashboard components (, ), a debug component (), and the previous modular AI Tutor attempt () were moved to  extensions or directories to streamline the codebase.
 </code_architecture>
 
 <pending_tasks>
--   **CRITICAL**: Replace placeholder Razorpay test keys () with live production keys in  and  to enable payments.
--   **HIGH PRIORITY**: Re-enable CSRF protection by uncommenting the middleware in  to enhance security.
+-   **CRITICAL**: Replace placeholder Razorpay test keys () with live production keys in  and .
+-   **HIGH PRIORITY**: Re-enable CSRF protection by uncommenting the middleware in .
 -   **LOW PRIORITY**: Complete the React Query migration for the  in the frontend.
--   **ONGOING**: Integrate and thoroughly test the newly created custom hooks and UI components to complete the modularization of the AI Tutor. (This task was attempted, but the modular component was reverted due to bugs).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively working on resolving critical, widespread authentication issues that affected all features (AI Tutor, Mock Tests, Auto Notes). These issues manifested as Please login again or unexpected error messages and 401 Unauthorized responses from backend APIs across the application.
+Immediately before this summary request, the AI engineer was actively working on fixing critical bugs and implementing premium enhancements for the **AI Tutor screen**. The user reported several issues: chat history not loading dynamically, static header metrics (0 left today, 0 day streak), and a severe message rendering and input behavior bug where user messages would disappear, and the AI would respond twice (first an empty bubble, then a valid reply), making the chat experience unusable.
 
-Root cause analysis traced the problem to incorrect cookie handling in the backend's authentication service, specifically the  and  attributes of session cookies. In a production HTTPS environment,  was preventing cookies from being properly transmitted, leading to session loss.
+The AI engineer's analysis of the legacy  revealed that the core issue stemmed from incorrect message rendering logic, where each message in the state array was being treated as both a user and an AI message, leading to duplication and loss of context. Additionally, a race condition in state updates during message sending was suspected.
 
-The AI engineer's last successful action was to fix this critical authentication bug by modifying  to correctly set cookie attributes:
--    when the application is running over HTTPS.
--    to allow cross-site cookie transmission.
-
-This fix was followed by a backend restart, and a comprehensive frontend testing confirmed that the authentication issues were resolved, and all features were accessible without login prompts.
-
-The previous work on modularizing the AI Tutor was temporarily rolled back to the legacy  component because the modular version introduced new bugs, including authentication problems. The AI Tutor is currently running on its legacy, monolithic component, but the building blocks (hooks and UI components) for the modular version still exist in the codebase.
+To address these comprehensive issues and fulfill the user's detailed UI/UX upgrade requests (expanded chat width, auto-resize input, gradient bubbles, animations, inline timestamps, feedback options), the user explicitly requested a Full Rebuild of the AI Tutor. The AI engineer has initiated this by creating a new, optimized component, . The legacy  has been backed up, and the new component has replaced it in the application's structure. The frontend was restarted, and no critical console errors were observed, though a  warning was noted. The work is currently in the initial phase of building out .
 </current_work>
 
 <optional_next_step>
-Re-attempt the integration and thorough testing of the modular AI Tutor components now that core authentication is fixed.
+Continue implementing all UI/UX and functional enhancements within the new  component.
 </optional_next_step>
