@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 import random
 
-from services.auth_service import get_current_user
+from dependencies import get_current_user
 from core.database import get_database
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
