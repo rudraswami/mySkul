@@ -157,6 +157,122 @@ async def get_resume_tests(
         raise HTTPException(status_code=500, detail=f"Failed to get resume tests: {str(e)}")
 
 
-# Note: Complex endpoints like /generate, /submit, /retake, /bookmark-question
+@router.post("/generate")
+async def generate_mock_test(
+    request: dict,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Generate a new mock test based on user parameters
+    
+    Request body:
+    {
+        "exam_type": str (JEE, NEET, etc.),
+        "test_type": str (full_length, subject_wise, etc.),
+        "subjects": list[str],
+        "difficulty_level": str (easy, medium, hard),
+        "num_questions": int,
+        "generation_mode": str (standard, adaptive, etc.)
+    }
+    """
+    try:
+        import uuid
+        from datetime import datetime, timezone
+        
+        # Extract parameters
+        exam_type = request.get('exam_type', 'JEE')
+        test_type = request.get('test_type', 'full_length')
+        subjects = request.get('subjects', [])
+        difficulty = request.get('difficulty_level', 'medium')
+        num_questions = request.get('num_questions', 75)
+        generation_mode = request.get('generation_mode', 'standard')
+        
+        # Check subscription access - using UnifiedSubscriptionService
+        from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
+        from dependencies import get_unified_subscription_service
+        
+        sub_service = UnifiedSubscriptionService(db)
+        await sub_service.initialize()
+        
+        access_result = await sub_service.check_feature_access(
+            user.user_id,
+            FeatureName.MOCK_TESTS.value,
+            requested_amount=1
+        )
+        
+        if not access_result.allowed:
+            raise HTTPException(
+                status_code=402,
+                detail=access_result.to_dict()
+            )
+        
+        # Generate test ID
+        test_id = str(uuid.uuid4())
+        
+        # Create test document
+        test_doc = {
+            "test_id": test_id,
+            "user_id": user.user_id,
+            "student_id": user.user_id,  # For backward compatibility
+            "exam_type": exam_type,
+            "test_type": test_type,
+            "subjects": subjects,
+            "difficulty_level": difficulty,
+            "num_questions": num_questions,
+            "generation_mode": generation_mode,
+            "status": "active",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "time_limit_minutes": 180,  # 3 hours default
+            "questions": [],  # Would be populated by AI in full implementation
+            "total_marks": num_questions,  # 1 mark per question
+            "title": f"{exam_type} {test_type.replace('_', ' ').title()} Test"
+        }
+        
+        # For now, generate simple placeholder questions
+        # In production, this would call AI service to generate real questions
+        questions = []
+        for i in range(min(num_questions, 10)):  # Limit to 10 for demo
+            questions.append({
+                "question_id": str(uuid.uuid4()),
+                "question_number": i + 1,
+                "subject": subjects[i % len(subjects)] if subjects else "General",
+                "question_text": f"Sample question {i + 1} for {exam_type}",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": 0,
+                "marks": 1,
+                "difficulty": difficulty
+            })
+        
+        test_doc["questions"] = questions
+        test_doc["num_questions"] = len(questions)
+        test_doc["total_marks"] = len(questions)
+        
+        # Save to database
+        await db.mock_tests.insert_one(test_doc)
+        
+        # Track usage
+        await sub_service.track_feature_use(user.user_id, FeatureName.MOCK_TESTS.value, 1)
+        
+        # Return test
+        del test_doc["_id"]  # Remove MongoDB _id
+        
+        return {
+            "success": True,
+            "test": test_doc,
+            "test_id": test_id,
+            "message": "Mock test generated successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Test generation error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate test: {str(e)}")
+
+
+# Note: Complex endpoints like /submit, /retake, /bookmark-question
 # remain in server.py for now as they involve heavy AI processing and subscription logic.
 # These can be migrated incrementally in future iterations.
