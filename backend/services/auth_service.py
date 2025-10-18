@@ -47,7 +47,11 @@ class AuthService:
     async def get_current_user(self, request: Request, authorization: Optional[str] = Header(None)) -> User:
         """
         Hybrid authentication: Session token (OAuth) OR JWT token authentication
-        Priority: dhruv_ai_session > Authorization Bearer > dhruv_ai_auth (JWT)
+        Priority: dhruv_ai_session cookie > Authorization Bearer > dhruv_ai_auth cookie
+        
+        Supports:
+        1. OAuth session tokens (random strings stored in DB)
+        2. JWT tokens (signed tokens with payload)
         """
         from datetime import datetime, timezone
         
@@ -75,8 +79,21 @@ class AuthService:
         if not token:
             token = request.cookies.get("dhruv_ai_auth")
         
-        # If we have a JWT token, validate it
+        # If we have a token, try to validate it
         if token:
+            # CRITICAL FIX: First try as session token (OAuth), then as JWT
+            
+            # Try 1: Check if it's a session token in database
+            current_time_iso = datetime.now(timezone.utc).isoformat()
+            user_doc = await self.db.users.find_one({
+                "session_token": token,
+                "session_expiry": {"$gt": current_time_iso}
+            })
+            
+            if user_doc:
+                return User(**user_doc)
+            
+            # Try 2: Check if it's a valid JWT token
             try:
                 payload = self.verify_jwt_token(token)
                 user = await self.db.users.find_one({"user_id": payload['user_id']})
