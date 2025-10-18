@@ -199,7 +199,7 @@ function AppContent() {
                 <Routes>
                   <Route path="/dashboard" element={
                     <Suspense fallback={<PageLoader message="Loading dashboard..." />}>
-                      <StudentDashboard />
+                      <PremiumDashboard />
                     </Suspense>
                   } />
                   <Route path="/tutor" element={
