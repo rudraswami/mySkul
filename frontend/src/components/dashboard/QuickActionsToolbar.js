@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, FileText, BookOpen, Zap } from 'lucide-react';
+import { MessageCircle, FileText, BookOpen } from 'lucide-react';
 
 /**
- * Floating Quick Actions Toolbar
- * Provides one-tap access to key features
+ * Bottom Fixed Quick Actions Toolbar
+ * Provides persistent access to key features
  */
 const QuickActionsToolbar = () => {
   const navigate = useNavigate();
@@ -27,35 +27,31 @@ const QuickActionsToolbar = () => {
     {
       id: 'notes',
       icon: BookOpen,
-      label: 'Notes',
+      label: 'Auto Notes',
       color: 'from-orange-500 to-pink-500',
       action: () => navigate('/auto-notes')
     }
   ];
 
   return (
-    <div className="quick-actions-toolbar">
-      {quickActions.map((action) => {
-        const Icon = action.icon;
-        return (
-          <div
-            key={action.id}
-            onClick={action.action}
-            className={`quick-action-button bg-gradient-to-br ${action.color} hover:shadow-lg group relative`}
-            title={action.label}
-          >
-            <Icon className="h-6 w-6 text-white" />
-            
-            {/* Tooltip */}
-            <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              <div className="bg-gray-900 text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
-                {action.label}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg md:hidden">
+      <div className="flex items-center justify-around p-2">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              onClick={action.action}
+              className={`flex flex-col items-center space-y-1 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-1`}
+            >
+              <div className={`p-2 bg-gradient-to-br ${action.color} rounded-lg`}>
+                <Icon className="h-5 w-5 text-white" />
               </div>
-            </div>
-          </div>
-        );
-      })}
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{action.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
