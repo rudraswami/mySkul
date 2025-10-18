@@ -12,13 +12,15 @@ from dependencies import get_current_user, get_database
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/analytics")
-async def get_dashboard_analytics(current_user: dict = Depends(get_current_user)):
+async def get_dashboard_analytics(
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
     """
     Get comprehensive dashboard analytics for the user
     Returns streak data, progress, subjects, etc.
     """
     try:
-        db = await get_database()
         user_id = current_user.get("id") or current_user.get("user_id")
         
         # Get user's study sessions
