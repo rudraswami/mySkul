@@ -37,17 +37,27 @@ export function AuthProvider({ children }) {
       const sessionToken = params.get('session_token');
       
       if (sessionToken) {
-        console.log('🍪 OAuth redirect detected - setting session cookie from URL');
+        console.log('🍪 OAuth redirect detected - setting session token');
         
-        // Set session cookie client-side BEFORE checking session
+        // CRITICAL FIX: Store token in localStorage for reliable access
+        // This ensures subsequent API calls can include the token even if cookies fail
+        localStorage.setItem('dhruv_ai_token', sessionToken);
+        setToken(sessionToken);
+        
+        // Also try to set session cookie (may work in same-domain scenarios)
         const domain = window.location.hostname.includes('emergent.host') 
           ? '.emergent.host' 
           : window.location.hostname;
         
-        const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
-        document.cookie = cookieString;
+        try {
+          const cookieString = `dhruv_ai_session=${sessionToken}; path=/; domain=${domain}; secure; samesite=none; max-age=604800`;
+          document.cookie = cookieString;
+          console.log('✅ Session cookie set via document.cookie');
+        } catch (e) {
+          console.warn('⚠️ Cookie setting failed (cross-domain), using localStorage only:', e);
+        }
         
-        console.log('✅ Session cookie set in AuthContext');
+        console.log('✅ Session token stored in localStorage');
         
         // Clean URL by removing session_token parameter
         window.history.replaceState({}, document.title, window.location.pathname);
