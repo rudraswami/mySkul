@@ -400,22 +400,120 @@ export default function AITutorPremium() {
    * Handle follow-up question or predefined question
    * Now actually sends the message instead of just populating input
    */
-  const handleFollowUp = async (content) => {
+  const handleFollowUp = (content) => {
+    if (!content.trim() || loading) return;
+    
+    // Set the input message
     setInputMessage(content);
     
-    // Wait a tiny moment for state to update, then send
-    setTimeout(async () => {
-      // Trigger send by calling sendMessage with the content directly
-      if (content.trim() && !loading) {
-        // Set input first
-        setInputMessage(content);
-        // Focus textarea
-        textareaRef.current?.focus();
-        // Wait for next tick then send
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await sendMessage();
+    // Immediately trigger send with this content
+    handleQuickSend(content);
+  };
+  
+  /**
+   * Quick send for predefined questions
+   */
+  const handleQuickSend = async (messageContent) => {
+    if (!messageContent.trim() || loading) return;
+    
+    // Clear input and send
+    setInputMessage('');
+    setLoading(true);
+    
+    // Check access
+    const accessCheck = await checkFeatureAccess('ai_sessions_monthly');
+    if (!accessCheck.has_access) {
+      setUpgradeModalData({
+        feature: 'AI Tutor',
+        used: accessCheck.used,
+        limit: accessCheck.limit,
+        tier: accessCheck.subscription_tier
+      });
+      setShowUpgradeModal(true);
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      // CRITICAL: ALWAYS create session before sending message
+      let sessionId = currentSession;
+      if (!sessionId) {
+        sessionId = await createNewSession(messageContent);
+        
+        // If session creation fails, generate temporary ID
+        if (!sessionId) {
+          sessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          setCurrentSession(sessionId);
+          console.warn('⚠️ Using temporary session ID:', sessionId);
+        }
       }
-    }, 50);
+      
+      // Add user message immediately to UI
+      const userMsg = {
+        type: 'user',
+        content: messageContent,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, userMsg]);
+      
+      // Call AI API
+      const token = localStorage.getItem('dhruv_ai_token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      const requestBody = {
+        message: messageContent,
+        subject: selectedSubject,
+        session_id: sessionId,
+        depth_level: 'standard',
+        exam_mode: 'JEE'
+      };
+      
+      let response;
+      if (aiMode === 'dual') {
+        response = await axios.post(`${API}/ai/dual-response`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
+      } else if (aiMode === 'mentor') {
+        response = await axios.post(`${API}/ai/mentor-only`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
+      } else {
+        response = await axios.post(`${API}/ai/professor-only`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
+      }
+      
+      const aiResponse = response.data;
+      
+      // Add AI response to UI
+      const aiMsg = {
+        type: 'ai',
+        ...aiResponse,
+        timestamp: new Date().toISOString(),
+        message_id: aiResponse.message_id || `msg_${Date.now()}`
+      };
+      
+      setMessages(prev => [...prev, aiMsg]);
+      
+      // Track usage and refresh metrics
+      await trackFeatureUsage('ai_sessions_monthly');
+      await loadMetrics();
+      
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      
+      setMessages(prev => [...prev, {
+        type: 'error',
+        content: 'Failed to get AI response. Please try again.',
+        timestamp: new Date().toISOString()
+      }]);
+    } finally {
+      setLoading(false);
+    }
   };
   
   /**
