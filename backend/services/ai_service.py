@@ -737,36 +737,57 @@ Remember:
             }
     
     async def save_session_message(self, user_id: str, session_id: str, message: str, ai_response: Dict[str, Any]):
-        """Save a chat message to the session with sanitized content"""
+        """Save a chat message to the session with FULL structure for frontend compatibility"""
         try:
-            # Extract sanitized response for database storage
-            sanitized_response = ai_response.get('primary', {}).get('response', '')
+            # Sanitize user message
+            sanitized_user_message = self.response_parser.sanitize_text(message)
             
-            # Save the message with sanitized content
-            chat_message = ChatMessage(
-                session_id=session_id,
-                user_id=user_id,
-                message=self.response_parser.sanitize_text(message),  # Sanitize user message too
-                response=str(sanitized_response)
-            )
-            
-            message_dict = chat_message.dict()
-            message_dict['timestamp'] = message_dict['timestamp'].isoformat()
-            
-            # Store complete sanitized response structure for analysis
-            message_dict['ai_response_full'] = {
-                'primary_sanitized': ai_response.get('primary', {}).get('response', ''),
-                'secondary_sanitized': ai_response.get('secondary', {}).get('response', ''),
-                'micro_sections': ai_response.get('primary', {}).get('micro_lesson_sections', {}),
-                'mentor_sections': ai_response.get('secondary', {}).get('mentor_sections', {})
+            # Create comprehensive message document for MongoDB
+            # CRITICAL: Store in format that frontend expects when loading history
+            message_dict = {
+                'message_id': str(uuid.uuid4()),
+                'session_id': session_id,
+                'user_id': user_id,
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                
+                # FRONTEND-COMPATIBLE STRUCTURE
+                'user_message': sanitized_user_message,  # Frontend expects this field
+                
+                # Store COMPLETE AI response structure for history loading
+                'dual_response': ai_response.get('dual_response'),  # For dual mode
+                'response': ai_response.get('response'),  # For single mode
+                'persona': ai_response.get('persona'),  # mentor or professor
+                
+                # Additional metadata
+                'primary': ai_response.get('primary'),
+                'secondary': ai_response.get('secondary'),
+                'confidence': ai_response.get('confidence'),
+                'reasoning': ai_response.get('reasoning'),
+                
+                # Legacy fields for backward compatibility
+                'message': sanitized_user_message,  # Old field name
+                
+                # Full AI response for analysis
+                'ai_response_full': {
+                    'primary_sanitized': ai_response.get('primary', {}).get('response', ''),
+                    'secondary_sanitized': ai_response.get('secondary', {}).get('response', ''),
+                    'micro_sections': ai_response.get('primary', {}).get('micro_lesson_sections', {}),
+                    'mentor_sections': ai_response.get('secondary', {}).get('mentor_sections', {})
+                },
+                
+                # User feedback tracking
+                'feedback': None
             }
             
             await self.db.chat_messages.insert_one(message_dict)
             
-            # Update session last_updated timestamp
+            # Update session last_updated timestamp and message count
             await self.db.chat_sessions.update_one(
                 {"session_id": session_id},
-                {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
+                {
+                    "$set": {"last_updated": datetime.now(timezone.utc).isoformat()},
+                    "$inc": {"message_count": 1}
+                }
             )
             
             return True
