@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'; // Temporarily disabled
 import './App.css';
 import './styles/mobile.css';
+import './styles/premium-dashboard.css';
 
 // Eagerly loaded components (critical path)
 import LandingPage from './components/LandingPage';
