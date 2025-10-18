@@ -26,8 +26,39 @@ async def get_user_profile(user: User = Depends(get_current_user)):
         "current_standard": getattr(user, 'current_standard', ''),
         "institution": getattr(user, 'institution', ''),
         "subscription_type": user.subscription_type,
+        "xp": getattr(user, 'xp', 0),
+        "level": getattr(user, 'level', 1),
+        "badges": getattr(user, 'badges', []),
         "created_at": getattr(user, 'created_at', None)
     }
+
+
+@router.get("/progress")
+async def get_user_progress(user: User = Depends(get_current_user), db = Depends(get_database)):
+    """
+    Get user progress (XP, level, badges)
+    """
+    try:
+        # Get user's XP and level from database
+        user_data = await db.users.find_one({"id": user.user_id})
+        
+        if not user_data:
+            return {"xp": 0, "level": 1, "badges": []}
+        
+        xp = user_data.get("xp", 0)
+        level = user_data.get("level", 1)
+        badges = user_data.get("badges", [])
+        
+        return {
+            "xp": xp,
+            "level": level,
+            "badges": badges,
+            "xp_to_next_level": (level + 1) * 100,
+            "xp_progress": (xp % 100)
+        }
+    except Exception as e:
+        print(f"Error fetching user progress: {e}")
+        return {"xp": 0, "level": 1, "badges": []}
 
 
 @router.put("/profile")
