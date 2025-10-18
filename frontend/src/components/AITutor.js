@@ -288,6 +288,7 @@ export default function AITutorPremium() {
   /**
    * Send message to AI - RESTORED from legacy version
    * Includes depth_level and exam_mode for structured student-centric responses
+   * Backend now auto-saves messages, so we don't need manual save
    */
   const sendMessage = async () => {
     if (!inputMessage.trim() || loading) return;
@@ -365,19 +366,16 @@ export default function AITutorPremium() {
       
       const aiResponse = response.data;
       
-      // CRITICAL: Preserve OLD response structure for proper rendering
-      // This maintains the student-centric structured format
-      const enhancedMessage = {
+      // Add AI response to UI - COMPLETE structure
+      // Backend auto-saves, so we just need to display
+      const aiMsg = {
+        type: 'ai',
         ...aiResponse,
-        user_message: messageToSend,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message_id: aiResponse.message_id || `msg_${Date.now()}`
       };
       
-      // Add AI message to UI with COMPLETE structure
-      setMessages(prev => [...prev, enhancedMessage]);
-      
-      // Save to backend
-      await saveMessageToSession(sessionId, messageToSend, aiResponse);
+      setMessages(prev => [...prev, aiMsg]);
       
       // Track usage and refresh metrics
       await trackFeatureUsage('ai_sessions_monthly');
