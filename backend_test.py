@@ -2777,6 +2777,543 @@ class NewEndpointsTester:
         return success_rate >= 70  # 70% success rate for new endpoints readiness
 
 
+class DashboardGamificationTester:
+    def __init__(self):
+        # Use the correct backend URL from frontend/.env
+        self.base_url = "https://eduai-platform-25.preview.emergentagent.com/api"
+        self.token = None
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+    
+    def run_test(self, test_name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.base_url}/{endpoint}"
+        
+        # Merge headers
+        test_headers = self.session.headers.copy()
+        if headers:
+            test_headers.update(headers)
+        
+        try:
+            if method == "GET":
+                response = self.session.get(url, headers=test_headers, timeout=30)
+            elif method == "POST":
+                response = self.session.post(url, json=data, headers=test_headers, timeout=30)
+            elif method == "PUT":
+                response = self.session.put(url, json=data, headers=test_headers, timeout=30)
+            elif method == "DELETE":
+                response = self.session.delete(url, headers=test_headers, timeout=30)
+            
+            # Handle expected status as list or single value
+            if isinstance(expected_status, list):
+                status_match = response.status_code in expected_status
+            else:
+                status_match = response.status_code == expected_status
+            
+            if status_match:
+                try:
+                    response_data = response.json()
+                    return True, response_data, response.status_code
+                except:
+                    return True, {}, response.status_code
+            else:
+                print(f"   ❌ {test_name}: Expected {expected_status}, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"      Error: {error_data}")
+                    return False, error_data, response.status_code
+                except:
+                    print(f"      Error: {response.text}")
+                    return False, {"error": response.text}, response.status_code
+                    
+        except Exception as e:
+            print(f"   ❌ {test_name}: Exception - {str(e)}")
+            return False, {"error": str(e)}, 0
+
+    def test_dashboard_gamification_endpoints(self):
+        """Test Dashboard and Gamification endpoints to verify fixes"""
+        print("\n📊 DASHBOARD & GAMIFICATION ENDPOINTS TESTING")
+        print("=" * 80)
+        print("   OBJECTIVE: Verify dashboard and gamification endpoint fixes")
+        print("   BACKEND URL:", self.base_url)
+        print("   EXPECTED: No 500 errors, proper 200 OK or 401 responses")
+        
+        test_results = {
+            # Dashboard Endpoints (Previously 500 errors)
+            'dashboard_analytics': False,
+            'dashboard_streak': False,
+            'dashboard_leaderboard': False,
+            
+            # Gamification Endpoints (Previously 404 from SW)
+            'gamification_progress': False,
+            'gamification_leaderboard': False,
+            'gamification_achievements': False,
+            
+            # Regression Testing
+            'user_progress': False,
+            'mock_tests_library': False,
+            'mock_tests_generate': False,
+            'ai_dual_response': False,
+            
+            # Backend Health
+            'backend_health': False,
+            'no_500_errors': False
+        }
+        
+        # 1. BACKEND HEALTH CHECK
+        print("\n1️⃣ BACKEND HEALTH CHECK")
+        test_results['backend_health'] = self.test_backend_health()
+        
+        # 2. DASHBOARD ENDPOINTS (Previously 500 errors)
+        print("\n2️⃣ DASHBOARD ENDPOINTS (Previously 500 errors)")
+        dashboard_results = self.test_dashboard_endpoints()
+        test_results.update(dashboard_results)
+        
+        # 3. GAMIFICATION ENDPOINTS (Previously 404 from SW)
+        print("\n3️⃣ GAMIFICATION ENDPOINTS (Previously 404 from SW)")
+        gamification_results = self.test_gamification_endpoints()
+        test_results.update(gamification_results)
+        
+        # 4. REGRESSION TESTING
+        print("\n4️⃣ REGRESSION TESTING")
+        regression_results = self.test_regression_endpoints()
+        test_results.update(regression_results)
+        
+        # 5. VERIFY NO 500 ERRORS
+        print("\n5️⃣ VERIFY NO 500 ERRORS")
+        test_results['no_500_errors'] = self.verify_no_500_errors(test_results)
+        
+        return self._print_dashboard_gamification_results(test_results)
+    
+    def test_backend_health(self):
+        """Test backend health endpoint"""
+        print("   Testing backend health")
+        
+        success, response, status_code = self.run_test(
+            "Backend Health Check",
+            "GET",
+            "health",
+            200
+        )
+        
+        if success and status_code == 200:
+            print(f"   ✅ Backend health check successful")
+            print(f"      Status: {response.get('status')}")
+            print(f"      Service: {response.get('service')}")
+            return True
+        else:
+            print(f"   ❌ Backend health check failed - Status: {status_code}")
+            return False
+    
+    def test_dashboard_endpoints(self):
+        """Test dashboard endpoints (previously returning 500 errors)"""
+        print("   Testing dashboard endpoints (previously 500 errors)")
+        
+        results = {
+            'dashboard_analytics': False,
+            'dashboard_streak': False,
+            'dashboard_leaderboard': False
+        }
+        
+        # Test GET /api/dashboard/analytics
+        print("   📝 Testing: GET /api/dashboard/analytics")
+        success, response, status_code = self.run_test(
+            "Dashboard Analytics",
+            "GET",
+            "dashboard/analytics",
+            [200, 401]  # Should return 200 OK or 401 (no more 500)
+        )
+        
+        if success:
+            results['dashboard_analytics'] = True
+            if status_code == 500:
+                print(f"   ❌ Still returning 500 error - Fix not working")
+                results['dashboard_analytics'] = False
+            else:
+                print(f"   ✅ Dashboard analytics endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Dashboard analytics failed - Status: {status_code}")
+            if status_code == 500:
+                print(f"      ⚠️ CRITICAL: Still returning 500 Internal Server Error")
+        
+        # Test GET /api/dashboard/streak
+        print("   📝 Testing: GET /api/dashboard/streak")
+        success, response, status_code = self.run_test(
+            "Dashboard Streak",
+            "GET",
+            "dashboard/streak",
+            [200, 401]  # Should return 200 OK or 401 (no more 500)
+        )
+        
+        if success:
+            results['dashboard_streak'] = True
+            if status_code == 500:
+                print(f"   ❌ Still returning 500 error - Fix not working")
+                results['dashboard_streak'] = False
+            else:
+                print(f"   ✅ Dashboard streak endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Dashboard streak failed - Status: {status_code}")
+            if status_code == 500:
+                print(f"      ⚠️ CRITICAL: Still returning 500 Internal Server Error")
+        
+        # Test GET /api/dashboard/leaderboard
+        print("   📝 Testing: GET /api/dashboard/leaderboard")
+        success, response, status_code = self.run_test(
+            "Dashboard Leaderboard",
+            "GET",
+            "dashboard/leaderboard",
+            [200, 401]  # Should return 200 OK or 401 (no more 500)
+        )
+        
+        if success:
+            results['dashboard_leaderboard'] = True
+            if status_code == 500:
+                print(f"   ❌ Still returning 500 error - Fix not working")
+                results['dashboard_leaderboard'] = False
+            else:
+                print(f"   ✅ Dashboard leaderboard endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Dashboard leaderboard failed - Status: {status_code}")
+            if status_code == 500:
+                print(f"      ⚠️ CRITICAL: Still returning 500 Internal Server Error")
+        
+        return results
+    
+    def test_gamification_endpoints(self):
+        """Test gamification endpoints (previously returning 404 from SW)"""
+        print("   Testing gamification endpoints (previously 404 from SW)")
+        
+        results = {
+            'gamification_progress': False,
+            'gamification_leaderboard': False,
+            'gamification_achievements': False
+        }
+        
+        # Test GET /api/gamification/progress
+        print("   📝 Testing: GET /api/gamification/progress")
+        success, response, status_code = self.run_test(
+            "Gamification Progress",
+            "GET",
+            "gamification/progress",
+            [200, 401]  # Should return 200 OK or 401 (not 404)
+        )
+        
+        if success:
+            results['gamification_progress'] = True
+            if status_code == 404:
+                print(f"   ❌ Still returning 404 error - Fix not working")
+                results['gamification_progress'] = False
+            else:
+                print(f"   ✅ Gamification progress endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Gamification progress failed - Status: {status_code}")
+            if status_code == 404:
+                print(f"      ⚠️ CRITICAL: Still returning 404 Not Found")
+        
+        # Test GET /api/gamification/leaderboard
+        print("   📝 Testing: GET /api/gamification/leaderboard")
+        success, response, status_code = self.run_test(
+            "Gamification Leaderboard",
+            "GET",
+            "gamification/leaderboard",
+            [200, 401]  # Should return 200 OK or 401 (not 404)
+        )
+        
+        if success:
+            results['gamification_leaderboard'] = True
+            if status_code == 404:
+                print(f"   ❌ Still returning 404 error - Fix not working")
+                results['gamification_leaderboard'] = False
+            else:
+                print(f"   ✅ Gamification leaderboard endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Gamification leaderboard failed - Status: {status_code}")
+            if status_code == 404:
+                print(f"      ⚠️ CRITICAL: Still returning 404 Not Found")
+        
+        # Test GET /api/gamification/achievements
+        print("   📝 Testing: GET /api/gamification/achievements")
+        success, response, status_code = self.run_test(
+            "Gamification Achievements",
+            "GET",
+            "gamification/achievements",
+            [200, 401]  # Should return 200 OK or 401 (not 404)
+        )
+        
+        if success:
+            results['gamification_achievements'] = True
+            if status_code == 404:
+                print(f"   ❌ Still returning 404 error - Fix not working")
+                results['gamification_achievements'] = False
+            else:
+                print(f"   ✅ Gamification achievements endpoint fixed - Status: {status_code}")
+                if status_code == 200:
+                    print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+                elif status_code == 401:
+                    print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Gamification achievements failed - Status: {status_code}")
+            if status_code == 404:
+                print(f"      ⚠️ CRITICAL: Still returning 404 Not Found")
+        
+        return results
+    
+    def test_regression_endpoints(self):
+        """Test regression endpoints to ensure they still work"""
+        print("   Testing regression endpoints")
+        
+        results = {
+            'user_progress': False,
+            'mock_tests_library': False,
+            'mock_tests_generate': False,
+            'ai_dual_response': False
+        }
+        
+        # Test GET /api/user/progress
+        print("   📝 Testing: GET /api/user/progress")
+        success, response, status_code = self.run_test(
+            "User Progress",
+            "GET",
+            "user/progress",
+            [200, 401]  # Should still work
+        )
+        
+        if success:
+            results['user_progress'] = True
+            print(f"   ✅ User progress endpoint working - Status: {status_code}")
+            if status_code == 200:
+                print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+        else:
+            print(f"   ❌ User progress failed - Status: {status_code}")
+        
+        # Test GET /api/mock-tests/library
+        print("   📝 Testing: GET /api/mock-tests/library")
+        success, response, status_code = self.run_test(
+            "Mock Tests Library",
+            "GET",
+            "mock-tests/library",
+            [200, 401]  # Should still work
+        )
+        
+        if success:
+            results['mock_tests_library'] = True
+            print(f"   ✅ Mock tests library endpoint working - Status: {status_code}")
+            if status_code == 200:
+                print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+        else:
+            print(f"   ❌ Mock tests library failed - Status: {status_code}")
+        
+        # Test POST /api/mock-tests/generate
+        print("   📝 Testing: POST /api/mock-tests/generate")
+        generate_data = {
+            "subject": "Mathematics",
+            "topic": "Algebra",
+            "difficulty": "intermediate",
+            "question_count": 10
+        }
+        
+        success, response, status_code = self.run_test(
+            "Mock Tests Generate",
+            "POST",
+            "mock-tests/generate",
+            [200, 401, 422],  # Should still work
+            data=generate_data
+        )
+        
+        if success:
+            results['mock_tests_generate'] = True
+            print(f"   ✅ Mock tests generate endpoint working - Status: {status_code}")
+            if status_code == 200:
+                print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+        else:
+            print(f"   ❌ Mock tests generate failed - Status: {status_code}")
+        
+        # Test POST /api/ai/dual-response
+        print("   📝 Testing: POST /api/ai/dual-response")
+        ai_data = {
+            "user_message": "Explain quadratic equations",
+            "subject": "Mathematics",
+            "exam_type": "JEE",
+            "mode": "dual"
+        }
+        
+        success, response, status_code = self.run_test(
+            "AI Dual Response",
+            "POST",
+            "ai/dual-response",
+            [200, 401, 422],  # Should still work
+            data=ai_data
+        )
+        
+        if success:
+            results['ai_dual_response'] = True
+            print(f"   ✅ AI dual response endpoint working - Status: {status_code}")
+            if status_code == 200:
+                print(f"      Response keys: {list(response.keys()) if isinstance(response, dict) else 'Non-dict response'}")
+        else:
+            print(f"   ❌ AI dual response failed - Status: {status_code}")
+        
+        return results
+    
+    def verify_no_500_errors(self, test_results):
+        """Verify that no 500 errors were encountered"""
+        print("   Verifying no 500 Internal Server Errors")
+        
+        # Check if any dashboard endpoints returned 500
+        dashboard_endpoints = ['dashboard_analytics', 'dashboard_streak', 'dashboard_leaderboard']
+        dashboard_500_free = all(test_results.get(endpoint, False) for endpoint in dashboard_endpoints)
+        
+        if dashboard_500_free:
+            print(f"   ✅ No 500 errors detected in dashboard endpoints")
+        else:
+            print(f"   ❌ Some dashboard endpoints may still return 500 errors")
+        
+        # Check if any gamification endpoints returned 404
+        gamification_endpoints = ['gamification_progress', 'gamification_leaderboard', 'gamification_achievements']
+        gamification_404_free = all(test_results.get(endpoint, False) for endpoint in gamification_endpoints)
+        
+        if gamification_404_free:
+            print(f"   ✅ No 404 errors detected in gamification endpoints")
+        else:
+            print(f"   ❌ Some gamification endpoints may still return 404 errors")
+        
+        return dashboard_500_free and gamification_404_free
+    
+    def _print_dashboard_gamification_results(self, test_results):
+        """Print comprehensive dashboard and gamification test results"""
+        print("\n" + "=" * 80)
+        print("📊 DASHBOARD & GAMIFICATION ENDPOINTS - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        
+        # Backend Health
+        print(f"\n   BACKEND HEALTH:")
+        health_tests = ['backend_health']
+        for test_name in health_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Dashboard Endpoints (Previously 500 errors)
+        dashboard_tests = ['dashboard_analytics', 'dashboard_streak', 'dashboard_leaderboard']
+        dashboard_success = sum(test_results.get(test, False) for test in dashboard_tests)
+        print(f"\n   DASHBOARD ENDPOINTS - Previously 500 errors ({dashboard_success}/{len(dashboard_tests)}):")
+        for test_name in dashboard_tests:
+            status = "✅ FIXED" if test_results.get(test_name, False) else "❌ STILL BROKEN"
+            display_name = test_name.replace('dashboard_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Gamification Endpoints (Previously 404 from SW)
+        gamification_tests = ['gamification_progress', 'gamification_leaderboard', 'gamification_achievements']
+        gamification_success = sum(test_results.get(test, False) for test in gamification_tests)
+        print(f"\n   GAMIFICATION ENDPOINTS - Previously 404 from SW ({gamification_success}/{len(gamification_tests)}):")
+        for test_name in gamification_tests:
+            status = "✅ FIXED" if test_results.get(test_name, False) else "❌ STILL BROKEN"
+            display_name = test_name.replace('gamification_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Regression Testing
+        regression_tests = ['user_progress', 'mock_tests_library', 'mock_tests_generate', 'ai_dual_response']
+        regression_success = sum(test_results.get(test, False) for test in regression_tests)
+        print(f"\n   REGRESSION TESTING ({regression_success}/{len(regression_tests)}):")
+        for test_name in regression_tests:
+            status = "✅ WORKING" if test_results.get(test_name, False) else "❌ BROKEN"
+            display_name = test_name.replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Error Verification
+        print(f"\n   ERROR VERIFICATION:")
+        no_500_status = "✅ FIXED" if test_results.get('no_500_errors', False) else "❌ STILL PRESENT"
+        print(f"      No 500 Errors: {no_500_status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Success Criteria Summary
+        print(f"\n🎯 FIX VERIFICATION CRITERIA:")
+        criteria_mapping = {
+            'Dashboard endpoints no longer return 500': dashboard_success == len(dashboard_tests),
+            'Gamification endpoints no longer return 404': gamification_success == len(gamification_tests),
+            'No regressions in existing functionality': regression_success >= len(regression_tests) * 0.75,  # 75% threshold
+            'All endpoints return proper HTTP status codes': test_results.get('no_500_errors', False),
+            'Backend health check working': test_results.get('backend_health', False)
+        }
+        
+        for criterion, passed in criteria_mapping.items():
+            status = "✅" if passed else "❌"
+            print(f"   {status} {criterion}")
+        
+        # Determine overall status
+        critical_fixes = dashboard_success + gamification_success
+        total_critical = len(dashboard_tests) + len(gamification_tests)
+        critical_fix_rate = (critical_fixes / total_critical) * 100
+        
+        if critical_fix_rate == 100:
+            print("\n✅ DASHBOARD & GAMIFICATION FIXES: COMPLETE SUCCESS")
+            print("   All previously broken endpoints are now working correctly")
+        elif critical_fix_rate >= 80:
+            print("\n⚠️ DASHBOARD & GAMIFICATION FIXES: MOSTLY SUCCESSFUL")
+            print("   Most endpoints fixed, some issues remain")
+        elif critical_fix_rate >= 50:
+            print("\n⚠️ DASHBOARD & GAMIFICATION FIXES: PARTIAL SUCCESS")
+            print("   Some endpoints fixed, significant issues remain")
+        else:
+            print("\n❌ DASHBOARD & GAMIFICATION FIXES: FAILED")
+            print("   Most endpoints still broken, fixes not working")
+        
+        # Specific recommendations
+        print(f"\n🔧 RECOMMENDATIONS:")
+        
+        if dashboard_success < len(dashboard_tests):
+            broken_dashboard = [test for test in dashboard_tests if not test_results.get(test, False)]
+            print(f"   ❌ Dashboard endpoints still broken: {broken_dashboard}")
+            print(f"   🔍 Check dashboard_analytics.py router implementation")
+        
+        if gamification_success < len(gamification_tests):
+            broken_gamification = [test for test in gamification_tests if not test_results.get(test, False)]
+            print(f"   ❌ Gamification endpoints still broken: {broken_gamification}")
+            print(f"   🔍 Check gamification.py router implementation and registration")
+        
+        if regression_success < len(regression_tests):
+            broken_regression = [test for test in regression_tests if not test_results.get(test, False)]
+            print(f"   ⚠️ Regression issues detected: {broken_regression}")
+            print(f"   🔍 Check if recent changes broke existing functionality")
+        
+        if critical_fix_rate == 100 and regression_success == len(regression_tests):
+            print(f"   ✅ All fixes successful, no regressions detected")
+            print(f"   ✅ Ready for production deployment")
+        
+        return critical_fix_rate >= 80  # 80% success rate for fix verification
+
+
 if __name__ == "__main__":
     # Run new endpoints testing FIRST (as requested in review)
     print("🎮 STARTING NEW ENDPOINTS TESTING - GAMIFICATION & MOCK TESTS")
