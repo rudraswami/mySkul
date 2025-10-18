@@ -283,6 +283,7 @@ async def generate_dual_ai_response(
     """
     Generate dual AI response (Professor + Mentor)
     Checks subscription access before generating response
+    Automatically saves message to session
     """
     try:
         # Check feature access
@@ -303,6 +304,15 @@ async def generate_dual_ai_response(
         response = await ai_service.generate_dual_ai_response(
             user.user_id, request.message, request.session_id, request.subject
         )
+        
+        # Auto-save message to session for history
+        if request.session_id:
+            await ai_service.save_session_message(
+                user.user_id,
+                request.session_id,
+                request.message,
+                response
+            )
         
         # Track usage AFTER successful generation
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
