@@ -397,11 +397,25 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Handle follow-up question
+   * Handle follow-up question or predefined question
+   * Now actually sends the message instead of just populating input
    */
-  const handleFollowUp = (content) => {
+  const handleFollowUp = async (content) => {
     setInputMessage(content);
-    textareaRef.current?.focus();
+    
+    // Wait a tiny moment for state to update, then send
+    setTimeout(async () => {
+      // Trigger send by calling sendMessage with the content directly
+      if (content.trim() && !loading) {
+        // Set input first
+        setInputMessage(content);
+        // Focus textarea
+        textareaRef.current?.focus();
+        // Wait for next tick then send
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await sendMessage();
+      }
+    }, 50);
   };
   
   /**
