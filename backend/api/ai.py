@@ -331,19 +331,30 @@ async def generate_mentor_response(
     user: User = Depends(get_current_user),
     ai_service: AIService = Depends(get_ai_service)
 ):
-    """Generate mentor-only AI response"""
+    """Generate mentor-only AI response and auto-save to session"""
     try:
         # Use the dual response but extract mentor only
         response = await ai_service.generate_dual_ai_response(
             user.user_id, request.message, request.session_id, request.subject
         )
         
-        return {
+        mentor_response = {
             "response": response["secondary"]["response"],
-            "type": "mentor",
+            "persona": "mentor",
             "session_id": request.session_id,
             "subject": request.subject
         }
+        
+        # Auto-save to session
+        if request.session_id:
+            await ai_service.save_session_message(
+                user.user_id,
+                request.session_id,
+                request.message,
+                mentor_response
+            )
+        
+        return mentor_response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate mentor response: {str(e)}")
 
@@ -354,19 +365,30 @@ async def generate_professor_response(
     user: User = Depends(get_current_user),
     ai_service: AIService = Depends(get_ai_service)
 ):
-    """Generate professor-only AI response"""
+    """Generate professor-only AI response and auto-save to session"""
     try:
         # Use the dual response but extract professor only
         response = await ai_service.generate_dual_ai_response(
             user.user_id, request.message, request.session_id, request.subject
         )
         
-        return {
+        professor_response = {
             "response": response["primary"]["response"],
-            "type": "professor", 
+            "persona": "professor",
             "session_id": request.session_id,
             "subject": request.subject
         }
+        
+        # Auto-save to session
+        if request.session_id:
+            await ai_service.save_session_message(
+                user.user_id,
+                request.session_id,
+                request.message,
+                professor_response
+            )
+        
+        return professor_response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate professor response: {str(e)}")
 
