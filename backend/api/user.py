@@ -2,7 +2,7 @@
 User profile router for profile management and user operations
 """
 from fastapi import APIRouter, HTTPException, Depends
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from models.core import User, ProfileUpdateRequest
 from dependencies import get_current_user, get_database
