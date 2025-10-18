@@ -267,25 +267,6 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Save message to backend session
-   */
-  const saveMessageToSession = async (sessionId, userMessage, aiResponse) => {
-    try {
-      const token = localStorage.getItem('dhruv_ai_token');
-      if (!token) return;
-      
-      await axios.post(`${API}/ai/chat/${sessionId}/messages`, {
-        user_message: userMessage,
-        ai_response: aiResponse
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-    } catch (error) {
-      console.error('Failed to save message:', error);
-    }
-  };
-  
-  /**
    * Send message to AI - RESTORED from legacy version
    * Includes depth_level and exam_mode for structured student-centric responses
    * Backend now auto-saves messages, so we don't need manual save
