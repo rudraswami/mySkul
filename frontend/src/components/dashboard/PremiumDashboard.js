@@ -24,6 +24,7 @@ import RadialProgress from './RadialProgress';
 import FocusMode from './FocusMode';
 import SmartRecommendations from './SmartRecommendations';
 import MoodTracker from './MoodTracker';
+import LiveLeaderboard from './LiveLeaderboard';
 
 // Import premium styles
 import '../../styles/premium-dashboard.css';
