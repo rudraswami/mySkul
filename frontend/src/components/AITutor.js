@@ -632,6 +632,105 @@ export default function AITutorPremium() {
                         <p className="text-sm">{message.content}</p>
                       </div>
                     </div>
+                  ) : message.type === 'ai' ? (
+                    // AI response from new messages (already split into user + AI)
+                    <div className="flex justify-start">
+                      <div className="max-w-4xl w-full space-y-4">
+                        {message.dual_response ? (
+                          // Dual Response (Professor + Mentor)
+                          <div className="space-y-4">
+                            {/* Professor Response */}
+                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 shadow-lg">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-2">
+                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                  <span className="font-semibold text-gray-900 dark:text-white">Professor</span>
+                                </div>
+                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  <span>{formatTime(message.timestamp)}</span>
+                                </div>
+                              </div>
+                              <SemanticAIResponse 
+                                content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
+                                type="professor"
+                              />
+                            </div>
+                            
+                            {/* Mentor Response */}
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-6 shadow-lg">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-2">
+                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                  <span className="font-semibold text-gray-900 dark:text-white">Mentor</span>
+                                </div>
+                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  <span>{formatTime(message.timestamp)}</span>
+                                </div>
+                              </div>
+                              <SemanticAIResponse 
+                                content={message.dual_response.secondary?.raw_text || message.dual_response.secondary?.response}
+                                type="mentor"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          // Single Response (Mentor or Professor only)
+                          <div className={`rounded-2xl p-6 shadow-lg ${
+                            message.persona === 'professor' 
+                              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900'
+                              : 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900'
+                          }`}>
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-2">
+                                {message.persona === 'professor' ? (
+                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                ) : (
+                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                )}
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  {message.persona === 'professor' ? 'Professor' : 'Mentor'}
+                                </span>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                <Clock className="h-3 w-3 mr-1" />
+                                <span>{formatTime(message.timestamp)}</span>
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                              {message.response}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Feedback & Follow-up Buttons */}
+                        <div className="flex items-center justify-between px-2">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleFeedback(message.message_id, 'positive')}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                              title="Helpful"
+                            >
+                              <ThumbsUp className="h-4 w-4 text-gray-400 group-hover:text-green-500" />
+                            </button>
+                            <button
+                              onClick={() => handleFeedback(message.message_id, 'negative')}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                              title="Not helpful"
+                            >
+                              <ThumbsDown className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => handleFollowUp('Can you explain this in more detail?')}
+                            className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
+                          >
+                            Ask Follow-up
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ) : message.user_message ? (
                     // COMPLETE message with user_message AND AI response (OLD format)
                     <React.Fragment>
