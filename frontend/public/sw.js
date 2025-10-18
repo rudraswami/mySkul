@@ -81,8 +81,15 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
+  // CRITICAL: For /api/ routes, ALWAYS bypass service worker and go to network
+  // This prevents caching issues and ensures fresh data
+  if (url.pathname.startsWith('/api/') || url.href.includes('/api/')) {
+    // For API requests, completely bypass service worker for non-GET
+    if (request.method !== 'GET') {
+      event.respondWith(fetch(request));
+      return;
+    }
+    // For GET requests, use handleApiRequest with network-first strategy
     event.respondWith(handleApiRequest(request));
     return;
   }
