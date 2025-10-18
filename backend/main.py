@@ -196,6 +196,7 @@ def create_app() -> FastAPI:
     app.include_router(auto_notes.router, prefix="/api", tags=["Auto Notes"])
     app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])
     app.include_router(dashboard_analytics.router, prefix="/api", tags=["Dashboard Analytics"])
+    app.include_router(gamification.router, prefix="/api", tags=["Gamification"])
     
     logger.info("✅ All routers registered")
     
