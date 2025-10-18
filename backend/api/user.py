@@ -61,6 +61,93 @@ async def get_user_progress(user: User = Depends(get_current_user), db = Depends
         return {"xp": 0, "level": 1, "badges": []}
 
 
+@router.get("/recommendations")
+async def get_smart_recommendations(user: User = Depends(get_current_user), db = Depends(get_database)):
+    """
+    Get AI-powered smart study recommendations
+    """
+    try:
+        user_id = user.user_id
+        
+        # Get user's recent activity
+        sessions = await db.ai_sessions.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(50).to_list(length=50)
+        
+        recommendations = []
+        
+        # Analyze weak topics
+        topic_scores = {}
+        for session in sessions:
+            topic = session.get("topic", "General")
+            # Mock score analysis - in production, analyze actual performance
+            if topic not in topic_scores:
+                topic_scores[topic] = {"count": 0, "avg_score": 0}
+            topic_scores[topic]["count"] += 1
+        
+        # Add weak topic recommendation
+        if topic_scores:
+            weakest = min(topic_scores.items(), key=lambda x: x[1]["count"])
+            recommendations.append({
+                "id": "weak_topic",
+                "type": "focus",
+                "priority": "high",
+                "title": f"Focus on {weakest[0]}",
+                "description": f"You've only practiced {weakest[1]['count']} times. Let's strengthen this!",
+                "action": "Start Learning",
+                "route": f"/tutor?topic={weakest[0]}",
+                "progress": (weakest[1]['count'] / 10) * 100
+            })
+        
+        # Check streak
+        today_sessions = [s for s in sessions if s.get("created_at", datetime.min).date() == datetime.now().date()]
+        if not today_sessions:
+            recommendations.append({
+                "id": "streak",
+                "type": "streak",
+                "priority": "medium",
+                "title": "Keep Your Streak Alive!",
+                "description": "Study for at least 30 minutes today to maintain your streak",
+                "action": "Study Now",
+                "route": "/tutor",
+                "progress": 0
+            })
+        
+        # Revision recommendation
+        week_old = datetime.now() - timedelta(days=7)
+        old_topics = [s.get("topic") for s in sessions if s.get("created_at", datetime.min) < week_old]
+        if old_topics:
+            recommendations.append({
+                "id": "revision",
+                "type": "review",
+                "priority": "medium",
+                "title": f"Time to Revise {old_topics[0]}",
+                "description": "You learned this last week. Perfect time for revision!",
+                "action": "Review Topic",
+                "route": f"/tutor?topic={old_topics[0]}",
+                "progress": 50
+            })
+        
+        # Mock test recommendation
+        test_count = await db.mock_tests.count_documents({"user_id": user_id})
+        if test_count < 5:
+            recommendations.append({
+                "id": "practice",
+                "type": "test",
+                "priority": "low",
+                "title": "Take a Mock Test",
+                "description": "Practice makes perfect. Test your knowledge!",
+                "action": "Start Test",
+                "route": "/tests",
+                "progress": (test_count / 5) * 100
+            })
+        
+        return {"recommendations": recommendations}
+    except Exception as e:
+        print(f"Error fetching recommendations: {e}")
+        return {"recommendations": []}
+
+
 @router.put("/profile")
 async def update_user_profile(
     profile_update: ProfileUpdateRequest,
