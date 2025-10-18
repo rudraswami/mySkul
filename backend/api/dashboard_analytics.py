@@ -150,13 +150,15 @@ async def get_streak_data(
 
 
 @router.get("/leaderboard")
-async def get_leaderboard(current_user: dict = Depends(get_current_user)):
+async def get_leaderboard(
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
     """
     Get live leaderboard with top 10 users
     Includes pseudo profiles initially, replaces with real data as users accumulate
     """
     try:
-        db = await get_database()
         user_id = current_user.get("id") or current_user.get("user_id")
         
         # Get real user scores
