@@ -1,0 +1,613 @@
+/* ========================================
+   Premium Dashboard Styles - Dhruv AI
+   ======================================== */
+
+/* ========================================
+   GLASSMORPHISM & MODERN CARDS
+   ======================================== */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.glass-card-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+}
+
+/* Premium depth shadows */
+.shadow-premium {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 4px 8px rgba(0, 0, 0, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-premium-lg {
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 8px 16px rgba(0, 0, 0, 0.07),
+    0 16px 32px rgba(0, 0, 0, 0.07);
+}
+
+/* ========================================
+   PREMIUM GRADIENTS
+   ======================================== */
+
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-info {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.gradient-purple-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b86e5 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(135deg, #2E3192 0%, #1BFFFF 100%);
+}
+
+.gradient-sunset {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.gradient-cosmic {
+  background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(102, 126, 234, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #f8f8f8 20%,
+    #f0f0f0 40%,
+    #f0f0f0 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+/* ========================================
+   RADIAL PROGRESS RINGS
+   ======================================== */
+
+.progress-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  stroke-linecap: round;
+}
+
+/* ========================================
+   STREAK HEATMAP (GitHub-style)
+   ======================================== */
+
+.heatmap-container {
+  display: grid;
+  grid-template-columns: repeat(53, 1fr);
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.heatmap-level-0 {
+  background-color: #ebedf0;
+}
+
+.heatmap-level-1 {
+  background-color: #9be9a8;
+}
+
+.heatmap-level-2 {
+  background-color: #40c463;
+}
+
+.heatmap-level-3 {
+  background-color: #30a14e;
+}
+
+.heatmap-level-4 {
+  background-color: #216e39;
+}
+
+/* ========================================
+   FLOATING QUICK ACTIONS TOOLBAR
+   ======================================== */
+
+.quick-actions-toolbar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  gap: 12px;
+}
+
+.quick-action-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-action-button:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.quick-action-button:active {
+  transform: scale(0.95);
+}
+
+/* ========================================
+   ACHIEVEMENT BADGES
+   ======================================== */
+
+.badge-container {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-glow {
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.badge-container:hover .badge-glow {
+  opacity: 0.6;
+}
+
+.badge-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: badge-shine 3s infinite;
+}
+
+@keyframes badge-shine {
+  0% {
+    left: -100%;
+  }
+  50%, 100% {
+    left: 100%;
+  }
+}
+
+/* ========================================
+   FOCUS MODE
+   ======================================== */
+
+.focus-mode-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.focus-mode-content {
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   LEADERBOARD ANIMATIONS
+   ======================================== */
+
+.rank-transition {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rank-up {
+  animation: rank-up 0.6s ease-out;
+}
+
+.rank-down {
+  animation: rank-down 0.6s ease-out;
+}
+
+@keyframes rank-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+    background-color: rgba(34, 197, 94, 0.2);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    background-color: transparent;
+  }
+}
+
+@keyframes rank-down {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    background-color: transparent;
+  }
+}
+
+/* ========================================
+   XP PROGRESS BAR
+   ======================================== */
+
+.xp-bar {
+  position: relative;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 999px;
+  position: relative;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.xp-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: xp-shimmer 2s infinite;
+}
+
+@keyframes xp-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ========================================
+   AI MENTOR CHAT
+   ======================================== */
+
+.chat-container {
+  max-height: 500px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.chat-message {
+  animation: message-slide-in 0.3s ease-out;
+}
+
+@keyframes message-slide-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+}
+
+.chat-bubble-user {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-left: auto;
+}
+
+.chat-bubble-ai {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1a1a;
+}
+
+/* ========================================
+   SKELETON LOADERS
+   ======================================== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ========================================
+   RESPONSIVE OPTIMIZATIONS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .quick-actions-toolbar {
+    bottom: 10px;
+    right: 10px;
+    gap: 8px;
+  }
+  
+  .quick-action-button {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .heatmap-cell {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .focus-mode-content {
+    padding: 24px;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY - HIGH CONTRAST MODE
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #000;
+  }
+  
+  .glass-card-dark {
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #fff;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION SUPPORT
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .chat-bubble-ai {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 50%,
+    #1e293b 75%
+  );
+  background-size: 200% 100%;
+}
+
+.dark .heatmap-level-0 {
+  background-color: #1e293b;
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
