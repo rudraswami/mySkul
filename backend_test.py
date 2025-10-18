@@ -3315,7 +3315,20 @@ class DashboardGamificationTester:
 
 
 if __name__ == "__main__":
-    # Run new endpoints testing FIRST (as requested in review)
+    # Run Dashboard & Gamification Testing FIRST (Primary Focus)
+    print("🎯 RUNNING DASHBOARD & GAMIFICATION ENDPOINT TESTING")
+    print("=" * 80)
+    dashboard_tester = DashboardGamificationTester()
+    dashboard_success = dashboard_tester.test_dashboard_gamification_endpoints()
+    
+    if dashboard_success:
+        print("\n📊 Dashboard & Gamification testing completed successfully!")
+    else:
+        print("\n⚠️ Dashboard & Gamification testing completed with issues.")
+    
+    print("\n" + "=" * 80)
+    
+    # Run new endpoints testing SECOND (as requested in review)
     print("🎮 STARTING NEW ENDPOINTS TESTING - GAMIFICATION & MOCK TESTS")
     print("=" * 80)
     new_tester = NewEndpointsTester()
