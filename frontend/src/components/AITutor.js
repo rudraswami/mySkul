@@ -135,7 +135,7 @@ export default function AITutorPremium() {
   
   /**
    * Load specific session's chat history
-   * CRITICAL: Fixed message parsing to prevent duplication bug
+   * CRITICAL: Fixed message parsing to handle both old and new message formats
    */
   const loadSession = async (sessionId) => {
     try {
@@ -150,28 +150,48 @@ export default function AITutorPremium() {
       const sessionData = response.data;
       setCurrentSession(sessionId);
       
-      // Parse messages correctly - each message is EITHER user OR AI, not both
+      // Parse messages correctly - handle BOTH old format (combined) and new format (split)
       const parsedMessages = [];
       if (sessionData.messages && Array.isArray(sessionData.messages)) {
         sessionData.messages.forEach(msg => {
-          // Add user message
+          // NEW FORMAT: Messages with user_message field store user + AI together
           if (msg.user_message) {
+            // Add user message
             parsedMessages.push({
               type: 'user',
               content: msg.user_message,
               timestamp: msg.timestamp || new Date().toISOString()
             });
-          }
-          
-          // Add AI response (separate message)
-          if (msg.dual_response || msg.response) {
+            
+            // Add AI response (if exists)
+            if (msg.dual_response || msg.response) {
+              parsedMessages.push({
+                type: 'ai',
+                dual_response: msg.dual_response,
+                response: msg.response,
+                persona: msg.persona,
+                primary: msg.primary,
+                secondary: msg.secondary,
+                timestamp: msg.timestamp || new Date().toISOString(),
+                message_id: msg.message_id || `msg_${Date.now()}`
+              });
+            }
+          } 
+          // OLD FORMAT: Separate user and AI message objects
+          else if (msg.message && !msg.response) {
+            // User message only
+            parsedMessages.push({
+              type: 'user',
+              content: msg.message,
+              timestamp: msg.timestamp || new Date().toISOString()
+            });
+          } else if (msg.response) {
+            // AI response only
             parsedMessages.push({
               type: 'ai',
-              dual_response: msg.dual_response,
               response: msg.response,
-              persona: msg.persona,
               timestamp: msg.timestamp || new Date().toISOString(),
-              message_id: msg.id || `msg_${Date.now()}`
+              message_id: msg.message_id || `msg_${Date.now()}`
             });
           }
         });
