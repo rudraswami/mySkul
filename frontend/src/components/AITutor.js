@@ -286,7 +286,8 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Send message to AI - FIXED to prevent duplication bug
+   * Send message to AI - RESTORED from legacy version
+   * Includes depth_level and exam_mode for structured student-centric responses
    */
   const sendMessage = async () => {
     if (!inputMessage.trim() || loading) return;
@@ -309,8 +310,7 @@ export default function AITutorPremium() {
     setLoading(true);
     
     try {
-      // CRITICAL FIX: ALWAYS create session before sending message
-      // Backend requires session_id (not Optional)
+      // CRITICAL: ALWAYS create session before sending message
       let sessionId = currentSession;
       if (!sessionId) {
         sessionId = await createNewSession(messageToSend);
@@ -332,44 +332,49 @@ export default function AITutorPremium() {
       
       setMessages(prev => [...prev, userMsg]);
       
-      // Call AI API with guaranteed session_id
+      // Call AI API with ALL required parameters for structured responses
       const token = localStorage.getItem('dhruv_ai_token');
       const headers = { 'Authorization': `Bearer ${token}` };
       
+      // CRITICAL FIX: Include depth_level and exam_mode for student-centric structured responses
+      const requestBody = {
+        message: messageToSend,
+        subject: selectedSubject,
+        session_id: sessionId,  // Now guaranteed to be string, never null
+        depth_level: 'standard', // 'quick', 'standard', 'deep'
+        exam_mode: 'JEE'        // 'JEE', 'NEET', 'CBSE'
+      };
+      
       let response;
       if (aiMode === 'dual') {
-        response = await axios.post(`${API}/ai/dual-response`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId  // Now guaranteed to be string, never null
-        }, { headers, timeout: 45000 });
+        response = await axios.post(`${API}/ai/dual-response`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
       } else if (aiMode === 'mentor') {
-        response = await axios.post(`${API}/ai/mentor-only`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId  // Now guaranteed to be string, never null
-        }, { headers, timeout: 45000 });
+        response = await axios.post(`${API}/ai/mentor-only`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
       } else {
-        response = await axios.post(`${API}/ai/professor-only`, {
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId  // Now guaranteed to be string, never null
-        }, { headers, timeout: 45000 });
+        response = await axios.post(`${API}/ai/professor-only`, requestBody, { 
+          headers, 
+          timeout: 45000 
+        });
       }
       
       const aiResponse = response.data;
       
-      // Add AI message to UI (as separate message)
-      const aiMsg = {
-        type: 'ai',
-        dual_response: aiResponse.dual_response,
-        response: aiResponse.response,
-        persona: aiResponse.persona,
-        timestamp: new Date().toISOString(),
-        message_id: `msg_${Date.now()}`
+      // CRITICAL: Preserve OLD response structure for proper rendering
+      // This maintains the student-centric structured format
+      const enhancedMessage = {
+        ...aiResponse,
+        user_message: messageToSend,
+        timestamp: new Date().toISOString()
       };
       
-      setMessages(prev => [...prev, aiMsg]);
+      // Add AI message to UI with COMPLETE structure
+      setMessages(prev => [...prev, enhancedMessage]);
       
       // Save to backend
       await saveMessageToSession(sessionId, messageToSend, aiResponse);
