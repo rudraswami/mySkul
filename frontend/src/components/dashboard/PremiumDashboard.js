@@ -11,7 +11,8 @@ import {
   Eye,
   EyeOff,
   Sun,
-  Moon
+  Moon,
+  Trophy
 } from 'lucide-react';
 
 // Import premium components
