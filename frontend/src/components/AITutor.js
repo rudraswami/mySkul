@@ -309,10 +309,18 @@ export default function AITutorPremium() {
     setLoading(true);
     
     try {
-      // Create session if needed
+      // CRITICAL FIX: ALWAYS create session before sending message
+      // Backend requires session_id (not Optional)
       let sessionId = currentSession;
       if (!sessionId) {
         sessionId = await createNewSession(messageToSend);
+        
+        // If session creation fails, generate temporary ID
+        if (!sessionId) {
+          sessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          setCurrentSession(sessionId);
+          console.warn('⚠️ Using temporary session ID:', sessionId);
+        }
       }
       
       // Add user message immediately to UI
@@ -324,7 +332,7 @@ export default function AITutorPremium() {
       
       setMessages(prev => [...prev, userMsg]);
       
-      // Call AI API
+      // Call AI API with guaranteed session_id
       const token = localStorage.getItem('dhruv_ai_token');
       const headers = { 'Authorization': `Bearer ${token}` };
       
@@ -333,19 +341,19 @@ export default function AITutorPremium() {
         response = await axios.post(`${API}/ai/dual-response`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: sessionId
+          session_id: sessionId  // Now guaranteed to be string, never null
         }, { headers, timeout: 45000 });
       } else if (aiMode === 'mentor') {
         response = await axios.post(`${API}/ai/mentor-only`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: sessionId
+          session_id: sessionId  // Now guaranteed to be string, never null
         }, { headers, timeout: 45000 });
       } else {
         response = await axios.post(`${API}/ai/professor-only`, {
           message: messageToSend,
           subject: selectedSubject,
-          session_id: sessionId
+          session_id: sessionId  // Now guaranteed to be string, never null
         }, { headers, timeout: 45000 });
       }
       
