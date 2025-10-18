@@ -130,14 +130,43 @@ self.addEventListener('fetch', (event) => {
 async function handleApiRequest(request) {
   const url = new URL(request.url);
   
+  // CRITICAL FIX: Never cache non-GET requests (POST, PUT, DELETE, PATCH)
+  // These methods cannot be cached as per Cache API specification
+  if (request.method !== 'GET') {
+    try {
+      return await fetch(request);
+    } catch (error) {
+      // Handle offline POST requests specially
+      if (request.method === 'POST' && url.pathname.includes('/upload-audio')) {
+        return handleOfflineAudioUpload(request);
+      }
+      
+      // For other non-GET requests, return offline response
+      return new Response(
+        JSON.stringify({ 
+          error: 'Network unavailable', 
+          offline: true,
+          message: 'This request requires internet connection.' 
+        }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+  }
+  
+  // For GET requests, use network-first with cache fallback
   try {
     // Try network first
     const response = await fetch(request);
     
-    // Cache successful GET requests
-    if (request.method === 'GET' && response.status === 200) {
+    // Cache successful GET requests (only 200 OK responses)
+    if (response.status === 200) {
       const cache = await caches.open(API_CACHE_NAME);
-      cache.put(request, response.clone());
+      // Clone response before caching
+      cache.put(request, response.clone()).catch(err => {
+        console.log('Service Worker: Cache put failed', err);
+      });
     }
     
     return response;
@@ -145,18 +174,11 @@ async function handleApiRequest(request) {
   } catch (error) {
     console.log('Service Worker: API request failed, checking cache', url.pathname);
     
-    // Fallback to cache for GET requests
-    if (request.method === 'GET') {
-      const cachedResponse = await caches.match(request);
-      if (cachedResponse) {
-        console.log('Service Worker: Serving API from cache', url.pathname);
-        return cachedResponse;
-      }
-    }
-    
-    // Handle offline audio upload requests
-    if (request.method === 'POST' && url.pathname.includes('/upload-audio')) {
-      return handleOfflineAudioUpload(request);
+    // Fallback to cache for GET requests only
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('Service Worker: Serving API from cache', url.pathname);
+      return cachedResponse;
     }
     
     // Return offline response
