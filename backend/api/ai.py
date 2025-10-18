@@ -499,12 +499,48 @@ async def get_session_messages(
     user: User = Depends(get_current_user),
     ai_service: AIService = Depends(get_ai_service)
 ):
-    """Get all messages for a specific session"""
+    """Get all messages for a specific session with pagination support"""
     try:
         messages = await ai_service.get_session_messages(session_id, user.user_id)
         return {"messages": messages}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get session messages: {str(e)}")
+
+
+@router.post("/chat/{session_id}/messages")
+async def save_session_message(
+    session_id: str,
+    request: dict,
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Save a message to the session
+    Expected request body: { user_message: str, ai_response: dict }
+    """
+    try:
+        user_message = request.get('user_message', '')
+        ai_response = request.get('ai_response', {})
+        
+        if not user_message:
+            raise HTTPException(status_code=400, detail="user_message is required")
+        
+        success = await ai_service.save_session_message(
+            user.user_id,
+            session_id,
+            user_message,
+            ai_response
+        )
+        
+        if success:
+            return {"message": "Message saved successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save message")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save message: {str(e)}")
 
 
 @router.put("/chat/{session_id}/rename")
