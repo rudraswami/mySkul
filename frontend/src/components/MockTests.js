@@ -656,7 +656,7 @@ export default function MockTests() {
       const resultsData = await response.json();
       
       // Fetch gamification progress for rewards display
-      const progressResponse = await fetch(`${backendUrl}/api/gamification/progress`, {
+      const progressResponse = await fetch(`${backendUrl}/api/user/progress`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
