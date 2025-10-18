@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -16,12 +16,11 @@ import {
   Heart,
   Sparkles,
   Plus,
+  TrendingUp,
   Flame,
   Target,
   BookOpen,
-  Loader,
-  X,
-  Menu
+  Loader
 } from 'lucide-react';
 import SemanticAIResponse from './SemanticAIResponse';
 import UpgradeModal from './UpgradeModal';
@@ -31,18 +30,9 @@ const API = `${BACKEND_URL}/api`;
 
 /**
  * Premium AI Tutor Component - Complete Rebuild
- * Features:
- * - Dynamic chat history loading
- * - Dynamic header metrics (sessions left, streak, XP)
- * - Fixed message rendering (no duplication bug)
- * - Expanded chat width (75%)
- * - Auto-resize textarea
- * - Gradient message bubbles
- * - Smooth animations
- * - Inline timestamps
- * - Feedback options (thumbs up/down)
+ * Fixes: Message rendering, chat history, dynamic metrics, premium UI
  */
-export default function AITutorPremium() {
+export default function AITutor() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { checkFeatureAccess, trackFeatureUsage } = useSubscription();
@@ -74,6 +64,7 @@ export default function AITutorPremium() {
   
   // Refs
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
   const textareaRef = useRef(null);
   
   // Initialize
@@ -116,7 +107,7 @@ export default function AITutorPremium() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
       
-      const response = await axios.get(`${API}/ai/chat/sessions`, {
+      const response = await axios.get(`${API}/chat/sessions`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -135,7 +126,6 @@ export default function AITutorPremium() {
   
   /**
    * Load specific session's chat history
-   * CRITICAL: Fixed message parsing to prevent duplication bug
    */
   const loadSession = async (sessionId) => {
     try {
@@ -143,14 +133,14 @@ export default function AITutorPremium() {
       if (!token) return;
       
       setLoading(true);
-      const response = await axios.get(`${API}/ai/chat/${sessionId}/messages`, {
+      const response = await axios.get(`${API}/chat/sessions/${sessionId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       const sessionData = response.data;
       setCurrentSession(sessionId);
       
-      // Parse messages correctly - each message is EITHER user OR AI, not both
+      // Parse messages correctly - separate user and AI messages
       const parsedMessages = [];
       if (sessionData.messages && Array.isArray(sessionData.messages)) {
         sessionData.messages.forEach(msg => {
@@ -163,7 +153,7 @@ export default function AITutorPremium() {
             });
           }
           
-          // Add AI response (separate message)
+          // Add AI response
           if (msg.dual_response || msg.response) {
             parsedMessages.push({
               type: 'ai',
@@ -171,7 +161,7 @@ export default function AITutorPremium() {
               response: msg.response,
               persona: msg.persona,
               timestamp: msg.timestamp || new Date().toISOString(),
-              message_id: msg.id || `msg_${Date.now()}`
+              message_id: msg.id
             });
           }
         });
@@ -202,35 +192,26 @@ export default function AITutorPremium() {
       const accessData = accessResponse.data;
       
       // Load streak data
-      try {
-        const streakResponse = await axios.get(`${API}/dashboard/streak`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const streakData = streakResponse.data;
-        
-        // Load user progress (XP, level)
-        const progressResponse = await axios.get(`${API}/user/progress`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const progressData = progressResponse.data;
-        
-        setMetrics({
-          sessionsLeft: accessData.remaining || 0,
-          totalSessions: accessData.total || 0,
-          currentStreak: streakData.current_streak || 0,
-          xp: progressData.xp || 0,
-          level: progressData.level || 1
-        });
-      } catch (error) {
-        // If streak/progress endpoints don't exist yet, just set access data
-        setMetrics({
-          sessionsLeft: accessData.remaining || 0,
-          totalSessions: accessData.total || 0,
-          currentStreak: 0,
-          xp: 0,
-          level: 1
-        });
-      }
+      const streakResponse = await axios.get(`${API}/dashboard/streak`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const streakData = streakResponse.data;
+      
+      // Load user progress (XP, level)
+      const progressResponse = await axios.get(`${API}/user/progress`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const progressData = progressResponse.data;
+      
+      setMetrics({
+        sessionsLeft: accessData.remaining || 0,
+        totalSessions: accessData.total || 0,
+        currentStreak: streakData.current_streak || 0,
+        xp: progressData.xp || 0,
+        level: progressData.level || 1
+      });
     } catch (error) {
       console.error('Failed to load metrics:', error);
     }
@@ -246,7 +227,7 @@ export default function AITutorPremium() {
       
       const title = firstMessage.substring(0, 50) + (firstMessage.length > 50 ? '...' : '');
       
-      const response = await axios.post(`${API}/ai/chat/sessions`, {
+      const response = await axios.post(`${API}/chat/sessions`, {
         title,
         subject: selectedSubject,
         topic: 'General',
@@ -274,7 +255,7 @@ export default function AITutorPremium() {
       const token = localStorage.getItem('dhruv_ai_token');
       if (!token) return;
       
-      await axios.post(`${API}/ai/chat/${sessionId}/messages`, {
+      await axios.post(`${API}/chat/sessions/${sessionId}/messages`, {
         user_message: userMessage,
         ai_response: aiResponse
       }, {
@@ -286,7 +267,7 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Send message to AI - FIXED to prevent duplication bug
+   * Send message to AI
    */
   const sendMessage = async () => {
     if (!inputMessage.trim() || loading) return;
@@ -351,7 +332,7 @@ export default function AITutorPremium() {
       
       const aiResponse = response.data;
       
-      // Add AI message to UI (as separate message)
+      // Add AI message to UI
       const aiMsg = {
         type: 'ai',
         dual_response: aiResponse.dual_response,
@@ -381,6 +362,7 @@ export default function AITutorPremium() {
       }]);
     } finally {
       setLoading(false);
+      inputRef.current?.focus();
     }
   };
   
@@ -390,7 +372,7 @@ export default function AITutorPremium() {
   const handleFeedback = async (messageId, feedback) => {
     try {
       const token = localStorage.getItem('dhruv_ai_token');
-      await axios.post(`${API}/ai/chat/feedback`, {
+      await axios.post(`${API}/chat/feedback`, {
         message_id: messageId,
         feedback,
         session_id: currentSession
@@ -409,7 +391,7 @@ export default function AITutorPremium() {
    */
   const handleFollowUp = (content) => {
     setInputMessage(content);
-    textareaRef.current?.focus();
+    inputRef.current?.focus();
   };
   
   /**
@@ -454,24 +436,24 @@ export default function AITutorPremium() {
   };
   
   return (
-    <div className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+    <div className=\"flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900\">
       
       {/* Sidebar - Sessions */}
       {showSidebar && (
-        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className=\"w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col\">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className=\"p-4 border-b border-gray-200 dark:border-gray-700\">
             <button
               onClick={startNewChat}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all"
+              className=\"w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all\"
             >
-              <Plus className="h-5 w-5" />
-              <span className="font-semibold">New Chat</span>
+              <Plus className=\"h-5 w-5\" />
+              <span className=\"font-semibold\">New Chat</span>
             </button>
           </div>
           
           {/* Sessions List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className=\"flex-1 overflow-y-auto p-4 space-y-2\">
             {sessions.map(session => (
               <button
                 key={session.session_id}
@@ -482,95 +464,79 @@ export default function AITutorPremium() {
                     : 'bg-gray-50 dark:bg-gray-700'
                 }`}
               >
-                <div className="flex items-center space-x-2 mb-1">
-                  <MessageCircle className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <div className=\"flex items-center space-x-2 mb-1\">
+                  <MessageCircle className=\"h-4 w-4 text-gray-500\" />
+                  <span className=\"text-sm font-medium text-gray-900 dark:text-white truncate\">
                     {session.title || 'Untitled Chat'}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className=\"text-xs text-gray-500 dark:text-gray-400\">
                   {session.message_count || 0} messages
                 </div>
               </button>
             ))}
-            
-            {sessions.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No chat sessions yet</p>
-                <p className="text-xs mt-1">Start a new chat to begin!</p>
-              </div>
-            )}
           </div>
         </div>
       )}
       
       {/* Main Chat Area - 75% width */}
-      <div className="flex-1 flex flex-col" style={{ maxWidth: showSidebar ? '75%' : '100%' }}>
+      <div className=\"flex-1 flex flex-col\" style={{ maxWidth: showSidebar ? '75%' : '100%' }}>
         
         {/* Header with Dynamic Metrics */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center space-x-3">
-              {/* Mobile Menu Toggle */}
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                {showSidebar ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-              
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
-                <Brain className="h-6 w-6 text-white" />
+        <div className=\"bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4\">
+          <div className=\"flex items-center justify-between max-w-6xl mx-auto\">
+            <div className=\"flex items-center space-x-3\">
+              <div className=\"p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl\">
+                <Brain className=\"h-6 w-6 text-white\" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI Tutor</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Your personal learning companion</p>
+                <h1 className=\"text-xl font-bold text-gray-900 dark:text-white\">AI Tutor</h1>
+                <p className=\"text-sm text-gray-500 dark:text-gray-400\">Your personal learning companion</p>
               </div>
             </div>
             
             {/* Dynamic Metrics */}
-            <div className="hidden md:flex items-center space-x-6">
+            <div className=\"flex items-center space-x-6\">
               {/* Sessions Left */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className=\"flex items-center space-x-2\">
+                <div className=\"p-2 bg-blue-100 dark:bg-blue-900 rounded-lg\">
+                  <Zap className=\"h-4 w-4 text-blue-600 dark:text-blue-400\" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                  <div className=\"text-sm font-bold text-gray-900 dark:text-white\">
                     {metrics.sessionsLeft} left today
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className=\"text-xs text-gray-500 dark:text-gray-400\">
                     of {metrics.totalSessions}
                   </div>
                 </div>
               </div>
               
               {/* Streak */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Flame className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <div className=\"flex items-center space-x-2\">
+                <div className=\"p-2 bg-orange-100 dark:bg-orange-900 rounded-lg\">
+                  <Flame className=\"h-4 w-4 text-orange-600 dark:text-orange-400\" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                  <div className=\"text-sm font-bold text-gray-900 dark:text-white\">
                     {metrics.currentStreak} day streak
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className=\"text-xs text-gray-500 dark:text-gray-400\">
                     Keep it up! 🔥
                   </div>
                 </div>
               </div>
               
               {/* Level */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <div className=\"flex items-center space-x-2\">
+                <div className=\"p-2 bg-purple-100 dark:bg-purple-900 rounded-lg\">
+                  <Target className=\"h-4 w-4 text-purple-600 dark:text-purple-400\" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
+                  <div className=\"text-sm font-bold text-gray-900 dark:text-white\">
                     Level {metrics.level}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className=\"text-xs text-gray-500 dark:text-gray-400\">
                     {metrics.xp} XP
                   </div>
                 </div>
@@ -580,21 +546,21 @@ export default function AITutorPremium() {
         </div>
         
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+        <div className=\"flex-1 overflow-y-auto p-6 space-y-6\" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
           <AnimatePresence>
             {messages.length === 0 ? (
               // Empty state
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6">
-                  <Brain className="h-16 w-16 text-white" />
+              <div className=\"flex flex-col items-center justify-center h-full text-center\">
+                <div className=\"p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6\">
+                  <Brain className=\"h-16 w-16 text-white\" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2 className=\"text-2xl font-bold text-gray-900 dark:text-white mb-2\">
                   Welcome to AI Tutor!
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
+                <p className=\"text-gray-600 dark:text-gray-300 mb-6 max-w-md\">
                   Ask me anything about {selectedSubject}. I'm here to help you learn and ace your exams!
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                <div className=\"grid grid-cols-2 gap-4 max-w-2xl\">
                   {[
                     'Explain quadratic equations',
                     'Help me with calculus',
@@ -604,10 +570,10 @@ export default function AITutorPremium() {
                     <button
                       key={index}
                       onClick={() => handleFollowUp(suggestion)}
-                      className="p-4 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all text-left"
+                      className=\"p-4 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all text-left\"
                     >
-                      <Sparkles className="h-4 w-4 text-purple-600 mb-2" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{suggestion}</p>
+                      <Sparkles className=\"h-4 w-4 text-purple-600 mb-2\" />
+                      <p className=\"text-sm font-medium text-gray-900 dark:text-white\">{suggestion}</p>
                     </button>
                   ))}
                 </div>
@@ -618,60 +584,60 @@ export default function AITutorPremium() {
                 <motion.div
                   key={index}
                   variants={messageVariants}
-                  initial="hidden"
-                  animate="visible"
+                  initial=\"hidden\"
+                  animate=\"visible\"
                 >
                   {message.type === 'user' ? (
-                    // User Message with gradient bubble
-                    <div className="flex justify-end">
-                      <div className="max-w-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-md p-4 shadow-lg">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                        <div className="flex items-center justify-end mt-2 text-xs text-blue-100 opacity-75">
-                          <Clock className="h-3 w-3 mr-1" />
+                    // User Message
+                    <div className=\"flex justify-end\">
+                      <div className=\"max-w-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-md p-4 shadow-lg\">
+                        <p className=\"text-sm leading-relaxed whitespace-pre-wrap\">{message.content}</p>
+                        <div className=\"flex items-center justify-end mt-2 text-xs text-blue-100 opacity-75\">
+                          <Clock className=\"h-3 w-3 mr-1\" />
                           <span>{formatTime(message.timestamp)}</span>
                         </div>
                       </div>
                     </div>
                   ) : message.type === 'ai' ? (
                     // AI Message
-                    <div className="flex justify-start">
-                      <div className="max-w-4xl w-full space-y-4">
+                    <div className=\"flex justify-start\">
+                      <div className=\"max-w-4xl w-full space-y-4\">
                         {message.dual_response ? (
                           // Dual Response (Professor + Mentor)
-                          <div className="space-y-4">
+                          <div className=\"space-y-4\">
                             {/* Professor Response */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 shadow-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-2">
-                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                  <span className="font-semibold text-gray-900 dark:text-white">Professor</span>
+                            <div className=\"bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 shadow-lg\">
+                              <div className=\"flex items-center justify-between mb-4\">
+                                <div className=\"flex items-center space-x-2\">
+                                  <GraduationCap className=\"h-5 w-5 text-blue-600 dark:text-blue-400\" />
+                                  <span className=\"font-semibold text-gray-900 dark:text-white\">Professor</span>
                                 </div>
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3 mr-1" />
+                                <div className=\"flex items-center text-xs text-gray-500 dark:text-gray-400\">
+                                  <Clock className=\"h-3 w-3 mr-1\" />
                                   <span>{formatTime(message.timestamp)}</span>
                                 </div>
                               </div>
                               <SemanticAIResponse 
                                 content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
-                                type="professor"
+                                type=\"professor\"
                               />
                             </div>
                             
                             {/* Mentor Response */}
-                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-6 shadow-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-2">
-                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                  <span className="font-semibold text-gray-900 dark:text-white">Mentor</span>
+                            <div className=\"bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-6 shadow-lg\">
+                              <div className=\"flex items-center justify-between mb-4\">
+                                <div className=\"flex items-center space-x-2\">
+                                  <Heart className=\"h-5 w-5 text-purple-600 dark:text-purple-400\" />
+                                  <span className=\"font-semibold text-gray-900 dark:text-white\">Mentor</span>
                                 </div>
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3 mr-1" />
+                                <div className=\"flex items-center text-xs text-gray-500 dark:text-gray-400\">
+                                  <Clock className=\"h-3 w-3 mr-1\" />
                                   <span>{formatTime(message.timestamp)}</span>
                                 </div>
                               </div>
                               <SemanticAIResponse 
                                 content={message.dual_response.secondary?.raw_text || message.dual_response.secondary?.response}
-                                type="mentor"
+                                type=\"mentor\"
                               />
                             </div>
                           </div>
@@ -682,49 +648,49 @@ export default function AITutorPremium() {
                               ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900'
                               : 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900'
                           }`}>
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-2">
+                            <div className=\"flex items-center justify-between mb-4\">
+                              <div className=\"flex items-center space-x-2\">
                                 {message.persona === 'professor' ? (
-                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                  <GraduationCap className=\"h-5 w-5 text-blue-600 dark:text-blue-400\" />
                                 ) : (
-                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                  <Heart className=\"h-5 w-5 text-purple-600 dark:text-purple-400\" />
                                 )}
-                                <span className="font-semibold text-gray-900 dark:text-white">
+                                <span className=\"font-semibold text-gray-900 dark:text-white\">
                                   {message.persona === 'professor' ? 'Professor' : 'Mentor'}
                                 </span>
                               </div>
-                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                <Clock className="h-3 w-3 mr-1" />
+                              <div className=\"flex items-center text-xs text-gray-500 dark:text-gray-400\">
+                                <Clock className=\"h-3 w-3 mr-1\" />
                                 <span>{formatTime(message.timestamp)}</span>
                               </div>
                             </div>
-                            <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                            <div className=\"text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap\">
                               {message.response}
                             </div>
                           </div>
                         )}
                         
                         {/* Feedback & Follow-up Buttons */}
-                        <div className="flex items-center justify-between px-2">
-                          <div className="flex items-center space-x-2">
+                        <div className=\"flex items-center justify-between px-2\">
+                          <div className=\"flex items-center space-x-2\">
                             <button
                               onClick={() => handleFeedback(message.message_id, 'positive')}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
-                              title="Helpful"
+                              className=\"p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group\"
+                              title=\"Helpful\"
                             >
-                              <ThumbsUp className="h-4 w-4 text-gray-400 group-hover:text-green-500" />
+                              <ThumbsUp className=\"h-4 w-4 text-gray-400 group-hover:text-green-500\" />
                             </button>
                             <button
                               onClick={() => handleFeedback(message.message_id, 'negative')}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
-                              title="Not helpful"
+                              className=\"p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group\"
+                              title=\"Not helpful\"
                             >
-                              <ThumbsDown className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
+                              <ThumbsDown className=\"h-4 w-4 text-gray-400 group-hover:text-red-500\" />
                             </button>
                           </div>
                           <button
                             onClick={() => handleFollowUp('Can you explain this in more detail?')}
-                            className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
+                            className=\"px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors\"
                           >
                             Ask Follow-up
                           </button>
@@ -733,9 +699,9 @@ export default function AITutorPremium() {
                     </div>
                   ) : (
                     // Error Message
-                    <div className="flex justify-center">
-                      <div className="max-w-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl p-4">
-                        <p className="text-sm">{message.content}</p>
+                    <div className=\"flex justify-center\">
+                      <div className=\"max-w-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl p-4\">
+                        <p className=\"text-sm\">{message.content}</p>
                       </div>
                     </div>
                   )}
@@ -746,11 +712,11 @@ export default function AITutorPremium() {
           
           {/* Loading Indicator */}
           {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center space-x-3">
-                  <Loader className="h-5 w-5 text-purple-600 animate-spin" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">AI is thinking...</span>
+            <div className=\"flex justify-start\">
+              <div className=\"bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 shadow-lg\">
+                <div className=\"flex items-center space-x-3\">
+                  <Loader className=\"h-5 w-5 text-purple-600 animate-spin\" />
+                  <span className=\"text-sm text-gray-600 dark:text-gray-300\">AI is thinking...</span>
                 </div>
               </div>
             </div>
@@ -760,10 +726,10 @@ export default function AITutorPremium() {
         </div>
         
         {/* Input Area - Auto-resize */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1 relative">
+        <div className=\"bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4\">
+          <div className=\"max-w-4xl mx-auto\">
+            <div className=\"flex items-end space-x-3\">
+              <div className=\"flex-1 relative\">
                 <textarea
                   ref={textareaRef}
                   value={inputMessage}
@@ -774,8 +740,8 @@ export default function AITutorPremium() {
                       sendMessage();
                     }
                   }}
-                  placeholder="Ask me anything..."
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  placeholder=\"Ask me anything...\"
+                  className=\"w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400\"
                   style={{ minHeight: '56px', maxHeight: '200px' }}
                   rows={1}
                   disabled={loading}
@@ -784,31 +750,29 @@ export default function AITutorPremium() {
               <button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || loading}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className=\"px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2\"
               >
-                <Send className="h-5 w-5" />
-                <span className="font-semibold">Send</span>
+                <Send className=\"h-5 w-5\" />
+                <span className=\"font-semibold\">Send</span>
               </button>
             </div>
             
-            {/* Subject & Mode Selectors */}
-            <div className="mt-3 flex items-center flex-wrap gap-3">
-              <div className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4 text-gray-500" />
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Biology">Biology</option>
-                  <option value="General">General</option>
-                </select>
-              </div>
+            {/* Subject Selector */}
+            <div className=\"mt-3 flex items-center space-x-3\">
+              <BookOpen className=\"h-4 w-4 text-gray-500\" />
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className=\"px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500\"
+              >
+                <option value=\"Mathematics\">Mathematics</option>
+                <option value=\"Physics\">Physics</option>
+                <option value=\"Chemistry\">Chemistry</option>
+                <option value=\"Biology\">Biology</option>
+                <option value=\"General\">General</option>
+              </select>
               
-              <div className="flex items-center space-x-2 ml-auto">
+              <div className=\"flex items-center space-x-2 ml-auto\">
                 <button
                   onClick={() => setAiMode('dual')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
