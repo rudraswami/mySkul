@@ -17,7 +17,7 @@ import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import { SkipToContent } from './utils/accessibility';
 
 // Lazy loaded components (code splitting for better initial load)
-const StudentDashboard = lazy(() => import('./components/StudentDashboard'));
+const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
 const AITutor = lazy(() => import('./components/AITutor')); // Large component - lazy load
 const MockTests = lazy(() => import('./components/MockTests'));
 const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
