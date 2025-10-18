@@ -60,13 +60,15 @@ async def get_dashboard_analytics(
 
 
 @router.get("/streak")
-async def get_streak_data(current_user: dict = Depends(get_current_user)):
+async def get_streak_data(
+    current_user: dict = Depends(get_current_user),
+    db = Depends(get_database)
+):
     """
     Get detailed streak calendar data (365 days)
     Returns: date, minutes studied, activity level (0-4), subjects
     """
     try:
-        db = await get_database()
         user_id = current_user.get("id") or current_user.get("user_id")
         
         # Get all sessions for past 365 days
