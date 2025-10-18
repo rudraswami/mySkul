@@ -2778,6 +2778,19 @@ class NewEndpointsTester:
 
 
 if __name__ == "__main__":
+    # Run new endpoints testing FIRST (as requested in review)
+    print("🎮 STARTING NEW ENDPOINTS TESTING - GAMIFICATION & MOCK TESTS")
+    print("=" * 80)
+    new_tester = NewEndpointsTester()
+    new_success = new_tester.test_new_endpoints()
+    
+    if new_success:
+        print("\n🎮 New endpoints testing completed successfully!")
+    else:
+        print("\n⚠️ New endpoints testing completed with issues.")
+    
+    print("\n" + "=" * 80)
+    
     # Run the mobile CSS verification testing
     tester = MobileCSSVerificationTester()
     success = tester.test_mobile_css_verification()
