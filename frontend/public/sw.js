@@ -3,9 +3,9 @@
  * Provides offline recording capabilities, caching, and background sync
  */
 
-const CACHE_NAME = 'dhruv-ai-auto-notes-v1';
-const AUDIO_CACHE_NAME = 'dhruv-ai-audio-cache-v1';
-const API_CACHE_NAME = 'dhruv-ai-api-cache-v1';
+const CACHE_NAME = 'dhruv-ai-auto-notes-v2';
+const AUDIO_CACHE_NAME = 'dhruv-ai-audio-cache-v2';
+const API_CACHE_NAME = 'dhruv-ai-api-cache-v2';
 
 // Assets to cache for offline functionality
 const STATIC_ASSETS = [
