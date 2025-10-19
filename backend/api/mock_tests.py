@@ -231,9 +231,16 @@ async def generate_mock_test(
         exam_type = request.get('exam_type', 'JEE')
         test_type = request.get('test_type', 'full_length')
         subjects = request.get('subjects', [])
-        difficulty = request.get('difficulty_level', 'medium')
+        difficulty_raw = request.get('difficulty_level', 'medium')
         num_questions = request.get('num_questions', 75)
         generation_mode = request.get('generation_mode', 'standard')
+        
+        # PATCH: Handle integer difficulty_level from frontend (1=easy, 2=medium, 3=hard)
+        if isinstance(difficulty_raw, int):
+            difficulty_map = {1: 'easy', 2: 'medium', 3: 'hard'}
+            difficulty = difficulty_map.get(difficulty_raw, 'medium')
+        else:
+            difficulty = difficulty_raw if difficulty_raw in ['easy', 'medium', 'hard'] else 'medium'
         
         # PATCH: Use dependency-injected sub_service instead of manual initialization
         # Check subscription access - NO initialize() call needed
