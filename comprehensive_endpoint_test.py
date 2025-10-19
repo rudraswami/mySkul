@@ -467,7 +467,7 @@ class ComprehensiveEndpointTester:
         
         # Regression Testing
         print(f"\n   REGRESSION TESTING - EXISTING FUNCTIONALITY:")
-        regression_tests = ['ai_dual_response_working', 'auth_me_working']
+        regression_tests = ['ai_dual_response_working', 'auth_session_working']
         regression_success = sum(test_results.get(test, False) for test in regression_tests)
         for test_name in regression_tests:
             status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
