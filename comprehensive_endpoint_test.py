@@ -396,12 +396,12 @@ class ComprehensiveEndpointTester:
         else:
             print(f"   ❌ AI Dual Response failed - Status: {status_code}")
         
-        # Test GET /api/auth/me
-        print("   📝 Testing: GET /api/auth/me")
+        # Test GET /api/auth/session
+        print("   📝 Testing: GET /api/auth/session")
         success, response, status_code = self.run_test(
-            "Auth Me",
+            "Auth Session",
             "GET",
-            "auth/me",
+            "auth/session",
             [200, 401]  # Should still work
         )
         
