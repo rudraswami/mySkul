@@ -96,7 +96,7 @@ async def get_performance_trends(
 
 @router.get("/subjects")
 async def get_subjects(
-    exam_type: str = "JEE",  # Default to JEE if not provided
+    exam_type: str = Query(default="JEE", description="Exam type (JEE, NEET, etc.)"),  # Default to JEE if not provided
     user: User = Depends(get_current_user),
     service: MockTestsService = Depends(get_mock_tests_service)
 ):
@@ -106,6 +106,51 @@ async def get_subjects(
         return {"subjects": subjects, "exam_type": exam_type}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get subjects: {str(e)}")
+
+
+@router.get("/bookmarked-questions")
+async def get_bookmarked_questions(
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    PATCH: Get all bookmarked questions from test attempts
+    Returns questions that user has bookmarked across all tests
+    """
+    try:
+        # Find all test attempts with bookmarked questions
+        attempts = await db.test_attempts.find({
+            "student_id": user.user_id
+        }).to_list(length=None)
+        
+        bookmarked = []
+        for attempt in attempts:
+            responses = attempt.get("responses", [])
+            for response in responses:
+                if response.get("bookmarked", False):
+                    bookmarked.append({
+                        "test_id": attempt.get("test_id"),
+                        "question_id": response.get("question_id"),
+                        "question": response.get("question", ""),
+                        "subject": response.get("subject", ""),
+                        "topic": response.get("topic", ""),
+                        "user_answer": response.get("user_answer"),
+                        "correct_answer": response.get("correct_answer"),
+                        "is_correct": response.get("is_correct", False),
+                        "bookmarked_at": attempt.get("submitted_at")
+                    })
+        
+        return {
+            "bookmarked_questions": bookmarked,
+            "total": len(bookmarked)
+        }
+    except Exception as e:
+        print(f"Error fetching bookmarked questions: {e}")
+        # Return empty list instead of error for graceful degradation
+        return {
+            "bookmarked_questions": [],
+            "total": 0
+        }
 
 
 @router.get("/{test_id}/detailed-review")
