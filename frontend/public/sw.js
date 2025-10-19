@@ -86,7 +86,14 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // CRITICAL FIX: For ALL /api/ routes, ALWAYS go directly to network
+  // CRITICAL FIX 1: NEVER cache non-GET requests (POST, PUT, DELETE, PATCH)
+  // This prevents "Failed to execute 'put' on 'Cache': Request method 'POST' is unsupported"
+  if (request.method !== 'GET') {
+    event.respondWith(fetch(request));
+    return;
+  }
+  
+  // CRITICAL FIX 2: For ALL /api/ routes, ALWAYS go directly to network
   // NEVER cache API responses to prevent stale data
   if (url.pathname.startsWith('/api/') || url.href.includes('/api/')) {
     // Bypass service worker completely for ALL API requests
