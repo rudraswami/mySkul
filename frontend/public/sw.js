@@ -81,16 +81,25 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // CRITICAL: For /api/ routes, ALWAYS bypass service worker and go to network
-  // This prevents caching issues and ensures fresh data
+  // CRITICAL FIX: For ALL /api/ routes, ALWAYS go directly to network
+  // NEVER cache API responses to prevent stale data
   if (url.pathname.startsWith('/api/') || url.href.includes('/api/')) {
-    // For API requests, completely bypass service worker for non-GET
-    if (request.method !== 'GET') {
-      event.respondWith(fetch(request));
-      return;
-    }
-    // For GET requests, use handleApiRequest with network-first strategy
-    event.respondWith(handleApiRequest(request));
+    // Bypass service worker completely for ALL API requests
+    event.respondWith(
+      fetch(request).catch(error => {
+        console.error('Service Worker: API request failed', url.pathname, error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Network unavailable', 
+            offline: true,
+            message: 'This request requires internet connection.' 
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      })
+    );
     return;
   }
   
