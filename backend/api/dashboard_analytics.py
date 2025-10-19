@@ -8,12 +8,13 @@ from typing import List, Dict, Any
 import random
 
 from dependencies import get_current_user, get_database
+from models.core import User
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/analytics")
 async def get_dashboard_analytics(
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db = Depends(get_database)
 ):
     """
@@ -21,7 +22,8 @@ async def get_dashboard_analytics(
     Returns streak data, progress, subjects, etc.
     """
     try:
-        user_id = current_user.get("id") or current_user.get("user_id")
+        # PATCH: Use User model's user_id attribute instead of dict access
+        user_id = current_user.user_id
         
         # Get user's study sessions
         sessions = await db.ai_sessions.find(
