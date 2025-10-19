@@ -605,27 +605,31 @@ export default function MockTests() {
 
       const data = await response.json();
       
+      // PATCH: Backend returns data in {success, test, test_id, message} format
+      // Extract test from response
+      const testData = data.test || data;
+      
       // PATCH: Add logging to debug test generation response
       console.log('✅ Mock test generated successfully:', {
-        test_id: data.test_id,
-        title: data.title,
-        num_questions: data.questions?.length || 0,
-        has_questions: !!data.questions
+        test_id: testData.test_id,
+        title: testData.title,
+        num_questions: testData.questions?.length || 0,
+        has_questions: !!testData.questions
       });
       
       // Validate response data
-      if (!data.test_id || !data.questions || data.questions.length === 0) {
-        console.error('❌ Invalid test data received:', data);
+      if (!testData.test_id || !testData.questions || testData.questions.length === 0) {
+        console.error('❌ Invalid test data received:', testData);
         throw new Error('Test generation returned invalid data');
       }
       
       // Store test data - exam mode will open when progress animation completes
       setExamModeTest({
-        test_id: data.test_id,
-        title: data.title,
+        test_id: testData.test_id,
+        title: testData.title,
         time_limit: timerSeconds
       });
-      setExamModeQuestions(data.questions || []);
+      setExamModeQuestions(testData.questions || []);
       
       console.log('✅ Test data stored, progress modal will complete animation');
       
