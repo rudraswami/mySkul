@@ -65,9 +65,9 @@ const RazorpayPayment = ({
         throw new Error('Authentication required');
       }
 
-      // Create order on backend
+      // PATCH: Fixed route to match backend endpoint /api/subscription/razorpay/create-order
       const orderResponse = await axios.post(
-        `${backendUrl}/api/razorpay/create-order`,
+        `${backendUrl}/api/subscription/razorpay/create-order`,
         {
           amount: amount * 100, // Convert to paise
           currency: 'INR',
