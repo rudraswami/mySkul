@@ -89,7 +89,22 @@ self.addEventListener('fetch', (event) => {
   // CRITICAL FIX 1: NEVER cache non-GET requests (POST, PUT, DELETE, PATCH)
   // This prevents "Failed to execute 'put' on 'Cache': Request method 'POST' is unsupported"
   if (request.method !== 'GET') {
-    event.respondWith(fetch(request));
+    event.respondWith(
+      fetch(request).catch(error => {
+        console.error('Service Worker: Non-GET request failed', request.method, url.pathname, error);
+        // Return error response instead of letting it fail silently
+        return new Response(
+          JSON.stringify({ 
+            error: 'Request failed', 
+            message: error.message || 'Network error occurred'
+          }), {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      })
+    );
     return;
   }
   
