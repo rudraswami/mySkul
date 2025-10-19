@@ -96,14 +96,14 @@ async def get_performance_trends(
 
 @router.get("/subjects")
 async def get_subjects(
-    exam_type: str,
+    exam_type: str = "JEE",  # Default to JEE if not provided
     user: User = Depends(get_current_user),
     service: MockTestsService = Depends(get_mock_tests_service)
 ):
-    """Get available subjects for an exam type"""
+    """Get available subjects for an exam type (defaults to JEE)"""
     try:
         subjects = await service.get_available_subjects(user.user_id, exam_type)
-        return {"subjects": subjects}
+        return {"subjects": subjects, "exam_type": exam_type}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get subjects: {str(e)}")
 
