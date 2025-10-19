@@ -60,18 +60,23 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Delete old cache versions
+          // Delete ALL old cache versions including API cache
+          // This ensures no stale 404/422 responses are served
           if (cacheName !== CACHE_NAME && 
-              cacheName !== AUDIO_CACHE_NAME && 
-              cacheName !== API_CACHE_NAME) {
+              cacheName !== AUDIO_CACHE_NAME) {
             console.log('Service Worker: Deleting old cache', cacheName);
+            return caches.delete(cacheName);
+          }
+          // CRITICAL: Also delete API_CACHE_NAME to clear all API responses
+          if (cacheName === API_CACHE_NAME) {
+            console.log('Service Worker: Clearing API cache to prevent stale responses');
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker: Activation complete');
-      return self.clients.claim(); // Take control of all clients
+      console.log('Service Worker: Activation complete, all old caches cleared');
+      return self.clients.claim(); // Take control of all clients immediately
     })
   );
 });
