@@ -161,7 +161,8 @@ async def get_resume_tests(
 async def generate_mock_test(
     request: dict,
     user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_database),
+    sub_service = Depends(get_unified_subscription_service)
 ):
     """
     Generate a new mock test based on user parameters
@@ -179,6 +180,7 @@ async def generate_mock_test(
     try:
         import uuid
         from datetime import datetime, timezone
+        from services.unified_subscription_service import FeatureName
         
         # Extract parameters
         exam_type = request.get('exam_type', 'JEE')
@@ -188,13 +190,8 @@ async def generate_mock_test(
         num_questions = request.get('num_questions', 75)
         generation_mode = request.get('generation_mode', 'standard')
         
-        # Check subscription access - using UnifiedSubscriptionService
-        from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
-        from dependencies import get_unified_subscription_service
-        
-        sub_service = UnifiedSubscriptionService(db)
-        await sub_service.initialize()
-        
+        # PATCH: Use dependency-injected sub_service instead of manual initialization
+        # Check subscription access - NO initialize() call needed
         access_result = await sub_service.check_feature_access(
             user.user_id,
             FeatureName.MOCK_TESTS.value,
