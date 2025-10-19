@@ -406,14 +406,14 @@ class ComprehensiveEndpointTester:
         )
         
         if success:
-            results['auth_me_working'] = True
-            print(f"   ✅ Auth Me working - Status: {status_code}")
+            results['auth_session_working'] = True
+            print(f"   ✅ Auth Session working - Status: {status_code}")
             if status_code == 401:
                 print(f"      Expected: Authentication required")
             elif status_code == 200:
-                print(f"      Success: User info retrieved")
+                print(f"      Success: User session retrieved")
         else:
-            print(f"   ❌ Auth Me failed - Status: {status_code}")
+            print(f"   ❌ Auth Session failed - Status: {status_code}")
         
         return results
     
