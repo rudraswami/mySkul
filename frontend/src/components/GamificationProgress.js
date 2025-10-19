@@ -51,18 +51,20 @@ export default function GamificationProgress({ showFullView = false }) {
   };
 
   const getLevelTitle = (level) => {
-    if (level >= 50) return { title: 'Grand Master', color: 'text-purple-600', icon: '👑' };
-    if (level >= 30) return { title: 'Master', color: 'text-yellow-600', icon: '🏆' };
-    if (level >= 20) return { title: 'Expert', color: 'text-blue-600', icon: '⭐' };
-    if (level >= 10) return { title: 'Advanced', color: 'text-green-600', icon: '🎯' };
-    if (level >= 5) return { title: 'Intermediate', color: 'text-teal-600', icon: '📚' };
+    const safeLevel = level || 1;
+    if (safeLevel >= 50) return { title: 'Grand Master', color: 'text-purple-600', icon: '👑' };
+    if (safeLevel >= 30) return { title: 'Master', color: 'text-yellow-600', icon: '🏆' };
+    if (safeLevel >= 20) return { title: 'Expert', color: 'text-blue-600', icon: '⭐' };
+    if (safeLevel >= 10) return { title: 'Advanced', color: 'text-green-600', icon: '🎯' };
+    if (safeLevel >= 5) return { title: 'Intermediate', color: 'text-teal-600', icon: '📚' };
     return { title: 'Novice', color: 'text-gray-600', icon: '🌱' };
   };
 
   const getStreakEmoji = (streak) => {
-    if (streak >= 30) return '🔥🔥🔥';
-    if (streak >= 7) return '🔥🔥';
-    if (streak >= 3) return '🔥';
+    const safeStreak = streak || 0;
+    if (safeStreak >= 30) return '🔥🔥🔥';
+    if (safeStreak >= 7) return '🔥🔥';
+    if (safeStreak >= 3) return '🔥';
     return '✨';
   };
 
@@ -83,8 +85,24 @@ export default function GamificationProgress({ showFullView = false }) {
     return null;
   }
 
-  const levelInfo = getLevelTitle(progress.current_level);
-  const xpPercentage = (progress.total_xp % 100);
+  // Safe accessors with fallbacks
+  const levelInfo = getLevelTitle(progress.current_level || progress.level || 1);
+  const xpPercentage = ((progress.total_xp || progress.xp || 0) % 100);
+  const safeProgress = {
+    current_level: progress.current_level || progress.level || 1,
+    total_xp: progress.total_xp || progress.xp || 0,
+    xp_for_next_level: progress.xp_for_next_level || progress.xp_to_next_level || 100,
+    current_streak: progress.current_streak || 0,
+    longest_streak: progress.longest_streak || 0,
+    total_badges: progress.total_badges || (Array.isArray(progress.badges) ? progress.badges.length : 0),
+    available_badges: progress.available_badges || 10,
+    badges_earned: progress.badges_earned || progress.badges || [],
+    stats: {
+      total_tests: progress.stats?.total_tests || 0,
+      average_accuracy: progress.stats?.average_accuracy || 0,
+      perfect_scores: progress.stats?.perfect_scores || 0
+    }
+  };
 
   // Compact view for sidebar/dashboard
   if (!showFullView) {
