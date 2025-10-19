@@ -367,7 +367,7 @@ class ComprehensiveEndpointTester:
         
         results = {
             'ai_dual_response_working': False,
-            'auth_me_working': False
+            'auth_session_working': False
         }
         
         # Test POST /api/ai/dual-response
