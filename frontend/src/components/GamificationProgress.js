@@ -114,14 +114,14 @@ export default function GamificationProgress({ showFullView = false }) {
             <div className="flex items-center gap-2">
               <div className="text-2xl">{levelInfo.icon}</div>
               <div>
-                <p className="text-xs text-gray-600">Level {progress.current_level}</p>
+                <p className="text-xs text-gray-600">Level {safeProgress.current_level}</p>
                 <p className={`text-sm font-bold ${levelInfo.color}`}>{levelInfo.title}</p>
               </div>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1 text-yellow-600">
                 <Zap className="w-4 h-4" />
-                <span className="font-bold">{progress.total_xp}</span>
+                <span className="font-bold">{safeProgress.total_xp}</span>
               </div>
               <p className="text-xs text-gray-500">Total XP</p>
             </div>
@@ -131,17 +131,17 @@ export default function GamificationProgress({ showFullView = false }) {
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>Level Progress</span>
-              <span>{progress.xp_for_next_level} XP to next</span>
+              <span>{safeProgress.xp_for_next_level} XP to next</span>
             </div>
             <Progress value={xpPercentage} className="h-2" />
           </div>
 
           {/* Streak */}
-          {progress.current_streak > 0 && (
+          {safeProgress.current_streak > 0 && (
             <div className="flex items-center justify-center gap-2 bg-orange-100 rounded-lg py-2">
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-sm font-semibold text-orange-700">
-                {progress.current_streak} Day Streak {getStreakEmoji(progress.current_streak)}
+                {safeProgress.current_streak} Day Streak {getStreakEmoji(safeProgress.current_streak)}
               </span>
             </div>
           )}
@@ -150,11 +150,11 @@ export default function GamificationProgress({ showFullView = false }) {
           <div className="grid grid-cols-2 gap-2 mt-3">
             <div className="bg-white rounded-lg p-2 text-center">
               <Award className="w-4 h-4 text-purple-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-600">{progress.total_badges} Badges</p>
+              <p className="text-xs text-gray-600">{safeProgress.total_badges} Badges</p>
             </div>
             <div className="bg-white rounded-lg p-2 text-center">
               <Target className="w-4 h-4 text-green-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-600">{progress.stats.total_tests} Tests</p>
+              <p className="text-xs text-gray-600">{safeProgress.stats.total_tests} Tests</p>
             </div>
           </div>
         </CardContent>
