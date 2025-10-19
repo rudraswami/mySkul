@@ -317,8 +317,11 @@ async def generate_mock_test(
         raise
     except Exception as e:
         import logging
+        import traceback
         logger = logging.getLogger(__name__)
-        logger.error(f"Test generation error: {str(e)}", exc_info=True)
+        logger.error(f"❌ Test generation CRITICAL error: {str(e)}")
+        logger.error(f"❌ Full traceback: {traceback.format_exc()}")
+        logger.error(f"❌ Request data: {request}")
         raise HTTPException(status_code=500, detail=f"Failed to generate test: {str(e)}")
 
 
