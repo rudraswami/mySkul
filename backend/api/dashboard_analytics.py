@@ -63,7 +63,7 @@ async def get_dashboard_analytics(
 
 @router.get("/streak")
 async def get_streak_data(
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db = Depends(get_database)
 ):
     """
@@ -71,7 +71,8 @@ async def get_streak_data(
     Returns: date, minutes studied, activity level (0-4), subjects
     """
     try:
-        user_id = current_user.get("id") or current_user.get("user_id")
+        # PATCH: Use User model's user_id attribute
+        user_id = current_user.user_id
         
         # Get all sessions for past 365 days
         year_ago = datetime.now() - timedelta(days=365)
