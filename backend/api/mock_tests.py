@@ -1,7 +1,7 @@
 """
 Mock Tests router for test generation, submission, and performance tracking
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 
 from models.core import User
 from services.mock_tests_service import MockTestsService
