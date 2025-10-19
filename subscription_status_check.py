@@ -9,7 +9,7 @@ import sys
 
 def login():
     """Login with test@dhruvai.com/password123"""
-    base_url = "https://eduai-platform-25.preview.emergentagent.com/api"
+    base_url = "https://razorpay-live.preview.emergentagent.com/api"
     login_data = {
         "email": "test@dhruvai.com",
         "password": "password123"
