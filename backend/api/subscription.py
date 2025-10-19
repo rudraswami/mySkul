@@ -535,3 +535,214 @@ async def cancel_subscription(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
+
+
+# ==================== RAZORPAY PAYMENT INTEGRATION ====================
+
+@router.post("/razorpay/create-order")
+async def create_razorpay_order(
+    request: Dict[str, Any],
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Create Razorpay order for subscription purchase
+    
+    Request body: {
+        "plan_name": "PREMIUM" | "PRO",
+        "billing_cycle": "monthly" | "yearly"
+    }
+    """
+    try:
+        import razorpay
+        import os
+        from core.config import settings
+        
+        # Initialize Razorpay client with production credentials
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        plan_name = request.get("plan_name", "PREMIUM")
+        billing_cycle = request.get("billing_cycle", "monthly")
+        
+        # Get plan configuration
+        subscription_service = SubscriptionService(db)
+        plan_config = await subscription_service.load_plan_config()
+        
+        if plan_name not in plan_config:
+            raise HTTPException(status_code=400, detail=f"Invalid plan: {plan_name}")
+        
+        plan_data = plan_config[plan_name]
+        
+        # Get price based on billing cycle
+        if billing_cycle == "yearly":
+            amount_inr = plan_data.get("price_yearly", plan_data.get("price_monthly", 0) * 10)  # 10 months price for yearly
+        else:
+            amount_inr = plan_data.get("price_monthly", 0)
+        
+        # Convert to paise (Razorpay uses paise, not rupees)
+        amount_paise = int(amount_inr * 100)
+        
+        # Create Razorpay order
+        order_data = {
+            "amount": amount_paise,
+            "currency": "INR",
+            "receipt": f"order_{user.user_id}_{int(datetime.now(timezone.utc).timestamp())}",
+            "notes": {
+                "user_id": user.user_id,
+                "plan_name": plan_name,
+                "billing_cycle": billing_cycle,
+                "email": user.email or ""
+            }
+        }
+        
+        razorpay_order = client.order.create(data=order_data)
+        
+        # Store order in database for verification later
+        order_record = {
+            "order_id": razorpay_order["id"],
+            "user_id": user.user_id,
+            "plan_name": plan_name,
+            "billing_cycle": billing_cycle,
+            "amount_inr": amount_inr,
+            "amount_paise": amount_paise,
+            "status": "created",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "razorpay_order": razorpay_order
+        }
+        
+        await db.razorpay_orders.insert_one(order_record)
+        
+        return {
+            "order_id": razorpay_order["id"],
+            "amount": amount_inr,
+            "amount_paise": amount_paise,
+            "currency": "INR",
+            "key_id": settings.RAZORPAY_KEY_ID,  # Frontend needs this
+            "plan_name": plan_name,
+            "billing_cycle": billing_cycle
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Razorpay order creation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
+
+
+@router.post("/razorpay/verify-payment")
+async def verify_razorpay_payment(
+    request: Dict[str, Any],
+    user: User = Depends(get_current_user),
+    db = Depends(get_database),
+    unified_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
+):
+    """
+    Verify Razorpay payment and activate subscription
+    
+    Request body: {
+        "razorpay_order_id": "order_xxx",
+        "razorpay_payment_id": "pay_xxx",
+        "razorpay_signature": "signature_xxx"
+    }
+    """
+    try:
+        import razorpay
+        import hmac
+        import hashlib
+        from core.config import settings
+        
+        razorpay_order_id = request.get("razorpay_order_id")
+        razorpay_payment_id = request.get("razorpay_payment_id")
+        razorpay_signature = request.get("razorpay_signature")
+        
+        if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+            raise HTTPException(status_code=400, detail="Missing payment verification parameters")
+        
+        # Verify signature
+        generated_signature = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode(),
+            f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        if generated_signature != razorpay_signature:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+        
+        # Get order from database
+        order = await db.razorpay_orders.find_one({"order_id": razorpay_order_id})
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        if order.get("user_id") != user.user_id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+        
+        # Initialize Razorpay client
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        # Fetch payment details from Razorpay
+        payment = client.payment.fetch(razorpay_payment_id)
+        
+        if payment["status"] != "captured" and payment["status"] != "authorized":
+            raise HTTPException(status_code=400, detail=f"Payment not successful: {payment['status']}")
+        
+        # Activate subscription using unified service
+        plan_name = order.get("plan_name", "PREMIUM")
+        billing_cycle = order.get("billing_cycle", "monthly")
+        
+        # Upgrade user to paid plan
+        success = await unified_service.upgrade_subscription(
+            user.user_id,
+            plan_name,
+            billing_cycle
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to activate subscription")
+        
+        # Update order status
+        await db.razorpay_orders.update_one(
+            {"order_id": razorpay_order_id},
+            {
+                "$set": {
+                    "status": "completed",
+                    "payment_id": razorpay_payment_id,
+                    "signature": razorpay_signature,
+                    "payment_details": payment,
+                    "completed_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        # Create subscription record
+        await db.subscriptions.update_one(
+            {"user_id": user.user_id},
+            {
+                "$set": {
+                    "razorpay_order_id": razorpay_order_id,
+                    "razorpay_payment_id": razorpay_payment_id,
+                    "payment_method": "razorpay",
+                    "last_payment_date": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "message": "Payment verified and subscription activated",
+            "subscription": {
+                "tier": plan_name,
+                "billing_cycle": billing_cycle,
+                "status": "active"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Payment verification failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Payment verification failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
