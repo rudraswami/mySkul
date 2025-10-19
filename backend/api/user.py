@@ -36,29 +36,107 @@ async def get_user_profile(user: User = Depends(get_current_user)):
 @router.get("/progress")
 async def get_user_progress(user: User = Depends(get_current_user), db = Depends(get_database)):
     """
-    Get user progress (XP, level, badges)
+    Get comprehensive user progress (XP, level, badges, stats, streaks)
+    Returns all data needed for GamificationProgress component
     """
     try:
-        # Get user's XP and level from database
+        # Get user's data from database
         user_data = await db.users.find_one({"id": user.user_id})
         
         if not user_data:
-            return {"xp": 0, "level": 1, "badges": []}
+            # Return safe defaults for new users
+            return {
+                "xp": 0,
+                "level": 1,
+                "badges": [],
+                "total_xp": 0,
+                "current_level": 1,
+                "xp_to_next_level": 100,
+                "xp_for_next_level": 100,
+                "xp_progress": 0,
+                "current_streak": 0,
+                "longest_streak": 0,
+                "total_badges": 0,
+                "available_badges": 10,
+                "badges_earned": [],
+                "stats": {
+                    "total_tests": 0,
+                    "average_accuracy": 0,
+                    "perfect_scores": 0
+                }
+            }
         
         xp = user_data.get("xp", 0)
         level = user_data.get("level", 1)
         badges = user_data.get("badges", [])
         
+        # Calculate XP progress
+        xp_for_next_level = (level + 1) * 100 - xp
+        xp_progress = xp % 100
+        
+        # Get streak data
+        current_streak = user_data.get("current_streak", 0)
+        longest_streak = user_data.get("longest_streak", 0)
+        
+        # Get test statistics
+        test_attempts = await db.test_attempts.count_documents({"student_id": user.user_id})
+        
+        # Calculate average accuracy
+        attempts = await db.test_attempts.find({"student_id": user.user_id}).to_list(length=None)
+        if attempts:
+            accuracies = [a.get("accuracy", 0) for a in attempts if a.get("accuracy") is not None]
+            avg_accuracy = sum(accuracies) / len(accuracies) if accuracies else 0
+            perfect_scores = len([a for a in attempts if a.get("accuracy", 0) >= 100])
+        else:
+            avg_accuracy = 0
+            perfect_scores = 0
+        
         return {
+            # Legacy fields for backward compatibility
             "xp": xp,
             "level": level,
             "badges": badges,
-            "xp_to_next_level": (level + 1) * 100,
-            "xp_progress": (xp % 100)
+            "xp_to_next_level": max(0, xp_for_next_level),
+            "xp_progress": xp_progress,
+            
+            # New fields for GamificationProgress component
+            "total_xp": xp,
+            "current_level": level,
+            "xp_for_next_level": max(0, xp_for_next_level),
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "total_badges": len(badges),
+            "available_badges": 10,  # Total badges available in system
+            "badges_earned": badges if isinstance(badges, list) else [],
+            "stats": {
+                "total_tests": test_attempts,
+                "average_accuracy": int(avg_accuracy),
+                "perfect_scores": perfect_scores
+            }
         }
     except Exception as e:
         print(f"Error fetching user progress: {e}")
-        return {"xp": 0, "level": 1, "badges": []}
+        # Return safe defaults on error
+        return {
+            "xp": 0,
+            "level": 1,
+            "badges": [],
+            "total_xp": 0,
+            "current_level": 1,
+            "xp_to_next_level": 100,
+            "xp_for_next_level": 100,
+            "xp_progress": 0,
+            "current_streak": 0,
+            "longest_streak": 0,
+            "total_badges": 0,
+            "available_badges": 10,
+            "badges_earned": [],
+            "stats": {
+                "total_tests": 0,
+                "average_accuracy": 0,
+                "perfect_scores": 0
+            }
+        }
 
 
 @router.get("/recommendations")
