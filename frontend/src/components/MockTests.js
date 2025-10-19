@@ -593,10 +593,14 @@ export default function MockTests() {
       }
 
       if (!response.ok) {
-        // Log the actual error for debugging
+        // PATCH: Better error logging
         const errorText = await response.text();
-        console.error('Test generation failed:', response.status, errorText);
-        throw new Error(`Failed to generate test: ${response.status}`);
+        console.error('❌ Test generation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`Failed to generate test: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
