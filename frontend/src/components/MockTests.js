@@ -1090,7 +1090,8 @@ export default function MockTests() {
         setShowDetailedReview(true);
         
         // Load bookmarked questions
-        const bookmarkedResponse = await fetch(`${backendUrl}/api/bookmarked-questions`, {
+        // PATCH: Fixed route to match backend endpoint
+        const bookmarkedResponse = await fetch(`${backendUrl}/api/mock-tests/bookmarked-questions`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
