@@ -3866,7 +3866,22 @@ class RazorpayPaymentTester:
 
 
 if __name__ == "__main__":
-    # Run Dashboard & Gamification Testing FIRST (Primary Focus)
+    # Run Razorpay Payment Integration Testing FIRST (Primary Focus)
+    print("💳 RUNNING RAZORPAY PAYMENT INTEGRATION TESTING")
+    print("=" * 80)
+    razorpay_tester = RazorpayPaymentTester()
+    razorpay_success = razorpay_tester.test_razorpay_payment_integration()
+    
+    if razorpay_success:
+        print("\n💳 Razorpay payment integration testing completed successfully!")
+        print("   Payment endpoints are production-ready and properly configured")
+    else:
+        print("\n⚠️ Razorpay payment integration testing completed with issues.")
+        print("   Review failed tests before enabling payment features")
+    
+    print("\n" + "=" * 80)
+    
+    # Run Dashboard & Gamification Testing SECOND
     print("🎯 RUNNING DASHBOARD & GAMIFICATION ENDPOINT TESTING")
     print("=" * 80)
     dashboard_tester = DashboardGamificationTester()
