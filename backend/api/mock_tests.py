@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from models.core import User
 from services.mock_tests_service import MockTestsService
-from dependencies import get_current_user, get_database
+from dependencies import get_current_user, get_database, get_unified_subscription_service
 
 # Router instance
 router = APIRouter(prefix="/mock-tests", tags=["mock-tests"])
