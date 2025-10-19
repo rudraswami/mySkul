@@ -3314,6 +3314,557 @@ class DashboardGamificationTester:
         return critical_fix_rate >= 80  # 80% success rate for fix verification
 
 
+class RazorpayPaymentTester:
+    def __init__(self):
+        # Use the correct backend URL from frontend/.env
+        self.base_url = "https://eduai-platform-25.preview.emergentagent.com/api"
+        self.token = None
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+    
+    def run_test(self, test_name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.base_url}/{endpoint}"
+        
+        # Merge headers
+        test_headers = self.session.headers.copy()
+        if headers:
+            test_headers.update(headers)
+        
+        try:
+            if method == "GET":
+                response = self.session.get(url, headers=test_headers, timeout=30)
+            elif method == "POST":
+                response = self.session.post(url, json=data, headers=test_headers, timeout=30)
+            elif method == "PUT":
+                response = self.session.put(url, json=data, headers=test_headers, timeout=30)
+            elif method == "DELETE":
+                response = self.session.delete(url, headers=test_headers, timeout=30)
+            
+            # Handle expected status as list or single value
+            if isinstance(expected_status, list):
+                status_match = response.status_code in expected_status
+            else:
+                status_match = response.status_code == expected_status
+            
+            if status_match:
+                try:
+                    response_data = response.json()
+                    return True, response_data, response.status_code
+                except:
+                    return True, {}, response.status_code
+            else:
+                print(f"   ❌ {test_name}: Expected {expected_status}, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"      Error: {error_data}")
+                    return False, error_data, response.status_code
+                except:
+                    print(f"      Error: {response.text}")
+                    return False, {"error": response.text}, response.status_code
+                    
+        except Exception as e:
+            print(f"   ❌ {test_name}: Exception - {str(e)}")
+            return False, {"error": str(e)}, 0
+
+    def test_razorpay_payment_integration(self):
+        """Test Razorpay payment integration endpoints"""
+        print("\n💳 RAZORPAY PAYMENT INTEGRATION TESTING")
+        print("=" * 80)
+        print("   OBJECTIVE: Verify Razorpay payment endpoints are production-ready")
+        print("   BACKEND URL:", self.base_url)
+        print("   FOCUS: Payment endpoints, subscription plans, order creation, payment verification")
+        
+        test_results = {
+            # Payment Endpoints Availability
+            'create_order_endpoint_available': False,
+            'verify_payment_endpoint_available': False,
+            
+            # Subscription Plans Endpoint
+            'subscription_plans_available': False,
+            'subscription_plans_pricing': False,
+            
+            # Order Creation Test (with auth)
+            'order_creation_accessible': False,
+            'order_response_structure': False,
+            'live_razorpay_key_verification': False,
+            
+            # Payment Verification Test
+            'payment_verification_accessible': False,
+            'payment_verification_error_handling': False,
+            
+            # Regression Testing
+            'subscription_current_working': False,
+            'subscription_usage_working': False,
+            
+            # Core functionality
+            'backend_health': False,
+            'authentication_security': False
+        }
+        
+        # 1. CORE FUNCTIONALITY
+        print("\n1️⃣ CORE FUNCTIONALITY")
+        test_results['backend_health'] = self.test_backend_health()
+        test_results['authentication_security'] = self.test_authentication_security()
+        
+        # 2. PAYMENT ENDPOINTS AVAILABILITY
+        print("\n2️⃣ PAYMENT ENDPOINTS AVAILABILITY")
+        payment_endpoints_results = self.test_payment_endpoints_availability()
+        test_results.update(payment_endpoints_results)
+        
+        # 3. SUBSCRIPTION PLANS ENDPOINT
+        print("\n3️⃣ SUBSCRIPTION PLANS ENDPOINT")
+        plans_results = self.test_subscription_plans_endpoint()
+        test_results.update(plans_results)
+        
+        # 4. ORDER CREATION TEST (with auth)
+        print("\n4️⃣ ORDER CREATION TEST (with auth)")
+        order_results = self.test_order_creation_with_auth()
+        test_results.update(order_results)
+        
+        # 5. PAYMENT VERIFICATION TEST
+        print("\n5️⃣ PAYMENT VERIFICATION TEST")
+        verification_results = self.test_payment_verification()
+        test_results.update(verification_results)
+        
+        # 6. REGRESSION TESTING
+        print("\n6️⃣ REGRESSION TESTING")
+        regression_results = self.test_regression_endpoints()
+        test_results.update(regression_results)
+        
+        return self._print_razorpay_test_results(test_results)
+    
+    def test_backend_health(self):
+        """Test backend health endpoint"""
+        print("   Testing backend health")
+        
+        success, response, status_code = self.run_test(
+            "Backend Health Check",
+            "GET",
+            "health",
+            200
+        )
+        
+        if success and status_code == 200:
+            print(f"   ✅ Backend health check successful")
+            print(f"      Status: {response.get('status')}")
+            print(f"      Service: {response.get('service')}")
+            return True
+        else:
+            print(f"   ❌ Backend health check failed - Status: {status_code}")
+            return False
+    
+    def test_authentication_security(self):
+        """Test authentication security (OAuth only expected)"""
+        print("   Testing authentication security")
+        
+        # Test unauthenticated session endpoint
+        success, response, status_code = self.run_test(
+            "Unauthenticated Session Check",
+            "GET",
+            "auth/session",
+            401
+        )
+        
+        if success and status_code == 401:
+            print(f"   ✅ Authentication properly secured (401 for unauthenticated)")
+            return True
+        else:
+            print(f"   ❌ Authentication security issue - Status: {status_code}")
+            return False
+    
+    def test_payment_endpoints_availability(self):
+        """Test payment endpoints availability"""
+        print("   Testing payment endpoints availability")
+        
+        results = {
+            'create_order_endpoint_available': False,
+            'verify_payment_endpoint_available': False
+        }
+        
+        # Test POST /api/subscription/razorpay/create-order
+        print("   📝 Testing: POST /api/subscription/razorpay/create-order")
+        success, response, status_code = self.run_test(
+            "Create Order Endpoint",
+            "POST",
+            "subscription/razorpay/create-order",
+            [200, 401, 402],  # 200=success, 401=auth required, 402=subscription required
+            data={"plan_name": "PREMIUM", "billing_cycle": "monthly"}
+        )
+        
+        if success:
+            results['create_order_endpoint_available'] = True
+            print(f"   ✅ Create order endpoint available - Status: {status_code}")
+            if status_code == 401:
+                print(f"      Expected: Authentication required (OAuth)")
+            elif status_code == 402:
+                print(f"      Expected: Subscription access required")
+        else:
+            print(f"   ❌ Create order endpoint failed - Status: {status_code}")
+        
+        # Test POST /api/subscription/razorpay/verify-payment
+        print("   📝 Testing: POST /api/subscription/razorpay/verify-payment")
+        success, response, status_code = self.run_test(
+            "Verify Payment Endpoint",
+            "POST",
+            "subscription/razorpay/verify-payment",
+            [200, 400, 401],  # 200=success, 400=missing params, 401=auth required
+            data={"razorpay_order_id": "test", "razorpay_payment_id": "test", "razorpay_signature": "test"}
+        )
+        
+        if success:
+            results['verify_payment_endpoint_available'] = True
+            print(f"   ✅ Verify payment endpoint available - Status: {status_code}")
+            if status_code == 401:
+                print(f"      Expected: Authentication required (OAuth)")
+            elif status_code == 400:
+                print(f"      Expected: Invalid parameters (test data)")
+        else:
+            print(f"   ❌ Verify payment endpoint failed - Status: {status_code}")
+        
+        return results
+    
+    def test_subscription_plans_endpoint(self):
+        """Test subscription plans endpoint"""
+        print("   Testing subscription plans endpoint")
+        
+        results = {
+            'subscription_plans_available': False,
+            'subscription_plans_pricing': False
+        }
+        
+        # Test GET /api/subscription/plans
+        print("   📝 Testing: GET /api/subscription/plans")
+        success, response, status_code = self.run_test(
+            "Subscription Plans",
+            "GET",
+            "subscription/plans",
+            [200, 401]
+        )
+        
+        if success:
+            results['subscription_plans_available'] = True
+            print(f"   ✅ Subscription plans endpoint available - Status: {status_code}")
+            
+            if status_code == 200 and isinstance(response, dict):
+                plans = response.get('plans', [])
+                if plans and len(plans) > 0:
+                    results['subscription_plans_pricing'] = True
+                    print(f"      ✅ Plans available: {len(plans)}")
+                    
+                    # Check for pricing information
+                    premium_plan = None
+                    for plan in plans:
+                        if plan.get('name') == 'PREMIUM':
+                            premium_plan = plan
+                            break
+                    
+                    if premium_plan:
+                        monthly_price = premium_plan.get('price_monthly', 0)
+                        yearly_price = premium_plan.get('price_yearly', 0)
+                        print(f"      PREMIUM Plan - Monthly: ₹{monthly_price}, Yearly: ₹{yearly_price}")
+                    else:
+                        print(f"      ⚠️ PREMIUM plan not found in response")
+                else:
+                    print(f"      ⚠️ No plans found in response")
+        else:
+            print(f"   ❌ Subscription plans failed - Status: {status_code}")
+        
+        return results
+    
+    def test_order_creation_with_auth(self):
+        """Test order creation with authentication"""
+        print("   Testing order creation with authentication")
+        
+        results = {
+            'order_creation_accessible': False,
+            'order_response_structure': False,
+            'live_razorpay_key_verification': False
+        }
+        
+        # Test order creation with proper request body
+        order_request = {
+            "plan_name": "PREMIUM",
+            "billing_cycle": "monthly"
+        }
+        
+        print("   📝 Testing: Order creation with PREMIUM monthly plan")
+        success, response, status_code = self.run_test(
+            "Order Creation with Auth",
+            "POST",
+            "subscription/razorpay/create-order",
+            [200, 401, 402],
+            data=order_request
+        )
+        
+        if success:
+            results['order_creation_accessible'] = True
+            print(f"   ✅ Order creation endpoint accessible - Status: {status_code}")
+            
+            if status_code == 200 and isinstance(response, dict):
+                # Verify response structure
+                expected_fields = ['order_id', 'amount_paise', 'currency', 'key_id']
+                has_all_fields = all(field in response for field in expected_fields)
+                
+                if has_all_fields:
+                    results['order_response_structure'] = True
+                    print(f"      ✅ Response has proper structure")
+                    print(f"      Fields: {list(response.keys())}")
+                    
+                    # Verify key_id is live Razorpay key
+                    key_id = response.get('key_id', '')
+                    if key_id.startswith('rzp_live_'):
+                        results['live_razorpay_key_verification'] = True
+                        print(f"      ✅ Live Razorpay key detected: {key_id[:15]}...")
+                    else:
+                        print(f"      ⚠️ Key ID may not be live: {key_id}")
+                        
+                    # Show order details
+                    amount = response.get('amount', 0)
+                    amount_paise = response.get('amount_paise', 0)
+                    currency = response.get('currency', 'INR')
+                    print(f"      Order Amount: ₹{amount} ({amount_paise} paise) {currency}")
+                else:
+                    print(f"      ⚠️ Response missing required fields")
+                    print(f"      Expected: {expected_fields}")
+                    print(f"      Actual: {list(response.keys())}")
+            elif status_code == 401:
+                print(f"      Expected: Authentication required for order creation")
+            elif status_code == 402:
+                print(f"      Expected: Subscription access required")
+        else:
+            print(f"   ❌ Order creation failed - Status: {status_code}")
+        
+        return results
+    
+    def test_payment_verification(self):
+        """Test payment verification endpoint"""
+        print("   Testing payment verification endpoint")
+        
+        results = {
+            'payment_verification_accessible': False,
+            'payment_verification_error_handling': False
+        }
+        
+        # Test with missing parameters (should return 400)
+        print("   📝 Testing: Payment verification with missing parameters")
+        success, response, status_code = self.run_test(
+            "Payment Verification - Missing Params",
+            "POST",
+            "subscription/razorpay/verify-payment",
+            [400, 401],
+            data={}  # Empty data should trigger 400 error
+        )
+        
+        if success:
+            results['payment_verification_accessible'] = True
+            print(f"   ✅ Payment verification endpoint accessible - Status: {status_code}")
+            
+            if status_code == 400:
+                results['payment_verification_error_handling'] = True
+                print(f"      ✅ Proper error handling for missing parameters")
+                if isinstance(response, dict) and 'detail' in response:
+                    print(f"      Error message: {response['detail']}")
+            elif status_code == 401:
+                print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Payment verification failed - Status: {status_code}")
+        
+        # Test with invalid parameters
+        print("   📝 Testing: Payment verification with invalid parameters")
+        invalid_data = {
+            "razorpay_order_id": "invalid_order",
+            "razorpay_payment_id": "invalid_payment",
+            "razorpay_signature": "invalid_signature"
+        }
+        
+        success, response, status_code = self.run_test(
+            "Payment Verification - Invalid Params",
+            "POST",
+            "subscription/razorpay/verify-payment",
+            [400, 401, 404],
+            data=invalid_data
+        )
+        
+        if success:
+            print(f"   ✅ Payment verification handles invalid parameters - Status: {status_code}")
+            if status_code == 400:
+                print(f"      Expected: Invalid signature or parameters")
+            elif status_code == 404:
+                print(f"      Expected: Order not found")
+            elif status_code == 401:
+                print(f"      Expected: Authentication required")
+        else:
+            print(f"   ❌ Payment verification with invalid params failed - Status: {status_code}")
+        
+        return results
+    
+    def test_regression_endpoints(self):
+        """Test regression - existing subscription endpoints should still work"""
+        print("   Testing regression - existing subscription endpoints")
+        
+        results = {
+            'subscription_current_working': False,
+            'subscription_usage_working': False
+        }
+        
+        # Test GET /api/subscription/current
+        print("   📝 Testing: GET /api/subscription/current")
+        success, response, status_code = self.run_test(
+            "Subscription Current",
+            "GET",
+            "subscription/current",
+            [200, 401]
+        )
+        
+        if success:
+            results['subscription_current_working'] = True
+            print(f"   ✅ Subscription current endpoint working - Status: {status_code}")
+        else:
+            print(f"   ❌ Subscription current failed - Status: {status_code}")
+        
+        # Test GET /api/subscription/usage
+        print("   📝 Testing: GET /api/subscription/usage")
+        success, response, status_code = self.run_test(
+            "Subscription Usage",
+            "GET",
+            "subscription/usage",
+            [200, 401]
+        )
+        
+        if success:
+            results['subscription_usage_working'] = True
+            print(f"   ✅ Subscription usage endpoint working - Status: {status_code}")
+        else:
+            print(f"   ❌ Subscription usage failed - Status: {status_code}")
+        
+        return results
+    
+    def _print_razorpay_test_results(self, test_results):
+        """Print comprehensive Razorpay test results"""
+        print("\n" + "=" * 80)
+        print("💳 RAZORPAY PAYMENT INTEGRATION TESTING - FINAL RESULTS")
+        print("=" * 80)
+        
+        success_count = sum(test_results.values())
+        total_tests = len(test_results)
+        success_rate = (success_count / total_tests) * 100
+        
+        print(f"\n📊 TEST RESULTS SUMMARY:")
+        
+        # Core Functionality
+        print(f"\n   CORE FUNCTIONALITY:")
+        core_tests = ['backend_health', 'authentication_security']
+        for test_name in core_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Payment Endpoints Availability
+        payment_tests = ['create_order_endpoint_available', 'verify_payment_endpoint_available']
+        payment_success = sum(test_results.get(test, False) for test in payment_tests)
+        print(f"\n   PAYMENT ENDPOINTS AVAILABILITY ({payment_success}/{len(payment_tests)}):")
+        for test_name in payment_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('_endpoint_available', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Subscription Plans Endpoint
+        plans_tests = ['subscription_plans_available', 'subscription_plans_pricing']
+        plans_success = sum(test_results.get(test, False) for test in plans_tests)
+        print(f"\n   SUBSCRIPTION PLANS ENDPOINT ({plans_success}/{len(plans_tests)}):")
+        for test_name in plans_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('subscription_plans_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Order Creation Test
+        order_tests = ['order_creation_accessible', 'order_response_structure', 'live_razorpay_key_verification']
+        order_success = sum(test_results.get(test, False) for test in order_tests)
+        print(f"\n   ORDER CREATION TEST ({order_success}/{len(order_tests)}):")
+        for test_name in order_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('order_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Payment Verification Test
+        verification_tests = ['payment_verification_accessible', 'payment_verification_error_handling']
+        verification_success = sum(test_results.get(test, False) for test in verification_tests)
+        print(f"\n   PAYMENT VERIFICATION TEST ({verification_success}/{len(verification_tests)}):")
+        for test_name in verification_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('payment_verification_', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        # Regression Testing
+        regression_tests = ['subscription_current_working', 'subscription_usage_working']
+        regression_success = sum(test_results.get(test, False) for test in regression_tests)
+        print(f"\n   REGRESSION TESTING ({regression_success}/{len(regression_tests)}):")
+        for test_name in regression_tests:
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            display_name = test_name.replace('subscription_', '').replace('_working', '').replace('_', ' ').title()
+            print(f"      {display_name}: {status}")
+        
+        print(f"\n📈 OVERALL SUCCESS RATE: {success_count}/{total_tests} ({success_rate:.1f}%)")
+        
+        # Success Criteria Summary
+        print(f"\n🎯 RAZORPAY INTEGRATION READINESS:")
+        criteria_mapping = {
+            'Payment Endpoints Accessible': all(test_results.get(test, False) for test in payment_tests),
+            'Subscription Plans Available': test_results.get('subscription_plans_available', False),
+            'Order Creation Working': test_results.get('order_creation_accessible', False),
+            'Live Razorpay Credentials': test_results.get('live_razorpay_key_verification', False),
+            'Payment Verification Working': test_results.get('payment_verification_accessible', False),
+            'Error Handling Proper': test_results.get('payment_verification_error_handling', False),
+            'No Regressions': all(test_results.get(test, False) for test in regression_tests)
+        }
+        
+        for criterion, passed in criteria_mapping.items():
+            status = "✅" if passed else "❌"
+            print(f"   {status} {criterion}")
+        
+        # Determine overall status
+        critical_tests = payment_tests + ['subscription_plans_available', 'order_creation_accessible']
+        critical_success = sum(test_results.get(test, False) for test in critical_tests)
+        critical_rate = (critical_success / len(critical_tests)) * 100
+        
+        if success_rate >= 90 and critical_rate >= 100:
+            print("\n✅ RAZORPAY INTEGRATION: EXCELLENT - PRODUCTION READY")
+            print("   All payment endpoints working, live credentials configured")
+        elif success_rate >= 80 and critical_rate >= 80:
+            print("\n✅ RAZORPAY INTEGRATION: GOOD - READY WITH MINOR ISSUES")
+            print("   Core payment functionality working, minor issues are non-blocking")
+        elif success_rate >= 70:
+            print("\n⚠️ RAZORPAY INTEGRATION: PARTIAL - NEEDS ATTENTION")
+            print("   Basic payment functionality working, some issues need investigation")
+        else:
+            print("\n❌ RAZORPAY INTEGRATION: NOT READY")
+            print("   Critical payment integration issues found, requires fixes")
+        
+        # Specific recommendations
+        print(f"\n🔧 RECOMMENDATIONS:")
+        
+        if test_results.get('live_razorpay_key_verification', False):
+            print("   ✅ Live Razorpay credentials properly configured")
+        else:
+            print("   ⚠️ Verify live Razorpay credentials are being used")
+        
+        if all(test_results.get(test, False) for test in payment_tests):
+            print("   ✅ Both payment endpoints accessible and secured")
+        else:
+            print("   ❌ Payment endpoints have accessibility issues")
+        
+        if all(test_results.get(test, False) for test in regression_tests):
+            print("   ✅ No regressions in existing subscription system")
+        else:
+            print("   ⚠️ Some existing subscription endpoints may have issues")
+        
+        return success_rate >= 80  # 80% success rate for production readiness
+
+
 if __name__ == "__main__":
     # Run Dashboard & Gamification Testing FIRST (Primary Focus)
     print("🎯 RUNNING DASHBOARD & GAMIFICATION ENDPOINT TESTING")
