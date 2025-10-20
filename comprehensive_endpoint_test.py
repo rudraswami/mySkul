@@ -6,7 +6,7 @@ from datetime import datetime
 class ComprehensiveEndpointTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://razorpay-live.preview.emergentagent.com/api"
+        self.base_url = "https://edtech-fixes.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({

@@ -11,7 +11,7 @@ import io
 from datetime import datetime
 
 class PhaseATester:
-    def __init__(self, base_url="https://razorpay-live.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://edtech-fixes.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

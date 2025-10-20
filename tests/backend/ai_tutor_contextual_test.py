@@ -10,7 +10,7 @@ import time
 
 class AITutorContextualTester:
     def __init__(self):
-        self.base_url = "https://razorpay-live.preview.emergentagent.com/api"
+        self.base_url = "https://edtech-fixes.preview.emergentagent.com/api"
         self.token = None
         self.test_user_email = "test@dhruvai.com"
         self.test_user_password = "password123"
@@ -283,7 +283,7 @@ def main():
     print("CRITICAL REVIEW REQUEST: Test AI Tutor response generation fix")
     print("Issue: Previously all questions were getting identical generic responses")
     print("Fix: Re-enabled actual LLM calls instead of using only static fallback responses")
-    print("Backend URL: https://razorpay-live.preview.emergentagent.com/api")
+    print("Backend URL: https://edtech-fixes.preview.emergentagent.com/api")
     print("Test Credentials: test@dhruvai.com / password123")
     print("=" * 80)
     

@@ -9,7 +9,7 @@ from datetime import datetime
 class CriticalBugFixesTester:
     def __init__(self):
         # Use backend URL from frontend/.env
-        self.base_url = "https://razorpay-live.preview.emergentagent.com/api"
+        self.base_url = "https://edtech-fixes.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

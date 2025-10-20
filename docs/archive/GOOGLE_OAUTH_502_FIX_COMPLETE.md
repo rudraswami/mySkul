@@ -87,16 +87,16 @@ async with httpx.AsyncClient() as client:
 **Backend `.env` (`/app/backend/.env`):**
 ```env
 # Updated domain
-BACKEND_URL=https://razorpay-live.preview.emergentagent.com
-FRONTEND_URL=https://razorpay-live.preview.emergentagent.com
+BACKEND_URL=https://edtech-fixes.preview.emergentagent.com
+FRONTEND_URL=https://edtech-fixes.preview.emergentagent.com
 
 # Added static preview domain to CORS
-CORS_ORIGINS="http://localhost:3000,https://razorpay-live.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
+CORS_ORIGINS="http://localhost:3000,https://edtech-fixes.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com"
 ```
 
 **Frontend `.env` (`/app/frontend/.env`):**
 ```env
-REACT_APP_BACKEND_URL=https://razorpay-live.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://edtech-fixes.preview.emergentagent.com
 ```
 
 #### 5. Middleware Reordering (`/app/backend/server.py`)
@@ -144,7 +144,7 @@ app.add_middleware(CORSMiddleware, ...)
 👤 User info - Email: test@gmail.com, Name: Test User
 ✅ New user created: ...
 🍪 Session cookie set
-🔄 Redirecting to: https://razorpay-live.preview.emergentagent.com/profile-setup
+🔄 Redirecting to: https://edtech-fixes.preview.emergentagent.com/profile-setup
 ```
 
 ## Architecture Benefits
@@ -162,7 +162,7 @@ app.add_middleware(CORSMiddleware, ...)
 
 **Required Authorized Redirect URI:**
 ```
-https://razorpay-live.preview.emergentagent.com/api/auth/google/callback
+https://edtech-fixes.preview.emergentagent.com/api/auth/google/callback
 ```
 
 **OAuth 2.0 Credentials:**

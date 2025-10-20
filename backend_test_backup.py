@@ -7,7 +7,7 @@ import io
 import uuid
 
 class DhruvAITester:
-    def __init__(self, base_url="https://razorpay-live.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://edtech-fixes.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
@@ -2002,7 +2002,7 @@ class DhruvAITester:
         print("\n🚨 URGENT: AUTHENTICATION APIS COMPREHENSIVE TESTING")
         print("   User reports: Login API returning 429, Registration APIs failing")
         print("   Testing: /api/auth/login and /api/auth/register endpoints")
-        print("   Backend URL: https://razorpay-live.preview.emergentagent.com")
+        print("   Backend URL: https://edtech-fixes.preview.emergentagent.com")
         
         auth_test_results = {
             'login_valid_credentials': False,
