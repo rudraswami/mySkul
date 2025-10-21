@@ -73,13 +73,15 @@ apiClient.interceptors.request.use(
 );
 
 /**
- * Response interceptor - Handle errors globally
+ * Response interceptor - Handle errors globally with retry logic
  */
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
+    const originalRequest = error.config;
+    
     // Handle CSRF token errors
     if (error.response?.status === 403 && error.response.data?.detail?.includes('CSRF')) {
       console.warn('CSRF token expired, refreshing...');
@@ -89,23 +91,58 @@ apiClient.interceptors.response.use(
       
       // Retry the original request
       if (csrfToken) {
-        const originalRequest = error.config;
         originalRequest.headers['X-CSRF-Token'] = csrfToken;
+        originalRequest._retry = true;
         return apiClient.request(originalRequest);
       }
     }
     
-    // Handle authentication errors
+    // Handle 500 errors with user-friendly messages
+    if (error.response?.status === 500) {
+      console.error('Server error:', error.response.data);
+      
+      // Add user-friendly error message
+      error.userMessage = 'Something went wrong on our end. Our team has been notified. Please try again in a moment.';
+      
+      // Retry once for 500 errors if not already retried
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
+        // Wait 1 second before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return apiClient.request(originalRequest);
+      }
+    }
+    
+    // Handle authentication errors (token expired)
     if (error.response?.status === 401) {
-      // Don't auto-logout here - let components handle it
-      // This allows React Query to retry properly
-      console.warn('Authentication error:', error.response.data);
+      const errorDetail = error.response.data?.detail || '';
+      
+      // Check if token is expired
+      if (errorDetail.includes('expired') || errorDetail.includes('invalid')) {
+        console.warn('Token expired, user needs to re-authenticate');
+        
+        // Clear expired token
+        localStorage.removeItem('dhruv_ai_token');
+        
+        // Add user-friendly message
+        error.userMessage = 'Your session has expired. Please log in again.';
+      } else {
+        console.warn('Authentication error:', error.response.data);
+        error.userMessage = 'Authentication required. Please log in.';
+      }
     }
     
     // Handle subscription/payment errors
     if (error.response?.status === 402) {
       console.log('Subscription limit reached:', error.response.data);
+      error.userMessage = 'Please upgrade your plan to continue using this feature.';
       // Don't throw - let components handle subscription modals
+    }
+    
+    // Handle rate limiting
+    if (error.response?.status === 429) {
+      console.warn('Rate limit exceeded');
+      error.userMessage = 'Too many requests. Please slow down and try again in a moment.';
     }
     
     return Promise.reject(error);
