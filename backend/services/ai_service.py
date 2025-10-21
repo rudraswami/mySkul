@@ -163,6 +163,7 @@ class AIService:
         """
         Generate enhanced dual AI response with adaptive personas, visual generation, and progressive disclosure
         AI Tutor 2.0 feature with subscription checking and usage tracking
+        OPTIMIZED: Added simple message detection and parallel AI execution
         """
         try:
             # Step 0: Check subscription access (if subscription service available)
@@ -177,6 +178,13 @@ class AIService:
                         "access_info": access_info
                     }
                 logger.info(f"AI Tutor access check: {access_info.get('remaining')} sessions remaining")
+            
+            # OPTIMIZATION: Detect simple messages (greetings, short queries) and return fast responses
+            message_lower = message.lower().strip()
+            simple_greetings = ['hi', 'hello', 'hey', 'hola', 'namaste', 'good morning', 'good afternoon', 'good evening']
+            if message_lower in simple_greetings or (len(message.strip()) < 10 and any(greeting in message_lower for greeting in simple_greetings)):
+                logger.info(f"🚀 Fast response for simple greeting: {message}")
+                return self._generate_simple_greeting_response(user_id, message, session_id, subject)
             
             # Step 1: Analyze sentiment and user intent
             sentiment_analysis = self.sentiment_analyzer.analyze(message)
