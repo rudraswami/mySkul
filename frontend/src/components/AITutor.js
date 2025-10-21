@@ -21,10 +21,15 @@ import {
   BookOpen,
   Loader,
   X,
-  Menu
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+  Lightbulb,
+  TrendingUp
 } from 'lucide-react';
 import SemanticAIResponse from './SemanticAIResponse';
 import UpgradeModal from './UpgradeModal';
+import '../styles/ai-tutor-redesign.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
