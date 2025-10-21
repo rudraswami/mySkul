@@ -146,6 +146,8 @@ def create_app() -> FastAPI:
             "/api/subscription/razorpay-webhook",  # Webhook must be exempt
             "/api/subscription/check-access",  # FIX: Exempt subscription checks (JWT-authenticated)
             "/api/subscription/track-usage",  # FIX: Exempt usage tracking (JWT-authenticated)
+            "/api/ai/chat/sessions",  # FIX: Exempt AI chat sessions (JWT-authenticated)
+            "/api/ai/dual-response",  # FIX: Exempt AI dual response (JWT-authenticated)
         ]
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
