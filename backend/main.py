@@ -102,7 +102,8 @@ def create_app() -> FastAPI:
         secret_key=settings.JWT_SECRET,
         same_site=settings.SESSION_COOKIE_SAMESITE,
         https_only=is_https,
-        max_age=settings.SESSION_EXPIRY_DAYS * 24 * 60 * 60  # Convert days to seconds
+        max_age=settings.SESSION_EXPIRY_DAYS * 24 * 60 * 60,  # Convert days to seconds
+        domain=cookie_domain  # FIX: Add missing domain parameter
     )
     logger.info(f"   - same_site: {settings.SESSION_COOKIE_SAMESITE}")
     logger.info(f"   - https_only: {is_https}")
