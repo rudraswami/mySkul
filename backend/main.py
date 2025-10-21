@@ -19,6 +19,7 @@ from api import auth, user, subscription, ai, analytics, auto_notes, mock_tests,
 
 # Middleware
 from middleware.csrf import CSRFMiddleware
+from middleware.security_headers import SecurityHeadersMiddleware
 
 # Services for dependency injection
 from services.auth_service import AuthService
