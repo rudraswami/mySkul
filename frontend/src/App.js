@@ -102,6 +102,19 @@ function AppContent() {
   const { user, loading } = useAuth();
   const { upsellModal, setUpsellModal } = useSubscription();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Initialize modern alerts system
+  const toast = useToast();
+  const modal = useModal();
+  
+  useEffect(() => {
+    initializeAlerts(toast, modal);
+    replaceGlobalAlert(); // Replace window.alert with toast
+    
+    return () => {
+      // Cleanup if needed
+    };
+  }, [toast, modal]);
 
   if (loading) {
     return <PageLoader message="Authenticating..." />;
