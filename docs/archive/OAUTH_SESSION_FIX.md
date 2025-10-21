@@ -221,7 +221,7 @@ These should already be set in Emergent dashboard:
 ```env
 BACKEND_URL=https://seamless-auth-1.emergent.host
 FRONTEND_URL=https://seamless-auth-1.emergent.host
-CORS_ORIGINS=http://localhost:3000,https://platform-rescue.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com,https://seamless-auth-1.emergent.host
+CORS_ORIGINS=http://localhost:3000,https://tutor-reborn.preview.emergentagent.com,https://dhruv-ai-fix.preview.static.emergentagent.com,https://seamless-auth-1.emergent.host
 ```
 
 ### Google Cloud Console

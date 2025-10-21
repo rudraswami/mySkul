@@ -3,7 +3,7 @@
 import requests
 import json
 
-BACKEND_URL = "https://platform-rescue.preview.emergentagent.com"
+BACKEND_URL = "https://tutor-reborn.preview.emergentagent.com"
 
 print("=" * 60)
 print("Testing Subscription Modal Flow")
