@@ -146,9 +146,9 @@ async def get_performance_stats(
             "study_streak": analytics.get("study_streak", 0),
             "total_study_time": analytics.get("study_time_today", 0),
             "subjects_mastery": subject_progress.get("subjects", {}),
-            "performance_trend": "improving",  # Would calculate from historical data
-            "rank_position": 85,  # Mock data
-            "percentile": 75
+            "performance_trend": "stable",  # TODO: Calculate from historical data
+            "rank_position": None,  # Leaderboard rank - implement when leaderboard ready
+            "percentile": None  # User percentile - implement when leaderboard ready
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get performance stats: {str(e)}")
