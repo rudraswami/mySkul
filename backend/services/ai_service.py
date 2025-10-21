@@ -432,31 +432,123 @@ Depth Level: {depth_level}"""
             
             # Mentor chat will be created AFTER Professor response (Phase 2 sequential reflection)
             
-            # Phase 1: SEQUENTIAL EXECUTION (Professor → Mentor chain)
-            # This ensures Mentor can read and complement Professor's explanation
-            logger.info("🤖 Starting sequential AI generation (Professor → Mentor)")
+            # OPTIMIZATION: PARALLEL EXECUTION (Professor & Mentor simultaneously)
+            # This reduces total time from 35-40s to ~20s
+            logger.info("🤖 Starting parallel AI generation (Professor & Mentor simultaneously)")
             
             try:
-                # STEP 1: Generate Professor response first (deep reasoning)
-                logger.info("🎓 Generating Professor response (deep technical explanation)...")
+                # STEP 1 & 2: Generate BOTH responses in parallel for speed
+                logger.info("🎓💙 Generating Professor and Mentor responses in parallel...")
                 professor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
                 
                 start_time = time.time()
-                professor_response = await self._safe_llm_call(
-                    professor_chat, professor_message, "professor", subject, message, 
-                    max_retries=1, timeout_seconds=20  # Optimized from 25s to 20s with reduced max_tokens
+                
+                # Create independent Mentor system prompt (doesn't need Professor context for speed)
+                mentor_independent_system = f"""You are a Master Mentor AI providing strategic learning guidance and motivation.
+
+MENTOR RESPONSE STRUCTURE (Tagged for Frontend Microcards):
+
+[MICROCARD:MOTIVATION]
+Motivation Spark (2-3 sentences, 200-250 characters)
+- Why THIS specific concept matters for {exam_mode} success
+- Personal relevance and career applications
+- Build confidence with specificity (not generic encouragement)
+[/MICROCARD:MOTIVATION]
+
+[MICROCARD:RECAP]
+Strategic Recap (4-6 bullet points, 300-350 characters)
+- Highlight the MOST exam-critical points about {message} in {subject}
+- Identify concepts students commonly misunderstand
+- Point out what deserves extra attention
+- Use everyday analogies to clarify complex ideas
+- Format: • Clear, memorable statements
+[/MICROCARD:RECAP]
+
+[MICROCARD:EXAMBOOST]
+Exam Booster Strategies (3-4 tactics, 250-300 characters)
+- {exam_mode}-specific solving techniques
+- Memory mnemonics for key formulas or concepts
+- Time-saving shortcuts used by top scorers
+- Common exam traps related to THIS topic and how to avoid them
+- Practice problem patterns to master
+[/MICROCARD:EXAMBOOST]
+
+[MICROCARD:ENCOURAGEMENT]
+Confidence Builder (2-3 powerful sentences, 150-200 characters)
+- Acknowledge the intellectual challenge
+- Growth mindset reinforcement
+- Forward momentum with energy
+- End with motivational punch: "You're building real mastery!"
+[/MICROCARD:ENCOURAGEMENT]
+
+KEY TERMS EMPHASIS (wrap in <key>term</key>):
+- Study strategies, memory techniques, exam tactics
+- Conceptual connections
+- Common mistakes to avoid
+
+FORMATTING RULES:
+1. Use [MICROCARD:TYPE] tags for frontend rendering
+2. Wrap important terms in <key></key> for bolding
+3. Use • for bullet points (no emojis)
+4. NO markdown (**, *, __, _)
+5. NO emojis (🌟, 💪, 🎯, ⚡)
+6. Clean punctuation only
+
+DEPTH MODE: {depth_level}
+EXAM CONTEXT: {exam_mode}
+
+TONE:
+- Warm but strategic (not just cheerleading)
+- Like a master coach who knows the game inside-out
+- Balance empathy with tactical intelligence
+- {exam_mode} exam-focused with real study science
+- Student sentiment: {sentiment_analysis['primary_sentiment']}
+
+Student's Question: {message}
+Subject: {subject}
+Exam Mode: {exam_mode}
+Depth Level: {depth_level}"""
+
+                # Create Mentor chat instance with independent system prompt
+                mentor_chat = LlmChat(
+                    api_key=self.emergent_llm_key,
+                    session_id=f"mentor_{user_id}_{session_id}",
+                    system_message=mentor_independent_system
+                ).with_model("openai", "gpt-4o").with_params(
+                    temperature=0.75,
+                    top_p=0.9,
+                    max_tokens=800,          # Further reduced for speed
+                    presence_penalty=0.15,
+                    frequency_penalty=0.15
                 )
-                professor_time = time.time() - start_time
                 
-                # Validate Professor response
-                if isinstance(professor_response, Exception):
-                    logger.error(f"❌ Professor generation failed: {professor_response}")
-                    raise professor_response
+                mentor_message = UserMessage(text=f"Subject: {subject}. Question: {message}")
                 
-                logger.info(f"✅ Professor response generated in {professor_time:.2f}s ({len(professor_response)} chars)")
+                # Execute BOTH in parallel with asyncio.gather()
+                professor_result, mentor_result = await asyncio.gather(
+                    self._safe_llm_call(
+                        professor_chat, professor_message, "professor", subject, message, 
+                        max_retries=1, timeout_seconds=18  # Slightly reduced timeout
+                    ),
+                    self._safe_llm_call(
+                        mentor_chat, mentor_message, "mentor", subject, message,
+                        max_retries=1, timeout_seconds=15  # Mentor timeout
+                    ),
+                    return_exceptions=True  # Don't fail if one fails
+                )
                 
-                # STEP 2: Generate Mentor response WITH Professor context (Phase 2 Reflection Logic)
-                logger.info("💙 Generating Mentor response with contextual reflection...")
+                total_time = time.time() - start_time
+                
+                # Handle Professor response
+                if isinstance(professor_result, Exception):
+                    logger.error(f"❌ Professor generation failed: {professor_result}")
+                    raise professor_result
+                
+                professor_response = professor_result
+                professor_time = total_time  # For logging purposes
+                logger.info(f"✅ Professor response generated ({len(professor_response)} chars)")
+                
+                # Handle Mentor response (graceful fallback if failed)
                 
                 # Extract key concepts from Professor's response for Mentor to reflect on
                 professor_context = professor_response[:800] + ("..." if len(professor_response) > 800 else "")
