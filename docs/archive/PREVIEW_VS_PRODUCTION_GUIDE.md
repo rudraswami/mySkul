@@ -3,7 +3,7 @@
 ## Current Situation
 
 You have **two environments**:
-1. **Preview**: `https://ai-platform-fix-2.preview.emergentagent.com`
+1. **Preview**: `https://platform-rescue.preview.emergentagent.com`
 2. **Production**: `https://seamless-auth-1.emergent.host`
 
 Currently, the `.env` files are configured for **production** URLs, which is why preview testing encounters OAuth state errors.
@@ -12,7 +12,7 @@ Currently, the `.env` files are configured for **production** URLs, which is why
 
 When you test on preview with production URLs in `.env`:
 ```
-Frontend .env: REACT_APP_BACKEND_URL=https://ai-platform-fix-2.preview.emergentagent.com ✓
+Frontend .env: REACT_APP_BACKEND_URL=https://platform-rescue.preview.emergentagent.com ✓
 Backend .env:  BACKEND_URL=https://seamless-auth-1.emergent.host ✗
                FRONTEND_URL=https://seamless-auth-1.emergent.host ✗
 ```
@@ -62,8 +62,8 @@ If you specifically need to test on preview URL, use Emergent's environment vari
 2. **Add Preview-Specific Variables:**
    ```
    For Preview Environment:
-   BACKEND_URL=https://ai-platform-fix-2.preview.emergentagent.com
-   FRONTEND_URL=https://ai-platform-fix-2.preview.emergentagent.com
+   BACKEND_URL=https://platform-rescue.preview.emergentagent.com
+   FRONTEND_URL=https://platform-rescue.preview.emergentagent.com
    ```
 
 3. **Keep Production Variables As-Is:**
@@ -95,7 +95,7 @@ Add **both** callback URLs to your Google OAuth Console:
 5. Add both redirect URIs:
    ```
    https://seamless-auth-1.emergent.host/api/auth/google/callback
-   https://ai-platform-fix-2.preview.emergentagent.com/api/auth/google/callback
+   https://platform-rescue.preview.emergentagent.com/api/auth/google/callback
    ```
 
 **Advantages:**

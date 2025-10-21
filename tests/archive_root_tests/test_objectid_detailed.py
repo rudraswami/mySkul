@@ -10,7 +10,7 @@ import time
 
 class DetailedObjectIdTester:
     def __init__(self):
-        self.base_url = "https://ai-platform-fix-2.preview.emergentagent.com/api"
+        self.base_url = "https://platform-rescue.preview.emergentagent.com/api"
         self.token = None
         
     def login(self):

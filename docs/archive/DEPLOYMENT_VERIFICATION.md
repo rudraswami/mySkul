@@ -99,7 +99,7 @@ Status: **PRODUCTION READY**
 ### 1. Update Google Cloud Console (CRITICAL)
 **Current Redirect URI:**
 ```
-https://ai-platform-fix-2.preview.emergentagent.com/api/auth/google/callback
+https://platform-rescue.preview.emergentagent.com/api/auth/google/callback
 ```
 
 **After deployment, add production URI:**

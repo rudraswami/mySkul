@@ -10,7 +10,7 @@ import sys
 import time
 
 class SubscriptionCheckAccessTester:
-    def __init__(self, base_url="https://ai-platform-fix-2.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://platform-rescue.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

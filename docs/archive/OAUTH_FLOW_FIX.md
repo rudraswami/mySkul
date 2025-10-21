@@ -144,7 +144,7 @@ This is **one extra click** but ensures:
 ## 🧪 Testing the Fix
 
 ### Test Steps:
-1. Go to: https://ai-platform-fix-2.preview.emergentagent.com/login
+1. Go to: https://platform-rescue.preview.emergentagent.com/login
 2. Click "Continue with Google"
 3. **You'll see Emergent consent screen** (expected)
 4. Click "Continue"
