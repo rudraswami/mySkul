@@ -59,10 +59,10 @@ export default function StressManagement() {
   const submitAssessment = async () => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('dhruv_ai_token'); // Fixed: use correct token key
+      const token = localStorage.getItem('dhruv_ai_token');
       
       if (!token) {
-        alert('Please log in to submit assessment');
+        warning('Authentication Required', 'Please log in to submit assessment');
         return;
       }
       
@@ -84,15 +84,15 @@ export default function StressManagement() {
         loadMotivationalContent();
         
         // Success feedback
-        alert(`Assessment completed! Your wellness score: ${data.wellness_score.toFixed(1)}/10`);
+        success('Assessment Complete!', `Your wellness score: ${data.wellness_score.toFixed(1)}/10`);
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        alert(`Error: ${errorData.detail || 'Failed to submit assessment'}`);
+        showError('Assessment Failed', errorData.detail || 'Failed to submit assessment');
         console.error('Assessment submission failed:', response.status, errorData);
       }
     } catch (error) {
       console.error('Error submitting assessment:', error);
-      alert('Network error occurred. Please check your connection and try again.');
+      showError('Network Error', 'Please check your connection and try again');
     } finally {
       setIsSubmitting(false);
     }
