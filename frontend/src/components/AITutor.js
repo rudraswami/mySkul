@@ -683,13 +683,16 @@ export default function AITutorPremium() {
     );
   };
   
-  // Message animation variants
+  // Message animation variants (120-150ms, easeInOutCubic)
   const messageVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 8 },
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.3 }
+      transition: { 
+        duration: 0.12, // 120ms
+        ease: [0.4, 0, 0.2, 1] // easeInOutCubic
+      }
     }
   };
   
