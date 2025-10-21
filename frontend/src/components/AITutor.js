@@ -624,6 +624,65 @@ export default function AITutorPremium() {
     setSentMessageIds(new Set()); // FIX: Clear message tracking
   };
   
+  /**
+   * Toggle concept card expansion
+   */
+  const toggleConcept = (messageId) => {
+    setExpandedConcepts(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
+  };
+  
+  /**
+   * Render concept card (collapsible with MathJax support)
+   */
+  const renderConceptCard = (concept, messageId) => {
+    if (!concept) return null;
+    
+    const isExpanded = expandedConcepts[messageId];
+    
+    return (
+      <div className="concept-card">
+        <div className="concept-card-header" onClick={() => toggleConcept(messageId)}>
+          <BookOpen className="h-4 w-4" />
+          <span>📘 View Concept</span>
+          <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+        </div>
+        {isExpanded && (
+          <div className="concept-card-content">
+            <div dangerouslySetInnerHTML={{ __html: concept }} />
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  /**
+   * Render confidence bar
+   */
+  const renderConfidenceBar = (confidence = 0.95) => {
+    const percentage = Math.round(confidence * 100);
+    
+    return (
+      <div className="confidence-bar-container">
+        <div className="confidence-bar-label">
+          <TrendingUp className="h-3 w-3" />
+          <span>Confidence</span>
+        </div>
+        <div className="confidence-bar">
+          <div 
+            className="confidence-bar-fill" 
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <div className="confidence-tooltip">
+          ✓ Verified by Professor Layer ({percentage}%)
+        </div>
+      </div>
+    );
+  };
+  
   // Message animation variants
   const messageVariants = {
     hidden: { opacity: 0, y: 20 },
