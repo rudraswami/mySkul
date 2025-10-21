@@ -7,7 +7,7 @@
 **Root Cause:** Cookie with `SameSite=Lax` not sent in cross-domain requests
 
 **Environment:**
-- Frontend: `https://tutor-reborn.preview.emergentagent.com` (`.emergentagent.com` domain)
+- Frontend: `https://dhruv-ai-platform.preview.emergentagent.com` (`.emergentagent.com` domain)
 - Backend: `https://seamless-auth-1.emergent.host` (`.emergent.host` domain)
 
 **Impact:** Different top-level domains → all requests are cross-site → browser blocks `SameSite=Lax` cookies
@@ -163,7 +163,7 @@ Priority: Medium
 ```
 Status: 302 Found
 Set-Cookie: dhruv_ai_session=abc123...; Path=/; HttpOnly; Secure; SameSite=None
-Location: https://tutor-reborn.preview.emergentagent.com/profile-setup
+Location: https://dhruv-ai-platform.preview.emergentagent.com/profile-setup
 ```
 
 **Session Check Request:**
@@ -210,7 +210,7 @@ Body: { "user": { "user_id": "...", "email": "...", ... } }
 
 3. **Visit Preview Frontend**
    ```
-   https://tutor-reborn.preview.emergentagent.com
+   https://dhruv-ai-platform.preview.emergentagent.com
    ```
 
 4. **Complete OAuth Flow**
@@ -265,7 +265,7 @@ Body: { "user": { "user_id": "...", "email": "...", ... } }
 ## Expected User Flow (After Fix)
 
 ```
-1. User visits: https://tutor-reborn.preview.emergentagent.com
+1. User visits: https://dhruv-ai-platform.preview.emergentagent.com
    ↓
 2. Clicks "Continue with Google"
    ↓
@@ -283,7 +283,7 @@ Body: { "user": { "user_id": "...", "email": "...", ... } }
    - Creates/updates user in MongoDB ✅
    - Sets cookie (SameSite=None) ✅
    ↓
-8. Backend redirects to: https://tutor-reborn.preview.emergentagent.com/profile-setup
+8. Backend redirects to: https://dhruv-ai-platform.preview.emergentagent.com/profile-setup
    ↓
 9. Frontend loads, makes XHR to: https://seamless-auth-1.emergent.host/api/auth/session
    ↓

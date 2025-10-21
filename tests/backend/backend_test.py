@@ -980,7 +980,7 @@ class BackendAPITester:
         print("   OBJECTIVE: Test complete OAuth flow with MongoDB state management")
         print("   CONTEXT: Custom OAuth state system using MongoDB (no session middleware)")
         print("   ENDPOINTS: /api/auth/google/login, /api/auth/google/callback")
-        print("   BACKEND URL: https://tutor-reborn.preview.emergentagent.com")
+        print("   BACKEND URL: https://dhruv-ai-platform.preview.emergentagent.com")
         
         test_results = {
             'oauth_login_initiation': False,
@@ -3446,7 +3446,7 @@ import io
 import uuid
 
 class DhruvAITester:
-    def __init__(self, base_url="https://tutor-reborn.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://dhruv-ai-platform.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
@@ -6232,7 +6232,7 @@ class DhruvAITester:
         print("\n🚨 URGENT: AUTHENTICATION APIS COMPREHENSIVE TESTING")
         print("   User reports: Login API returning 429, Registration APIs failing")
         print("   Testing: /api/auth/login and /api/auth/register endpoints")
-        print("   Backend URL: https://tutor-reborn.preview.emergentagent.com")
+        print("   Backend URL: https://dhruv-ai-platform.preview.emergentagent.com")
         
         auth_test_results = {
             'login_valid_credentials': False,
