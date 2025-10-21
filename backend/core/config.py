@@ -203,17 +203,19 @@ class Settings:
         """
         errors = []
         
-        # Required for security
+        # Required for security - CRITICAL
         if not self.JWT_SECRET:
-            errors.append("JWT_SECRET is required for authentication")
+            errors.append("JWT_SECRET is required for authentication (CRITICAL)")
+        elif len(self.JWT_SECRET) < 32:
+            errors.append("JWT_SECRET must be at least 32 characters for security")
         
-        # Required for database
+        # Required for database - CRITICAL
         if not self.MONGO_URL:
-            errors.append("MONGO_URL is required for database connection")
+            errors.append("MONGO_URL is required for database connection (CRITICAL)")
         
-        # Required for AI functionality
+        # Required for AI functionality - CRITICAL
         if not self.EMERGENT_LLM_KEY:
-            errors.append("EMERGENT_LLM_KEY is required for AI features")
+            errors.append("EMERGENT_LLM_KEY is required for AI features (CRITICAL)")
         
         # Warn about CSRF secret (auto-generated if missing)
         if not os.getenv("CSRF_SECRET"):
