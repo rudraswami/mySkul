@@ -607,12 +607,14 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Start new chat
+   * Start new chat - FIXED to reset all state properly
    */
   const startNewChat = () => {
     setCurrentSession(null);
     setMessages([]);
     setInputMessage('');
+    setHasInteraction(false); // FIX: Reset interaction flag
+    setSentMessageIds(new Set()); // FIX: Clear message tracking
   };
   
   // Message animation variants
