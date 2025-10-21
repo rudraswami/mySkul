@@ -20,12 +20,28 @@ async def get_mock_tests_service(db = Depends(get_database)) -> MockTestsService
 @router.get("/library")
 async def get_test_library(
     user: User = Depends(get_current_user),
-    service: MockTestsService = Depends(get_mock_tests_service)
+    service: MockTestsService = Depends(get_mock_tests_service),
+    skip: int = Query(0, ge=0, description="Number of tests to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Number of tests to return (max 100)")
 ):
-    """Get test library for the user"""
+    """
+    Get test library for the user with pagination
+    
+    - **skip**: Number of tests to skip (for pagination)
+    - **limit**: Number of tests to return (default 20, max 100)
+    """
     try:
         tests = await service.get_user_tests(user.user_id)
-        return {"tests": tests, "total": len(tests)}
+        total = len(tests)
+        paginated_tests = tests[skip:skip + limit]
+        
+        return {
+            "tests": paginated_tests,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "has_more": (skip + limit) < total
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get test library: {str(e)}")
 
