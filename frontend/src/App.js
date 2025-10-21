@@ -36,6 +36,7 @@ const ContactUs = lazy(() => import('./pages/policies/ContactUs'));
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import ErrorBoundary from './components/ErrorBoundary';
 // UpsellModal removed - duplicate of UpgradeModal (now using unified UpgradeModal in components)
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
