@@ -54,6 +54,10 @@ export default function AITutorPremium() {
   const [currentSession, setCurrentSession] = useState(null);
   const [sessions, setSessions] = useState([]);
   
+  // FIX: Track user interaction to prevent welcome screen flash
+  const [hasInteraction, setHasInteraction] = useState(false);
+  const [sentMessageIds, setSentMessageIds] = useState(new Set());
+  
   // UI State
   const [showSidebar, setShowSidebar] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
