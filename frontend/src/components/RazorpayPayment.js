@@ -65,15 +65,14 @@ const RazorpayPayment = ({
         throw new Error('Authentication required');
       }
 
-      // PATCH: Fixed route to match backend endpoint /api/subscription/razorpay/create-order
+      // CRITICAL FIX: Don't send amount - backend calculates from plan config
+      // Frontend only sends plan_name and billing_cycle
       const orderResponse = await axios.post(
         `${backendUrl}/api/subscription/razorpay/create-order`,
         {
-          amount: amount * 100, // Convert to paise
-          currency: 'INR',
-          plan_name: planName.toUpperCase(),
-          billing_cycle: billingCycle,
-          user_id: userDetails?.user_id || 'unknown'
+          plan_name: planName.toUpperCase(),  // "FREE", "PREMIUM", "PRO"
+          billing_cycle: billingCycle,        // "monthly", "yearly"
+          user_id: userDetails?.user_id || 'unknown'  // For logging only
         },
         {
           headers: {
@@ -84,23 +83,29 @@ const RazorpayPayment = ({
       );
 
       const orderData = orderResponse.data;
+      
+      console.log('Razorpay order created:', {
+        order_id: orderData.order_id,
+        amount_inr: orderData.amount_inr,
+        amount_paise: orderData.amount
+      });
 
       // Razorpay checkout options
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-        amount: orderData.amount,
+        key: orderData.key_id || process.env.REACT_APP_RAZORPAY_KEY_ID,
+        amount: orderData.amount,  // Backend returns amount in PAISE
         currency: orderData.currency,
         name: 'Dhruv AI - EdTech Platform',
         description: `${planName} Plan - ${billingCycle} subscription`,
         order_id: orderData.order_id,
-        image: '/logo192.png', // Add your logo
+        image: '/logo192.png',
         handler: async (response) => {
           try {
             setPaymentStatus('verifying');
             
             // Verify payment on backend
             const verifyResponse = await axios.post(
-              `${backendUrl}/api/razorpay/verify-payment`,
+              `${backendUrl}/api/subscription/razorpay/verify-payment`,
               {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -129,7 +134,7 @@ const RazorpayPayment = ({
           contact: userDetails?.phone || ''
         },
         theme: {
-          color: '#3B82F6' // Blue theme matching your app
+          color: '#3B82F6'
         },
         modal: {
           ondismiss: () => {
@@ -143,7 +148,7 @@ const RazorpayPayment = ({
           card: true,
           netbanking: true,
           wallet: true,
-          emi: amount > 1000 ? true : false // Enable EMI for amounts > ₹1000
+          emi: orderData.amount_inr > 1000 ? true : false  // Use INR amount for EMI check
         },
         notes: {
           plan_name: planName,
@@ -159,7 +164,17 @@ const RazorpayPayment = ({
       console.error('Order creation failed:', error);
       setIsProcessing(false);
       setPaymentStatus('failed');
-      onError?.(error.response?.data?.detail || 'Failed to create payment order');
+      
+      // Enhanced error message
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create payment order';
+      onError?.(errorMessage);
+      
+      // Log full error for debugging
+      console.error('Full error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
     }
   };
 
