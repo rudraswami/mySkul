@@ -119,13 +119,13 @@ async def get_performance(
             "study_streak": analytics.get("study_streak", 0),
             "total_study_time": analytics.get("study_time_today", 0),
             "subjects_mastery": subject_progress.get("subjects", {}),
-            "performance_trend": "improving",
-            "rank_position": 85,
-            "percentile": 75,
+            "performance_trend": "stable",  # TODO: Calculate from historical data
+            "rank_position": None,  # Leaderboard rank - implement when leaderboard ready
+            "percentile": None,  # User percentile - implement when leaderboard ready
             "weekly_progress": analytics.get("weekly_progress", []),
-            "strong_subjects": [],
-            "weak_subjects": [],
-            "recommended_actions": []
+            "strong_subjects": [],  # TODO: Calculate from accuracy data
+            "weak_subjects": [],  # TODO: Calculate from accuracy data
+            "recommended_actions": []  # TODO: AI-generated recommendations
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get performance: {str(e)}")
