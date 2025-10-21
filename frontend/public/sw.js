@@ -41,10 +41,7 @@ self.addEventListener('install', (event) => {
       }),
       
       // Initialize audio cache
-      caches.open(AUDIO_CACHE_NAME),
-      
-      // Initialize API cache
-      caches.open(API_CACHE_NAME)
+      caches.open(AUDIO_CACHE_NAME)
     ]).then(() => {
       console.log('Service Worker: Installation complete');
       self.skipWaiting(); // Force activation of new service worker
