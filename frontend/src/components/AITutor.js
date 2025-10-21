@@ -139,7 +139,7 @@ export default function AITutorPremium() {
   
   /**
    * Load specific session's chat history
-   * CRITICAL: Fixed message parsing to handle both old and new message formats
+   * CRITICAL: Fixed message parsing and prevents welcome screen flash
    */
   const loadSession = async (sessionId) => {
     try {
@@ -156,55 +156,85 @@ export default function AITutorPremium() {
       
       // Parse messages correctly - handle BOTH old format (combined) and new format (split)
       const parsedMessages = [];
+      const messageIds = new Set();
+      
       if (sessionData.messages && Array.isArray(sessionData.messages)) {
         sessionData.messages.forEach(msg => {
           // NEW FORMAT: Messages with user_message field store user + AI together
           if (msg.user_message) {
             // Add user message
-            parsedMessages.push({
-              type: 'user',
-              content: msg.user_message,
-              timestamp: msg.timestamp || new Date().toISOString()
-            });
+            const userMsgId = msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${Math.random()}`;
+            if (!messageIds.has(userMsgId)) {
+              parsedMessages.push({
+                type: 'user',
+                content: msg.user_message,
+                timestamp: msg.timestamp || new Date().toISOString(),
+                message_id: userMsgId
+              });
+              messageIds.add(userMsgId);
+            }
             
             // Add AI response (if exists)
             if (msg.dual_response || msg.response) {
-              parsedMessages.push({
-                type: 'ai',
-                dual_response: msg.dual_response,
-                response: msg.response,
-                persona: msg.persona,
-                primary: msg.primary,
-                secondary: msg.secondary,
-                timestamp: msg.timestamp || new Date().toISOString(),
-                message_id: msg.message_id || `msg_${Date.now()}`
-              });
+              const aiMsgId = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
+              if (!messageIds.has(aiMsgId)) {
+                parsedMessages.push({
+                  type: 'ai',
+                  dual_response: msg.dual_response,
+                  response: msg.response,
+                  persona: msg.persona,
+                  primary: msg.primary,
+                  secondary: msg.secondary,
+                  timestamp: msg.timestamp || new Date().toISOString(),
+                  message_id: aiMsgId
+                });
+                messageIds.add(aiMsgId);
+              }
             }
           } 
           // OLD FORMAT: Separate user and AI message objects
           else if (msg.message && !msg.response) {
             // User message only
-            parsedMessages.push({
-              type: 'user',
-              content: msg.message,
-              timestamp: msg.timestamp || new Date().toISOString()
-            });
+            const userMsgId = msg.message_id || `user_${Date.now()}_${Math.random()}`;
+            if (!messageIds.has(userMsgId)) {
+              parsedMessages.push({
+                type: 'user',
+                content: msg.message,
+                timestamp: msg.timestamp || new Date().toISOString(),
+                message_id: userMsgId
+              });
+              messageIds.add(userMsgId);
+            }
           } else if (msg.response) {
             // AI response only
-            parsedMessages.push({
-              type: 'ai',
-              response: msg.response,
-              timestamp: msg.timestamp || new Date().toISOString(),
-              message_id: msg.message_id || `msg_${Date.now()}`
-            });
+            const aiMsgId = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
+            if (!messageIds.has(aiMsgId)) {
+              parsedMessages.push({
+                type: 'ai',
+                response: msg.response,
+                timestamp: msg.timestamp || new Date().toISOString(),
+                message_id: aiMsgId
+              });
+              messageIds.add(aiMsgId);
+            }
           }
         });
       }
       
       setMessages(parsedMessages);
+      setSentMessageIds(messageIds);
+      
+      // FIX: Set hasInteraction if messages exist to prevent welcome screen
+      if (parsedMessages.length > 0) {
+        setHasInteraction(true);
+      } else {
+        setHasInteraction(false);
+      }
     } catch (error) {
       console.error('Failed to load session:', error);
       setMessages([]);
+      setSentMessageIds(new Set());
+      setHasInteraction(false);
     } finally {
       setLoading(false);
     }
