@@ -67,6 +67,8 @@ export default function AITutorPremium() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalData, setUpgradeModalData] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false); // Right drawer for reasoning/insights
+  const [expandedConcepts, setExpandedConcepts] = useState({}); // Track expanded concept cards
   
   // Metrics State (Dynamic from API)
   const [metrics, setMetrics] = useState({
