@@ -9,7 +9,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// CRITICAL: Fail fast if BACKEND_URL not configured
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+if (!BACKEND_URL) {
+  throw new Error('REACT_APP_BACKEND_URL environment variable is required');
+}
 const API = `${BACKEND_URL}/api`;
 
 export const useAITutorSession = () => {
