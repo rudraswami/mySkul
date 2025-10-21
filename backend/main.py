@@ -13,6 +13,7 @@ import json as json_lib
 # Core imports
 from core.config import settings
 from core.database import init_database, close_database, get_database
+from core.rate_limiting import limiter, rate_limit_exceeded_handler
 
 # API routers
 from api import auth, user, subscription, ai, analytics, auto_notes, mock_tests, dashboard_analytics, gamification
