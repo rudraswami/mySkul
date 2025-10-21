@@ -46,7 +46,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             response.headers["X-CSRF-Token"] = csrf_token
             
             # Store token in session
-            if hasattr(request, "session"):
+            if "session" in request.scope:
                 request.session["csrf_token"] = csrf_token
             
             return response
