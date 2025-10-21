@@ -756,7 +756,8 @@ export default function AITutorPremium() {
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
           <AnimatePresence>
-            {messages.length === 0 ? (
+            {/* FIX: Show welcome only if no messages AND no interaction AND not loading */}
+            {messages.length === 0 && !hasInteraction && !loading ? (
               // Empty state
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6">
@@ -787,15 +788,15 @@ export default function AITutorPremium() {
                 </div>
               </div>
             ) : (
-              // Messages
-              messages.map((message, index) => (
+              // Messages - FIX: Use message_id as key for better rendering
+              messages.map((message) => (
                 <motion.div
-                  key={index}
+                  key={message.message_id || `${message.type}_${message.timestamp}`}
                   variants={messageVariants}
                   initial="hidden"
                   animate="visible"
                 >
-                  {/* CRITICAL: Render message based on OLD structure */}
+                  {/* Render message based on type */}
                   {message.type === 'user' ? (
                     // Simple user message (sent before AI response)
                     <div className="flex justify-end">
