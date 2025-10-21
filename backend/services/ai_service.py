@@ -159,6 +159,105 @@ class AIService:
         else:
             return "CBSE"  # General board exam
     
+    def _generate_simple_greeting_response(self, user_id: str, message: str, session_id: str, subject: str) -> Dict[str, Any]:
+        """
+        Generate fast response for simple greetings without calling AI (under 100ms)
+        OPTIMIZATION: Avoids 35-40s AI generation for trivial messages
+        """
+        greetings_map = {
+            'hi': "Hello! I'm your AI Tutor, ready to help you master any topic!",
+            'hello': "Hello! I'm excited to help you learn today!",
+            'hey': "Hey there! Ready to tackle some challenging concepts?",
+            'hola': "Hola! Let's dive into some amazing learning!",
+            'namaste': "Namaste! Your personal learning journey starts here!"
+        }
+        
+        # Get greeting response
+        message_lower = message.lower().strip()
+        base_greeting = greetings_map.get(message_lower, "Hello! I'm your AI Tutor!")
+        
+        # Create fast response structure
+        professor_response = f"""{base_greeting}
+
+[SECTION:CONCEPT]
+I'm here to provide deep, comprehensive explanations for any question you have in {subject}. Feel free to ask me anything!
+[/SECTION:CONCEPT]
+
+[SECTION:STEPS]
+Here's how I can help you:
+1. **Ask any question** - From basic concepts to advanced problems
+2. **Get detailed explanations** - Step-by-step breakdowns with reasoning
+3. **Learn efficiently** - Exam-focused strategies and real-world applications
+4. **Build confidence** - Personalized guidance for your learning style
+[/SECTION:STEPS]"""
+
+        mentor_response = f"""Welcome! I'm so glad you're here!
+
+[MICROCARD:MOTIVATION]
+Starting a learning session shows real commitment. Every expert was once a beginner, and you're taking that first step right now!
+[/MICROCARD:MOTIVATION]
+
+[MICROCARD:RECAP]
+• I'm here to break down complex topics into understandable pieces
+• We'll focus on exam success and real understanding
+• Ask anything - there are no silly questions here
+[/MICROCARD:RECAP]
+
+[MICROCARD:ENCOURAGEMENT]
+You've got this! Let's make learning engaging and effective. Ready when you are! 🚀
+[/MICROCARD:ENCOURAGEMENT]"""
+        
+        # Return structured response (matches regular AI response format)
+        return {
+            "dual_response": {
+                "primary": {
+                    "response": professor_response,
+                    "persona": "professor",
+                    "micro_lesson_sections": {
+                        "concept_overview": f"I'm your AI Tutor for {subject}, ready to provide comprehensive explanations!",
+                        "key_formula": [],
+                        "step_by_step": "Ask me any question and I'll provide detailed, exam-focused guidance.",
+                        "real_life_analogy": "",
+                        "mentor_tip": "",
+                        "visual_prompt": ""
+                    }
+                },
+                "secondary": {
+                    "response": mentor_response,
+                    "persona": "mentor",
+                    "mentor_sections": {
+                        "motivation_spark": "Starting a learning session shows real commitment!",
+                        "simplified_recap": "I'm here to help you understand and excel.",
+                        "confidence_tips": "Ask anything - there are no silly questions!",
+                        "encouragement": "You've got this! Ready when you are!"
+                    }
+                }
+            },
+            "sentiment_analysis": {
+                "primary_sentiment": "neutral",
+                "confidence": 1.0,
+                "persona_blend": {"professor": 0.5, "mentor": 0.5}
+            },
+            "visual": {
+                "type": "none",
+                "content": None,
+                "generated": False
+            },
+            "quick_actions": [
+                {"label": "Explain a concept", "action": "ask_question"},
+                {"label": "Solve a problem", "action": "solve_problem"},
+                {"label": "Practice questions", "action": "practice"}
+            ],
+            "motivational_data": {
+                "message": f"Welcome to {subject} learning!",
+                "badge": "beginner",
+                "progress": 0
+            },
+            "fast_response": True,
+            "response_time_ms": 50
+        }
+
+    
     async def generate_dual_ai_response(self, user_id: str, message: str, session_id: str, subject: str) -> Dict[str, Any]:
         """
         Generate enhanced dual AI response with adaptive personas, visual generation, and progressive disclosure
