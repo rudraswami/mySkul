@@ -1,0 +1,542 @@
+/* ============================================
+   AI Tutor Chat Interface Redesign - Dhruv AI
+   Design System: Glass-morphism + Gradients
+   ============================================ */
+
+:root {
+  /* Dhruv AI Purple Gradient */
+  --dhruv-purple-start: #6C63FF;
+  --dhruv-purple-end: #836FFF;
+  
+  /* Secondary Colors */
+  --soft-blue: #A5B4FC;
+  --accent-blue: #7DD3FC;
+  
+  /* Background Gradients */
+  --bg-light-start: #F8F9FF;
+  --bg-light-end: #EEF2FF;
+  --bg-dark-start: #0F172A;
+  --bg-dark-end: #1E293B;
+  
+  /* Glass-morphism */
+  --glass-bg-light: rgba(255, 255, 255, 0.6);
+  --glass-bg-dark: rgba(255, 255, 255, 0.1);
+  --backdrop-blur: 12px;
+  
+  /* Border Radius */
+  --radius-sm: 16px;
+  --radius-md: 20px;
+  --radius-lg: 24px;
+  
+  /* Shadows */
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+  
+  /* Spacing */
+  --safe-padding-desktop: 24px;
+  --safe-padding-mobile: 16px;
+}
+
+/* ============================================
+   Chat Container Layout
+   ============================================ */
+
+.ai-tutor-redesign {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--bg-light-start) 0%, var(--bg-light-end) 100%);
+  overflow: hidden;
+}
+
+.dark .ai-tutor-redesign {
+  background: linear-gradient(135deg, var(--bg-dark-start) 0%, var(--bg-dark-end) 100%);
+}
+
+/* ============================================
+   Central Chat Zone (~640px readable width)
+   ============================================ */
+
+.chat-main-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 var(--safe-padding-desktop);
+}
+
+@media (max-width: 768px) {
+  .chat-main-zone {
+    padding: 0 var(--safe-padding-mobile);
+  }
+}
+
+/* ============================================
+   Message Bubbles
+   ============================================ */
+
+/* User Bubble - Gradient Fill */
+.user-message-bubble {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--dhruv-purple-start) 0%, var(--dhruv-purple-end) 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  border-bottom-right-radius: 4px;
+  max-width: 80%;
+  box-shadow: var(--shadow-medium);
+  position: relative;
+  animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* AI Bubble - Glass-morphism */
+.ai-message-bubble {
+  align-self: flex-start;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--backdrop-blur));
+  color: #1F2937;
+  padding: 20px 24px;
+  border-radius: var(--radius-md);
+  border-bottom-left-radius: 4px;
+  max-width: 90%;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .ai-message-bubble {
+  background: var(--glass-bg-dark);
+  color: #F3F4F6;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Message Entry Animation */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Timestamp */
+.message-timestamp {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ============================================
+   Inline Concept Card
+   ============================================ */
+
+.concept-card {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(108, 99, 255, 0.08);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--dhruv-purple-start);
+}
+
+.dark .concept-card {
+  background: rgba(108, 99, 255, 0.15);
+}
+
+.concept-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--dhruv-purple-start);
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.concept-card-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4B5563;
+}
+
+.dark .concept-card-content {
+  color: #D1D5DB;
+}
+
+/* MathJax Support */
+.concept-card-content .MathJax {
+  display: inline-block;
+  margin: 4px 0;
+}
+
+/* Code Blocks */
+.concept-card-content pre {
+  background: #1F2937;
+  color: #F3F4F6;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+/* ============================================
+   Confidence Bar
+   ============================================ */
+
+.confidence-bar-container {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .confidence-bar-container {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.confidence-bar-label {
+  font-size: 11px;
+  color: #6B7280;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dark .confidence-bar-label {
+  color: #9CA3AF;
+}
+
+.confidence-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.dark .confidence-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dhruv-purple-start) 0%, var(--dhruv-purple-end) 100%);
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confidence-tooltip {
+  font-size: 11px;
+  color: var(--dhruv-purple-start);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ============================================
+   Right Drawer (Collapsible Reasoning/Insights)
+   ============================================ */
+
+.drawer-container {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 320px;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--backdrop-blur));
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+  z-index: 40;
+  overflow-y: auto;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .drawer-container {
+  background: var(--glass-bg-dark);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawer-container.collapsed {
+  transform: translateX(100%);
+}
+
+.drawer-container.expanded {
+  transform: translateX(0);
+}
+
+.drawer-toggle-btn {
+  position: absolute;
+  left: -48px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 80px;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--backdrop-blur));
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 41;
+}
+
+.dark .drawer-toggle-btn {
+  background: var(--glass-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+}
+
+.drawer-toggle-btn:hover {
+  background: rgba(108, 99, 255, 0.12);
+}
+
+.drawer-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .drawer-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawer-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1F2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dark .drawer-title {
+  color: #F3F4F6;
+}
+
+.drawer-content {
+  padding: 24px;
+}
+
+.drawer-section {
+  margin-bottom: 24px;
+}
+
+.drawer-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dhruv-purple-start);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.drawer-section-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4B5563;
+}
+
+.dark .drawer-section-content {
+  color: #D1D5DB;
+}
+
+/* Mobile: Drawer becomes full-width overlay */
+@media (max-width: 768px) {
+  .drawer-container {
+    width: 100vw;
+  }
+  
+  .drawer-toggle-btn {
+    left: -56px;
+  }
+}
+
+/* ============================================
+   Typing Indicator (Pulse Animation)
+   ============================================ */
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--backdrop-blur));
+  border-radius: var(--radius-md);
+  width: fit-content;
+  animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .typing-indicator {
+  background: var(--glass-bg-dark);
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--dhruv-purple-start);
+  border-radius: 50%;
+  animation: typingPulse 0.8s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typingPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ============================================
+   Input Area
+   ============================================ */
+
+.chat-input-area {
+  padding: var(--safe-padding-desktop);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--backdrop-blur));
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .chat-input-area {
+  background: var(--glass-bg-dark);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-input-wrapper {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+.chat-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background: rgba(108, 99, 255, 0.3);
+  border-radius: 3px;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 99, 255, 0.5);
+}
+
+/* ============================================
+   Accessibility (Keyboard Focus, Reduced Motion)
+   ============================================ */
+
+/* Focus Indicators (AA Contrast) */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--dhruv-purple-start);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .user-message-bubble,
+  .ai-message-bubble,
+  .typing-indicator {
+    animation: none;
+  }
+  
+  .drawer-container,
+  .drawer-toggle-btn {
+    transition: none;
+  }
+}
+
+/* ============================================
+   Dark Mode Enhancements
+   ============================================ */
+
+.dark .user-message-bubble {
+  background: linear-gradient(135deg, var(--dhruv-purple-start) 0%, var(--dhruv-purple-end) 100%);
+  box-shadow: 0 4px 16px rgba(108, 99, 255, 0.3);
+}
+
+/* ============================================
+   Responsive Design (Fluid on Mobile/Tablet)
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .chat-main-zone {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-message-bubble,
+  .ai-message-bubble {
+    max-width: 90%;
+    padding: 14px 18px;
+  }
+  
+  .concept-card {
+    padding: 12px;
+  }
+  
+  .drawer-container {
+    width: 100vw;
+  }
+}
+
+/* ============================================
+   Safe Area Support (Mobile Notch/Navbar)
+   ============================================ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .chat-input-area {
+    padding-bottom: calc(var(--safe-padding-desktop) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ============================================
+   No Hard Borders (Subtle Shadows Only)
+   ============================================ */
+
+.no-border {
+  border: none !important;
+  box-shadow: var(--shadow-subtle);
+}
