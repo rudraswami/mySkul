@@ -388,10 +388,15 @@ async def exchange_google_session(
         if not session_id:
             raise HTTPException(status_code=400, detail="session_id is required")
         
-        # Call Emergent API
+        # Call Emergent API - use environment variable for flexibility
+        emergent_auth_api_url = os.getenv(
+            'EMERGENT_AUTH_API_URL',
+            'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data'
+        )
+        
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data',
+                emergent_auth_api_url,
                 headers={'X-Session-ID': session_id}
             ) as resp:
                 if resp.status != 200:
