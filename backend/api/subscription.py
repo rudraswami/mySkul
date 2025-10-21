@@ -551,6 +551,7 @@ async def create_razorpay_order(
     Request body: {
         "plan_name": "PREMIUM" | "PRO",
         "billing_cycle": "monthly" | "yearly"
+        # amount is NOT needed - backend calculates from plan config
     }
     """
     try:
@@ -564,6 +565,11 @@ async def create_razorpay_order(
         plan_name = request.get("plan_name", "PREMIUM")
         billing_cycle = request.get("billing_cycle", "monthly")
         
+        # FIX: Log received request for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Creating Razorpay order - Plan: {plan_name}, Cycle: {billing_cycle}, User: {user.user_id}")
+        
         # Get plan configuration
         subscription_service = SubscriptionService(db)
         plan_config = await subscription_service.load_plan_config()
@@ -573,18 +579,24 @@ async def create_razorpay_order(
         
         plan_data = plan_config[plan_name]
         
-        # Get price based on billing cycle
+        # Get price based on billing cycle - BACKEND CALCULATES THIS, NOT FRONTEND
         if billing_cycle == "yearly":
-            amount_inr = plan_data.get("price_yearly", plan_data.get("price_monthly", 0) * 10)  # 10 months price for yearly
+            amount_inr = plan_data.get("price_yearly", plan_data.get("price_monthly", 0) * 10)
         else:
             amount_inr = plan_data.get("price_monthly", 0)
         
-        # Convert to paise (Razorpay uses paise, not rupees)
+        # FIX: Ensure amount is valid
+        if amount_inr <= 0:
+            raise HTTPException(status_code=400, detail=f"Invalid plan amount: {amount_inr}")
+        
+        # Convert to paise (Razorpay uses paise: ₹1 = 100 paise)
         amount_paise = int(amount_inr * 100)
+        
+        logger.info(f"Amount calculated - INR: {amount_inr}, Paise: {amount_paise}")
         
         # Create Razorpay order
         order_data = {
-            "amount": amount_paise,
+            "amount": amount_paise,  # MUST be in paise
             "currency": "INR",
             "receipt": f"order_{user.user_id}_{int(datetime.now(timezone.utc).timestamp())}",
             "notes": {
@@ -596,6 +608,8 @@ async def create_razorpay_order(
         }
         
         razorpay_order = client.order.create(data=order_data)
+        
+        logger.info(f"Razorpay order created successfully: {razorpay_order['id']}")
         
         # Store order in database for verification later
         order_record = {
@@ -612,12 +626,24 @@ async def create_razorpay_order(
         
         await db.razorpay_orders.insert_one(order_record)
         
+        # FIX: Return amount in PAISE for Razorpay frontend SDK
         return {
             "order_id": razorpay_order["id"],
-            "amount": amount_inr,
-            "amount_paise": amount_paise,
+            "amount": amount_paise,  # CRITICAL: Must be paise for Razorpay SDK
+            "amount_inr": amount_inr,  # For display purposes
             "currency": "INR",
-            "key_id": settings.RAZORPAY_KEY_ID,  # Frontend needs this
+            "key_id": settings.RAZORPAY_KEY_ID,
+            "plan_name": plan_name,
+            "billing_cycle": billing_cycle
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Razorpay order creation failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
             "plan_name": plan_name,
             "billing_cycle": billing_cycle
         }
