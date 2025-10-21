@@ -78,6 +78,10 @@ def create_app() -> FastAPI:
         default_response_class=JSONResponse
     )
     
+    # Add rate limiter state and exception handler
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+    
     # =============================================================================
     # MIDDLEWARE CONFIGURATION
     # =============================================================================
