@@ -5685,6 +5685,54 @@ mongodb    RUNNING   pid 31, uptime 0:24:XX
 
 ---
 
+## AI Tutor Chat Stability Fixes (January 21, 2025)
+
+### CRITICAL CHAT ISSUES - FIXES APPLIED ✅
+
+**Issues Reported**:
+1. Welcome screen reappears after sending message
+2. User message doesn't render, only AI response
+3. Empty/duplicate chat bubbles
+4. History doesn't persist on navigation
+5. Session continuity issues
+
+**Root Causes Identified**:
+1. **Welcome Screen Flash**: Condition `messages.length === 0` true during message send
+2. **Missing State**: No flag to track user interaction
+3. **No Deduplication**: Messages could be added multiple times
+4. **Backend Duplicates**: No duplicate detection in save_session_message
+5. **Key Issues**: Using array index as key instead of message_id
+
+**Fixes Applied**:
+
+### Frontend Fixes (/app/frontend/src/components/AITutor.js):
+1. Added `hasInteraction` state to track if user started chatting
+2. Added `sentMessageIds` Set to prevent duplicate message rendering
+3. Updated welcome screen condition: `messages.length === 0 && !hasInteraction && !loading`
+4. Added unique message_id to all user messages
+5. Fixed message key from `index` to `message_id`
+6. Enhanced loadSession() with deduplication
+7. Fixed startNewChat() to reset all state properly
+
+### Backend Fixes (/app/backend/services/ai_service.py):
+1. Added duplicate message detection (30-second window)
+2. Returns message_id from save_session_message
+3. Added timedelta import for time-based deduplication
+4. Prevents duplicate insertions in database
+
+**Files Modified**:
+- `/app/frontend/src/components/AITutor.js` - Core chat logic fixes
+- `/app/backend/services/ai_service.py` - Deduplication and message ID tracking
+
+**Testing Required**:
+- [ ] Send first message → user bubble + AI response, no welcome screen
+- [ ] Send multiple messages → all render correctly, no duplicates
+- [ ] Navigate to different session and back → history persists
+- [ ] Reload page → messages restore from backend
+- [ ] Start new chat → welcome screen shows, old messages cleared
+
+
+
 ## URGENT FIX VERIFICATION - AI Tutor & Subscription Critical Failures (January 21, 2025)
 
 ### CRITICAL P0 BLOCKER FIX - VERIFICATION COMPLETE ✅
