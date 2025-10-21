@@ -144,6 +144,8 @@ def create_app() -> FastAPI:
             "/docs",
             "/openapi.json",
             "/api/subscription/razorpay-webhook",  # Webhook must be exempt
+            "/api/subscription/razorpay/create-order",  # FIX: Razorpay payment endpoints (JWT-authenticated)
+            "/api/subscription/razorpay/verify-payment",  # FIX: Razorpay payment endpoints (JWT-authenticated)
             "/api/subscription/check-access",  # FIX: Exempt subscription checks (JWT-authenticated)
             "/api/subscription/track-usage",  # FIX: Exempt usage tracking (JWT-authenticated)
             "/api/ai/chat/sessions",  # FIX: Exempt AI chat sessions (JWT-authenticated)
