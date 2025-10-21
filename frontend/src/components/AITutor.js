@@ -321,12 +321,15 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Send message to AI - RESTORED from legacy version
+   * Send message to AI - FIXED to prevent duplicates and welcome screen flash
    * Includes depth_level and exam_mode for structured student-centric responses
    * Backend now auto-saves messages, so we don't need manual save
    */
   const sendMessage = async () => {
     if (!inputMessage.trim() || loading) return;
+    
+    // FIX: Set interaction immediately to prevent welcome screen flash
+    setHasInteraction(true);
     
     // Check access
     const accessCheck = await checkFeatureAccess('ai_sessions_monthly');
@@ -359,26 +362,31 @@ export default function AITutorPremium() {
         }
       }
       
-      // Add user message immediately to UI
+      // Add user message immediately to UI with unique ID
+      const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const userMsg = {
         type: 'user',
         content: messageToSend,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message_id: userMsgId
       };
       
-      setMessages(prev => [...prev, userMsg]);
+      // FIX: Check for duplicates before adding
+      if (!sentMessageIds.has(userMsgId)) {
+        setMessages(prev => [...prev, userMsg]);
+        setSentMessageIds(prev => new Set([...prev, userMsgId]));
+      }
       
       // Call AI API with ALL required parameters for structured responses
       const token = localStorage.getItem('dhruv_ai_token');
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      // CRITICAL FIX: Include depth_level and exam_mode for student-centric structured responses
       const requestBody = {
         message: messageToSend,
         subject: selectedSubject,
-        session_id: sessionId,  // Now guaranteed to be string, never null
-        depth_level: 'standard', // 'quick', 'standard', 'deep'
-        exam_mode: 'JEE'        // 'JEE', 'NEET', 'CBSE'
+        session_id: sessionId,
+        depth_level: 'standard',
+        exam_mode: 'JEE'
       };
       
       let response;
@@ -401,16 +409,20 @@ export default function AITutorPremium() {
       
       const aiResponse = response.data;
       
-      // Add AI response to UI - COMPLETE structure
-      // Backend auto-saves, so we just need to display
+      // Add AI response to UI with unique ID
+      const aiMsgId = aiResponse.message_id || `ai_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const aiMsg = {
         type: 'ai',
         ...aiResponse,
         timestamp: new Date().toISOString(),
-        message_id: aiResponse.message_id || `msg_${Date.now()}`
+        message_id: aiMsgId
       };
       
-      setMessages(prev => [...prev, aiMsg]);
+      // FIX: Check for duplicates before adding
+      if (!sentMessageIds.has(aiMsgId)) {
+        setMessages(prev => [...prev, aiMsg]);
+        setSentMessageIds(prev => new Set([...prev, aiMsgId]));
+      }
       
       // Track usage and refresh metrics
       await trackFeatureUsage('ai_sessions_monthly');
@@ -420,10 +432,12 @@ export default function AITutorPremium() {
       console.error('Failed to send message:', error);
       
       // Add error message
+      const errorMsgId = `error_${Date.now()}`;
       setMessages(prev => [...prev, {
         type: 'error',
         content: 'Failed to get AI response. Please try again.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message_id: errorMsgId
       }]);
     } finally {
       setLoading(false);
