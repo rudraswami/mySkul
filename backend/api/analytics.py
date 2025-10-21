@@ -174,12 +174,10 @@ async def get_learning_analytics(
             "goal_completion": {
                 "daily_completion_rate": daily_goals.get("completion_percentage", 0),
                 "streak_maintenance": daily_goals.get("streak_current", 0) >= 3,
-                "consistency_score": 75  # Mock calculation
+                "consistency_score": None  # TODO: Calculate consistency from session patterns
             },
             "recommendations": [
-                "Focus more time on weak areas in Physics",
-                "Maintain current Mathematics practice frequency", 
-                "Consider mock tests for better time management"
+                # TODO: Implement AI-powered recommendations based on user performance
             ]
         }
     except Exception as e:
