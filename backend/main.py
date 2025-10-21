@@ -119,21 +119,21 @@ def create_app() -> FastAPI:
     )
 
     
-    # CSRF Middleware (OPTIONAL - Currently disabled for compatibility)
-    # Uncomment to enable CSRF protection for state-changing requests
-    # logger.info("🛡️ Configuring CSRF Protection...")
-    # app.add_middleware(
-    #     CSRFMiddleware,
-    #     exempt_paths=[
-    #         "/api/auth/google/login",
-    #         "/api/auth/google/callback",
-    #         "/api/auth/session",
-    #         "/api/health",
-    #         "/docs",
-    #         "/openapi.json"
-    #     ]
-    # )
-    # logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
+    # CSRF Middleware - ENABLED for production security
+    logger.info("🛡️ Configuring CSRF Protection...")
+    app.add_middleware(
+        CSRFMiddleware,
+        exempt_paths=[
+            "/api/auth/google/login",
+            "/api/auth/google/callback",
+            "/api/auth/session",
+            "/api/health",
+            "/docs",
+            "/openapi.json",
+            "/api/subscription/razorpay-webhook"  # Webhook must be exempt
+        ]
+    )
+    logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
 
     
     # =============================================================================
