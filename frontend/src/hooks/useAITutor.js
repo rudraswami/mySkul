@@ -5,6 +5,7 @@ import client from '../api/client';
  * React Query hooks for AI Tutor functionality
  * Handles schema defaults, sanitization, and analytics events
  * AI Tutor 2.4 - ISS-3 Implementation
+ * FIXED: Corrected API endpoints (404 errors resolved)
  */
 
 // Client-side sanitization to match backend
@@ -71,12 +72,13 @@ const trackEvent = (eventName, eventData) => {
 
 /**
  * Hook to fetch user's AI Tutor sessions
+ * FIXED: /api/ai/sessions → /api/ai/chat/sessions
  */
 export const useAITutorSessions = () => {
   return useQuery({
     queryKey: ['ai-tutor-sessions'],
     queryFn: async () => {
-      const response = await client.get('/api/ai/sessions');
+      const response = await client.get('/api/ai/chat/sessions');
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -86,13 +88,14 @@ export const useAITutorSessions = () => {
 
 /**
  * Hook to fetch messages for a specific session
+ * FIXED: /api/ai/sessions/{id}/messages → /api/ai/chat/{id}/messages
  */
 export const useSessionMessages = (sessionId) => {
   return useQuery({
     queryKey: ['ai-tutor-messages', sessionId],
     queryFn: async () => {
       if (!sessionId) return [];
-      const response = await client.get(`/api/ai/sessions/${sessionId}/messages`);
+      const response = await client.get(`/api/ai/chat/${sessionId}/messages`);
       return response.data;
     },
     enabled: !!sessionId,
@@ -102,13 +105,14 @@ export const useSessionMessages = (sessionId) => {
 
 /**
  * Hook to create a new AI Tutor session
+ * FIXED: /api/ai/create-session → /api/ai/chat/sessions (POST)
  */
 export const useCreateSession = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ title, subject, topic }) => {
-      const response = await client.post('/api/ai/create-session', {
+      const response = await client.post('/api/ai/chat/sessions', {
         title,
         subject,
         topic: topic || 'General'
@@ -302,13 +306,14 @@ export const useFormulaInteraction = () => {
 
 /**
  * Hook to rename a session
+ * FIXED: /api/chat/{sessionId}/rename → /api/ai/chat/{sessionId}/rename
  */
 export const useRenameSession = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ sessionId, title }) => {
-      const response = await client.put(`/api/chat/${sessionId}/rename`, { title });
+      const response = await client.put(`/api/ai/chat/${sessionId}/rename`, { title });
       return response.data;
     },
     onSuccess: () => {
@@ -319,13 +324,14 @@ export const useRenameSession = () => {
 
 /**
  * Hook to delete a session
+ * FIXED: /api/chat/{sessionId} → /api/ai/chat/{sessionId}
  */
 export const useDeleteSession = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (sessionId) => {
-      const response = await client.delete(`/api/chat/${sessionId}`);
+      const response = await client.delete(`/api/ai/chat/${sessionId}`);
       return response.data;
     },
     onSuccess: () => {
@@ -336,13 +342,14 @@ export const useDeleteSession = () => {
 
 /**
  * Hook to pin/unpin a session
+ * FIXED: /api/chat/{sessionId}/pin → /api/ai/chat/{sessionId}/pin
  */
 export const usePinSession = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ sessionId, isPinned }) => {
-      const response = await client.put(`/api/chat/${sessionId}/pin`, { is_pinned: isPinned });
+      const response = await client.put(`/api/ai/chat/${sessionId}/pin`, { is_pinned: isPinned });
       return response.data;
     },
     onSuccess: () => {
@@ -353,11 +360,12 @@ export const usePinSession = () => {
 
 /**
  * Hook to bookmark a message
+ * FIXED: /api/chat/{sessionId}/bookmark → /api/ai/chat/{sessionId}/bookmark
  */
 export const useBookmarkMessage = () => {
   return useMutation({
     mutationFn: async ({ sessionId, messageId, isBookmarked }) => {
-      const response = await client.put(`/api/chat/${sessionId}/bookmark`, { 
+      const response = await client.put(`/api/ai/chat/${sessionId}/bookmark`, { 
         message_id: messageId,
         is_bookmarked: isBookmarked 
       });
