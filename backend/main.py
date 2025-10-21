@@ -143,7 +143,9 @@ def create_app() -> FastAPI:
             "/api/health",
             "/docs",
             "/openapi.json",
-            "/api/subscription/razorpay-webhook"  # Webhook must be exempt
+            "/api/subscription/razorpay-webhook",  # Webhook must be exempt
+            "/api/subscription/check-access",  # FIX: Exempt subscription checks (JWT-authenticated)
+            "/api/subscription/track-usage",  # FIX: Exempt usage tracking (JWT-authenticated)
         ]
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
