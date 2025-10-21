@@ -546,22 +546,19 @@ async function clearAudioCache() {
 // Get cache status information
 async function getCacheStatus() {
   try {
-    const [staticCache, audioCache, apiCache] = await Promise.all([
+    const [staticCache, audioCache] = await Promise.all([
       caches.open(CACHE_NAME),
-      caches.open(AUDIO_CACHE_NAME),
-      caches.open(API_CACHE_NAME)
+      caches.open(AUDIO_CACHE_NAME)
     ]);
     
-    const [staticKeys, audioKeys, apiKeys] = await Promise.all([
+    const [staticKeys, audioKeys] = await Promise.all([
       staticCache.keys(),
-      audioCache.keys(),
-      apiCache.keys()
+      audioCache.keys()
     ]);
     
     return {
       static: staticKeys.length,
       audio: audioKeys.length,
-      api: apiKeys.length,
       queuedUploads: audioUploadQueue.length,
       isOnline: isOnline
     };
