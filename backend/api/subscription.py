@@ -644,17 +644,6 @@ async def create_razorpay_order(
         logger = logging.getLogger(__name__)
         logger.error(f"Razorpay order creation failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
-            "plan_name": plan_name,
-            "billing_cycle": billing_cycle
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Razorpay order creation failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
 
 
 @router.post("/razorpay/verify-payment")
