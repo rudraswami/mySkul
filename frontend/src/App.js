@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
 import './styles/mobile.css';
 import './styles/premium-dashboard.css';
+import './styles/premium-modal-theme.css';
 
 // Eagerly loaded components (critical path)
 import LandingPage from './components/LandingPage';
@@ -16,6 +17,12 @@ import { Toaster } from './components/ui/toaster';
 import { PageLoader } from './components/ui/loading';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import { SkipToContent } from './utils/accessibility';
+
+// Global Modal & Toast System
+import { ModalProvider } from './contexts/ModalContext';
+import { ToastProvider } from './contexts/ToastContext';
+import ModalRenderer from './components/ModalRenderer';
+import ToastRenderer from './components/ToastRenderer';
 
 // Lazy loaded components (code splitting for better initial load)
 const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
