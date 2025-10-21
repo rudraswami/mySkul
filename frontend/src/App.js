@@ -70,16 +70,23 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <AuthProvider>
-            <SubscriptionProvider>
-              <Router>
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                  <AppContent />
-                  <Toaster />
-                </div>
-              </Router>
-            </SubscriptionProvider>
-          </AuthProvider>
+          <ModalProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <SubscriptionProvider>
+                  <Router>
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                      <AppContent />
+                      <Toaster />
+                      {/* Global Modal & Toast Renderers */}
+                      <ModalRenderer />
+                      <ToastRenderer />
+                    </div>
+                  </Router>
+                </SubscriptionProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </ModalProvider>
         </ThemeProvider>
         {/* React Query DevTools - temporarily disabled due to compatibility issues */}
         {/* {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />} */}
