@@ -569,6 +569,19 @@ async def google_auth_callback(
     # Set httpOnly cookie with session token
     backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
     is_https = backend_url.startswith('https://')
+    
+    # Extract domain dynamically from BACKEND_URL
+    cookie_domain = None
+    if is_https and backend_url:
+        from urllib.parse import urlparse
+        parsed = urlparse(backend_url)
+        hostname = parsed.hostname
+        if hostname and '.' in hostname:
+            # Extract root domain (e.g., emergent.host from seamless-auth-1.emergent.host)
+            parts = hostname.split('.')
+            if len(parts) >= 2:
+                cookie_domain = f".{'.'.join(parts[-2:])}"
+    
     response.set_cookie(
         key="dhruv_ai_session",
         value=auth_data.session_token,
@@ -577,7 +590,7 @@ async def google_auth_callback(
         secure=is_https,
         samesite="none",
         path="/",
-        domain=".emergent.host" if is_https else None
+        domain=cookie_domain
     )
     
     return {
