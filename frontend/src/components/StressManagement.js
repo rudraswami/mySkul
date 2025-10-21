@@ -29,7 +29,8 @@ export default function StressManagement() {
   const [wellnessScore, setWellnessScore] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [motivationalContent, setMotivationalContent] = useState([]);
-
+  
+  const { success, error: showError, warning } = useToast();
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
