@@ -738,26 +738,41 @@ Remember:
             }
     
     async def save_session_message(self, user_id: str, session_id: str, message: str, ai_response: Dict[str, Any]):
-        """Save a chat message to the session with FULL structure for frontend compatibility"""
+        """Save a chat message to the session with deduplication to prevent duplicates"""
         try:
             # Sanitize user message
             sanitized_user_message = self.response_parser.sanitize_text(message)
             
+            # Generate unique message_id
+            message_id = str(uuid.uuid4())
+            
+            # FIX: Check if this exact message already exists to prevent duplicates
+            existing_message = await self.db.chat_messages.find_one({
+                'session_id': session_id,
+                'user_message': sanitized_user_message,
+                'timestamp': {
+                    '$gte': (datetime.now(timezone.utc) - timedelta(seconds=30)).isoformat()
+                }
+            })
+            
+            if existing_message:
+                logger.warning(f"Duplicate message detected for session {session_id}, skipping insertion")
+                return existing_message.get('message_id', message_id)
+            
             # Create comprehensive message document for MongoDB
-            # CRITICAL: Store in format that frontend expects when loading history
             message_dict = {
-                'message_id': str(uuid.uuid4()),
+                'message_id': message_id,
                 'session_id': session_id,
                 'user_id': user_id,
                 'timestamp': datetime.now(timezone.utc).isoformat(),
                 
                 # FRONTEND-COMPATIBLE STRUCTURE
-                'user_message': sanitized_user_message,  # Frontend expects this field
+                'user_message': sanitized_user_message,
                 
                 # Store COMPLETE AI response structure for history loading
-                'dual_response': ai_response.get('dual_response'),  # For dual mode
-                'response': ai_response.get('response'),  # For single mode
-                'persona': ai_response.get('persona'),  # mentor or professor
+                'dual_response': ai_response.get('dual_response'),
+                'response': ai_response.get('response'),
+                'persona': ai_response.get('persona'),
                 
                 # Additional metadata
                 'primary': ai_response.get('primary'),
@@ -766,7 +781,7 @@ Remember:
                 'reasoning': ai_response.get('reasoning'),
                 
                 # Legacy fields for backward compatibility
-                'message': sanitized_user_message,  # Old field name
+                'message': sanitized_user_message,
                 
                 # Full AI response for analysis
                 'ai_response_full': {
@@ -791,11 +806,11 @@ Remember:
                 }
             )
             
-            return True
+            return message_id
             
         except Exception as e:
             logger.error(f"Save session message error: {str(e)}")
-            return False
+            return None
     
     async def _safe_llm_call(self, chat_instance, message, role_type: str, subject: str, user_message: str, max_retries: int = 1, timeout_seconds: int = 25):
         """
