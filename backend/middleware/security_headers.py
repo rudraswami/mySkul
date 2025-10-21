@@ -2,6 +2,7 @@
 Security Headers Middleware
 Adds essential security headers to all HTTP responses
 """
+import os
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -45,14 +46,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         # Content Security Policy (CSP)
         # Strict policy to prevent XSS and data injection attacks
-        # Note: Adjust based on your actual requirements
+        # Dynamically construct connect-src based on environment
+        backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+        frontend_url = os.getenv('FRONTEND_URL', backend_url)
+        
         csp_directives = [
             "default-src 'self'",  # Default: only same origin
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",  # Allow Razorpay scripts
             "style-src 'self' 'unsafe-inline'",  # Allow inline styles (Tailwind, etc.)
             "img-src 'self' data: https:",  # Allow images from data URIs and HTTPS
             "font-src 'self' data:",  # Allow fonts from same origin and data URIs
-            "connect-src 'self' https://seamless-auth-1.emergent.host https://api.openai.com",  # API endpoints
+            f"connect-src 'self' {backend_url} {frontend_url} https://api.openai.com https://demobackend.emergentagent.com",  # API endpoints
             "frame-src https://checkout.razorpay.com",  # Allow Razorpay iframe
             "object-src 'none'",  # Block <object>, <embed>, <applet>
             "base-uri 'self'",  # Restrict <base> tag
