@@ -14,6 +14,7 @@ import {
   BookOpen,
   Clock
 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
 export default function StressManagement() {
   const [assessmentData, setAssessmentData] = useState({
