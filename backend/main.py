@@ -81,6 +81,11 @@ def create_app() -> FastAPI:
     # MIDDLEWARE CONFIGURATION
     # =============================================================================
     
+    # Security Headers Middleware (MUST be first to apply to all responses)
+    logger.info("🛡️ Configuring Security Headers...")
+    app.add_middleware(SecurityHeadersMiddleware)
+    logger.info("   - HSTS, CSP, X-Frame-Options, and other security headers enabled")
+    
     # Session Middleware (MUST be before CORS for cookie handling)
     logger.info("🍪 Configuring SessionMiddleware...")
     is_https = settings.BACKEND_URL.startswith('https://')
