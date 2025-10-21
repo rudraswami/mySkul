@@ -88,6 +88,6 @@ def get_csrf_token(request: Request) -> Optional[str]:
     Helper function to get CSRF token from request session
     Usage: token = get_csrf_token(request)
     """
-    if hasattr(request, "session"):
+    if "session" in request.scope:
         return request.session.get("csrf_token")
     return None
