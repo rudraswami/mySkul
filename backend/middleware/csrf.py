@@ -58,7 +58,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             
             # Get token from session
             token_from_session = None
-            if hasattr(request, "session"):
+            if "session" in request.scope:
                 token_from_session = request.session.get("csrf_token")
             
             # Validate token
