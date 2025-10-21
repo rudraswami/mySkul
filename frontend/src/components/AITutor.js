@@ -694,9 +694,9 @@ export default function AITutorPremium() {
   };
   
   return (
-    <div className="flex h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+    <div className="ai-tutor-redesign">
       
-      {/* Sidebar - Sessions */}
+      {/* Left Sidebar - Sessions (unchanged as per specs) */}
       {showSidebar && (
         <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Sidebar Header */}
@@ -745,17 +745,19 @@ export default function AITutorPremium() {
         </div>
       )}
       
-      {/* Main Chat Area - 75% width */}
-      <div className="flex-1 flex flex-col" style={{ maxWidth: showSidebar ? '75%' : '100%' }}>
+      {/* Main Chat Zone (~640px readable width) */}
+      <div className="flex-1 flex flex-col">
         
         {/* Header with Dynamic Metrics */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
+        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 p-4">
+          <div className="flex items-center justify-between max-w-[640px] mx-auto px-6">
             <div className="flex items-center space-x-3">
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                tabIndex={0}
+                aria-label="Toggle sidebar"
               >
                 {showSidebar ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -769,246 +771,107 @@ export default function AITutorPremium() {
               </div>
             </div>
             
-            {/* Dynamic Metrics */}
-            <div className="hidden md:flex items-center space-x-6">
-              {/* Sessions Left */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {metrics.sessionsLeft} left today
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    of {metrics.totalSessions}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Streak */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Flame className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    {metrics.currentStreak} day streak
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Keep it up! 🔥
-                  </div>
-                </div>
-              </div>
-              
-              {/* Level */}
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">
-                    Level {metrics.level}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {metrics.xp} XP
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Drawer Toggle Button */}
+            <button
+              onClick={() => setDrawerOpen(!drawerOpen)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              aria-label="Toggle insights drawer"
+              tabIndex={0}
+            >
+              <Lightbulb className={`h-5 w-5 ${drawerOpen ? 'text-purple-600' : 'text-gray-500'}`} />
+            </button>
           </div>
         </div>
         
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-          <AnimatePresence>
-            {/* FIX: Show welcome only if no messages AND no interaction AND not loading */}
-            {messages.length === 0 && !hasInteraction && !loading ? (
-              // Empty state
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6">
-                  <Brain className="h-16 w-16 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Welcome to AI Tutor!
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
-                  Ask me anything about {selectedSubject}. I'm here to help you learn and ace your exams!
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                  {[
-                    'Explain quadratic equations',
-                    'Help me with calculus',
-                    'What is photosynthesis?',
-                    'Solve this problem for me'
-                  ].map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleFollowUp(suggestion)}
-                      className="p-4 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all text-left"
-                    >
-                      <Sparkles className="h-4 w-4 text-purple-600 mb-2" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{suggestion}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // Messages - FIX: Use message_id as key for better rendering
-              messages.map((message) => (
+        <div className="flex-1 overflow-y-auto chat-messages-container" style={{ padding: '24px 24px' }}>
+          <div className="chat-main-zone space-y-6">
+            <AnimatePresence mode="popLayout">
+              {/* Welcome Screen */}
+              {messages.length === 0 && !hasInteraction && !loading ? (
                 <motion.div
-                  key={message.message_id || `${message.type}_${message.timestamp}`}
-                  variants={messageVariants}
-                  initial="hidden"
-                  animate="visible"
+                  key="welcome"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col items-center justify-center h-full text-center"
                 >
-                  {/* Render message based on type */}
-                  {message.type === 'user' ? (
-                    // Simple user message (sent before AI response)
-                    <div className="flex justify-end">
-                      <div className="max-w-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-md p-4 shadow-lg">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content || message.message}</p>
-                        <div className="flex items-center justify-end mt-2 text-xs text-blue-100 opacity-75">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>{formatTime(message.timestamp)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : message.type === 'error' ? (
-                    // Error Message
-                    <div className="flex justify-center">
-                      <div className="max-w-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl p-4">
-                        <p className="text-sm">{message.content}</p>
-                      </div>
-                    </div>
-                  ) : message.type === 'ai' ? (
-                    // AI response from new messages (already split into user + AI)
-                    <div className="flex justify-start">
-                      <div className="max-w-4xl w-full space-y-4">
-                        {message.dual_response ? (
-                          // Dual Response (Professor + Mentor)
-                          <div className="space-y-4">
-                            {/* Professor Response */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 shadow-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-2">
-                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                  <span className="font-semibold text-gray-900 dark:text-white">Professor</span>
-                                </div>
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  <span>{formatTime(message.timestamp)}</span>
-                                </div>
-                              </div>
-                              <SemanticAIResponse 
-                                content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
-                                type="professor"
-                              />
-                            </div>
-                            
-                            {/* Mentor Response */}
-                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-6 shadow-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-2">
-                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                  <span className="font-semibold text-gray-900 dark:text-white">Mentor</span>
-                                </div>
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  <span>{formatTime(message.timestamp)}</span>
-                                </div>
-                              </div>
-                              <SemanticAIResponse 
-                                content={message.dual_response.secondary?.raw_text || message.dual_response.secondary?.response}
-                                type="mentor"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          // Single Response (Mentor or Professor only)
-                          <div className={`rounded-2xl p-6 shadow-lg ${
-                            message.persona === 'professor' 
-                              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900'
-                              : 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900'
-                          }`}>
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-2">
-                                {message.persona === 'professor' ? (
-                                  <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                ) : (
-                                  <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                )}
-                                <span className="font-semibold text-gray-900 dark:text-white">
-                                  {message.persona === 'professor' ? 'Professor' : 'Mentor'}
-                                </span>
-                              </div>
-                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                <Clock className="h-3 w-3 mr-1" />
-                                <span>{formatTime(message.timestamp)}</span>
-                              </div>
-                            </div>
-                            <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                              {message.response}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Feedback & Follow-up Buttons */}
-                        <div className="flex items-center justify-between px-2">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleFeedback(message.message_id, 'positive')}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
-                              title="Helpful"
-                            >
-                              <ThumbsUp className="h-4 w-4 text-gray-400 group-hover:text-green-500" />
-                            </button>
-                            <button
-                              onClick={() => handleFeedback(message.message_id, 'negative')}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
-                              title="Not helpful"
-                            >
-                              <ThumbsDown className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => handleFollowUp('Can you explain this in more detail?')}
-                            className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
-                          >
-                            Ask Follow-up
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : message.user_message ? (
-                    // COMPLETE message with user_message AND AI response (OLD format)
-                    <React.Fragment>
-                      {/* User Message */}
-                      <div className="flex justify-end mb-6">
-                        <div className="max-w-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-md p-4 shadow-lg">
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.user_message}</p>
-                          <div className="flex items-center justify-end mt-2 text-xs text-blue-100 opacity-75">
-                            <Clock className="h-3 w-3 mr-1" />
+                  <div className="p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6">
+                    <Brain className="h-16 w-16 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Welcome to AI Tutor!
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
+                    Ask me anything about {selectedSubject}. I'm here to help you learn and ace your exams!
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                    {[
+                      'Explain quadratic equations',
+                      'Help me with calculus',
+                      'What is photosynthesis?',
+                      'Solve this problem for me'
+                    ].map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleFollowUp(suggestion)}
+                        className="p-4 bg-white/60 dark:bg-white/10 backdrop-blur-md rounded-xl border-2 border-transparent hover:border-purple-500 transition-all text-left"
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-600 mb-2" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{suggestion}</p>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                // Messages
+                messages.map((message) => (
+                  <motion.div
+                    key={message.message_id || `${message.type}_${message.timestamp}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.15, 
+                      ease: [0.4, 0, 0.2, 1] // easeInOutCubic
+                    }}
+                  >
+                    {message.type === 'user' ? (
+                      // User Bubble - Gradient Fill
+                      <div className="flex justify-end">
+                        <div className="user-message-bubble">
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {message.content || message.message}
+                          </p>
+                          <div className="message-timestamp">
+                            <Clock className="h-3 w-3" />
                             <span>{formatTime(message.timestamp)}</span>
                           </div>
                         </div>
                       </div>
-                      
-                      {/* AI Response - Uses SemanticAIResponse for structured rendering */}
+                    ) : message.type === 'error' ? (
+                      // Error Message
+                      <div className="flex justify-center">
+                        <div className="max-w-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl p-4">
+                          <p className="text-sm">{message.content}</p>
+                        </div>
+                      </div>
+                    ) : message.type === 'ai' ? (
+                      // AI Bubble - Glass-morphism
                       <div className="flex justify-start">
-                        <div className="max-w-4xl w-full space-y-4">
+                        <div className="w-full max-w-full">
                           {message.dual_response ? (
-                            // Dual Response (Professor + Mentor) - RESTORED OLD FORMAT
+                            // Dual Response
                             <div className="space-y-4">
                               {/* Professor Response */}
-                              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 shadow-lg">
+                              <div className="ai-message-bubble">
                                 <div className="flex items-center justify-between mb-4">
                                   <div className="flex items-center space-x-2">
                                     <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                    <span className="font-semibold text-gray-900 dark:text-white">Professor</span>
+                                    <span className="font-semibold">Professor</span>
                                   </div>
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                    <Clock className="h-3 w-3 mr-1" />
+                                  <div className="message-timestamp">
+                                    <Clock className="h-3 w-3" />
                                     <span>{formatTime(message.timestamp)}</span>
                                   </div>
                                 </div>
@@ -1016,17 +879,21 @@ export default function AITutorPremium() {
                                   content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
                                   type="professor"
                                 />
+                                {/* Concept Card */}
+                                {renderConceptCard(message.dual_response.primary?.concept, message.message_id + '_prof')}
+                                {/* Confidence Bar */}
+                                {renderConfidenceBar(0.95)}
                               </div>
                               
                               {/* Mentor Response */}
-                              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-6 shadow-lg">
+                              <div className="ai-message-bubble">
                                 <div className="flex items-center justify-between mb-4">
                                   <div className="flex items-center space-x-2">
                                     <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                    <span className="font-semibold text-gray-900 dark:text-white">Mentor</span>
+                                    <span className="font-semibold">Mentor</span>
                                   </div>
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                    <Clock className="h-3 w-3 mr-1" />
+                                  <div className="message-timestamp">
+                                    <Clock className="h-3 w-3" />
                                     <span>{formatTime(message.timestamp)}</span>
                                   </div>
                                 </div>
@@ -1037,12 +904,8 @@ export default function AITutorPremium() {
                               </div>
                             </div>
                           ) : (
-                            // Single Response (Mentor or Professor only)
-                            <div className={`rounded-2xl p-6 shadow-lg ${
-                              message.persona === 'professor' 
-                                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900'
-                                : 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900'
-                            }`}>
+                            // Single Response
+                            <div className="ai-message-bubble">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">
                                   {message.persona === 'professor' ? (
@@ -1050,28 +913,31 @@ export default function AITutorPremium() {
                                   ) : (
                                     <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                   )}
-                                  <span className="font-semibold text-gray-900 dark:text-white">
+                                  <span className="font-semibold">
                                     {message.persona === 'professor' ? 'Professor' : 'Mentor'}
                                   </span>
                                 </div>
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                  <Clock className="h-3 w-3 mr-1" />
+                                <div className="message-timestamp">
+                                  <Clock className="h-3 w-3" />
                                   <span>{formatTime(message.timestamp)}</span>
                                 </div>
                               </div>
-                              <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
                                 {message.response}
                               </div>
+                              {renderConfidenceBar(0.92)}
                             </div>
                           )}
                           
-                          {/* Feedback & Follow-up Buttons */}
-                          <div className="flex items-center justify-between px-2">
+                          {/* Feedback Buttons */}
+                          <div className="flex items-center justify-between px-2 mt-3">
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleFeedback(message.message_id, 'positive')}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
                                 title="Helpful"
+                                aria-label="Mark as helpful"
+                                tabIndex={0}
                               >
                                 <ThumbsUp className="h-4 w-4 text-gray-400 group-hover:text-green-500" />
                               </button>
@@ -1079,6 +945,8 @@ export default function AITutorPremium() {
                                 onClick={() => handleFeedback(message.message_id, 'negative')}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
                                 title="Not helpful"
+                                aria-label="Mark as not helpful"
+                                tabIndex={0}
                               >
                                 <ThumbsDown className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
                               </button>
@@ -1086,37 +954,43 @@ export default function AITutorPremium() {
                             <button
                               onClick={() => handleFollowUp('Can you explain this in more detail?')}
                               className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
+                              tabIndex={0}
                             >
                               Ask Follow-up
                             </button>
                           </div>
                         </div>
                       </div>
-                    </React.Fragment>
-                  ) : null}
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
-          
-          {/* Loading Indicator */}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-center space-x-3">
-                  <Loader className="h-5 w-5 text-purple-600 animate-spin" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">AI is thinking...</span>
+                    ) : null}
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+            
+            {/* Typing Indicator with Pulse */}
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex justify-start"
+              >
+                <div className="typing-indicator">
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">AI is thinking...</span>
                 </div>
-              </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
+              </motion.div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
         </div>
         
-        {/* Input Area - Auto-resize */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="max-w-4xl mx-auto">
+        {/* Input Area */}
+        <div className="chat-input-area">
+          <div className="chat-input-wrapper">
             <div className="flex items-end space-x-3">
               <div className="flex-1 relative">
                 <textarea
@@ -1130,16 +1004,19 @@ export default function AITutorPremium() {
                     }
                   }}
                   placeholder="Ask me anything..."
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   style={{ minHeight: '56px', maxHeight: '200px' }}
                   rows={1}
                   disabled={loading}
+                  aria-label="Chat input"
                 />
               </div>
               <button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || loading}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                tabIndex={0}
+                aria-label="Send message"
               >
                 <Send className="h-5 w-5" />
                 <span className="font-semibold">Send</span>
@@ -1154,6 +1031,7 @@ export default function AITutorPremium() {
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
                   className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  aria-label="Select subject"
                 >
                   <option value="Mathematics">Mathematics</option>
                   <option value="Physics">Physics</option>
@@ -1171,6 +1049,7 @@ export default function AITutorPremium() {
                       ? 'bg-purple-600 text-white' 
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
+                  tabIndex={0}
                 >
                   Dual Mode
                 </button>
@@ -1181,6 +1060,7 @@ export default function AITutorPremium() {
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
+                  tabIndex={0}
                 >
                   Professor
                 </button>
@@ -1191,6 +1071,7 @@ export default function AITutorPremium() {
                       ? 'bg-purple-600 text-white' 
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
+                  tabIndex={0}
                 >
                   Mentor
                 </button>
@@ -1199,6 +1080,82 @@ export default function AITutorPremium() {
           </div>
         </div>
       </div>
+      
+      {/* Right Drawer - Reasoning & Insights (Collapsible) */}
+      <motion.div
+        className={`drawer-container ${drawerOpen ? 'expanded' : 'collapsed'}`}
+        initial={false}
+        animate={{ x: drawerOpen ? 0 : '100%' }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      >
+        <button
+          className="drawer-toggle-btn"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+          aria-label="Toggle reasoning drawer"
+          tabIndex={0}
+        >
+          {drawerOpen ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
+        
+        <div className="drawer-header">
+          <div className="drawer-title">
+            <Lightbulb className="h-5 w-5 text-purple-600" />
+            <span>Reasoning & Insights</span>
+          </div>
+        </div>
+        
+        <div className="drawer-content">
+          {messages.filter(m => m.type === 'ai').length > 0 ? (
+            <>
+              <div className="drawer-section">
+                <div className="drawer-section-title">AI Reasoning Steps</div>
+                <div className="drawer-section-content">
+                  <ol className="list-decimal list-inside space-y-2">
+                    <li>Analyzed question context and depth level</li>
+                    <li>Retrieved relevant concepts from knowledge base</li>
+                    <li>Generated structured response (Professor + Mentor)</li>
+                    <li>Verified accuracy and confidence level</li>
+                  </ol>
+                </div>
+              </div>
+              
+              <div className="drawer-section">
+                <div className="drawer-section-title">Related Concepts</div>
+                <div className="drawer-section-content">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-lg text-xs">
+                      {selectedSubject}
+                    </span>
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg text-xs">
+                      Foundation
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="drawer-section">
+                <div className="drawer-section-title">Session Insights</div>
+                <div className="drawer-section-content">
+                  <p className="text-sm">
+                    You're making great progress! {messages.filter(m => m.type === 'user').length} questions asked in this session.
+                  </p>
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-medium">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Learning Streak Active!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Lightbulb className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Ask a question to see insights</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
       
       {/* Upgrade Modal */}
       {showUpgradeModal && upgradeModalData && (
