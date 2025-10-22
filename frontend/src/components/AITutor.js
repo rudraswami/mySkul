@@ -967,7 +967,7 @@ export default function AITutorPremium() {
         <div className="flex-1 overflow-y-auto chat-messages-container" style={{ padding: '24px 24px' }}>
           <div className="chat-main-zone space-y-6">
             <AnimatePresence mode="popLayout">
-              {/* Welcome Screen */}
+              {/* Welcome Screen with Dynamic Prompts */}
               {messages.length === 0 && !hasInteraction && !loading ? (
                 <motion.div
                   key="welcome"
@@ -975,7 +975,7 @@ export default function AITutorPremium() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="flex flex-col items-center justify-center h-full text-center"
+                  className="flex flex-col items-center justify-center h-full text-center px-4"
                 >
                   <div className="p-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl mb-6">
                     <Brain className="h-16 w-16 text-white" />
@@ -983,26 +983,67 @@ export default function AITutorPremium() {
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     Welcome to AI Tutor!
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4 max-w-md">
                     Ask me anything about {selectedSubject}. I'm here to help you learn and ace your exams!
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                    {[
-                      'Explain quadratic equations',
-                      'Help me with calculus',
-                      'What is photosynthesis?',
-                      'Solve this problem for me'
-                    ].map((suggestion, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleFollowUp(suggestion)}
-                        className="p-4 bg-white/60 dark:bg-white/10 backdrop-blur-md rounded-xl border-2 border-transparent hover:border-purple-500 transition-all text-left"
-                      >
-                        <Sparkles className="h-4 w-4 text-purple-600 mb-2" />
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{suggestion}</p>
-                      </button>
-                    ))}
+                  
+                  {/* Subject Selector */}
+                  <div className="mb-6">
+                    <select
+                      value={selectedSubject}
+                      onChange={(e) => setSelectedSubject(e.target.value)}
+                      className="px-6 py-3 bg-white dark:bg-gray-800 rounded-xl text-base font-medium text-gray-900 dark:text-white border-2 border-purple-200 dark:border-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    >
+                      <option value="Mathematics">📐 Mathematics</option>
+                      <option value="Physics">⚡ Physics</option>
+                      <option value="Chemistry">🧪 Chemistry</option>
+                      <option value="Biology">🧬 Biology</option>
+                      <option value="English">📚 English</option>
+                      <option value="History">🏛️ History</option>
+                      <option value="Geography">🌍 Geography</option>
+                    </select>
                   </div>
+                  
+                  {/* NEW: Dynamic Default Prompts with Staggered Animation */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={selectedSubject}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full"
+                    >
+                      {promptsLoading ? (
+                        <div className="col-span-2 flex justify-center py-8">
+                          <Loader className="h-8 w-8 animate-spin text-purple-600" />
+                        </div>
+                      ) : (
+                        defaultPrompts.map((prompt, index) => (
+                          <motion.button
+                            key={`${selectedSubject}-${index}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ 
+                              delay: index * 0.1, // 100ms stagger
+                              duration: 0.3,
+                              ease: [0.4, 0, 0.2, 1]
+                            }}
+                            onClick={() => handleFollowUp(prompt.text)}
+                            className="p-4 bg-white/60 dark:bg-white/10 backdrop-blur-md rounded-xl border-2 border-transparent hover:border-purple-500 hover:shadow-lg transition-all text-left group"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <Sparkles className="h-4 w-4 text-purple-600 group-hover:text-purple-700 transition-colors" />
+                              <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+                                {prompt.type}
+                              </span>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{prompt.text}</p>
+                          </motion.button>
+                        ))
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
                 </motion.div>
               ) : (
                 // Messages
