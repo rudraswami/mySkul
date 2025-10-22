@@ -24,6 +24,35 @@
 import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 /**
+ * Ensure modal is visible within viewport
+ * Automatically scrolls modal into view if it's off-viewport
+ * 
+ * @param {HTMLElement} element - The modal element
+ */
+export const ensureModalInView = (element) => {
+  if (!element) return;
+  
+  // Use requestAnimationFrame to ensure DOM is painted
+  requestAnimationFrame(() => {
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Check if modal is off-viewport vertically or horizontally
+    const isOffViewportVertical = rect.top < 0 || rect.bottom > viewportHeight;
+    const isOffViewportHorizontal = rect.left < 0 || rect.right > viewportWidth;
+    
+    if (isOffViewportVertical || isOffViewportHorizontal) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'center'
+      });
+    }
+  });
+};
+
+/**
  * Apply global modal behavior to a modal element
  * 
  * @param {HTMLElement} element - The modal container element
@@ -33,6 +62,7 @@ import { MODAL_BEHAVIOR } from '../config/modalConfig';
  * @param {Function} options.onClose - Callback to close the modal
  * @param {boolean} [options.scrollLock=true] - Lock body scroll
  * @param {boolean} [options.closeOnEsc=true] - Close on ESC key
+ * @param {boolean} [options.ensureInView=true] - Ensure modal is visible in viewport
  * @returns {Function} Cleanup function to remove behavior
  */
 export const applyGlobalModalBehavior = (element, options = {}) => {
@@ -41,7 +71,8 @@ export const applyGlobalModalBehavior = (element, options = {}) => {
     outsideClick = MODAL_BEHAVIOR.outsideClick.enabled,
     onClose,
     scrollLock = true,
-    closeOnEsc = MODAL_BEHAVIOR.keyboard.closeOnEsc
+    closeOnEsc = MODAL_BEHAVIOR.keyboard.closeOnEsc,
+    ensureInView = true
   } = options;
 
   // Store original body overflow
@@ -58,7 +89,12 @@ export const applyGlobalModalBehavior = (element, options = {}) => {
     }
   }
 
-  // 2. Set accessibility attributes
+  // 2. Ensure modal is visible in viewport
+  if (ensureInView) {
+    ensureModalInView(element);
+  }
+
+  // 3. Set accessibility attributes
   element.setAttribute('role', MODAL_BEHAVIOR.a11y.role);
   element.setAttribute('aria-modal', String(MODAL_BEHAVIOR.a11y.ariaModal));
   
@@ -71,13 +107,13 @@ export const applyGlobalModalBehavior = (element, options = {}) => {
     element.setAttribute('aria-labelledby', titleElement.id);
   }
 
-  // 3. Focus trap implementation
+  // 4. Focus trap implementation
   let focusTrapCleanup = null;
   if (trapFocus) {
     focusTrapCleanup = enableFocusTrap(element);
   }
 
-  // 4. ESC key handler
+  // 5. ESC key handler
   const handleEscape = (e) => {
     if (closeOnEsc && e.key === 'Escape' && onClose) {
       e.preventDefault();
@@ -88,7 +124,7 @@ export const applyGlobalModalBehavior = (element, options = {}) => {
   
   document.addEventListener('keydown', handleEscape, true);
 
-  // 5. Outside click handler (optional)
+  // 6. Outside click handler (optional)
   let clickHandler = null;
   if (outsideClick && onClose) {
     clickHandler = (e) => {
