@@ -2,6 +2,116 @@
 
 ## LATEST FIX - Duplicate User Message Issue (January 22, 2025)
 
+### ✅ DUPLICATE MESSAGE BUG FIX - COMPLETE
+(See previous section for details)
+
+---
+
+## NEW FEATURE - Dynamic Context-Aware Layout (January 22, 2025)
+
+### 🎨 UI/UX ENHANCEMENT - AI TUTOR CONTEXT-AWARE LAYOUT ✅ **IMPLEMENTED**
+
+**Feature Scope**: Improve Tutor screen context-awareness and layout focus
+
+**Tasks Completed**:
+
+#### 1️⃣ Dynamic Subject-Based Default Prompts ✅
+- **Backend**: New endpoint `/api/subjects/{subject}/defaultPrompts`
+  - Returns 4 contextual questions per subject
+  - Structure: 2 concept / 1 application / 1 exam-style
+  - Supports 7 subjects: Mathematics, Physics, Chemistry, Biology, English, History, Geography
+- **Frontend**: Dynamic prompt loading with fade animation
+  - Auto-fetches prompts when subject changes
+  - Animated with Framer Motion (fade + stagger 100ms delay per card)
+  - Fallback to local prompts if API fails
+
+#### 2️⃣ Unified Sidebar Merge ✅
+- **Sidebar converted to overlay drawer** (280px width)
+  - Opens from left, covers Tutor view
+  - Closes on: outside click, ESC key, or session selection
+  - Backdrop blur effect for focus
+  - Smooth slide-in animation (250ms, ease-in-out-cubic)
+- **"+ New Chat" moved to header**
+  - Desktop: Header button (always visible, top-right)
+  - Mobile (≤768px): Floating Action Button (FAB, bottom-right)
+  - Both trigger same `startNewChat()` function
+- **Chat history** accessible via hamburger menu
+
+#### 3️⃣ Collapsible Header ✅
+- **Empty state**: Full header with:
+  - AI Tutor branding + Brain icon
+  - Tagline: "Your personal learning companion"
+  - Subject selector dropdown
+  - Welcome message
+- **Active chat**: Minimal header shows:
+  - Sidebar toggle (hamburger menu)
+  - Subject selector (compact)
+  - "New Chat" button
+  - Insights drawer toggle
+- **Smooth collapse animation** (300ms cubic-bezier transition)
+
+**Technical Implementation**:
+
+**Files Created**:
+- `/app/backend/api/ai.py` - Added `/api/subjects/{subject}/defaultPrompts` endpoint
+
+**Files Modified**:
+1. `/app/frontend/src/components/AITutor.js`:
+   - Added state: `defaultPrompts`, `promptsLoading`, `headerCollapsed`
+   - Added function: `loadDefaultPrompts()` with API integration
+   - Added useEffect: Header collapse logic
+   - Redesigned sidebar: Overlay with backdrop and animations
+   - Updated header: Dynamic collapsing with Framer Motion
+   - Added FAB: Floating button for mobile
+   - Updated welcome screen: Subject selector + dynamic prompts with stagger
+
+2. `/app/frontend/src/styles/ai-tutor-redesign.css`:
+   - Added overlay sidebar styles
+   - Added FAB styles (mobile only)
+   - Added default prompt card hover effects
+   - Added header collapse transitions
+   - Improved focus states for accessibility
+
+**Animation Details**:
+- **Sidebar**: Slide-in from left (250ms ease-in-out-cubic)
+- **Backdrop**: Fade-in (opacity 0 → 1)
+- **Default prompts**: Fade + stagger (100ms delay per card)
+- **Header**: Height + padding transition (300ms)
+- **FAB**: Scale on hover/tap (Framer Motion whileHover/whileTap)
+
+**Responsive Behavior**:
+- **Desktop (>768px)**: Header button for "New Chat"
+- **Mobile (≤768px)**: FAB replaces header button
+- **Sidebar**: Overlay on all screen sizes (no persistent left panel)
+
+**Keyboard Shortcuts**:
+- **ESC**: Close sidebar overlay
+- **Tab**: Navigate through interactive elements
+- **Enter**: Select/activate focused element
+
+**Testing Status**:
+- ✅ Backend endpoint created and tested
+- ✅ Frontend components implemented
+- ✅ CSS animations added
+- ⏳ Authenticated user testing pending (requires login)
+- ⏳ Mobile responsive testing pending
+- ⏳ Keyboard navigation testing pending
+
+**Expected User Experience**:
+1. User visits AI Tutor → sees welcome screen with subject selector
+2. Selects subject (e.g., "Physics") → prompts fade-change to Physics questions
+3. Clicks prompt card → chat starts, header collapses to minimal mode
+4. Clicks hamburger menu → sidebar slides in with chat history
+5. On mobile: FAB visible for quick "New Chat" access
+
+**Git Commit Tag**: `feat/ui-tutor-context-aware-layout-v1`
+
+**Status**: ✅ **FEATURE COMPLETE - READY FOR TESTING**
+
+---
+
+## LATEST FIX - Duplicate User Message Issue (January 22, 2025)
+
 ### CRITICAL BUG FIX - DUPLICATE MESSAGE RENDERING ✅ **FIXED**
 
 **Problem Reported by User**:
