@@ -407,6 +407,76 @@ async def get_available_contexts():
     }
 
 
+@router.get("/subjects/{subject}/defaultPrompts")
+async def get_subject_default_prompts(subject: str):
+    """
+    Get context-aware default question prompts for a specific subject
+    Returns 4 questions: 2 concept, 1 application, 1 exam-style
+    """
+    # Default prompts database - subject-specific contextual questions
+    prompts_db = {
+        "Mathematics": [
+            {"text": "Explain the fundamental theorem of calculus", "type": "concept"},
+            {"text": "What is the difference between permutations and combinations?", "type": "concept"},
+            {"text": "How do I solve quadratic equations in real-world problems?", "type": "application"},
+            {"text": "Give me a JEE-level problem on integration by parts", "type": "exam"}
+        ],
+        "Physics": [
+            {"text": "Explain Newton's laws of motion with examples", "type": "concept"},
+            {"text": "What is the difference between work and energy?", "type": "concept"},
+            {"text": "How does a pulley system reduce the effort force?", "type": "application"},
+            {"text": "Give me a NEET-level problem on projectile motion", "type": "exam"}
+        ],
+        "Chemistry": [
+            {"text": "Explain atomic structure and electron configuration", "type": "concept"},
+            {"text": "What is the difference between ionic and covalent bonds?", "type": "concept"},
+            {"text": "How do catalysts speed up chemical reactions?", "type": "application"},
+            {"text": "Give me a JEE-level problem on chemical equilibrium", "type": "exam"}
+        ],
+        "Biology": [
+            {"text": "Explain the process of photosynthesis in detail", "type": "concept"},
+            {"text": "What is the difference between mitosis and meiosis?", "type": "concept"},
+            {"text": "How does DNA replication work in cells?", "type": "application"},
+            {"text": "Give me a NEET-level problem on genetics and inheritance", "type": "exam"}
+        ],
+        "English": [
+            {"text": "Explain the elements of a strong essay introduction", "type": "concept"},
+            {"text": "What are the key differences between active and passive voice?", "type": "concept"},
+            {"text": "How can I improve my vocabulary for competitive exams?", "type": "application"},
+            {"text": "Give me practice questions on reading comprehension", "type": "exam"}
+        ],
+        "History": [
+            {"text": "Explain the causes of the Indian independence movement", "type": "concept"},
+            {"text": "What were the major effects of World War II?", "type": "concept"},
+            {"text": "How did the Industrial Revolution change society?", "type": "application"},
+            {"text": "Give me UPSC-level questions on ancient Indian history", "type": "exam"}
+        ],
+        "Geography": [
+            {"text": "Explain the water cycle and its importance", "type": "concept"},
+            {"text": "What is the difference between weather and climate?", "type": "concept"},
+            {"text": "How does deforestation affect the environment?", "type": "application"},
+            {"text": "Give me UPSC-level questions on Indian geography", "type": "exam"}
+        ]
+    }
+    
+    # Normalize subject name (case-insensitive)
+    subject_normalized = subject.strip().title()
+    
+    # Return subject-specific prompts or fallback to general prompts
+    if subject_normalized in prompts_db:
+        return {
+            "subject": subject_normalized,
+            "prompts": prompts_db[subject_normalized]
+        }
+    else:
+        # Fallback to Mathematics if subject not found
+        return {
+            "subject": subject_normalized,
+            "prompts": prompts_db["Mathematics"],
+            "note": f"Using default prompts for {subject_normalized}"
+        }
+
+
 @router.post("/dual-study-plan")
 async def create_dual_study_plan(
     request: StudyPlanRequest,
