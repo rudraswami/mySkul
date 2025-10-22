@@ -634,7 +634,11 @@ export default function AITutorPremium() {
   const handleQuickSend = async (messageContent) => {
     if (!messageContent.trim() || loading) return;
     
-    // Clear input and send
+    // NEW: Hide welcome screen immediately
+    setShowWelcome(false);
+    setHasInteraction(true);
+    
+    // Clear input
     setInputMessage('');
     setLoading(true);
     
@@ -666,7 +670,7 @@ export default function AITutorPremium() {
         }
       }
       
-      // Add user message immediately to UI with unique ID
+      // NEW: OPTIMISTIC UPDATE - Add user message immediately
       const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const userMsg = {
         type: 'user',
@@ -675,7 +679,7 @@ export default function AITutorPremium() {
         message_id: userMsgId
       };
       
-      // FIX: Check for duplicates by content and type
+      // Check for duplicates and add message
       setMessages(prev => {
         const now = new Date().getTime();
         const isDuplicate = prev.some(msg => 
@@ -689,6 +693,9 @@ export default function AITutorPremium() {
         setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
         return [...prev, userMsg];
       });
+      
+      // NEW: Show AI typing indicator
+      setIsAITyping(true);
       
       // Call AI API
       const token = localStorage.getItem('dhruv_ai_token');
