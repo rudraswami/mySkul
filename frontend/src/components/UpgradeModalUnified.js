@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Crown, Zap, TrendingUp, Star, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
@@ -6,6 +6,14 @@ import { Card } from './ui/card';
 import { useNavigate } from 'react-router-dom';
 import { PLANS_CONFIG, getPlanByTier } from '../config/plans';
 import { useModal } from '../contexts/ModalContext';
+import { 
+  applyGlobalModalBehavior, 
+  getModalAnimationProps, 
+  getBackdropStyle,
+  getModalContainerStyle,
+  getModalContentStyle
+} from '../utils/modalBehavior';
+import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 /**
  * UpgradeModal - Unified version using global modal system
