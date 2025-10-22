@@ -53,11 +53,25 @@ const MOTIVATIONAL_MESSAGES = {
 
 export default function MotivationalPopup({ performance, onClose, stats = {} }) {
   const [isVisible, setIsVisible] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     // Fade in animation
     setTimeout(() => setIsVisible(true), 100);
   }, []);
+  
+  // Apply global modal behavior
+  useEffect(() => {
+    if (modalRef.current) {
+      return applyGlobalModalBehavior(modalRef.current, {
+        trapFocus: true,
+        outsideClick: true, // Allow closing on backdrop click
+        onClose,
+        scrollLock: true,
+        closeOnEsc: true
+      });
+    }
+  }, [onClose]);
 
   const getMotivationalContent = () => {
     const score = performance?.percentage || 0;
