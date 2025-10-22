@@ -446,8 +446,13 @@ export default function AITutorPremium() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || loading) return;
     
-    // FIX: Set interaction immediately to prevent welcome screen flash
+    // NEW: Hide welcome screen immediately
+    setShowWelcome(false);
     setHasInteraction(true);
+    
+    // Store message content before clearing input
+    const messageToSend = inputMessage;
+    setInputMessage(''); // Clear input immediately for better UX
     
     // Check access
     const accessCheck = await checkFeatureAccess('ai_sessions_monthly');
@@ -462,8 +467,6 @@ export default function AITutorPremium() {
       return;
     }
     
-    const messageToSend = inputMessage;
-    setInputMessage('');
     setLoading(true);
     
     try {
@@ -480,7 +483,7 @@ export default function AITutorPremium() {
         }
       }
       
-      // Add user message immediately to UI with unique ID
+      // NEW: OPTIMISTIC UPDATE - Add user message immediately (instant rendering)
       const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const userMsg = {
         type: 'user',
@@ -489,23 +492,23 @@ export default function AITutorPremium() {
         message_id: userMsgId
       };
       
-      // FIX: Check for duplicates by content and type (not just ID)
+      // Check for duplicates and add message
       setMessages(prev => {
-        // Check if a message with same content and type exists in last 5 seconds
         const now = new Date().getTime();
         const isDuplicate = prev.some(msg => 
           msg.type === 'user' && 
           msg.content === messageToSend &&
-          (now - new Date(msg.timestamp).getTime()) < 5000 // Within 5 seconds
+          (now - new Date(msg.timestamp).getTime()) < 5000
         );
         
-        if (isDuplicate) {
-          return prev; // Don't add duplicate
-        }
+        if (isDuplicate) return prev;
         
         setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
         return [...prev, userMsg];
       });
+      
+      // NEW: Show AI typing indicator
+      setIsAITyping(true);
       
       // Call AI API with ALL required parameters for structured responses
       const token = localStorage.getItem('dhruv_ai_token');
