@@ -1328,25 +1328,28 @@ export default function AITutorPremium() {
               </button>
             </div>
             
-            {/* Subject & Mode Selectors */}
-            <div className="mt-3 flex items-center flex-wrap gap-3">
-              <div className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4 text-gray-500" />
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  aria-label="Select subject"
-                >
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Biology">Biology</option>
-                  <option value="General">General</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center space-x-2 ml-auto">
+            {/* NEW: Subject Selector - Show in footer only when chat is active */}
+            {headerCollapsed && (
+              <div className="mt-3 flex items-center flex-wrap gap-3">
+                <div className="flex items-center space-x-2">
+                  <BookOpen className="h-4 w-4 text-gray-500" />
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Select subject"
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="English">English</option>
+                    <option value="History">History</option>
+                    <option value="Geography">Geography</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center space-x-2 ml-auto">
                 <button
                   onClick={() => setAiMode('dual')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
