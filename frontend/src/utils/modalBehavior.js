@@ -261,23 +261,53 @@ export const getBackdropStyle = () => {
   return {
     backgroundColor: color,
     backdropFilter: blur ? `blur(${blurAmount})` : 'none',
-    WebkitBackdropFilter: blur ? `blur(${blurAmount})` : 'none'
+    WebkitBackdropFilter: blur ? `blur(${blurAmount})` : 'none',
+    zIndex: MODAL_BEHAVIOR.zIndex.backdrop
   };
 };
 
 /**
- * Get modal container style based on config
+ * Get modal container style - for the wrapper that centers the modal
  * 
  * @param {Object} overrides - Style overrides
- * @returns {Object} Style object for modal
+ * @returns {Object} Style object for modal container
  */
-export const getModalStyle = (overrides = {}) => {
+export const getModalContainerStyle = (overrides = {}) => {
   return {
+    zIndex: MODAL_BEHAVIOR.zIndex.modal,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: MODAL_BEHAVIOR.viewport.verticalMargin,
+    ...overrides
+  };
+};
+
+/**
+ * Get modal content style - for the actual modal content with scrolling
+ * 
+ * @param {Object} overrides - Style overrides
+ * @returns {Object} Style object for modal content
+ */
+export const getModalContentStyle = (overrides = {}) => {
+  return {
+    maxHeight: MODAL_BEHAVIOR.viewport.maxHeight,
+    overflowY: 'auto',
     borderRadius: MODAL_BEHAVIOR.style.borderRadius,
     boxShadow: MODAL_BEHAVIOR.style.shadow,
     maxWidth: MODAL_BEHAVIOR.style.maxWidth,
     ...overrides
   };
+};
+
+/**
+ * Get modal style based on config (legacy - kept for backward compatibility)
+ * 
+ * @param {Object} overrides - Style overrides
+ * @returns {Object} Style object for modal
+ */
+export const getModalStyle = (overrides = {}) => {
+  return getModalContentStyle(overrides);
 };
 
 /**
