@@ -1378,6 +1378,17 @@ export default function AITutorPremium() {
         </div>
       </motion.div>
       
+      {/* NEW: Floating Action Button (Mobile Only - ≤768px) */}
+      <motion.button
+        onClick={startNewChat}
+        className="md:hidden fixed bottom-24 right-6 z-30 p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label="New Chat"
+      >
+        <Plus className="h-6 w-6" />
+      </motion.button>
+      
       {/* Upgrade Modal */}
       {showUpgradeModal && upgradeModalData && (
         <UpgradeModal
