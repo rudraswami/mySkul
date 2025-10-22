@@ -100,10 +100,69 @@ export default function AITutorPremium() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   
-  // Initialize
+  /**
+   * NEW: LocalStorage persistence utilities
+   * Store and retrieve chat history per user + subject
+   */
+  const getStorageKey = () => {
+    const userId = user?.user_id || 'anonymous';
+    return `tutorChatHistory_${userId}_${selectedSubject}`;
+  };
+  
+  const saveChatToStorage = (messagesToSave) => {
+    try {
+      const storageKey = getStorageKey();
+      // Keep only last 10 exchanges (20 messages: 10 user + 10 AI)
+      const recentMessages = messagesToSave.slice(-20);
+      localStorage.setItem(storageKey, JSON.stringify(recentMessages));
+    } catch (error) {
+      console.warn('Failed to save chat to localStorage:', error);
+    }
+  };
+  
+  const loadChatFromStorage = () => {
+    try {
+      const storageKey = getStorageKey();
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (error) {
+      console.warn('Failed to load chat from localStorage:', error);
+    }
+    return [];
+  };
+  
+  const clearChatStorage = () => {
+    try {
+      const storageKey = getStorageKey();
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.warn('Failed to clear chat storage:', error);
+    }
+  };
+  
+  // Initialize - Load persisted chat on mount
   useEffect(() => {
     loadInitialData();
-  }, []);
+    
+    // Re-hydrate chat from localStorage
+    const persistedMessages = loadChatFromStorage();
+    if (persistedMessages.length > 0) {
+      setMessages(persistedMessages);
+      setHasInteraction(true);
+      setShowWelcome(false);
+      setHeaderCollapsed(true);
+    }
+  }, [selectedSubject]); // Re-load when subject changes
+  
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatToStorage(messages);
+    }
+  }, [messages]);
   
   // Auto-scroll to bottom
   useEffect(() => {
