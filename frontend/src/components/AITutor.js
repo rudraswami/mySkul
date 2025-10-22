@@ -63,6 +63,9 @@ export default function AITutorPremium() {
   const [hasInteraction, setHasInteraction] = useState(false);
   const [sentMessageIds, setSentMessageIds] = useState(new Set());
   
+  // NEW: AI typing indicator
+  const [isAITyping, setIsAITyping] = useState(false);
+  
   // UI State
   const [showSidebar, setShowSidebar] = useState(false); // Changed to false - now overlay only
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -74,8 +77,11 @@ export default function AITutorPremium() {
   const [defaultPrompts, setDefaultPrompts] = useState([]);
   const [promptsLoading, setPromptsLoading] = useState(false);
   
-  // NEW: Header collapse state
+  // NEW: Header collapse state (auto-collapse when chat starts)
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  
+  // NEW: Welcome screen visibility control
+  const [showWelcome, setShowWelcome] = useState(true);
   
   // Metrics State (Dynamic from API)
   const [metrics, setMetrics] = useState({
