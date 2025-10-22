@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Crown, Zap, TrendingUp, Star, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { useNavigate } from 'react-router-dom';
 import { PLANS_CONFIG, getPlanByTier } from '../config/plans';
+import { applyGlobalModalBehavior, getModalAnimationProps, getBackdropStyle } from '../utils/modalBehavior';
+import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 /**
  * UpgradeModal - Shows when user reaches AI Tutor session limit
  * Displays motivational copy and upgrade options
+ * 
+ * INTEGRATED: Global modal behavior (scroll lock, focus trap, ESC key, animations)
  */
 const UpgradeModal = ({ 
   isOpen, 
@@ -18,6 +22,20 @@ const UpgradeModal = ({
   currentTier = "FREE"
 }) => {
   const navigate = useNavigate();
+  const modalRef = useRef(null);
+
+  // Apply global modal behavior
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      return applyGlobalModalBehavior(modalRef.current, {
+        trapFocus: true,
+        outsideClick: true, // Allow closing on backdrop click
+        onClose,
+        scrollLock: true,
+        closeOnEsc: true
+      });
+    }
+  }, [isOpen, onClose]);
 
   console.log('🎭 UpgradeModal render:', { isOpen, upgradeHint, accessInfo, currentTier });
 
