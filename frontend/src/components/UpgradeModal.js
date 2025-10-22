@@ -56,28 +56,35 @@ const UpgradeModal = ({
     navigate('/subscription');
   };
 
+  // Get standardized animation props
+  const backdropAnimation = getModalAnimationProps('backdrop');
+  const modalAnimation = getModalAnimationProps('modal');
+  const backdropStyle = getBackdropStyle();
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - Using global behavior */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            {...backdropAnimation}
+            style={backdropStyle}
+            className="fixed inset-0 z-50"
+            data-modal-backdrop="true"
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal - Using global behavior */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
+            {...modalAnimation}
+            ref={modalRef}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <Card className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div 
+              className="max-w-2xl w-full pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card className="bg-white rounded-2xl shadow-2xl overflow-hidden">
               {/* Header with gradient */}
               <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white relative">
                 <button
