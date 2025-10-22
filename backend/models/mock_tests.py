@@ -1,7 +1,7 @@
 """
 Pydantic models for Mock Tests functionality
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
