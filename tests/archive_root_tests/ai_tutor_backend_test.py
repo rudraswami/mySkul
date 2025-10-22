@@ -7,7 +7,7 @@ from datetime import datetime
 class AITutorFixesTester:
     def __init__(self):
         # Use the correct backend URL from frontend/.env
-        self.base_url = "https://dhruv-frontend-test.preview.emergentagent.com/api"
+        self.base_url = "https://tutor-evolution.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({

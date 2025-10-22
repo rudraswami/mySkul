@@ -11,7 +11,7 @@ from datetime import datetime
 
 class DashboardAnalyticsTest:
     def __init__(self):
-        self.base_url = "https://dhruv-frontend-test.preview.emergentagent.com/api"
+        self.base_url = "https://tutor-evolution.preview.emergentagent.com/api"
         self.token = None
         self.test_email = "test@dhruvai.com"
         self.test_password = "password123"
