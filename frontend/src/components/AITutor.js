@@ -305,6 +305,35 @@ export default function AITutorPremium() {
   };
   
   /**
+   * Load subject-specific default prompts
+   * NEW: Dynamic context-aware default questions
+   */
+  const loadDefaultPrompts = async (subject) => {
+    setPromptsLoading(true);
+    try {
+      const response = await axios.get(`${API}/ai/subjects/${subject}/defaultPrompts`);
+      setDefaultPrompts(response.data.prompts || []);
+    } catch (error) {
+      console.error('Failed to load default prompts:', error);
+      // Fallback to hardcoded prompts
+      setDefaultPrompts([
+        { text: 'Explain the key concepts', type: 'concept' },
+        { text: 'Give me practice problems', type: 'application' },
+        { text: 'Show me exam-style questions', type: 'exam' }
+      ]);
+    } finally {
+      setPromptsLoading(false);
+    }
+  };
+  
+  // Load default prompts when subject changes
+  useEffect(() => {
+    if (selectedSubject && messages.length === 0) {
+      loadDefaultPrompts(selectedSubject);
+    }
+  }, [selectedSubject]);
+  
+  /**
    * Create new session
    */
   const createNewSession = async (firstMessage) => {
