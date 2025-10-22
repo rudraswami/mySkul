@@ -722,6 +722,8 @@ export default function AITutorPremium() {
     setInputMessage('');
     setHasInteraction(false); // FIX: Reset interaction flag
     setSentMessageIds(new Set()); // FIX: Clear message tracking
+    setShowSidebar(false); // NEW: Close sidebar on new chat
+    loadDefaultPrompts(selectedSubject); // NEW: Reload prompts
   };
   
   /**
