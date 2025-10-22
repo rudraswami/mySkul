@@ -90,19 +90,35 @@ export default function MotivationalPopup({ performance, onClose, stats = {} }) 
     setTimeout(onClose, 300);
   };
 
+  // Get global modal styles
+  const backdropStyle = getBackdropStyle();
+  const containerStyle = getModalContainerStyle();
+  const contentStyle = getModalContentStyle({ maxWidth: '32rem' }); // max-w-lg
+
   return (
     <div 
       ref={modalRef}
-      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
+      style={{
+        ...backdropStyle,
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        transition: 'opacity 300ms',
+        opacity: isVisible ? 1 : 0
+      }}
       data-modal-backdrop="true"
       onClick={handleClose}
     >
       <Card 
-        className={`max-w-lg w-full bg-gradient-to-br ${content.color} border-0 shadow-2xl transform transition-all duration-500 ${
-          isVisible ? 'scale-100' : 'scale-75'
-        }`}
+        style={{
+          ...contentStyle,
+          transition: 'all 500ms',
+          transform: isVisible ? 'scale(1)' : 'scale(0.75)'
+        }}
+        className={`w-full bg-gradient-to-br ${content.color} border-0 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
