@@ -799,94 +799,169 @@ export default function AITutorPremium() {
   };
   
   return (
-    <div className="ai-tutor-redesign">
+    <div className="ai-tutor-redesign relative">
       
-      {/* Left Sidebar - Sessions (unchanged as per specs) */}
-      {showSidebar && (
-        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-          {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={startNewChat}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all"
-            >
-              <Plus className="h-5 w-5" />
-              <span className="font-semibold">New Chat</span>
-            </button>
-          </div>
-          
-          {/* Sessions List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {sessions.map(session => (
-              <button
-                key={session.session_id}
-                onClick={() => loadSession(session.session_id)}
-                className={`w-full text-left p-3 rounded-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  currentSession === session.session_id 
-                    ? 'bg-purple-100 dark:bg-purple-900 border-2 border-purple-500' 
-                    : 'bg-gray-50 dark:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2 mb-1">
-                  <MessageCircle className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {session.title || 'Untitled Chat'}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {session.message_count || 0} messages
-                </div>
-              </button>
-            ))}
+      {/* NEW: Overlay Sidebar - Chat History (280px, left overlay) */}
+      <AnimatePresence>
+        {showSidebar && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSidebar(false)}
+              className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            />
             
-            {sessions.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No chat sessions yet</p>
-                <p className="text-xs mt-1">Start a new chat to begin!</p>
+            {/* Sidebar Drawer */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed left-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col"
+            >
+              {/* Sidebar Header */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Chat History</h3>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Close sidebar"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-      )}
+              
+              {/* Sessions List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {sessions.map(session => (
+                  <motion.button
+                    key={session.session_id}
+                    onClick={() => {
+                      loadSession(session.session_id);
+                      setShowSidebar(false); // Close sidebar on mobile
+                    }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`w-full text-left p-3 rounded-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      currentSession === session.session_id 
+                        ? 'bg-purple-100 dark:bg-purple-900 border-2 border-purple-500' 
+                        : 'bg-gray-50 dark:bg-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 mb-1">
+                      <MessageCircle className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {session.title || 'Untitled Chat'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {session.message_count || 0} messages
+                    </div>
+                  </motion.button>
+                ))}
+                
+                {sessions.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No chat sessions yet</p>
+                    <p className="text-xs mt-1">Start a new chat to begin!</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       
-      {/* Main Chat Zone (~640px readable width) */}
+      {/* Main Chat Zone */}
       <div className="flex-1 flex flex-col">
         
-        {/* Header with Dynamic Metrics */}
-        <div className="bg-white/60 dark:bg-white/10 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 p-4">
+        {/* NEW: Dynamic Header - Collapses when chat starts */}
+        <motion.div
+          animate={{ 
+            height: headerCollapsed ? 'auto' : 'auto',
+            paddingTop: headerCollapsed ? '12px' : '16px',
+            paddingBottom: headerCollapsed ? '12px' : '16px'
+          }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="bg-white/60 dark:bg-white/10 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50"
+        >
           <div className="flex items-center justify-between max-w-[640px] mx-auto px-6">
             <div className="flex items-center space-x-3">
-              {/* Mobile Menu Toggle */}
+              {/* Sidebar Toggle (always visible) */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                tabIndex={0}
-                aria-label="Toggle sidebar"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Toggle chat history"
               >
-                {showSidebar ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                <Menu className="h-5 w-5" />
               </button>
               
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
-                <Brain className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI Tutor</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Your personal learning companion</p>
-              </div>
+              {!headerCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
+                    <Brain className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI Tutor</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Your personal learning companion</p>
+                  </div>
+                </motion.div>
+              )}
+              
+              {headerCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center space-x-2"
+                >
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm font-medium text-gray-900 dark:text-white border-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="English">English</option>
+                    <option value="History">History</option>
+                    <option value="Geography">Geography</option>
+                  </select>
+                </motion.div>
+              )}
             </div>
             
-            {/* Drawer Toggle Button */}
-            <button
-              onClick={() => setDrawerOpen(!drawerOpen)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              aria-label="Toggle insights drawer"
-              tabIndex={0}
-            >
-              <Lightbulb className={`h-5 w-5 ${drawerOpen ? 'text-purple-600' : 'text-gray-500'}`} />
-            </button>
+            {/* Right Side Actions */}
+            <div className="flex items-center space-x-2">
+              {/* NEW: New Chat Button (desktop) */}
+              <button
+                onClick={startNewChat}
+                className="hidden md:flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Chat</span>
+              </button>
+              
+              {/* Insights Drawer Toggle */}
+              <button
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Toggle insights drawer"
+              >
+                <Lightbulb className={`h-5 w-5 ${drawerOpen ? 'text-purple-600' : 'text-gray-500'}`} />
+              </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto chat-messages-container" style={{ padding: '24px 24px' }}>
