@@ -25,6 +25,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import LatexRenderer from './microlesson/LatexRenderer';
 import { applyGlobalModalBehavior } from '../utils/modalBehavior';
+import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 export default function EnhancedResultsModal({ 
   results, 
