@@ -540,3 +540,62 @@ textarea:focus-visible,
   border: none !important;
   box-shadow: var(--shadow-subtle);
 }
+
+
+/* ============================================
+   NEW: Overlay Sidebar & FAB Styles
+   Feature: Dynamic Context-Aware Layout
+   ============================================ */
+
+/* Backdrop for sidebar overlay */
+.sidebar-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Overlay sidebar animations */
+.sidebar-overlay {
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Floating Action Button - Mobile Only */
+@media (max-width: 768px) {
+  .fab-new-chat {
+    box-shadow: 0 8px 24px rgba(108, 99, 255, 0.4);
+  }
+  
+  .fab-new-chat:active {
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.6);
+  }
+}
+
+/* Dynamic Default Prompts */
+.default-prompt-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.default-prompt-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(108, 99, 255, 0.2);
+}
+
+/* Header Collapse Animation */
+.header-collapsed {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Keyboard shortcuts hint */
+@media (min-width: 1024px) {
+  .keyboard-hint {
+    opacity: 0.6;
+    font-size: 0.75rem;
+    color: var(--soft-blue);
+  }
+}
+
+/* Improved focus states for accessibility */
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--dhruv-purple-start);
+  outline-offset: 2px;
+}
+
