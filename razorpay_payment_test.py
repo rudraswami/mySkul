@@ -194,11 +194,12 @@ class RazorpayPaymentTester:
         self.log("="*80)
         
         # Test combinations as specified in the review request
+        # Note: PRO is actually called ACHIEVER in the plan config
         test_cases = [
             ("STARTER", "monthly"),
             ("STARTER", "yearly"),
-            ("PRO", "monthly"),
-            ("PRO", "yearly"),
+            ("ACHIEVER", "monthly"),  # PRO plan is called ACHIEVER
+            ("ACHIEVER", "yearly"),
         ]
         
         results = []
