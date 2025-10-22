@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { X, TrendingUp, Zap, Target, Award } from 'lucide-react';
+import { applyGlobalModalBehavior } from '../utils/modalBehavior';
 
 const MOTIVATIONAL_MESSAGES = {
   excellent: {
