@@ -54,10 +54,19 @@ export const MODAL_BEHAVIOR = {
   },
   
   // Z-index layering (must align with existing CSS)
+  // Updated to enforce global viewport visibility
   zIndex: {
-    backdrop: 9000,
-    modal: 9001,
-    nested: 9100, // For modals that open on top of other modals
+    backdrop: 9490,      // Backdrop layer
+    modal: 9500,         // Base modal layer
+    nested: 9600,        // For modals that open on top of other modals
+    floatingUI: 9400     // Floating UI elements below modals
+  },
+  
+  // Viewport constraints
+  viewport: {
+    maxHeight: "90vh",         // Maximum modal height
+    verticalMargin: "2rem",    // Vertical spacing from viewport edges
+    horizontalMargin: "1rem"   // Horizontal spacing from viewport edges
   },
   
   // Accessibility
