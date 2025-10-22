@@ -123,10 +123,11 @@ export default function EnhancedResultsModal({
   const resultsContent = (
     <div 
       ref={modalRef}
-      className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 z-[9999] overflow-y-auto"
+      className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-y-auto"
+      style={{ zIndex: MODAL_BEHAVIOR.zIndex.modal }}
     >
       <div className="min-h-screen py-8 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto" style={{ maxHeight: MODAL_BEHAVIOR.viewport.maxHeight }}>
           {/* Close Button - Top Right */}
           <button
             onClick={onClose}
