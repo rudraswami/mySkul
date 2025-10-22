@@ -64,11 +64,18 @@ export default function AITutorPremium() {
   const [sentMessageIds, setSentMessageIds] = useState(new Set());
   
   // UI State
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false); // Changed to false - now overlay only
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalData, setUpgradeModalData] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false); // Right drawer for reasoning/insights
   const [expandedConcepts, setExpandedConcepts] = useState({}); // Track expanded concept cards
+  
+  // NEW: Dynamic default prompts
+  const [defaultPrompts, setDefaultPrompts] = useState([]);
+  const [promptsLoading, setPromptsLoading] = useState(false);
+  
+  // NEW: Header collapse state
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   
   // Metrics State (Dynamic from API)
   const [metrics, setMetrics] = useState({
