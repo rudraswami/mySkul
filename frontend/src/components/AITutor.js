@@ -607,15 +607,31 @@ export default function AITutorPremium() {
       
       const aiResponse = response.data;
       
-      // Add AI response to UI
+      // Add AI response to UI with unique ID
+      const aiMsgId = aiResponse.message_id || `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const aiMsg = {
         type: 'ai',
         ...aiResponse,
         timestamp: new Date().toISOString(),
-        message_id: aiResponse.message_id || `msg_${Date.now()}`
+        message_id: aiMsgId
       };
       
-      setMessages(prev => [...prev, aiMsg]);
+      // FIX: Check for duplicates
+      setMessages(prev => {
+        const isDuplicateId = prev.some(msg => msg.message_id === aiMsgId);
+        const now = new Date().getTime();
+        const aiContent = JSON.stringify(aiResponse.dual_response || aiResponse.response || '');
+        const isDuplicateContent = prev.some(msg => 
+          msg.type === 'ai' && 
+          JSON.stringify(msg.dual_response || msg.response || '') === aiContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+        
+        if (isDuplicateId || isDuplicateContent) return prev;
+        
+        setSentMessageIds(prevIds => new Set([...prevIds, aiMsgId]));
+        return [...prev, aiMsg];
+      });
       
       // Track usage and refresh metrics
       await trackFeatureUsage('ai_sessions_monthly');
