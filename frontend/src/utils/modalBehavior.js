@@ -311,6 +311,45 @@ export const getModalStyle = (overrides = {}) => {
 };
 
 /**
+ * Get CSS class names for modal elements with correct z-index
+ * 
+ * @returns {Object} Class name strings for modal elements
+ */
+export const getModalClassNames = () => {
+  return {
+    backdrop: `fixed inset-0`,
+    container: `fixed inset-0 flex items-center justify-center p-4 pointer-events-none`,
+    content: `w-full pointer-events-auto max-h-[90vh] overflow-y-auto`,
+  };
+};
+
+/**
+ * Get inline styles for modal elements (for direct style attribute usage)
+ * 
+ * @returns {Object} Style objects for modal elements
+ */
+export const getModalInlineStyles = () => {
+  return {
+    backdrop: {
+      ...getBackdropStyle(),
+      position: 'fixed',
+      inset: 0
+    },
+    container: {
+      ...getModalContainerStyle(),
+      position: 'fixed',
+      inset: 0,
+      pointerEvents: 'none'
+    },
+    content: {
+      ...getModalContentStyle(),
+      pointerEvents: 'auto',
+      width: '100%'
+    }
+  };
+};
+
+/**
  * Hook for modal behavior (React hook version)
  * 
  * @param {Object} options - Configuration options
@@ -332,6 +371,8 @@ export const useModalBehavior = (options = {}) => {
     backdropProps: getModalAnimationProps('backdrop'),
     modalProps: getModalAnimationProps('modal'),
     backdropStyle: getBackdropStyle(),
-    modalStyle: getModalStyle(options.styleOverrides)
+    modalStyle: getModalStyle(options.styleOverrides),
+    classNames: getModalClassNames(),
+    inlineStyles: getModalInlineStyles()
   };
 };
