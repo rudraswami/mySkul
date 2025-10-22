@@ -437,11 +437,27 @@ export default function AITutorPremium() {
         message_id: aiMsgId
       };
       
-      // FIX: Check for duplicates before adding
-      if (!sentMessageIds.has(aiMsgId)) {
-        setMessages(prev => [...prev, aiMsg]);
-        setSentMessageIds(prev => new Set([...prev, aiMsgId]));
-      }
+      // FIX: Check for duplicates by ID and content
+      setMessages(prev => {
+        // Check if message with same ID already exists
+        const isDuplicateId = prev.some(msg => msg.message_id === aiMsgId);
+        
+        // Check if AI message with similar content exists in last 5 seconds
+        const now = new Date().getTime();
+        const aiContent = JSON.stringify(aiResponse.dual_response || aiResponse.response || '');
+        const isDuplicateContent = prev.some(msg => 
+          msg.type === 'ai' && 
+          JSON.stringify(msg.dual_response || msg.response || '') === aiContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+        
+        if (isDuplicateId || isDuplicateContent) {
+          return prev; // Don't add duplicate
+        }
+        
+        setSentMessageIds(prevIds => new Set([...prevIds, aiMsgId]));
+        return [...prev, aiMsg];
+      });
       
       // Track usage and refresh metrics
       await trackFeatureUsage('ai_sessions_monthly');
