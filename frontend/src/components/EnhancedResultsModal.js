@@ -120,7 +120,10 @@ export default function EnhancedResultsModal({
   };
 
   const resultsContent = (
-    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 z-[9999] overflow-y-auto">
+    <div 
+      ref={modalRef}
+      className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 z-[9999] overflow-y-auto"
+    >
       <div className="min-h-screen py-8 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Close Button - Top Right */}
