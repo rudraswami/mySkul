@@ -1384,7 +1384,8 @@ export default function AITutorPremium() {
                   Mentor
                 </button>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
