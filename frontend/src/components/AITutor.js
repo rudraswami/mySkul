@@ -333,6 +333,11 @@ export default function AITutorPremium() {
     }
   }, [selectedSubject]);
   
+  // NEW: Collapse header when chat starts
+  useEffect(() => {
+    setHeaderCollapsed(messages.length > 0 && hasInteraction);
+  }, [messages.length, hasInteraction]);
+  
   /**
    * Create new session
    */
