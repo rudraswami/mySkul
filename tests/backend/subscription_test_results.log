@@ -1,0 +1,1708 @@
+🚀 Starting Dhruv AI Backend API Tests - CRITICAL FIXES VERIFICATION
+================================================================================
+
+🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING
+
+🔥 CRITICAL FIXES VERIFICATION - PRIORITY TESTING
+   Testing high-priority fixes that were just implemented
+================================================================================
+   Setting up authentication for critical tests...
+
+🔍 Testing User Login...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/login
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTYyMWZjNzktNjQ3NC00ODcxLThhODQtMjU1NjI4ODNlMjI5IiwiZW1haWwiOiJ0ZXN0QGRocnV2YWkuY29tIiwiZXhwIjoxNzU5...
+   Login token: eyJhbGciOiJIUzI1NiIs...
+
+🎯 PRIORITY 1: Auto-Note Mentor Database Collection Fix
+   Testing Auto-Note Mentor database collection fix...
+   1. Testing /api/auto-notes/start-session...
+
+🔍 Testing Auto-Note Start Session (Collection Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/start-session
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "c36c8388-6e02-41a7-b1ec-8a70fb92fee0",
+  "session_name": "Critical Fix Test - Physics",
+  "subject": "Physics",
+  "source_type": "live",
+  "status": "active",
+  "created_at": "2025-...
+   ✅ Session created successfully: c36c8388-6e02-41a7-b1ec-8a70fb92fee0
+   Session name: Critical Fix Test - Physics
+   Subject: Physics
+   Status: active
+   2. Testing /api/auto-notes/{session_id}...
+
+🔍 Testing Auto-Note Get Session (Collection Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/c36c8388-6e02-41a7-b1ec-8a70fb92fee0
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "c36c8388-6e02-41a7-b1ec-8a70fb92fee0",
+  "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+  "subject": "Physics",
+  "session_name": "Critical Fix Test - Physics",
+  "source_type":...
+   ✅ Session retrieved successfully from auto_note_sessions collection
+   Retrieved session ID: c36c8388-6e02-41a7-b1ec-8a70fb92fee0
+   Title: Critical Fix Test - Physics
+   Status: active
+   3. Testing /api/auto-notes/sessions...
+
+🔍 Testing Auto-Note List Sessions (Collection Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/sessions
+   Method: GET
+   Status Code: 500
+❌ Failed - Expected 200, got 500
+   Error: {'detail': 'Failed to retrieve session'}
+   ❌ Failed to list sessions - 500 error persists
+   4. Testing error elimination...
+   ❌ 500 errors still occurring - fix incomplete
+   Auto-Note Database Collection Fix: 2/4 tests passed
+
+🎯 PRIORITY 2: MongoDB ObjectId Serialization Fix
+   Testing MongoDB ObjectId serialization fix...
+   1. Testing /api/dashboard/analytics...
+
+🔍 Testing Dashboard Analytics (ObjectId Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/dashboard/analytics
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "recent_progress": [
+    {
+      "progress_id": "651e2533-5aed-4010-bff9-edaec48cc7d8",
+      "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+      "subject": "Mathematics",
+      "chapter": "Q...
+   ✅ Dashboard analytics returned without ObjectId serialization errors
+   Response properly serialized: 455 characters
+   2. Testing /api/analytics/performance...
+
+🔍 Testing Performance Analytics (ObjectId Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/analytics/performance
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "overall_performance": {
+    "average_score": 16.666666666666664,
+    "score_trend": [
+      16.666666666666664,
+      16.666666666666664,
+      16.666666666666664
+    ],
+    "time_trend": [
+     ...
+   ✅ Performance analytics returned without ObjectId/datetime serialization errors
+   MongoDB ObjectId Serialization Fix: 2/2 tests passed
+
+🎯 PRIORITY 3: Mock Test Generation API
+   Testing Mock Test Generation API fix...
+   1. Testing Mathematics mock test generation...
+   Request: {'exam_type': 'JEE', 'subject': 'Mathematics', 'difficulty': 3, 'num_questions': 5}
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Mock Test Generation - Mathematics (API Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Mathematics', 'difficulty': 3, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Mathematics mock test generation failed - 500 error persists
+   2. Testing Physics mock test generation...
+   Request: {'exam_type': 'JEE', 'subject': 'Physics', 'difficulty': 3, 'num_questions': 5}
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Mock Test Generation - Physics (API Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Physics', 'difficulty': 3, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Physics mock test generation failed - 500 error persists
+   3. Testing Chemistry mock test generation...
+   Request: {'exam_type': 'JEE', 'subject': 'Chemistry', 'difficulty': 3, 'num_questions': 5}
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Mock Test Generation - Chemistry (API Fix)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Chemistry', 'difficulty': 3, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Chemistry mock test generation failed - 500 error persists
+   Mock Test Generation API Fix: 0/3 tests passed
+
+🔍 Testing Health Check...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/health
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "status": "healthy",
+  "timestamp": "2025-10-02T07:33:49.185824"
+}...
+
+🔍 Testing Root Endpoint...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Dhruv AI API - Empowering Education with AI"
+}...
+
+🔍 Testing User Registration...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/register
+   Method: POST
+   Status Code: 400
+❌ Failed - Expected 200, got 400
+   Error: {'detail': 'Email already registered'}
+
+🔍 Testing User Login...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/login
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTYyMWZjNzktNjQ3NC00ODcxLThhODQtMjU1NjI4ODNlMjI5IiwiZW1haWwiOiJ0ZXN0QGRocnV2YWkuY29tIiwiZXhwIjoxNzU5...
+   Login token: eyJhbGciOiJIUzI1NiIs...
+
+🔍 Testing Get User Profile...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/user/profile
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+  "full_name": "Test User",
+  "email": "test@dhruvai.com",
+  "exam_type": "JEE",
+  "grade": "12th",
+  "target_year": 2025,
+  "subscription_type":...
+   Testing subscription plans API...
+
+🔍 Testing Subscription Plans API...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/plans
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plans": [
+    {
+      "name": "free",
+      "display_name": "Free Plan",
+      "price_monthly": 0.0,
+      "price_yearly": 0.0,
+      "features": [
+        "Limited AI Tutor conversations (10 mes...
+   ✅ Plans API returned 4 plans
+   Currency: INR
+   Billing cycles: ['monthly', 'yearly']
+   Plan: free
+     Monthly: ₹0.0, Yearly: ₹0.0
+     Features: 5, Limits: 6
+   Plan: basic
+     Monthly: ₹299.0, Yearly: ₹2990.0
+     Features: 6, Limits: 6
+   Plan: premium
+     Monthly: ₹799.0, Yearly: ₹7990.0
+     Features: 8, Limits: 6
+   Plan: pro
+     Monthly: ₹1999.0, Yearly: ₹19990.0
+     Features: 7, Limits: 9
+   ✅ All subscription plans validated with correct pricing and limits
+   Testing current subscription API...
+
+🔍 Testing Current Subscription API...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/current
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "subscription": {
+    "subscription_id": "6966a300-deeb-4fcc-908e-0ed38484a53d",
+    "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+    "plan_id": "free",
+    "plan_name": "free",
+    "status"...
+   ✅ Current subscription retrieved
+   Plan: free
+   Status: active
+   Days remaining: 364
+   Usage features tracked: 6
+   Feature ai_conversations_daily: 0/10
+   Feature mock_tests_monthly: 0/2
+   Feature audio_processing_monthly: 0/15
+   Feature export_functionality: 0/0
+   Feature voice_input: 0/0
+   Feature dual_feedback: 0/0
+   ✅ Current subscription details validated
+   Testing checkout session creation...
+   Testing basic plan (monthly)...
+
+🔍 Testing Checkout Session - basic...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1cOxWQpzVISzWhgKOYtvkV2FWlNI7AxUL5T6o4sch0BcLTtfeX7xKeqgC#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a1cOxWQpzVISzWhgKOYtvkV2FWlNI7AxUL5T6o4sch0BcLTtfeX7xKeqgC
+   Amount: 299.0 INR
+   Checkout URL: ✓
+   Testing premium plan (monthly)...
+
+🔍 Testing Checkout Session - premium...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1RaC2w8zafeo8rMej78s4Lh1mq3E2Z3QBwO6EInUS6xEwrNlS7GHEY8fc#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a1RaC2w8zafeo8rMej78s4Lh1mq3E2Z3QBwO6EInUS6xEwrNlS7GHEY8fc
+   Amount: 799.0 INR
+   Checkout URL: ✓
+   Testing pro plan (yearly)...
+
+🔍 Testing Checkout Session - pro...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a10IPUbx34w29Y7Ll1mKcJIBcnj33222ke04hYVGzT34R5MuVcKG4cpDhX#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a10IPUbx34w29Y7Ll1mKcJIBcnj33222ke04hYVGzT34R5MuVcKG4cpDhX
+   Amount: 19990.0 INR
+   Checkout URL: ✓
+   Testing free plan checkout rejection...
+
+🔍 Testing Checkout Session - Free Plan (Should Fail)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 400, got 500
+   Error: {'detail': 'Failed to create checkout session'}
+   Testing payment status API...
+   Checking payment status for basic session...
+
+🔍 Testing Payment Status - basic...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/payment-status/cs_test_a1cOxWQpzVISzWhgKOYtvkV2FWlNI7AxUL5T6o4sch0BcLTtfeX7xKeqgC
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "status": "open",
+  "payment_status": "unpaid",
+  "amount_total": 29900,
+  "currency": "inr",
+  "metadata": {
+    "billing_cycle": "monthly",
+    "plan_name": "basic",
+    "user_email": "test@dhru...
+   ✅ Payment status retrieved
+   Status: open
+   Payment status: unpaid
+   Amount: 29900 inr
+   Metadata: 5 fields
+   ✅ Payment status structure validated
+   Checking payment status for premium session...
+
+🔍 Testing Payment Status - premium...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/payment-status/cs_test_a1RaC2w8zafeo8rMej78s4Lh1mq3E2Z3QBwO6EInUS6xEwrNlS7GHEY8fc
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "status": "open",
+  "payment_status": "unpaid",
+  "amount_total": 79900,
+  "currency": "inr",
+  "metadata": {
+    "billing_cycle": "monthly",
+    "plan_name": "premium",
+    "user_email": "test@dh...
+   ✅ Payment status retrieved
+   Status: open
+   Payment status: unpaid
+   Amount: 79900 inr
+   Metadata: 5 fields
+   ✅ Payment status structure validated
+   Testing usage tracking and access control...
+
+🔍 Testing Usage Summary...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/usage
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+  "current_plan": "free",
+  "usage_details": {
+    "ai_conversations_daily": {
+      "limit": 10,
+      "used": 0,
+      "remaining": 10,
+      "...
+   ✅ Usage summary retrieved
+   Current plan: free
+   Subscription status: active
+   Features tracked: 6
+   AI conversations: 0/10
+   Mock tests: 0/2
+   ✅ Free plan usage limits correctly configured
+   ✅ Feature ai_conversations_daily access control working correctly
+   ✅ Feature mock_tests_monthly access control working correctly
+   ✅ Feature audio_processing_monthly access control working correctly
+   Testing Stripe webhook endpoint...
+
+🔍 Testing Stripe Webhook...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/webhook/stripe
+   Method: POST
+   Status Code: 200
+❌ Failed - Expected 400, got 200
+   Error: {'received': True, 'event_type': 'checkout.session.completed'}
+   ❌ Stripe webhook endpoint not responding properly
+   Testing complete subscription integration flow...
+   Step 1: Getting available plans...
+   Testing subscription plans API...
+
+🔍 Testing Subscription Plans API...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/plans
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plans": [
+    {
+      "name": "free",
+      "display_name": "Free Plan",
+      "price_monthly": 0.0,
+      "price_yearly": 0.0,
+      "features": [
+        "Limited AI Tutor conversations (10 mes...
+   ✅ Plans API returned 4 plans
+   Currency: INR
+   Billing cycles: ['monthly', 'yearly']
+   Plan: free
+     Monthly: ₹0.0, Yearly: ₹0.0
+     Features: 5, Limits: 6
+   Plan: basic
+     Monthly: ₹299.0, Yearly: ₹2990.0
+     Features: 6, Limits: 6
+   Plan: premium
+     Monthly: ₹799.0, Yearly: ₹7990.0
+     Features: 8, Limits: 6
+   Plan: pro
+     Monthly: ₹1999.0, Yearly: ₹19990.0
+     Features: 7, Limits: 9
+   ✅ All subscription plans validated with correct pricing and limits
+   Step 2: Checking current subscription...
+   Testing current subscription API...
+
+🔍 Testing Current Subscription API...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/current
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "subscription": {
+    "subscription_id": "6966a300-deeb-4fcc-908e-0ed38484a53d",
+    "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+    "plan_id": "free",
+    "plan_name": "free",
+    "status"...
+   ✅ Current subscription retrieved
+   Plan: free
+   Status: active
+   Days remaining: 364
+   Usage features tracked: 6
+   Feature ai_conversations_daily: 0/10
+   Feature mock_tests_monthly: 0/2
+   Feature audio_processing_monthly: 0/15
+   Feature export_functionality: 0/0
+   Feature voice_input: 0/0
+   Feature dual_feedback: 0/0
+   ✅ Current subscription details validated
+   Step 3: Testing checkout session creation...
+   Testing checkout session creation...
+   Testing basic plan (monthly)...
+
+🔍 Testing Checkout Session - basic...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1fqcrh9Up7I6FXPE63MnpGZvhkWGTCjEd1dvjlVp26Qge030jRcOHtXOv#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a1fqcrh9Up7I6FXPE63MnpGZvhkWGTCjEd1dvjlVp26Qge030jRcOHtXOv
+   Amount: 299.0 INR
+   Checkout URL: ✓
+   Testing premium plan (monthly)...
+
+🔍 Testing Checkout Session - premium...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1WNcoQ4gwWo25u8czc5UyhhlFpoeRLPQsd95tXG4UF2lLoEvxDkDMHZZa#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a1WNcoQ4gwWo25u8czc5UyhhlFpoeRLPQsd95tXG4UF2lLoEvxDkDMHZZa
+   Amount: 799.0 INR
+   Checkout URL: ✓
+   Testing pro plan (yearly)...
+
+🔍 Testing Checkout Session - pro...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_a1Xgmiqgeno5ZtiYf3BJ0wITe45SX16x6ATadO0nKIh0OQCnoD4Pjb3Bwo#fidkdWxOYHwnPyd1blpxYHZxWjA0V2xNPFFDY05KQ1c2RlRQamt%2FU0s1YFV8NmtsYkY9dURnXDJE...
+   ✅ Checkout session created
+   Session ID: cs_test_a1Xgmiqgeno5ZtiYf3BJ0wITe45SX16x6ATadO0nKIh0OQCnoD4Pjb3Bwo
+   Amount: 19990.0 INR
+   Checkout URL: ✓
+   Testing free plan checkout rejection...
+
+🔍 Testing Checkout Session - Free Plan (Should Fail)...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/checkout
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 400, got 500
+   Error: {'detail': 'Failed to create checkout session'}
+   Step 4: Testing usage tracking...
+   Testing usage tracking and access control...
+
+🔍 Testing Usage Summary...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/subscription/usage
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+  "current_plan": "free",
+  "usage_details": {
+    "ai_conversations_daily": {
+      "limit": 10,
+      "used": 0,
+      "remaining": 10,
+      "...
+   ✅ Usage summary retrieved
+   Current plan: free
+   Subscription status: active
+   Features tracked: 6
+   AI conversations: 0/10
+   Mock tests: 0/2
+   ✅ Free plan usage limits correctly configured
+   ✅ Feature ai_conversations_daily access control working correctly
+   ✅ Feature mock_tests_monthly access control working correctly
+   ✅ Feature audio_processing_monthly access control working correctly
+   Integration flow: 4/4 steps successful
+   ✅ Subscription integration flow working correctly
+   Sending AI chat message (this may take a few seconds)...
+
+🔍 Testing AI Chat Message...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/chat/message
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "68e7a7c1-6612-47ab-86ba-cb5c27d5b746",
+  "message": "Explain quadratic equations and their applications in JEE",
+  "response": "Quadratic equations play a crucial role in algebra an...
+   Session ID: 68e7a7c1-6612-47ab-86ba-cb5c27d5b746
+
+🔍 Testing Get Chat Sessions...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/chat/sessions
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "sessions": [
+    {
+      "_id": "68de2aed2a5eb1cb5b1f4ec2",
+      "session_id": "68e7a7c1-6612-47ab-86ba-cb5c27d5b746",
+      "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+      "subject": "...
+
+🔍 Testing Get Chat Messages...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/chat/68e7a7c1-6612-47ab-86ba-cb5c27d5b746/messages
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "messages": [
+    {
+      "_id": "68de2b002a5eb1cb5b1f4ec3",
+      "message_id": "9e3ae7e2-8372-444d-a0b1-aae1b51b5c3b",
+      "session_id": "68e7a7c1-6612-47ab-86ba-cb5c27d5b746",
+      "user_id"...
+   🎯 PRIORITY TEST: Dashboard Analytics API - Review Request Focus
+   Testing /api/dashboard/analytics endpoint specifically
+   Expected fields: recent_progress, total_study_time, chat_sessions_count, current_streak, weekly_goals_progress
+
+🔍 Testing Dashboard Analytics...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/dashboard/analytics
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "recent_progress": [
+    {
+      "progress_id": "651e2533-5aed-4010-bff9-edaec48cc7d8",
+      "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+      "subject": "Mathematics",
+      "chapter": "Q...
+   ✅ Dashboard analytics API returned 200 OK
+   📊 Full Response Structure: {
+  "recent_progress": [
+    {
+      "progress_id": "651e2533-5aed-4010-bff9-edaec48cc7d8",
+      "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+      "subject": "Mathematics",
+      "chapter": "Quadratic Equations",
+      "concept": "Discriminant",
+      "mastery_level": 75.0,
+      "time_spent": 30,
+      "last_accessed": "2025-10-02T07:32:26.250000",
+      "questions_attempted": 10,
+      "questions_correct": 8
+    }
+  ],
+  "total_study_time": 30,
+  "chat_sessions_count": 10,
+  "current_streak": 7,
+  "weekly_goals_progress": 75
+}
+   ✅ recent_progress: [{'progress_id': '651e2533-5aed-4010-bff9-edaec48cc7d8', 'user_id': 'a621fc79-6474-4871-8a84-25562883e229', 'subject': 'Mathematics', 'chapter': 'Quadratic Equations', 'concept': 'Discriminant', 'mastery_level': 75.0, 'time_spent': 30, 'last_accessed': '2025-10-02T07:32:26.250000', 'questions_attempted': 10, 'questions_correct': 8}] (type: list)
+   ✅ total_study_time: 30 (type: int)
+   ✅ chat_sessions_count: 10 (type: int)
+   ✅ current_streak: 7 (type: int)
+   ✅ weekly_goals_progress: 75 (type: int)
+   ✅ All required fields present in response
+
+   📈 DATA QUALITY ANALYSIS:
+   ✅ recent_progress: Contains 1 entries (appears to be actual data)
+      Item 1: {'progress_id': '651e2533-5aed-4010-bff9-edaec48cc7d8', 'user_id': 'a621fc79-6474-4871-8a84-25562883e229', 'subject': 'Mathematics', 'chapter': 'Quadratic Equations', 'concept': 'Discriminant', 'mastery_level': 75.0, 'time_spent': 30, 'last_accessed': '2025-10-02T07:32:26.250000', 'questions_attempted': 10, 'questions_correct': 8}
+   ✅ total_study_time: 30 (appears to be actual data)
+   ✅ chat_sessions_count: 10 (valid count)
+   ✅ current_streak: 7 (valid streak)
+   ✅ weekly_goals_progress: 75% (valid percentage)
+
+   🎯 REVIEW REQUEST CONCLUSION:
+   ✅ API returns ACTUAL DATABASE DATA (not just placeholder values)
+
+🔍 Testing Progress Summary...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/progress/summary
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "progress": [
+    {
+      "_id": "Mathematics",
+      "avg_mastery": 75.0,
+      "total_time": 30,
+      "concepts_studied": 1,
+      "questions_attempted": 10,
+      "questions_correct": 8,
+     ...
+
+🔍 Testing Update Progress...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/progress/update
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Progress updated successfully"
+}...
+   Sending doubt query (this may take a few seconds)...
+
+🔍 Testing Doubt Resolution...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/doubt/resolve
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "question": "What is Newton's second law of motion?",
+  "answer": "Newton's Second Law of Motion states that the acceleration of an object is directly proportional to the net external force acting...
+   Testing mock test generation 1/5: Mathematics Level 3 (10 questions)
+
+🔍 Testing Generate Mock Test - Mathematics L3...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Mathematics', 'difficulty': 3, 'num_questions': 10}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Failed to generate test for Mathematics
+   Testing mock test generation 2/5: Physics Level 4 (5 questions)
+
+🔍 Testing Generate Mock Test - Physics L4...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Physics', 'difficulty': 4, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Failed to generate test for Physics
+   Testing mock test generation 3/5: Chemistry Level 2 (25 questions)
+
+🔍 Testing Generate Mock Test - Chemistry L2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Chemistry', 'difficulty': 2, 'num_questions': 25}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Failed to generate test for Chemistry
+   Testing mock test generation 4/5: Mathematics Level 1 (5 questions)
+
+🔍 Testing Generate Mock Test - Mathematics L1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'NEET', 'subject': 'Mathematics', 'difficulty': 1, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Failed to generate test for Mathematics
+   Testing mock test generation 5/5: Physics Level 5 (10 questions)
+
+🔍 Testing Generate Mock Test - Physics L5...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'NEET', 'subject': 'Physics', 'difficulty': 5, 'num_questions': 10}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Failed to generate test for Physics
+   Testing enhanced question generation features...
+   Testing Mathematics question generation...
+
+🔍 Testing Enhanced Questions - Mathematics...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Mathematics', 'difficulty': 3, 'num_questions': 3}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}, {'type': 'greater_than_equal', 'loc': ['body', 'num_questions'], 'msg': 'Input should be greater than or equal to 5', 'input': 3, 'ctx': {'ge': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/greater_than_equal'}]}
+   ❌ Failed to generate Mathematics questions
+   Testing Physics question generation...
+
+🔍 Testing Enhanced Questions - Physics...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Physics', 'difficulty': 3, 'num_questions': 3}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}, {'type': 'greater_than_equal', 'loc': ['body', 'num_questions'], 'msg': 'Input should be greater than or equal to 5', 'input': 3, 'ctx': {'ge': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/greater_than_equal'}]}
+   ❌ Failed to generate Physics questions
+   Testing Chemistry question generation...
+
+🔍 Testing Enhanced Questions - Chemistry...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Chemistry', 'difficulty': 3, 'num_questions': 3}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}, {'type': 'greater_than_equal', 'loc': ['body', 'num_questions'], 'msg': 'Input should be greater than or equal to 5', 'input': 3, 'ctx': {'ge': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/greater_than_equal'}]}
+   ❌ Failed to generate Chemistry questions
+❌ No token or test IDs available for mock test submission
+   Fetching comprehensive performance analytics...
+
+🔍 Testing Performance Analytics...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/analytics/performance
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "overall_performance": {
+    "average_score": 16.666666666666664,
+    "score_trend": [
+      16.666666666666664,
+      16.666666666666664,
+      16.666666666666664
+    ],
+    "time_trend": [
+     ...
+   ✅ Analytics retrieved successfully
+   Average score: 16.7
+   Subjects analyzed: 1
+   Weekly completed hours: 0.5
+   Parent grade: B
+   Testing stress assessment scenario 1/2: Stress Level 7/10
+   This may take a few seconds for AI recommendations...
+
+🔍 Testing Stress Assessment - Scenario 1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/wellness/stress-assessment
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "assessment_id": "ea98a023-df6f-4551-a81b-ce56f20a0ab0",
+  "wellness_score": 4.5,
+  "recommendations": [
+    "Practice daily meditation for 10-15 minutes",
+    "Maintain regular sleep schedule (7-...
+   ✅ Assessment completed
+   Wellness score: 4.5/10
+   Recommendations count: 5
+   Priority actions: 3
+   Testing stress assessment scenario 2/2: Stress Level 3/10
+   This may take a few seconds for AI recommendations...
+
+🔍 Testing Stress Assessment - Scenario 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/wellness/stress-assessment
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "assessment_id": "89005708-44d9-4f17-a0ac-0de3aed7f966",
+  "wellness_score": 8.5,
+  "recommendations": [
+    "Practice daily meditation for 10-15 minutes",
+    "Maintain regular sleep schedule (7-...
+   ✅ Assessment completed
+   Wellness score: 8.5/10
+   Recommendations count: 5
+   Priority actions: 3
+   Fetching personalized motivational content...
+   This may take a few seconds for AI content generation...
+
+🔍 Testing Motivational Content...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/wellness/motivational-content
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "daily_content": [
+    {
+      "content_id": "7e7f55e3-4f67-49cd-90ad-d6950173f10b",
+      "content_type": "quote",
+      "title": "Daily Inspiration",
+      "content": "Success is not final, fail...
+   ✅ Motivational content retrieved
+   Content items: 4
+   Content types: tip, exercise, ai_generated, quote
+   Wellness tip provided: Yes
+   Testing authentication validation on new endpoints...
+   Testing mock-tests/generate without auth...
+
+🔍 Testing Auth Validation - mock-tests/generate...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing analytics/performance without auth...
+
+🔍 Testing Auth Validation - analytics/performance...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/analytics/performance
+   Method: GET
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing wellness/stress-assessment without auth...
+
+🔍 Testing Auth Validation - wellness/stress-assessment...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/wellness/stress-assessment
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing wellness/motivational-content without auth...
+
+🔍 Testing Auth Validation - wellness/motivational-content...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/wellness/motivational-content
+   Method: GET
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing ai/dual-response without auth...
+
+🔍 Testing Auth Validation - ai/dual-response...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing ai/mentor-only without auth...
+
+🔍 Testing Auth Validation - ai/mentor-only...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/mentor-only
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing ai/professor-only without auth...
+
+🔍 Testing Auth Validation - ai/professor-only...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/professor-only
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing auto-note session start...
+
+🔍 Testing Auto-Note Start Session...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/start-session
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "00780628-485c-4cd9-aa2d-a9e599db9cff",
+  "session_name": "Physics Class - Electromagnetic Induction",
+  "subject": "Physics",
+  "source_type": "live",
+  "status": "active",
+  "creat...
+   ✅ Session started: 00780628-485c-4cd9-aa2d-a9e599db9cff
+   Title: N/A
+   Subject: Physics
+   Status: active
+   Testing audio chunk processing...
+   Processing audio chunk 1/3...
+
+🔍 Testing Process Audio Chunk 1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/process-audio
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "chunk_id": "c184ed89-15b3-4197-a006-d4c793b7ed5b",
+  "processed": true,
+  "concepts_detected": [
+    "law"
+  ],
+  "timestamp": 0.0,
+  "transcription_preview": "Today we will learn about electroma...
+   ✅ Chunk 1 processed
+   Concepts detected: 1
+   Transcription preview: Today we will learn about electromagnetic inductio...
+   Processing audio chunk 2/3...
+
+🔍 Testing Process Audio Chunk 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/process-audio
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "chunk_id": "eaccf6bc-9ce9-476e-aa44-0de58b9a146b",
+  "processed": true,
+  "concepts_detected": [
+    "formula"
+  ],
+  "timestamp": 15.5,
+  "transcription_preview": "The formula for electromagneti...
+   ✅ Chunk 2 processed
+   Concepts detected: 1
+   Transcription preview: The formula for electromagnetic induction is EMF e...
+   Processing audio chunk 3/3...
+
+🔍 Testing Process Audio Chunk 3...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/process-audio
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "chunk_id": "3962597b-ab08-4323-9f18-c1a918944743",
+  "processed": true,
+  "concepts_detected": [
+    "principle"
+  ],
+  "timestamp": 30.2,
+  "transcription_preview": "This principle is fundamenta...
+   ✅ Chunk 3 processed
+   Concepts detected: 1
+   Transcription preview: This principle is fundamental to understanding how...
+   Testing auto-note session completion...
+   This may take 10-15 seconds for dual AI analysis...
+
+🔍 Testing Auto-Note End Session...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/end-session?session_id=exam-genius-hub
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 200, got 500
+   Error: {'detail': 'Failed to complete note session'}
+   Testing auto-note session retrieval...
+
+🔍 Testing Get Auto-Note Session...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/00780628-485c-4cd9-aa2d-a9e599db9cff
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "00780628-485c-4cd9-aa2d-a9e599db9cff",
+  "user_id": "a621fc79-6474-4871-8a84-25562883e229",
+  "subject": "Physics",
+  "session_name": "Physics Class - Electromagnetic Induction",
+  ...
+   ✅ Session retrieved
+   Session ID: 00780628-485c-4cd9-aa2d-a9e599db9cff
+   Title: N/A
+   Subject: Physics
+   Status: processing
+   Has transcription: No
+   Has structured notes: No
+   Has dual analysis: No
+   Testing auto-note sessions listing...
+
+🔍 Testing List Auto-Note Sessions...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/sessions
+   Method: GET
+   Status Code: 500
+❌ Failed - Expected 200, got 500
+   Error: {'detail': 'Failed to retrieve session'}
+   Testing auto-note point explanation...
+   This may take 5-10 seconds for dual AI explanation...
+
+🔍 Testing Explain Note Point...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/explain-point
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 200, got 500
+   Error: {'detail': 'Failed to explain note point'}
+   Testing auto-note flashcard generation...
+   This may take 5-10 seconds for AI flashcard creation...
+
+🔍 Testing Generate Flashcards...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auto-notes/generate-flashcards
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['query', 'note_id'], 'msg': 'Field required', 'input': None, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+❌ No token or test IDs available for dual feedback test
+   Testing Phase 2: Study Planning Dual Intelligence...
+   Testing High Stress Student (stress level: 8/10)
+   Daily hours: 8, Weak subjects: 2
+   This may take 10-15 seconds for dual AI planning...
+
+🔍 Testing Study Plan - High Stress Student...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plan_id": "a194ce73-a2ce-4d0a-9dcd-6adcec76b338",
+  "dual_intelligence_plan": {
+    "professor": {
+      "persona": "professor",
+      "academic_structure": "",
+      "focus": "Curriculum coverag...
+   ✅ Dual intelligence plan generated
+   Plan ID: a194ce73-a2ce-4d0a-9dcd-6adcec76b338
+   Professor focus: Curriculum coverage, exam compliance, rigorous preparation
+   Mentor focus: Motivation, stress management, adaptive learning
+   Primary persona: mentor
+   Timeline start: 2025-10-02
+   Review frequency: weekly
+   ⚠️  Dual intelligence structure incomplete
+   Professor structure: ✗
+   Mentor guidance: ✓
+   Timeline setup: ✓
+   Testing Balanced Student (stress level: 4/10)
+   Daily hours: 6, Weak subjects: 1
+   This may take 10-15 seconds for dual AI planning...
+
+🔍 Testing Study Plan - Balanced Student...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plan_id": "bf75c16e-0de2-438b-a569-86a5f9d6b116",
+  "dual_intelligence_plan": {
+    "professor": {
+      "persona": "professor",
+      "academic_structure": "",
+      "focus": "Curriculum coverag...
+   ✅ Dual intelligence plan generated
+   Plan ID: bf75c16e-0de2-438b-a569-86a5f9d6b116
+   Professor focus: Curriculum coverage, exam compliance, rigorous preparation
+   Mentor focus: Motivation, stress management, adaptive learning
+   Primary persona: mentor
+   Timeline start: 2025-10-02
+   Review frequency: weekly
+   ⚠️  Dual intelligence structure incomplete
+   Professor structure: ✗
+   Mentor guidance: ✓
+   Timeline setup: ✓
+   Testing Low Stress Student (stress level: 2/10)
+   Daily hours: 4, Weak subjects: 0
+   This may take 10-15 seconds for dual AI planning...
+
+🔍 Testing Study Plan - Low Stress Student...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plan_id": "b49f2271-7db2-47ae-a27f-a7d6cc33ace1",
+  "dual_intelligence_plan": {
+    "professor": {
+      "persona": "professor",
+      "academic_structure": "",
+      "focus": "Curriculum coverag...
+   ✅ Dual intelligence plan generated
+   Plan ID: b49f2271-7db2-47ae-a27f-a7d6cc33ace1
+   Professor focus: Curriculum coverage, exam compliance, rigorous preparation
+   Mentor focus: Motivation, stress management, adaptive learning
+   Primary persona: mentor
+   Timeline start: 2025-10-02
+   Review frequency: weekly
+   ⚠️  Dual intelligence structure incomplete
+   Professor structure: ✗
+   Mentor guidance: ✓
+   Timeline setup: ✓
+   Testing Phase 2: Enhanced Question Analysis...
+   Testing Stressed Student - Math Problem
+   Question: 'Solve the integral ∫(x² + 3x + 2)dx step by step...'
+   This may take 10-15 seconds for enhanced dual analysis...
+
+🔍 Testing Enhanced Analysis - Stressed Student - Math Problem...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "enhanced_b18f61c2-361d-4e1a-a089-0ba362daa4a2",
+  "enhanced_analysis": {
+    "technical_accuracy": {
+      "persona": "professor",
+      "analysis": "To solve the integral \\( \\int...
+   ✅ Enhanced analysis received
+   Technical accuracy persona: professor
+   Learning psychology persona: mentor
+   Student performance level: developing
+   Student stress status: moderate
+   Recommended approach: encouraging
+   Primary persona: professor
+   ✅ Enhanced analysis structure validated
+   Technical accuracy: Professor provides factual correctness
+   Learning psychology: Mentor optimizes for student understanding
+   Student context: Performance and stress assessment included
+   Scenario metadata: Persona classification provided
+   Testing Confident Student - Physics Concept
+   Question: 'Explain the concept of electromagnetic induction a...'
+   This may take 10-15 seconds for enhanced dual analysis...
+
+🔍 Testing Enhanced Analysis - Confident Student - Physics Concept...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "enhanced_1cd6b1aa-24b2-4256-9721-e5c70c803016",
+  "enhanced_analysis": {
+    "technical_accuracy": {
+      "persona": "professor",
+      "analysis": "Hello there! Appreciating how f...
+   ✅ Enhanced analysis received
+   Technical accuracy persona: professor
+   Learning psychology persona: mentor
+   Student performance level: developing
+   Student stress status: moderate
+   Recommended approach: encouraging
+   Primary persona: mentor
+   ✅ Enhanced analysis structure validated
+   Technical accuracy: Professor provides factual correctness
+   Learning psychology: Mentor optimizes for student understanding
+   Student context: Performance and stress assessment included
+   Scenario metadata: Persona classification provided
+   Testing Average Student - Chemistry Problem
+   Question: 'Balance the chemical equation: C₂H₆ + O₂ → CO₂ + H...'
+   This may take 10-15 seconds for enhanced dual analysis...
+
+🔍 Testing Enhanced Analysis - Average Student - Chemistry Problem...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "enhanced_3ed3ca95-0193-4cdd-85bf-b9565aa818ae",
+  "enhanced_analysis": {
+    "technical_accuracy": {
+      "persona": "professor",
+      "analysis": "",
+      "focus": "Factual corr...
+   ✅ Enhanced analysis received
+   Technical accuracy persona: professor
+   Learning psychology persona: mentor
+   Student performance level: developing
+   Student stress status: moderate
+   Recommended approach: encouraging
+   Primary persona: mentor
+   ⚠️  Enhanced analysis structure incomplete
+   Technical analysis: ✗
+   Psychology guidance: ✓
+   Student assessment: ✓
+   Scenario metadata: ✓
+   Testing Phase 2 integration with authentication and database...
+   Skipping Mock Test Dual Feedback - no test IDs available
+   Testing Study Planning Dual Intelligence with authentication...
+
+🔍 Testing Phase 2 Auth - Study Planning Dual Intelligence...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "plan_id": "f9a123e5-d953-4cd7-a57d-f7295889970e",
+  "dual_intelligence_plan": {
+    "professor": {
+      "persona": "professor",
+      "academic_structure": "",
+      "focus": "Curriculum coverag...
+   ✅ Study Planning Dual Intelligence authenticated successfully
+   ✅ Study plan persisted with ID: f9a123e5-d953-4cd7-a57d-f7295889970e
+   Testing Study Planning Dual Intelligence without authentication...
+
+🔍 Testing Phase 2 Unauth - Study Planning Dual Intelligence...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing Enhanced Question Analysis with authentication...
+
+🔍 Testing Phase 2 Auth - Enhanced Question Analysis...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "enhanced_b16f2f66-2d0b-470b-baf1-106e32c39393",
+  "enhanced_analysis": {
+    "technical_accuracy": {
+      "persona": "professor",
+      "analysis": "",
+      "focus": "Factual corr...
+   ✅ Enhanced Question Analysis authenticated successfully
+   ✅ Analysis session created: enhanced_b16f2f66-2d0b-470b-baf1-106e32c39393
+   Testing Enhanced Question Analysis without authentication...
+
+🔍 Testing Phase 2 Unauth - Enhanced Question Analysis...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 401
+✅ Passed - Status: 401
+   Response: {
+  "detail": "Missing or invalid authorization header"
+}...
+   ✅ Correctly rejected unauthorized request
+   Testing Phase 2 error handling and fallback mechanisms...
+   Testing Invalid Study Plan Date...
+
+🔍 Testing Error Handling - Invalid Study Plan Date...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 422, got 500
+   Error: {'detail': 'Failed to create dual study plan'}
+   ❌ Error handling failed
+   Testing Invalid Study Hours...
+
+🔍 Testing Error Handling - Invalid Study Hours...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-study-plan
+   Method: POST
+   Status Code: 422
+✅ Passed - Status: 422
+   Response: {
+  "detail": [
+    {
+      "type": "less_than_equal",
+      "loc": [
+        "body",
+        "daily_study_hours"
+      ],
+      "msg": "Input should be less than or equal to 16",
+      "input": 25,
+ ...
+   ✅ Error handled correctly (status 422)
+   Testing Empty Question Analysis...
+
+🔍 Testing Error Handling - Empty Question Analysis...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/enhanced-question-analysis
+   Method: POST
+   Status Code: 200
+❌ Failed - Expected 422, got 200
+   Error: {'session_id': 'enhanced_df08bdfb-4da6-463a-abe7-d48803fbc923', 'enhanced_analysis': {'technical_accuracy': {'persona': 'professor', 'analysis': '', 'focus': 'Factual correctness, step-by-step reasoning, exam compliance'}, 'learning_psychology': {'persona': 'mentor', 'guidance': "Hello there! First off, I want to commend you for taking on the challenge of preparing for the JEE exam. It's a big task, but every bit of effort you put in now is a valuable step toward your goal. Your determination is truly inspiring!\n\n### Let's Approach the Question Together:\n\nSince the exam type you're preparing for is JEE, it's all about understanding concepts deeply and applying them innovatively. At this point, you're facing a question that might feel a bit like an enigma. That’s okay—we’ve all been there.\n\n1. **Technical Breakdown**:\n   Suppose your question is from a particular topic like calculus or algebra. Let's say it's about integrals, for instance. Here’s how to crack it:\n\n   - **Identify** the type of integral: Is it definite or indefinite?\n   - **Recognize** the function involved: Is it a polynomial, trigonometric, logarithmic, etc.?\n   - **Look** for suitable methods: Substitution, integration by parts, or perhaps using standard formulas.\n\n   By dissecting the question this way, you'll pinpoint exactly what the question is asking you to do.\n\n2. **Emotional and Learning Support**:\n   I notice your stress level is at a 4.3/10, which is quite manageable. This means you’re handling things pretty well, but let’s make sure we keep it in check. Remember, every challenging question is an opportunity to learn and grow, not a measurement of your worth or ability.\n\n### Practical Next Steps:\n\n- **Break it Down**, Step-by-Step: Don’t rush. Take it one small step at a time, as discussed above.  \n- **Practice Similar Questions**: Look for similar types of problems to boost your confidence. This repetition solidifies understanding and uncovers patterns.  \n- **Reflect on Mistakes**: If you make an error, identify where you went off track. Each mistake is your personal tutor in knowing what not to do next time.\n\n### You’ve Got This!\n\nYour recent performance shows you're building a foundation, even if it feels slow. Each percentage point is progress. Visualize your success in these equations leading you straight to your dreams. With consistent effort and strategic practice, there's nothing you can't conquer.\n\nTrust in the process and more importantly, trust in yourself. You're capable, you're improving, and you're getting closer to your goal with each practice session. Keep going! 🌟", 'focus': 'Student understanding, confidence building, personalized approach'}}, 'student_context': {'performance_level': 'developing', 'stress_status': 'moderate', 'recommended_approach': 'encouraging'}, 'scenario_metadata': {'primary_persona': 'mentor', 'scenario_type': 'guidance_motivation', 'confidence': 0.2}}
+   ❌ Error handling failed
+   Testing Phase 2 backward compatibility with existing mock test system...
+   Testing Legacy Mock Test Generation...
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Backward Compatibility - Legacy Mock Test Generation...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 422
+❌ Failed - Expected 200, got 422
+   Error: {'detail': [{'type': 'missing', 'loc': ['body', 'subjects'], 'msg': 'Field required', 'input': {'exam_type': 'JEE', 'subject': 'Mathematics', 'difficulty': 3, 'num_questions': 5}, 'url': 'https://errors.pydantic.dev/2.11/v/missing'}]}
+   ❌ Legacy Mock Test Generation failed
+   🎯 PRIORITY TEST: AI Tutor Mathematical Formatting Functionality
+   Testing /api/ai/dual-response endpoint with mathematical expressions
+   Focus: Verify mathematical expression handling in AI responses
+   Question: 'Solve x^2 - 5x + 6 = 0 step by step'
+   This may take 10-15 seconds for dual AI mathematical processing...
+
+🔍 Testing Mathematical Formatting Test...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "e3bde5a2-be4c-47e2-b134-a23b1dcc86a9",
+  "message": "Solve x^2 - 5x + 6 = 0 step by step",
+  "dual_response": {
+    "primary": {
+      "persona": "professor",
+      "response": "To ...
+   ✅ Dual response received for mathematical question
+   Primary persona: N/A
+   Secondary persona: N/A
+   Scenario type: N/A
+   Confidence: 0.00
+
+   📊 MATHEMATICAL FORMATTING ANALYSIS:
+   Primary response length: 0 characters
+   Secondary response length: 0 characters
+   Primary response mathematical indicators: 0
+   Secondary response mathematical indicators: 0
+   Primary response step indicators: 0
+   Secondary response step indicators: 0
+
+   📝 SAMPLE CONTENT VERIFICATION:
+   Primary Response Preview (first 200 chars):
+   '...'
+   Secondary Response Preview (first 200 chars):
+   '...'
+
+   🎯 MATHEMATICAL FORMATTING ASSESSMENT:
+   Contains mathematical expressions: ❌
+   Contains step-by-step solution: ❌
+   Responses have proper length: ❌
+   Both personas respond coherently: ❌
+   ❌ MATHEMATICAL FORMATTING TEST FAILED
+   - One or more formatting criteria not met
+   Testing scenario classification logic...
+   Testing scenario 1/5: Technical/factual question
+   Message: 'Solve x² + 5x + 6 = 0 step by step...'
+
+🔍 Testing Scenario Classification - Technical/factual question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=Solve x² + 5x + 6 = 0 step by step
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Solve x\u00b2   5x   6 = 0 step by step",
+  "classification": {
+    "primary_persona": "professor",
+    "secondary_persona": "mentor",
+    "scenario_type": "fact_solving",
+    "confide...
+   ✅ Classification successful
+   Primary persona: professor
+   Scenario type: fact_solving
+   Confidence: 0.40
+   ✅ Correct persona classification
+   Testing scenario 2/5: Motivational/guidance question
+   Message: 'I'm stressed about my JEE exam, help me plan...'
+
+🔍 Testing Scenario Classification - Motivational/guidance question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=I'm stressed about my JEE exam, help me plan
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "I'm stressed about my JEE exam, help me plan",
+  "classification": {
+    "primary_persona": "mentor",
+    "secondary_persona": "professor",
+    "scenario_type": "guidance_motivation",
+...
+   ✅ Classification successful
+   Primary persona: mentor
+   Scenario type: guidance_motivation
+   Confidence: 0.20
+   ✅ Correct persona classification
+   Testing scenario 3/5: Mixed/general question
+   Message: 'What are effective study techniques?...'
+
+🔍 Testing Scenario Classification - Mixed/general question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=What are effective study techniques?
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "What are effective study techniques?",
+  "classification": {
+    "primary_persona": "mentor",
+    "secondary_persona": "professor",
+    "scenario_type": "general_inquiry",
+    "confide...
+   ✅ Classification successful
+   Primary persona: mentor
+   Scenario type: general_inquiry
+   Confidence: 0.50
+   ✅ Correct persona classification
+   Testing scenario 4/5: Technical/factual question
+   Message: 'Explain the concept of derivatives in calculus...'
+
+🔍 Testing Scenario Classification - Technical/factual question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=Explain the concept of derivatives in calculus
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Explain the concept of derivatives in calculus",
+  "classification": {
+    "primary_persona": "professor",
+    "secondary_persona": "mentor",
+    "scenario_type": "fact_solving",
+    "...
+   ✅ Classification successful
+   Primary persona: professor
+   Scenario type: fact_solving
+   Confidence: 0.20
+   ✅ Correct persona classification
+   Testing scenario 5/5: Motivational/guidance question
+   Message: 'I'm feeling demotivated and need guidance...'
+
+🔍 Testing Scenario Classification - Motivational/guidance question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=I'm feeling demotivated and need guidance
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "I'm feeling demotivated and need guidance",
+  "classification": {
+    "primary_persona": "mentor",
+    "secondary_persona": "professor",
+    "scenario_type": "guidance_motivation",
+   ...
+   ✅ Classification successful
+   Primary persona: mentor
+   Scenario type: guidance_motivation
+   Confidence: 0.40
+   ✅ Correct persona classification
+   Testing dual-layer AI coordinated responses...
+   Testing dual response 1/3: Technical math problem
+   Message: 'Solve x² + 5x + 6 = 0 step by step...'
+   This may take 10-15 seconds for dual AI processing...
+
+🔍 Testing Dual AI Response - Technical math problem...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "20f2a8f5-f105-458c-9dcd-df0eef2e57be",
+  "message": "Solve x\u00b2 + 5x + 6 = 0 step by step",
+  "dual_response": {
+    "primary": {
+      "persona": "professor",
+      "response": ...
+   ✅ Dual response received
+   Primary persona: professor
+   Secondary persona: mentor
+   Scenario type: fact_solving
+   Confidence: 0.40
+   Primary response length: 1834
+   Secondary response length: 1809
+   ✅ Response structure validated
+   Testing dual response 2/3: Motivational guidance
+   Message: 'I'm stressed about my JEE exam, help me plan...'
+   This may take 10-15 seconds for dual AI processing...
+
+🔍 Testing Dual AI Response - Motivational guidance...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "0376c544-435e-4847-85ad-0b348d8520e1",
+  "message": "I'm stressed about my JEE exam, help me plan",
+  "dual_response": {
+    "primary": {
+      "persona": "mentor",
+      "response"...
+   ✅ Dual response received
+   Primary persona: mentor
+   Secondary persona: professor
+   Scenario type: guidance_motivation
+   Confidence: 0.20
+   Primary response length: 1982
+   Secondary response length: 0
+   ✅ Response structure validated
+   Testing dual response 3/3: Mixed/general question
+   Message: 'What are effective study techniques?...'
+   This may take 10-15 seconds for dual AI processing...
+
+🔍 Testing Dual AI Response - Mixed/general question...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "edf54329-4a52-4e59-9129-16fa2f4c139b",
+  "message": "What are effective study techniques?",
+  "dual_response": {
+    "primary": {
+      "persona": "mentor",
+      "response": "Let's...
+   ✅ Dual response received
+   Primary persona: mentor
+   Secondary persona: professor
+   Scenario type: general_inquiry
+   Confidence: 0.50
+   Primary response length: 1999
+   Secondary response length: 0
+   ✅ Response structure validated
+   Testing pure Mentor AI responses...
+   Testing mentor response 1/2
+   Message: 'I'm feeling overwhelmed with JEE preparation, need...'
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Mentor Only Response - 1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/mentor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "8d1e87d1-b621-4642-b41a-01b24df4b73d",
+  "message": "I'm feeling overwhelmed with JEE preparation, need motivation",
+  "response": "Hey there! First of all, take a deep breath. It's...
+   ✅ Mentor response received
+   Persona: mentor
+   Response length: 1582
+   Has reasoning: Yes
+   ✅ Mentor response validated
+   Testing mentor response 2/2
+   Message: 'How can I manage my study schedule better?...'
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Mentor Only Response - 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/mentor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "de5c6dc0-b883-43cb-9ee2-07766d473cd6",
+  "message": "How can I manage my study schedule better?",
+  "response": "Hey there! First off, it's great to see your dedication to optimizin...
+   ✅ Mentor response received
+   Persona: mentor
+   Response length: 1801
+   Has reasoning: Yes
+   ✅ Mentor response validated
+   Testing pure Professor AI responses...
+   Testing professor response 1/2
+   Message: 'Derive the quadratic formula step by step...'
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Professor Only Response - 1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/professor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "fe12c4d0-960f-40f1-83cb-ad0def322ba0",
+  "message": "Derive the quadratic formula step by step",
+  "response": "To derive the quadratic formula, we start with a general quadratic eq...
+   ✅ Professor response received
+   Persona: professor
+   Response length: 2529
+   Has reasoning: Yes
+   ✅ Professor response validated
+   Testing professor response 2/2
+   Message: 'Explain Newton's laws of motion with examples...'
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Professor Only Response - 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/professor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "5a312c76-812a-46d7-9502-f092d5a74102",
+  "message": "Explain Newton's laws of motion with examples",
+  "response": "Certainly! Newton's laws of motion are three fundamental principl...
+   ✅ Professor response received
+   Persona: professor
+   Response length: 3378
+   Has reasoning: Yes
+   ✅ Professor response validated
+   Testing backward compatibility with legacy chat endpoint...
+   Testing legacy /api/chat/message endpoint...
+   This may take 5-10 seconds for AI processing...
+
+🔍 Testing Legacy Chat Message Compatibility...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/chat/message
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "a76dc6cd-bbb1-4b2a-a4b7-9d9089fc9e4e",
+  "message": "What is the derivative of x\u00b2?",
+  "response": "The derivative of \\( x^2 \\) with respect to \\( x \\) is calculated using ...
+   ✅ Legacy endpoint working
+   Response length: 3225
+   Has reasoning: Yes
+   Session ID: a76dc6cd-bbb1-4b2a-a...
+   ✅ Legacy endpoint now uses dual-layer AI system
+   Testing dual-layer AI authentication integration...
+   Testing ai/dual-response with valid authentication...
+
+🔍 Testing Auth Integration - ai/dual-response...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "0faf9500-c6a2-440e-9f55-72d401e03714",
+  "message": "Test auth",
+  "dual_response": {
+    "primary": {
+      "persona": "mentor",
+      "response": "Hello there! It looks like you'r...
+   ✅ ai/dual-response authenticated successfully
+   Testing ai/mentor-only with valid authentication...
+
+🔍 Testing Auth Integration - ai/mentor-only...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/mentor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "950659d3-28aa-4030-80c8-e3583a15730d",
+  "message": "Test auth",
+  "response": "Hello there! It looks like you're testing out the auth. It's great to see you taking proactive steps....
+   ✅ ai/mentor-only authenticated successfully
+   Testing ai/professor-only with valid authentication...
+
+🔍 Testing Auth Integration - ai/professor-only...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/professor-only
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "fac79fb3-02ae-4ee2-a033-21cd0241e5ac",
+  "message": "Test auth",
+  "response": "Thank you for confirming your presence. How may I assist you today with your mathematics competitive ...
+   ✅ ai/professor-only authenticated successfully
+   Testing ai/scenario-classify with valid authentication...
+
+🔍 Testing Auth Integration - ai/scenario-classify...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/scenario-classify?message=Test message
+   Method: GET
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Test message",
+  "classification": {
+    "primary_persona": "mentor",
+    "secondary_persona": "professor",
+    "scenario_type": "general_inquiry",
+    "confidence": 0.5
+  },
+  "explan...
+   ✅ ai/scenario-classify authenticated successfully
+
+======================================================================
+📊 FINAL TEST RESULTS - DHRUV AI DUAL-LAYER SYSTEM TESTING
+======================================================================
+Tests Run: 98
+Tests Passed: 75
+Tests Failed: 23
+Success Rate: 76.5%
+
+❌ Failed Tests:
+   - User Registration
+   - 💰 Stripe Webhook Endpoint
+   - 🆕 Generate Mock Tests
+   - 🆕 Enhanced Question Generation
+   - 🆕 Submit Mock Test
+   - 📝 Auto-Note End Session
+   - 📝 Auto-Note List Sessions
+   - 📝 Auto-Note Explain Point
+   - 📝 Auto-Note Generate Flashcards
+   - 🚀 Phase 2: Mock Tests Dual Feedback
+   - 🚀 Phase 2: Study Planning Dual Intelligence
+   - 🚀 Phase 2: Enhanced Question Analysis
+   - 🚀 Phase 2: Error Handling & Fallbacks
+   - 🚀 Phase 2: Backward Compatibility
+   - 🎯 Mathematical Formatting
+
+🔍 CRITICAL ISSUES FOUND:
+   Please review failed tests above for backend functionality issues.
+
+📋 FEATURES TESTED:
+   💰 SUBSCRIPTION SYSTEM (PRIORITY):
+   ✓ Subscription Plans API (4 tiers: free, basic ₹299, premium ₹799, pro ₹1999)
+   ✓ Current Subscription API with usage summary
+   ✓ Stripe Checkout Session Creation
+   ✓ Payment Status Tracking
+   ✓ Usage Limits & Access Control (10 AI conversations/day, 2 mock tests/month for free)
+   ✓ Stripe Webhook Integration
+   ✓ Complete Subscription Flow Integration
+   ✓ Enhanced Mock Test System (Generation & Submission)
+   ✓ Performance Analytics (Student & Parent Views)
+   ✓ Stress Management & Wellness Assessment
+   ✓ Personalized Motivational Content
+   ✓ Authentication & Security Validation
+   📝 AUTO-NOTE MENTOR API:
+   ✓ Start Recording Session
+   ✓ Process Audio Transcription
+   ✓ End Session & Generate Notes
+   ✓ Get Session Details
+   ✓ List All Sessions
+   ✓ Explain Note Points
+   ✓ Generate Flashcards
+   🚀 PHASE 2: DUAL-LAYER AI SCENARIO IMPLEMENTATIONS:
+   ✓ Mock Tests Dual Feedback System (Professor + Mentor Analysis)
+   ✓ Study Planning Dual Intelligence (Academic + Personal Guidance)
+   ✓ Enhanced Question Analysis (Technical + Learning Psychology)
+   ✓ Integration Testing with Authentication & Database
+   ✓ Error Handling & Fallback Mechanisms
+   ✓ Backward Compatibility with Existing Systems
+   🤖 DUAL-LAYER AI SYSTEM:
+   ✓ Scenario Classification Logic
+   ✓ Coordinated Mentor+Professor Responses
+   ✓ Pure Mentor AI Responses
+   ✓ Pure Professor AI Responses
+   ✓ Backward Compatibility with Legacy Chat
+   ✓ JWT Authentication Integration

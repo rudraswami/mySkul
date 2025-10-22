@@ -1,0 +1,13 @@
+🤖 DHRUV AI - AI TUTOR CONTEXTUAL FIX TESTING
+================================================================================
+CRITICAL REVIEW REQUEST: Test AI Tutor response generation fix
+Issue: Previously all questions were getting identical generic responses
+Fix: Re-enabled actual LLM calls instead of using only static fallback responses
+Backend URL: https://dhruv-frontend-test.preview.emergentagent.com/api
+Test Credentials: test@dhruvai.com / password123
+================================================================================
+🔐 AUTHENTICATION
+==================================================
+❌ Authentication error: HTTPSConnectionPool(host='ai-perf-boost.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)
+
+❌ AUTHENTICATION FAILED - Cannot proceed with testing

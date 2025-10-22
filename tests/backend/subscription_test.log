@@ -1,0 +1,140 @@
+🚀 Starting Subscription Flows Consistency Testing...
+================================================================================
+
+🚨 CRITICAL: BACKEND SUBSCRIPTION FLOWS CONSISTENCY TESTING
+   Review Request Focus: Validate subscription flows consistency
+   1) /api/mock-tests/generate: 200 with test data OR 402 with upsell_info
+   2) /api/ai/dual-response: Same behavior using SubscriptionService.check_feature_access
+   3) /api/subscription/check-access: 402 (not 200) with upsell_info when exhausted
+   Expected: Payload samples and status codes for each scenario
+
+📊 Step 1: Authentication Setup
+
+🔍 Testing User Login...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/login
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTYyMWZjNzktNjQ3NC00ODcxLThhODQtMjU1NjI4ODNlMjI5IiwiZW1haWwiOiJ0ZXN0QGRocnV2YWkuY29tIiwiZXhwIjoxNzYw...
+   Login token: eyJhbGciOiJIUzI1NiIs...
+   ✅ Authenticated successfully
+
+📊 Step 2: Create Fresh Free User for Quota Testing
+
+🔍 Testing Create Fresh Free User...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/register
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "User registered successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMzBhM2Q4NDMtOTk3OC00NjFkLTkwYTYtYTNlYzRjYWUyNjVhIiwiZW1haWwiOiJzdWJzY3JpcHRpb25fZmxvd190...
+   ✅ Fresh user created: subscription_flow_test_1759910734@dhruvai.com
+   User ID: 30a3d843-9978-461d-90a6-a3ec4cae265a
+
+🎯 Step 3: Test /api/mock-tests/generate - User Has Remaining Quota
+   Expected: 200 OK with test data
+
+🔍 Testing Mock Tests Generate - With Quota...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "test_id": "4af904c6-3ba6-4b56-870b-647ab3d1e0ac",
+  "test_name": "JEE - Mathematics Test",
+  "description": "Full_Length test with 5 questions",
+  "questions": [
+    {
+      "question_id": "33d3b...
+   ✅ /api/mock-tests/generate returns 200 OK when user has quota
+   📊 Response Sample:
+      test_id: 4af904c6-3ba6-4b56-870b-647ab3d1e0ac
+      test_name: JEE - Mathematics Test
+      questions_count: 5
+      total_marks: 20
+      time_limit: 30 minutes
+
+🎯 Step 4: Exhaust Mock Test Quota
+   Generating additional tests to reach free tier limit
+   Generating test 2...
+
+🔍 Testing Mock Test Generation - Test 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected [200, 402, 429], got 500
+   Error: Internal Server Error
+      🎯 Quota exhausted at test 2 (Status: 500)
+   📊 Total tests generated: 1
+
+🚨 Step 5: Test /api/mock-tests/generate - Limit Reached
+   Expected: 402 Payment Required with upsell_info
+
+🔍 Testing Mock Tests Generate - Limit Reached...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/mock-tests/generate
+   Method: POST
+   Status Code: 500
+❌ Failed - Expected 402, got 500
+   Error: Internal Server Error
+   ❌ /api/mock-tests/generate failed to return 402 (Status: 500)
+   Error: {'error': 'Internal Server Error'}
+
+🎯 Step 6: Test /api/ai/dual-response - User Has Remaining Quota
+   Expected: 200 OK with dual AI response
+
+🔍 Testing AI Dual Response - With Quota...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "session_id": "30cc1649-9faa-4b60-8211-5f2081442693",
+  "message": "Explain quadratic equations briefly",
+  "subject": "Mathematics",
+  "topic_detected": "algebra",
+  "dual_response": {
+    "prima...
+   ✅ /api/ai/dual-response returns 200 OK when user has quota
+   📊 Response Sample:
+      primary.response: ✗
+      primary.role: N/A
+      secondary.response: ✗
+      secondary.role: N/A
+   ❌ Incomplete dual AI response structure
+
+🎯 Step 7: Test /api/ai/dual-response - Limit Reached
+   Creating user and exhausting AI conversation quota...
+
+🔍 Testing Create AI Quota Test User...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/auth/register
+   Method: POST
+   Status Code: 200
+✅ Passed - Status: 200
+   Response: {
+  "message": "User registered successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNGY0YmU0YTgtNWRiNi00MGFmLWEyY2YtZWU5MWM0N2NkNWRlIiwiZW1haWwiOiJhaV9xdW90YV90ZXN0XzE3NTk5...
+   ✅ AI quota test user created: ai_quota_test_1759910769@dhruvai.com
+   Exhausting AI conversation quota (10 messages/day)...
+
+🔍 Testing AI Message 1...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+❌ Failed - Expected [200, 402, 429], got 200
+   Error: {'session_id': '3d4ce55a-64c2-41bc-bef5-e505c64bcbd8', 'message': 'Test message 1 - explain basic math concept', 'subject': 'Mathematics', 'topic_detected': 'General', 'dual_response': {'primary': {'persona': 'professor', 'response': "Let's tackle this together 👇\n\n**Concept Setup**:\nToday we will delve into a cornerstone of mathematics: **Addition**. This foundational operation is essential for solving more complex problems you'll encounter in exams. Understanding addition not only helps in performing basic arithmetic but also lays the groundwork for algebra, calculus, and beyond.\n\n**Step-by-Step Board Explanation**:\n\n1️⃣ **Definition of Addition**:\n   - **Addition** is the process of combining two or more quantities to find their total or sum. It is represented by the plus sign (+), and the result is known as the sum.\n\n2️⃣ **Symbol and General Form**:\n   - If you have two numbers a and b, the addition is expressed as:\n     \\[\n     a + b = \\text{Sum}\n     \\]\n\n3️⃣ **Example Calculation**:\n   - Consider two numbers 3 and 7:\n     \\[\n     3 + 7 = 10\n     \\]\n     Here, 10 is the **sum** of the numbers 3 and 7. ✅\n\n4️⃣ **Properties of Addition**:\n   - **Commutative Property**: a + b = b + a\n     - Example: 3 + 7 = 7 + 3 = 10 \n   - **Associative Property**: (a + b) + c = a + (b + c)\n     - Example: (3 + 7) + 5 = 3 + (7 + 5) = 15\n   - **Identity Property**: a + 0 = a\n     - Example: 7 + 0 = 7\n\n5️⃣ **Verification**:\n   - Double-checking calculations verifies accuracy. By recalculating:\n     \\[\n     3 + 7 \\Rightarrow 10 \\quad (\\text{Cross-verified})\n     \\]\n\nUnderstanding and being fluent in these properties allows you to perform calculations swiftly and simplify complex mathematical expressions under exam conditions. 💡\n\nIf you need more advanced explanations or have specific questions, feel free to ask!", 'reasoning': 'Professor AI: Applied systematic verification and rule-based reasoning for Mathematics, ensuring academic accuracy and exam compliance.'}, 'secondary': {'persona': 'mentor', 'response': "I'm here to guide you through this! 💙 Thank you for reaching out to learn about basic math concepts! \n\nUnderstanding these fundamentals is crucial as they form the building blocks for more advanced topics you'll encounter, especially if you're preparing for a competitive exam. Let's break it down into simple steps together!\n\n1️⃣ **Addition and Subtraction Basics**:  \n   ✅ **Addition** is combining two or more numbers to get a total. For example, \\(2 + 3 = 5\\).  \n   ✅ **Subtraction** is taking away one number from another. For example, \\(5 - 2 = 3\\).\n\n2️⃣ **Multiplication and Division**:  \n   ✅ **Multiplication** is like repeated addition. For example, \\(3 \\times 2\\) is the same as adding 3 twice: \\(3 + 3 = 6\\).  \n   ✅ **Division** is splitting a number into equal parts. For example, \\(6 ÷ 2 = 3\\) (you're splitting 6 into 2 equal parts).\n\n3️⃣ **Understanding Place Value**:  \n   💡 Each digit in a number has a place value (ones, tens, hundreds, etc.). For instance, in the number 345, the '3' is in the hundreds place, meaning it represents 300.\n\n4️⃣ **Simple Fractions**:  \n   ⚠️ **Fractions** represent parts of a whole. The top number (numerator) shows how many parts you have, and the bottom number (denominator) shows into how many parts the whole is divided. For example, \\( \\frac{1}{2} \\) is half of a whole.\n\nStay positive and remember that the more you practice these, the easier they will become. You're building a solid foundation for all the math adventures ahead. Keep up the great work, and don't hesitate to reach out if you need more help! 🌟", 'reasoning': 'Mentor AI: Applied adaptive learning psychology and motivational techniques for Mathematics exam preparation, focusing on emotional support and personalized guidance.'}, 'scenario_type': 'general_inquiry', 'confidence': 0.5}, 'timestamp': '2025-10-08T08:06:21.115978', 'guardrails': {'math_validation': {'validation_id': 'd2cbba31-3e67-4769-a15d-5eac1109645b', 'expression': 'Test message 1 - explain basic math concept', 'result': None, 'units_input': None, 'units_output': None, 'is_valid': False, 'validation_errors': ['Mathematical error: invalid syntax (<string>, line 1)'], 'confidence_score': 0.3, 'validation_method': 'symbolic', 'timestamp': '2025-10-08T08:06:21.116778+00:00'}, 'citations': [{'citation_id': 'e835baec-f101-46be-ac79-46c2c9e9221b', 'source_type': 'ncert', 'source_title': 'NCERT Mathematics Class 11', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.9, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}, {'citation_id': '63216027-441a-4edf-9b5b-df4fdd14c929', 'source_type': 'ncert', 'source_title': 'NCERT Mathematics Class 12', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.8, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}, {'citation_id': '6cc27486-5664-4fd9-9e60-e434fe95c512', 'source_type': 'reference_book', 'source_title': 'R.D. Sharma', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.7, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}]}, 'disagreement_alert': None, 'action_buttons': {'practice_more_available': True, 'add_to_notes_available': True, 'create_flashcards_available': True, 'schedule_revision_available': True}, 'analytics': {'performance_stats': {'study_streak': 1, 'total_interactions': 1, 'study_time_this_week': 0.0, 'subjects_studied': ['Mathematics'], 'performance_trend': 'stable', 'topic_mastery': {}, 'recommendations': ['Try to practice more regularly - aim for at least 2-3 sessions per day', 'Focus more practice on: General', 'Try to increase your daily study time for better results']}}, 'engagement': {'interaction_recorded': True, 'streak_updated': {'streak_updated': True, 'new_streak': 1, 'streak_bonus': True}, 'xp_awarded': {'xp_awarded': 10, 'total_xp': 10, 'level': 1, 'level_up': False, 'milestone_achieved': None}, 'verification_status': 'verified'}}
+      ✅ Message 1 sent successfully
+
+🔍 Testing AI Message 2...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
+   Status Code: 200
+❌ Failed - Expected [200, 402, 429], got 200
+   Error: {'session_id': 'c54b1b2b-4d1b-4ab7-be5a-893974859dcd', 'message': 'Test message 2 - explain basic math concept', 'subject': 'Mathematics', 'topic_detected': 'General', 'dual_response': {'primary': {'persona': 'professor', 'response': "To ensure we're on the same page, could you specify which basic math concept you're interested in exploring? It could be topics like addition, subtraction, fractions, or perhaps even something slightly more advanced like algebra or geometry. Let me know, and I'll provide a precise and thorough explanation.", 'reasoning': 'Professor AI: Applied systematic verification and rule-based reasoning for Mathematics, ensuring academic accuracy and exam compliance.'}, 'secondary': {'persona': 'mentor', 'response': "I'm here to guide you through this! 💙 Let's tackle a basic math concept with clarity and confidence.\n\n**Concept Setup**: Understanding basic math concepts, like addition and subtraction, is essential as they form the foundation for more advanced topics you'll encounter in your exam preparation journey. Mastering these basics will build your confidence and set you up for success!\n\n**Step-by-Step Guidance**:\n\n1️⃣ **What is Addition?**  \n   - Think of addition as putting things together. For example, if you have 2 apples and you get 3 more, how many do you have in total?  \n   - ✅ **Visualize**: 2 apples 🍎 + 3 apples 🍏 = 5 apples 🍎🍏🍏\n\n2️⃣ **What is Subtraction?**  \n   - Subtraction is about taking away. Imagine you have 5 oranges and you give 2 to a friend. How many are left?  \n   - ✅ **Visualize**: 5 oranges 🍊 minus 2 oranges 🍊 = 3 oranges 🍊\n\n3️⃣ **Practice Makes Perfect**: Try simple problems like 8 + 4 or 10 - 6. Keep track of your answers and see how quickly you improve. Practice helps your brain get used to these operations.\n\n4️⃣ **Celebrate Small Wins**: Each time you solve a problem correctly, pat yourself on the back! Every small victory is a step to greater success. 🎉\n\nRemember, every expert in math started with these basic concepts. By mastering them, you're building the strong foundation needed for tackling more challenging math problems in the future. Keep going, you're doing wonderfully! 🌟", 'reasoning': 'Mentor AI: Applied adaptive learning psychology and motivational techniques for Mathematics exam preparation, focusing on emotional support and personalized guidance.'}, 'scenario_type': 'general_inquiry', 'confidence': 0.5}, 'timestamp': '2025-10-08T08:06:29.703622', 'guardrails': {'math_validation': {'validation_id': '390ecea2-74ab-4f38-9d34-62a9afeec7b0', 'expression': 'Test message 2 - explain basic math concept', 'result': None, 'units_input': None, 'units_output': None, 'is_valid': False, 'validation_errors': ['Mathematical error: invalid syntax (<string>, line 1)'], 'confidence_score': 0.3, 'validation_method': 'symbolic', 'timestamp': '2025-10-08T08:06:29.704511+00:00'}, 'citations': [{'citation_id': '02740b23-b6ab-40ca-b835-17cef360558f', 'source_type': 'ncert', 'source_title': 'NCERT Mathematics Class 11', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.9, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}, {'citation_id': '1c1dde3d-3990-48ea-b954-5392c5006bda', 'source_type': 'ncert', 'source_title': 'NCERT Mathematics Class 12', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.8, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}, {'citation_id': 'bef982eb-e924-4316-9c31-0d241d6f8375', 'source_type': 'reference_book', 'source_title': 'R.D. Sharma', 'chapter_section': 'Chapter on General', 'page_number': None, 'url': None, 'confidence': 0.7, 'education_standard': 'JEE', 'subject': 'Mathematics', 'topic': 'General'}]}, 'disagreement_alert': None, 'action_buttons': {'practice_more_available': True, 'add_to_notes_available': True, 'create_flashcards_available': True, 'schedule_revision_available': True}, 'analytics': {'performance_stats': {'study_streak': 1, 'total_interactions': 2, 'study_time_this_week': 0.0, 'subjects_studied': ['Mathematics'], 'performance_trend': 'stable', 'topic_mastery': {}, 'recommendations': ['Try to practice more regularly - aim for at least 2-3 sessions per day', 'Focus more practice on: General', 'Try to increase your daily study time for better results']}}, 'engagement': {'interaction_recorded': True, 'streak_updated': {'streak_updated': False, 'current_streak': 1, 'already_active_today': True}, 'xp_awarded': {'xp_awarded': 10, 'total_xp': 20, 'level': 1, 'level_up': False, 'milestone_achieved': None, 'xp_to_next_level': 80}, 'verification_status': 'verified'}}
+      ✅ Message 2 sent successfully
+
+🔍 Testing AI Message 3...
+   URL: https://dhruv-frontend-test.preview.emergentagent.com/api/ai/dual-response
+   Method: POST
