@@ -398,9 +398,14 @@ export default function AITutorPremium() {
     }
   }, [selectedSubject]);
   
-  // NEW: Collapse header when chat starts
+  // NEW: Control welcome screen visibility (prevent flicker)
   useEffect(() => {
-    setHeaderCollapsed(messages.length > 0 && hasInteraction);
+    setShowWelcome(messages.length === 0 && !hasInteraction && !loading);
+  }, [messages.length, hasInteraction, loading]);
+  
+  // NEW: Auto-collapse header when chat starts
+  useEffect(() => {
+    setHeaderCollapsed(messages.length > 0 || hasInteraction);
   }, [messages.length, hasInteraction]);
   
   /**
