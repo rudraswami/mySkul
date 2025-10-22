@@ -62,32 +62,36 @@ const UpgradeModal = ({
     navigate('/subscription');
   };
 
-  // Get standardized animation props
+  // Get standardized animation props and styles
   const backdropAnimation = getModalAnimationProps('backdrop');
   const modalAnimation = getModalAnimationProps('modal');
   const backdropStyle = getBackdropStyle();
+  const containerStyle = getModalContainerStyle();
+  const contentStyle = getModalContentStyle({ maxWidth: '48rem' }); // max-w-2xl
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - Using global behavior */}
+          {/* Backdrop - Using global z-index (9490) */}
           <motion.div
             {...backdropAnimation}
             style={backdropStyle}
-            className="fixed inset-0 z-50"
+            className="fixed inset-0"
             data-modal-backdrop="true"
             onClick={onClose}
           />
 
-          {/* Modal - Using global behavior */}
+          {/* Modal Container - Using global z-index (9500) */}
           <motion.div
             {...modalAnimation}
             ref={modalRef}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+            style={containerStyle}
+            className="fixed inset-0 p-4 pointer-events-none"
           >
             <div 
-              className="max-w-2xl w-full pointer-events-auto"
+              style={contentStyle}
+              className="w-full pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <Card className="bg-white rounded-2xl shadow-2xl overflow-hidden">
