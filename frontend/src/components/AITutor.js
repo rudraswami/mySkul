@@ -797,6 +797,9 @@ export default function AITutorPremium() {
     setHasInteraction(false); // FIX: Reset interaction flag
     setSentMessageIds(new Set()); // FIX: Clear message tracking
     setShowSidebar(false); // NEW: Close sidebar on new chat
+    setShowWelcome(true); // NEW: Show welcome screen
+    setHeaderCollapsed(false); // NEW: Expand header
+    clearChatStorage(); // NEW: Clear localStorage for this subject
     loadDefaultPrompts(selectedSubject); // NEW: Reload prompts
   };
   
