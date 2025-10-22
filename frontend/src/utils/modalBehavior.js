@@ -1,0 +1,271 @@
+/**
+ * Global Modal Behavior Utility
+ * 
+ * Provides consistent modal behavior across the application:
+ * - Focus trap
+ * - Scroll lock
+ * - ESC key handling
+ * - Outside click handling
+ * - Backdrop rendering
+ * - Accessibility attributes
+ * 
+ * Usage:
+ *   useEffect(() => {
+ *     if (isOpen && modalRef.current) {
+ *       return applyGlobalModalBehavior(modalRef.current, {
+ *         trapFocus: true,
+ *         outsideClick: true,
+ *         onClose: handleClose
+ *       });
+ *     }
+ *   }, [isOpen]);
+ */
+
+import { MODAL_BEHAVIOR } from '../config/modalConfig';
+
+/**
+ * Apply global modal behavior to a modal element
+ * 
+ * @param {HTMLElement} element - The modal container element
+ * @param {Object} options - Configuration options
+ * @param {boolean} [options.trapFocus=true] - Enable focus trapping
+ * @param {boolean} [options.outsideClick=true] - Close on outside click
+ * @param {Function} options.onClose - Callback to close the modal
+ * @param {boolean} [options.scrollLock=true] - Lock body scroll
+ * @param {boolean} [options.closeOnEsc=true] - Close on ESC key
+ * @returns {Function} Cleanup function to remove behavior
+ */
+export const applyGlobalModalBehavior = (element, options = {}) => {
+  const {
+    trapFocus = MODAL_BEHAVIOR.keyboard.focusTrap,
+    outsideClick = MODAL_BEHAVIOR.outsideClick.enabled,
+    onClose,
+    scrollLock = true,
+    closeOnEsc = MODAL_BEHAVIOR.keyboard.closeOnEsc
+  } = options;
+
+  // Store original body overflow
+  const originalOverflow = document.body.style.overflow;
+  const originalPaddingRight = document.body.style.paddingRight;
+
+  // 1. Lock body scroll
+  if (scrollLock) {
+    // Get scrollbar width to prevent layout shift
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+  }
+
+  // 2. Set accessibility attributes
+  element.setAttribute('role', MODAL_BEHAVIOR.a11y.role);
+  element.setAttribute('aria-modal', String(MODAL_BEHAVIOR.a11y.ariaModal));
+  
+  // Try to find and set aria-labelledby
+  const titleElement = element.querySelector('h1, h2, h3, [id*="title"], [class*="title"]');
+  if (titleElement) {
+    if (!titleElement.id) {
+      titleElement.id = `modal-title-${Date.now()}`;
+    }
+    element.setAttribute('aria-labelledby', titleElement.id);
+  }
+
+  // 3. Focus trap implementation
+  let focusTrapCleanup = null;
+  if (trapFocus) {
+    focusTrapCleanup = enableFocusTrap(element);
+  }
+
+  // 4. ESC key handler
+  const handleEscape = (e) => {
+    if (closeOnEsc && e.key === 'Escape' && onClose) {
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    }
+  };
+  
+  document.addEventListener('keydown', handleEscape, true);
+
+  // 5. Outside click handler (optional)
+  let clickHandler = null;
+  if (outsideClick && onClose) {
+    clickHandler = (e) => {
+      // Check if click is outside the modal content
+      if (element && !element.contains(e.target)) {
+        // Check if click is on backdrop (not on nested elements)
+        const backdrop = document.querySelector('.modal-backdrop, [data-modal-backdrop]');
+        if (backdrop && (e.target === backdrop || backdrop.contains(e.target))) {
+          onClose();
+        }
+      }
+    };
+    // Use capture phase to handle before other handlers
+    document.addEventListener('mousedown', clickHandler, true);
+  }
+
+  // Return cleanup function
+  return () => {
+    // Restore body scroll
+    if (scrollLock) {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+    }
+
+    // Remove event listeners
+    document.removeEventListener('keydown', handleEscape, true);
+    if (clickHandler) {
+      document.removeEventListener('mousedown', clickHandler, true);
+    }
+
+    // Remove focus trap
+    if (focusTrapCleanup) {
+      focusTrapCleanup();
+    }
+
+    // Remove accessibility attributes
+    element.removeAttribute('role');
+    element.removeAttribute('aria-modal');
+    element.removeAttribute('aria-labelledby');
+  };
+};
+
+/**
+ * Enable focus trap within modal
+ * Keeps focus inside modal, cycling through focusable elements
+ * 
+ * @param {HTMLElement} element - The modal container
+ * @returns {Function} Cleanup function
+ */
+function enableFocusTrap(element) {
+  // Get all focusable elements
+  const getFocusableElements = () => {
+    return element.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+  };
+
+  // Store the element that had focus before modal opened
+  const previousActiveElement = document.activeElement;
+
+  // Focus first focusable element in modal
+  const focusableElements = getFocusableElements();
+  if (focusableElements.length > 0) {
+    focusableElements[0].focus();
+  }
+
+  // Tab key handler
+  const handleTab = (e) => {
+    if (e.key !== 'Tab') return;
+
+    const focusable = Array.from(getFocusableElements());
+    const firstFocusable = focusable[0];
+    const lastFocusable = focusable[focusable.length - 1];
+
+    if (focusable.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    // Shift + Tab
+    if (e.shiftKey) {
+      if (document.activeElement === firstFocusable) {
+        e.preventDefault();
+        lastFocusable.focus();
+      }
+    }
+    // Tab
+    else {
+      if (document.activeElement === lastFocusable) {
+        e.preventDefault();
+        firstFocusable.focus();
+      }
+    }
+  };
+
+  element.addEventListener('keydown', handleTab);
+
+  // Cleanup function
+  return () => {
+    element.removeEventListener('keydown', handleTab);
+    // Restore focus to previous element
+    if (previousActiveElement && previousActiveElement.focus) {
+      previousActiveElement.focus();
+    }
+  };
+}
+
+/**
+ * Get Framer Motion animation props for modal
+ * 
+ * @param {string} type - Animation type ('modal' or 'backdrop')
+ * @returns {Object} Framer Motion props
+ */
+export const getModalAnimationProps = (type = 'modal') => {
+  const animation = MODAL_BEHAVIOR.animation[type];
+  return {
+    initial: animation.initial,
+    animate: animation.animate,
+    exit: animation.exit,
+    transition: {
+      duration: MODAL_BEHAVIOR.animation.duration,
+      ease: MODAL_BEHAVIOR.animation.easing
+    }
+  };
+};
+
+/**
+ * Get backdrop style based on config
+ * 
+ * @returns {Object} Style object for backdrop
+ */
+export const getBackdropStyle = () => {
+  const { color, blur, blurAmount } = MODAL_BEHAVIOR.backdrop;
+  return {
+    backgroundColor: color,
+    backdropFilter: blur ? `blur(${blurAmount})` : 'none',
+    WebkitBackdropFilter: blur ? `blur(${blurAmount})` : 'none'
+  };
+};
+
+/**
+ * Get modal container style based on config
+ * 
+ * @param {Object} overrides - Style overrides
+ * @returns {Object} Style object for modal
+ */
+export const getModalStyle = (overrides = {}) => {
+  return {
+    borderRadius: MODAL_BEHAVIOR.style.borderRadius,
+    boxShadow: MODAL_BEHAVIOR.style.shadow,
+    maxWidth: MODAL_BEHAVIOR.style.maxWidth,
+    ...overrides
+  };
+};
+
+/**
+ * Hook for modal behavior (React hook version)
+ * 
+ * @param {Object} options - Configuration options
+ * @returns {Object} Modal behavior utilities
+ */
+export const useModalBehavior = (options = {}) => {
+  const { isOpen, onClose, modalRef } = options;
+
+  React.useEffect(() => {
+    if (isOpen && modalRef?.current) {
+      return applyGlobalModalBehavior(modalRef.current, {
+        ...options,
+        onClose
+      });
+    }
+  }, [isOpen, onClose, modalRef, options]);
+
+  return {
+    backdropProps: getModalAnimationProps('backdrop'),
+    modalProps: getModalAnimationProps('modal'),
+    backdropStyle: getBackdropStyle(),
+    modalStyle: getModalStyle(options.styleOverrides)
+  };
+};
