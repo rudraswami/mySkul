@@ -551,14 +551,29 @@ export default function AITutorPremium() {
         }
       }
       
-      // Add user message immediately to UI
+      // Add user message immediately to UI with unique ID
+      const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const userMsg = {
         type: 'user',
         content: messageContent,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message_id: userMsgId
       };
       
-      setMessages(prev => [...prev, userMsg]);
+      // FIX: Check for duplicates by content and type
+      setMessages(prev => {
+        const now = new Date().getTime();
+        const isDuplicate = prev.some(msg => 
+          msg.type === 'user' && 
+          msg.content === messageContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+        
+        if (isDuplicate) return prev;
+        
+        setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
+        return [...prev, userMsg];
+      });
       
       // Call AI API
       const token = localStorage.getItem('dhruv_ai_token');
