@@ -594,11 +594,15 @@ async def create_razorpay_order(
         
         logger.info(f"Amount calculated - INR: {amount_inr}, Paise: {amount_paise}")
         
-        # Create Razorpay order
+        # Create Razorpay order with compact receipt (max 40 chars)
+        # Format: {first_8_chars_of_uuid}-{timestamp_last_10_digits}
+        # Example: 9c4e099e-1234567890 (19 chars total)
+        compact_receipt = f"{user.user_id[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+        
         order_data = {
             "amount": amount_paise,  # MUST be in paise
             "currency": "INR",
-            "receipt": f"order_{user.user_id}_{int(datetime.now(timezone.utc).timestamp())}",
+            "receipt": compact_receipt,
             "notes": {
                 "user_id": user.user_id,
                 "plan_name": plan_name,
