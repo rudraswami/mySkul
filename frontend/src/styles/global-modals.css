@@ -1,0 +1,206 @@
+/**
+ * Global Modal System - Framework-level Styles
+ * 
+ * Ensures ALL modals, popups, and alerts across the application:
+ * - Appear centered on viewport instantly
+ * - Maintain consistent backdrop, layering, and scroll behavior
+ * - Work uniformly across all screens and components
+ * 
+ * Applied globally via index.css
+ */
+
+/* ==================== Z-INDEX HIERARCHY ==================== */
+:root {
+  --z-floating-ui: 9400;
+  --z-modal-backdrop: 9490;
+  --z-modal: 9500;
+  --z-modal-nested: 9600;
+}
+
+/* ==================== MODAL BACKDROP ==================== */
+.modal-backdrop,
+[data-modal-backdrop="true"] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ==================== MODAL CONTAINER ==================== */
+.modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none; /* Allow clicks through container */
+}
+
+/* ==================== MODAL CONTENT ==================== */
+.modal-content {
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  pointer-events: auto; /* Re-enable clicks on content */
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  
+  /* Smooth scrolling within modal */
+  scroll-behavior: smooth;
+  
+  /* Webkit scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== MOBILE VIEWPORT FIX ==================== */
+@media (max-width: 640px) {
+  .modal-container {
+    padding: 0.5rem;
+  }
+  
+  .modal-content {
+    max-height: 95vh; /* More space on mobile */
+    max-width: 100%;
+  }
+}
+
+/* ==================== FULLSCREEN MODALS ==================== */
+.modal-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  overflow-y: auto;
+  background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3);
+}
+
+/* ==================== NESTED MODALS ==================== */
+.modal-nested {
+  z-index: var(--z-modal-nested);
+}
+
+.modal-nested + .modal-backdrop {
+  z-index: calc(var(--z-modal-nested) - 10);
+  background-color: rgba(0, 0, 0, 0.6); /* Darker for nested */
+}
+
+/* ==================== ANIMATION UTILITIES ==================== */
+.modal-fade-in {
+  animation: modalFadeIn 150ms ease-in-out;
+}
+
+.modal-fade-out {
+  animation: modalFadeOut 150ms ease-in-out;
+}
+
+.modal-slide-up {
+  animation: modalSlideUp 150ms ease-in-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+/* Focus visible styles for modal elements */
+.modal-content *:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ==================== SCROLL LOCK ==================== */
+/* Applied to body when modal is open */
+body.modal-open {
+  overflow: hidden;
+  /* Prevent layout shift from scrollbar */
+  padding-right: var(--scrollbar-width, 0);
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  .modal-backdrop,
+  [data-modal-backdrop] {
+    display: none;
+  }
+  
+  .modal-container {
+    position: static;
+    z-index: auto;
+  }
+  
+  .modal-content {
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+@media (prefers-reduced-motion: reduce) {
+  .modal-content,
+  .modal-backdrop,
+  .modal-container {
+    animation: none !important;
+    transition: none !important;
+  }
+}
