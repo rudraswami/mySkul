@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { X, TrendingUp, Zap, Target, Award } from 'lucide-react';
-import { applyGlobalModalBehavior } from '../utils/modalBehavior';
+import { applyGlobalModalBehavior, getBackdropStyle, getModalContainerStyle, getModalContentStyle } from '../utils/modalBehavior';
+import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 const MOTIVATIONAL_MESSAGES = {
   excellent: {
