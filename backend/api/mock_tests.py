@@ -226,127 +226,212 @@ async def get_resume_tests(
         raise HTTPException(status_code=500, detail=f"Failed to get resume tests: {str(e)}")
 
 
-@router.post("/generate")
+@router.post("/generate", response_model=TestGenerationResponse)
 async def generate_mock_test(
-    request: dict,
+    request: TestGenerationRequest,
     user: User = Depends(get_current_user),
     db = Depends(get_database),
     sub_service = Depends(get_unified_subscription_service)
 ):
     """
-    Generate a new mock test based on user parameters
+    Generate a new mock test based on user parameters with comprehensive validation
     
-    Request body:
-    {
-        "exam_type": str (JEE, NEET, etc.),
-        "test_type": str (full_length, subject_wise, etc.),
-        "subjects": list[str],
-        "difficulty_level": str (easy, medium, hard),
-        "num_questions": int,
-        "generation_mode": str (standard, adaptive, etc.)
-    }
+    **Validations**:
+    - exam_type: Required, non-empty string
+    - subjects: Required, must have at least 1 subject
+    - difficulty_level: 1=easy, 2=medium, 3=hard (accepts int or string)
+    - num_questions: Between 3 and 100
+    - test_type: One of [full_length, chapter_wise, subject_wise, adaptive]
+    
+    **Error Codes**:
+    - 400: Validation error (invalid parameters)
+    - 402: Subscription limit reached
+    - 500: Internal server error (database, AI service, etc.)
     """
+    # Generate trace ID for debugging
+    trace_id = str(uuid.uuid4())
+    
     try:
-        import uuid
         from datetime import datetime, timezone
         from services.unified_subscription_service import FeatureName
         
-        # Extract parameters
-        exam_type = request.get('exam_type', 'JEE')
-        test_type = request.get('test_type', 'full_length')
-        subjects = request.get('subjects', [])
-        difficulty_raw = request.get('difficulty_level', 'medium')
-        num_questions = request.get('num_questions', 75)
-        generation_mode = request.get('generation_mode', 'standard')
+        logger.info(f"[{trace_id}] Test generation started for user {user.user_id}")
+        logger.info(f"[{trace_id}] Request: exam_type={request.exam_type}, subjects={request.subjects}, "
+                   f"difficulty={request.difficulty_level}, num_questions={request.num_questions}")
         
-        # PATCH: Handle integer difficulty_level from frontend (1=easy, 2=medium, 3=hard)
-        if isinstance(difficulty_raw, int):
-            difficulty_map = {1: 'easy', 2: 'medium', 3: 'hard'}
-            difficulty = difficulty_map.get(difficulty_raw, 'medium')
-        else:
-            difficulty = difficulty_raw if difficulty_raw in ['easy', 'medium', 'hard'] else 'medium'
-        
-        # PATCH: Use dependency-injected sub_service instead of manual initialization
-        # Check subscription access - NO initialize() call needed
-        access_result = await sub_service.check_feature_access(
-            user.user_id,
-            FeatureName.MOCK_TESTS.value,
-            requested_amount=1
-        )
-        
-        if not access_result.allowed:
+        # ==================== STEP 1: Validate Subscription Access ====================
+        try:
+            access_result = await sub_service.check_feature_access(
+                user.user_id,
+                FeatureName.MOCK_TESTS.value,
+                requested_amount=1
+            )
+            
+            if not access_result.allowed:
+                logger.warning(f"[{trace_id}] Subscription limit reached for user {user.user_id}")
+                raise HTTPException(
+                    status_code=402,
+                    detail=access_result.to_dict()
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[{trace_id}] Subscription check failed: {str(e)}", exc_info=True)
             raise HTTPException(
-                status_code=402,
-                detail=access_result.to_dict()
+                status_code=500,
+                detail={
+                    "success": False,
+                    "error_code": "SUBSCRIPTION_CHECK_FAILED",
+                    "message": "Failed to verify subscription access",
+                    "trace_id": trace_id
+                }
             )
         
-        # Generate test ID
+        # ==================== STEP 2: Generate Test ID ====================
         test_id = str(uuid.uuid4())
+        logger.info(f"[{trace_id}] Generated test_id: {test_id}")
         
-        # Create test document
-        test_doc = {
-            "test_id": test_id,
-            "user_id": user.user_id,
-            "student_id": user.user_id,  # For backward compatibility
-            "exam_type": exam_type,
-            "test_type": test_type,
-            "subjects": subjects,
-            "difficulty_level": difficulty,
-            "num_questions": num_questions,
-            "generation_mode": generation_mode,
-            "status": "active",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "time_limit_minutes": 180,  # 3 hours default
-            "questions": [],  # Would be populated by AI in full implementation
-            "total_marks": num_questions,  # 1 mark per question
-            "title": f"{exam_type} {test_type.replace('_', ' ').title()} Test"
-        }
+        # ==================== STEP 3: Generate Questions ====================
+        try:
+            # Ensure subjects list is not empty (should be validated by Pydantic, but double-check)
+            if not request.subjects:
+                raise ValueError("subjects list cannot be empty")
+            
+            questions = []
+            # Generate requested number of questions (up to 100)
+            for i in range(min(request.num_questions, 100)):
+                # Safely select subject with modulo
+                subject = request.subjects[i % len(request.subjects)]
+                
+                questions.append({
+                    "question_id": str(uuid.uuid4()),
+                    "question_number": i + 1,
+                    "subject": subject,
+                    "question_text": f"Sample {request.exam_type} question {i + 1} - {subject}",
+                    "options": [
+                        f"Option A for question {i + 1}",
+                        f"Option B for question {i + 1}",
+                        f"Option C for question {i + 1}",
+                        f"Option D for question {i + 1}"
+                    ],
+                    "correct_answer": 0,  # Index of correct option
+                    "marks": 1,
+                    "difficulty": request.difficulty_level,
+                    "explanation": f"Explanation for question {i + 1}"
+                })
+            
+            if not questions:
+                raise ValueError("Failed to generate any questions")
+            
+            logger.info(f"[{trace_id}] Generated {len(questions)} questions")
+            
+        except Exception as e:
+            logger.error(f"[{trace_id}] Question generation failed: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "success": False,
+                    "error_code": "QUESTION_GENERATION_FAILED",
+                    "message": f"Failed to generate questions: {str(e)}",
+                    "trace_id": trace_id
+                }
+            )
         
-        # For now, generate simple placeholder questions
-        # In production, this would call AI service to generate real questions
-        questions = []
-        for i in range(min(num_questions, 10)):  # Limit to 10 for demo
-            questions.append({
-                "question_id": str(uuid.uuid4()),
-                "question_number": i + 1,
-                "subject": subjects[i % len(subjects)] if subjects else "General",
-                "question_text": f"Sample question {i + 1} for {exam_type}",
-                "options": ["Option A", "Option B", "Option C", "Option D"],
-                "correct_answer": 0,
-                "marks": 1,
-                "difficulty": difficulty
-            })
+        # ==================== STEP 4: Create Test Document ====================
+        try:
+            test_doc = {
+                "test_id": test_id,
+                "user_id": user.user_id,
+                "student_id": user.user_id,  # Backward compatibility
+                "exam_type": request.exam_type,
+                "test_type": request.test_type,
+                "subjects": request.subjects,
+                "difficulty_level": request.difficulty_level,
+                "num_questions": len(questions),
+                "generation_mode": request.generation_mode,
+                "status": "active",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "time_limit_minutes": 180,  # 3 hours default
+                "questions": questions,
+                "total_marks": len(questions),  # 1 mark per question
+                "title": f"{request.exam_type} {request.test_type.replace('_', ' ').title()} Test",
+                "trace_id": trace_id,
+                "created_by": "api_v2"
+            }
+            
+            logger.info(f"[{trace_id}] Test document created with {len(questions)} questions")
+            
+        except Exception as e:
+            logger.error(f"[{trace_id}] Test document creation failed: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "success": False,
+                    "error_code": "TEST_DOCUMENT_CREATION_FAILED",
+                    "message": f"Failed to create test document: {str(e)}",
+                    "trace_id": trace_id
+                }
+            )
         
-        test_doc["questions"] = questions
-        test_doc["num_questions"] = len(questions)
-        test_doc["total_marks"] = len(questions)
+        # ==================== STEP 5: Save to Database ====================
+        try:
+            result = await db.mock_tests.insert_one(test_doc)
+            logger.info(f"[{trace_id}] Test saved to database with _id: {result.inserted_id}")
+            
+        except Exception as e:
+            logger.error(f"[{trace_id}] Database insertion failed: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "success": False,
+                    "error_code": "DATABASE_INSERTION_FAILED",
+                    "message": "Failed to save test to database",
+                    "details": {"error": str(e)},
+                    "trace_id": trace_id
+                }
+            )
         
-        # Save to database
-        await db.mock_tests.insert_one(test_doc)
+        # ==================== STEP 6: Track Usage ====================
+        try:
+            await sub_service.track_feature_use(user.user_id, FeatureName.MOCK_TESTS.value, 1)
+            logger.info(f"[{trace_id}] Feature usage tracked for user {user.user_id}")
+        except Exception as e:
+            # Don't fail the request if usage tracking fails, just log it
+            logger.error(f"[{trace_id}] Usage tracking failed (non-critical): {str(e)}")
         
-        # Track usage
-        await sub_service.track_feature_use(user.user_id, FeatureName.MOCK_TESTS.value, 1)
+        # ==================== STEP 7: Return Response ====================
+        # Remove MongoDB _id before returning
+        if "_id" in test_doc:
+            del test_doc["_id"]
         
-        # Return test
-        del test_doc["_id"]  # Remove MongoDB _id
+        logger.info(f"[{trace_id}] Test generation completed successfully")
         
-        return {
-            "success": True,
-            "test": test_doc,
-            "test_id": test_id,
-            "message": "Mock test generated successfully"
-        }
+        return TestGenerationResponse(
+            success=True,
+            test_id=test_id,
+            test=test_doc,
+            message="Mock test generated successfully"
+        )
         
     except HTTPException:
+        # Re-raise HTTP exceptions (402, 400, etc.)
         raise
+        
     except Exception as e:
-        import logging
-        import traceback
-        logger = logging.getLogger(__name__)
-        logger.error(f"❌ Test generation CRITICAL error: {str(e)}")
-        logger.error(f"❌ Full traceback: {traceback.format_exc()}")
-        logger.error(f"❌ Request data: {request}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate test: {str(e)}")
+        # Catch any unexpected errors
+        logger.error(f"[{trace_id}] Unexpected error in test generation: {str(e)}", exc_info=True)
+        logger.error(f"[{trace_id}] Full traceback: {traceback.format_exc()}")
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error_code": "INTERNAL_SERVER_ERROR",
+                "message": "An unexpected error occurred during test generation",
+                "details": {"error": str(e)},
+                "trace_id": trace_id
+            }
+        )
 
 
 # Note: Complex endpoints like /submit, /retake, /bookmark-question
