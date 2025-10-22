@@ -5,7 +5,13 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { useNavigate } from 'react-router-dom';
 import { PLANS_CONFIG, getPlanByTier } from '../config/plans';
-import { applyGlobalModalBehavior, getModalAnimationProps, getBackdropStyle } from '../utils/modalBehavior';
+import { 
+  applyGlobalModalBehavior, 
+  getModalAnimationProps, 
+  getBackdropStyle,
+  getModalContainerStyle,
+  getModalContentStyle
+} from '../utils/modalBehavior';
 import { MODAL_BEHAVIOR } from '../config/modalConfig';
 
 /**
