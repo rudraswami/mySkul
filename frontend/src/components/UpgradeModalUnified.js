@@ -200,36 +200,57 @@ const UpgradeModal = ({
   accessInfo,
   currentTier = "FREE"
 }) => {
+  const modalRef = useRef(null);
+
+  // Apply global modal behavior
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      return applyGlobalModalBehavior(modalRef.current, {
+        trapFocus: true,
+        outsideClick: true,
+        onClose,
+        scrollLock: true,
+        closeOnEsc: true
+      });
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const limitReached = upgradeHint?.type === "limit_reached";
+
+  // Get global modal styles
+  const backdropAnimation = getModalAnimationProps('backdrop');
+  const modalAnimation = getModalAnimationProps('modal');
+  const backdropStyle = getBackdropStyle();
+  const containerStyle = getModalContainerStyle();
+  const contentStyle = getModalContentStyle({ maxWidth: '48rem' }); // max-w-2xl
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - Using global z-index (9490) */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-40 z-[9000]"
-            style={{ 
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)'
-            }}
+            {...backdropAnimation}
+            style={backdropStyle}
+            className="fixed inset-0"
+            data-modal-backdrop="true"
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal Container - Using global z-index (9500) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-[9001] flex items-center justify-center p-4"
+            {...modalAnimation}
+            ref={modalRef}
+            style={containerStyle}
+            className="fixed inset-0 p-4 pointer-events-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <Card className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <Card 
+              style={contentStyle}
+              className="w-full pointer-events-auto bg-white rounded-2xl shadow-2xl overflow-hidden"
+            >
               {/* Header with gradient */}
               <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white relative">
                 <button
