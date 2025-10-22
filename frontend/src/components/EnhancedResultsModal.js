@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import LatexRenderer from './microlesson/LatexRenderer';
+import { applyGlobalModalBehavior } from '../utils/modalBehavior';
 
 export default function EnhancedResultsModal({ 
   results, 
@@ -35,14 +36,20 @@ export default function EnhancedResultsModal({
 }) {
   const [animationStep, setAnimationStep] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
+  const modalRef = useRef(null);
 
-  // Lock body scroll when results modal is open
+  // Apply global modal behavior (replaces manual scroll lock)
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+    if (modalRef.current) {
+      return applyGlobalModalBehavior(modalRef.current, {
+        trapFocus: true,
+        outsideClick: false, // Prevent closing on outside click (exam results)
+        onClose,
+        scrollLock: true,
+        closeOnEsc: false // Don't allow ESC to close exam results
+      });
+    }
+  }, [onClose]);
 
   // Sanitize AI feedback text
   const sanitizeText = (text) => {
