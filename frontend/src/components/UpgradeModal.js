@@ -264,7 +264,8 @@ const UpgradeModal = ({
                   )}
                 </div>
               </div>
-            </Card>
+              </Card>
+            </div>
           </motion.div>
         </>
       )}
