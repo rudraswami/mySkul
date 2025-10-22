@@ -2,10 +2,18 @@
 Mock Tests router for test generation, submission, and performance tracking
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
+import logging
+import traceback
+import uuid
+from typing import Dict, Any
 
 from models.core import User
+from models.mock_tests import TestGenerationRequest, TestGenerationResponse, ErrorResponse
 from services.mock_tests_service import MockTestsService
 from dependencies import get_current_user, get_database, get_unified_subscription_service
+
+# Logger setup
+logger = logging.getLogger(__name__)
 
 # Router instance
 router = APIRouter(prefix="/mock-tests", tags=["mock-tests"])
