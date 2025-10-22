@@ -1045,7 +1045,7 @@ export default function AITutorPremium() {
           <div className="chat-main-zone space-y-6">
             <AnimatePresence mode="popLayout">
               {/* Welcome Screen with Dynamic Prompts */}
-              {messages.length === 0 && !hasInteraction && !loading ? (
+              {showWelcome ? (
                 <motion.div
                   key="welcome"
                   initial={{ opacity: 0, y: 20 }}
