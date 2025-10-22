@@ -378,11 +378,23 @@ export default function AITutorPremium() {
         message_id: userMsgId
       };
       
-      // FIX: Check for duplicates before adding
-      if (!sentMessageIds.has(userMsgId)) {
-        setMessages(prev => [...prev, userMsg]);
-        setSentMessageIds(prev => new Set([...prev, userMsgId]));
-      }
+      // FIX: Check for duplicates by content and type (not just ID)
+      setMessages(prev => {
+        // Check if a message with same content and type exists in last 5 seconds
+        const now = new Date().getTime();
+        const isDuplicate = prev.some(msg => 
+          msg.type === 'user' && 
+          msg.content === messageToSend &&
+          (now - new Date(msg.timestamp).getTime()) < 5000 // Within 5 seconds
+        );
+        
+        if (isDuplicate) {
+          return prev; // Don't add duplicate
+        }
+        
+        setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
+        return [...prev, userMsg];
+      });
       
       // Call AI API with ALL required parameters for structured responses
       const token = localStorage.getItem('dhruv_ai_token');
