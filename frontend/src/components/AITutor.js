@@ -769,6 +769,7 @@ export default function AITutorPremium() {
       }]);
     } finally {
       setLoading(false);
+      setIsAITyping(false); // NEW: Turn off typing indicator
     }
   };
   
