@@ -91,9 +91,11 @@ export default function MotivationalPopup({ performance, onClose, stats = {} }) 
 
   return (
     <div 
+      ref={modalRef}
       className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
+      data-modal-backdrop="true"
       onClick={handleClose}
     >
       <Card 
