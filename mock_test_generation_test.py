@@ -1,0 +1,575 @@
+#!/usr/bin/env python3
+"""
+Mock Test Generation API Stabilization Testing
+Testing /api/mock-tests/generate endpoint for stability and validation
+"""
+
+import requests
+import json
+import time
+from datetime import datetime
+from typing import Dict, Any, List, Tuple
+
+class MockTestGenerationTester:
+    def __init__(self):
+        # Use environment variable for backend URL
+        self.base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+        self.jwt_token = None
+        self.test_results = {
+            'valid_requests': [],
+            'validation_errors': [],
+            'response_structure': [],
+            'error_responses': []
+        }
+    
+    def log(self, message, level="INFO"):
+        """Log test messages"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        symbol = {
+            "INFO": "ℹ️",
+            "SUCCESS": "✅",
+            "ERROR": "❌",
+            "WARNING": "⚠️",
+            "TEST": "🧪"
+        }.get(level, "📝")
+        print(f"[{timestamp}] {symbol} {message}")
+    
+    def authenticate(self):
+        """Authenticate and get JWT token"""
+        self.log("=" * 80)
+        self.log("🔐 AUTHENTICATION", "INFO")
+        self.log("=" * 80)
+        
+        # Try to get session first
+        try:
+            response = self.session.get(f"{self.base_url}/auth/session", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('authenticated'):
+                    self.jwt_token = data.get('token')
+                    if self.jwt_token:
+                        self.session.headers['Authorization'] = f'Bearer {self.jwt_token}'
+                        self.log(f"Authenticated with existing session", "SUCCESS")
+                        return True
+        except Exception as e:
+            self.log(f"Session check failed: {str(e)}", "WARNING")
+        
+        # Note: This app uses Google OAuth, so we can't login with email/password
+        # We'll test without authentication to verify proper 401 responses
+        self.log("No active session found - testing without authentication", "WARNING")
+        self.log("Note: App uses Google OAuth - cannot test with email/password", "INFO")
+        return False
+    
+    def make_request(self, endpoint: str, method: str = "POST", data: Dict = None) -> Tuple[int, Dict, float]:
+        """Make API request and return status, response, elapsed time"""
+        url = f"{self.base_url}/{endpoint}"
+        
+        try:
+            start_time = time.time()
+            
+            if method == "POST":
+                response = self.session.post(url, json=data, timeout=30)
+            elif method == "GET":
+                response = self.session.get(url, timeout=30)
+            
+            elapsed_time = time.time() - start_time
+            
+            try:
+                response_data = response.json()
+            except:
+                response_data = {"error": "Non-JSON response", "text": response.text[:200]}
+            
+            return response.status_code, response_data, elapsed_time
+            
+        except Exception as e:
+            return 0, {"error": str(e)}, 0
+    
+    # ============= VALID TEST GENERATION REQUESTS =============
+    
+    def test_valid_requests(self):
+        """Test valid test generation requests"""
+        self.log("\n" + "=" * 80)
+        self.log("✅ VALID TEST GENERATION REQUESTS", "INFO")
+        self.log("=" * 80)
+        
+        test_cases = [
+            {
+                "name": "Single Subject - Mathematics",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "difficulty_level": 2,
+                    "num_questions": 10
+                }
+            },
+            {
+                "name": "Multiple Subjects - Math & Physics",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics", "Physics"],
+                    "difficulty_level": 3,
+                    "num_questions": 20
+                }
+            },
+            {
+                "name": "Minimum Questions (3)",
+                "data": {
+                    "exam_type": "NEET",
+                    "subjects": ["Biology"],
+                    "difficulty_level": 1,
+                    "num_questions": 3
+                }
+            },
+            {
+                "name": "Maximum Questions (100)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Chemistry"],
+                    "difficulty_level": 3,
+                    "num_questions": 100
+                }
+            },
+            {
+                "name": "Difficulty as String (easy)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Physics"],
+                    "difficulty_level": "easy",
+                    "num_questions": 15
+                }
+            },
+            {
+                "name": "Difficulty as String (medium)",
+                "data": {
+                    "exam_type": "NEET",
+                    "subjects": ["Chemistry", "Biology"],
+                    "difficulty_level": "medium",
+                    "num_questions": 25
+                }
+            },
+            {
+                "name": "Difficulty as String (hard)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics", "Physics", "Chemistry"],
+                    "difficulty_level": "hard",
+                    "num_questions": 30
+                }
+            }
+        ]
+        
+        for i, test_case in enumerate(test_cases, 1):
+            self.log(f"\n{i}️⃣ Testing: {test_case['name']}", "TEST")
+            self.log(f"   Request: {json.dumps(test_case['data'], indent=6)}")
+            
+            status, response, elapsed = self.make_request("mock-tests/generate", "POST", test_case['data'])
+            
+            result = {
+                'test_name': test_case['name'],
+                'request': test_case['data'],
+                'status_code': status,
+                'response': response,
+                'elapsed_time': elapsed,
+                'success': False,
+                'issues': []
+            }
+            
+            # Check status code
+            if status == 200:
+                self.log(f"   ✅ Status: 200 OK", "SUCCESS")
+                result['success'] = True
+                
+                # Verify response structure
+                if self.verify_success_response_structure(response, result):
+                    self.log(f"   ✅ Response structure valid", "SUCCESS")
+                
+                self.log(f"   ⏱️ Response time: {elapsed:.2f}s", "INFO")
+                
+            elif status == 401:
+                self.log(f"   ⚠️ Status: 401 Unauthorized (expected without auth)", "WARNING")
+                result['issues'].append("Authentication required")
+                
+            elif status == 402:
+                self.log(f"   ⚠️ Status: 402 Payment Required (subscription limit)", "WARNING")
+                result['issues'].append("Subscription limit reached")
+                
+            elif status == 422:
+                self.log(f"   ❌ Status: 422 Validation Error (should be valid!)", "ERROR")
+                self.log(f"   Response: {json.dumps(response, indent=6)}", "ERROR")
+                result['issues'].append("Unexpected validation error")
+                
+            elif status == 500:
+                self.log(f"   ❌ Status: 500 Internal Server Error (CRITICAL!)", "ERROR")
+                self.log(f"   Response: {json.dumps(response, indent=6)}", "ERROR")
+                result['issues'].append("500 error - endpoint unstable")
+                trace_id = response.get('detail', {}).get('trace_id') if isinstance(response.get('detail'), dict) else None
+                if trace_id:
+                    self.log(f"   🔍 Trace ID: {trace_id}", "ERROR")
+                
+            else:
+                self.log(f"   ❌ Status: {status} (unexpected)", "ERROR")
+                self.log(f"   Response: {json.dumps(response, indent=6)}", "ERROR")
+                result['issues'].append(f"Unexpected status code: {status}")
+            
+            self.test_results['valid_requests'].append(result)
+    
+    # ============= VALIDATION ERROR SCENARIOS =============
+    
+    def test_validation_errors(self):
+        """Test validation error scenarios (should return 422, not 500)"""
+        self.log("\n" + "=" * 80)
+        self.log("🔍 VALIDATION ERROR SCENARIOS", "INFO")
+        self.log("=" * 80)
+        
+        test_cases = [
+            {
+                "name": "Empty exam_type",
+                "data": {
+                    "exam_type": "",
+                    "subjects": ["Mathematics"],
+                    "num_questions": 10
+                },
+                "expected_error": "exam_type cannot be empty"
+            },
+            {
+                "name": "Empty subjects array",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": [],
+                    "num_questions": 10
+                },
+                "expected_error": "subjects cannot be empty"
+            },
+            {
+                "name": "Invalid difficulty (too high)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "difficulty_level": 10,
+                    "num_questions": 10
+                },
+                "expected_error": "Invalid difficulty level"
+            },
+            {
+                "name": "Invalid difficulty (zero)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "difficulty_level": 0,
+                    "num_questions": 10
+                },
+                "expected_error": "Invalid difficulty level"
+            },
+            {
+                "name": "Questions below minimum (1)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "num_questions": 1
+                },
+                "expected_error": "num_questions must be >= 3"
+            },
+            {
+                "name": "Questions below minimum (2)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "num_questions": 2
+                },
+                "expected_error": "num_questions must be >= 3"
+            },
+            {
+                "name": "Questions above maximum (200)",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "num_questions": 200
+                },
+                "expected_error": "num_questions must be <= 100"
+            },
+            {
+                "name": "Missing exam_type",
+                "data": {
+                    "subjects": ["Mathematics"],
+                    "num_questions": 10
+                },
+                "expected_error": "exam_type is required"
+            },
+            {
+                "name": "Missing subjects",
+                "data": {
+                    "exam_type": "JEE",
+                    "num_questions": 10
+                },
+                "expected_error": "subjects is required"
+            },
+            {
+                "name": "Invalid difficulty string",
+                "data": {
+                    "exam_type": "JEE",
+                    "subjects": ["Mathematics"],
+                    "difficulty_level": "super_hard",
+                    "num_questions": 10
+                },
+                "expected_error": "Invalid difficulty level"
+            }
+        ]
+        
+        for i, test_case in enumerate(test_cases, 1):
+            self.log(f"\n{i}️⃣ Testing: {test_case['name']}", "TEST")
+            self.log(f"   Request: {json.dumps(test_case['data'], indent=6)}")
+            self.log(f"   Expected: 422 Validation Error", "INFO")
+            
+            status, response, elapsed = self.make_request("mock-tests/generate", "POST", test_case['data'])
+            
+            result = {
+                'test_name': test_case['name'],
+                'request': test_case['data'],
+                'expected_error': test_case['expected_error'],
+                'status_code': status,
+                'response': response,
+                'elapsed_time': elapsed,
+                'success': False,
+                'issues': []
+            }
+            
+            # Check status code
+            if status == 422:
+                self.log(f"   ✅ Status: 422 Validation Error (correct!)", "SUCCESS")
+                result['success'] = True
+                
+                # Verify error response structure
+                if self.verify_error_response_structure(response, result):
+                    self.log(f"   ✅ Error response structure valid", "SUCCESS")
+                
+            elif status == 401:
+                self.log(f"   ⚠️ Status: 401 Unauthorized (auth checked before validation)", "WARNING")
+                result['issues'].append("Authentication required before validation")
+                
+            elif status == 500:
+                self.log(f"   ❌ Status: 500 Internal Server Error (SHOULD BE 422!)", "ERROR")
+                self.log(f"   Response: {json.dumps(response, indent=6)}", "ERROR")
+                result['issues'].append("500 error instead of 422 - validation not working")
+                trace_id = response.get('detail', {}).get('trace_id') if isinstance(response.get('detail'), dict) else None
+                if trace_id:
+                    self.log(f"   🔍 Trace ID: {trace_id}", "ERROR")
+                
+            else:
+                self.log(f"   ❌ Status: {status} (expected 422)", "ERROR")
+                self.log(f"   Response: {json.dumps(response, indent=6)}", "ERROR")
+                result['issues'].append(f"Expected 422, got {status}")
+            
+            self.test_results['validation_errors'].append(result)
+    
+    # ============= RESPONSE STRUCTURE VERIFICATION =============
+    
+    def verify_success_response_structure(self, response: Dict, result: Dict) -> bool:
+        """Verify successful response structure"""
+        required_fields = ['success', 'test_id', 'test', 'message']
+        test_required_fields = ['test_id', 'questions', 'title', 'exam_type', 'subjects', 
+                               'difficulty_level', 'generated_at', 'status']
+        
+        issues = []
+        
+        # Check top-level fields
+        for field in required_fields:
+            if field not in response:
+                issues.append(f"Missing field: {field}")
+        
+        # Check success is true
+        if response.get('success') != True:
+            issues.append(f"success should be true, got: {response.get('success')}")
+        
+        # Check test_id format (UUID)
+        test_id = response.get('test_id')
+        if test_id:
+            if len(test_id) != 36 or test_id.count('-') != 4:
+                issues.append(f"test_id not in UUID format: {test_id}")
+        
+        # Check test object
+        test_obj = response.get('test', {})
+        if isinstance(test_obj, dict):
+            for field in test_required_fields:
+                if field not in test_obj:
+                    issues.append(f"Missing test field: {field}")
+            
+            # Check questions array
+            questions = test_obj.get('questions', [])
+            if not isinstance(questions, list):
+                issues.append(f"questions should be array, got: {type(questions)}")
+            elif len(questions) == 0:
+                issues.append("questions array is empty")
+            else:
+                # Verify question structure
+                first_q = questions[0]
+                if isinstance(first_q, dict):
+                    q_required = ['question_id', 'question_number', 'subject', 'question_text', 
+                                 'options', 'correct_answer', 'marks', 'difficulty']
+                    for field in q_required:
+                        if field not in first_q:
+                            issues.append(f"Missing question field: {field}")
+            
+            # Check status
+            if test_obj.get('status') != 'active':
+                issues.append(f"status should be 'active', got: {test_obj.get('status')}")
+        else:
+            issues.append(f"test should be object, got: {type(test_obj)}")
+        
+        # Check message
+        if not response.get('message'):
+            issues.append("message is empty")
+        
+        if issues:
+            for issue in issues:
+                self.log(f"      ⚠️ {issue}", "WARNING")
+            result['issues'].extend(issues)
+            return False
+        
+        return True
+    
+    def verify_error_response_structure(self, response: Dict, result: Dict) -> bool:
+        """Verify error response structure"""
+        issues = []
+        
+        # Check for detail field (FastAPI standard)
+        if 'detail' not in response:
+            issues.append("Missing 'detail' field in error response")
+        else:
+            detail = response['detail']
+            # Detail can be string or object
+            if isinstance(detail, dict):
+                # Check for common error fields
+                if 'message' not in detail and 'error' not in detail:
+                    issues.append("Error detail missing 'message' or 'error' field")
+            elif not isinstance(detail, (str, list)):
+                issues.append(f"Unexpected detail type: {type(detail)}")
+        
+        if issues:
+            for issue in issues:
+                self.log(f"      ⚠️ {issue}", "WARNING")
+            result['issues'].extend(issues)
+            return False
+        
+        return True
+    
+    # ============= MAIN TEST RUNNER =============
+    
+    def run_all_tests(self):
+        """Run all mock test generation tests"""
+        self.log("\n" + "=" * 80)
+        self.log("🚀 MOCK TEST GENERATION API STABILIZATION TESTING", "INFO")
+        self.log("=" * 80)
+        self.log(f"Backend URL: {self.base_url}")
+        self.log(f"Test Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Authenticate
+        self.authenticate()
+        
+        # Run test suites
+        self.test_valid_requests()
+        self.test_validation_errors()
+        
+        # Print final summary
+        self.print_final_summary()
+    
+    def print_final_summary(self):
+        """Print final test summary"""
+        self.log("\n" + "=" * 80)
+        self.log("📊 FINAL TEST SUMMARY", "INFO")
+        self.log("=" * 80)
+        
+        # Valid Requests Summary
+        self.log("\n✅ VALID TEST GENERATION REQUESTS:")
+        valid_success = sum(1 for r in self.test_results['valid_requests'] if r['success'])
+        valid_total = len(self.test_results['valid_requests'])
+        self.log(f"   Success: {valid_success}/{valid_total}")
+        
+        # Count by status code
+        status_counts = {}
+        for r in self.test_results['valid_requests']:
+            status = r['status_code']
+            status_counts[status] = status_counts.get(status, 0) + 1
+        
+        for status, count in sorted(status_counts.items()):
+            status_name = {
+                200: "200 OK",
+                401: "401 Unauthorized",
+                402: "402 Payment Required",
+                422: "422 Validation Error",
+                500: "500 Internal Server Error"
+            }.get(status, f"{status} Unknown")
+            self.log(f"   - {status_name}: {count}")
+        
+        # Check for 500 errors
+        errors_500 = [r for r in self.test_results['valid_requests'] if r['status_code'] == 500]
+        if errors_500:
+            self.log(f"\n   ❌ CRITICAL: {len(errors_500)} valid requests returned 500 errors!", "ERROR")
+            for r in errors_500:
+                self.log(f"      - {r['test_name']}", "ERROR")
+                trace_id = r['response'].get('detail', {}).get('trace_id') if isinstance(r['response'].get('detail'), dict) else None
+                if trace_id:
+                    self.log(f"        Trace ID: {trace_id}", "ERROR")
+        
+        # Validation Errors Summary
+        self.log("\n🔍 VALIDATION ERROR SCENARIOS:")
+        validation_success = sum(1 for r in self.test_results['validation_errors'] if r['success'])
+        validation_total = len(self.test_results['validation_errors'])
+        self.log(f"   Success: {validation_success}/{validation_total}")
+        
+        # Count by status code
+        val_status_counts = {}
+        for r in self.test_results['validation_errors']:
+            status = r['status_code']
+            val_status_counts[status] = val_status_counts.get(status, 0) + 1
+        
+        for status, count in sorted(val_status_counts.items()):
+            status_name = {
+                200: "200 OK",
+                401: "401 Unauthorized",
+                422: "422 Validation Error",
+                500: "500 Internal Server Error"
+            }.get(status, f"{status} Unknown")
+            self.log(f"   - {status_name}: {count}")
+        
+        # Check for 500 errors in validation
+        val_errors_500 = [r for r in self.test_results['validation_errors'] if r['status_code'] == 500]
+        if val_errors_500:
+            self.log(f"\n   ❌ CRITICAL: {len(val_errors_500)} validation tests returned 500 instead of 422!", "ERROR")
+            for r in val_errors_500:
+                self.log(f"      - {r['test_name']}", "ERROR")
+                trace_id = r['response'].get('detail', {}).get('trace_id') if isinstance(r['response'].get('detail'), dict) else None
+                if trace_id:
+                    self.log(f"        Trace ID: {trace_id}", "ERROR")
+        
+        # Overall Assessment
+        total_tests = valid_total + validation_total
+        total_success = valid_success + validation_success
+        success_rate = (total_success / total_tests * 100) if total_tests > 0 else 0
+        
+        total_500_errors = len(errors_500) + len(val_errors_500)
+        
+        self.log("\n" + "=" * 80)
+        self.log(f"OVERALL RESULTS: {total_success}/{total_tests} tests passed ({success_rate:.1f}%)")
+        self.log(f"500 ERRORS: {total_500_errors} (should be 0)")
+        self.log("=" * 80)
+        
+        if total_500_errors == 0 and success_rate >= 90:
+            self.log("✅ EXCELLENT: Mock test generation endpoint is stable!", "SUCCESS")
+        elif total_500_errors == 0 and success_rate >= 70:
+            self.log("⚠️ GOOD: Endpoint stable but some tests failed (likely auth/subscription)", "WARNING")
+        elif total_500_errors > 0:
+            self.log(f"❌ CRITICAL: {total_500_errors} 500 errors detected - endpoint unstable!", "ERROR")
+        else:
+            self.log("⚠️ PARTIAL: Endpoint has issues that need attention", "WARNING")
+        
+        self.log(f"\nTest End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+if __name__ == "__main__":
+    tester = MockTestGenerationTester()
+    tester.run_all_tests()
