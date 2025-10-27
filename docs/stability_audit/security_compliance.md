@@ -69,7 +69,7 @@ SessionMiddleware(
 CORS_ORIGINS = [
     'http://localhost:3000',  # Development
     'https://seamless-auth-1.emergent.host',  # Backend
-    'https://tutor-evolution.preview.emergentagent.com',  # Preview
+    'https://eduai-platform-28.preview.emergentagent.com',  # Preview
 ]
 
 CORSMiddleware(

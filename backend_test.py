@@ -12,7 +12,7 @@ from datetime import datetime
 class Phase2BackendTester:
     def __init__(self):
         # Use environment variable for backend URL
-        self.base_url = "https://tutor-evolution.preview.emergentagent.com/api"
+        self.base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

@@ -221,7 +221,7 @@ Fixed the receipt length issue in subscription.py. The receipt format is now: `{
 - Created test user with UUID: `9c4e099e-c2b3-47d6-afec-84dff937c665`
 - Generated JWT token for authentication
 - Tested endpoint: `POST /api/subscription/razorpay/create-order`
-- Backend URL: `https://tutor-evolution.preview.emergentagent.com/api`
+- Backend URL: `https://eduai-platform-28.preview.emergentagent.com/api`
 
 **Test Coverage**:
 1. Receipt format validation (length calculation)
@@ -1373,7 +1373,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 
 #### 📋 **TESTING METHODOLOGY**
 - **Authentication**: test@dhruvai.com / password123
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Health, CSRF, Subscription Migration, Feature Access
 - **Response Validation**: Status codes, JSON structure, field presence
 
@@ -1489,7 +1489,7 @@ import { ThemeProvider, ThemeToggle } from './contexts/ThemeContext';
 ---
 
 **Testing Environment**: 
-- Frontend URL: https://tutor-evolution.preview.emergentagent.com
+- Frontend URL: https://eduai-platform-28.preview.emergentagent.com
 - Authentication: Google OAuth only
 - Browser: Playwright (Desktop 1920x1080)
 - Test Date: January 16, 2025
@@ -1865,7 +1865,7 @@ results = await run_sequential(
 ### Deployment Verification:
 
 **Backend Status**: ✅ Running
-- Health endpoint: https://tutor-evolution.preview.emergentagent.com/api/health
+- Health endpoint: https://eduai-platform-28.preview.emergentagent.com/api/health
 - All services initialized successfully
 - Database indexes: All 63 indexes created across 9 collections
 - Configuration: All environment variables properly set
@@ -1988,7 +1988,7 @@ mongodb    RUNNING   (Port 27017)
 ✅ **Configuration Valid** - Environment variables and MongoDB working
 
 #### 📋 **TESTING METHODOLOGY**
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Health, CORS, Authentication, Subscription, AI Services, Mock Tests, Error Handling, Configuration
 - **Authentication**: OAuth-only (Google) - email/password not supported (expected)
 - **Response Validation**: Status codes, JSON structure, security headers
@@ -2083,7 +2083,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📊 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Authentication**: OAuth-only (Google) - test credentials not applicable
 - **Test Coverage**: 15 endpoints across 5 categories
 - **Response Validation**: Status codes, JSON structure, authentication security
@@ -2178,7 +2178,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Feature name mapping, new feature names, payment error verification
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 402 errors, proper feature recognition
@@ -2414,7 +2414,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Payment endpoints, subscription plans, order creation, payment verification, regression testing
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, endpoint accessibility, authentication security
@@ -2539,7 +2539,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Feature name mapping, new feature names, payment error verification
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 402 errors, proper feature recognition
@@ -2612,7 +2612,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: 20 comprehensive tests across 7 critical areas
 - **Authentication**: OAuth-only (401 responses expected and acceptable)
 - **Response Validation**: Status codes, error messages, endpoint accessibility
@@ -2790,7 +2790,7 @@ mongodb    RUNNING   (Port 27017)
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Dashboard endpoints, gamification endpoints, regression testing
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 500/404 errors, proper HTTP responses
@@ -3306,7 +3306,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Target failing endpoints, regression testing, backend health
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 404/422 errors, proper HTTP responses
@@ -3987,7 +3987,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📊 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Authentication**: OAuth-only (Google) - 401 responses expected for unauthenticated tests
 - **Test Coverage**: 17 endpoints across 5 categories (Chat Sessions, AI Responses, Metrics, Feature Access, Core)
 - **Response Validation**: Status codes, JSON structure, authentication security
@@ -4519,7 +4519,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: User Progress, Dashboard, Gamification, Mock Tests, Regression Testing
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 500/404 errors, proper HTTP responses
@@ -4691,7 +4691,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Frontend URL**: https://tutor-evolution.preview.emergentagent.com
+- **Frontend URL**: https://eduai-platform-28.preview.emergentagent.com
 - **Viewports Tested**: 4 different mobile/tablet sizes
 - **Test Coverage**: Landing page, login, navigation, protected routes, touch interactions
 - **Authentication**: OAuth-only (Google) - unauthenticated testing appropriate
@@ -4860,7 +4860,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Session validation, subscription endpoints, feature access, AI endpoints, error handling
 - **Authentication**: OAuth-only (Google) - unauthenticated testing appropriate
 - **Response Validation**: Status codes, error messages, consistency checks
@@ -4978,7 +4978,7 @@ Response: { success: true, subscription: {...} }
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Health, Authentication, Subscription, AI Tutor, Error Handling
 - **Context**: Mobile CSS changes only (no backend code modified)
 - **Response Validation**: Status codes, JSON structure, error handling
@@ -5907,7 +5907,7 @@ Please login and test:
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: 9 comprehensive tests across 5 categories
 - **Authentication**: OAuth-only (Google) - 401 responses expected for unauthenticated tests
 - **Response Validation**: Status codes, endpoint existence, request/response structure
@@ -6075,7 +6075,7 @@ Please login and test:
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: 10 endpoints across gamification, mock tests, and regression testing
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, endpoint accessibility, no server errors
@@ -6431,7 +6431,7 @@ mongodb    RUNNING   pid 31, uptime 0:24:XX
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Security (CSRF), Critical Endpoints, Subscription, Authentication, Error Handling
 - **Authentication**: OAuth-only (401/403 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, error messages, CSRF protection, performance
@@ -6651,7 +6651,7 @@ mongodb    RUNNING   pid 31, uptime 0:24:XX
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: Health check, subscription endpoints, AI endpoints, CSRF exemptions, session configuration
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, no 500 errors, proper error messages
@@ -7012,7 +7012,7 @@ The fixes are working perfectly. Users will now receive proper authentication er
 
 #### 📋 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: 6 critical test categories, 27 individual tests
 - **Authentication**: OAuth-only (401 responses expected for unauthenticated tests)
 - **Response Validation**: Status codes, endpoint existence, proper error responses
@@ -7433,7 +7433,7 @@ All backend endpoints verified working and properly secured. Performance optimiz
 - **NOT hardcoded** - fully environment-based
 
 **3. Environment-based API URLs** - ✅ **FIXED AND VERIFIED**
-- Backend URL: `https://tutor-evolution.preview.emergentagent.com/api`
+- Backend URL: `https://eduai-platform-28.preview.emergentagent.com/api`
 - Using production/preview URL (not localhost)
 - All API calls use environment-configured URLs
 
@@ -7444,7 +7444,7 @@ All backend endpoints verified working and properly secured. Performance optimiz
 
 #### 📊 **TESTING METHODOLOGY**
 
-- **Backend URL**: https://tutor-evolution.preview.emergentagent.com/api
+- **Backend URL**: https://eduai-platform-28.preview.emergentagent.com/api
 - **Test Coverage**: 
   - Authentication flow (session, CSRF, cookies)
   - Core API endpoints (subscription, AI, user profile)

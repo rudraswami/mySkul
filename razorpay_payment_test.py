@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional
 
 class RazorpayPaymentTester:
     def __init__(self):
-        self.base_url = "https://tutor-evolution.preview.emergentagent.com/api"
+        self.base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

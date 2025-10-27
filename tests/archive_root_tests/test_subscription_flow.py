@@ -3,7 +3,7 @@
 import requests
 import json
 
-BACKEND_URL = "https://tutor-evolution.preview.emergentagent.com"
+BACKEND_URL = "https://eduai-platform-28.preview.emergentagent.com"
 
 print("=" * 60)
 print("Testing Subscription Modal Flow")

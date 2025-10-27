@@ -1,25 +1,27 @@
 <analysis>
-The AI engineer successfully progressed through several significant development phases. Initially, the focus was on stabilizing the Dhruv AI platform, including a comprehensive AI Tutor UI/UX redesign and critical deployment fixes. This involved extensive frontend styling, refactoring in , and backend configuration adjustments. Subsequently, a duplicate chat message bug in the AI Tutor was addressed by refining message ID generation and rendering logic. A major feature, Dynamic Default Prompts + Sidebar Merge + Header Collapse for the AI Tutor, was then implemented, requiring a new backend endpoint and significant  overhaul. This was followed by a Global Modal Standardization effort, creating utility files and integrating them into multiple existing modals. Immediately prior to the end of the trajectory, the engineer implemented AI Tutor Interaction Stability features like optimistic rendering and local chat history. The final immediate task involved fixing a Razorpay Order Creation error related to receipt length.
+The AI engineer systematically tackled critical issues, starting with AI Tutor UI/UX redesign, deployment fixes, and a duplicate chat bug. This involved significant refactoring in  and backend configuration. Subsequently, a major feature for dynamic default prompts, sidebar merge, and header collapse was implemented, requiring a new backend endpoint and  overhaul. A Global Modal Standardization effort introduced utility files and integrated them into existing modals for consistent behavior, culminating in the fix for persistent off-viewport modal display. A critical Razorpay receipt length bug was identified, analyzed, and successfully fixed in  after user feedback. The current focus is on stabilizing the Mock Test Generation feature () due to recurring 500 errors, involving thorough examination of backend and frontend code, and ongoing implementation of robust Pydantic models and error handling in  and . The process highlights iterative development, root-cause analysis, and continuous verification.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform aims for production readiness, offering an AI Tutor, Auto-Note Mentor, and Mock Tests with Gmail authentication. Initial issues included  errors, service worker problems, dashboard/gamification bugs, and Razorpay integration flaws (500 errors on auth/logout and subscription check-access). The AI Tutor was broken with no history, slow responses, and poor animations.
+The Dhruv AI platform aims for production readiness, offering an AI Tutor, Auto-Note Mentor, and Mock Tests. Initial challenges included  errors, service worker problems, dashboard/gamification bugs, and Razorpay integration flaws. The AI Tutor suffered from broken history, slow responses, and poor animations.
 **Implemented Features:**
-1.  **AI Tutor UI/UX Redesign:** A ~640px central chat, glass-morphism AI bubbles, gradient user bubbles, inline concept cards, a confidence bar, a collapsible right drawer, and Framer Motion animations.
-2.  **Deployment Fixes:** Resolved  warnings, hardcoded cookie/CSP domains, and external API URLs.
+1.  **AI Tutor UI/UX Redesign:** Central chat, glass-morphism/gradient bubbles, concept cards, confidence bar, collapsible right drawer, Framer Motion animations.
+2.  **Deployment Fixes:** Resolved  warnings, hardcoded cookie/CSP domains, external API URLs.
 3.  **Duplicate Chat Message Fix:** Ensured unique message rendering in AI Tutor.
-4.  **Dynamic Default Prompts + Sidebar Merge + Header Collapse:** New backend endpoint (), unified collapsible sidebar, + New Chat in header, collapsible header, responsive FAB.
-5.  **Global Modal Standardization:** A layer to standardize animation, backdrop, z-index, focus trap, scroll lock, theming, and accessibility across existing modals (e.g., UpgradeModal, EnhancedResultsModal, MotivationalPopup), maintaining original logic.
-6.  **AI Tutor Interaction Stability:** Prevented welcome screen flicker, enabled instant user message rendering, implemented local chat history persistence, context-aware subject selector, smooth header collapse, and an AI is thinking... indicator.
-7.  **Razorpay Receipt Length Fix:** Enforced Razorpay's 40-character limit for payment receipt generation.
+4.  **Dynamic Default Prompts + Sidebar Merge + Header Collapse:** New backend endpoint, unified collapsible sidebar, + New Chat in header, collapsible header, responsive FAB.
+5.  **Global Modal Standardization:** Standardized animation, backdrop, z-index, focus trap, scroll lock, theming, accessibility across modals (UpgradeModal, EnhancedResultsModal, MotivationalPopup, UpgradeModalUnified). Recently fixed off-viewport display issues.
+6.  **AI Tutor Interaction Stability:** Prevented welcome screen flicker, instant user message rendering, local chat history, context-aware subject selector, smooth header collapse, AI is thinking indicator.
+7.  **Razorpay Receipt Length Fix:** Enforced 40-character limit for payment receipt generation, resolving order creation failures.
+Currently, the Mock Test Generation feature requires permanent stabilization to eliminate recurring 500 errors.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Development**: React.js, FastAPI, MongoDB.
+-   **Full-stack Development**: React.js (frontend), FastAPI (backend), MongoDB (database).
 -   **Authentication**: Google OAuth, JWTs, CSRF protection.
 -   **Frontend UI/State**: React Context, React Portals, Framer Motion, Axios, Local Storage.
 -   **Deployment**: Supervisor, Kubernetes, Environment Variables, .
 -   **Payment Gateway**: Razorpay integration.
+-   **Backend Validation**: Pydantic models.
 </key_technical_concepts>
 
 <code_architecture>
@@ -28,20 +30,24 @@ The application follows a standard full-stack architecture with a React frontend
 
 -   ****: FastAPI entry point. Modified to include  and  in  to fix 500 errors and handle cookie domains.
 -   ****: Defines AI API routes. Modified to add the  endpoint for subject-specific default questions.
--   ****: Defines subscription API routes. Modified around line 601 to create a more compact Razorpay receipt format, adhering to the 40-character limit to fix order creation failures.
--   ****: Handles security headers. Modified to fix hardcoded CSP domains and likely cookie domains during deployment fixes.
--   ****: Core AI Tutor component.
-    -   Heavily modified for UI/UX redesign (layout, glass-morphism/gradient bubbles, concept cards, right drawer, Framer Motion).
-    -   Fixed duplicate message issue by refining message ID generation and message handling in  and .
-    -   Extensively rewritten for Dynamic Default Prompts + Sidebar Merge + Header Collapse and Interaction Stability features, including new state management, ,  for header collapse, updated , a completely rewritten  section, dynamic prompts, subject selector in welcome/footer, responsive FAB, optimistic rendering, local chat history, and AI typing indicator.
+-   ****: Defines subscription API routes. Modified around line 601 to create a more compact Razorpay receipt format, adhering to the 40-character limit, to fix order creation failures.
+-   ****: Defines Mock Test API routes. Currently undergoing significant modification to stabilize the  endpoint, including a rewrite for robust error handling and validation logic.
+-   ****: Pydantic models for Mock Tests. Currently being modified to define proper Pydantic models for request and response payloads, crucial for validating the Mock Test generation API.
+-   ****: Handles security headers. Modified to fix hardcoded CSP domains and cookie domains during deployment fixes.
+-   ****: Core AI Tutor component. Heavily modified for UI/UX redesign, duplicate message fix, dynamic prompts, sidebar merge, header collapse, optimistic rendering, local chat history, and AI typing indicator.
 -   ****: AI Tutor custom hook. Modified to fix incorrect API endpoint calls (e.g.,  to ) resolving 404s.
 -   ** (NEW)**: New CSS for the AI Tutor redesign, extended with rules for overlay sidebar and responsive FAB.
--   ** (NEW)**: Stores global configuration for modal animations, backdrop, keyboard behavior, and styling.
--   ** (NEW)**: Provides a utility function  to standardize modal behavior (focus trap, scroll lock, backdrop, accessibility).
--   ****: Integrated with  and  for standardized animation and behavior.
--   ****: Integrated with  and  for standardized animation and behavior.
--   ****: Integrated with  and  for standardized animation and behavior.
--   ** (NEW)**: Documents the global modal standardization.
+-   ** (NEW)**: New CSS file created to standardize modal appearance, z-index, and height constraints across the application, imported into .
+-   ****: Main CSS file. Modified to import the new .
+-   ** (NEW)**: Stores global configuration for modal animations, backdrop, keyboard behavior, and styling, centralizing modal behavior control.
+-   ** (NEW)**: Provides utility functions for standardized modal behavior. Heavily modified to include  for auto-centering, background scroll lock, and to apply consistent z-index, animations, and accessibility attributes.
+-   ****: Integrated with  and  and modified for global modal standardization, ensuring consistent animation and viewport centering.
+-   ****: Integrated with  and  and modified for global modal standardization, ensuring consistent animation and viewport centering.
+-   ****: Integrated with  and  and modified for global modal standardization, ensuring consistent animation and viewport centering.
+-   ** (NEW)**: A new modal component, integrated with  and  and modified for global modal standardization and viewport centering.
+-   ** (NEW)**: Documents the global modal standardization efforts.
+-   ** (NEW)**: New documentation detailing the comprehensive modal framework implementation.
+-   ** (NEW)**: Documentation confirming the completion of modal viewport fixes.
 -   ****: Frequently updated with summaries of implemented fixes and their testing status.
 </code_architecture>
 
@@ -51,17 +57,28 @@ The application follows a standard full-stack architecture with a React frontend
 -   Automate index creation on startup with safe existence checks.
 -   Complete  cleanup in the frontend.
 -   Address various UI/UX issues identified in the audit beyond the modal system.
--   Re-verify Razorpay payment flow after CSRF exemption.
+-   Re-verify Razorpay payment flow after CSRF exemption (receipt length fix completed, but full re-verification may be pending).
 -   Implement the efficient, credit-optimized development-to-production workflow.
--   Integrate global modal behavior into  and any other remaining modal components.
 -   Run automated frontend testing for AI Tutor UI/UX redesign, deployment fixes, and interaction stability.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was addressing a critical bug related to Razorpay order creation. The problem stemmed from the  parameter sent to the Razorpay API exceeding its strict 40-character length limit, leading to payment failures across all subscription plans. The engineer pinpointed the issue in the backend, specifically within the  file, around line 601, where the  string was being constructed by concatenating potentially long fields like , , and . An initial fix has been implemented to compact this receipt format, ensuring it adheres to Razorpay's length constraint. The engineer has requested the user to test this implemented fix to confirm the resolution of the payment order creation issue.
+Immediately prior to this summary, the AI engineer was addressing a critical and recurring issue: the stabilization of the Mock Test Generation feature, specifically the  API endpoint. This feature intermittently fails with 500 Internal Server Errors, a problem that resurfaces even after previous fixes, often after unrelated frontend or backend merges. This indicates underlying issues like incomplete backend validation, insufficient error handling, missing integration tests, or schema inconsistencies between modules.
+
+The engineer initiated a comprehensive root-cause analysis. This involved:
+1.  **Backend API Examination:** Reading  to understand the  endpoint's current logic.
+2.  **Service Layer Investigation:** Examining  to understand the core business logic related to mock test creation.
+3.  **Frontend Payload Analysis:** Reviewing  to determine the exact payload structure sent from the client to the  endpoint, ensuring consistency.
+4.  **Pydantic Model Review:** Checking  to see existing data models for mock tests and identify gaps in validation.
+
+Based on this analysis, the engineer began implementing a robust fix. This involves:
+-   **Updating Pydantic Models:** Defining proper and comprehensive Pydantic models in  to enforce strict validation of incoming request data and outgoing response data.
+-   **Rewriting API Endpoint Logic:** Completely rewriting the  endpoint within  to incorporate these new Pydantic models, add server-side validation, implement structured error wrapping, and enhance exception handling to prevent raw 500 errors and provide meaningful client feedback.
+
+The engineer's last explicit action was rewriting the  endpoint, indicating that this work is still in progress.
 </current_work>
 
 <optional_next_step>
-Ask the user to test the Razorpay receipt length fix.
+Complete the rewrite of the  endpoint in  with robust Pydantic models, error handling, and validation.
 </optional_next_step>
 
