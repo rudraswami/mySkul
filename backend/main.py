@@ -153,6 +153,7 @@ def create_app() -> FastAPI:
             "/api/ai/dual-response",  # FIX: Exempt AI dual response (JWT-authenticated)
             "/api/ai/mentor-only",  # FIX: Exempt AI mentor-only (JWT-authenticated)
             "/api/ai/professor-only",  # FIX: Exempt AI professor-only (JWT-authenticated)
+            "/api/mock-tests/generate",  # FIX: Exempt mock test generation (JWT-authenticated)
         ]
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
