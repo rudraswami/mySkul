@@ -723,7 +723,7 @@ async def delete_chat_session(
     except HTTPException:
         raise
     except Exception as e:
-
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
 
 
 # ===================== NEURO-SYMBOLIC AI TUTOR (v3.0) =====================
