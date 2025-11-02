@@ -106,7 +106,7 @@ class NeuroSymbolicParser:
         # Extract confidence score
         confidence_pattern = r'Confidence Score:?\s*\[?([\d.]+)\]?'
         confidence_match = re.search(confidence_pattern, section_text, re.IGNORECASE)
-        confidence = float(confidence_match.group(1)) if confidence_match else 0.8
+        confidence = float(confidence_match.group(1)) if confidence_match else 0.7
         
         # Ensure confidence is between 0.0 and 1.0
         confidence = max(0.0, min(1.0, confidence))
