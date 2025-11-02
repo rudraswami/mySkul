@@ -1371,7 +1371,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
             start_time = time.time()
             
             logger.info("🚀 Calling LLM for neuro-symbolic response...")
-            raw_response = await neuro_chat.send_message_async(user_message)
+            raw_response = await neuro_chat.send_message(user_message)
             
             generation_time = time.time() - start_time
             logger.info(f"✅ Response generated in {generation_time:.2f}s")
