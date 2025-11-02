@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Brain, LogIn } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Brain, LogIn, Mail, Lock, User, Calendar } from 'lucide-react';
 import PremiumShowcase from './PremiumShowcase';
 import '../../styles/auth.css';
 
@@ -8,6 +8,23 @@ export default function LoginScreen() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authMode, setAuthMode] = useState('google'); // 'google' or 'email'
+  const [showSignup, setShowSignup] = useState(false);
+  
+  // Login form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // Signup form state
+  const [signupData, setSignupData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    exam_type: 'JEE',
+    target_year: new Date().getFullYear() + 1,
+    grade: ''
+  });
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -21,6 +38,100 @@ export default function LoginScreen() {
       return;
     }
     window.location.href = `${backendUrl}/api/auth/google/login`;
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Login failed');
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('dhruv_ai_token', data.token);
+      localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
+
+      // Navigate based on profile completion
+      if (data.user.profile_completed === false) {
+        navigate('/profile-setup');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    // Validation
+    if (signupData.password !== signupData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: signupData.full_name,
+          email: signupData.email,
+          password: signupData.password,
+          exam_type: signupData.exam_type,
+          target_year: parseInt(signupData.target_year),
+          grade: signupData.grade || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('dhruv_ai_token', data.token);
+      localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
+
+      // Navigate to profile setup or dashboard
+      navigate('/profile-setup');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
