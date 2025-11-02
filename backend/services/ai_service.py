@@ -1309,3 +1309,125 @@ You're making great progress by actively seeking to understand. Keep up this exc
         except Exception as e:
             logger.error(f"Update session error: {str(e)}")
             return False
+    
+    async def generate_neuro_symbolic_response(
+        self,
+        user_id: str,
+        session_id: str,
+        message: str,
+        subject: str,
+        exam_mode: str = "JEE",
+        message_history: List[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate neuro-symbolic AI Tutor response (Indian student-centric)
+        
+        Args:
+            user_id: User ID
+            session_id: Chat session ID
+            message: Student's question
+            subject: Subject (Mathematics, Physics, etc.)
+            exam_mode: JEE, NEET, UPSC, etc.
+            message_history: Previous messages for context
+        
+        Returns:
+            Dict with neuro-symbolic response structure
+        """
+        try:
+            from prompts.neuro_symbolic_tutor import (
+                get_neuro_symbolic_prompt,
+                detect_student_emotion,
+                generate_ncert_mapping
+            )
+            from utils.neuro_symbolic_parser import NeuroSymbolicParser
+            from models.neuro_symbolic import NeuroSymbolicResponse
+            
+            logger.info(f"🧠 Generating neuro-symbolic response for user {user_id}")
+            
+            # Step 1: Detect student emotion
+            emotion = detect_student_emotion(message, message_history)
+            logger.info(f"😊 Detected emotion: {emotion}")
+            
+            # Step 2: Generate system prompt
+            system_prompt = get_neuro_symbolic_prompt(subject, message, exam_mode, emotion)
+            
+            # Step 3: Create LLM chat instance
+            neuro_chat = LlmChat(
+                api_key=self.emergent_llm_key,
+                session_id=f"neuro_{user_id}_{session_id}",
+                system_message=system_prompt
+            ).with_model("openai", "gpt-4o").with_params(
+                temperature=0.7,  # Balanced creativity for Indian context
+                top_p=0.9,
+                max_tokens=1800,  # Longer for 8 sections
+                presence_penalty=0.1,
+                frequency_penalty=0.1
+            )
+            
+            # Step 4: Generate response
+            user_message = UserMessage(text=message)
+            start_time = time.time()
+            
+            logger.info("🚀 Calling LLM for neuro-symbolic response...")
+            raw_response = await neuro_chat.send_message_async(user_message)
+            
+            generation_time = time.time() - start_time
+            logger.info(f"✅ Response generated in {generation_time:.2f}s")
+            
+            # Step 5: Parse response
+            logger.info("📊 Parsing neuro-symbolic response...")
+            parsed_response = NeuroSymbolicParser.parse_full_response(
+                raw_response,
+                subject,
+                exam_mode,
+                emotion
+            )
+            
+            # Step 6: Validate with Pydantic model
+            try:
+                validated_response = NeuroSymbolicResponse(**parsed_response)
+                response_dict = validated_response.dict()
+            except Exception as validation_error:
+                logger.warning(f"⚠️ Response validation warning: {validation_error}")
+                # Use parsed response even if validation fails partially
+                response_dict = parsed_response
+            
+            # Step 7: Save to database
+            message_id = str(uuid.uuid4())
+            message_doc = {
+                'message_id': message_id,
+                'session_id': session_id,
+                'user_id': user_id,
+                'user_message': message,
+                'ai_response': response_dict,
+                'response_type': 'neuro_symbolic',
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'generation_time_seconds': generation_time,
+                'emotion_detected': emotion
+            }
+            
+            await self.db.chat_messages.insert_one(message_doc)
+            logger.info(f"💾 Message saved: {message_id}")
+            
+            # Step 8: Update session last_updated
+            await self.db.chat_sessions.update_one(
+                {"session_id": session_id, "user_id": user_id},
+                {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
+            )
+            
+            # Return response with metadata
+            return {
+                'success': True,
+                'message_id': message_id,
+                'response': response_dict,
+                'raw_response': raw_response,
+                'generation_time': generation_time,
+                'emotion_detected': emotion
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Neuro-symbolic generation error: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise Exception(f"Failed to generate neuro-symbolic response: {str(e)}")
+
+            return False
