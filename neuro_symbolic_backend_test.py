@@ -114,25 +114,30 @@ class NeuroSymbolicTester:
             response = self.session.post(url, json=payload, timeout=30)
             elapsed_time = time.time() - start_time
             
+            self.log(f"Response status: {response.status_code}", "INFO")
+            
             if response.status_code == expected_status:
                 try:
                     data = response.json()
                     self.test_results['passed'] += 1
                     return True, data, elapsed_time
-                except:
+                except Exception as json_err:
                     self.test_results['failed'] += 1
-                    return False, {"error": "Invalid JSON response"}, elapsed_time
+                    self.log(f"JSON parse error: {str(json_err)}", "ERROR")
+                    return False, {"error": f"Invalid JSON response: {str(json_err)}", "text": response.text[:200]}, elapsed_time
             else:
                 self.test_results['failed'] += 1
                 try:
                     error_data = response.json()
                 except:
-                    error_data = {"error": response.text}
+                    error_data = {"error": response.text[:500], "status_code": response.status_code}
+                self.log(f"Status code mismatch: expected {expected_status}, got {response.status_code}", "ERROR")
                 return False, error_data, elapsed_time
                 
         except Exception as e:
             self.test_results['failed'] += 1
             self.test_results['errors'].append(f"{test_name}: {str(e)}")
+            self.log(f"Exception during request: {str(e)}", "ERROR")
             return False, {"error": str(e)}, 0
     
     def validate_response_structure(self, response_data, test_name):
