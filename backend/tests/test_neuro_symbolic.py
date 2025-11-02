@@ -204,7 +204,7 @@ class TestResponseParsing:
         practice = NeuroSymbolicParser.parse_mini_practice(response_text)
         assert practice is not None
         assert "2kg" in practice['question']
-        assert practice['options'] is not None
+        assert practice['options'] is not None and len(practice['options']) > 0  # Check options exist and not empty
         assert len(practice['options']) == 4
         assert "F = ma" in practice['hint']
     
