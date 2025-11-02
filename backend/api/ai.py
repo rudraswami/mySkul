@@ -723,4 +723,86 @@ async def delete_chat_session(
     except HTTPException:
         raise
     except Exception as e:
+
+
+
+# ===================== NEURO-SYMBOLIC AI TUTOR (v3.0) =====================
+
+@router.post("/neuro-symbolic")
+async def generate_neuro_symbolic_response(
+    request: DualAIRequest,
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service),
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
+):
+    """
+    Generate Neuro-Symbolic AI Tutor response (Indian student-centric)
+    
+    - **message**: Student's question
+    - **subject**: Subject (Mathematics, Physics, Chemistry, Biology, etc.)
+    - **session_id**: Chat session ID
+    - **exam_mode**: JEE, NEET, UPSC, etc. (default: JEE)
+    
+    Returns 8-section response:
+    1. Practical Explanation (simple, 3-6 lines)
+    2. Indian Example (from student life)
+    3. Metaphor (memory hook)
+    4. Visual Schema (JSON diagram)
+    5. Professor Verification (steps, source, confidence)
+    6. Mini Practice (1 MCQ)
+    7. Encouragement (sincere)
+    8. Ask (follow-up question)
+    """
+    try:
+        # Check subscription access
+        access_result = await sub_service.check_feature_access(
+            user.user_id,
+            FeatureName.AI_MENTOR.value,
+            requested_amount=1
+        )
+        
+        if not access_result.allowed:
+            raise HTTPException(
+                status_code=402,
+                detail=access_result.to_dict()
+            )
+        
+        # Get message history for emotion context (optional)
+        message_history = []
+        if request.session_id:
+            history = await ai_service.get_session_messages(request.session_id, user.user_id)
+            message_history = history[-5:] if history else []  # Last 5 messages for context
+        
+        # Generate neuro-symbolic response
+        result = await ai_service.generate_neuro_symbolic_response(
+            user_id=user.user_id,
+            session_id=request.session_id or f"temp_{user.user_id}",
+            message=request.message,
+            subject=request.subject,
+            exam_mode=getattr(request, 'exam_mode', 'JEE'),
+            message_history=message_history
+        )
+        
+        # Track usage
+        await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
+        
+        return {
+            'success': True,
+            'message_id': result['message_id'],
+            'response': result['response'],
+            'emotion_detected': result['emotion_detected'],
+            'generation_time': result['generation_time']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Neuro-symbolic response error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate response: {str(e)}"
+        )
+
         raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
