@@ -41,6 +41,7 @@ export default function AITutorNeuroSymbolic() {
   // Welcome state
   const [showWelcome, setShowWelcome] = useState(true);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [hasInteraction, setHasInteraction] = useState(false);
 
   // Default quick prompts (subject-specific)
   const [defaultPrompts, setDefaultPrompts] = useState([]);
