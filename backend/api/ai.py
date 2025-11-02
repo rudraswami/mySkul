@@ -804,5 +804,3 @@ async def generate_neuro_symbolic_response(
             status_code=500,
             detail=f"Failed to generate response: {str(e)}"
         )
-
-        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
