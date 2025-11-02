@@ -26,7 +26,7 @@ import ToastRenderer from './components/ToastRenderer';
 
 // Lazy loaded components (code splitting for better initial load)
 const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
-const AITutor = lazy(() => import('./components/AITutor')); // Large component - lazy load
+const AITutor = lazy(() => import('./components/AITutorNeuroSymbolic')); // Neuro-Symbolic v3.0 - lazy load
 const MockTests = lazy(() => import('./components/MockTests'));
 const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
 const Subscription = lazy(() => import('./components/Subscription'));
