@@ -142,18 +142,19 @@ class NeuroSymbolicParser:
         question = question_match.group(1).strip() if question_match else ""
         
         # Extract options (for MCQ)
-        options_pattern = r'(?:Options:?\s*\n)((?:[A-D]\)\s+.*?\n?)+)'
+        options_pattern = r'(?:\*\*Options:\*\*\s*\n)((?:[A-D]\)\s+.*?\n?)+)'
         options_match = re.search(options_pattern, section_text, re.IGNORECASE | re.DOTALL)
         
-        options = None
+        options = []
         question_type = "short_answer"
         
         if options_match:
             options_text = options_match.group(1)
             # Extract each option
-            option_items = re.findall(r'([A-D])\)\s+(.*?)(?=[A-D]\)|$)', options_text, re.DOTALL)
+            option_items = re.findall(r'([A-D])\)\s+(.*?)(?=\n[A-D]\)|\n\*\*|$)', options_text, re.DOTALL)
             options = [opt[1].strip() for opt in option_items if opt[1].strip()]
-            question_type = "mcq"
+            if options:  # Only set to MCQ if we actually parsed options
+                question_type = "mcq"
         
         # Extract hint
         hint_pattern = r'\*\*Hint:\*\*\s*(.*?)(?=\n\*\*|\[/SECTION|$)'
