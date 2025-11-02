@@ -1,6 +1,7 @@
 """
 AI service for chat sessions, dual AI responses, guardrails, and AI-powered features
 Enhanced for AI Tutor 2.0 with adaptive personas, visual generation, and sentiment analysis
+Enhanced for Neuro-Symbolic AI Tutor 3.0 with Indian student-centric learning
 """
 import os
 import logging
@@ -8,6 +9,7 @@ import sys
 import asyncio
 import time
 import uuid
+import traceback
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
