@@ -446,7 +446,7 @@ export default function MockTests() {
   const handleOpenWizard = async () => {
     // Check subscription access BEFORE opening wizard
     try {
-      const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+      const accessInfo = await checkFeatureAccess('mock_tests');
       
       if (!accessInfo.has_access) {
         // Show upgrade modal when limit reached
