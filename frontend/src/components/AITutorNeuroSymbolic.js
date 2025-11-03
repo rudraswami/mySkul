@@ -123,7 +123,7 @@ export default function AITutorNeuroSymbolic() {
     if (!messageToSend || loading) return;
 
     // Check feature access
-    const access = await checkFeatureAccess('ai_mentor_sessions');
+    const access = await checkFeatureAccess('ai_mentor');
     if (!access.has_access) {
       setUpgradeModalData(access);
       setShowUpgradeModal(true);
