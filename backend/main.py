@@ -139,6 +139,8 @@ def create_app() -> FastAPI:
         exempt_paths=[
             "/api/auth/google/login",
             "/api/auth/google/callback",
+            "/api/auth/login",  # FIX: Email/password login must be exempt (creates session)
+            "/api/auth/register",  # FIX: Email/password registration must be exempt (creates user)
             "/api/auth/logout",  # FIX: Logout must be exempt (session cleanup)
             "/api/auth/session",
             "/api/health",
