@@ -358,7 +358,8 @@ def test_4_fresh_user_mock_tests():
         limit = data.get("limit", -1)
         remaining = data.get("remaining", -1)
         
-        if has_access and used == 0 and limit == 2 and remaining == 2:
+        # Fresh user with amount=1: remaining = 2 - 0 - 1 = 1
+        if has_access and used == 0 and limit == 2 and remaining == 1:
             log_test("Test 4", "PASS", f"✅ Mock tests access granted: used={used}, limit={limit}, remaining={remaining}")
         else:
             log_test("Test 4", "FAIL", f"❌ Unexpected values: has_access={has_access}, used={used}, limit={limit}, remaining={remaining}")
