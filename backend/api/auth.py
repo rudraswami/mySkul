@@ -72,7 +72,13 @@ async def login_user(
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
+    # DEBUG: Log user_doc to see what's being loaded
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Login - user_doc user_id: {user_doc.get('user_id', 'NOT FOUND')}")
+    
     user = User(**user_doc)
+    logger.info(f"Login - User object user_id: {user.user_id}")
     
     # Verify password
     if not auth_service.verify_password(login_data.password, user.password_hash):
