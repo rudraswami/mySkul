@@ -72,20 +72,14 @@ async def login_user(
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # DEBUG: Log user_doc to see what's being loaded
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Login - user_doc user_id: {user_doc.get('user_id', 'NOT FOUND')}")
-    
     user = User(**user_doc)
-    logger.info(f"Login - User object user_id: {user.user_id}")
     
     # Verify password
     if not auth_service.verify_password(login_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # Create JWT token
-    token = auth_service.create_jwt_token(user.user_id, user.email)
+    # Create JWT token using the user_id from database
+    token = auth_service.create_jwt_token(str(user_doc['user_id']), user.email)
     
     # Set secure httpOnly cookie
     auth_service.set_secure_cookie(response, token)
@@ -94,12 +88,12 @@ async def login_user(
         "message": "Login successful",
         "token": token,  # For backward compatibility with Bearer token auth
         "user": {
-            "user_id": user.user_id,
+            "user_id": str(user_doc['user_id']),
             "full_name": user.full_name,
             "email": user.email,
             "exam_type": user.exam_type,
             "subscription_type": user.subscription_type,
-            "profile_completed": user.profile_completed
+            "profile_completed": user_doc.get('profile_completed', False)
         }
     }
 
