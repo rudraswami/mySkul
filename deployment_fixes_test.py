@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 class DeploymentFixesTester:
     def __init__(self):
         # Get backend URL from frontend .env
-        self.backend_url = "https://eduai-platform-28.preview.emergentagent.com/api"
+        self.backend_url = "https://neuro-tutor-dev.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

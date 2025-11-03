@@ -7,7 +7,7 @@ Testing with STARTER (₹199) and ACHIEVER (₹999) plans
 import requests
 import json
 
-base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
+base_url = "https://neuro-tutor-dev.preview.emergentagent.com/api"
 
 print("=" * 80)
 print("Testing Razorpay with ACTUAL plan names")

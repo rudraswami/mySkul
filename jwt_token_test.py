@@ -9,7 +9,7 @@ import json
 # Use the token from the previous test
 jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYjYyMjkxZmUtMDQyZS00ZTE3LWIyYjAtNTY3M2IzMTM3OTA4IiwiZW1haWwiOiJ0ZXN0c3R1ZGVudF85NmIxeXl3dUB0ZXN0LmNvbSIsImV4cCI6MTc2Mjc3MzMxM30.MyHXdZfXj32qViDtXQIJO8fotlSnBog3a0tdzVycMO0"
 
-base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
+base_url = "https://neuro-tutor-dev.preview.emergentagent.com/api"
 
 print("Testing JWT Token with Authenticated Endpoints")
 print("=" * 80)

@@ -7,7 +7,7 @@ import requests
 import json
 
 # Test credentials
-base_url = "https://eduai-platform-28.preview.emergentagent.com/api"
+base_url = "https://neuro-tutor-dev.preview.emergentagent.com/api"
 test_email = "test@dhruvai.com"
 test_password = "password123"
 

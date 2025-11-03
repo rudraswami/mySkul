@@ -99,7 +99,7 @@ Status: **PRODUCTION READY**
 ### 1. Update Google Cloud Console (CRITICAL)
 **Current Redirect URI:**
 ```
-https://eduai-platform-28.preview.emergentagent.com/api/auth/google/callback
+https://neuro-tutor-dev.preview.emergentagent.com/api/auth/google/callback
 ```
 
 **After deployment, add production URI:**
