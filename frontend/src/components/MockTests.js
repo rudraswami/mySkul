@@ -637,7 +637,7 @@ export default function MockTests() {
       // When animation finishes, handleProgressComplete() will close modal and show exam mode
       
       // Track usage
-      await trackFeatureUsage('mock_tests_weekly');
+      await trackFeatureUsage('mock_tests');
       
     } catch (error) {
       console.error('Test generation error:', error);
@@ -892,7 +892,7 @@ export default function MockTests() {
         console.log('✅ Test generated successfully:', testData.test_name);
         
         // Track feature usage for subscription
-        await trackFeatureUsage('mock_tests_weekly');
+        await trackFeatureUsage('mock_tests');
         
         // Cache the test
         cacheTest(cacheKey, testData);
