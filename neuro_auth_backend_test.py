@@ -95,7 +95,8 @@ class NeuroAuthBackendTester:
             "email": "testneuro@dhruvai.com",
             "password": "TestNeuro123!",
             "full_name": "Test Neuro User",
-            "exam_type": "JEE"
+            "exam_type": "JEE",
+            "target_year": 2025
         }
         
         success, response, status, elapsed = self.run_test(
