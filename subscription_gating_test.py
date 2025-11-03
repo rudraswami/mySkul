@@ -333,15 +333,18 @@ def test_3_exhaust_free_tier(user_data):
     print(f"   Response: {json.dumps(data, indent=2)}")
     
     if status_code == 402:
-        used = data.get("used", -1)
-        limit = data.get("limit", -1)
-        remaining = data.get("remaining", -1)
-        upgrade_message = data.get("upsell_info", {}).get("upgrade_message")
+        # 402 response has data in 'detail' field
+        detail = data.get("detail", {}) if isinstance(data, dict) else {}
+        upsell_info = detail.get("upsell_info", {})
+        used = detail.get("used", -1)
+        limit = detail.get("limit", -1)
+        remaining = detail.get("remaining", -1)
+        upgrade_message = upsell_info.get("upgrade_message")
         
         if used == 10 and limit == 10 and remaining == 0 and upgrade_message:
             log_test("Test 3", "PASS", f"✅ Correctly blocked at limit: used={used}, limit={limit}, upgrade_message present")
         else:
-            log_test("Test 3", "FAIL", f"❌ Blocked but unexpected values: used={used}, limit={limit}, remaining={remaining}")
+            log_test("Test 3", "FAIL", f"❌ Blocked but unexpected values: used={used}, limit={limit}, remaining={remaining}, upgrade_message={upgrade_message}")
     elif status_code == 200:
         log_test("Test 3", "FAIL", "❌ 11th question NOT blocked! Should return 402")
     else:
