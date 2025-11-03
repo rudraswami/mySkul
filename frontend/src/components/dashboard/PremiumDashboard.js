@@ -143,6 +143,27 @@ const PremiumDashboard = () => {
   };
 
   /**
+   * Load usage data for subscription meters
+   */
+  const loadUsageData = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${BACKEND_URL}/api/subscription/usage`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsageData(data);
+      }
+    } catch (error) {
+      console.error('Failed to load usage data:', error);
+    }
+  };
+
+  /**
    * Get dynamic greeting based on time of day and user data
    */
   const getDynamicGreeting = () => {
