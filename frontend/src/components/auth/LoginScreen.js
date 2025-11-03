@@ -49,31 +49,22 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(loginData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Login failed');
+      // Use AuthContext's login function which properly sets user state
+      const result = await login(loginData.email, loginData.password);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed');
       }
 
-      // Store token and user
-      localStorage.setItem('dhruv_ai_token', data.token);
-      localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
+      // Get user from localStorage (set by AuthContext)
+      const storedUser = localStorage.getItem('dhruv_ai_user');
+      const userData = storedUser ? JSON.parse(storedUser) : null;
 
       // Navigate based on profile completion
-      if (data.user.profile_completed === false) {
-        navigate('/profile-setup');
+      if (userData && userData.profile_completed === false) {
+        navigate('/profile-setup', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
