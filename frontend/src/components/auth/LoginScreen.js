@@ -110,8 +110,10 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Registration failed');
       }
 
-      // Navigate to profile setup
-      navigate('/profile-setup', { replace: true });
+      // Email/Password signup is complete with profile - navigate to dashboard
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 0);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
