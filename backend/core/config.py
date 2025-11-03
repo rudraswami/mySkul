@@ -167,19 +167,23 @@ class Settings:
     # SUBSCRIPTION LIMITS
     # =============================================================================
     # Free Tier - Updated to match planConfig_ai_tutor.json (January 17, 2025)
-    FREE_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("FREE_TIER_AI_MENTOR_LIMIT", "10"))
-    FREE_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("FREE_TIER_MOCK_TEST_LIMIT", "1"))
-    FREE_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("FREE_TIER_AUTO_NOTES_LIMIT", "1"))
+    # Free Tier - Daily/Monthly limits
+    FREE_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("FREE_TIER_AI_MENTOR_LIMIT", "10"))  # 10/day
+    FREE_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("FREE_TIER_MOCK_TEST_LIMIT", "2"))  # 2/month
+    FREE_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("FREE_TIER_AUTO_NOTES_LIMIT", "5"))  # 5/month
+    FREE_TIER_MEMORY_HOURS: int = int(os.getenv("FREE_TIER_MEMORY_HOURS", "24"))  # 24 hours
     
-    # Basic Tier
-    BASIC_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("BASIC_TIER_AI_MENTOR_LIMIT", "50"))
-    BASIC_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("BASIC_TIER_MOCK_TEST_LIMIT", "10"))
-    BASIC_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("BASIC_TIER_AUTO_NOTES_LIMIT", "20"))
+    # Basic Tier - Daily/Monthly limits
+    BASIC_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("BASIC_TIER_AI_MENTOR_LIMIT", "50"))  # 50/day
+    BASIC_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("BASIC_TIER_MOCK_TEST_LIMIT", "10"))  # 10/month
+    BASIC_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("BASIC_TIER_AUTO_NOTES_LIMIT", "25"))  # 25/month
+    BASIC_TIER_MEMORY_DAYS: int = int(os.getenv("BASIC_TIER_MEMORY_DAYS", "7"))  # 7 days
     
     # Premium Tier (unlimited = -1)
     PREMIUM_TIER_AI_MENTOR_LIMIT: int = int(os.getenv("PREMIUM_TIER_AI_MENTOR_LIMIT", "-1"))
     PREMIUM_TIER_MOCK_TEST_LIMIT: int = int(os.getenv("PREMIUM_TIER_MOCK_TEST_LIMIT", "-1"))
     PREMIUM_TIER_AUTO_NOTES_LIMIT: int = int(os.getenv("PREMIUM_TIER_AUTO_NOTES_LIMIT", "-1"))
+    PREMIUM_TIER_MEMORY_DAYS: int = int(os.getenv("PREMIUM_TIER_MEMORY_DAYS", "-1"))  # Unlimited
     
     # =============================================================================
     # FILE UPLOAD SETTINGS
