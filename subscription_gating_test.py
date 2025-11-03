@@ -106,15 +106,20 @@ def check_feature_access(token, feature_name, amount=1):
     except Exception as e:
         return {"error": str(e)}
 
-def call_neuro_symbolic(token, message="Test question about quadratic equations"):
+def call_neuro_symbolic(token, message="Test question about quadratic equations", session_id=None):
     """Call neuro-symbolic AI endpoint"""
     try:
+        if not session_id:
+            import uuid
+            session_id = str(uuid.uuid4())
+        
         response = requests.post(
             f"{BACKEND_URL}/ai/neuro-symbolic",
             json={
                 "message": message,
                 "subject": "Mathematics",
-                "exam_mode": "JEE"
+                "exam_mode": "JEE",
+                "session_id": session_id
             },
             headers={"Authorization": f"Bearer {token}"},
             timeout=30
