@@ -56,12 +56,8 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Get user from localStorage (set by AuthContext)
-      const storedUser = localStorage.getItem('dhruv_ai_user');
-      const userData = storedUser ? JSON.parse(storedUser) : null;
-
       // Navigate based on profile completion
-      if (userData && userData.profile_completed === false) {
+      if (result.user && result.user.profile_completed === false) {
         navigate('/profile-setup', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
