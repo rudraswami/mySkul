@@ -308,6 +308,45 @@ const PremiumDashboard = () => {
           </div>
         </div>
 
+        {/* Usage Meters - Subscription Limits */}
+        <div className="glass-card rounded-2xl p-6 shadow-premium animate-fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              Your Usage Today
+            </h2>
+            <PlanBadge tier={subscriptionInfo?.subscription_tier || user?.subscription_type || 'free'} />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* AI Questions Usage */}
+            <UsageMeter
+              feature="AI Questions"
+              used={usageData?.usage?.ai_mentor?.used || 0}
+              limit={usageData?.usage?.ai_mentor?.limit || 10}
+              resetPeriod="daily"
+              icon="🤖"
+            />
+            
+            {/* Mock Tests Usage */}
+            <UsageMeter
+              feature="Mock Tests"
+              used={usageData?.usage?.mock_tests?.used || 0}
+              limit={usageData?.usage?.mock_tests?.limit || 2}
+              resetPeriod="monthly"
+              icon="📝"
+            />
+            
+            {/* Auto Notes Usage */}
+            <UsageMeter
+              feature="Auto Notes"
+              used={usageData?.usage?.auto_notes?.used || 0}
+              limit={usageData?.usage?.auto_notes?.limit || 5}
+              resetPeriod="monthly"
+              icon="📔"
+            />
+          </div>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
           {/* Study Time Card */}
