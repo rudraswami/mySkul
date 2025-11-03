@@ -14,7 +14,11 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Initialize user from localStorage if available
+    const storedUser = localStorage.getItem('dhruv_ai_user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(() => localStorage.getItem('dhruv_ai_token'));
 
