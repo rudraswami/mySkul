@@ -402,7 +402,8 @@ def test_5_fresh_user_auto_notes():
         limit = data.get("limit", -1)
         remaining = data.get("remaining", -1)
         
-        if has_access and used == 0 and limit == 5 and remaining == 5:
+        # Fresh user with amount=1: remaining = 5 - 0 - 1 = 4
+        if has_access and used == 0 and limit == 5 and remaining == 4:
             log_test("Test 5", "PASS", f"✅ Auto notes access granted: used={used}, limit={limit}, remaining={remaining}")
         else:
             log_test("Test 5", "FAIL", f"❌ Unexpected values: has_access={has_access}, used={used}, limit={limit}, remaining={remaining}")
