@@ -133,7 +133,25 @@ def call_neuro_symbolic(token, message="Test question about quadratic equations"
     except Exception as e:
         return {"error": str(e)}
 
-def get_usage_info(token):
+def track_usage(token, feature_name, amount=1):
+    """Track feature usage"""
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/subscription/track-usage",
+            json={
+                "feature_name": feature_name,
+                "amount": amount
+            },
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10
+        )
+        
+        return {
+            "status_code": response.status_code,
+            "data": response.json() if response.status_code == 200 else None
+        }
+    except Exception as e:
+        return {"error": str(e)}
     """Get current usage information"""
     try:
         response = requests.get(
