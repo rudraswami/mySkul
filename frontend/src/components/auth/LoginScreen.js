@@ -56,12 +56,14 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Navigate based on profile completion
-      if (result.user && result.user.profile_completed === false) {
-        navigate('/profile-setup', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      // Allow React state to propagate before navigation
+      setTimeout(() => {
+        if (result.user && result.user.profile_completed === false) {
+          navigate('/profile-setup', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }, 0);
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
