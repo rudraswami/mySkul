@@ -215,7 +215,7 @@ export default function AITutorNeuroSymbolic() {
       setMessages(prev => [...prev, aiMsg]);
 
       // Track usage
-      await trackFeatureUsage('ai_mentor_sessions');
+      await trackFeatureUsage('ai_mentor');
 
     } catch (error) {
       console.error('Error sending message:', error);
