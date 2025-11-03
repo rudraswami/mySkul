@@ -182,8 +182,9 @@ export function AuthProvider({ children }) {
       setToken(newToken);
       setUser(newUser);
       localStorage.setItem('dhruv_ai_token', newToken);
+      localStorage.setItem('dhruv_ai_user', JSON.stringify(newUser));
       
-      return { success: true };
+      return { success: true, user: newUser };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Registration error:', error.response?.status);
