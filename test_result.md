@@ -1,5 +1,154 @@
 # Test Results - Neuro-Symbolic AI Tutor E2E Testing (January 23, 2025)
 
+## ❌ CRITICAL ISSUE: Email/Password Login UI NOT RENDERED (January 23, 2025 - Latest Test)
+
+### Testing Agent E2 - Comprehensive E2E Test Results
+**Test Date**: January 23, 2025  
+**Test Status**: ❌ **BLOCKED - LOGIN UI MISSING**  
+**Overall Success Rate**: 0% (0/8 tests passed)
+
+---
+
+### 🔴 ROOT CAUSE: Email/Password Tab Not Rendering
+
+**Problem**: The "Email & Password" tab button exists in the code but is NOT being rendered on the login page.
+
+**Evidence from Latest Test**:
+1. ✅ Login page loads correctly at `/login`
+2. ❌ **"Email & Password" tab NOT found in DOM**
+3. ❌ **Email input field NOT found**
+4. ❌ **Password input field NOT found**
+5. ✅ Only "Google Sign In" button is visible
+6. ❌ Cannot proceed with email/password login testing
+
+**Console Errors Detected**:
+```
+error: Received `true` for a non-boolean attribute `jsx`.
+If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
+```
+
+**This React error is CRITICAL** - it's preventing the Email & Password form from rendering properly.
+
+**Screenshots Captured**:
+- `/tmp/01_login_page.png` - Shows only Google Sign In button visible
+- `/tmp/error_screenshot.png` - Login page with missing Email/Password UI
+
+---
+
+### 🔍 DETAILED ANALYSIS
+
+**LoginScreen.js Code Review** (lines 152-176):
+```javascript
+{!showSignup && (
+  <div className="flex mb-6 bg-white p-1 rounded-xl shadow-sm">
+    <button
+      onClick={() => setAuthMode('google')}
+      className={...}
+    >
+      Google Sign In
+    </button>
+    <button
+      onClick={() => setAuthMode('email')}
+      className={...}
+    >
+      Email & Password
+    </button>
+  </div>
+)}
+```
+
+**The tab buttons ARE in the code**, but the Email/Password form (lines 216-268) is NOT rendering when `authMode === 'email'`.
+
+**Hypothesis**:
+1. The React JSX boolean attribute error is causing component rendering to fail
+2. The error prevents the conditional rendering logic from working
+3. When user clicks "Email & Password" tab, the form doesn't appear
+4. This is a **CRITICAL RENDERING BUG**, not an API issue
+
+---
+
+### 📊 TEST RESULTS SUMMARY
+
+| Test Case | Status | Details |
+|-----------|--------|---------|
+| Email/Password Login | ❌ BLOCKED | UI not rendered - cannot test |
+| Dashboard Navigation | ❌ BLOCKED | Cannot login |
+| AI Tutor Access | ❌ BLOCKED | Cannot login |
+| Welcome Screen | ❌ BLOCKED | Cannot access AI Tutor |
+| First Question | ❌ BLOCKED | Cannot access AI Tutor |
+| All 8 Sections | ❌ BLOCKED | Cannot access AI Tutor |
+| No Legacy UI | ❌ BLOCKED | Cannot access AI Tutor |
+| Session Continuity | ❌ BLOCKED | Cannot access AI Tutor |
+
+**Overall**: 0/8 tests passed (0%)
+
+---
+
+### 🔧 URGENT FIXES REQUIRED FOR MAIN AGENT
+
+#### **Priority 1: Fix React JSX Boolean Attribute Error** (CRITICAL)
+
+**Issue**: React error preventing form rendering
+```
+Received `true` for a non-boolean attribute `jsx`.
+```
+
+**Action Required**:
+1. Search codebase for `jsx={true}` or `jsx=true`
+2. This is likely in a component that's imported by LoginScreen
+3. Fix by removing the jsx prop or converting to string
+4. This error is BLOCKING the entire login UI from rendering
+
+**Search Command**:
+```bash
+grep -r "jsx=" /app/frontend/src/
+```
+
+#### **Priority 2: Verify LoginScreen Conditional Rendering** (HIGH)
+
+**File**: `/app/frontend/src/components/auth/LoginScreen.js`
+
+**Check**:
+1. Line 216: `{!showSignup && authMode === 'email' && (`
+2. Ensure this condition is evaluating correctly
+3. Add console.log to debug:
+   ```javascript
+   console.log('authMode:', authMode, 'showSignup:', showSignup);
+   ```
+
+#### **Priority 3: Test Email/Password Form Visibility** (HIGH)
+
+**Manual Test**:
+1. Open browser console
+2. Navigate to `/login`
+3. Click "Email & Password" tab
+4. Check if `authMode` state changes to 'email'
+5. Check if form appears in DOM
+
+---
+
+### 🎯 NEXT STEPS
+
+1. **URGENT**: Fix React JSX boolean attribute error
+2. **URGENT**: Verify Email/Password form renders when tab is clicked
+3. **HIGH**: Test login flow after UI is fixed
+4. **MEDIUM**: Test AI Tutor neuro-symbolic sections
+5. **LOW**: Validate session continuity
+
+---
+
+### 📸 SCREENSHOTS CAPTURED
+
+1. `/tmp/01_login_page.png` - Login page showing only Google Sign In
+2. `/tmp/error_screenshot.png` - Login page with missing Email/Password UI
+
+---
+
+**Status**: ❌ **TESTING BLOCKED - CRITICAL UI RENDERING ISSUE**  
+**Recommendation**: **FIX REACT JSX ERROR AND EMAIL/PASSWORD UI RENDERING BEFORE PROCEEDING**
+
+---
+
 ## ❌ CRITICAL ISSUE: Email/Password Login STILL NOT WORKING (January 23, 2025)
 
 ### Latest Test Results (January 23, 2025)
