@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Brain, 
@@ -25,6 +26,8 @@ import FocusMode from './FocusMode';
 import SmartRecommendations from './SmartRecommendations';
 import MoodTracker from './MoodTracker';
 import LiveLeaderboard from './LiveLeaderboard';
+import UsageMeter from '../UsageMeter';
+import PlanBadge from '../PlanBadge';
 
 // Import premium styles
 import '../../styles/premium-dashboard.css';
