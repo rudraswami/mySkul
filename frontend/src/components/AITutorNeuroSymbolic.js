@@ -448,23 +448,27 @@ export default function AITutorNeuroSymbolic() {
                 {/* Quick prompts */}
                 {defaultPrompts.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                    {defaultPrompts.map((prompt, index) => (
-                      <motion.button
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        onClick={() => handleQuickSend(prompt)}
-                        className="p-4 bg-white rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all text-left group"
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Sparkles className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                          <p className="text-sm text-gray-700 leading-relaxed">
-                            {prompt}
-                          </p>
-                        </div>
-                      </motion.button>
-                    ))}
+                    {defaultPrompts.map((prompt, index) => {
+                      // Handle both string prompts and object prompts {text, type}
+                      const promptText = typeof prompt === 'string' ? prompt : prompt.text || prompt;
+                      return (
+                        <motion.button
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          onClick={() => handleQuickSend(promptText)}
+                          className="p-4 bg-white rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all text-left group"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <Sparkles className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {promptText}
+                            </p>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 )}
               </motion.div>
