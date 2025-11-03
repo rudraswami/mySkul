@@ -264,23 +264,48 @@ class NeuroAuthBackendTester:
             self.log("   ❌ No JWT token available. Cannot test authenticated endpoint.")
             return results
         
+        headers = {
+            'Authorization': f'Bearer {self.jwt_token}'
+        }
+        
+        # First, create a session
+        self.log("\n🔧 Creating test session for neuro-symbolic test...")
+        session_data = {
+            "title": "Neuro Test Session",
+            "subject": "Mathematics",
+            "topic": "Pythagoras"
+        }
+        
+        success, response, status, elapsed = self.run_test(
+            "Create Test Session",
+            "POST",
+            "ai/chat/sessions",
+            [200, 201],
+            data=session_data,
+            headers=headers
+        )
+        
+        session_id = None
+        if success and 'session_id' in response:
+            session_id = response['session_id']
+            self.log(f"   ✅ Test session created: {session_id}")
+        else:
+            self.log(f"   ⚠️ Could not create session, will test without session_id")
+        
         # Test: Generate Neuro-Symbolic Response
         self.log("\n1️⃣ Testing Neuro-Symbolic AI Response Generation")
         
         test_payload = {
             "message": "Explain Pythagoras theorem",
             "subject": "Mathematics",
-            "session_id": None,
+            "session_id": session_id,
             "exam_mode": "JEE"
-        }
-        
-        headers = {
-            'Authorization': f'Bearer {self.jwt_token}'
         }
         
         self.log(f"   📤 Request payload:")
         self.log(f"      - message: {test_payload['message']}")
         self.log(f"      - subject: {test_payload['subject']}")
+        self.log(f"      - session_id: {test_payload['session_id']}")
         self.log(f"      - exam_mode: {test_payload['exam_mode']}")
         
         success, response, status, elapsed = self.run_test(
