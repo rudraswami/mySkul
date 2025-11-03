@@ -103,7 +103,7 @@ export function AuthProvider({ children }) {
     };
 
     checkAuth();
-  }, [token]);
+  }, []); // Only run on mount, not when token changes
 
   const loginWithGoogle = async (sessionData) => {
     try {
