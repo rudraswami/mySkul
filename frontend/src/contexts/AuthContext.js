@@ -158,11 +158,13 @@ export function AuthProvider({ children }) {
       
       const { token: newToken, user: userData } = response.data;
       
-      // Set both token (for Bearer auth fallback) and user state
-      setToken(newToken);
-      setUser(userData);
+      // Store in localStorage FIRST before setting state
       localStorage.setItem('dhruv_ai_token', newToken);
       localStorage.setItem('dhruv_ai_user', JSON.stringify(userData));
+      
+      // Then set React state
+      setToken(newToken);
+      setUser(userData);
       
       // SECURITY: httpOnly cookie is also set automatically by backend
       return { success: true, user: userData };
