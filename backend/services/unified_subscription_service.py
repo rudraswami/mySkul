@@ -319,15 +319,32 @@ class UnifiedSubscriptionService:
             )
     
     async def _get_current_usage(self, user_id: str, feature: str) -> int:
-        """Get today's usage count for a feature"""
+        """
+        Get current usage count for a feature with smart reset logic
+        - AI Mentor: daily reset
+        - Mock Tests & Auto Notes: monthly reset
+        """
         try:
-            today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-            tomorrow = today + timedelta(days=1)
+            now = datetime.now(timezone.utc)
+            
+            # Determine reset period based on feature
+            if feature == FeatureName.AI_MENTOR.value:
+                # Daily reset
+                reset_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                reset_end = reset_start + timedelta(days=1)
+            else:
+                # Monthly reset for mock_tests and auto_notes
+                reset_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                # Next month's first day
+                if now.month == 12:
+                    reset_end = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                else:
+                    reset_end = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
             
             usage_doc = await self.db.usage_tracking.find_one({
                 "user_id": user_id,
                 "feature_name": feature,
-                "usage_date": {"$gte": today, "$lt": tomorrow}
+                "usage_date": {"$gte": reset_start, "$lt": reset_end}
             })
             
             return usage_doc.get("usage_count", 0) if usage_doc else 0
@@ -337,10 +354,24 @@ class UnifiedSubscriptionService:
             return 0
     
     async def _get_next_reset_time(self, feature: str) -> datetime:
-        """Get next reset time for feature limits (midnight UTC)"""
+        """
+        Get next reset time based on feature type
+        - AI Mentor: midnight UTC (daily)
+        - Mock Tests & Auto Notes: 1st of next month (monthly)
+        """
         now = datetime.now(timezone.utc)
-        tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        return tomorrow
+        
+        if feature == FeatureName.AI_MENTOR.value:
+            # Next day at midnight
+            tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            return tomorrow
+        else:
+            # First day of next month
+            if now.month == 12:
+                next_reset = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            else:
+                next_reset = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            return next_reset
     
     # =========================================================================
     # USAGE TRACKING
