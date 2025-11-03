@@ -152,6 +152,8 @@ def track_usage(token, feature_name, amount=1):
         }
     except Exception as e:
         return {"error": str(e)}
+
+def get_usage_info(token):
     """Get current usage information"""
     try:
         response = requests.get(
