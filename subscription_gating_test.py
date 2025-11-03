@@ -190,7 +190,9 @@ def test_1_fresh_user_first_question():
         limit = data.get("limit", -1)
         remaining = data.get("remaining", -1)
         
-        if has_access and used == 0 and limit == 10 and remaining == 10:
+        # When checking with amount=1, remaining = limit - used - 1
+        # For fresh user: remaining = 10 - 0 - 1 = 9
+        if has_access and used == 0 and limit == 10 and remaining == 9:
             log_test("Test 1 - Check Access", "PASS", f"✅ Fresh user allowed: used={used}, limit={limit}, remaining={remaining}")
         else:
             log_test("Test 1 - Check Access", "FAIL", f"❌ Unexpected values: has_access={has_access}, used={used}, limit={limit}, remaining={remaining}")
