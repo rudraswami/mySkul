@@ -260,7 +260,8 @@ def test_2_usage_after_first_question(user_data):
         remaining = data.get("remaining", -1)
         has_access = data.get("has_access", False)
         
-        if used == 1 and limit == 10 and remaining == 9 and has_access:
+        # After 1 use, with amount=1 check: remaining = 10 - 1 - 1 = 8
+        if used == 1 and limit == 10 and remaining == 8 and has_access:
             log_test("Test 2", "PASS", f"✅ Usage tracked correctly: used={used}, limit={limit}, remaining={remaining}")
         else:
             log_test("Test 2", "FAIL", f"❌ Unexpected values: used={used}, limit={limit}, remaining={remaining}, has_access={has_access}")
