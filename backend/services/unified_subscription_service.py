@@ -384,8 +384,9 @@ class UnifiedSubscriptionService:
         amount: int = 1
     ) -> bool:
         """
-        Track feature usage after successful use
-        Call this AFTER the feature is actually used
+        Track feature usage after successful use with smart reset periods
+        - AI Mentor: daily tracking
+        - Mock Tests & Auto Notes: monthly tracking
         
         Args:
             user_id: User's unique identifier
@@ -396,17 +397,28 @@ class UnifiedSubscriptionService:
             True if tracked successfully, False otherwise
         """
         try:
-            today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            now = datetime.now(timezone.utc)
+            
+            # Determine tracking period based on feature
+            if feature == FeatureName.AI_MENTOR.value:
+                # Daily tracking
+                tracking_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            else:
+                # Monthly tracking for mock_tests and auto_notes
+                tracking_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             
             await self.db.usage_tracking.update_one(
                 {
                     "user_id": user_id,
                     "feature_name": feature,
-                    "usage_date": today
+                    "usage_date": tracking_date
                 },
                 {
                     "$inc": {"usage_count": amount},
-                    "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+                    "$set": {
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "reset_period": "daily" if feature == FeatureName.AI_MENTOR.value else "monthly"
+                    }
                 },
                 upsert=True
             )
