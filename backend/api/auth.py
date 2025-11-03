@@ -34,7 +34,8 @@ async def register_user(
     password_hash = auth_service.hash_password(user_data.password)
     user = User(
         **user_data.dict(exclude={'password'}),
-        password_hash=password_hash
+        password_hash=password_hash,
+        profile_completed=True  # Email/Password signup is one-step with profile
     )
     
     # Save to database
@@ -53,7 +54,11 @@ async def register_user(
             "user_id": user.user_id,
             "full_name": user.full_name,
             "email": user.email,
-            "exam_type": user.exam_type
+            "exam_type": user.exam_type,
+            "profile_completed": True,  # Return profile_completed in response
+            "subscription_type": user.subscription_type,
+            "grade": user.grade,
+            "target_year": user.target_year
         }
     }
 
