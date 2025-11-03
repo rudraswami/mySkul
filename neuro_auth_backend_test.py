@@ -102,7 +102,8 @@ class NeuroAuthBackendTester:
             "Register User",
             "POST",
             "auth/register",
-            [200, 201]
+            [200, 201],
+            data=register_data
         )
         
         if success:
