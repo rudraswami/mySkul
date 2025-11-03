@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Brain, Mail, Lock, User, Calendar, GraduationCap } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import PremiumShowcase from './PremiumShowcase';
 import '../../styles/auth.css';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [authMode, setAuthMode] = useState('google'); // 'google' or 'email'
