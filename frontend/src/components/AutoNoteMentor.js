@@ -511,7 +511,7 @@ export default function AutoNoteMentor() {
         const result = await response.json();
         
         // Track feature usage for subscription
-        await trackFeatureUsage('auto_note_uploads_daily');
+        await trackFeatureUsage('auto_notes');
         
         setProcessingProgress(100);
         
