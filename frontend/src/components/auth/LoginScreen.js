@@ -98,35 +98,22 @@ export default function LoginScreen() {
     }
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          full_name: signupData.full_name,
-          email: signupData.email,
-          password: signupData.password,
-          exam_type: signupData.exam_type,
-          target_year: parseInt(signupData.target_year),
-          grade: signupData.grade || null
-        })
+      // Use AuthContext's register function which properly sets user state
+      const result = await register({
+        full_name: signupData.full_name,
+        email: signupData.email,
+        password: signupData.password,
+        exam_type: signupData.exam_type,
+        target_year: parseInt(signupData.target_year),
+        grade: signupData.grade || null
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed');
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed');
       }
 
-      // Store token and user
-      localStorage.setItem('dhruv_ai_token', data.token);
-      localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
-
       // Navigate to profile setup
-      navigate('/profile-setup');
+      navigate('/profile-setup', { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
