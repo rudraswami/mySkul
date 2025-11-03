@@ -289,19 +289,21 @@ def test_3_exhaust_free_tier(user_data):
     token = user_data["token"]
     
     # We already used 1, so we need to use 9 more to reach limit
-    print(f"\n📝 Simulating 9 more AI questions (questions 2-10)")
+    print(f"\n📝 Calling AI endpoint 9 more times (questions 2-10)")
     
+    import uuid
     for i in range(2, 11):
         print(f"   Question {i}/10...")
-        # Check access
-        access_result = check_feature_access(token, "ai_mentor", 1)
-        if access_result.get("status_code") != 200:
-            log_test("Test 3", "FAIL", f"❌ Question {i} blocked unexpectedly")
+        session_id = str(uuid.uuid4())
+        
+        # Call AI endpoint to actually track usage
+        ai_result = call_neuro_symbolic(token, f"Test question {i}", session_id)
+        
+        if ai_result.get("status_code") != 200:
+            log_test("Test 3", "FAIL", f"❌ Question {i} failed: {ai_result.get('text', ai_result.get('error'))}")
             return
         
-        # Call AI (simulated by just tracking usage)
-        # In real scenario, we'd call neuro-symbolic endpoint
-        time.sleep(0.2)  # Small delay to avoid rate limiting
+        time.sleep(0.3)  # Small delay to avoid rate limiting
     
     print(f"\n📝 Checking access for 11th question (should be BLOCKED)")
     access_result = check_feature_access(token, "ai_mentor", 1)
