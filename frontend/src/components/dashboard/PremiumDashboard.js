@@ -40,11 +40,13 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
  */
 const PremiumDashboard = () => {
   const { user } = useAuth();
+  const { subscriptionInfo } = useSubscription();
   const navigate = useNavigate();
 
   // Core State
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+  const [usageData, setUsageData] = useState(null);
   
   // Feature States
   const [showAIMentor, setShowAIMentor] = useState(false);
@@ -60,6 +62,7 @@ const PremiumDashboard = () => {
   useEffect(() => {
     loadDashboardData();
     loadUserProgress();
+    loadUsageData();
   }, []);
 
   useEffect(() => {
