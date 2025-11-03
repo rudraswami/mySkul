@@ -385,7 +385,7 @@ export default function AutoNoteMentor() {
   // Enhanced file upload and processing - STANDALONE (no session required)
   const handleFileUpload = async (file) => {
     // CRITICAL: Check subscription access FIRST
-    const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
+    const accessInfo = await checkFeatureAccess('auto_notes');
     if (!accessInfo.has_access) {
       // Map accessInfo to expected UpgradeModal structure
       const used = accessInfo.used || accessInfo.current_usage || 0;
@@ -747,7 +747,7 @@ export default function AutoNoteMentor() {
     // CRITICAL: Check subscription access FIRST
     // Both uploads and recordings use same feature quota from planConfig_ai_tutor.json
     console.log('🔍 Checking Auto-Note access...');
-    const accessInfo = await checkFeatureAccess('auto_note_uploads_daily');
+    const accessInfo = await checkFeatureAccess('auto_notes');
     console.log('✅ Access check response:', accessInfo);
     
     if (!accessInfo.has_access) {
