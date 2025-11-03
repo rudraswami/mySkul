@@ -158,9 +158,10 @@ export function AuthProvider({ children }) {
       setToken(newToken);
       setUser(userData);
       localStorage.setItem('dhruv_ai_token', newToken);
+      localStorage.setItem('dhruv_ai_user', JSON.stringify(userData));
       
       // SECURITY: httpOnly cookie is also set automatically by backend
-      return { success: true };
+      return { success: true, user: userData };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', error.response?.status);
