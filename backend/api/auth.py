@@ -92,7 +92,8 @@ async def login_user(
             "full_name": user.full_name,
             "email": user.email,
             "exam_type": user.exam_type,
-            "subscription_type": user.subscription_type
+            "subscription_type": user.subscription_type,
+            "profile_completed": user.profile_completed
         }
     }
 
