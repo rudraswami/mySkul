@@ -141,7 +141,7 @@ You will provide TWO versions of content:
     ],
     "professor_badge": {{
       "verified": true,
-      "ncert_ref": "Class {exam_mode == 'JEE' ? '11-12' : '9-12'}",
+      "ncert_ref": "Class {'11-12' if exam_mode in ['JEE', 'NEET'] else '9-12'}",
       "confidence": "high",
       "students_solved": "<random 5000-15000>"
     }}
