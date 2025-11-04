@@ -790,7 +790,7 @@ async def generate_neuro_symbolic_response(
             'success': True,
             'message_id': result['message_id'],
             'response': result['response'],
-            'emotion_detected': result['emotion_detected'],
+            'question_type': result.get('question_type', 'explanation'),
             'generation_time': result['generation_time']
         }
         
