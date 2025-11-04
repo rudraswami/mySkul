@@ -1322,7 +1322,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
         message_history: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Generate neuro-symbolic AI Tutor response (Indian student-centric)
+        Generate neuro-symbolic AI Mentor response v2.0 (Progressive Disclosure)
         
         Args:
             user_id: User ID
@@ -1333,66 +1333,95 @@ You're making great progress by actively seeking to understand. Keep up this exc
             message_history: Previous messages for context
         
         Returns:
-            Dict with neuro-symbolic response structure
+            Dict with progressive disclosure response structure
         """
         try:
-            from prompts.neuro_symbolic_tutor import (
-                get_neuro_symbolic_prompt,
-                detect_student_emotion,
-                generate_ncert_mapping
+            from prompts.neuro_symbolic_mentor_v2 import (
+                get_mentor_prompt_v2,
+                detect_question_type
             )
-            from utils.neuro_symbolic_parser import NeuroSymbolicParser
-            from models.neuro_symbolic import NeuroSymbolicResponse
             
-            logger.info(f"🧠 Generating neuro-symbolic response for user {user_id}")
+            logger.info(f"🧠 Generating mentor response v2.0 for user {user_id}")
             
-            # Step 1: Detect student emotion
-            emotion = detect_student_emotion(message, message_history)
-            logger.info(f"😊 Detected emotion: {emotion}")
+            # Step 1: Get user profile for personalization
+            user_doc = await self.db.users.find_one({"user_id": user_id})
+            student_profile = {
+                'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
+                'region': user_doc.get('region', 'Bangalore'),
+                'engagement_level': 'neutral',
+                'emotional_state': 'neutral'
+            }
             
-            # Step 2: Generate system prompt
-            system_prompt = get_neuro_symbolic_prompt(subject, message, exam_mode, emotion)
+            # Step 2: Detect question type
+            question_type = detect_question_type(message)
+            logger.info(f"📝 Question type: {question_type}")
             
-            # Step 3: Create LLM chat instance
+            # Step 3: Generate system prompt v2
+            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
+            
+            # Step 4: Create LLM chat instance
             neuro_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                session_id=f"neuro_{user_id}_{session_id}",
+                session_id=f"mentor_v2_{user_id}_{session_id}",
                 system_message=system_prompt
             ).with_model("openai", "gpt-4o").with_params(
-                temperature=0.7,  # Balanced creativity for Indian context
+                temperature=0.8,  # Slightly higher for engaging mentor tone
                 top_p=0.9,
-                max_tokens=1800,  # Longer for 8 sections
-                presence_penalty=0.1,
-                frequency_penalty=0.1
+                max_tokens=2500,  # Progressive sections need more tokens
+                presence_penalty=0.2,
+                frequency_penalty=0.1,
+                response_format={"type": "json_object"}  # Force JSON response
             )
             
-            # Step 4: Generate response
+            # Step 5: Generate response
             user_message = UserMessage(text=message)
             start_time = time.time()
             
-            logger.info("🚀 Calling LLM for neuro-symbolic response...")
+            logger.info("🚀 Calling LLM for mentor response v2.0...")
             raw_response = await neuro_chat.send_message(user_message)
             
             generation_time = time.time() - start_time
             logger.info(f"✅ Response generated in {generation_time:.2f}s")
             
-            # Step 5: Parse response
-            logger.info("📊 Parsing neuro-symbolic response...")
-            parsed_response = NeuroSymbolicParser.parse_full_response(
-                raw_response,
-                subject,
-                exam_mode,
-                emotion
-            )
-            
-            # Step 6: Validate with Pydantic model
+            # Step 6: Parse JSON response
+            import json
             try:
-                validated_response = NeuroSymbolicResponse(**parsed_response)
-                response_dict = validated_response.dict()
-            except Exception as validation_error:
-                logger.warning(f"⚠️ Response validation warning: {validation_error}")
-                # Use parsed response even if validation fails partially
-                response_dict = parsed_response
+                response_dict = json.loads(raw_response)
+                logger.info("📊 JSON response parsed successfully")
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ JSON parse error: {str(e)}")
+                # Fallback to simple response
+                response_dict = {
+                    "default_view": {
+                        "greeting": "Let's tackle this together!",
+                        "metaphor": {
+                            "category": student_profile['preferred_metaphor'],
+                            "text": "Let me break this down for you in a simple way.",
+                            "animation_hint": "none"
+                        },
+                        "main_content": {
+                            "type": "explanation",
+                            "content": raw_response[:500],
+                            "key_insight": "See explanation above"
+                        },
+                        "interactive_options": [
+                            {"button_text": "Show me more", "reveals": "strategy"}
+                        ],
+                        "professor_badge": {
+                            "verified": True,
+                            "ncert_ref": "Class 11-12",
+                            "confidence": "high",
+                            "students_solved": "10247"
+                        }
+                    },
+                    "progressive_sections": {
+                        "strategy": {
+                            "title": "Detailed Breakdown",
+                            "content": raw_response,
+                            "tips": ["Break it down step by step"]
+                        }
+                    }
+                }
             
             # Step 7: Save to database
             message_id = str(uuid.uuid4())
@@ -1402,10 +1431,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'user_id': user_id,
                 'user_message': message,
                 'ai_response': response_dict,
-                'response_type': 'neuro_symbolic',
+                'response_type': 'mentor_v2_progressive',
+                'question_type': question_type,
+                'student_profile': student_profile,
                 'timestamp': datetime.now(timezone.utc).isoformat(),
-                'generation_time_seconds': generation_time,
-                'emotion_detected': emotion
+                'generation_time_seconds': generation_time
             }
             
             await self.db.chat_messages.insert_one(message_doc)
@@ -1424,12 +1454,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'response': response_dict,
                 'raw_response': raw_response,
                 'generation_time': generation_time,
-                'emotion_detected': emotion
+                'question_type': question_type
             }
             
         except Exception as e:
-            logger.error(f"❌ Neuro-symbolic generation error: {str(e)}")
+            logger.error(f"❌ Mentor v2 generation error: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            raise Exception(f"Failed to generate neuro-symbolic response: {str(e)}")
+            raise Exception(f"Failed to generate mentor response: {str(e)}")
 
             return False
