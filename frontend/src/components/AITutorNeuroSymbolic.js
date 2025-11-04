@@ -508,7 +508,7 @@ export default function AITutorNeuroSymbolic() {
                               <Brain className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900">AI Tutor</p>
+                              <p className="font-semibold text-gray-900">Dhruv AI Mentor</p>
                               <p className="text-xs text-gray-500">
                                 {new Date(message.timestamp).toLocaleTimeString([], {
                                   hour: '2-digit',
@@ -523,7 +523,13 @@ export default function AITutorNeuroSymbolic() {
                             </div>
                           </div>
                           
-                          <NeuroSymbolicResponse response={message.content} />
+                          <MentorResponseV2 
+                            response={message.content}
+                            onInteraction={(section) => {
+                              console.log('User revealed section:', section);
+                              // Can track engagement here
+                            }}
+                          />
                         </div>
                       </div>
                     )}
