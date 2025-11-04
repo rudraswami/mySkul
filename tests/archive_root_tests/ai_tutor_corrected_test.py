@@ -7,7 +7,7 @@ from datetime import datetime
 class AITutorCorrectedTester:
     def __init__(self):
         # Use the backend URL from the review request
-        self.base_url = "https://neuro-tutor-dev.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-tutor-app.preview.emergentagent.com/api"
         self.token = None
         self.session = requests.Session()
         self.session.headers.update({

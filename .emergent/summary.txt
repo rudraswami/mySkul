@@ -1,32 +1,20 @@
 <analysis>
-The AI engineer's work primarily focused on three major phases: stabilizing the Mock Test Generation, implementing Email/Password authentication, and transforming the AI Tutor to a Neuro-Symbolic dual-layer format. Initial efforts involved backend stabilization for mock tests, leading to a comprehensive root-cause analysis and planned rewrite of the generation endpoint. Subsequently, the engineer identified and integrated existing email/password authentication code in the backend and successfully implemented its UI in the frontend, resolving a critical CSRF issue through targeted  modifications. The final phase involved developing the backend for the Neuro-Symbolic AI Tutor, including new prompts, Pydantic models, parsing logic, and an API endpoint, with unit tests passing. Frontend integration of these new components was initiated, replacing the legacy AI Tutor UI. Throughout, iterative testing, debugging (e.g., file watcher limits), and deployment verification were key.
+The AI engineer's trajectory involved a multi-phase development effort focusing on stabilizing and enhancing the Dhruv AI platform. Initial work addressed Mock Test generation, followed by critical implementation of Email/Password authentication, which suffered from persistent login and profile redirection bugs requiring multiple debugging cycles and  intervention. A major task was the backend development and initial frontend integration of a Neuro-Symbolic AI Tutor, including new Pydantic models, prompts, and parsing logic. Subsequent efforts tackled a subscription MVP, integrating usage counters, enforcing limits, and updating configuration. Recurring issues included frontend-backend mismatches in feature names and persistent login/onboarding redirection problems for newly registered users, indicating state management and routing complexities in the React application. The work concluded with a critical  redirection bug still open, despite extensive debugging and confirmation of backend logic.
 </analysis>
 
 <product_requirements>
-The Dhruv AI platform aims for production readiness, offering an AI Tutor, Auto-Note Mentor, and Mock Tests. Critical issues involved  errors, service worker problems, dashboard/gamification bugs, and Razorpay integration flaws, with the AI Tutor suffering from broken history and poor UI.
-
-**Implemented Features:**
-1.  **AI Tutor UI/UX Redesign:** Central chat, glass-morphism/gradient bubbles, concept cards, confidence bar, collapsible right drawer, Framer Motion animations.
-2.  **Deployment Fixes:** Resolved  warnings, hardcoded cookie/CSP domains, external API URLs.
-3.  **Duplicate Chat Message Fix:** Ensured unique message rendering in AI Tutor.
-4.  **Dynamic Default Prompts + Sidebar Merge + Header Collapse:** New backend endpoint, unified collapsible sidebar, + New Chat in header, collapsible header, responsive FAB.
-5.  **Global Modal Standardization:** Standardized animation, backdrop, z-index, focus trap, scroll lock, theming, accessibility across modals. Fixed off-viewport display.
-6.  **AI Tutor Interaction Stability:** Prevented welcome screen flicker, instant user message rendering, local chat history, context-aware subject selector, smooth header collapse, AI is thinking indicator.
-7.  **Razorpay Receipt Length Fix:** Enforced 40-character limit, resolving order creation failures.
-8.  **Email + Password Authentication:** Added signup, login, logout, and forgot/reset password functionality, complementing existing Google OAuth.
-9.  **Neuro-Symbolic AI Tutor Transformation (Backend Done):** Rewriting AI Tutor to an 8-section, dual-layer format (Practical Mentor and Practical Professor) with human-like, practical, respectful tone, simple Indian English/Kanglish, real-life Indian examples, metaphors, visual schema (JSON), professor verification, mini-practice, and emotional awareness rules.
-
-**Current Focus:** Complete Mock Test Generation feature stabilization, and then integrate the Neuro-Symbolic AI Tutor frontend.
+The Dhruv AI platform aims for production readiness, offering AI Tutor, Auto-Note Mentor, and Mock Tests. Initial goals included resolving  errors, service worker problems, dashboard/gamification bugs, and Razorpay integration flaws, alongside improving the AI Tutor's broken history and poor UI.
+**Implemented Features:** AI Tutor UI/UX redesign, deployment fixes, duplicate chat message fix, dynamic prompts, global modal standardization, AI Tutor interaction stability, Razorpay receipt length fix, Email + Password Authentication, and Neuro-Symbolic AI Tutor transformation (backend complete).
+**Current Focus:** Stabilize Mock Test Generation and integrate the Neuro-Symbolic AI Tutor frontend. Additionally, implemented Free → Basic subscription with usage counters (10 AI Q/day, 2 tests/month, 5 notes/month for Free; 50 AI Q/day, 10 tests/month, 25 notes/month for Basic), auto-reset, API enforcement, and frontend display of plan/meters. Onboarding flow for new users was refined to ensure direct dashboard navigation after signup/login if  is true.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack Development**: React.js (frontend), FastAPI (backend), MongoDB (database).
--   **Authentication**: Google OAuth, JWTs, CSRF protection, Email/Password auth.
--   **Frontend UI/State**: React Context, React Portals, Framer Motion, Axios, Local Storage, Modular Components.
--   **Backend Validation**: Pydantic models (for request/response, including Neuro-Symbolic AI).
--   **Deployment**: Supervisor, Kubernetes, Environment Variables, , File Watcher limits.
--   **Payment Gateway**: Razorpay integration.
--   **LLM Interaction**: Dynamic system prompts, structured JSON responses, response parsing.
+- Full-stack: React.js, FastAPI, MongoDB.
+- Auth: Google OAuth, JWT, CSRF, Email/Password,  for sessions.
+- Frontend: React Context, Hooks, Framer Motion, Axios, Modular Components.
+- Backend: Pydantic, LLM interaction, structured JSON parsing.
+- Deployment: Supervisor, Kubernetes, Environment Variables.
+- Subscription: Tier-based limits, usage tracking, daily/monthly resets.
 </key_technical_concepts>
 
 <code_architecture>
@@ -34,45 +22,51 @@ The application uses a React frontend, FastAPI backend, and MongoDB.
 
 
 
--   ****: FastAPI entry point. Modified to add  and  to  to resolve login failures due to missing CSRF tokens.
--   ****: AI API routes. Modified to include a new endpoint for the neuro-symbolic AI tutor ().
--   ****: Defines Mock Test API routes. Undergoing significant modification to stabilize , including a rewrite for robust error handling and validation.
--   ****: AI core logic. Modified to include a new method () for the neuro-symbolic AI tutor.
--   ****: Pydantic models for Mock Tests. Being modified for comprehensive validation of the generation API.
--   ** (NEW)**: Defines Pydantic models for the new neuro-symbolic AI response format.
--   ** (NEW)**: Contains system prompts and templates for the neuro-symbolic AI tutor.
--   ** (NEW)**: Utility functions to parse the structured JSON output from the neuro-symbolic AI.
--   ** (NEW)**: Unit tests for the neuro-symbolic AI tutor's prompt generation and response parsing, ensuring correctness and robustness.
--   ****: Main React component. Modified to conditionally render  instead of the legacy .
--   ****: Original AI Tutor component. Backed up to  and replaced by the neuro-symbolic version.
--   ** (NEW)**: The new main AI Tutor component designed to integrate and render the neuro-symbolic AI responses.
--   ****: Login component. Rewritten to include both Google OAuth and Email/Password login forms, integrated with backend auth.
--   ** (NEW directory)**: Contains modular React components for rendering individual sections of the neuro-symbolic AI response (e.g., , , , ).
+-   ****: FastAPI entry point. Modified to add  and  to  to resolve login failures.
+-   ****: AI API routes. Modified for neuro-symbolic AI tutor endpoint () and to return default prompts as  objects.
+-   ****: Authentication routes. Modified to set  during email/password registration and verified Google OAuth flow.
+-   ****: Subscription API routes. Added  endpoint for frontend usage statistics.
+-   ****: Handles subscription logic. Modified for daily/monthly usage tracking and auto-reset mechanisms, and to fetch usage summaries.
+-   ** (NEW)**: Pydantic models for the neuro-symbolic AI response format.
+-   ** (NEW)**: Pydantic model for user feature usage counters.
+-   ** (MODIFIED)**: Updated Free/Basic tier limits for AI mentor, mock tests, and auto notes.
+-   ** (NEW)**: Script to set  for existing users with profile fields.
+-   ****: Main React component. Modified for conditional rendering of  and route logic for  and .
+-   ** (NEW, MODIFIED)**: New main AI Tutor component. Modified to correctly render default prompts by extracting the  property, and to use correct feature names () for subscription calls.
+-   ** (MODIFIED, REWRITTEN)**: Login component. Rewritten to use  hook for / functions and navigate directly to  after successful signup/login. Includes a  for navigation.
+-   ** (MODIFIED)**: Component to guard routes. Its logic was re-verified against .
+-   ** (NEW)**: Component to display individual feature usage.
+-   ** (NEW)**: Component to display the user's current subscription plan.
+-   ** (MODIFIED)**: Dashboard component. Modified to integrate  and  components.
+-   ** (MODIFIED)**: Modified to use the correct feature name  for subscription.
+-   ** (MODIFIED)**: Modified to use the correct feature name  for subscription.
+-   ** (MODIFIED)**: Authentication context. Modified to initialize user state from  on mount, removed  dependency from , and ensures  data (including ) is stored synchronously in  during login/registration.
+-   ** (MODIFIED)**: Subscription context. Verified to pass feature names correctly to backend and handle 402 errors.
 </code_architecture>
 
 <pending_tasks>
--   Complete migration to UUIDs for MongoDB ObjectIDs.
--   Implement a database migration system for schema changes.
--   Automate index creation on startup with safe existence checks.
--   Complete  cleanup in the frontend.
--   Address various UI/UX issues identified in the audit beyond the modal system.
--   Re-verify Razorpay payment flow after CSRF exemption.
--   Implement the efficient, credit-optimized development-to-production workflow.
--   Run automated frontend testing for AI Tutor UI/UX redesign, deployment fixes, and interaction stability.
--   Complete the rewrite of the  endpoint in .
--   Complete frontend integration and UI updates for the new Neuro-Symbolic AI Tutor, including modular sections, SVG visual renderer, and collapsible verification.
+-   Resolve persistent  issue causing redirection to  after login or when accessing , despite the database and login response indicating .
+-   Complete Mock Test Generation feature stabilization (rewrite ).
+-   Complete full end-to-end Neuro-Symbolic AI Tutor interaction validation (all 8 sections, session continuity).
+-   Address remaining UI/UX issues identified by automated testing (beyond current fixes).
+-   Implement database migration system, UUIDs for ObjectIDs, automated index creation.
+-   Console log cleanup.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was focused on verifying the deployment and functionality of recent changes, particularly the Email/Password authentication and the Neuro-Symbolic AI Tutor.
+Immediately prior to this summary request, the AI engineer was focused on resolving a critical frontend navigation bug related to user onboarding and profile completion. Despite numerous fixes to both backend and frontend, including setting  on registration, updating  to sync user data with , and applying  recommendations (removing  dependency from , synchronous  updates,  for navigation), the application continued to redirect authenticated users with  to the  page when navigating to  or after a fresh login.
 
-The user reported issues with the production environment not showing the latest changes, specifically the new auth flow and the Neuro-Symbolic AI Tutor UI. During investigation, a critical file watcher limit error was encountered in the frontend build process, which was resolved by restarting the frontend service to force a rebuild.
+The backend has been confirmed to return  in the login response, and a migration script was successfully run for existing users. The  now uses 's  function and navigates to .  has been updated to initialize user state from  and update it synchronously.
 
-Subsequently, the Email/Password authentication flow, which had been previously implemented and deployed, was reported by the user as failing with Session expired or invalid and Internal Server Error. Upon investigation, the root cause was identified as missing CSRF exemption for  and  endpoints in . This was fixed by adding these paths to the . After restarting the backend, the email/password authentication (signup and login) was successfully tested and confirmed working by the automated testing agent, including a fix for a MongoDB index issue.
+Concurrently, work on the Phase-1 Subscription MVP was completed. This involved:
+-   **Backend:** Updating  with specific Free/Basic tier limits, creating , and modifying  to handle daily/monthly usage counters and auto-resets. A new  endpoint was added.
+-   **Frontend:** Creating  and  components, and integrating them into  to display user's plan and real-time usage.
+-   **Bug Fixes:** A critical bug in AI Tutor, Mock Tests, and Auto Notes components was fixed where  and  were called with incorrect feature names (e.g.,  instead of ), which was causing false-positive subscription gating. These components now use the correct feature names.
 
-The backend for the Neuro-Symbolic AI Tutor transformation is complete, with new prompts, Pydantic models, parsing logic, and an API endpoint, passing all unit tests. Frontend components for this new UI were created ( and modular sub-components), and  was updated to use the new tutor component. However, the complete functional testing of the Neuro-Symbolic AI Tutor frontend was pending due to the authentication issues, which have now been resolved.
+The most recent manual tests confirmed that the dashboard correctly displays free tier limits for new users, and usage meters are visible. However, the redirection to  when trying to access  remains the primary blocker, preventing full E2E validation of the Neuro-Symbolic AI Tutor.
 </current_work>
 
 <optional_next_step>
-Proceed with comprehensive frontend testing and integration of the Neuro-Symbolic AI Tutor UI.
+Investigate and resolve why users with  are still being redirected to  when accessing , focusing on frontend state propagation and routing logic.
 </optional_next_step>
+
