@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
+import MentorResponseV2 from './mentor-v2/MentorResponseV2';
 import UpgradeModal from './UpgradeModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
