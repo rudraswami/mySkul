@@ -1,0 +1,293 @@
+/**
+ * Mentor Response Component v2.0 - Progressive Disclosure
+ * Default view + interactive reveal system
+ */
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  CheckCircle, 
+  Lightbulb, 
+  Target, 
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Users
+} from 'lucide-react';
+
+export default function MentorResponseV2({ response, onInteraction }) {
+  const [revealedSections, setRevealedSections] = useState(new Set());
+  
+  if (!response || !response.default_view) {
+    return <div className="text-red-500">Error: Invalid response structure</div>;
+  }
+  
+  const { default_view, progressive_sections } = response;
+  
+  // Handle button click to reveal section
+  const handleReveal = (sectionKey) => {
+    setRevealedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionKey)) {
+        newSet.delete(sectionKey);
+      } else {
+        newSet.add(sectionKey);
+      }
+      return newSet;
+    });
+    
+    // Notify parent for analytics
+    if (onInteraction) {
+      onInteraction(sectionKey);
+    }
+  };
+  
+  return (
+    <div className="mentor-response-v2 space-y-4">
+      {/* Default View - Always Visible */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-100"
+      >
+        {/* Greeting */}
+        <div className="text-xl font-bold text-purple-900 mb-4">
+          🤝 <span className="font-semibold">{default_view.greeting}</span>
+        </div>
+        
+        {/* Metaphor Card */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-purple-200">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl mt-1">
+              {getMetaphorIcon(default_view.metaphor?.category)}
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-800 leading-relaxed">
+                {default_view.metaphor?.text}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Content */}
+        <div className="bg-gray-50 rounded-xl p-5 mb-4">
+          <div className="prose prose-purple max-w-none">
+            <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap">
+              {default_view.main_content?.content}
+            </p>
+            {default_view.main_content?.key_insight && (
+              <div className="mt-4 flex items-center gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <Lightbulb className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                <p className="text-sm text-yellow-900 font-medium m-0">
+                  {default_view.main_content.key_insight}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Interactive Buttons */}
+        {default_view.interactive_options && default_view.interactive_options.length > 0 && (
+          <div className="flex flex-wrap gap-3 mb-4">
+            {default_view.interactive_options.map((option, idx) => (
+              <motion.button
+                key={idx}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleReveal(option.reveals)}
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  revealedSections.has(option.reveals)
+                    ? 'bg-purple-600 text-white shadow-lg'
+                    : 'bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                {option.button_text}
+                {revealedSections.has(option.reveals) ? (
+                  <ChevronUp className="inline ml-2 w-4 h-4" />
+                ) : (
+                  <ChevronDown className="inline ml-2 w-4 h-4" />
+                )}
+              </motion.button>
+            ))}
+          </div>
+        )}
+        
+        {/* Professor Badge */}
+        {default_view.professor_badge && (
+          <div className="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-medium text-green-900">
+                Professor-Verified ✓ {default_view.professor_badge.ncert_ref}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users className="w-4 h-4" />
+              <span>{default_view.professor_badge.students_solved || '10,000+'}  students solved this</span>
+            </div>
+          </div>
+        )}
+      </motion.div>
+      
+      {/* Progressive Sections - Revealed on Demand */}
+      {progressive_sections && (
+        <AnimatePresence>
+          {/* Strategy Section */}
+          {revealedSections.has('strategy') && progressive_sections.strategy && (
+            <ProgressiveSection
+              title={progressive_sections.strategy.title || 'Step-by-Step Strategy'}
+              icon={<Target className="w-6 h-6" />}
+              onClose={() => handleReveal('strategy')}
+            >
+              <div className="prose prose-purple max-w-none">
+                <div className="text-gray-800 whitespace-pre-wrap">
+                  {progressive_sections.strategy.content}
+                </div>
+                {progressive_sections.strategy.tips && progressive_sections.strategy.tips.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="font-semibold text-purple-900 mb-2">💡 Pro Tips:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {progressive_sections.strategy.tips.map((tip, idx) => (
+                        <li key={idx} className="text-gray-700">{tip}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </ProgressiveSection>
+          )}
+          
+          {/* Visual Schema Section */}
+          {revealedSections.has('visual') && progressive_sections.visual_schema && (
+            <ProgressiveSection
+              title="Visual Understanding"
+              icon={<Lightbulb className="w-6 h-6" />}
+              onClose={() => handleReveal('visual')}
+            >
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">
+                  {progressive_sections.visual_schema.mental_model}
+                </p>
+                {/* Simple visual diagram - can be enhanced later */}
+                <div className="text-center text-gray-500 py-8">
+                  <Lightbulb className="w-16 h-16 mx-auto mb-2 text-blue-400" />
+                  <p>Visual diagram placeholder</p>
+                </div>
+              </div>
+            </ProgressiveSection>
+          )}
+          
+          {/* Interactive Solver Section */}
+          {revealedSections.has('interactive_solver') && progressive_sections.interactive_solver && (
+            <ProgressiveSection
+              title="Let's Solve Step-by-Step"
+              icon={<Target className="w-6 h-6" />}
+              onClose={() => handleReveal('interactive_solver')}
+            >
+              <div className="space-y-4">
+                {progressive_sections.interactive_solver.problem_breakdown && (
+                  <ol className="list-decimal pl-5 space-y-2">
+                    {progressive_sections.interactive_solver.problem_breakdown.map((step, idx) => (
+                      <li key={idx} className="text-gray-800">{step}</li>
+                    ))}
+                  </ol>
+                )}
+                {progressive_sections.interactive_solver.solution_approach && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-sm font-semibold text-green-900 mb-2">✅ Solution Approach:</p>
+                    <p className="text-gray-800">{progressive_sections.interactive_solver.solution_approach}</p>
+                  </div>
+                )}
+              </div>
+            </ProgressiveSection>
+          )}
+          
+          {/* Mini Practice Section */}
+          {revealedSections.has('practice') && progressive_sections.mini_practice && (
+            <ProgressiveSection
+              title="Mini Practice"
+              icon={<TrendingUp className="w-6 h-6" />}
+              onClose={() => handleReveal('practice')}
+            >
+              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <p className="font-semibold text-gray-900 mb-3">
+                  {progressive_sections.mini_practice.question}
+                </p>
+                {progressive_sections.mini_practice.hint && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    💡 Hint: {progressive_sections.mini_practice.hint}
+                  </p>
+                )}
+                {progressive_sections.mini_practice.time_estimate && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    ⏱️ Time: {progressive_sections.mini_practice.time_estimate}
+                  </p>
+                )}
+              </div>
+            </ProgressiveSection>
+          )}
+        </AnimatePresence>
+      )}
+      
+      {/* Encouragement & What's Next - Always at bottom */}
+      {progressive_sections && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+          {progressive_sections.encouragement && (
+            <p className="text-purple-900 font-medium mb-3">
+              ✨ {progressive_sections.encouragement.message}
+            </p>
+          )}
+          {progressive_sections.whats_next && progressive_sections.whats_next.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-purple-900 mb-2">➕ What's Next?</p>
+              <ul className="text-sm text-purple-800 space-y-1">
+                {progressive_sections.whats_next.map((item, idx) => (
+                  <li key={idx}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Progressive Section Component
+function ProgressiveSection({ title, icon, children, onClose }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 overflow-hidden"
+    >
+      <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {icon}
+          <h3 className="font-bold text-lg">{title}</h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      </div>
+      <div className="p-6">
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+// Helper function to get metaphor icon
+function getMetaphorIcon(category) {
+  const icons = {
+    cricket: '🏏',
+    bollywood: '🎬',
+    cooking: '🍳',
+    gaming: '🎮'
+  };
+  return icons[category] || '💡';
+}
