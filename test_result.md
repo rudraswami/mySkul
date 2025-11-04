@@ -1,3 +1,135 @@
+# Test Results - AI Mentor v2.0 Progressive Disclosure (November 4, 2025)
+
+## 🚀 NEW IMPLEMENTATION - AI MENTOR V2.0 (In Progress)
+
+### Implementation Summary
+**Implementation Date**: November 4, 2025
+**Status**: ✅ **BACKEND & FRONTEND CODE COMPLETE - READY FOR TESTING**
+
+### What Changed:
+
+#### 1️⃣ Backend - New Mentor-Style Prompt System
+**File Created**: `/app/backend/prompts/neuro_symbolic_mentor_v2.py`
+
+**New Features**:
+- ✅ Progressive disclosure response format (default view + hidden sections)
+- ✅ Regional personalization (Delhi/Mumbai/Chennai/Kolkata/Bangalore)
+- ✅ Metaphor categories (Cricket 🏏 / Bollywood 🎬 / Cooking 🍳 / Gaming 🎮)
+- ✅ Mentor-style tone (friendly Indian teacher, not textbook)
+- ✅ JSON structured response format
+- ❌ **REMOVED**: MCQ section (as per requirement)
+- ✅ Interactive buttons for progressive reveal
+
+**Response Structure**:
+```json
+{
+  "default_view": {
+    "greeting": "Engaging 1-liner with context",
+    "metaphor": {...},
+    "main_content": {...},
+    "interactive_options": [...],
+    "professor_badge": {...}
+  },
+  "progressive_sections": {
+    "strategy": {...},
+    "visual_schema": {...},
+    "interactive_solver": {...},
+    "mini_practice": {...},
+    "encouragement": {...},
+    "whats_next": [...]
+  }
+}
+```
+
+#### 2️⃣ Backend Service - Updated AI Service
+**File Modified**: `/app/backend/services/ai_service.py`
+
+**Changes**:
+- ✅ Uses new `get_mentor_prompt_v2()` instead of old 8-section format
+- ✅ Force JSON response with `response_format={"type": "json_object"}`
+- ✅ Parses JSON response directly
+- ✅ Saves student profile preferences (metaphor category, region)
+- ✅ Fallback handling for JSON parse errors
+
+#### 3️⃣ Frontend - New Progressive Disclosure Component
+**File Created**: `/app/frontend/src/components/mentor-v2/MentorResponseV2.js`
+
+**New Features**:
+- ✅ Default view shows only greeting + metaphor + main content + buttons
+- ✅ Interactive buttons to reveal sections on demand
+- ✅ Smooth animations with Framer Motion
+- ✅ Section collapse/expand functionality
+- ✅ Professor-verified badge with social proof
+- ✅ Clean, non-overwhelming UI (max 2 sections initially)
+
+**File Modified**: `/app/frontend/src/components/AITutorNeuroSymbolic.js`
+- ✅ Imports new `MentorResponseV2` component
+- ✅ Uses new component for AI responses
+- ✅ Updated AI name to "Dhruv AI Mentor"
+
+#### 4️⃣ Backend API - Updated Endpoint
+**File Modified**: `/app/backend/api/ai.py`
+- ✅ Returns `question_type` instead of `emotion_detected`
+- ✅ Compatible with new response structure
+
+### Key Improvements:
+
+✅ **Engagement**: Mentor-style tone, not textbook
+✅ **Progressive Disclosure**: Default view (2 sections) → Reveal on demand
+✅ **Personalization**: Regional examples, metaphor categories
+✅ **No Overwhelm**: Clean, focused default view
+✅ **Interactive**: Student controls what they want to see
+✅ **Social Proof**: Professor-verified badge + student count
+✅ **MCQ Removed**: Separate functionality exists
+
+### Testing Status:
+
+- ✅ Backend code implemented
+- ✅ Frontend component created
+- ✅ Services restarted successfully
+- ⏳ **NEEDS TESTING**: Full E2E flow with authenticated user
+- ⏳ **NEEDS VALIDATION**: Response format, progressive disclosure, engagement
+
+### Testing Checklist:
+
+**Authentication**:
+- [ ] Login with test user (testneuro@dhruvai.com)
+- [ ] Navigate to /tutor page
+
+**Default View**:
+- [ ] Greeting is engaging (not textbook-like)
+- [ ] ONE metaphor visible (cricket/bollywood/cooking/gaming)
+- [ ] Main content is clear and concise
+- [ ] Interactive buttons present ("Yes, show me!" / "Let me try first")
+- [ ] Professor badge visible
+- [ ] No MCQ section
+
+**Progressive Disclosure**:
+- [ ] Click "Yes, show me!" → Strategy section reveals
+- [ ] Click "Let me try first" → Interactive solver reveals
+- [ ] Sections animate smoothly
+- [ ] Can collapse sections
+- [ ] Encouragement + What's Next at bottom
+
+**Multiple Questions**:
+- [ ] Send 2-3 questions in succession
+- [ ] Each response follows same format
+- [ ] Different metaphors/examples for variety
+- [ ] Session continuity works
+
+**Mobile Responsive**:
+- [ ] Test on 375px width
+- [ ] Progressive disclosure works on mobile
+- [ ] Buttons are tappable (44x44px)
+
+### Known Issues to Address:
+
+1. ⚠️ **Onboarding Modal**: May still block first-time users (from previous test)
+2. ⚠️ **User Profile**: Need to add `preferred_metaphor` and `region` fields to user model
+3. ⚠️ **Visual Schema**: Placeholder implementation (can enhance later)
+
+---
+
 # Test Results - Neuro-Symbolic AI Tutor E2E Testing (November 3, 2025)
 
 ## ✅ COMPREHENSIVE E2E TESTING COMPLETE (November 3, 2025 - Latest Test)
