@@ -1,3 +1,48 @@
+# Test Results - AI Mentor v2.2 DYNAMIC METAPHOR SELECTION (November 5, 2025)
+
+## ✅ PHASE 2 COMPLETE: DYNAMIC METAPHOR SELECTION (November 5, 2025)
+
+### Implementation Summary
+**Date**: November 5, 2025
+**Status**: ✅ **PHASE 2 COMPLETE - READY FOR TESTING**
+
+**Problem Solved**:
+- ❌ BEFORE: Cricket metaphor used for ALL questions (not dynamic)
+- ✅ AFTER: Intelligent topic detection → Appropriate metaphor selection
+
+**What Was Built**:
+1. **Topic Classifier** (`/app/backend/services/topic_classifier.py`)
+   - 15+ topic categories (Quantum Physics, Chemistry, Biology, etc.)
+   - 50+ keywords per topic
+   - Fast rule-based matching (<10ms)
+   - Regional customization
+
+2. **Expanded Metaphor Library** (`metaphor_visual_library.py`)
+   - 10+ new concept mappings
+   - Quantum numbers → Hotel rooms / Train compartments
+   - Chemistry → Cooking / Tiffin assembly
+   - Biology → City systems / Kitchen organization
+   - Enhanced fallback system
+
+3. **AI Service Integration** (`ai_service.py`)
+   - Dynamic metaphor selection before response generation
+   - Logs show selected metaphor vs user preference
+   - Passes to prompt system correctly
+
+**Expected Behavior**:
+- "Explain quantum numbers" → Hotel/Train metaphor (NOT cricket)
+- "What are ionic bonds?" → Cooking metaphor
+- "How does photosynthesis work?" → Solar cooking metaphor
+- "Explain integration by parts" → Cricket strategy (appropriate here)
+- "Newton's second law" → Cricket ball OR Train motion
+
+**Next Phase**:
+Phase 3: AI-Powered SVG Sketch Generation (replacing static images)
+
+**Testing**: See `/app/test_phase2_dynamic_metaphors.md` for detailed test cases
+
+---
+
 # Test Results - AI Mentor v2.1 PERFORMANCE OPTIMIZATIONS (November 5, 2025)
 
 ## ❌ CRITICAL ISSUE: CSRF FIX NOT WORKING - ONBOARDING MODAL STILL BLOCKING (November 5, 2025 - Latest Test by E2)
