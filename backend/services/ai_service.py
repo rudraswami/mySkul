@@ -1345,10 +1345,15 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 get_mentor_avatar,
                 get_verification_badge
             )
+            from services.intent_classifier import IntentClassifier, generate_greeting_response
             
             logger.info(f"🧠 Generating mentor response v2.0 for user {user_id}")
             
-            # Step 1: Get user profile for personalization
+            # CRITICAL FIX: Classify intent before generating response
+            intent = IntentClassifier.classify_intent(message)
+            logger.info(f"🎯 Intent classified: {intent}")
+            
+            # Get user profile for personalization
             user_doc = await self.db.users.find_one({"user_id": user_id})
             student_profile = {
                 'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
@@ -1360,12 +1365,63 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'network_speed': user_doc.get('network_speed', '3G')
             }
             
-            # Step 2: Detect question type
+            # If greeting detected, return mentor personality response
+            if intent == 'greeting':
+                logger.info("👋 Greeting detected - routing to mentor personality")
+                
+                # Get user streak (if tracking exists)
+                streak_days = user_doc.get('current_streak', 0)
+                user_name = user_doc.get('full_name', 'there')
+                if user_name and ' ' in user_name:
+                    user_name = user_name.split()[0]  # First name only
+                
+                greeting_response = generate_greeting_response(
+                    user_name=user_name,
+                    streak_days=streak_days,
+                    metaphor_category=student_profile['preferred_metaphor'],
+                    region=student_profile['region']
+                )
+                
+                # Save greeting message to database
+                message_id = str(uuid.uuid4())
+                message_doc = {
+                    'message_id': message_id,
+                    'session_id': session_id,
+                    'user_id': user_id,
+                    'user_message': message,
+                    'ai_response': greeting_response,
+                    'response_type': 'mentor_greeting',
+                    'intent': 'greeting',
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'generation_time_seconds': 0.1
+                }
+                
+                await self.db.chat_messages.insert_one(message_doc)
+                
+                # Update session
+                await self.db.chat_sessions.update_one(
+                    {"session_id": session_id, "user_id": user_id},
+                    {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
+                )
+                
+                return {
+                    'success': True,
+                    'message_id': message_id,
+                    'response': greeting_response,
+                    'raw_response': 'greeting',
+                    'generation_time': 0.1,
+                    'question_type': 'greeting',
+                    'intent': 'greeting'
+                }
+            
+            # Otherwise, proceed with concept explanation
+            logger.info("📚 Learning intent - generating concept explanation")
+            
+            # Detect question type
             question_type = detect_question_type(message)
             logger.info(f"📝 Question type: {question_type}")
             
-            # Step 3: Get visual metaphor for concept (extract concept from message)
-            # For now, use a simple concept extraction (can be enhanced later)
+            # Get visual metaphor for concept (extract concept from message)
             concept_key = message.lower()[:50].replace(' ', '_')
             metaphor_visual = get_metaphor_visual(
                 concept_key,
@@ -1374,7 +1430,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
             )
             logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual['hero_visual']}")
             
-            # Step 4: Generate system prompt v2 with visual context
+            # Generate system prompt v2 with visual context
             system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
             
             # Step 4: Create LLM chat instance
