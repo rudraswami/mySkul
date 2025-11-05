@@ -1555,24 +1555,25 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         }
                         logger.info(f"✅ Added mentor avatar: {avatar_url}")
                     
-                    # CRITICAL: Add hero visual - prefer REAL images over SVG fallback
+                    # CRITICAL: Add hero visual - NOW USING SVG (Phase 3)
                     if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
-                        logger.warning("⚠️ Hero visual missing from LLM response - injecting REAL image from metaphor library")
-                        # Use REAL image from metaphor library (Tier 2)
+                        logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG from Phase 3")
+                        # Use SVG data URI (Phase 3 - generated above)
                         default_view['hero_visual'] = {
-                            'visual_url': metaphor_visual['hero_visual'],  # REAL Unsplash/Pexels image
+                            'visual_url': metaphor_visual['hero_visual'],  # NOW SVG data URI (set at line 1482)
                             'alt_text': metaphor_visual['metaphor_text'],
                             'load_priority': 'high',
-                            'size_bytes': 150000,  # Typical compressed image ~150KB
+                            'size_bytes': metaphor_visual['svg_data']['size_kb'] * 1024,  # SVG size
                             'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
-                            'tier': 2,  # Real image from library
+                            'tier': metaphor_visual['visual_tier'],  # SVG tier (0, 1, or 2)
                             'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0],
-                            'cultural_context': metaphor_visual.get('cultural_context', 'General')
+                            'cultural_context': metaphor_visual.get('cultural_context', 'General'),
+                            'svg_generation_method': metaphor_visual['svg_data']['generation_method']
                         }
-                        logger.info(f"✅ Injected REAL hero visual (Tier 2): {metaphor_visual['hero_visual'][:100]}...")
-                        logger.info(f"✅ Cultural context: {metaphor_visual.get('cultural_context')}")
+                        logger.info(f"✅ Injected SVG hero visual (Tier {metaphor_visual['visual_tier']}): {metaphor_visual['svg_data']['generation_method']}")
+                        logger.info(f"✅ SVG size: {metaphor_visual['svg_data']['size_kb']:.1f}KB")
                     else:
-                        logger.info(f"✅ Hero visual present in response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
+                        logger.info(f"✅ Hero visual present in LLM response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
                     
                     # Add verification badge
                     if 'professor_badge' in default_view:
