@@ -99,6 +99,9 @@ def generate_greeting_response(user_name: str = "there", streak_days: int = 0,
     Phase 2: Mentor Personality
     """
     
+    # Import real visual assets
+    from prompts.metaphor_visual_library import REAL_VISUAL_ASSETS
+    
     # Regional greetings
     regional_greetings = {
         'Delhi': 'Namaste',
@@ -118,6 +121,9 @@ def generate_greeting_response(user_name: str = "there", streak_days: int = 0,
         'gaming': '🎮'
     }.get(metaphor_category, '🏏')
     
+    # Get real hero visual based on metaphor
+    hero_visual_url = REAL_VISUAL_ASSETS.get(metaphor_category, REAL_VISUAL_ASSETS['cricket'])[0]
+    
     # Streak message
     streak_msg = ""
     if streak_days > 0:
@@ -133,9 +139,11 @@ def generate_greeting_response(user_name: str = "there", streak_days: int = 0,
             },
             "greeting": f"{greeting} {user_name}!{streak_msg}",
             "hero_visual": {
-                "visual_url": f"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNFRkY2RkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzEwQjk4MSI+8J+PhzwvdGV4dD48L3N2Zz4=",
+                "visual_url": hero_visual_url,  # REAL image, not abstract SVG
                 "alt_text": f"Welcome! {metaphor_emoji}",
-                "placeholder_color": "#EFF6FF"
+                "placeholder_color": "#EFF6FF",
+                "tier": 2,  # Real image
+                "load_priority": "high"
             },
             "metaphor": {
                 "category": metaphor_category,
