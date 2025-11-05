@@ -135,17 +135,13 @@ METAPHOR_LIBRARY = {
         }
     },
     
-    # Add more concepts...
+    # Pythagoras Theorem - Real visuals
     "pythagoras_theorem": {
         "cricket": {
             "all": {
-                "hero_visual": f"{VISUAL_CDN_BASE}/cricket/fielding-triangle.png",
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][1],  # Cricket fielding
                 "metaphor_text": "Like cricket fielding triangle - three fielders form right angle, distance calculation is a² + b² = c²",
-                "step_visuals": [
-                    f"{VISUAL_CDN_BASE}/cricket/fielder-positions.png",
-                    f"{VISUAL_CDN_BASE}/cricket/throw-distance.png",
-                    f"{VISUAL_CDN_BASE}/cricket/perfect-throw.png"
-                ],
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][2:4],
                 "animation_hint": "cricket-triangle-formation",
                 "color_theme": "#10B981",
                 "cultural_context": "IPL fielding strategy"
@@ -153,16 +149,36 @@ METAPHOR_LIBRARY = {
         },
         "cooking": {
             "all": {
-                "hero_visual": f"{VISUAL_CDN_BASE}/cooking/roti-triangle.png",
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][4],  # Cooking scene
                 "metaphor_text": "Like measuring roti dough - if you fold it into triangle, edges follow Pythagoras",
-                "step_visuals": [
-                    f"{VISUAL_CDN_BASE}/cooking/dough-fold.png",
-                    f"{VISUAL_CDN_BASE}/cooking/triangle-measure.png",
-                    f"{VISUAL_CDN_BASE}/cooking/perfect-roti.png"
-                ],
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][1:3],
                 "animation_hint": "cooking-fold-triangle",
                 "color_theme": "#F59E0B",
                 "cultural_context": "Home cooking"
+            }
+        }
+    },
+    
+    # Generic fallback for unmapped concepts
+    "generic_concept": {
+        "cricket": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][0],
+                "metaphor_text": "Let me explain this with a cricket example you'll relate to",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][1:3],
+                "animation_hint": "cricket-strategy",
+                "color_theme": "#10B981",
+                "cultural_context": "Cricket strategy"
+            }
+        },
+        "cooking": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][0],
+                "metaphor_text": "Let me explain this like a cooking recipe",
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][1:3],
+                "animation_hint": "cooking-process",
+                "color_theme": "#F59E0B",
+                "cultural_context": "Cooking process"
             }
         }
     }
