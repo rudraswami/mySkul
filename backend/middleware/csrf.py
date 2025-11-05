@@ -25,6 +25,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             "/api/auth/google/login",  # OAuth redirect
             "/api/auth/google/callback",  # OAuth callback
             "/api/auth/session",  # Session check
+            "/api/auth/profile/complete",  # Onboarding completion
+            "/api/auth/register",  # Registration
+            "/api/auth/login",  # Login
             "/api/health",  # Health check
             "/docs",  # API docs
             "/openapi.json"  # OpenAPI spec
