@@ -152,7 +152,7 @@ def generate_greeting_response(user_name: str = "there", streak_days: int = 0,
             },
             "main_content": {
                 "type": "greeting",
-                "content": f"Great to see you! I'm your AI mentor - think of me as a helpful IIT senior.\n\nWhat can I help you with today?\n\n• Need concept explanation?\n• Want to solve problems?\n• Practice questions?\n• Clarify doubts?",
+                "content": "Great to see you! I'm your AI mentor - think of me as a helpful IIT senior.\n\nWhat can I help you with today?\n\n• Need concept explanation?\n• Want to solve problems?\n• Practice questions?\n• Clarify doubts?",
                 "key_insight": "Ask me anything about your subjects!"
             },
             "quick_actions": [
