@@ -537,10 +537,86 @@ Include: Simple characters, actual objects, arrows, thought bubbles, icons, numb
             "fallback_used": True
         }
     
-    def _get_concept_template(self, concept: str, topic: str, metaphor_category: str, colors: list) -> str:
-        """Get concept-specific SVG template (not generic)"""
+    def _get_concept_template(self, concept: str, topic: str, metaphor_category: str, colors: list, region: str) -> str:
+        """Get concept-specific SVG template (not generic) - EXPANDED LIBRARY"""
         
         concept_lower = concept.lower()
+        
+        # CATALYST / CHEMICAL REACTION template
+        if 'catalyst' in concept_lower or 'speed up' in concept_lower or ('chemical' in concept_lower and 'reaction' in concept_lower):
+            return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
+    </marker>
+  </defs>
+  <rect width="800" height="600" fill="#FEF7ED" />
+  
+  <!-- Title -->
+  <text x="400" y="35" font-family="Comic Sans MS, cursive" font-size="20" text-anchor="middle" fill="{colors[0]}" font-weight="bold">
+    💡 Catalyst: Like Adding Tadka to Speed Up Cooking!
+  </text>
+  
+  <!-- TOP ROW - WITHOUT CATALYST (Slow) -->
+  <text x="150" y="100" font-family="Comic Sans MS, cursive" font-size="16" fill="{colors[0]}" font-weight="bold">WITHOUT Catalyst (Slow 🐢)</text>
+  
+  <!-- Reactants -->
+  <circle cx="100" cy="180" r="30" fill="#93C5FD" stroke="{colors[0]}" stroke-width="2" />
+  <text x="100" y="190" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}">H₂</text>
+  
+  <circle cx="200" cy="180" r="30" fill="#FCA5A5" stroke="{colors[0]}" stroke-width="2" />
+  <text x="200" y="190" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}">O₂</text>
+  
+  <!-- Slow arrow -->
+  <line x1="240" y1="180" x2="330" y2="180" stroke="{colors[1]}" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="10,5" />
+  <text x="285" y="165" font-family="Comic Sans MS, cursive" font-size="12" fill="{colors[1]}">Slow reaction</text>
+  <text x="285" y="200" font-family="Comic Sans MS, cursive" font-size="12" fill="{colors[1]}">High energy needed</text>
+  
+  <!-- Product -->
+  <ellipse cx="400" cy="180" rx="50" ry="35" fill="#D9F99D" stroke="{colors[0]}" stroke-width="2" />
+  <text x="400" y="190" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[0]}">H₂O</text>
+  <text x="400" y="235" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="{colors[1]}">⏰ Takes long time!</text>
+  
+  <!-- BOTTOM ROW - WITH CATALYST (Fast) -->
+  <text x="150" y="320" font-family="Comic Sans MS, cursive" font-size="16" fill="{colors[0]}" font-weight="bold">WITH Catalyst (Fast ⚡)</text>
+  
+  <!-- Reactants -->
+  <circle cx="100" cy="400" r="30" fill="#93C5FD" stroke="{colors[0]}" stroke-width="2" />
+  <text x="100" y="410" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}">H₂</text>
+  
+  <circle cx="200" cy="400" r="30" fill="#FCA5A5" stroke="{colors[0]}" stroke-width="2" />
+  <text x="200" y="410" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}">O₂</text>
+  
+  <!-- CATALYST (Tadka spoon!) -->
+  <rect x="260" y="370" width="70" height="60" rx="8" fill="#FCD34D" stroke="{colors[0]}" stroke-width="3" />
+  <text x="295" y="395" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[0]}" font-weight="bold">🥄 Pt</text>
+  <text x="295" y="415" font-family="Comic Sans MS, cursive" font-size="10" text-anchor="middle" fill="#78350F">Catalyst</text>
+  
+  <!-- Fast arrow with boost -->
+  <line x1="340" y1="400" x2="430" y2="400" stroke="#10B981" stroke-width="4" marker-end="url(#arrowhead)" />
+  <text x="385" y="385" font-family="Comic Sans MS, cursive" font-size="13" fill="#10B981" font-weight="bold">⚡ FAST!</text>
+  <text x="385" y="425" font-family="Comic Sans MS, cursive" font-size="11" fill="#10B981">Lower energy path</text>
+  
+  <!-- Product (same) -->
+  <ellipse cx="500" cy="400" rx="50" ry="35" fill="#D9F99D" stroke="{colors[0]}" stroke-width="2" />
+  <text x="500" y="410" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[0]}">H₂O</text>
+  <text x="500" y="455" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="#10B981">✅ Quick reaction!</text>
+  
+  <!-- Explanation box -->
+  <rect x="550" y="150" width="220" height="250" rx="10" fill="#FFFBEB" stroke="{colors[0]}" stroke-width="2" />
+  <text x="660" y="180" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[0]}" font-weight="bold">🥘 Tadka Analogy:</text>
+  <text x="570" y="210" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">• Dal cooks slowly</text>
+  <text x="570" y="235" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">• Add tadka (cumin,</text>
+  <text x="570" y="255" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">  mustard seeds)</text>
+  <text x="570" y="280" font-family="Comic Sans MS, cursive" font-size="12" fill="#10B981">• Flavor spreads FAST!</text>
+  <text x="570" y="310" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">Same way, catalyst</text>
+  <text x="570" y="330" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">speeds reaction</text>
+  <text x="570" y="350" font-family="Comic Sans MS, cursive" font-size="12" fill="#78350F">without getting used!</text>
+  
+  <!-- Bottom summary -->
+  <text x="400" y="530" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[0]}">Key: Catalyst = Reaction Speed Booster (Like Tadka in Cooking!) 🥘</text>
+  <text x="400" y="560" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="#6B7280">Lower activation energy → Faster product formation</text>
+</svg>'''
         
         # Photosynthesis template
         if 'photosynthesis' in concept_lower:
