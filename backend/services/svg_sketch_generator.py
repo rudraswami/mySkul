@@ -342,62 +342,25 @@ Generate the concept-specific SVG now:"""
         
         # Quantum numbers
         elif 'quantum' in concept_lower:
-            return """**SPECIFIC GUIDANCE FOR QUANTUM NUMBERS**:
-- If metaphor is "hotel rooms", draw a simple hotel building with floors
-- Show n (principal) as floor levels (Ground, 1st, 2nd, 3rd)
-- Show l (angular) as wings/sections (A, B, C wings)
-- Show m (magnetic) as room numbers within each wing
-- Show s (spin) as bed choice (left bed/right bed)
-- Add electron icon moving through this system
-- Use Indian hotel style if appropriate (not western)
+            return """**VISUAL STORYTELLING FOR QUANTUM NUMBERS**:
+**BACKGROUND**: Soft lavender (#F5F3FF)
+- Draw Indian hotel/apartment building showing n (floors), l (wings), m (rooms), s (beds)
+- Show electron character finding its room with address tag
+- Use building metaphor with visual organization
 - Label clearly: n=1,2,3... l=0,1,2... m=-l to +l, s=↑↓"""
         
-        # Ionic bonding
+        # Ionic bonding  
         elif 'ionic' in concept_lower and 'bond' in concept_lower:
-            return """**SPECIFIC GUIDANCE FOR IONIC BONDING**:
-- If metaphor is "tiffin", draw a tiffin dabba (Indian lunch box)
-- Show one compartment giving food (electron donor = cation)
-- Show another compartment receiving food (electron acceptor = anion)
-- Draw electrons as small circles moving from one to other
-- Show the bond as them being clipped together
-- Label Na+ and Cl- if using sodium chloride example
-- Show the attraction/bond holding them together
+            return """**VISUAL STORYTELLING FOR IONIC BONDING**:
+**BACKGROUND**: Warm orange (#FEF3C7)
+- Draw Indian tiffin dabba sharing metaphor
+- Show Na student giving electron to Cl student
+- Show attraction and bond formation with expressive characters
 - Use Indian tiffin box style (stacked circular containers)"""
         
         # Newton's laws
         elif 'newton' in concept_lower:
-            return """**SPECIFIC GUIDANCE FOR NEWTON'S LAWS**:
-- If metaphor is "cricket", draw cricket field scenario:
-  * Ball at rest (1st law)
-  * Bowler applying force (2nd law: F=ma)
-  * Ball pushing back on hand (3rd law: action-reaction)
-- If metaphor is "train", draw train scenario:
-  * Train at station (inertia)
-  * Engine applying force (F=ma)
-  * Tracks pushing back (action-reaction)
-- Show force arrows clearly
-- Label mass, acceleration, force
-- Make it dynamic and relatable"""
-        
-        # Quantum numbers
-        elif 'quantum' in concept_lower:
-            return """**VISUAL STORYTELLING FOR QUANTUM NUMBERS**: [see previous detailed guidance]
-**BACKGROUND**: Soft lavender (#F5F3FF)
-Draw Indian hotel/apartment building showing n (floors), l (wings), m (rooms), s (beds)
-Show electron character finding its room with address tag
-Use building metaphor with visual organization"""
-        
-        # Ionic bonding  
-        elif 'ionic' in concept_lower and 'bond' in concept_lower:
-            return """**VISUAL STORYTELLING FOR IONIC BONDING**: [see previous detailed guidance]
-**BACKGROUND**: Warm orange (#FEF3C7)
-Draw Indian tiffin dabba sharing metaphor
-Show Na student giving electron to Cl student
-Show attraction and bond formation with expressive characters"""
-        
-        # Newton's laws
-        elif 'newton' in concept_lower:
-            return """**VISUAL STORYTELLING FOR NEWTON'S LAWS**: [see previous detailed guidance]
+            return """**VISUAL STORYTELLING FOR NEWTON'S LAWS**:
 **BACKGROUND**: Sky blue (#EBF8FF)
 Three panel story showing:
 1. Ball at rest (inertia)
