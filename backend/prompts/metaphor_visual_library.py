@@ -229,7 +229,7 @@ MEMORY_CHALLENGE_ASSETS = {
 
 def get_metaphor_visual(concept: str, category: str, region: str):
     """
-    Get visual metaphor for concept
+    Get visual metaphor for concept using REAL images
     
     Args:
         concept: Concept name (e.g., 'integration_by_parts')
@@ -237,22 +237,16 @@ def get_metaphor_visual(concept: str, category: str, region: str):
         region: Region ('Delhi', 'Mumbai', 'Chennai', 'Kolkata', 'Bangalore')
     
     Returns:
-        Dict with visual assets and metaphor text
+        Dict with REAL visual assets (not abstract shapes)
     """
     concept_key = concept.lower().replace(' ', '_')
     
-    if concept_key not in METAPHOR_LIBRARY:
-        # Default fallback
-        return {
-            "hero_visual": f"{VISUAL_CDN_BASE}/default/concept-visual.png",
-            "metaphor_text": "Let me break this down for you step by step",
-            "step_visuals": [],
-            "animation_hint": "none",
-            "color_theme": "#6366F1",
-            "cultural_context": "General"
-        }
-    
-    concept_metaphors = METAPHOR_LIBRARY[concept_key]
+    # Try to find exact concept
+    if concept_key in METAPHOR_LIBRARY:
+        concept_metaphors = METAPHOR_LIBRARY[concept_key]
+    else:
+        # Use generic fallback
+        concept_metaphors = METAPHOR_LIBRARY.get('generic_concept', METAPHOR_LIBRARY['integration_by_parts'])
     
     if category not in concept_metaphors:
         category = list(concept_metaphors.keys())[0]  # Fallback to first available
