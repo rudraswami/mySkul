@@ -1417,18 +1417,35 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # Otherwise, proceed with concept explanation
             logger.info("📚 Learning intent - generating concept explanation")
             
+            # PHASE 2: Dynamic Metaphor Selection
+            from services.topic_classifier import TopicClassifier
+            
+            # Step 1: Intelligently select metaphor based on topic
+            metaphor_selection = TopicClassifier.select_metaphor(
+                message,
+                preferred_category=student_profile['preferred_metaphor'],
+                region=student_profile['region']
+            )
+            logger.info(f"🎯 Dynamic metaphor selection: {metaphor_selection}")
+            
+            # Step 2: Use selected metaphor (not hardcoded user preference)
+            selected_metaphor = metaphor_selection['metaphor_category']
+            detected_topic = metaphor_selection['topic']
+            
             # Detect question type
             question_type = detect_question_type(message)
             logger.info(f"📝 Question type: {question_type}")
             
-            # Get visual metaphor for concept (extract concept from message)
-            concept_key = message.lower()[:50].replace(' ', '_')
+            # Step 3: Get visual metaphor using dynamic selection
+            concept_key = detected_topic if detected_topic != 'generic' else message.lower()[:50].replace(' ', '_')
             metaphor_visual = get_metaphor_visual(
                 concept_key,
-                student_profile['preferred_metaphor'],
-                student_profile['region']
+                selected_metaphor,
+                student_profile['region'],
+                question=message
             )
-            logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual['hero_visual']}")
+            logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual.get('hero_visual', 'N/A')}")
+            logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
             # Generate system prompt v2 with visual context
             system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
