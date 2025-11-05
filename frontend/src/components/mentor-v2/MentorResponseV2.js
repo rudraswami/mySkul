@@ -119,29 +119,47 @@ export default function MentorResponseV2({ response, onInteraction }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-4 rounded-xl overflow-hidden border-2 border-purple-200"
+            className="mb-4 rounded-xl overflow-hidden border-2 border-purple-200 relative"
             style={{ backgroundColor: default_view.hero_visual.placeholder_color || '#F3F4F6' }}
           >
+            {/* Debug info in development */}
+            {process.env.NODE_ENV === 'development' && visualDebugInfo.hasHeroVisual && (
+              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs p-2 rounded z-10">
+                Tier: {visualDebugInfo.tier || 'N/A'} | 
+                Type: {visualDebugInfo.urlType} | 
+                Size: {visualDebugInfo.urlLength}B
+              </div>
+            )}
+            
             {!imageLoadError['hero_visual'] ? (
               <img
                 src={default_view.hero_visual.visual_url}
                 alt={default_view.hero_visual.alt_text || 'Hero Visual'}
                 className="w-full h-auto"
                 loading="eager"
-                onError={() => handleImageError('hero_visual')}
+                onLoad={() => handleImageLoad('hero_visual')}
+                onError={(e) => handleImageError('hero_visual', e)}
+                style={{ minHeight: '200px' }}
               />
             ) : (
-              <div className="w-full h-64 flex items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100">
-                <div className="text-center p-6">
+              <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6">
+                <div className="text-center">
                   <div className="text-6xl mb-3">
-                    {getMetaphorIcon(default_view.metaphor?.category)}
+                    {default_view.hero_visual.fallback_emoji || 
+                     getMetaphorIcon(default_view.metaphor?.category) || 
+                     '💡'}
                   </div>
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
                     {default_view.hero_visual.alt_text || default_view.metaphor?.text || 'Visual concept'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Visual assets loading...
+                  <p className="text-xs text-gray-500">
+                    Visual Tier {default_view.hero_visual.tier || 1} - Fallback Active
                   </p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <p className="text-xs text-red-500 mt-2">
+                      Debug: Image failed to load - check console
+                    </p>
+                  )}
                 </div>
               </div>
             )}
