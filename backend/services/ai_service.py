@@ -1629,7 +1629,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'color_theme': '#10B981'
             },
             'cooking': {
-                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNGRUYzQzciLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iI0Y1OUUwQiI+8J+NszwvdGV4dD48L3N2Zz4=',
+                'svg_template': 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23FEF3C7"/%3E%3Cellipse cx="200" cy="140" rx="80" ry="50" fill="%23F59E0B"/%3E%3Crect x="190" y="140" width="20" height="60" fill="%238B5CF6"/%3E%3Ctext x="200" y="250" text-anchor="middle" font-family="Arial" font-size="24" fill="%23374151"%3ECooking Concept%3C/text%3E%3C/svg%3E',
                 'emoji': '🍳',
                 'color_theme': '#F59E0B'
             },
