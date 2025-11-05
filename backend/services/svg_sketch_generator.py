@@ -317,9 +317,13 @@ Generate the SVG now:"""
 async def test_svg_generator():
     """Test SVG generation"""
     import os
-    from emergentintegrations.manager import get_universal_key
     
-    key = get_universal_key()
+    # Get key from environment
+    key = os.environ.get('EMERGENT_LLM_KEY')
+    if not key:
+        print("❌ EMERGENT_LLM_KEY not set in environment")
+        return
+    
     generator = SVGSketchGenerator(key)
     
     print("\n" + "="*60)
