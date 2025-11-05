@@ -26,8 +26,32 @@ REAL_VISUAL_ASSETS = {
     ]
 }
 
+# DYNAMIC METAPHOR TEMPLATES - Expanded Library
+# These will be replaced with AI-generated SVG in Phase 3
+# For now, using existing assets strategically
+
+# Generic fallback SVG templates (will be generated dynamically in Phase 3)
+SVG_TEMPLATES = {
+    "quantum_hotel": {
+        "type": "svg",
+        "description": "Hotel room floors representing energy levels",
+        "svg_template": "placeholder_for_phase3"
+    },
+    "train_compartments": {
+        "type": "svg", 
+        "description": "Train compartments showing electron arrangements",
+        "svg_template": "placeholder_for_phase3"
+    },
+    "cooking_process": {
+        "type": "svg",
+        "description": "Step-by-step cooking visualization",
+        "svg_template": "placeholder_for_phase3"
+    }
+}
+
 # Metaphor Library: {concept: {category: {region: visual_data}}}
 METAPHOR_LIBRARY = {
+    # CALCULUS CONCEPTS
     "integration_by_parts": {
         "cricket": {
             "Delhi": {
