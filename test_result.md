@@ -1,6 +1,125 @@
 # Test Results - AI Mentor v2.1 PERFORMANCE OPTIMIZATIONS (November 5, 2025)
 
-## ❌ CRITICAL ISSUE: LOGIN STILL BROKEN - VISUAL TESTING BLOCKED (November 5, 2025 - Latest Test)
+## ❌ CRITICAL ISSUE: ONBOARDING MODAL BLOCKING VISUAL TESTING (November 5, 2025 - Latest Test by E2)
+
+### Testing Agent E2 - Visual Rendering Test Results
+**Test Date**: November 5, 2025  
+**Test Status**: ❌ **BLOCKED - ONBOARDING MODAL + 500 ERROR**  
+**Overall Success Rate**: 0% (0/6 tests passed)
+
+---
+
+### 🔴 ROOT CAUSE: Onboarding Modal Cannot Be Skipped/Completed
+
+**Problem**: The onboarding modal blocks AI Tutor access and cannot be skipped due to backend 500 error.
+
+**Evidence from Latest Test**:
+1. ✅ Login works correctly (Email/Password authentication successful)
+2. ✅ Dashboard accessible after login
+3. ✅ Navigation to `/tutor` successful
+4. ❌ **Onboarding modal appears and blocks AI Tutor**
+5. ❌ **"Skip for now" button triggers 500 error on `/api/auth/profile/complete`**
+6. ❌ **Backend error: "CSRF token missing for POST /api/auth/profile/complete"**
+7. ❌ **Cannot test visual rendering without bypassing onboarding**
+
+**Backend Error Log**:
+```
+2025-11-05 07:53:47,517 - middleware.csrf - WARNING - CSRF token missing for POST /api/auth/profile/complete
+ERROR: Exception in ASGI application
+ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+```
+
+**Impact**: **CRITICAL** - Cannot test AI Tutor visual rendering feature
+
+---
+
+### 📊 TEST RESULTS SUMMARY
+
+| Test Case | Status | Details |
+|-----------|--------|---------|
+| Email/Password Login | ✅ PASS | Login successful, navigates to dashboard |
+| Navigate to /tutor | ✅ PASS | Page loads successfully |
+| Skip Onboarding | ❌ FAILED | 500 error on `/api/auth/profile/complete` |
+| Send greeting "hi" | ❌ BLOCKED | Onboarding modal blocks input |
+| Verify hero visual (greeting) | ❌ BLOCKED | Cannot test without onboarding skip |
+| Send concept "explain integration" | ❌ BLOCKED | Cannot test without onboarding skip |
+| Verify hero visual (concept) | ❌ BLOCKED | Cannot test without onboarding skip |
+| Visual tier = 2 verification | ❌ BLOCKED | Cannot test without onboarding skip |
+
+**Overall**: 2/8 tests passed (25%)
+
+---
+
+### 🔧 ACTION ITEMS FOR MAIN AGENT
+
+#### **Priority 1: Fix Onboarding Modal Skip/Complete Endpoint** (CRITICAL)
+
+**Issue**: `/api/auth/profile/complete` endpoint returns 500 error due to missing CSRF token
+
+**Root Cause**: CSRF token validation failing for onboarding skip/complete action
+
+**Debugging Steps**:
+1. **Check CSRF Token Handling**:
+   - File: `/app/backend/api/auth.py` - profile complete endpoint
+   - Verify CSRF token is being sent from frontend
+   - Check if CSRF middleware is properly configured
+
+2. **Frontend CSRF Token**:
+   - File: `/app/frontend/src/components/AITutorNeuroSymbolic.js`
+   - Verify onboarding skip button sends CSRF token
+   - Check if `credentials: 'include'` is set on fetch request
+
+3. **Backend CSRF Middleware**:
+   - File: `/app/backend/middleware/csrf.py`
+   - Verify CSRF validation logic
+   - Check if POST requests to `/api/auth/profile/complete` are exempt or properly validated
+
+**Recommended Fix**:
+- Option A: Exempt `/api/auth/profile/complete` from CSRF validation (if it's a safe operation)
+- Option B: Ensure frontend sends CSRF token with the request
+- Option C: Add proper CSRF token handling to the onboarding modal
+
+---
+
+#### **Priority 2: Test Visual Rendering After Onboarding Fix** (HIGH)
+
+Once onboarding is fixed, re-test visual rendering:
+1. Login with testneuro@dhruvai.com
+2. Navigate to /tutor
+3. Skip or complete onboarding
+4. Send "hi" - verify REAL cricket image (not abstract shapes)
+5. Send "explain integration by parts" - verify REAL metaphor image
+6. Verify visual tier = 2 in debug info
+7. Verify culturally relevant visuals (cricket fields, Indian cooking, etc.)
+
+---
+
+### 📸 SCREENSHOTS CAPTURED
+
+1. `01_tutor_with_onboarding.png` - Onboarding modal blocking AI Tutor
+2. `02_tutor_after_onboarding.png` - Still showing onboarding modal (skip failed)
+3. `03_greeting_response.png` - Onboarding modal still present
+4. `04_concept_response.png` - Onboarding modal still present
+5. `05_final_state.png` - Alert error: "An error occurred. Please try again."
+
+---
+
+### 🎯 NEXT STEPS
+
+1. **URGENT**: Fix CSRF token issue for `/api/auth/profile/complete` endpoint
+2. **URGENT**: Test onboarding skip/complete functionality
+3. **HIGH**: Re-run visual rendering tests after onboarding fix
+4. **MEDIUM**: Verify visual tier = 2 (real images from Unsplash/Pexels)
+5. **MEDIUM**: Verify culturally relevant metaphors (cricket, cooking, etc.)
+
+---
+
+**Status**: ❌ **TESTING BLOCKED - ONBOARDING MODAL CANNOT BE SKIPPED DUE TO 500 ERROR**  
+**Recommendation**: **FIX CSRF TOKEN ISSUE BEFORE PROCEEDING WITH VISUAL TESTING**
+
+---
+
+## ❌ PREVIOUS ISSUE: LOGIN STILL BROKEN - VISUAL TESTING BLOCKED (November 5, 2025 - Previous Test)
 
 ### Testing Agent E2 - Visual Rendering Test Results
 **Test Date**: November 5, 2025  
