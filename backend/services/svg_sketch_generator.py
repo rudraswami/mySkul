@@ -539,12 +539,255 @@ Include: Simple characters, actual objects, arrows, thought bubbles, icons, numb
         }
     
     def _get_concept_template(self, concept: str, topic: str, metaphor_category: str, colors: list, region: str) -> str:
-        """Get concept-specific SVG template (not generic) - EXPANDED LIBRARY"""
+        """
+        Get RICH, EDUCATIONAL, concept-specific SVG template
+        
+        PHILOSOPHY: The visual TEACHES the concept through the metaphor
+        NOT just labels - actual illustrated storytelling
+        """
         
         concept_lower = concept.lower()
         
-        # CATALYST / CHEMICAL REACTION template
-        if 'catalyst' in concept_lower or 'speed up' in concept_lower or ('chemical' in concept_lower and 'reaction' in concept_lower):
+        # ========================================
+        # NEWTON'S LAWS - Cricket Visual Story
+        # ========================================
+        if 'newton' in concept_lower or 'laws' in concept_lower or 'motion' in concept_lower:
+            return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" width="900" height="700">
+  <defs>
+    <marker id="force_arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <polygon points="0 3, 12 6, 0 9" fill="#DC2626" />
+    </marker>
+    <marker id="motion_arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <polygon points="0 3, 12 6, 0 9" fill="#10B981" />
+    </marker>
+  </defs>
+  
+  <!-- Soft educational background -->
+  <rect width="900" height="700" fill="#F0F9FF" />
+  
+  <!-- Cricket field base -->
+  <ellipse cx="450" cy="650" rx="400" ry="30" fill="#86EFAC" opacity="0.3" />
+  
+  <!-- Title -->
+  <text x="450" y="35" font-family="Comic Sans MS, cursive" font-size="22" text-anchor="middle" fill="#1E40AF" font-weight="bold">
+    Newton's Laws - The Cricket Ball Story 🏏
+  </text>
+  
+  <!-- ============ LAW 1: INERTIA ============ -->
+  <g id="law1">
+    <!-- Panel background -->
+    <rect x="20" y="70" width="260" height="180" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2" />
+    
+    <!-- Law 1 title -->
+    <text x="150" y="95" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="#1E40AF" font-weight="bold">
+      LAW 1: Inertia (Lazy Ball!)
+    </text>
+    
+    <!-- Cricket ball at rest -->
+    <circle cx="100" cy="160" r="25" fill="#DC2626" stroke="#991B1B" stroke-width="2" />
+    <text x="100" y="167" font-family="Arial" font-size="16" text-anchor="middle" fill="white" font-weight="bold">⚪</text>
+    
+    <!-- Ground line -->
+    <line x1="60" y1="190" x2="140" y2="190" stroke="#059669" stroke-width="3" />
+    
+    <!-- Player looking at ball -->
+    <ellipse cx="200" cy="140" rx="12" ry="15" fill="#F59E0B" />
+    <circle cx="200" cy="125" r="10" fill="#FBBF24" stroke="#78350F" stroke-width="1" />
+    <path d="M 200 140 L 200 170" stroke="#78350F" stroke-width="2" />
+    <path d="M 200 150 L 185 165" stroke="#78350F" stroke-width="2" />
+    <path d="M 200 150 L 215 165" stroke="#78350F" stroke-width="2" />
+    <path d="M 200 170 L 190 190" stroke="#78350F" stroke-width="2" />
+    <path d="M 200 170 L 210 190" stroke="#78350F" stroke-width="2" />
+    
+    <!-- Thought bubble -->
+    <ellipse cx="210" cy="100" rx="35" ry="20" fill="white" stroke="#3B82F6" stroke-width="1" />
+    <text x="210" y="105" font-family="Comic Sans MS, cursive" font-size="10" text-anchor="middle" fill="#1E40AF">
+      Won't move!
+    </text>
+    
+    <!-- Formula -->
+    <text x="150" y="225" font-family="Comic Sans MS, cursive" font-size="13" text-anchor="middle" fill="#1E40AF">
+      v = 0 (at rest stays at rest)
+    </text>
+  </g>
+  
+  <!-- ============ LAW 2: F=ma ============ -->
+  <g id="law2">
+    <!-- Panel background -->
+    <rect x="320" y="70" width="260" height="180" rx="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2" />
+    
+    <!-- Law 2 title -->
+    <text x="450" y="95" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="#92400E" font-weight="bold">
+      LAW 2: Force = Speed 💨
+    </text>
+    
+    <!-- Bowler (in action) -->
+    <ellipse cx="350" cy="150" rx="12" ry="15" fill="#3B82F6" />
+    <circle cx="350" cy="135" r="10" fill="#60A5FA" stroke="#1E40AF" stroke-width="1" />
+    <path d="M 350 145 L 350 175" stroke="#1E40AF" stroke-width="2" />
+    <path d="M 350 150 Q 380 140 390 160" stroke="#1E40AF" stroke-width="2" fill="none" />
+    <path d="M 350 155 L 335 170" stroke="#1E40AF" stroke-width="2" />
+    <path d="M 350 175 L 345 195" stroke="#1E40AF" stroke-width="2" />
+    <path d="M 350 175 L 355 195" stroke="#1E40AF" stroke-width="2" />
+    
+    <!-- Force arrow (big) -->
+    <line x1="395" y1="160" x2="470" y2="160" stroke="#DC2626" stroke-width="5" marker-end="url(#force_arrow)" />
+    <text x="432" y="150" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="#DC2626" font-weight="bold">
+      FORCE!
+    </text>
+    
+    <!-- Ball in motion -->
+    <circle cx="500" cy="160" r="20" fill="#DC2626" stroke="#991B1B" stroke-width="2" />
+    
+    <!-- Motion lines -->
+    <line x1="520" y1="155" x2="550" y2="155" stroke="#10B981" stroke-width="3" marker-end="url(#motion_arrow)" />
+    <line x1="525" y1="165" x2="555" y2="165" stroke="#10B981" stroke-width="2" marker-end="url(#motion_arrow)" />
+    
+    <!-- Acceleration label -->
+    <text x="540" y="145" font-family="Comic Sans MS, cursive" font-size="12" fill="#10B981" font-weight="bold">
+      a (fast!)
+    </text>
+    
+    <!-- Formula -->
+    <text x="450" y="225" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="#92400E" font-weight="bold">
+      F = ma
+    </text>
+  </g>
+  
+  <!-- ============ LAW 3: ACTION-REACTION ============ -->
+  <g id="law3">
+    <!-- Panel background -->
+    <rect x="620" y="70" width="260" height="180" rx="12" fill="#DCFCE7" stroke="#10B981" stroke-width="2" />
+    
+    <!-- Law 3 title -->
+    <text x="750" y="95" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="#065F46" font-weight="bold">
+      LAW 3: Push Back! 🔄
+    </text>
+    
+    <!-- Cricket bat -->
+    <rect x="640" y="140" width="60" height="10" rx="3" fill="#78350F" stroke="#451A03" stroke-width="2" />
+    <rect x="665" y="130" width="10" height="30" rx="2" fill="#92400E" stroke="#451A03" stroke-width="1" />
+    
+    <!-- Ball hitting bat -->
+    <circle cx="730" cy="145" r="18" fill="#DC2626" stroke="#991B1B" stroke-width="2" />
+    
+    <!-- Action arrow (ball on bat) -->
+    <line x1="750" y1="145" x2="720" y2="145" stroke="#DC2626" stroke-width="4" marker-end="url(#force_arrow)" />
+    <text x="765" y="135" font-family="Comic Sans MS, cursive" font-size="11" fill="#DC2626" font-weight="bold">
+      Action
+    </text>
+    
+    <!-- Reaction arrow (bat pushes back) -->
+    <line x1="690" y1="155" x2="720" y2="155" stroke="#3B82F6" stroke-width="4" marker-end="url(#force_arrow)" />
+    <text x="670" y="175" font-family="Comic Sans MS, cursive" font-size="11" fill="#3B82F6" font-weight="bold">
+      Reaction
+    </text>
+    
+    <!-- Batsman figure -->
+    <ellipse cx="660" cy="175" rx="10" ry="12" fill="#F59E0B" />
+    <circle cx="660" cy="165" r="8" fill="#FBBF24" stroke="#78350F" stroke-width="1" />
+    <path d="M 660 177 L 660 195" stroke="#78350F" stroke-width="2" />
+    <path d="M 660 182 L 650 188" stroke="#78350F" stroke-width="2" />
+    <path d="M 660 195 L 655 210" stroke="#78350F" stroke-width="2" />
+    <path d="M 660 195 L 665 210" stroke="#78350F" stroke-width="2" />
+    
+    <!-- Formula -->
+    <text x="750" y="225" font-family="Comic Sans MS, cursive" font-size="13" text-anchor="middle" fill="#065F46" font-weight="bold">
+      F₁ = -F₂ (Equal & Opposite)
+    </text>
+  </g>
+  
+  <!-- ============ BOTTOM SUMMARY ============ -->
+  <rect x="50" y="280" width="800" height="380" rx="15" fill="white" stroke="#6366F1" stroke-width="2" />
+  
+  <!-- Summary title -->
+  <text x="450" y="315" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="#4F46E5" font-weight="bold">
+    📚 Complete Cricket-Physics Story
+  </text>
+  
+  <!-- LAW 1 detailed -->
+  <g id="law1_detail">
+    <text x="80" y="360" font-family="Comic Sans MS, cursive" font-size="15" fill="#1E40AF" font-weight="bold">
+      1️⃣ Law of Inertia:
+    </text>
+    <text x="100" y="385" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Ball stays at rest until bowler applies force
+    </text>
+    <text x="100" y="405" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Ball in motion keeps moving unless stopped
+    </text>
+    <circle cx="380" cy="375" r="15" fill="#DC2626" />
+    <text x="380" y="365" font-family="Comic Sans MS, cursive" font-size="10" fill="white">Rest</text>
+  </g>
+  
+  <!-- LAW 2 detailed -->
+  <g id="law2_detail">
+    <text x="80" y="450" font-family="Comic Sans MS, cursive" font-size="15" fill="#92400E" font-weight="bold">
+      2️⃣ F = ma (Force Law):
+    </text>
+    <text x="100" y="475" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Harder you bowl (F↑) → Faster ball goes (a↑)
+    </text>
+    <text x="100" y="495" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Heavier ball (m↑) → Needs more force for same speed
+    </text>
+    
+    <!-- F=ma visual -->
+    <rect x="470" y="445" width="180" height="60" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2" />
+    <text x="560" y="470" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="#92400E" font-weight="bold">
+      F = m × a
+    </text>
+    <text x="560" y="492" font-family="Comic Sans MS, cursive" font-size="11" text-anchor="middle" fill="#78350F">
+      (Force = Mass × Speed change)
+    </text>
+  </g>
+  
+  <!-- LAW 3 detailed -->
+  <g id="law3_detail">
+    <text x="80" y="540" font-family="Comic Sans MS, cursive" font-size="15" fill="#065F46" font-weight="bold">
+      3️⃣ Action-Reaction:
+    </text>
+    <text x="100" y="565" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Ball hits bat → Bat feels impact equally
+    </text>
+    <text x="100" y="585" font-family="Comic Sans MS, cursive" font-size="13" fill="#374151">
+      🏏 Player's hand feels recoil from ball
+    </text>
+    
+    <!-- Action-Reaction visual -->
+    <g transform="translate(480, 540)">
+      <!-- Bat -->
+      <rect x="0" y="10" width="40" height="8" rx="2" fill="#78350F" stroke="#451A03" stroke-width="1" />
+      <!-- Ball -->
+      <circle cx="60" cy="14" r="12" fill="#DC2626" stroke="#991B1B" stroke-width="1" />
+      <!-- Action arrow -->
+      <line x1="75" y1="14" x2="52" y2="14" stroke="#DC2626" stroke-width="3" marker-end="url(#force_arrow)" />
+      <text x="90" y="12" font-family="Comic Sans MS, cursive" font-size="10" fill="#DC2626" font-weight="bold">Action</text>
+      <!-- Reaction arrow -->
+      <line x1="28" y1="24" x2="52" y2="24" stroke="#3B82F6" stroke-width="3" marker-end="url(#force_arrow)" />
+      <text x="5" y="38" font-family="Comic Sans MS, cursive" font-size="10" fill="#3B82F6" font-weight="bold">Reaction</text>
+    </g>
+  </g>
+  
+  <!-- Cricket field visual -->
+  <text x="450" y="630" font-family="Comic Sans MS, cursive" font-size="13" text-anchor="middle" fill="#065F46">
+    🏟️ Think: Every cricket shot follows these 3 laws!
+  </text>
+  
+  <!-- Key insight box -->
+  <rect x="680" y="565" width="190" height="60" rx="8" fill="#FEF9C3" stroke="#EAB308" stroke-width="2" />
+  <text x="775" y="585" font-family="Comic Sans MS, cursive" font-size="11" text-anchor="middle" fill="#713F12">
+    💡 Cricket makes physics
+  </text>
+  <text x="775" y="603" font-family="Comic Sans MS, cursive" font-size="11" text-anchor="middle" fill="#713F12">
+    easy to understand!
+  </text>
+</svg>'''
+        
+        # ========================================
+        # CATALYST - Cooking Tadka Story
+        # ========================================
+        elif 'catalyst' in concept_lower or 'speed up' in concept_lower or ('chemical' in concept_lower and 'reaction' in concept_lower):
             return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
   <defs>
     <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
