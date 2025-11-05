@@ -16,6 +16,7 @@ import {
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
+  const [imageLoadError, setImageLoadError] = useState({});
   
   if (!response || !response.default_view) {
     return <div className="text-red-500">Error: Invalid response structure</div>;
@@ -41,6 +42,11 @@ export default function MentorResponseV2({ response, onInteraction }) {
     }
   };
   
+  // Handle image load error
+  const handleImageError = (imageKey) => {
+    setImageLoadError(prev => ({ ...prev, [imageKey]: true }));
+  };
+  
   return (
     <div className="mentor-response-v2 space-y-4">
       {/* Default View - Always Visible */}
@@ -49,10 +55,63 @@ export default function MentorResponseV2({ response, onInteraction }) {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-100"
       >
-        {/* Greeting */}
-        <div className="text-xl font-bold text-purple-900 mb-4">
-          🤝 <span className="font-semibold">{default_view.greeting}</span>
+        {/* Mentor Avatar + Greeting */}
+        <div className="flex items-start gap-4 mb-4">
+          {default_view.mentor_avatar && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="flex-shrink-0"
+            >
+              {!imageLoadError['mentor_avatar'] ? (
+                <img
+                  src={default_view.mentor_avatar.visual_url}
+                  alt="Mentor Avatar"
+                  className="w-16 h-16 rounded-full border-2 border-purple-300"
+                  onError={() => handleImageError('mentor_avatar')}
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center text-white text-2xl">
+                  🤝
+                </div>
+              )}
+            </motion.div>
+          )}
+          <div className="flex-1">
+            <div className="text-xl font-bold text-purple-900">
+              {default_view.greeting}
+            </div>
+          </div>
         </div>
+        
+        {/* Hero Visual - VISUAL-FIRST */}
+        {default_view.hero_visual && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-4 rounded-xl overflow-hidden border-2 border-purple-200"
+            style={{ backgroundColor: default_view.hero_visual.placeholder_color || '#F3F4F6' }}
+          >
+            {!imageLoadError['hero_visual'] ? (
+              <img
+                src={default_view.hero_visual.visual_url}
+                alt={default_view.hero_visual.alt_text || 'Hero Visual'}
+                className="w-full h-auto"
+                loading="eager"
+                onError={() => handleImageError('hero_visual')}
+              />
+            ) : (
+              <div className="w-full h-64 flex items-center justify-center text-gray-400">
+                <div className="text-center">
+                  <Lightbulb className="w-16 h-16 mx-auto mb-2" />
+                  <p className="text-sm">{default_view.hero_visual.alt_text || 'Visual concept'}</p>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
         
         {/* Metaphor Card */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-purple-200">
