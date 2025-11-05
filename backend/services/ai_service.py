@@ -1523,7 +1523,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 
             except json.JSONDecodeError as e:
                 logger.error(f"❌ JSON parse error: {str(e)}")
-                # Fallback to simple response with visual assets
+                # Fallback to simple response with REAL visual assets
                 avatar_url = get_mentor_avatar(student_profile['emotional_state'])
                 badge_url = get_verification_badge('verified')
                 
@@ -1536,11 +1536,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         },
                         "greeting": "Let's tackle this together!",
                         "hero_visual": {
-                            "visual_url": metaphor_visual['hero_visual'],
+                            "visual_url": metaphor_visual['hero_visual'],  # REAL image from library
                             "alt_text": metaphor_visual['metaphor_text'],
-                            "load_priority": "high",
-                            "size_bytes": 450000,
-                            "placeholder_color": metaphor_visual.get('color_theme', '#6366F1')
+                            "placeholder_color": metaphor_visual.get('color_theme', '#6366F1'),
+                            "tier": 2,  # Real image
+                            "cultural_context": metaphor_visual.get('cultural_context', 'General')
                         },
                         "metaphor": {
                             "category": student_profile['preferred_metaphor'],
@@ -1572,6 +1572,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         }
                     }
                 }
+                logger.info(f"✅ Fallback response created with REAL image: {metaphor_visual['hero_visual'][:100]}")
             
             # Step 7: Save to database
             message_id = str(uuid.uuid4())
