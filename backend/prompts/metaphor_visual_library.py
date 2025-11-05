@@ -183,6 +183,122 @@ METAPHOR_LIBRARY = {
         }
     },
     
+    # QUANTUM PHYSICS CONCEPTS
+    "quantum_numbers": {
+        "accommodation": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][0],  # Placeholder, will be SVG in Phase 3
+                "metaphor_text": "Like hotel floors and rooms - n is the floor number, l is the wing, m is the room number, and s is the bed choice (left or right)",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][1:3],
+                "animation_hint": "hotel-floors",
+                "color_theme": "#6366F1",
+                "cultural_context": "Hotel room organization"
+            }
+        },
+        "transport": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][1],
+                "metaphor_text": "Like train compartments - n is the coach number, l is the compartment type (AC/sleeper), m is the berth number, s is upper/lower berth",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][2:4],
+                "animation_hint": "train-compartments",
+                "color_theme": "#10B981",
+                "cultural_context": "Railway berth system"
+            }
+        }
+    },
+    
+    # CHEMISTRY BONDING
+    "ionic_bonding": {
+        "cooking": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][0],
+                "metaphor_text": "Like making tiffin - one container gives food (electron donor), another receives it (electron acceptor), creating a complete meal set",
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][1:3],
+                "animation_hint": "tiffin-assembly",
+                "color_theme": "#F59E0B",
+                "cultural_context": "Tiffin dabba system"
+            }
+        }
+    },
+    
+    "covalent_bonding": {
+        "cooking": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][1],
+                "metaphor_text": "Like making dosa batter - rice and urad dal share ingredients to form perfect batter, just like atoms share electrons",
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][2:4],
+                "animation_hint": "mixing-ingredients",
+                "color_theme": "#F59E0B",
+                "cultural_context": "Cooking preparation"
+            }
+        }
+    },
+    
+    # PHYSICS MECHANICS
+    "newtons_laws": {
+        "cricket": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][2],
+                "metaphor_text": "Like cricket ball motion - ball stays at rest until bowler applies force, faster bowling needs more force, and ball pushes back on hand equally",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][0:2],
+                "animation_hint": "ball-motion",
+                "color_theme": "#DC2626",
+                "cultural_context": "Cricket physics"
+            }
+        },
+        "transport": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][3],
+                "metaphor_text": "Like local train motion - train stays at platform until force applied, heavier train needs more force to accelerate, and tracks push back equally",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][1:3],
+                "animation_hint": "train-motion",
+                "color_theme": "#10B981",
+                "cultural_context": "Railway mechanics"
+            }
+        }
+    },
+    
+    # BIOLOGY CONCEPTS
+    "photosynthesis": {
+        "cooking": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][4],
+                "metaphor_text": "Like solar cooking - sunlight provides heat (light energy), raw ingredients (CO2 + water) cook into food (glucose), releasing steam (oxygen)",
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][1:3],
+                "animation_hint": "solar-cooking",
+                "color_theme": "#10B981",
+                "cultural_context": "Solar cooking process"
+            }
+        }
+    },
+    
+    "cell_structure": {
+        "city": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cooking"][2],  # Placeholder
+                "metaphor_text": "Like a city - nucleus is the control room, mitochondria are power plants, ER is the transport network, ribosomes are factories",
+                "step_visuals": REAL_VISUAL_ASSETS["cooking"][3:5],
+                "animation_hint": "city-systems",
+                "color_theme": "#6366F1",
+                "cultural_context": "City infrastructure"
+            }
+        }
+    },
+    
+    # ALGEBRA
+    "quadratic_equations": {
+        "gaming": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][4],
+                "metaphor_text": "Like finding two solutions in a game level - you can reach the end point from two different paths (two roots)",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][0:2],
+                "animation_hint": "game-paths",
+                "color_theme": "#8B5CF6",
+                "cultural_context": "Gaming strategy"
+            }
+        }
+    },
+    
     # Generic fallback for unmapped concepts
     "generic_concept": {
         "cricket": {
@@ -203,6 +319,26 @@ METAPHOR_LIBRARY = {
                 "animation_hint": "cooking-process",
                 "color_theme": "#F59E0B",
                 "cultural_context": "Cooking process"
+            }
+        },
+        "accommodation": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][1],
+                "metaphor_text": "Think of this like organizing rooms in a building",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][2:4],
+                "animation_hint": "building-organization",
+                "color_theme": "#6366F1",
+                "cultural_context": "Building structure"
+            }
+        },
+        "transport": {
+            "all": {
+                "hero_visual": REAL_VISUAL_ASSETS["cricket"][2],
+                "metaphor_text": "Imagine this like a train journey from one station to another",
+                "step_visuals": REAL_VISUAL_ASSETS["cricket"][0:2],
+                "animation_hint": "journey",
+                "color_theme": "#10B981",
+                "cultural_context": "Transport system"
             }
         }
     }
