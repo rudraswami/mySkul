@@ -387,41 +387,74 @@ MEMORY_CHALLENGE_ASSETS = {
 }
 
 
-def get_metaphor_visual(concept: str, category: str, region: str):
+def get_metaphor_visual(concept: str, category: str, region: str, question: str = None):
     """
-    Get visual metaphor for concept using REAL images
+    Get visual metaphor for concept using DYNAMIC selection
     
     Args:
-        concept: Concept name (e.g., 'integration_by_parts')
-        category: Metaphor category ('cricket', 'cooking', 'bollywood', 'gaming')
+        concept: Concept name (e.g., 'integration_by_parts', 'quantum_numbers')
+        category: Metaphor category ('cricket', 'cooking', 'accommodation', 'transport')
         region: Region ('Delhi', 'Mumbai', 'Chennai', 'Kolkata', 'Bangalore')
+        question: Original question (optional, for better matching)
     
     Returns:
-        Dict with REAL visual assets (not abstract shapes)
+        Dict with visual assets and metaphor info
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     concept_key = concept.lower().replace(' ', '_')
     
-    # Try to find exact concept
+    # Try to find exact concept match
     if concept_key in METAPHOR_LIBRARY:
         concept_metaphors = METAPHOR_LIBRARY[concept_key]
+        logger.info(f"✅ Found exact concept match: {concept_key}")
     else:
-        # Use generic fallback
-        concept_metaphors = METAPHOR_LIBRARY.get('generic_concept', METAPHOR_LIBRARY['integration_by_parts'])
+        # Try partial match
+        partial_matches = [k for k in METAPHOR_LIBRARY.keys() if concept_key in k or k in concept_key]
+        if partial_matches and partial_matches[0] != 'generic_concept':
+            concept_metaphors = METAPHOR_LIBRARY[partial_matches[0]]
+            logger.info(f"✅ Found partial concept match: {partial_matches[0]}")
+        else:
+            # Use generic fallback with appropriate category
+            logger.info(f"🔄 Using generic fallback for concept: {concept_key}")
+            concept_metaphors = METAPHOR_LIBRARY.get('generic_concept', {})
     
-    if category not in concept_metaphors:
-        category = list(concept_metaphors.keys())[0]  # Fallback to first available
-    
-    category_metaphors = concept_metaphors[category]
+    # Try to get the preferred category
+    if category in concept_metaphors:
+        category_metaphors = concept_metaphors[category]
+        logger.info(f"✅ Using preferred category: {category}")
+    else:
+        # Fallback to first available category
+        if concept_metaphors:
+            category = list(concept_metaphors.keys())[0]
+            category_metaphors = concept_metaphors[category]
+            logger.info(f"🔄 Fallback to category: {category}")
+        else:
+            # Final fallback - use generic cooking
+            logger.warning(f"⚠️ No metaphors found, using generic cooking")
+            category_metaphors = METAPHOR_LIBRARY['generic_concept']['cooking']
     
     # Check if region-specific or 'all' regions
     if region in category_metaphors:
-        return category_metaphors[region]
+        visual_data = category_metaphors[region]
     elif 'all' in category_metaphors:
-        return category_metaphors['all']
+        visual_data = category_metaphors['all']
     else:
         # Fallback to first region available
         first_region = list(category_metaphors.keys())[0]
-        return category_metaphors[first_region]
+        visual_data = category_metaphors[first_region]
+        logger.info(f"🔄 Using region fallback: {first_region}")
+    
+    # Add metadata for debugging
+    visual_data['_meta'] = {
+        'concept': concept_key,
+        'category': category,
+        'region': region,
+        'fallback_used': concept_key not in METAPHOR_LIBRARY
+    }
+    
+    return visual_data
 
 
 def get_mentor_avatar(emotion: str):
