@@ -144,39 +144,57 @@ class SVGSketchGenerator:
         colors: list,
         region: str
     ) -> str:
-        """Build prompt for educational SVG generation"""
+        """Build concept-specific, metaphor-aligned SVG generation prompt"""
         
-        prompt = f"""Generate a clean, educational SVG diagram (like a professor drawing on a board) for this concept:
+        # Get concept-specific guidance
+        concept_guidance = self._get_concept_specific_guidance(concept, topic, metaphor_text, region)
+        
+        prompt = f"""Generate an educational SVG sketch that visually explains this concept step-by-step:
 
 **Concept**: {concept}
 **Topic**: {topic}
 **Metaphor**: {metaphor_text}
-**Region**: {region} (use culturally relevant elements)
+**Region**: {region}
 
-**SVG REQUIREMENTS**:
+{concept_guidance}
 
-1. **Style**: Hand-drawn, sketch-like (NOT corporate or polished)
-   - Use slightly wavy lines (not perfectly straight)
-   - Comic Sans MS or similar casual font
-   - Simple, clean, educational focus
+**CRITICAL REQUIREMENTS**:
 
-2. **Size & Optimization**:
-   - ViewBox: "0 0 800 600" (fixed for consistency)
+1. **CONCEPT-SPECIFIC VISUALS** (NOT generic placeholders):
+   - Draw ACTUAL elements of the concept (e.g., plants for photosynthesis, NOT "Object A")
+   - Show the METAPHOR visually (e.g., if metaphor is solar cooking, show solar cooker analogy)
+   - NO generic boxes labeled "Reactant A/B" or "Process 1/2"
+   - Every element should be recognizable and meaningful
+
+2. **METAPHOR ALIGNMENT**:
+   - The sketch MUST visually represent the metaphor
+   - If metaphor is "solar cooking", show a solar cooker with labeled parts
+   - If metaphor is "cricket strategy", show cricket field with player positions
+   - If metaphor is "train journey", show train compartments with connections
+   - The visual IS the metaphor, not a separate element
+
+3. **EDUCATIONAL FLOW** (3-6 steps):
+   - Show clear progression: Input → Process → Output
+   - Number each step (1, 2, 3...)
+   - Use arrows to show flow direction
+   - Each step should teach something specific
+
+4. **HAND-DRAWN SKETCH STYLE**:
+   - Slightly wavy lines (not perfectly straight)
+   - Comic Sans MS or cursive font
+   - Friendly, approachable, professor-drawing-on-board feel
+   - NOT corporate, NOT abstract, NOT generic
+
+5. **INDIAN CULTURAL ELEMENTS** (where appropriate):
+   - Use culturally relevant icons: tiffin, dosa tawa, cricket bat, train, auto-rickshaw
+   - Regional foods: {self._get_regional_foods(region)}
+   - Make it relatable to Indian students
+
+6. **SIZE & STRUCTURE**:
+   - ViewBox: "0 0 800 600"
    - Width: 800px, Height: 600px
-   - Target size: <200KB (keep it simple)
-
-3. **Educational Elements**:
-   - Clear labels pointing to key parts
-   - Step numbers if showing a process
-   - Arrows showing relationships
-   - Annotations for important details
-
-4. **Color Palette** (use these colors):
-   - Primary: {colors[0]}
-   - Secondary: {colors[1]}
-   - Accent: {colors[2]}
-
-5. **Structure**:
+   - Size target: <200KB (use simple shapes, avoid complexity)
+   
    ```xml
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
      <defs>
@@ -184,32 +202,129 @@ class SVGSketchGenerator:
          <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
        </marker>
      </defs>
-     <!-- Main visual elements here -->
+     
+     <!-- Metaphor callout at top -->
+     <text x="400" y="30" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[0]}">
+       💡 Think of this like: {metaphor_text[:60]}...
+     </text>
+     
+     <!-- Step-by-step visual explanation -->
+     <!-- Step 1: [Actual concept element] -->
+     <!-- Step 2: [Process happening] -->
+     <!-- Step 3: [Result/output] -->
+     
+     <!-- Arrows showing flow -->
+     <!-- Labels explaining each part -->
    </svg>
    ```
 
-6. **What to Include**:
-   - Central diagram showing the main concept
-   - 3-5 key labels/annotations
-   - Arrows showing flow or relationships
-   - Simple icons or shapes representing metaphor elements
+7. **COLOR PALETTE**:
+   - Primary: {colors[0]}
+   - Secondary: {colors[1]}
+   - Accent: {colors[2]}
 
-7. **What to AVOID**:
-   - No photographs or raster images
-   - No external <image> tags
-   - No complex gradients or filters
-   - No text longer than 50 characters per label
-   - No clipPath or complex masks
+8. **WHAT TO AVOID**:
+   - ❌ Generic placeholders ("Object A", "Reactant 1")
+   - ❌ Abstract boxes with no meaning
+   - ❌ Photos or raster images
+   - ❌ Corporate-style diagrams
+   - ❌ Complex gradients or filters
+   - ❌ Text longer than 40 characters per label
+
+**SUCCESS CRITERIA**:
+- A 16-year-old student should understand the concept from the visual ALONE
+- The metaphor should be clearly visible in the sketch
+- Each step should be numbered and labeled
+- Cultural elements should make it relatable
 
 **IMPORTANT**: 
 - Return ONLY the SVG code (starting with <svg> and ending with </svg>)
-- No markdown, no explanation, just pure SVG
-- Make it educational and memorable
-- Think like a professor drawing to explain to a 16-year-old student
+- No markdown formatting, no explanation text, just pure SVG
+- Make it educational, clear, and memorable
+- The visual should tell the story
 
-Generate the SVG now:"""
+Generate the concept-specific SVG now:"""
 
         return prompt
+    
+    def _get_concept_specific_guidance(self, concept: str, topic: str, metaphor_text: str, region: str) -> str:
+        """Get specific guidance for different concepts"""
+        
+        concept_lower = concept.lower()
+        
+        # Photosynthesis
+        if 'photosynthesis' in concept_lower:
+            return """**SPECIFIC GUIDANCE FOR PHOTOSYNTHESIS**:
+- Draw a simple plant with leaves (NOT "Object A")
+- Show sunlight rays coming down (with sun icon)
+- Show CO2 entering leaf (with CO2 label and arrow)
+- Show water coming from roots (with H2O label)
+- Show glucose being produced (with C6H12O6 or sugar icon)
+- Show O2 being released (with O2 label and arrow out)
+- If metaphor is "solar cooking", draw solar cooker alongside and show parallel:
+  * Sunlight → Solar panel/reflector → Heat → Food cooked
+  * Sunlight → Chlorophyll → Energy → Glucose made
+- Number each step clearly (1. Sunlight absorbed, 2. Water split, 3. Glucose made, etc.)"""
+        
+        # Quantum numbers
+        elif 'quantum' in concept_lower:
+            return """**SPECIFIC GUIDANCE FOR QUANTUM NUMBERS**:
+- If metaphor is "hotel rooms", draw a simple hotel building with floors
+- Show n (principal) as floor levels (Ground, 1st, 2nd, 3rd)
+- Show l (angular) as wings/sections (A, B, C wings)
+- Show m (magnetic) as room numbers within each wing
+- Show s (spin) as bed choice (left bed/right bed)
+- Add electron icon moving through this system
+- Use Indian hotel style if appropriate (not western)
+- Label clearly: n=1,2,3... l=0,1,2... m=-l to +l, s=↑↓"""
+        
+        # Ionic bonding
+        elif 'ionic' in concept_lower and 'bond' in concept_lower:
+            return """**SPECIFIC GUIDANCE FOR IONIC BONDING**:
+- If metaphor is "tiffin", draw a tiffin dabba (Indian lunch box)
+- Show one compartment giving food (electron donor = cation)
+- Show another compartment receiving food (electron acceptor = anion)
+- Draw electrons as small circles moving from one to other
+- Show the bond as them being clipped together
+- Label Na+ and Cl- if using sodium chloride example
+- Show the attraction/bond holding them together
+- Use Indian tiffin box style (stacked circular containers)"""
+        
+        # Newton's laws
+        elif 'newton' in concept_lower:
+            return """**SPECIFIC GUIDANCE FOR NEWTON'S LAWS**:
+- If metaphor is "cricket", draw cricket field scenario:
+  * Ball at rest (1st law)
+  * Bowler applying force (2nd law: F=ma)
+  * Ball pushing back on hand (3rd law: action-reaction)
+- If metaphor is "train", draw train scenario:
+  * Train at station (inertia)
+  * Engine applying force (F=ma)
+  * Tracks pushing back (action-reaction)
+- Show force arrows clearly
+- Label mass, acceleration, force
+- Make it dynamic and relatable"""
+        
+        # Generic fallback
+        else:
+            return f"""**GUIDANCE FOR {concept.upper()}**:
+- Draw the ACTUAL elements of this concept (not generic boxes)
+- Show the process step-by-step with numbered steps
+- Use the metaphor visually: {metaphor_text}
+- Make it specific to Indian student context
+- Each element should be clearly labeled
+- Show cause and effect with arrows"""
+    
+    def _get_regional_foods(self, region: str) -> str:
+        """Get regional foods for cultural context"""
+        foods = {
+            'Delhi': 'butter chicken, paratha, chole',
+            'Mumbai': 'vada pav, pav bhaji, bhel puri',
+            'Chennai': 'dosa, idli, filter coffee',
+            'Kolkata': 'rasgulla, mishti doi, phuchka',
+            'Bangalore': 'dosa, bisi bele bath, filter coffee'
+        }
+        return foods.get(region, 'Indian food items')
     
     def _extract_svg(self, response: str) -> Optional[str]:
         """Extract SVG code from LLM response"""
