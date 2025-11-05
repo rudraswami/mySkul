@@ -48,7 +48,8 @@ class SVGSketchGenerator:
         try:
             self.llm_chat = LlmChat(
                 api_key=self.emergent_llm_key,
-                session_id="svg_sketch_gen"
+                session_id="svg_sketch_gen",
+                system_message="You are an expert educational visual designer. You create clean, hand-drawn style SVG diagrams for teaching concepts."
             ).with_model("openai", "gpt-4o").with_params(
                 temperature=0.7,  # Some creativity for visual variety
                 max_tokens=2000,  # SVG can be verbose
