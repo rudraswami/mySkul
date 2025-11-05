@@ -515,13 +515,14 @@ Include: Simple characters, actual objects, arrows, thought bubbles, icons, numb
         concept: str,
         topic: str,
         metaphor_category: str,
-        colors: list
+        colors: list,
+        region: str = "Bangalore"
     ) -> Dict[str, Any]:
         """Generate concept-aware template-based fallback SVG"""
         logger.info(f"📐 Generating concept-aware template fallback for {concept}")
         
         # Get concept-specific template
-        svg_template = self._get_concept_template(concept, topic, metaphor_category, colors)
+        svg_template = self._get_concept_template(concept, topic, metaphor_category, colors, region)
         
         svg_optimized = self._optimize_svg(svg_template)
         svg_data_uri = self._svg_to_data_uri(svg_optimized)
