@@ -1340,6 +1340,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 get_mentor_prompt_v2,
                 detect_question_type
             )
+            from prompts.metaphor_visual_library import (
+                get_metaphor_visual,
+                get_mentor_avatar,
+                get_verification_badge
+            )
             
             logger.info(f"🧠 Generating mentor response v2.0 for user {user_id}")
             
@@ -1349,14 +1354,27 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
                 'region': user_doc.get('region', 'Bangalore'),
                 'engagement_level': 'neutral',
-                'emotional_state': 'neutral'
+                'emotional_state': 'neutral',
+                'visual_learner_preference': user_doc.get('visual_learner_preference', True),
+                'device_type': user_doc.get('device_type', 'mobile'),
+                'network_speed': user_doc.get('network_speed', '3G')
             }
             
             # Step 2: Detect question type
             question_type = detect_question_type(message)
             logger.info(f"📝 Question type: {question_type}")
             
-            # Step 3: Generate system prompt v2
+            # Step 3: Get visual metaphor for concept (extract concept from message)
+            # For now, use a simple concept extraction (can be enhanced later)
+            concept_key = message.lower()[:50].replace(' ', '_')
+            metaphor_visual = get_metaphor_visual(
+                concept_key,
+                student_profile['preferred_metaphor'],
+                student_profile['region']
+            )
+            logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual['hero_visual']}")
+            
+            # Step 4: Generate system prompt v2 with visual context
             system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
             
             # Step 4: Create LLM chat instance
