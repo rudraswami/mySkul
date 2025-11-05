@@ -1433,18 +1433,30 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # Generate system prompt v2 with visual context
             system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
             
-            # Step 4: Create LLM chat instance
+            # Step 4: Create LLM chat instance with optimized prompt
+            # Use compact prompt for faster response
+            from prompts.optimized_mentor_prompt import get_optimized_mentor_prompt
+            
+            # Try optimized prompt first (60% token reduction)
+            optimized_prompt = get_optimized_mentor_prompt(
+                subject=subject,
+                message=message,
+                exam_mode=exam_mode,
+                metaphor=student_profile['preferred_metaphor'],
+                region=student_profile['region']
+            )
+            
             neuro_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"mentor_v2_{user_id}_{session_id}",
-                system_message=system_prompt
+                system_message=optimized_prompt
             ).with_model("openai", "gpt-4o").with_params(
-                temperature=0.8,  # Slightly higher for engaging mentor tone
+                temperature=0.8,
                 top_p=0.9,
-                max_tokens=2500,  # Progressive sections need more tokens
+                max_tokens=2000,  # Reduced from 2500
                 presence_penalty=0.2,
                 frequency_penalty=0.1,
-                response_format={"type": "json_object"}  # Force JSON response
+                response_format={"type": "json_object"}
             )
             
             # Step 5: Generate response
