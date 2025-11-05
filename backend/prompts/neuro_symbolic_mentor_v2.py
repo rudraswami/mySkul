@@ -149,81 +149,206 @@ You will provide TWO versions of content with VISUALS FIRST:
    - Mini practice problem
    - Follow-up suggestions
 
-**MANDATORY RESPONSE STRUCTURE:**
+**MANDATORY RESPONSE STRUCTURE (VISUAL-FIRST):**
 
 ```json
 {{
   "default_view": {{
+    "mentor_avatar": {{
+      "visual_url": "https://assets.dhruvai.com/visuals/mentor/avatar-{emotional_state}.png",
+      "expression": "{emotional_state}",
+      "greeting_animation": "wave" | "thumbs_up" | "thinking"
+    }},
     "greeting": "<Friendly 1-line greeting with context, e.g., 'Arre, great choice! Integration by parts - this is like Dhoni's batting strategy! 🏏'>",
+    "hero_visual": {{
+      "visual_url": "https://assets.dhruvai.com/visuals/{metaphor_category}/{region.lower()}/hero-concept.png",
+      "alt_text": "<Descriptive alt text for accessibility>",
+      "load_priority": "high",
+      "size_bytes": <actual file size, must be <500KB>,
+      "placeholder_color": "<color from visual theme>"
+    }},
     "metaphor": {{
       "category": "{metaphor_category}",
       "text": "<2-3 sentence metaphor from {metaphor_category} relating to concept>",
-      "animation_hint": "cricket-bat|movie-scene|cooking-pot|game-level"
+      "visual_annotations": [
+        {{
+          "label": "<annotation text>",
+          "position": {{"x": 120, "y": 80}},
+          "arrow_to": {{"x": 200, "y": 150}}
+        }}
+      ],
+      "animation_hint": "cricket-bat|movie-scene|cooking-pot|game-level",
+      "animation_duration": "2-3s",
+      "animation_url": "https://assets.dhruvai.com/visuals/animations/{metaphor_category}-{region.lower()}.gif"
     }},
     "main_content": {{
       "type": "explanation" | "problem",
       "content": "<Core explanation in 4-6 lines OR the problem statement>",
-      "key_insight": "<1-line key takeaway>"
+      "key_insight": "<1-line key takeaway>",
+      "visual_callouts": [
+        "<Point to hero visual: See top-left for...>",
+        "<Point to metaphor: Notice how the...>"
+      ]
     }},
     "interactive_options": [
       {{
         "button_text": "Yes, show me!",
-        "reveals": "strategy"
+        "button_visual": "https://assets.dhruvai.com/visuals/buttons/show-me.png",
+        "reveals": "strategy",
+        "preview_visual": "https://assets.dhruvai.com/visuals/previews/strategy-preview.png"
       }},
       {{
         "button_text": "Let me try first",
-        "reveals": "interactive_solver"
+        "button_visual": "https://assets.dhruvai.com/visuals/buttons/try-first.png",
+        "reveals": "interactive_solver",
+        "preview_visual": "https://assets.dhruvai.com/visuals/previews/solver-preview.png"
       }}
     ],
     "professor_badge": {{
       "verified": true,
+      "badge_visual": "https://assets.dhruvai.com/visuals/badges/professor-verified.png",
       "ncert_ref": "Class {'11-12' if exam_mode in ['JEE', 'NEET'] else '9-12'}",
       "confidence": "high",
-      "students_solved": "<random 5000-15000>"
+      "students_solved": "<random 5000-15000>",
+      "confidence_visual_indicator": "5-star" | "verified-checkmark"
     }}
   }},
   
   "progressive_sections": {{
     "strategy": {{
       "title": "Step-by-Step Strategy",
-      "content": "<Detailed breakdown in numbered steps>",
-      "tips": ["<Practical tip 1>", "<Practical tip 2>"]
+      "hero_section_visual": "https://assets.dhruvai.com/visuals/strategy/overview.png",
+      "steps": [
+        {{
+          "step_number": 1,
+          "step_visual": "https://assets.dhruvai.com/visuals/steps/step-1.png",
+          "step_text": "<Brief explanation>",
+          "visual_highlight": "<What to focus on in visual>",
+          "animation_on_reveal": "fade-in-up"
+        }},
+        {{
+          "step_number": 2,
+          "step_visual": "https://assets.dhruvai.com/visuals/steps/step-2.png",
+          "step_text": "<Brief explanation>",
+          "visual_highlight": "<What to focus on in visual>",
+          "animation_on_reveal": "fade-in-up"
+        }},
+        {{
+          "step_number": 3,
+          "step_visual": "https://assets.dhruvai.com/visuals/steps/step-3.png",
+          "step_text": "<Brief explanation>",
+          "visual_highlight": "<What to focus on in visual>",
+          "animation_on_reveal": "fade-in-up"
+        }}
+      ],
+      "tips": [
+        {{"tip_text": "<Practical tip 1>", "tip_icon": "💡"}},
+        {{"tip_text": "<Practical tip 2>", "tip_icon": "✨"}}
+      ]
     }},
     
     "visual_schema": {{
-      "diagram_type": "flow" | "equation_map" | "mind_map" | "comparison",
       "title": "Visual Understanding",
+      "diagram_visual": "https://assets.dhruvai.com/visuals/diagrams/{subject.lower()}-diagram.png",
+      "diagram_type": "flow" | "equation_map" | "mind_map" | "comparison",
+      "interactive_diagram": true,
+      "tap_to_reveal_nodes": true,
       "nodes": [
-        {{"id": "1", "label": "Step/concept", "type": "main"}},
-        {{"id": "2", "label": "Next step", "type": "detail"}}
+        {{"id": "1", "label": "Step/concept", "type": "main", "visual_icon": "🎯"}},
+        {{"id": "2", "label": "Next step", "type": "detail", "visual_icon": "📊"}}
       ],
       "edges": [
-        {{"from": "1", "to": "2", "label": "leads to"}}
+        {{"from": "1", "to": "2", "label": "leads to", "arrow_style": "animated"}}
       ],
-      "mental_model": "<1-line explanation of diagram>"
+      "mental_model": "<1-line explanation of diagram>",
+      "mental_model_visual": "https://assets.dhruvai.com/visuals/mental-models/overview.png"
     }},
     
     "interactive_solver": {{
-      "problem_breakdown": ["<Step 1>", "<Step 2>", "<Step 3>"],
-      "hints": ["<Hint 1 if needed>", "<Hint 2 if stuck>"],
-      "solution_approach": "<Final approach>"
+      "interaction_type": "drag_drop" | "slider" | "tap_reveal",
+      "hero_interactive_visual": "https://assets.dhruvai.com/visuals/interactive/{metaphor_category}-solver.png",
+      "problem_breakdown": [
+        {{"step": "<Step 1>", "visual_hint": "https://assets.dhruvai.com/visuals/hints/hint-1.png"}},
+        {{"step": "<Step 2>", "visual_hint": "https://assets.dhruvai.com/visuals/hints/hint-2.png"}},
+        {{"step": "<Step 3>", "visual_hint": "https://assets.dhruvai.com/visuals/hints/hint-3.png"}}
+      ],
+      "interactive_elements": [
+        {{
+          "element_type": "draggable",
+          "element_visual": "https://assets.dhruvai.com/visuals/interactive/draggable-item.png",
+          "drop_zone_visual": "https://assets.dhruvai.com/visuals/interactive/drop-zone.png",
+          "feedback_correct": "https://assets.dhruvai.com/visuals/feedback/correct.gif",
+          "feedback_wrong": "https://assets.dhruvai.com/visuals/feedback/try-again.png",
+          "feedback_time": "≤100ms"
+        }}
+      ],
+      "solution_approach": "<Final approach>",
+      "solution_visual": "https://assets.dhruvai.com/visuals/solutions/final-answer.png",
+      "celebration_animation": "https://assets.dhruvai.com/visuals/celebrations/success-confetti.gif"
     }},
     
     "mini_practice": {{
       "question": "<Similar practice problem>",
+      "question_visual": "https://assets.dhruvai.com/visuals/practice/question-visual.png",
       "difficulty": "{exam_mode} level",
       "hint": "<1-line hint>",
-      "time_estimate": "<2-5 min>"
+      "hint_visual": "https://assets.dhruvai.com/visuals/hints/practice-hint.png",
+      "time_estimate": "<2-5 min>",
+      "success_badge": "https://assets.dhruvai.com/visuals/badges/practice-complete.png"
+    }},
+    
+    "verification_visual": {{
+      "badge_always_visible": true,
+      "badge_visual": "https://assets.dhruvai.com/visuals/badges/professor-checked.png",
+      "tap_to_reveal_diagram": true,
+      "verification_diagram": "https://assets.dhruvai.com/visuals/verification/step-check-diagram.png",
+      "verification_steps": [
+        {{
+          "step": "<Verification step 1>",
+          "check_visual": "https://assets.dhruvai.com/visuals/verification/check-1.png",
+          "check_animation": "checkmark-fade-in"
+        }},
+        {{
+          "step": "<Verification step 2>",
+          "check_visual": "https://assets.dhruvai.com/visuals/verification/check-2.png",
+          "check_animation": "checkmark-fade-in"
+        }}
+      ],
+      "source_text": "<NCERT/JEE source>",
+      "confidence_score": 0.95,
+      "confidence_visual": "https://assets.dhruvai.com/visuals/confidence/high-confidence.png"
+    }},
+    
+    "memory_challenge": {{
+      "challenge_type": "visual_drag_drop" | "visual_match" | "tap_sequence",
+      "challenge_visual": "https://assets.dhruvai.com/visuals/challenges/memory-challenge.png",
+      "metaphor_used": "<Same metaphor from default view>",
+      "challenge_instructions": "<Visual instructions>",
+      "success_animation": "https://assets.dhruvai.com/visuals/celebrations/memory-master.gif",
+      "memory_badge": "https://assets.dhruvai.com/visuals/badges/memory-master-unlocked.png",
+      "badge_unlock_animation": "shine-glow-pulse"
     }},
     
     "encouragement": {{
-      "message": "<2-3 sentences, sincere, NOT cringe. Examples: 'Good thinking. This concept helps in {exam_mode} exams.' | 'You're building solid understanding. Keep going.'>"
+      "message": "<2-3 sentences, sincere, NOT cringe. Examples: 'Good thinking. This concept helps in {exam_mode} exams.' | 'You're building solid understanding. Keep going.'>",
+      "mentor_avatar_expression": "encouraging",
+      "encouragement_visual": "https://assets.dhruvai.com/visuals/mentor/avatar-encouraging.png",
+      "motivational_animation": "thumbs-up-sparkle"
     }},
     
     "whats_next": [
-      "<Related concept to explore>",
-      "<Harder problem to try>",
-      "<Common exam pattern>"
+      {{
+        "suggestion": "<Related concept to explore>",
+        "preview_visual": "https://assets.dhruvai.com/visuals/previews/concept-1.png"
+      }},
+      {{
+        "suggestion": "<Harder problem to try>",
+        "preview_visual": "https://assets.dhruvai.com/visuals/previews/problem-1.png"
+      }},
+      {{
+        "suggestion": "<Common exam pattern>",
+        "preview_visual": "https://assets.dhruvai.com/visuals/previews/exam-pattern.png"
+      }}
     ]
   }}
 }}
