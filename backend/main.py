@@ -224,6 +224,14 @@ def create_app() -> FastAPI:
     app.include_router(dashboard_analytics.router, prefix="/api", tags=["Dashboard Analytics"])
     app.include_router(gamification.router, prefix="/api", tags=["Gamification"])
     
+    # Diagnostic endpoints for visual testing
+    try:
+        from api import diagnostic
+        app.include_router(diagnostic.router, prefix="/api", tags=["Diagnostic"])
+        logger.info("✅ Diagnostic router registered")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not load diagnostic router: {e}")
+    
     logger.info("✅ All routers registered")
     
     # =============================================================================
