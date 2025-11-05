@@ -1475,6 +1475,13 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 response_dict = json.loads(raw_response)
                 logger.info("📊 JSON response parsed successfully")
                 
+                # Add visual loading timeout warning if response took >5s
+                if generation_time > 5.0:
+                    logger.warning(f"⚠️ Response took {generation_time:.1f}s - adding visual fallback")
+                    if 'default_view' in response_dict and 'hero_visual' in response_dict['default_view']:
+                        response_dict['default_view']['hero_visual']['timeout_warning'] = True
+                        response_dict['default_view']['hero_visual']['generation_time'] = generation_time
+                
                 # Inject visual metadata from metaphor library if not present
                 if 'default_view' in response_dict:
                     default_view = response_dict['default_view']
@@ -1488,14 +1495,21 @@ You're making great progress by actively seeking to understand. Keep up this exc
                             'greeting_animation': 'wave'
                         }
                     
-                    # Add hero visual from metaphor library if missing
+                    # Add hero visual from metaphor library if missing or use SVG fallback
                     if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
+                        # Use Tier 1 SVG fallback
+                        svg_fallback = self._get_svg_fallback(
+                            student_profile['preferred_metaphor'],
+                            student_profile['region']
+                        )
                         default_view['hero_visual'] = {
-                            'visual_url': metaphor_visual['hero_visual'],
+                            'visual_url': svg_fallback['svg_template'],
                             'alt_text': metaphor_visual['metaphor_text'],
                             'load_priority': 'high',
-                            'size_bytes': 450000,  # Placeholder, <500KB
-                            'placeholder_color': metaphor_visual.get('color_theme', '#6366F1')
+                            'size_bytes': 5000,  # SVG is tiny
+                            'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
+                            'tier': 1,
+                            'fallback_emoji': svg_fallback['emoji']
                         }
                     
                     # Add verification badge
