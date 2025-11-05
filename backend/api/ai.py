@@ -1,9 +1,11 @@
 """
 AI router for chat sessions, dual AI responses, guardrails, and AI-powered features
 Now with unified subscription service for consistent access control
+Streaming support for <5s response times
 """
 import os
 from fastapi import APIRouter, HTTPException, Depends
+from sse_starlette.sse import EventSourceResponse
 
 from models.core import User, SessionCreateRequest, SessionRenameRequest, SessionPinRequest, SessionBookmarkRequest
 from models.ai import DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
