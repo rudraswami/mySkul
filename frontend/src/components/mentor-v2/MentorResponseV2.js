@@ -355,16 +355,22 @@ export default function MentorResponseV2({ response, onInteraction }) {
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
           {progressive_sections.encouragement && (
             <p className="text-purple-900 font-medium mb-3">
-              ✨ {progressive_sections.encouragement.message}
+              ✨ {typeof progressive_sections.encouragement === 'string' 
+                ? progressive_sections.encouragement 
+                : progressive_sections.encouragement.message}
             </p>
           )}
           {progressive_sections.whats_next && progressive_sections.whats_next.length > 0 && (
             <div>
               <p className="text-sm font-semibold text-purple-900 mb-2">➕ What's Next?</p>
               <ul className="text-sm text-purple-800 space-y-1">
-                {progressive_sections.whats_next.map((item, idx) => (
-                  <li key={idx}>• {item}</li>
-                ))}
+                {progressive_sections.whats_next.map((item, idx) => {
+                  // Handle both string and object formats
+                  const suggestion = typeof item === 'string' ? item : item.suggestion;
+                  return (
+                    <li key={idx}>• {suggestion}</li>
+                  );
+                })}
               </ul>
             </div>
           )}
