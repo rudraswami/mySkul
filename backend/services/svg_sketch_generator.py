@@ -385,7 +385,7 @@ STRUCTURE:
 - Middle: Process happening
 - Right: Result achieved
 
-Include: Simple characters, actual objects, arrows, thought bubbles, icons, numbered steps
+Include: Simple characters, actual objects, arrows, thought bubbles, icons, numbered steps"""
     
     def _get_regional_foods(self, region: str) -> str:
         """Get regional foods for cultural context"""
