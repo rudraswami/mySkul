@@ -80,6 +80,16 @@ class TopicClassifier:
         'photosynthesis': [
             'photosynthesis', 'chlorophyll', 'chloroplast', 'light reaction',
             'dark reaction', 'glucose', 'carbon dioxide', 'calvin cycle'
+        ],
+        'geography': [
+            'geography', 'map', 'latitude', 'longitude', 'continent', 'ocean',
+            'mountain', 'river', 'climate', 'weather', 'region', 'terrain',
+            'equator', 'hemisphere', 'topography'
+        ],
+        'weather_climate': [
+            'weather', 'climate', 'temperature', 'rainfall', 'monsoon',
+            'season', 'precipitation', 'humidity', 'atmospheric', 'pattern',
+            'meteorology', 'forecasting'
         ]
     }
     
