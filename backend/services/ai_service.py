@@ -1583,7 +1583,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 
             except json.JSONDecodeError as e:
                 logger.error(f"❌ JSON parse error: {str(e)}")
-                # Fallback to simple response with REAL visual assets
+                # Fallback to simple response with SVG visual assets (Phase 3)
                 avatar_url = get_mentor_avatar(student_profile['emotional_state'])
                 badge_url = get_verification_badge('verified')
                 
@@ -1596,7 +1596,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         },
                         "greeting": "Let's tackle this together!",
                         "hero_visual": {
-                            "visual_url": metaphor_visual['hero_visual'],  # REAL image from library
+                            "visual_url": metaphor_visual['hero_visual'],  # SVG data URI (Phase 3)
                             "alt_text": metaphor_visual['metaphor_text'],
                             "placeholder_color": metaphor_visual.get('color_theme', '#6366F1'),
                             "tier": 2,  # Real image
