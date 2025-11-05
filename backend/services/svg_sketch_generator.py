@@ -379,15 +379,50 @@ Generate the concept-specific SVG now:"""
 - Label mass, acceleration, force
 - Make it dynamic and relatable"""
         
+        # Quantum numbers
+        elif 'quantum' in concept_lower:
+            return """**VISUAL STORYTELLING FOR QUANTUM NUMBERS**: [see previous detailed guidance]
+**BACKGROUND**: Soft lavender (#F5F3FF)
+Draw Indian hotel/apartment building showing n (floors), l (wings), m (rooms), s (beds)
+Show electron character finding its room with address tag
+Use building metaphor with visual organization"""
+        
+        # Ionic bonding  
+        elif 'ionic' in concept_lower and 'bond' in concept_lower:
+            return """**VISUAL STORYTELLING FOR IONIC BONDING**: [see previous detailed guidance]
+**BACKGROUND**: Warm orange (#FEF3C7)
+Draw Indian tiffin dabba sharing metaphor
+Show Na student giving electron to Cl student
+Show attraction and bond formation with expressive characters"""
+        
+        # Newton's laws
+        elif 'newton' in concept_lower:
+            return """**VISUAL STORYTELLING FOR NEWTON'S LAWS**: [see previous detailed guidance]
+**BACKGROUND**: Sky blue (#EBF8FF)
+Three panel story showing:
+1. Ball at rest (inertia)
+2. Force and acceleration comparison (F=ma)
+3. Action-reaction with cricket scenario
+Use cricket context with player and ball, show forces visually"""
+        
         # Generic fallback
         else:
-            return f"""**GUIDANCE FOR {concept.upper()}**:
-- Draw the ACTUAL elements of this concept (not generic boxes)
-- Show the process step-by-step with numbered steps
-- Use the metaphor visually: {metaphor_text}
-- Make it specific to Indian student context
-- Each element should be clearly labeled
-- Show cause and effect with arrows"""
+            return f"""**VISUAL STORYTELLING FOR {concept.upper()}**:
+**BACKGROUND**: Soft cream (#FEF7ED) - neutral, educational
+
+CORE REQUIREMENTS:
+- NO GENERIC BOXES - Draw actual concept elements
+- STORYTELLING FLOW: Beginning → Process → Result  
+- EMOTIONAL DESIGN: Characters with expressions
+- INDIAN CONTEXT: Familiar objects and scenarios
+- VISUAL METAPHOR: {metaphor_text} shown visually
+
+STRUCTURE:
+- Left: Starting point
+- Middle: Process happening
+- Right: Result achieved
+
+Include: Simple characters, actual objects, arrows, thought bubbles, icons, numbered steps
     
     def _get_regional_foods(self, region: str) -> str:
         """Get regional foods for cultural context"""
