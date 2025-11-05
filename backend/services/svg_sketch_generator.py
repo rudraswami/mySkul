@@ -376,34 +376,11 @@ Generate the concept-specific SVG now:"""
         metaphor_category: str,
         colors: list
     ) -> Dict[str, Any]:
-        """Generate template-based fallback SVG"""
-        logger.info(f"📐 Generating template fallback for {concept}")
+        """Generate concept-aware template-based fallback SVG"""
+        logger.info(f"📐 Generating concept-aware template fallback for {concept}")
         
-        # Simple template SVG for fallback
-        svg_template = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
-  <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
-    </marker>
-  </defs>
-  
-  <!-- Background -->
-  <rect width="800" height="600" fill="#F9FAFB" />
-  
-  <!-- Central concept box -->
-  <rect x="250" y="200" width="300" height="200" rx="10" fill="none" stroke="{colors[0]}" stroke-width="3" />
-  <text x="400" y="310" font-family="Comic Sans MS, cursive" font-size="24" text-anchor="middle" fill="{colors[0]}">{concept.replace('_', ' ').title()}</text>
-  
-  <!-- Annotation arrows -->
-  <line x1="150" y1="250" x2="240" y2="280" stroke="{colors[1]}" stroke-width="2" marker-end="url(#arrowhead)" />
-  <text x="80" y="250" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[1]}">Key Concept</text>
-  
-  <line x1="650" y1="250" x2="560" y2="280" stroke="{colors[2]}" stroke-width="2" marker-end="url(#arrowhead)" />
-  <text x="660" y="250" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[2]}">Important!</text>
-  
-  <!-- Metaphor hint -->
-  <text x="400" y="500" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="#6B7280" opacity="0.8">Visual metaphor: {metaphor_category}</text>
-</svg>'''
+        # Get concept-specific template
+        svg_template = self._get_concept_template(concept, topic, metaphor_category, colors)
         
         svg_optimized = self._optimize_svg(svg_template)
         svg_data_uri = self._svg_to_data_uri(svg_optimized)
@@ -415,9 +392,159 @@ Generate the concept-specific SVG now:"""
             "size_kb": len(svg_optimized) / 1024,
             "cache_key": self._generate_cache_key(concept, topic, metaphor_category, "default"),
             "tier": 1,  # Template fallback tier
-            "generation_method": "template",
+            "generation_method": "template_concept_aware",
             "fallback_used": True
         }
+    
+    def _get_concept_template(self, concept: str, topic: str, metaphor_category: str, colors: list) -> str:
+        """Get concept-specific SVG template (not generic)"""
+        
+        concept_lower = concept.lower()
+        
+        # Photosynthesis template
+        if 'photosynthesis' in concept_lower:
+            return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
+    </marker>
+  </defs>
+  <rect width="800" height="600" fill="#F0FDF4" />
+  
+  <!-- Title/Metaphor -->
+  <text x="400" y="30" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}" font-weight="bold">
+    💡 Photosynthesis: Like Solar Cooking - Sun's Energy Makes Food!
+  </text>
+  
+  <!-- Sun -->
+  <circle cx="100" cy="100" r="40" fill="#FCD34D" stroke="{colors[0]}" stroke-width="2" />
+  <text x="100" y="170" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[0]}">☀️ Sunlight</text>
+  
+  <!-- Sunlight rays -->
+  <line x1="140" y1="120" x2="250" y2="250" stroke="{colors[0]}" stroke-width="3" marker-end="url(#arrowhead)" stroke-dasharray="5,5" />
+  
+  <!-- Plant/Leaf -->
+  <ellipse cx="300" cy="300" rx="80" ry="60" fill="#86EFAC" stroke="{colors[0]}" stroke-width="3" />
+  <text x="300" y="305" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[0]}" font-weight="bold">🌿 Leaf</text>
+  <text x="300" y="325" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="#065F46">(Chlorophyll)</text>
+  
+  <!-- CO2 input -->
+  <text x="150" y="350" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[1]}">CO₂</text>
+  <line x1="180" y1="345" x2="230" y2="310" stroke="{colors[1]}" stroke-width="2" marker-end="url(#arrowhead)" />
+  
+  <!-- H2O input -->
+  <text x="150" y="400" font-family="Comic Sans MS, cursive" font-size="14" fill="#0EA5E9">H₂O</text>
+  <line x1="180" y1="395" x2="230" y2="330" stroke="#0EA5E9" stroke-width="2" marker-end="url(#arrowhead)" />
+  
+  <!-- Glucose output -->
+  <rect x="420" y="260" width="120" height="80" rx="10" fill="#FEF3C7" stroke="{colors[0]}" stroke-width="3" />
+  <text x="480" y="295" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[0]}" font-weight="bold">🍬 Glucose</text>
+  <text x="480" y="315" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="#78350F">(C₆H₁₂O₆)</text>
+  <line x1="380" y1="300" x2="415" y2="300" stroke="{colors[0]}" stroke-width="3" marker-end="url(#arrowhead)" />
+  
+  <!-- O2 output -->
+  <text x="300" y="220" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[2]}">O₂ ↑</text>
+  <line x1="300" y1="240" x2="300" y2="230" stroke="{colors[2]}" stroke-width="2" marker-end="url(#arrowhead)" />
+  
+  <!-- Step labels -->
+  <text x="50" y="500" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[0]}">1️⃣ Sun gives energy</text>
+  <text x="250" y="500" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[0]}">2️⃣ Leaf absorbs light</text>
+  <text x="450" y="500" font-family="Comic Sans MS, cursive" font-size="14" fill="{colors[0]}">3️⃣ Makes glucose + O₂</text>
+</svg>'''
+        
+        # Quantum numbers (hotel) template
+        elif 'quantum' in concept_lower:
+            return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
+    </marker>
+  </defs>
+  <rect width="800" height="600" fill="#F5F3FF" />
+  
+  <!-- Title -->
+  <text x="400" y="30" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}" font-weight="bold">
+    💡 Quantum Numbers: Like Hotel Room Address!
+  </text>
+  
+  <!-- Hotel building -->
+  <rect x="200" y="100" width="400" height="400" fill="#E0E7FF" stroke="{colors[0]}" stroke-width="3" />
+  
+  <!-- Floors (n) -->
+  <line x1="200" y1="200" x2="600" y2="200" stroke="{colors[0]}" stroke-width="2" />
+  <line x1="200" y1="300" x2="600" y2="300" stroke="{colors[0]}" stroke-width="2" />
+  <line x1="200" y1="400" x2="600" y2="400" stroke="{colors[0]}" stroke-width="2" />
+  
+  <!-- Floor labels (n) -->
+  <text x="150" y="150" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="end" fill="{colors[0]}" font-weight="bold">n=3</text>
+  <text x="150" y="250" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="end" fill="{colors[0]}" font-weight="bold">n=2</text>
+  <text x="150" y="350" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="end" fill="{colors[0]}" font-weight="bold">n=1</text>
+  <text x="150" y="450" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="end" fill="{colors[0]}" font-weight="bold">n=0</text>
+  
+  <!-- Wings (l) -->
+  <line x1="400" y1="100" x2="400" y2="500" stroke="{colors[1]}" stroke-width="2" stroke-dasharray="5,5" />
+  <text x="300" y="90" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[1]}">Wing A (l=0)</text>
+  <text x="500" y="90" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="{colors[1]}">Wing B (l=1)</text>
+  
+  <!-- Rooms (m) -->
+  <circle cx="300" cy="250" r="20" fill="{colors[2]}" stroke="{colors[0]}" stroke-width="2" />
+  <text x="300" y="255" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="white" font-weight="bold">m</text>
+  
+  <!-- Electron -->
+  <circle cx="300" cy="250" r="8" fill="#EF4444" />
+  <text x="300" y="285" font-family="Comic Sans MS, cursive" font-size="12" text-anchor="middle" fill="{colors[0]}">⚡ e⁻</text>
+  
+  <!-- Legend -->
+  <text x="50" y="540" font-family="Comic Sans MS, cursive" font-size="13" fill="{colors[0]}">n = Floor (energy level)</text>
+  <text x="250" y="540" font-family="Comic Sans MS, cursive" font-size="13" fill="{colors[1]}">l = Wing (orbital shape)</text>
+  <text x="450" y="540" font-family="Comic Sans MS, cursive" font-size="13" fill="{colors[2]}">m = Room (orientation)</text>
+  <text x="650" y="540" font-family="Comic Sans MS, cursive" font-size="13" fill="#EF4444">s = Bed (spin ↑↓)</text>
+</svg>'''
+        
+        # Generic fallback (improved)
+        else:
+            concept_display = concept.replace('_', ' ').title()
+            return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="{colors[0]}" />
+    </marker>
+  </defs>
+  <rect width="800" height="600" fill="#F9FAFB" />
+  
+  <!-- Title -->
+  <text x="400" y="40" font-family="Comic Sans MS, cursive" font-size="20" text-anchor="middle" fill="{colors[0]}" font-weight="bold">
+    {concept_display}
+  </text>
+  
+  <!-- Main concept area -->
+  <rect x="200" y="150" width="400" height="250" rx="15" fill="white" stroke="{colors[0]}" stroke-width="3" />
+  <text x="400" y="280" font-family="Comic Sans MS, cursive" font-size="18" text-anchor="middle" fill="{colors[0]}">
+    📚 Learning about
+  </text>
+  <text x="400" y="310" font-family="Comic Sans MS, cursive" font-size="16" text-anchor="middle" fill="{colors[1]}">
+    {concept_display}
+  </text>
+  
+  <!-- Step indicators -->
+  <circle cx="250" cy="450" r="30" fill="{colors[0]}" />
+  <text x="250" y="460" font-family="Comic Sans MS, cursive" font-size="20" text-anchor="middle" fill="white" font-weight="bold">1</text>
+  
+  <line x1="280" y1="450" x2="320" y2="450" stroke="{colors[0]}" stroke-width="3" marker-end="url(#arrowhead)" />
+  
+  <circle cx="400" cy="450" r="30" fill="{colors[1]}" />
+  <text x="400" y="460" font-family="Comic Sans MS, cursive" font-size="20" text-anchor="middle" fill="white" font-weight="bold">2</text>
+  
+  <line x1="430" y1="450" x2="470" y2="450" stroke="{colors[1]}" stroke-width="3" marker-end="url(#arrowhead)" />
+  
+  <circle cx="550" cy="450" r="30" fill="{colors[2]}" />
+  <text x="550" y="460" font-family="Comic Sans MS, cursive" font-size="20" text-anchor="middle" fill="white" font-weight="bold">3</text>
+  
+  <!-- Metaphor category hint -->
+  <text x="400" y="550" font-family="Comic Sans MS, cursive" font-size="14" text-anchor="middle" fill="#6B7280">
+    💡 Metaphor: {metaphor_category.replace('_', ' ').title()}
+  </text>
+</svg>'''
     
     def generate_simple_svg_icon(self, icon_type: str, color: str = "#374151") -> str:
         """Generate simple SVG icon for UI elements"""
