@@ -1406,27 +1406,73 @@ You're making great progress by actively seeking to understand. Keep up this exc
             try:
                 response_dict = json.loads(raw_response)
                 logger.info("📊 JSON response parsed successfully")
+                
+                # Inject visual metadata from metaphor library if not present
+                if 'default_view' in response_dict:
+                    default_view = response_dict['default_view']
+                    
+                    # Add mentor avatar if missing
+                    if 'mentor_avatar' not in default_view:
+                        avatar_url = get_mentor_avatar(student_profile['emotional_state'])
+                        default_view['mentor_avatar'] = {
+                            'visual_url': avatar_url,
+                            'expression': student_profile['emotional_state'],
+                            'greeting_animation': 'wave'
+                        }
+                    
+                    # Add hero visual from metaphor library if missing
+                    if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
+                        default_view['hero_visual'] = {
+                            'visual_url': metaphor_visual['hero_visual'],
+                            'alt_text': metaphor_visual['metaphor_text'],
+                            'load_priority': 'high',
+                            'size_bytes': 450000,  # Placeholder, <500KB
+                            'placeholder_color': metaphor_visual.get('color_theme', '#6366F1')
+                        }
+                    
+                    # Add verification badge
+                    if 'professor_badge' in default_view:
+                        badge_url = get_verification_badge('professor_checked')
+                        default_view['professor_badge']['badge_visual'] = badge_url
+                
             except json.JSONDecodeError as e:
                 logger.error(f"❌ JSON parse error: {str(e)}")
-                # Fallback to simple response
+                # Fallback to simple response with visual assets
+                avatar_url = get_mentor_avatar(student_profile['emotional_state'])
+                badge_url = get_verification_badge('verified')
+                
                 response_dict = {
                     "default_view": {
+                        "mentor_avatar": {
+                            "visual_url": avatar_url,
+                            "expression": student_profile['emotional_state'],
+                            "greeting_animation": "wave"
+                        },
                         "greeting": "Let's tackle this together!",
+                        "hero_visual": {
+                            "visual_url": metaphor_visual['hero_visual'],
+                            "alt_text": metaphor_visual['metaphor_text'],
+                            "load_priority": "high",
+                            "size_bytes": 450000,
+                            "placeholder_color": metaphor_visual.get('color_theme', '#6366F1')
+                        },
                         "metaphor": {
                             "category": student_profile['preferred_metaphor'],
-                            "text": "Let me break this down for you in a simple way.",
-                            "animation_hint": "none"
+                            "text": metaphor_visual['metaphor_text'],
+                            "animation_hint": metaphor_visual.get('animation_hint', 'none')
                         },
                         "main_content": {
                             "type": "explanation",
                             "content": raw_response[:500],
-                            "key_insight": "See explanation above"
+                            "key_insight": "See explanation above",
+                            "visual_callouts": []
                         },
                         "interactive_options": [
                             {"button_text": "Show me more", "reveals": "strategy"}
                         ],
                         "professor_badge": {
                             "verified": True,
+                            "badge_visual": badge_url,
                             "ncert_ref": "Class 11-12",
                             "confidence": "high",
                             "students_solved": "10247"
