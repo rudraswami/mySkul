@@ -91,15 +91,19 @@ class TopicClassifier:
         'physics_mechanics': ['cricket_strategy', 'train_motion', 'auto_rickshaw'],
         'physics_waves': ['music', 'cricket_crowd', 'festival_celebration'],
         'physics_electricity': ['water_flow', 'train_network', 'metro_system'],
-        'calculus': ['cricket_strategy', 'cooking_process', 'journey_planning'],
-        'algebra': ['puzzle', 'cricket_score', 'market_calculation'],
-        'geometry': ['rangoli', 'cricket_field', 'building_architecture'],
-        'trigonometry': ['cricket_angles', 'kite_flying', 'building_heights'],
-        'probability': ['cricket_prediction', 'train_bogies', 'tiffin_distribution'],
+        'calculus': ['cooking_process', 'journey_planning', 'cricket_strategy'],
+        'algebra': ['puzzle', 'market_calculation', 'cricket_score'],
+        'geometry': ['rangoli', 'building_architecture', 'cricket_field'],
+        'trigonometry': ['kite_flying', 'building_heights', 'cricket_angles'],
+        'probability': ['train_bogies', 'tiffin_distribution', 'cricket_prediction'],
         'biology_cell': ['city_system', 'factory', 'kitchen_organization'],
         'biology_system': ['transport_network', 'water_supply', 'food_delivery'],
         'biology_genetics': ['family_resemblance', 'recipe_inheritance', 'traits_passing'],
-        'photosynthesis': ['cooking', 'solar_cooking', 'tiffin_preparation']
+        'photosynthesis': ['cooking', 'solar_cooking', 'tiffin_preparation'],
+        'geography': ['seasons_wardrobe', 'journey_planning', 'climate_zones'],
+        'weather_climate': ['daily_outfit', 'seasonal_wardrobe', 'lifestyle_patterns'],
+        'history': ['timeline_journey', 'story_chapters', 'family_tree'],
+        'economics': ['market_shopping', 'budget_planning', 'trade_routes']
     }
     
     # Fallback metaphor priorities
