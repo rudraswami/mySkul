@@ -2,7 +2,7 @@
  * Mentor Response Component v2.0 - Progressive Disclosure
  * Default view + interactive reveal system
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CheckCircle, 
