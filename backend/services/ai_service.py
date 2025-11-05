@@ -1447,6 +1447,43 @@ You're making great progress by actively seeking to understand. Keep up this exc
             logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual.get('hero_visual', 'N/A')}")
             logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
+            # PHASE 3: AI-Powered SVG Sketch Generation
+            # Generate educational sketch-style SVG (replaces static images)
+            from services.svg_sketch_generator import SVGSketchGenerator
+            from services.svg_cache import SVGCache
+            
+            svg_cache = SVGCache(ttl_hours=24)
+            svg_generator = SVGSketchGenerator(self.emergent_llm_key)
+            
+            # Try to get from cache first
+            cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
+            cached_svg = svg_cache.get(cache_key)
+            
+            if cached_svg:
+                logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
+                svg_visual = cached_svg
+            else:
+                # Generate new SVG sketch
+                logger.info("🎨 Generating new SVG sketch with GPT-4o...")
+                svg_visual = await svg_generator.generate_educational_sketch(
+                    concept=concept_key,
+                    topic=detected_topic,
+                    metaphor_category=selected_metaphor,
+                    metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
+                    region=student_profile['region']
+                )
+                
+                # Cache for future use
+                if svg_visual['success']:
+                    svg_cache.set(cache_key, svg_visual)
+                    logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
+            
+            # Replace static image with SVG (Phase 3 upgrade)
+            metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
+            metaphor_visual['svg_data'] = svg_visual
+            metaphor_visual['visual_tier'] = svg_visual['tier']
+            logger.info(f"🚀 Using SVG visual (Tier {svg_visual['tier']}) instead of static image")
+            
             # Generate system prompt v2 with visual context
             # IMPORTANT: Update student profile to use dynamically selected metaphor
             student_profile_dynamic = student_profile.copy()
