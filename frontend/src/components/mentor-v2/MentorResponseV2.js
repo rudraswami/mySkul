@@ -207,16 +207,63 @@ export default function MentorResponseV2({ response, onInteraction }) {
               onClose={() => handleReveal('strategy')}
             >
               <div className="prose prose-purple max-w-none">
-                <div className="text-gray-800 whitespace-pre-wrap">
-                  {progressive_sections.strategy.content}
-                </div>
+                {/* Strategy Steps */}
+                {progressive_sections.strategy.steps && progressive_sections.strategy.steps.length > 0 ? (
+                  <div className="space-y-4">
+                    {progressive_sections.strategy.steps.map((step, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="bg-white rounded-lg p-4 border border-purple-100"
+                      >
+                        {step.step_visual && !imageLoadError[`step_${idx}`] && (
+                          <img
+                            src={step.step_visual}
+                            alt={`Step ${step.step_number || idx + 1}`}
+                            className="w-full h-auto rounded-lg mb-3"
+                            onError={() => handleImageError(`step_${idx}`)}
+                          />
+                        )}
+                        <div className="flex items-start gap-3">
+                          <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                            {step.step_number || idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-gray-800">{step.step_text}</p>
+                            {step.visual_highlight && (
+                              <p className="text-sm text-purple-600 mt-2">
+                                👁️ {step.visual_highlight}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-800 whitespace-pre-wrap">
+                    {progressive_sections.strategy.content}
+                  </div>
+                )}
+                
+                {/* Tips */}
                 {progressive_sections.strategy.tips && progressive_sections.strategy.tips.length > 0 && (
                   <div className="mt-4 space-y-2">
                     <p className="font-semibold text-purple-900 mb-2">💡 Pro Tips:</p>
                     <ul className="list-disc pl-5 space-y-1">
-                      {progressive_sections.strategy.tips.map((tip, idx) => (
-                        <li key={idx} className="text-gray-700">{tip}</li>
-                      ))}
+                      {progressive_sections.strategy.tips.map((tip, idx) => {
+                        // Handle both string and object formats
+                        const tipText = typeof tip === 'string' ? tip : tip.tip_text;
+                        const tipIcon = typeof tip === 'object' ? tip.tip_icon : '💡';
+                        return (
+                          <li key={idx} className="text-gray-700">
+                            {tipIcon && <span className="mr-2">{tipIcon}</span>}
+                            {tipText}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
