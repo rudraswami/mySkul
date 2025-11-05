@@ -69,7 +69,7 @@ SessionMiddleware(
 CORS_ORIGINS = [
     'http://localhost:3000',  # Development
     'https://seamless-auth-1.emergent.host',  # Backend
-    'https://dhruv-tutor-app.preview.emergentagent.com',  # Preview
+    'https://dhruv-neuro-ai.preview.emergentagent.com',  # Preview
 ]
 
 CORSMiddleware(

@@ -142,7 +142,7 @@ samesite="lax"
 ```
 
 **Issue:**
-- Preview frontend: `https://dhruv-tutor-app.preview.emergentagent.com` (`.emergentagent.com` domain)
+- Preview frontend: `https://dhruv-neuro-ai.preview.emergentagent.com` (`.emergentagent.com` domain)
 - Backend: `https://seamless-auth-1.emergent.host` (`.emergent.host` domain)
 - Different top-level domains = cross-site requests
 - `SameSite=Lax` blocks cookies on cross-site XHR/fetch requests
@@ -255,7 +255,7 @@ Cookie Settings:
 
 **2. Preview Frontend + Production Backend (Cross-Domain)**
 ```
-Frontend: https://dhruv-tutor-app.preview.emergentagent.com
+Frontend: https://dhruv-neuro-ai.preview.emergentagent.com
 Backend: https://seamless-auth-1.emergent.host
 
 Cookie Settings:

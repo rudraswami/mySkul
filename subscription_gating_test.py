@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "https://dhruv-tutor-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://dhruv-neuro-ai.preview.emergentagent.com/api"
 
 # Test results storage
 test_results = []

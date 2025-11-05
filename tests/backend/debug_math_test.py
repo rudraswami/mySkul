@@ -8,7 +8,7 @@ import json
 import sys
 
 def test_ai_endpoint():
-    base_url = "https://dhruv-tutor-app.preview.emergentagent.com/api"
+    base_url = "https://dhruv-neuro-ai.preview.emergentagent.com/api"
     
     # Authenticate first
     login_data = {

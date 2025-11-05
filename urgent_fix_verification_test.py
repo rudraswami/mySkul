@@ -18,7 +18,7 @@ from typing import Dict, Any, Tuple
 class UrgentFixVerificationTester:
     def __init__(self):
         # Backend URL from review request
-        self.base_url = "https://dhruv-tutor-app.preview.emergentagent.com/api"
+        self.base_url = "https://dhruv-neuro-ai.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

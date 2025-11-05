@@ -7,7 +7,7 @@ Testing with STARTER (₹199) and ACHIEVER (₹999) plans
 import requests
 import json
 
-base_url = "https://dhruv-tutor-app.preview.emergentagent.com/api"
+base_url = "https://dhruv-neuro-ai.preview.emergentagent.com/api"
 
 print("=" * 80)
 print("Testing Razorpay with ACTUAL plan names")

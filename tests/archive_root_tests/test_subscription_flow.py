@@ -3,7 +3,7 @@
 import requests
 import json
 
-BACKEND_URL = "https://dhruv-tutor-app.preview.emergentagent.com"
+BACKEND_URL = "https://dhruv-neuro-ai.preview.emergentagent.com"
 
 print("=" * 60)
 print("Testing Subscription Modal Flow")
