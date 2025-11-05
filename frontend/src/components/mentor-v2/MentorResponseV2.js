@@ -174,7 +174,16 @@ export default function MentorResponseV2({ response, onInteraction }) {
         {default_view.professor_badge && (
           <div className="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              {default_view.professor_badge.badge_visual && !imageLoadError['professor_badge'] ? (
+                <img
+                  src={default_view.professor_badge.badge_visual}
+                  alt="Professor Verified"
+                  className="w-6 h-6"
+                  onError={() => handleImageError('professor_badge')}
+                />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              )}
               <span className="text-sm font-medium text-green-900">
                 Professor-Verified ✓ {default_view.professor_badge.ncert_ref}
               </span>
