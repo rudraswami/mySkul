@@ -70,6 +70,11 @@ class SVGSketchGenerator:
         """
         Generate educational SVG sketch for a concept
         
+        STRATEGY: Template-first approach (GPT-4o generates too generic visuals)
+        - Use concept-specific templates (fast, educational, guaranteed quality)
+        - Only use GPT-4o for unmapped concepts
+        - Validate output for generic terms and reject if found
+        
         Args:
             concept: Concept name (e.g., "quantum_numbers")
             topic: Topic category (e.g., "quantum_physics")
@@ -87,11 +92,22 @@ class SVGSketchGenerator:
             # Get color theme
             colors = self.COLOR_THEMES.get(metaphor_category, self.COLOR_THEMES["default"])
             
+            # STRATEGY CHANGE: Template-first (GPT-4o unreliable for concept-specific visuals)
+            # Try template first for known concepts
+            template_result = self._try_concept_template(concept, topic, metaphor_category, colors, region)
+            
+            if template_result:
+                logger.info(f"✅ Using concept-specific template (Tier 1): {template_result['size_kb']:.1f}KB")
+                return template_result
+            
+            # If no template exists, generate with GPT-4o (with strict validation)
+            logger.info("🤖 No template found, trying GPT-4o generation with strict validation...")
+            
             # Generate cache key
             cache_key = self._generate_cache_key(concept, topic, metaphor_category, region)
             
-            # Build educational SVG prompt
-            svg_prompt = self._build_svg_prompt(
+            # Build STRICT educational SVG prompt
+            svg_prompt = self._build_strict_svg_prompt(
                 concept=concept,
                 topic=topic,
                 metaphor_text=metaphor_text,
@@ -102,18 +118,26 @@ class SVGSketchGenerator:
             # Generate SVG using GPT-4o
             user_message = UserMessage(text=svg_prompt)
             
-            logger.info("🤖 Calling GPT-4o for SVG generation...")
+            logger.info("🤖 Calling GPT-4o for SVG generation with strict validation...")
             response = await self.llm_chat.send_message(user_message)
             
             # Extract SVG from response
             svg_code = self._extract_svg(response)
             
             if svg_code:
+                # CRITICAL: Validate for generic terms
+                is_valid, rejection_reason = self._validate_svg_educational(svg_code, concept)
+                
+                if not is_valid:
+                    logger.warning(f"⚠️ SVG rejected: {rejection_reason}")
+                    logger.warning("🔄 Falling back to template...")
+                    return self._generate_template_fallback(concept, topic, metaphor_category, colors, region)
+                
                 # Validate and optimize SVG
                 svg_optimized = self._optimize_svg(svg_code)
                 size_kb = len(svg_optimized) / 1024
                 
-                logger.info(f"✅ SVG generated successfully: {size_kb:.1f}KB")
+                logger.info(f"✅ SVG generated and validated: {size_kb:.1f}KB")
                 
                 # Convert to data URI for embedding
                 svg_data_uri = self._svg_to_data_uri(svg_optimized)
@@ -125,16 +149,61 @@ class SVGSketchGenerator:
                     "size_kb": size_kb,
                     "cache_key": cache_key,
                     "tier": 2,  # AI-generated tier
-                    "generation_method": "gpt4o",
+                    "generation_method": "gpt4o_validated",
                     "fallback_used": False
                 }
             else:
                 logger.warning("⚠️ No valid SVG in GPT-4o response, using template fallback")
-                return self._generate_template_fallback(concept, topic, metaphor_category, colors)
+                return self._generate_template_fallback(concept, topic, metaphor_category, colors, region)
                 
         except Exception as e:
             logger.error(f"❌ SVG generation failed: {e}")
-            return self._generate_template_fallback(concept, topic, metaphor_category, colors)
+            return self._generate_template_fallback(concept, topic, metaphor_category, colors, region)
+    
+    def _validate_svg_educational(self, svg_code: str, concept: str) -> tuple[bool, str]:
+        """
+        Validate SVG is educational and concept-specific (not generic)
+        
+        Returns: (is_valid, rejection_reason)
+        """
+        svg_lower = svg_code.lower()
+        
+        # FORBIDDEN generic terms
+        forbidden_terms = [
+            'reactant a', 'reactant b', 'reactant c',
+            'product a', 'product b', 'product c',
+            'object a', 'object b', 'object c',
+            'component 1', 'component 2', 'component 3',
+            'element 1', 'element 2', 'element 3',
+            'process 1', 'process 2', 'process 3',
+            'step a', 'step b', 'step c',
+            'reaction vessel', 'generic'
+        ]
+        
+        for term in forbidden_terms:
+            if term in svg_lower:
+                return False, f"Contains forbidden generic term: '{term}'"
+        
+        # Check if SVG has meaningful content (not just boxes)
+        has_text = len(re.findall(r'<text[^>]*>([^<]+)</text>', svg_code)) >= 3
+        has_shapes = len(re.findall(r'<(rect|circle|ellipse|path|polygon)', svg_code)) >= 3
+        
+        if not has_text or not has_shapes:
+            return False, "SVG lacks sufficient educational elements"
+        
+        return True, "Valid educational SVG"
+    
+    def _try_concept_template(self, concept: str, topic: str, metaphor: str, colors: list, region: str) -> Optional[Dict[str, Any]]:
+        """Try to use concept-specific template first (template-first strategy)"""
+        
+        concept_lower = concept.lower()
+        
+        # Check if we have a template for this concept
+        if 'photosynthesis' in concept_lower or 'catalyst' in concept_lower or 'weather' in concept_lower or 'climate' in concept_lower:
+            logger.info(f"✅ Found concept-specific template for: {concept}")
+            return self._generate_template_fallback(concept, topic, metaphor, colors, region)
+        
+        return None
     
     def _build_svg_prompt(
         self,
