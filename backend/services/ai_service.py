@@ -1639,7 +1639,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'color_theme': '#BE185D'
             },
             'gaming': {
-                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNEQ0ZDRTciLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzA1OTY2OSI+8J+OrzwvdGV4dD48L3N2Zz4=',
+                'svg_template': 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23DCFCE7"/%3E%3Crect x="120" y="100" width="160" height="80" rx="20" fill="%23059669"/%3E%3Ccircle cx="160" cy="140" r="15" fill="%23FFF"/%3E%3Ccircle cx="240" cy="140" r="15" fill="%23FFF"/%3E%3Ctext x="200" y="250" text-anchor="middle" font-family="Arial" font-size="24" fill="%23374151"%3EGaming Strategy%3C/text%3E%3C/svg%3E',
                 'emoji': '🎮',
                 'color_theme': '#059669'
             }
