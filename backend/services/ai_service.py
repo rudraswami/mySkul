@@ -193,7 +193,7 @@ Here's how I can help you:
 4. **Build confidence** - Personalized guidance for your learning style
 [/SECTION:STEPS]"""
 
-        mentor_response = f"""Welcome! I'm so glad you're here!
+        mentor_response = """Welcome! I'm so glad you're here!
 
 [MICROCARD:MOTIVATION]
 Starting a learning session shows real commitment. Every expert was once a beginner, and you're taking that first step right now!
@@ -561,7 +561,7 @@ Depth Level: {depth_level}"""
                 mentor_time = total_time  # For logging purposes
                 logger.info(f"✅ Mentor response generated ({len(mentor_response)} chars)")
                 logger.info(f"🎯 PARALLEL generation time: {total_time:.2f}s (Both generated simultaneously)")
-                logger.info(f"⚡ PERFORMANCE GAIN: Saved ~15-20s compared to sequential execution")
+                logger.info("⚡ PERFORMANCE GAIN: Saved ~15-20s compared to sequential execution")
                 
             except asyncio.TimeoutError as e:
                 logger.error(f"⏰ AI generation timeout: {e}")
@@ -1237,19 +1237,19 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 {
                     "source_title": f"NCERT {subject} Textbook",
                     "chapter_section": f"Chapter on {topic}",
-                    "page_number": f"Pages 45-67",
+                    "page_number": "Pages 45-67",
                     "relevance_score": 0.95
                 },
                 {
                     "source_title": f"Advanced {subject} Reference",
                     "chapter_section": f"{topic} - Detailed Analysis", 
-                    "page_number": f"Pages 120-135",
+                    "page_number": "Pages 120-135",
                     "relevance_score": 0.88
                 },
                 {
                     "source_title": f"{subject} Problem Solving Guide",
                     "chapter_section": f"Solved Examples - {topic}",
-                    "page_number": f"Pages 78-92", 
+                    "page_number": "Pages 78-92", 
                     "relevance_score": 0.82
                 }
             ]
