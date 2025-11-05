@@ -1624,7 +1624,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
         """
         svg_templates = {
             'cricket': {
-                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNFRkY2RkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzEwQjk4MSI+8J+PjzwvdGV4dD48L3N2Zz4=',
+                'svg_template': 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23EFF6FB"/%3E%3Ccircle cx="200" cy="120" r="40" fill="%2310B981"/%3E%3Crect x="180" y="120" width="40" height="100" rx="20" fill="%238B5CF6"/%3E%3Ctext x="200" y="250" text-anchor="middle" font-family="Arial" font-size="24" fill="%23374151"%3ECricket Strategy%3C/text%3E%3C/svg%3E',
                 'emoji': '🏏',
                 'color_theme': '#10B981'
             },
