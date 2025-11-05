@@ -1448,7 +1448,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
             logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
             # Generate system prompt v2 with visual context
-            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile)
+            # IMPORTANT: Update student profile to use dynamically selected metaphor
+            student_profile_dynamic = student_profile.copy()
+            student_profile_dynamic['preferred_metaphor'] = selected_metaphor
+            student_profile_dynamic['detected_topic'] = detected_topic
+            
+            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile_dynamic)
             
             # Step 4: Create LLM chat instance with optimized prompt
             # Use compact prompt for faster response
@@ -1459,7 +1464,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 subject=subject,
                 message=message,
                 exam_mode=exam_mode,
-                metaphor=student_profile['preferred_metaphor'],
+                metaphor=selected_metaphor,  # Use dynamically selected
                 region=student_profile['region']
             )
             
