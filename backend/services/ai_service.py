@@ -1620,6 +1620,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
         """
         Get Tier 1 SVG fallback visual (always <0.5s)
         Used when CDN assets fail or for immediate display
+        Uses simple shapes instead of emoji for better browser compatibility
         """
         svg_templates = {
             'cricket': {
