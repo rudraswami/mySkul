@@ -17,12 +17,34 @@ import {
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
   const [imageLoadError, setImageLoadError] = useState({});
+  const [visualDebugInfo, setVisualDebugInfo] = useState({});
   
   if (!response || !response.default_view) {
+    console.error('❌ Invalid response structure:', response);
     return <div className="text-red-500">Error: Invalid response structure</div>;
   }
   
   const { default_view, progressive_sections } = response;
+  
+  // Debug: Log visual data
+  useEffect(() => {
+    if (default_view.hero_visual) {
+      const visualInfo = {
+        hasHeroVisual: !!default_view.hero_visual,
+        hasVisualUrl: !!default_view.hero_visual.visual_url,
+        urlType: default_view.hero_visual.visual_url?.startsWith('data:') ? 'data URI' : 'external URL',
+        urlLength: default_view.hero_visual.visual_url?.length || 0,
+        tier: default_view.hero_visual.tier,
+        fallbackEmoji: default_view.hero_visual.fallback_emoji,
+        placeholderColor: default_view.hero_visual.placeholder_color
+      };
+      console.log('🎨 Visual Debug Info:', visualInfo);
+      console.log('🎨 Visual URL (first 200 chars):', default_view.hero_visual.visual_url?.substring(0, 200));
+      setVisualDebugInfo(visualInfo);
+    } else {
+      console.warn('⚠️ No hero_visual in response');
+    }
+  }, [default_view]);
   
   // Handle button click to reveal section
   const handleReveal = (sectionKey) => {
@@ -43,8 +65,14 @@ export default function MentorResponseV2({ response, onInteraction }) {
   };
   
   // Handle image load error
-  const handleImageError = (imageKey) => {
+  const handleImageError = (imageKey, event) => {
+    console.error(`❌ Image load error for ${imageKey}:`, event);
     setImageLoadError(prev => ({ ...prev, [imageKey]: true }));
+  };
+  
+  // Handle image load success
+  const handleImageLoad = (imageKey) => {
+    console.log(`✅ Image loaded successfully: ${imageKey}`);
   };
   
   return (
