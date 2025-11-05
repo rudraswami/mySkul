@@ -1609,3 +1609,33 @@ You're making great progress by actively seeking to understand. Keep up this exc
             raise Exception(f"Failed to generate mentor response: {str(e)}")
 
             return False
+    
+    def _get_svg_fallback(self, metaphor_category: str, region: str) -> dict:
+        """
+        Get Tier 1 SVG fallback visual (always <0.5s)
+        Used when CDN assets fail or for immediate display
+        """
+        svg_templates = {
+            'cricket': {
+                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNFRkY2RkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzEwQjk4MSI+8J+PjzwvdGV4dD48L3N2Zz4=',
+                'emoji': '🏏',
+                'color_theme': '#10B981'
+            },
+            'cooking': {
+                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNGRUYzQzciLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iI0Y1OUUwQiI+8J+NszwvdGV4dD48L3N2Zz4=',
+                'emoji': '🍳',
+                'color_theme': '#F59E0B'
+            },
+            'bollywood': {
+                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNGQ0U3RjMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iI0JFMTg1RCI+8J+OrDwvdGV4dD48L3N2Zz4=',
+                'emoji': '🎬',
+                'color_theme': '#BE185D'
+            },
+            'gaming': {
+                'svg_template': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNEQ0ZDRTciLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzA1OTY2OSI+8J+OrzwvdGV4dD48L3N2Zz4=',
+                'emoji': '🎮',
+                'color_theme': '#059669'
+            }
+        }
+        
+        return svg_templates.get(metaphor_category, svg_templates['cricket'])
