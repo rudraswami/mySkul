@@ -103,10 +103,17 @@ export default function MentorResponseV2({ response, onInteraction }) {
                 onError={() => handleImageError('hero_visual')}
               />
             ) : (
-              <div className="w-full h-64 flex items-center justify-center text-gray-400">
-                <div className="text-center">
-                  <Lightbulb className="w-16 h-16 mx-auto mb-2" />
-                  <p className="text-sm">{default_view.hero_visual.alt_text || 'Visual concept'}</p>
+              <div className="w-full h-64 flex items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100">
+                <div className="text-center p-6">
+                  <div className="text-6xl mb-3">
+                    {getMetaphorIcon(default_view.metaphor?.category)}
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {default_view.hero_visual.alt_text || default_view.metaphor?.text || 'Visual concept'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Visual assets loading...
+                  </p>
                 </div>
               </div>
             )}
