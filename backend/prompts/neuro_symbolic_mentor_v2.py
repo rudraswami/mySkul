@@ -1,11 +1,12 @@
 """
-Neuro-Symbolic AI Mentor v2.0 - Progressive Disclosure System
+Neuro-Symbolic AI Mentor v2.0 - Progressive Disclosure System + VISUAL-FIRST
 Mentor-style, engaging, personalized learning (NOT textbook-style)
+ENHANCEMENT: Visual-first learning with metaphor library integration
 """
 
 def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None) -> str:
     """
-    Generate mentor-style prompt for progressive disclosure
+    Generate mentor-style prompt for progressive disclosure with VISUAL-FIRST approach
     
     Args:
         subject: Subject name (Mathematics, Physics, Chemistry, etc.)
@@ -15,11 +16,14 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
             'preferred_metaphor': 'cricket'|'bollywood'|'cooking'|'gaming',
             'region': 'Delhi'|'Mumbai'|'Chennai'|'Kolkata'|'Bangalore',
             'engagement_level': 'high'|'medium'|'low',
-            'emotional_state': 'confident'|'neutral'|'struggling'
+            'emotional_state': 'confident'|'neutral'|'struggling',
+            'visual_learner_preference': true|false,
+            'device_type': 'mobile'|'tablet'|'desktop',
+            'network_speed': '2G'|'3G'|'4G'|'5G'
         }
     
     Returns:
-        System prompt string
+        System prompt string with visual-first enhancements
     """
     
     # Extract profile preferences or use defaults
