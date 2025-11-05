@@ -248,23 +248,97 @@ Generate the concept-specific SVG now:"""
         return prompt
     
     def _get_concept_specific_guidance(self, concept: str, topic: str, metaphor_text: str, region: str) -> str:
-        """Get specific guidance for different concepts"""
+        """Get ultra-specific visual guidance for each concept with emotional storytelling"""
         
         concept_lower = concept.lower()
         
+        # Weather vs Climate (Geography)
+        if 'weather' in concept_lower or 'climate' in concept_lower:
+            return """**VISUAL STORYTELLING FOR WEATHER VS CLIMATE**:
+
+**BACKGROUND**: Soft cream (#FEF7ED) - warm, neutral, educational
+
+**CORE VISUAL CONCEPT**: Show a student's wardrobe/lifestyle analogy
+
+**LEFT SIDE - WEATHER (Daily Choice)**:
+- Draw a student figure looking at TODAY'S outfit
+- Wardrobe with TODAY label (torn calendar page showing "Monday")
+- Clothes hanging: Raincoat, Umbrella (for today's rain)
+- Weather icons above: ☁️ Dark clouds, 🌧️ Rain drops falling
+- Label: "WEATHER = What to wear TODAY"
+- Emotion: Student checking weather app on phone
+
+**RIGHT SIDE - CLIMATE (Seasonal Pattern)**:
+- Same student looking at FULL WARDROBE for the YEAR
+- 4 sections labeled: Summer (☀️), Monsoon (🌧️), Winter (❄️), Spring (🌸)
+- Each section has appropriate Indian clothes:
+  * Summer: Cotton kurta, sunglasses
+  * Monsoon: Raincoat, umbrella, boots
+  * Winter: Sweater, jacket
+  * Spring: Light clothes, flowers
+- Label: "CLIMATE = What to keep for the SEASON"
+- Calendar showing full year pattern
+
+**CONNECTING ELEMENT**:
+- Arrow from left to right: "Daily → Patterns → Climate"
+- Text: "Many weather days = Climate pattern!"
+
+**VISUAL STYLE**:
+- Hand-drawn figures (simple stick figures with Indian clothes)
+- Actual clothing items drawn (not boxes)
+- Use icons: ☀️ 🌧️ ❄️ 🌸 ☁️
+- Color code: Warm colors for summer, blue for rain, cool for winter
+- Thought bubbles showing student thinking
+
+**EMOTIONAL DESIGN**:
+- Student expression: Curious, figuring it out
+- Relatable scenario: Getting ready for school
+- Indian context: Monsoon season, cotton clothes, etc.
+
+**NO BOXES**: Draw actual clothes, weather icons, student figure, wardrobe shelves"""
+        
         # Photosynthesis
-        if 'photosynthesis' in concept_lower:
-            return """**SPECIFIC GUIDANCE FOR PHOTOSYNTHESIS**:
-- Draw a simple plant with leaves (NOT "Object A")
-- Show sunlight rays coming down (with sun icon)
-- Show CO2 entering leaf (with CO2 label and arrow)
-- Show water coming from roots (with H2O label)
-- Show glucose being produced (with C6H12O6 or sugar icon)
-- Show O2 being released (with O2 label and arrow out)
-- If metaphor is "solar cooking", draw solar cooker alongside and show parallel:
-  * Sunlight → Solar panel/reflector → Heat → Food cooked
-  * Sunlight → Chlorophyll → Energy → Glucose made
-- Number each step clearly (1. Sunlight absorbed, 2. Water split, 3. Glucose made, etc.)"""
+        elif 'photosynthesis' in concept_lower:
+            return """**VISUAL STORYTELLING FOR PHOTOSYNTHESIS**:
+
+**BACKGROUND**: Light green (#F0FDF4) - nature, growth
+
+**CORE VISUAL**: Solar cooking analogy (Indian context)
+
+**TOP SECTION - THE SETUP**:
+- Draw simple solar cooker (parabolic dish) reflecting sunlight
+- Label: "1️⃣ ENERGY SOURCE"
+- Sun rays hitting reflector → Focus point
+- Emotion: Efficient, concentrated energy
+
+**MIDDLE SECTION - THE PLANT (Parallel to cooker)**:
+- Draw actual plant with distinct parts:
+  * 🌿 Green leaves (chlorophyll)
+  * Roots drawing 💧 H₂O from soil
+  * Stomata (tiny holes) taking 🌬️ CO₂ from air
+- Label: "2️⃣ INGREDIENTS COLLECTION"
+- Arrows showing inputs converging
+
+**BOTTOM SECTION - THE MAGIC**:
+- Inside leaf: Tiny factory icon (chloroplast)
+- Chemical equation simplified: 
+  * "6CO₂ + 6H₂O + ☀️ → C₆H₁₂O₆ (Glucose) + 6O₂"
+- Label: "3️⃣ FOOD PRODUCTION"
+- Glucose shown as energy packets (batteries 🔋)
+- O₂ bubbles floating up
+
+**PARALLEL SHOWN**:
+- Side-by-side comparison box:
+  * Solar Cooker: Sun → Heat → Food Cooked
+  * Photosynthesis: Sun → Chlorophyll → Glucose Made
+
+**EMOTIONAL DESIGN**:
+- Green = Life, growth
+- Sun rays = Energy, warmth
+- Plant = Friendly character
+- Glucose = Energy fuel (show as battery icons)
+
+**NO GENERIC SHAPES**: Draw actual leaf structure, sun with rays, roots, chemical molecules"""
         
         # Quantum numbers
         elif 'quantum' in concept_lower:
