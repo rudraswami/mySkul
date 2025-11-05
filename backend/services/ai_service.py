@@ -1496,24 +1496,22 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         }
                         logger.info(f"✅ Added mentor avatar: {avatar_url}")
                     
-                    # Add hero visual from metaphor library if missing or use SVG fallback
+                    # CRITICAL: Add hero visual - prefer REAL images over SVG fallback
                     if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
-                        logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG fallback")
-                        # Use Tier 1 SVG fallback
-                        svg_fallback = self._get_svg_fallback(
-                            student_profile['preferred_metaphor'],
-                            student_profile['region']
-                        )
+                        logger.warning("⚠️ Hero visual missing from LLM response - injecting REAL image from metaphor library")
+                        # Use REAL image from metaphor library (Tier 2)
                         default_view['hero_visual'] = {
-                            'visual_url': svg_fallback['svg_template'],
+                            'visual_url': metaphor_visual['hero_visual'],  # REAL Unsplash/Pexels image
                             'alt_text': metaphor_visual['metaphor_text'],
                             'load_priority': 'high',
-                            'size_bytes': 5000,  # SVG is tiny
+                            'size_bytes': 150000,  # Typical compressed image ~150KB
                             'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
-                            'tier': 1,
-                            'fallback_emoji': svg_fallback['emoji']
+                            'tier': 2,  # Real image from library
+                            'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0],
+                            'cultural_context': metaphor_visual.get('cultural_context', 'General')
                         }
-                        logger.info(f"✅ Injected SVG fallback (Tier 1): {svg_fallback['emoji']} - {len(svg_fallback['svg_template'])} bytes")
+                        logger.info(f"✅ Injected REAL hero visual (Tier 2): {metaphor_visual['hero_visual'][:100]}...")
+                        logger.info(f"✅ Cultural context: {metaphor_visual.get('cultural_context')}")
                     else:
                         logger.info(f"✅ Hero visual present in response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
                     
