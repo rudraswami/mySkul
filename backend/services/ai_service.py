@@ -1494,9 +1494,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
                             'expression': student_profile['emotional_state'],
                             'greeting_animation': 'wave'
                         }
+                        logger.info(f"✅ Added mentor avatar: {avatar_url}")
                     
                     # Add hero visual from metaphor library if missing or use SVG fallback
                     if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
+                        logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG fallback")
                         # Use Tier 1 SVG fallback
                         svg_fallback = self._get_svg_fallback(
                             student_profile['preferred_metaphor'],
@@ -1511,11 +1513,15 @@ You're making great progress by actively seeking to understand. Keep up this exc
                             'tier': 1,
                             'fallback_emoji': svg_fallback['emoji']
                         }
+                        logger.info(f"✅ Injected SVG fallback (Tier 1): {svg_fallback['emoji']} - {len(svg_fallback['svg_template'])} bytes")
+                    else:
+                        logger.info(f"✅ Hero visual present in response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
                     
                     # Add verification badge
                     if 'professor_badge' in default_view:
                         badge_url = get_verification_badge('professor_checked')
                         default_view['professor_badge']['badge_visual'] = badge_url
+                        logger.info("✅ Added verification badge")
                 
             except json.JSONDecodeError as e:
                 logger.error(f"❌ JSON parse error: {str(e)}")
