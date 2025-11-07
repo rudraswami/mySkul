@@ -6,6 +6,7 @@ import React from 'react';
 import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
+import VisualConceptBlock from './VisualConceptBlock'; // Importing the VisualConceptBlock
 
 export default function NeuroSymbolicResponse({ response, isLoading }) {
   if (isLoading) {
@@ -30,7 +31,8 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     mini_practice,
     encouragement,
     ask,
-    student_emotion
+    student_emotion,
+    visual_data // Added visual_data to handle dynamic visuals
   } = response;
 
   return (
@@ -86,17 +88,22 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         <VisualSchema schema={visual_schema} />
       )}
 
-      {/* 5. Professor Verification (Collapsible) */}
+      {/* 5. Dynamic Visual Concept Block */}
+      {visual_data && (
+        <VisualConceptBlock visualData={visual_data} /> // Using the VisualConceptBlock for dynamic visuals
+      )}
+
+      {/* 6. Professor Verification (Collapsible) */}
       {professor_verification && (
         <ProfessorVerification verification={professor_verification} />
       )}
 
-      {/* 6. Mini Practice */}
+      {/* 7. Mini Practice */}
       {mini_practice && (
         <MiniPractice practice={mini_practice} />
       )}
 
-      {/* 7. Encouragement */}
+      {/* 8. Encouragement */}
       {encouragement && (
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
           <div className="flex items-center space-x-2 mb-3">
@@ -109,7 +116,7 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         </div>
       )}
 
-      {/* 8. Ask / Follow-up */}
+      {/* 9. Ask / Follow-up */}
       {ask && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
           <div className="flex items-center space-x-2 mb-3">
