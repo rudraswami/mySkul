@@ -7,6 +7,7 @@ import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
 import VisualConceptBlock from './VisualConceptBlock'; // Importing the VisualConceptBlock
+import { useExistingVisualEngine } from '../hooks/useExistingVisualEngine'; // Importing existing visual engine hook
 
 export default function NeuroSymbolicResponse({ response, isLoading }) {
   if (isLoading) {
@@ -34,6 +35,8 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     student_emotion,
     visual_data // Added visual_data to handle dynamic visuals
   } = response;
+
+  const visualEngineData = useExistingVisualEngine(visual_data); // Using existing visual engine
 
   return (
     <div className="space-y-4 my-4">
@@ -89,8 +92,8 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
       )}
 
       {/* 5. Dynamic Visual Concept Block */}
-      {visual_data && (
-        <VisualConceptBlock visualData={visual_data} /> // Using the VisualConceptBlock for dynamic visuals
+      {visualEngineData && (
+        <VisualConceptBlock visualData={visualEngineData} /> // Using the VisualConceptBlock for dynamic visuals
       )}
 
       {/* 6. Professor Verification (Collapsible) */}
