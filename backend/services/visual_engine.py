@@ -29,6 +29,19 @@ class VisualEngine:
                     "alt_text": "A cricket match used as a metaphor for a generic physics concept.",
                     "style": "sketch",
                 }
+            },
+            "newtons_laws": {
+                "metaphor": "Newton's Laws of Motion",
+                "symbolic_structure": [
+                    "First Law: An object at rest stays at rest.",
+                    "Second Law: Force equals mass times acceleration.",
+                    "Third Law: For every action, there is an equal and opposite reaction."
+                ],
+                "hero_visual": {
+                    "url": "https://cdn.mgxai.com/visuals/physics/newton/laws_of_motion.svg",
+                    "alt_text": "Visual representation of Newton's Laws of Motion.",
+                    "style": "sketch",
+                }
             }
         }
 
