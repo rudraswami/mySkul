@@ -7,6 +7,7 @@ import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
 import VisualConceptBlock from './VisualConceptBlock'; // Importing the VisualConceptBlock
+import SketchAnimator from './SketchAnimator'; // Importing the SketchAnimator
 import { useExistingVisualEngine } from '../hooks/useExistingVisualEngine'; // Importing existing visual engine hook
 
 export default function NeuroSymbolicResponse({ response, isLoading }) {
@@ -96,17 +97,20 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         <VisualConceptBlock visualData={visualEngineData} /> // Using the VisualConceptBlock for dynamic visuals
       )}
 
-      {/* 6. Professor Verification (Collapsible) */}
+      {/* 6. Sketch Animator for real-time explanations */}
+      <SketchAnimator explanation={practical_explanation} />
+
+      {/* 7. Professor Verification (Collapsible) */}
       {professor_verification && (
         <ProfessorVerification verification={professor_verification} />
       )}
 
-      {/* 7. Mini Practice */}
+      {/* 8. Mini Practice */}
       {mini_practice && (
         <MiniPractice practice={mini_practice} />
       )}
 
-      {/* 8. Encouragement */}
+      {/* 9. Encouragement */}
       {encouragement && (
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
           <div className="flex items-center space-x-2 mb-3">
@@ -119,7 +123,7 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         </div>
       )}
 
-      {/* 9. Ask / Follow-up */}
+      {/* 10. Ask / Follow-up */}
       {ask && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
           <div className="flex items-center space-x-2 mb-3">
