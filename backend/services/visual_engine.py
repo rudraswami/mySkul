@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class VisualEngine:
         """
         Resolves a visual metaphor for a given topic and student persona.
         """
+        start_time = time.time()  # Start timing
         topic_key = topic.lower().replace(" ", "_")
         metaphor = self.metaphors.get(topic_key)
 
@@ -66,6 +68,8 @@ class VisualEngine:
 
         logger.info(f"Resolved visual metaphor for topic '{topic}': {metaphor['metaphor']}")
         self.log_frame_generation_success(topic)  # Log frame generation success
+        elapsed_time = time.time() - start_time  # Calculate elapsed time
+        logger.info(f"Frame generation for '{topic}' took {elapsed_time:.2f} seconds.")
         return metaphor
 
     def log_frame_generation_success(self, topic: str):
