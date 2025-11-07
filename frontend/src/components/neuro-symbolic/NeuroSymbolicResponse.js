@@ -92,9 +92,9 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         <VisualSchema schema={visual_schema} />
       )}
 
-      {/* 5. Dynamic Visual Concept Block */}
-      {visualEngineData && (
-        <VisualConceptBlock visualData={visualEngineData} /> // Using the VisualConceptBlock for dynamic visuals
+      {/* 5. Dynamic Visual Story Scene */}
+      {visualEngineData && visualEngineData.type === 'story_scene' && (
+        <VisualConceptBlock visualData={visualEngineData} /> // Using the VisualConceptBlock for dynamic story scenes
       )}
 
       {/* 6. Sketch Animator for real-time explanations */}
