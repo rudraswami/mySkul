@@ -4,8 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAITutorSessions, useCreateSession, useSessionMessages, useSendMessage } from '../hooks/useAITutor';
-import { useAITutorUI } from '../hooks/useAITutorUI';
 import { 
   Brain, 
   Send, 
@@ -57,13 +55,9 @@ export default function AITutorPremium() {
   // Core State
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const [currentSession, setCurrentSession] = useState(null);
-
-  const { data: sessionsData, isLoading: sessionsLoading } = useAITutorSessions();
-  const sessions = sessionsData?.sessions || [];
-  const { mutate: createSession, isLoading: isCreatingSession } = useCreateSession();
-  const { data: messagesData, isLoading: messagesLoading } = useSessionMessages(currentSession);
-  const { mutate: sendMessageMutation, isLoading: isSendingMessage } = useSendMessage();
+  const [sessions, setSessions] = useState([]);
   
   // FIX: Track user interaction to prevent welcome screen flash
   const [hasInteraction, setHasInteraction] = useState(false);
@@ -73,18 +67,11 @@ export default function AITutorPremium() {
   const [isAITyping, setIsAITyping] = useState(false);
   
   // UI State
-  const {
-    showSidebar,
-    setShowSidebar,
-    showUpgradeModal,
-    setShowUpgradeModal,
-    upgradeModalData,
-    setUpgradeModalData,
-    drawerOpen,
-    setDrawerOpen,
-    expandedConcepts,
-    toggleConcept
-  } = useAITutorUI();
+  const [showSidebar, setShowSidebar] = useState(false); // Changed to false - now overlay only
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalData, setUpgradeModalData] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false); // Right drawer for reasoning/insights
+  const [expandedConcepts, setExpandedConcepts] = useState({}); // Track expanded concept cards
   
   // NEW: Dynamic default prompts
   const [defaultPrompts, setDefaultPrompts] = useState([]);
@@ -190,19 +177,71 @@ export default function AITutorPremium() {
     }
   }, [inputMessage]);
 
-  useEffect(() => {
-    if (sessions.length > 0 && !currentSession) {
-      loadSession(sessions[0].session_id);
+  /**
+   * Load initial data: sessions, chat history, metrics
+   */
+  const loadInitialData = async () => {
+    try {
+      await Promise.all([
+        loadSessions(),
+        loadMetrics()
+      ]);
+    } catch (error) {
+      console.error('Failed to load initial data:', error);
     }
-  }, [sessions, currentSession]);
+  };
 
-  useEffect(() => {
-    if (messagesData) {
+  /**
+   * Load user sessions from backend
+   */
+  const loadSessions = async () => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      const response = await axios.get(`${API}/ai/chat/sessions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const sessionList = response.data.sessions || [];
+      setSessions(sessionList);
+
+      // Auto-load most recent session if exists
+      if (sessionList.length > 0 && !currentSession) {
+        loadSession(sessionList[0].session_id);
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+    }
+  };
+
+  /**
+   * Load specific session's chat history
+   * CRITICAL: Fixed message parsing and prevents welcome screen flash
+   */
+  const loadSession = async (sessionId) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return;
+
+      setLoading(true);
+      const response = await axios.get(`${API}/ai/chat/${sessionId}/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const sessionData = response.data;
+      setCurrentSession(sessionId);
+
+      // Parse messages correctly - handle BOTH old format (combined) and new format (split)
       const parsedMessages = [];
       const messageIds = new Set();
-      if (messagesData.messages && Array.isArray(messagesData.messages)) {
-        messagesData.messages.forEach(msg => {
+
+      if (sessionData.messages && Array.isArray(sessionData.messages)) {
+        sessionData.messages.forEach(msg => {
+          // NEW FORMAT: Messages with user_message field store user + AI together
           if (msg.user_message) {
+            // Add user message
             const userMsgId = msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${Math.random()}`;
             if (!messageIds.has(userMsgId)) {
               parsedMessages.push({
@@ -213,6 +252,8 @@ export default function AITutorPremium() {
               });
               messageIds.add(userMsgId);
             }
+
+            // Add AI response (if exists)
             if (msg.dual_response || msg.response) {
               const aiMsgId = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
               if (!messageIds.has(aiMsgId)) {
@@ -229,7 +270,10 @@ export default function AITutorPremium() {
                 messageIds.add(aiMsgId);
               }
             }
-          } else if (msg.message && !msg.response) {
+          }
+          // OLD FORMAT: Separate user and AI message objects
+          else if (msg.message && !msg.response) {
+            // User message only
             const userMsgId = msg.message_id || `user_${Date.now()}_${Math.random()}`;
             if (!messageIds.has(userMsgId)) {
               parsedMessages.push({
@@ -241,6 +285,7 @@ export default function AITutorPremium() {
               messageIds.add(userMsgId);
             }
           } else if (msg.response) {
+            // AI response only
             const aiMsgId = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
             if (!messageIds.has(aiMsgId)) {
               parsedMessages.push({
@@ -254,26 +299,23 @@ export default function AITutorPremium() {
           }
         });
       }
+
       setMessages(parsedMessages);
       setSentMessageIds(messageIds);
+
+      // FIX: Set hasInteraction if messages exist to prevent welcome screen
       if (parsedMessages.length > 0) {
         setHasInteraction(true);
       } else {
         setHasInteraction(false);
       }
-    }
-  }, [messagesData]);
-
-  /**
-   * Load initial data: sessions, chat history, metrics
-   */
-  const loadInitialData = async () => {
-    try {
-      await Promise.all([
-        loadMetrics()
-      ]);
     } catch (error) {
-      console.error('Failed to load initial data:', error);
+      console.error('Failed to load session:', error);
+      setMessages([]);
+      setSentMessageIds(new Set());
+      setHasInteraction(false);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -358,8 +400,8 @@ export default function AITutorPremium() {
   
   // NEW: Control welcome screen visibility (prevent flicker)
   useEffect(() => {
-    setShowWelcome(messages.length === 0 && !hasInteraction && !isSendingMessage);
-  }, [messages.length, hasInteraction, isSendingMessage]);
+    setShowWelcome(messages.length === 0 && !hasInteraction && !loading);
+  }, [messages.length, hasInteraction, loading]);
   
   // NEW: Auto-collapse header when chat starts
   useEffect(() => {
@@ -369,24 +411,31 @@ export default function AITutorPremium() {
   /**
    * Create new session
    */
-  const createNewSession = (firstMessage) => {
-    return new Promise((resolve, reject) => {
+  const createNewSession = async (firstMessage) => {
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      if (!token) return null;
+
       const title = firstMessage.substring(0, 50) + (firstMessage.length > 50 ? '...' : '');
-      createSession({
+
+      const response = await axios.post(`${API}/ai/chat/sessions`, {
         title,
         subject: selectedSubject,
-        topic: 'General'
+        topic: 'General',
+        ai_mode: aiMode
       }, {
-        onSuccess: (data) => {
-          setCurrentSession(data.session_id);
-          resolve(data.session_id);
-        },
-        onError: (error) => {
-          console.error('Failed to create session:', error);
-          reject(`local_${Date.now()}`);
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-    });
+
+      const sessionId = response.data.session_id;
+      setCurrentSession(sessionId);
+      await loadSessions(); // Refresh session list
+
+      return sessionId;
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      return `local_${Date.now()}`;
+    }
   };
   
   /**
@@ -394,13 +443,18 @@ export default function AITutorPremium() {
    * Includes depth_level and exam_mode for structured student-centric responses
    * Backend now auto-saves messages, so we don't need manual save
    */
-  const sendMessage = async (messageContent) => {
-    if (!messageContent.trim() || isSendingMessage) return;
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || loading) return;
 
+    // NEW: Hide welcome screen immediately
     setShowWelcome(false);
     setHasInteraction(true);
-    setInputMessage('');
 
+    // Store message content before clearing input
+    const messageToSend = inputMessage;
+    setInputMessage(''); // Clear input immediately for better UX
+
+    // Check access
     const accessCheck = await checkFeatureAccess('ai_sessions_monthly');
     if (!accessCheck.has_access) {
       setUpgradeModalData({
@@ -413,60 +467,131 @@ export default function AITutorPremium() {
       return;
     }
 
-    let sessionId = currentSession;
-    if (!sessionId) {
-      try {
-        sessionId = await createNewSession(messageContent);
-      } catch (error) {
-        sessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        setCurrentSession(sessionId);
-        console.warn('⚠️ Using temporary session ID:', sessionId);
+    setLoading(true);
+
+    try {
+      // CRITICAL: ALWAYS create session before sending message
+      let sessionId = currentSession;
+      if (!sessionId) {
+        sessionId = await createNewSession(messageToSend);
+
+        // If session creation fails, generate temporary ID
+        if (!sessionId) {
+          sessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          setCurrentSession(sessionId);
+          console.warn('⚠️ Using temporary session ID:', sessionId);
+        }
       }
+
+      // NEW: OPTIMISTIC UPDATE - Add user message immediately (instant rendering)
+      const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const userMsg = {
+        type: 'user',
+        content: messageToSend,
+        timestamp: new Date().toISOString(),
+        message_id: userMsgId
+      };
+
+      // Check for duplicates and add message
+      setMessages(prev => {
+        const now = new Date().getTime();
+        const isDuplicate = prev.some(msg =>
+          msg.type === 'user' &&
+          msg.content === messageToSend &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+
+        if (isDuplicate) return prev;
+
+        setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
+        return [...prev, userMsg];
+      });
+
+      // NEW: Show AI typing indicator
+      setIsAITyping(true);
+
+      // Call AI API with ALL required parameters for structured responses
+      const token = localStorage.getItem('dhruv_ai_token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const requestBody = {
+        message: messageToSend,
+        subject: selectedSubject,
+        session_id: sessionId,
+        depth_level: 'standard',
+        exam_mode: 'JEE'
+      };
+
+      let response;
+      if (aiMode === 'dual') {
+        response = await axios.post(`${API}/ai/dual-response`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      } else if (aiMode === 'mentor') {
+        response = await axios.post(`${API}/ai/mentor-only`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      } else {
+        response = await axios.post(`${API}/ai/professor-only`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      }
+
+      const aiResponse = response.data;
+
+      // Add AI response to UI with unique ID
+      const aiMsgId = aiResponse.message_id || `ai_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const aiMsg = {
+        type: 'ai',
+        ...aiResponse,
+        timestamp: new Date().toISOString(),
+        message_id: aiMsgId
+      };
+
+      // FIX: Check for duplicates by ID and content
+      setMessages(prev => {
+        // Check if message with same ID already exists
+        const isDuplicateId = prev.some(msg => msg.message_id === aiMsgId);
+
+        // Check if AI message with similar content exists in last 5 seconds
+        const now = new Date().getTime();
+        const aiContent = JSON.stringify(aiResponse.dual_response || aiResponse.response || '');
+        const isDuplicateContent = prev.some(msg =>
+          msg.type === 'ai' &&
+          JSON.stringify(msg.dual_response || msg.response || '') === aiContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+
+        if (isDuplicateId || isDuplicateContent) {
+          return prev; // Don't add duplicate
+        }
+
+        setSentMessageIds(prevIds => new Set([...prevIds, aiMsgId]));
+        return [...prev, aiMsg];
+      });
+
+      // Track usage and refresh metrics
+      await trackFeatureUsage('ai_sessions_monthly');
+      await loadMetrics();
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      // Add error message
+      const errorMsgId = `error_${Date.now()}`;
+      setMessages(prev => [...prev, {
+        type: 'error',
+        content: 'Failed to get AI response. Please try again.',
+        timestamp: new Date().toISOString(),
+        message_id: errorMsgId
+      }]);
+    } finally {
+      setLoading(false);
+      setIsAITyping(false); // NEW: Turn off typing indicator
     }
-
-    const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const userMsg = {
-      type: 'user',
-      content: messageContent,
-      timestamp: new Date().toISOString(),
-      message_id: userMsgId
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setIsAITyping(true);
-
-    sendMessageMutation({
-      message: messageContent,
-      sessionId,
-      subject: selectedSubject,
-      depthLevel: 'standard',
-      examMode: 'JEE',
-      mode: aiMode
-    }, {
-      onSuccess: async (aiResponse) => {
-        const aiMsgId = aiResponse.message_id || `ai_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        const aiMsg = {
-          type: 'ai',
-          ...aiResponse,
-          timestamp: new Date().toISOString(),
-          message_id: aiMsgId
-        };
-        setMessages(prev => [...prev, aiMsg]);
-        await trackFeatureUsage('ai_sessions_monthly');
-        await loadMetrics();
-      },
-      onError: (error) => {
-        console.error('Failed to send message:', error);
-        setMessages(prev => [...prev, {
-          type: 'error',
-          content: 'Failed to get AI response. Please try again.',
-          timestamp: new Date().toISOString()
-        }]);
-      },
-      onSettled: () => {
-        setIsAITyping(false);
-      }
-    });
   };
   
   /**
@@ -489,6 +614,164 @@ export default function AITutorPremium() {
     }
   };
   
+  /**
+   * Handle follow-up question or predefined question
+   * Now actually sends the message instead of just populating input
+   */
+  const handleFollowUp = (content) => {
+    if (!content.trim() || loading) return;
+
+    // Set the input message
+    setInputMessage(content);
+
+    // Immediately trigger send with this content
+    handleQuickSend(content);
+  };
+
+  /**
+   * Quick send for predefined questions
+   */
+  const handleQuickSend = async (messageContent) => {
+    if (!messageContent.trim() || loading) return;
+
+    // NEW: Hide welcome screen immediately
+    setShowWelcome(false);
+    setHasInteraction(true);
+
+    // Clear input
+    setInputMessage('');
+    setLoading(true);
+
+    // Check access
+    const accessCheck = await checkFeatureAccess('ai_sessions_monthly');
+    if (!accessCheck.has_access) {
+      setUpgradeModalData({
+        feature: 'AI Tutor',
+        used: accessCheck.used,
+        limit: accessCheck.limit,
+        tier: accessCheck.subscription_tier
+      });
+      setShowUpgradeModal(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // CRITICAL: ALWAYS create session before sending message
+      let sessionId = currentSession;
+      if (!sessionId) {
+        sessionId = await createNewSession(messageContent);
+
+        // If session creation fails, generate temporary ID
+        if (!sessionId) {
+          sessionId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          setCurrentSession(sessionId);
+          console.warn('⚠️ Using temporary session ID:', sessionId);
+        }
+      }
+
+      // NEW: OPTIMISTIC UPDATE - Add user message immediately
+      const userMsgId = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const userMsg = {
+        type: 'user',
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+        message_id: userMsgId
+      };
+
+      // Check for duplicates and add message
+      setMessages(prev => {
+        const now = new Date().getTime();
+        const isDuplicate = prev.some(msg =>
+          msg.type === 'user' &&
+          msg.content === messageContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+
+        if (isDuplicate) return prev;
+
+        setSentMessageIds(prevIds => new Set([...prevIds, userMsgId]));
+        return [...prev, userMsg];
+      });
+
+      // NEW: Show AI typing indicator
+      setIsAITyping(true);
+
+      // Call AI API
+      const token = localStorage.getItem('dhruv_ai_token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const requestBody = {
+        message: messageContent,
+        subject: selectedSubject,
+        session_id: sessionId,
+        depth_level: 'standard',
+        exam_mode: 'JEE'
+      };
+
+      let response;
+      if (aiMode === 'dual') {
+        response = await axios.post(`${API}/ai/dual-response`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      } else if (aiMode === 'mentor') {
+        response = await axios.post(`${API}/ai/mentor-only`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      } else {
+        response = await axios.post(`${API}/ai/professor-only`, requestBody, {
+          headers,
+          timeout: 45000
+        });
+      }
+
+      const aiResponse = response.data;
+
+      // Add AI response to UI with unique ID
+      const aiMsgId = aiResponse.message_id || `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const aiMsg = {
+        type: 'ai',
+        ...aiResponse,
+        timestamp: new Date().toISOString(),
+        message_id: aiMsgId
+      };
+
+      // FIX: Check for duplicates
+      setMessages(prev => {
+        const isDuplicateId = prev.some(msg => msg.message_id === aiMsgId);
+        const now = new Date().getTime();
+        const aiContent = JSON.stringify(aiResponse.dual_response || aiResponse.response || '');
+        const isDuplicateContent = prev.some(msg =>
+          msg.type === 'ai' &&
+          JSON.stringify(msg.dual_response || msg.response || '') === aiContent &&
+          (now - new Date(msg.timestamp).getTime()) < 5000
+        );
+
+        if (isDuplicateId || isDuplicateContent) return prev;
+
+        setSentMessageIds(prevIds => new Set([...prevIds, aiMsgId]));
+        return [...prev, aiMsg];
+      });
+
+      // Track usage and refresh metrics
+      await trackFeatureUsage('ai_sessions_monthly');
+      await loadMetrics();
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      setMessages(prev => [...prev, {
+        type: 'error',
+        content: 'Failed to get AI response. Please try again.',
+        timestamp: new Date().toISOString()
+      }]);
+    } finally {
+      setLoading(false);
+      setIsAITyping(false); // NEW: Turn off typing indicator
+    }
+  };
   
   /**
    * Scroll to bottom
@@ -528,6 +811,15 @@ export default function AITutorPremium() {
     loadDefaultPrompts(selectedSubject); // NEW: Reload prompts
   };
   
+  /**
+   * Toggle concept card expansion
+   */
+  const toggleConcept = (messageId) => {
+    setExpandedConcepts(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
+  };
   
   /**
    * Render concept card (collapsible with MathJax support)
@@ -822,7 +1114,7 @@ export default function AITutorPremium() {
                               duration: 0.3,
                               ease: [0.4, 0, 0.2, 1]
                             }}
-                            onClick={() => sendMessage(prompt.text)}
+                            onClick={() => handleFollowUp(prompt.text)}
                             className="p-4 bg-white/60 dark:bg-white/10 backdrop-blur-md rounded-xl border-2 border-transparent hover:border-purple-500 hover:shadow-lg transition-all text-left group"
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -966,7 +1258,7 @@ export default function AITutorPremium() {
                               </button>
                             </div>
                             <button
-                              onClick={() => sendMessage('Can you explain this in more detail?')}
+                              onClick={() => handleFollowUp('Can you explain this in more detail?')}
                               className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
                               tabIndex={0}
                             >
@@ -1021,20 +1313,20 @@ export default function AITutorPremium() {
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      sendMessage(inputMessage);
+                      sendMessage();
                     }
                   }}
                   placeholder="Ask me anything..."
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   style={{ minHeight: '56px', maxHeight: '200px' }}
                   rows={1}
-                  disabled={isSendingMessage}
+                  disabled={loading}
                   aria-label="Chat input"
                 />
               </div>
               <button
-                onClick={() => sendMessage(inputMessage)}
-                disabled={!inputMessage.trim() || isSendingMessage}
+                onClick={sendMessage}
+                disabled={!inputMessage.trim() || loading}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 tabIndex={0}
                 aria-label="Send message"

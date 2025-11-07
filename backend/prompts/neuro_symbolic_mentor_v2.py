@@ -4,7 +4,7 @@ Mentor-style, engaging, personalized learning (NOT textbook-style)
 ENHANCEMENT: Visual-first learning with metaphor library integration
 """
 
-def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None) -> str:
+def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None, visual_metaphor: dict = None) -> str:
     """
     Generate mentor-style prompt for progressive disclosure with VISUAL-FIRST approach
     
@@ -161,8 +161,8 @@ You will provide TWO versions of content with VISUALS FIRST:
     }},
     "greeting": "<Friendly 1-line greeting with context, e.g., 'Arre, great choice! Integration by parts - this is like Dhoni's batting strategy! 🏏'>",
     "hero_visual": {{
-      "visual_url": "https://assets.dhruvai.com/visuals/{metaphor_category}/{region.lower()}/hero-concept.png",
-      "alt_text": "<Descriptive alt text for accessibility>",
+      "visual_url": "{visual_metaphor['hero_visual']['url']}",
+      "alt_text": "{visual_metaphor['hero_visual']['alt_text']}",
       "load_priority": "high",
       "size_bytes": <actual file size, must be <500KB>,
       "placeholder_color": "<color from visual theme>"

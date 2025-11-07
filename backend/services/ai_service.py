@@ -21,6 +21,7 @@ from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.svg_generator import SVGGenerator
 from utils.response_parser import ResponseParser
 from utils.motivational_generator import MotivationalGenerator
+from services.visual_engine import VisualEngine
 from utils.format_validator import format_validator
 
 from models.core import ChatSession, ChatMessage
@@ -41,6 +42,7 @@ class AIService:
         self.svg_generator = SVGGenerator()
         self.response_parser = ResponseParser(emergent_llm_key)
         self.motivational_generator = MotivationalGenerator()
+        self.visual_engine = VisualEngine()
         self.gemini_chat = None  # Lazy init for Gemini visual generation
         self.subscription_service = subscription_service  # For usage tracking
     
@@ -1355,6 +1357,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
             
             # Get user profile for personalization
             user_doc = await self.db.users.find_one({"user_id": user_id})
+            # [JULES VISUAL ENHANCEMENT START]
             student_profile = {
                 'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
                 'region': user_doc.get('region', 'Bangalore'),
@@ -1365,6 +1368,10 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'network_speed': user_doc.get('network_speed', '3G')
             }
             
+            # Resolve visual metaphor
+            visual_metaphor = self.visual_engine.resolve_visual_metaphor(message, student_profile)
+            # [JULES VISUAL ENHANCEMENT END]
+
             # If greeting detected, return mentor personality response
             if intent == 'greeting':
                 logger.info("👋 Greeting detected - routing to mentor personality")
@@ -1490,7 +1497,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
             student_profile_dynamic['preferred_metaphor'] = selected_metaphor
             student_profile_dynamic['detected_topic'] = detected_topic
             
-            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile_dynamic)
+            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile_dynamic, visual_metaphor)
             
             # Step 4: Create LLM chat instance with optimized prompt
             # Use compact prompt for faster response
@@ -1659,6 +1666,10 @@ You're making great progress by actively seeking to understand. Keep up this exc
             )
             
             # Return response with metadata
+            # [JULES VISUAL ENHANCEMENT START]
+            response_dict['visual_metaphor'] = visual_metaphor
+            # [JULES VISUAL ENHANCEMENT END]
+
             return {
                 'success': True,
                 'message_id': message_id,
