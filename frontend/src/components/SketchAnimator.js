@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useAnimation } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
 
 /**
  * SketchAnimator - Component to animate sketches and metaphors in real-time
