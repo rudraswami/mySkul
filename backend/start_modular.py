@@ -1,4 +1,3 @@
-#!/bin/bash
 """
 Test the new modular FastAPI structure on port 8002
 """

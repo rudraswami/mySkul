@@ -5,11 +5,12 @@
 import axios from 'axios';
 
 // Get backend URL from environment - required for production
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-if (!BACKEND_URL) {
-  console.error('❌ REACT_APP_BACKEND_URL is not set in environment variables');
-  throw new Error('Backend URL not configured. Please set REACT_APP_BACKEND_URL environment variable.');
+// Prefer env; fallback to common local dev URL to avoid blank UI
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+if (!process.env.REACT_APP_BACKEND_URL) {
+  // Non-fatal warning to help local dev
+  // eslint-disable-next-line no-console
+  console.warn('REACT_APP_BACKEND_URL not set. Falling back to http://localhost:8001');
 }
 
 /**
@@ -33,7 +34,7 @@ let csrfToken = null;
 const fetchCsrfToken = async () => {
   try {
     const response = await apiClient.get('/auth/csrf-token');
-    csrfToken = response.data.csrf_token;
+    csrfToken = response?.data?.csrf_token || response?.headers?.['x-csrf-token'] || null;
     return csrfToken;
   } catch (error) {
     console.warn('Failed to fetch CSRF token:', error);
@@ -204,23 +205,29 @@ export const aiAPI = {
     apiClient.get('/ai/available-contexts'),
   
   getChatSessions: () =>
-    apiClient.get('/chat/sessions'),
+    apiClient.get('/ai/chat/sessions'),
   
-  sendMessage: (messageData) =>
-    apiClient.post('/chat/message', messageData),
+  sendMessage: (messageData) => {
+    // Prefer session-scoped message route if session_id provided
+    if (messageData?.session_id) {
+      return apiClient.post(`/ai/chat/${messageData.session_id}/messages`, messageData);
+    }
+    // Fallback to dual-response generator when no session context
+    return apiClient.post('/ai/dual-response', messageData);
+  },
   
   createSession: (sessionData) =>
-    apiClient.post('/chat/sessions', sessionData),
+    apiClient.post('/ai/chat/sessions', sessionData),
   
   // Guardrails
   validateMath: (expression) =>
-    apiClient.post('/guardrails/validate-math', { expression }),
+    apiClient.post('/ai/guardrails/validate-math', { expression }),
   
   verifyCitation: (subject, topic) =>
-    apiClient.get(`/guardrails/citations/${subject}/${topic}`),
+    apiClient.get(`/ai/guardrails/citations/${subject}/${topic}`),
   
   verifyFact: (statement, subject) =>
-    apiClient.post('/guardrails/fact-verification', { statement, subject }),
+    apiClient.post('/ai/guardrails/fact-verification', { statement, subject }),
 };
 
 // ==================== ANALYTICS ====================

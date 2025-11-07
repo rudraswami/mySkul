@@ -2,6 +2,7 @@
 Rate Limiting Configuration
 Protects API endpoints from abuse and DDoS attacks
 """
+import os
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -13,10 +14,12 @@ logger = logging.getLogger(__name__)
 
 # Initialize rate limiter
 # key_func: Function to identify clients (by IP address)
+# Allow configuring storage via env; default to in-memory
+_storage_uri = os.getenv("RATE_LIMIT_STORAGE_URI", "memory://")
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["100/minute"],  # Default: 100 requests per minute per IP
-    storage_uri="memory://",  # In-memory storage (use Redis for production)
+    storage_uri=_storage_uri,  # In-memory by default; set Redis for production
     strategy="fixed-window"  # Count resets at fixed intervals
 )
 
