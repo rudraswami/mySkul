@@ -65,4 +65,8 @@ class VisualEngine:
             }
 
         logger.info(f"Resolved visual metaphor for topic '{topic}': {metaphor['metaphor']}")
+        self.log_frame_generation_success(topic)  # Log frame generation success
         return metaphor
+
+    def log_frame_generation_success(self, topic: str):
+        logger.info(f"Frame generated successfully for topic: {topic}")
