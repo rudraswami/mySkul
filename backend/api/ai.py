@@ -864,13 +864,15 @@ async def generate_neuro_symbolic_response(
         # Track usage
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
         
-        return {
-            'success': True,
-            'message_id': result['message_id'],
-            'response': result['response'],
-            'question_type': result.get('question_type', 'explanation'),
-            'generation_time': result['generation_time']
-        }
+        # [JULES VISUAL ENHANCEMENT START]
+        visual_metaphor = result['response'].pop('visual_metaphor', {})
+        result['response']['hero_visual'] = visual_metaphor.get('hero_visual')
+        result['response']['step_visuals'] = result['response'].get('progressive_sections', {}).get('strategy', {}).get('steps', [])
+        result['response']['symbolic_structures'] = visual_metaphor.get('symbolic_structure')
+        result['response']['metaphor'] = visual_metaphor.get('metaphor')
+        result['response']['student_persona'] = f"{getattr(request, 'exam_mode', 'JEE')} | {result['response'].get('student_profile', {}).get('region', 'Delhi')} | {result['response'].get('student_profile', {}).get('emotional_state', 'Confident')}"
+        return result
+        # [JULES VISUAL ENHANCEMENT END]
         
     except HTTPException:
         raise
