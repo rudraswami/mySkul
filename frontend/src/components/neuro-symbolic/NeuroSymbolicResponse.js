@@ -1,7 +1,3 @@
-/**
- * Neuro-Symbolic Response Container
- * Displays all 8 sections of the AI response
- */
 import React from 'react';
 import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
