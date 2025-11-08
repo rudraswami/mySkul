@@ -17,13 +17,13 @@ const VisualConceptBlock = ({ visualData }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="my-4"
+      className="my-6 flex justify-center"
     >
       <motion.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="p-2"
+        className="w-full max-w-5xl rounded-3xl border border-purple-100 bg-white/95 p-6 shadow-lg"
       >
         <DynamicSceneComposer visualData={visualData} />
       </motion.div>

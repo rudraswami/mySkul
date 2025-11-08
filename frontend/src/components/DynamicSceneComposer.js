@@ -26,6 +26,8 @@ export default function DynamicSceneComposer({ visualData }) {
   // Render story scene from scene_json with simple frame navigation
   if (visualData.type === 'story_scene' && visualData.scene_json) {
     const { scene_json, interaction_flow = [], caption_text, interactivity } = visualData;
+    const baseWidth = scene_json.canvas?.width || 480;
+    const baseHeight = scene_json.canvas?.height || 270;
     const [frameIndex, setFrameIndex] = useState(0);
     const frame = interaction_flow[frameIndex] || { highlight: [] };
     const highlight = new Set(frame.highlight || []);
@@ -36,10 +38,19 @@ export default function DynamicSceneComposer({ visualData }) {
     }, [frame.highlight]);
     const containerRef = useRef(null);
 
+    const elements = useMemo(() => {
+      return (scene_json.elements || []).filter(el => {
+        const id = String(el?.id || '').toLowerCase();
+        if (el?.debug || el?.role === 'debug_label') return false;
+        if (id.includes('debug') || id.includes('meta_badge')) return false;
+        return true;
+      });
+    }, [scene_json.elements]);
+
     // Drag-and-drop interactive support (optional, non-breaking)
-    const tokens = (scene_json.elements || []).filter(e => e.type === 'token');
-    const dropzones = (scene_json.elements || []).filter(e => e.type === 'dropzone');
-    const sliders = (scene_json.elements || []).filter(e => e.type === 'slider');
+    const tokens = elements.filter(e => e.type === 'token');
+    const dropzones = elements.filter(e => e.type === 'dropzone');
+    const sliders = elements.filter(e => e.type === 'slider');
     const [tokenPositions, setTokenPositions] = useState(() => {
       const pos = {};
       tokens.forEach(t => { pos[t.id] = { x: t.x, y: t.y }; });
@@ -71,11 +82,13 @@ export default function DynamicSceneComposer({ visualData }) {
       return m;
     }, [interaction_flow]);
 
+    const background = scene_json.canvas?.background || '#ffffff';
+    const palette = scene_json.palette || {};
+
     const svg = useMemo(() => {
-      const w = scene_json.canvas?.width || 480;
-      const h = scene_json.canvas?.height || 270;
-      const bg = scene_json.canvas?.background || '#ffffff';
-      const pal = scene_json.palette || {};
+      const w = baseWidth;
+      const h = baseHeight;
+      const pal = palette;
 
       const renderEl = (el) => {
         const common = (extra = '') => `${extra} data-id='${el.id || ''}'`;
@@ -154,10 +167,9 @@ export default function DynamicSceneComposer({ visualData }) {
           case 'pattern': {
             // Render simple rangoli if requested; otherwise fallback to dashed placeholder
             if (el.style === 'rangoli') {
-              const palette = scene_json.palette || {};
-              const saffron = palette.saffron || '#FF9933';
-              const gold = palette.gold || '#FFD700';
-              const green = palette.green || '#138808';
+              const saffron = pal.saffron || '#FF9933';
+              const gold = pal.gold || '#FFD700';
+              const green = pal.green || '#138808';
               const cx = (el.x || 0) + (el.w || 0) / 2;
               const cy = (el.y || 0) + (el.h || 0) / 2;
               const R = Math.min((el.w || 120), (el.h || 120)) * 0.42;
@@ -184,7 +196,7 @@ export default function DynamicSceneComposer({ visualData }) {
                 items.push(`<circle cx='${px.toFixed(1)}' cy='${py.toFixed(1)}' r='${rDot.toFixed(1)}' fill='${gold}' opacity='0.8'/>`);
               }
               // Cross lines
-              for (let i = 0; i < petals/2; i++) {
+              for (let i = 0; i < petals / 2; i++) {
                 const a = (Math.PI * 2 * i) / (petals/2);
                 const x1 = cx + (R*0.2) * Math.cos(a);
                 const y1 = cy + (R*0.2) * Math.sin(a);
@@ -213,7 +225,7 @@ export default function DynamicSceneComposer({ visualData }) {
         }
       };
 
-      const content = (scene_json.elements || []).map(renderEl).join('');
+      const content = elements.map(renderEl).join('');
       const style = `<style>
         @keyframes rgPulse{0%{transform:scale(1)}100%{transform:scale(1.15)}}
         .pulse{animation:rgPulse .9s ease-in-out infinite alternate; transform-origin:center}
@@ -236,7 +248,7 @@ export default function DynamicSceneComposer({ visualData }) {
         <rect x='0' y='0' width='${w}' height='${h}' fill='transparent' />
         ${content}
       </svg>`;
-    }, [scene_json, frameIndex, JSON.stringify(sliderValues), JSON.stringify(labelOverrides)]);
+    }, [baseWidth, baseHeight, background, elements, frameIndex, JSON.stringify(sliderValues), JSON.stringify(labelOverrides), palette]);
 
     // Enrich placeholder labels using caption_text keywords (very lightweight heuristic)
     useEffect(() => {
@@ -262,7 +274,7 @@ export default function DynamicSceneComposer({ visualData }) {
     const prev = () => setFrameIndex(i => Math.max(i - 1, 0));
 
     // Lottie: load JSON for elements of type 'lottie' (optional)
-    const lottieEls = (scene_json.elements || []).filter(e => e.type === 'lottie');
+    const lottieEls = elements.filter(e => e.type === 'lottie');
     const [lottieDataMap, setLottieDataMap] = useState({});
     useEffect(() => {
       let cancelled = false;
@@ -380,157 +392,167 @@ export default function DynamicSceneComposer({ visualData }) {
       return () => clearInterval(id);
     }, [visualData.animation, interaction_flow.length]);
 
-    // Scaling: compute a scale factor to occupy ~90% of viewport height, centered
+    // Scaling: compute a scale factor to keep visuals compact and centered
     const [scale, setScale] = useState(1);
     useEffect(() => {
       const update = () => {
-        const w = scene_json.canvas?.width || 480;
-        const h = scene_json.canvas?.height || 270;
+        const w = baseWidth;
+        const h = baseHeight;
         const vw = (typeof window !== 'undefined' ? window.innerWidth : w) || w;
         const vh = (typeof window !== 'undefined' ? window.innerHeight : h) || h;
-        // Fit within max 55vh and ~85% of viewport width, keeping ~30% card space for caption/controls
-        const maxCardH = Math.max(260, Math.min(vh * 0.55, 560));
-        const availW = Math.min(vw * 0.85, 1000);
-        const availH = maxCardH * 0.7; // reserve space for caption
-        const s = Math.min(availW / w, availH / h);
+        const maxVisualH = Math.max(220, Math.min(vh * 0.45, 520));
+        const availW = Math.min(vw * 0.82, 960);
+        const s = Math.min(availW / w, maxVisualH / h);
         setScale(Number.isFinite(s) && s > 0 ? s : 1);
       };
       update();
       window.addEventListener('resize', update);
       return () => window.removeEventListener('resize', update);
-    }, [scene_json.canvas?.width, scene_json.canvas?.height]);
+    }, [baseWidth, baseHeight]);
 
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-end">
+      <div className="space-y-4">
+        <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
           {interaction_flow.length > 0 && (
             <div className="flex items-center gap-2">
-              <button onClick={prev} className="px-2 py-1 text-xs rounded border">Prev</button>
-              <span className="text-xs text-gray-500">{frameIndex + 1}/{Math.max(1, interaction_flow.length)}</span>
-              <button onClick={next} className="px-2 py-1 text-xs rounded border">Next</button>
-              <button onClick={() => { setFrameIndex(0); try { setConfettiFired(false);} catch{} }} className="px-2 py-1 text-xs rounded border">Replay</button>
+              <button onClick={prev} className="rounded border px-2 py-1 text-xs">Prev</button>
+              <span>{frameIndex + 1}/{Math.max(1, interaction_flow.length)}</span>
+              <button onClick={next} className="rounded border px-2 py-1 text-xs">Next</button>
+              <button
+                onClick={() => { setFrameIndex(0); try { setConfettiFired(false);} catch{}; }}
+                className="rounded border px-2 py-1 text-xs"
+              >
+                Replay
+              </button>
             </div>
           )}
         </div>
-        {/* Single, centered, responsive visual container (only one) */}
-        <div
-          className="relative"
-          style={{
-            width: '85%', maxWidth: 1000, margin: '12px auto',
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            height: 'auto', maxHeight: '50vh', overflow: 'hidden',
-            background: '#ffffff',
-            borderRadius: 10,
-            border: '1px solid #e5e7eb',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-            // scale the stage within by applying transform to an inner wrapper to keep this container as the single card
-          }}
-        >
-          <div ref={containerRef} data-scale={scale} style={{ position: 'relative', width: scene_json.canvas?.width || 480, height: scene_json.canvas?.height || 270, transform: `scale(${scale})`, transformOrigin: 'center' }}>
-            <div dangerouslySetInnerHTML={{ __html: svg }} />
-          {(interactivity?.show_reset || interactivity?.reset_button?.show) && (
-            <button
-              onClick={handleReset}
-              aria-label="Reset"
-              style={{ position: 'absolute', right: 8, top: 8, padding: '6px 10px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.06)', cursor: 'pointer' }}
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4">
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            style={{ aspectRatio: `${baseWidth}/${baseHeight}`, maxHeight: '60vh' }}
+          >
+            <div
+              ref={containerRef}
+              data-scale={scale}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                margin: 'auto',
+                width: baseWidth,
+                height: baseHeight,
+                transform: `scale(${scale})`,
+                transformOrigin: 'center'
+              }}
             >
-              Reset
-            </button>
+              <div dangerouslySetInnerHTML={{ __html: svg }} />
+              {(interactivity?.show_reset || interactivity?.reset_button?.show) && (
+                <button
+                  onClick={handleReset}
+                  aria-label="Reset"
+                  style={{ position: 'absolute', right: 8, top: 8, padding: '6px 10px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.06)', cursor: 'pointer' }}
+                >
+                  Reset
+                </button>
+              )}
+              {/* HTML overlay for tokens and dropzones for interactivity */}
+              {dropzones.map(z => {
+                const assigned = assignments[z.id];
+                const isCorrect = assigned ? (accepts[z.id] || []).includes(assigned) : null;
+                const borderColor = isCorrect == null ? '#999' : (isCorrect ? '#16a34a' : '#dc2626');
+                return (
+                  <div key={z.id} style={{ position: 'absolute', left: z.x, top: z.y, width: z.w || 120, height: z.h || 40, pointerEvents: 'none', border: `2px dashed ${borderColor}`, borderRadius: 8 }} />
+                );
+              })}
+              {tokens.map(t => {
+                const p = tokenPositions[t.id] || { x: t.x, y: t.y };
+                return (
+                  <button
+                    key={t.id}
+                    onPointerDown={(e) => onTokenDown(e, t.id)}
+                    style={{ position: 'absolute', left: p.x - 4, top: p.y - 20, padding: '4px 10px', background: '#ffffff', border: '1px solid #bbb', borderRadius: 6, cursor: 'grab' }}
+                  >
+                    {t.text || t.label || t.id}
+                  </button>
+                );
+              })}
+              {/* Tap-to-frame hotspots */}
+              {(interactivity?.tap_to_frame || []).map((m, idx) => {
+                const el = elements.find(e => e.id === m.elementId);
+                if (!el) return null;
+                let w = el.w || 48; let h = el.h || 28; let left = (el.x ?? 0) - 4; let top = (el.y ?? 0) - 20;
+                if (typeof el.cx === 'number' && typeof el.cy === 'number') {
+                  const r = el.r || 12; w = r * 2; h = r * 2; left = el.cx - r; top = el.cy - r;
+                }
+                const gotoIdx = frameIndexById[m.goto] ?? 0;
+                return (
+                  <button
+                    key={`tap_${idx}_${m.elementId}`}
+                    onClick={() => setFrameIndex(gotoIdx)}
+                    aria-label={`focus ${m.goto}`}
+                    style={{ position: 'absolute', left, top, width: w, height: h, background: 'transparent', border: '2px dashed rgba(99,102,241,0.25)', borderRadius: 8, cursor: 'pointer' }}
+                  />
+                );
+              })}
+              {sliders.map(s => {
+                const val = sliderValues[s.id] ?? (s.min ?? 0);
+                const onChange = (e) => {
+                  const v = Number(e.target.value);
+                  setSliderValues(prev => ({ ...prev, [s.id]: v }));
+                  applySliderBindings(s.id, v);
+                };
+                return (
+                  <input
+                    key={s.id}
+                    type="range"
+                    min={s.min ?? 0}
+                    max={s.max ?? 1}
+                    step={s.step ?? 0.01}
+                    value={val}
+                    onChange={onChange}
+                    aria-label={s.ariaLabel || s.id}
+                    style={{ position: 'absolute', left: s.x, top: s.y, width: (s.w || 200), height: 32 }}
+                  />
+                );
+              })}
+              {lottieEls.map(el => {
+                const data = lottieDataMap[el.id];
+                if (!data) return null;
+                const style = { position: 'absolute', left: el.x || 0, top: el.y || 0, width: el.w || 120, height: el.h || 120, pointerEvents: 'none' };
+                const confettiId = interactivity?.confetti_on_success?.id;
+                const confettiTargets = (interactivity?.confetti_on_success && interactivity.confetti_on_success.targets) || [];
+                const explicitMatch = confettiId ? el.id === confettiId : false;
+                const targetMatch = confettiTargets.length ? confettiTargets.includes(el.id) : false;
+                const nameMatch = /confetti|fireworks/i.test(el.id || '');
+                const shouldBoost = confettiFired && (explicitMatch || targetMatch || nameMatch);
+                return (
+                  <div key={el.id} style={style}>
+                    <Lottie animationData={data} loop={el.loop !== false} autoplay={(el.autoplay !== false) || shouldBoost} style={{ width: '100%', height: '100%' }} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {(caption_text || frame?.caption || interactivity?.goal) && (
+            <div className="flex w-full flex-col items-center gap-2 text-center">
+              {frame?.caption && (
+                <p className="text-sm font-medium text-gray-700">{frame.caption}</p>
+              )}
+              {caption_text && (
+                <p className="text-sm text-gray-600">{caption_text}</p>
+              )}
+              {interactivity?.goal && (
+                <div className="text-sm">
+                  {Object.keys(interactivity.goal).every(dz => (accepts[dz] || []).includes(assignments[dz])) ? (
+                    <span className="text-green-700">Correct! {interactivity.success_text || ''}</span>
+                  ) : (
+                    <span className="text-gray-600">{interactivity.hint_text || ''}</span>
+                  )}
+                </div>
+              )}
+            </div>
           )}
-          {/* HTML overlay for tokens and dropzones for interactivity */}
-          {dropzones.map(z => {
-            const assigned = assignments[z.id];
-            const isCorrect = assigned ? (accepts[z.id] || []).includes(assigned) : null;
-            const borderColor = isCorrect == null ? '#999' : (isCorrect ? '#16a34a' : '#dc2626');
-            return (
-              <div key={z.id} style={{ position: 'absolute', left: z.x, top: z.y, width: z.w || 120, height: z.h || 40, pointerEvents: 'none', border: `2px dashed ${borderColor}`, borderRadius: 8 }} />
-            );
-          })}
-          {tokens.map(t => {
-            const p = tokenPositions[t.id] || { x: t.x, y: t.y };
-            return (
-              <button
-                key={t.id}
-                onPointerDown={(e) => onTokenDown(e, t.id)}
-                style={{ position: 'absolute', left: p.x - 4, top: p.y - 20, padding: '4px 10px', background: '#ffffff', border: '1px solid #bbb', borderRadius: 6, cursor: 'grab' }}
-              >
-                {t.text || t.label || t.id}
-              </button>
-            );
-          })}
-          {/* Tap-to-frame hotspots */}
-          {(interactivity?.tap_to_frame || []).map((m, idx) => {
-            const el = (scene_json.elements || []).find(e => e.id === m.elementId);
-            if (!el) return null;
-            let w = el.w || 48; let h = el.h || 28; let left = (el.x ?? 0) - 4; let top = (el.y ?? 0) - 20;
-            if (typeof el.cx === 'number' && typeof el.cy === 'number') {
-              const r = el.r || 12; w = r * 2; h = r * 2; left = el.cx - r; top = el.cy - r;
-            }
-            const gotoIdx = frameIndexById[m.goto] ?? 0;
-            return (
-              <button
-                key={`tap_${idx}_${m.elementId}`}
-                onClick={() => setFrameIndex(gotoIdx)}
-                aria-label={`focus ${m.goto}`}
-                style={{ position: 'absolute', left, top, width: w, height: h, background: 'transparent', border: '2px dashed rgba(99,102,241,0.25)', borderRadius: 8, cursor: 'pointer' }}
-              />
-            );
-          })}
-          {sliders.map(s => {
-            const val = sliderValues[s.id] ?? (s.min ?? 0);
-            const onChange = (e) => {
-              const v = Number(e.target.value);
-              setSliderValues(prev => ({ ...prev, [s.id]: v }));
-              applySliderBindings(s.id, v);
-            };
-            return (
-              <input
-                key={s.id}
-                type="range"
-                min={s.min ?? 0}
-                max={s.max ?? 1}
-                step={s.step ?? 0.01}
-                value={val}
-                onChange={onChange}
-                aria-label={s.ariaLabel || s.id}
-                style={{ position: 'absolute', left: s.x, top: s.y, width: (s.w || 200), height: 32 }}
-              />
-            );
-          })}
-          {lottieEls.map(el => {
-            const data = lottieDataMap[el.id];
-            if (!data) return null;
-            const style = { position: 'absolute', left: el.x || 0, top: el.y || 0, width: el.w || 120, height: el.h || 120, pointerEvents: 'none' };
-            const confettiId = interactivity?.confetti_on_success?.id;
-            const confettiTargets = (interactivity?.confetti_on_success && interactivity.confetti_on_success.targets) || [];
-            const explicitMatch = confettiId ? el.id === confettiId : false;
-            const targetMatch = confettiTargets.length ? confettiTargets.includes(el.id) : false;
-            const nameMatch = /confetti|fireworks/i.test(el.id || '');
-            const shouldBoost = confettiFired && (explicitMatch || targetMatch || nameMatch);
-            return (
-              <div key={el.id} style={style}>
-                <Lottie animationData={data} loop={el.loop !== false} autoplay={(el.autoplay !== false) || shouldBoost} style={{ width: '100%', height: '100%' }} />
-              </div>
-            );
-          })}
-          </div>
         </div>
-        <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '6px 0 2px' }} />
-        {interactivity?.goal && (
-          <div className="text-sm">
-            {Object.keys(interactivity.goal).every(dz => (accepts[dz]||[]).includes(assignments[dz])) ? (
-              <span className="text-green-700">Correct! {interactivity.success_text || ''}</span>
-            ) : (
-              <span className="text-gray-600">{interactivity.hint_text || ''}</span>
-            )}
-          </div>
-        )}
-        {frame?.caption && (
-          <div className="text-sm text-gray-700">{frame.caption}</div>
-        )}
-        {caption_text && (
-          <div className="text-sm text-gray-600">{caption_text}</div>
-        )}
       </div>
     );
   }
