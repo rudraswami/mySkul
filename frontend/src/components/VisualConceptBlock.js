@@ -8,7 +8,14 @@ import DynamicSceneComposer from './DynamicSceneComposer'; // Importing the Dyna
  * Supports both inline SVG and base64 images with expand/collapse
  */
 const VisualConceptBlock = ({ visualData }) => {
-  if (!visualData || !visualData.generated) {
+  const hasSceneElements = Array.isArray(visualData?.scene_json?.elements)
+    && visualData.scene_json.elements.length > 0;
+  const hasInlineContent = typeof visualData?.content === 'string'
+    ? visualData.content.trim().length > 0
+    : Boolean(visualData?.content?.src);
+  const hasImageSource = typeof visualData?.src === 'string' && visualData.src.trim().length > 0;
+
+  if (!visualData || (!hasSceneElements && !hasInlineContent && !hasImageSource)) {
     return null;
   }
 

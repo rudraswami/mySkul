@@ -42,6 +42,16 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     visual_data || { metaphor, practical_explanation, ask }
   );
 
+  const hasRenderableVisual = Boolean(
+    visualEngineData && (
+      visualEngineData.scene_json?.elements?.length > 0 ||
+      ['story_scene', 'svg', 'image'].includes(visualEngineData.type) ||
+      visualEngineData.content?.src ||
+      visualEngineData.src ||
+      (typeof visualEngineData.content === 'string' && visualEngineData.content.trim().length > 0)
+    )
+  );
+
   return (
     <div className="space-y-4 my-4">
       {/* Emotion indicator (subtle) */}
@@ -96,9 +106,7 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
       )}
 
       {/* 5. Dynamic Visual Story Scene */}
-      {visualEngineData && (
-        visualEngineData.scene_json?.elements?.length || visualEngineData.type === 'story_scene'
-      ) ? (
+      {hasRenderableVisual ? (
         <VisualConceptBlock visualData={visualEngineData} />
       ) : (
         <div className="p-4 bg-purple-50 border border-purple-200 rounded">
