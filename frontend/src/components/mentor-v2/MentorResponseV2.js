@@ -2,7 +2,7 @@
  * Mentor Response Component v2.0 - Progressive Disclosure
  * Default view + interactive reveal system
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CheckCircle, 
@@ -13,6 +13,9 @@ import {
   ChevronUp,
   Users
 } from 'lucide-react';
+
+import DynamicSceneComposer from '../DynamicSceneComposer';
+import { buildSceneFromMetaphor } from '../../utils/svgGenerator';
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
@@ -25,6 +28,48 @@ export default function MentorResponseV2({ response, onInteraction }) {
   }
   
   const { default_view, progressive_sections } = response;
+
+  // Prefer dynamic scene_json provided by backend; otherwise synthesize from metaphor text
+  const dynamicScene = useMemo(() => {
+    try {
+      const hv = default_view?.hero_visual;
+      if (hv?.scene_json) {
+        return {
+          type: 'story_scene',
+          generated: true,
+          scene_json: hv.scene_json,
+          interaction_flow: hv.interaction_flow || [],
+          neuro_symbolic_map: hv.neuro_symbolic_map || [],
+          caption_text: hv.caption_text || default_view?.metaphor?.text || ''
+        };
+      }
+      if (response?.visual_data?.scene_json) {
+        const vd = response.visual_data;
+        return {
+          type: 'story_scene',
+          generated: true,
+          scene_json: vd.scene_json,
+          interaction_flow: vd.interaction_flow || [],
+          neuro_symbolic_map: vd.neuro_symbolic_map || [],
+          caption_text: vd.caption_text || default_view?.metaphor?.text || ''
+        };
+      }
+      // As a last resort, synthesize from available text to avoid static visuals
+      const seed =
+        default_view?.metaphor?.text ||
+        default_view?.main_content?.title ||
+        default_view?.main_content?.content ||
+        default_view?.greeting || '';
+      if (seed) return buildSceneFromMetaphor(seed, 'general');
+    } catch (e) {
+      console.warn('VISUAL_ENGINE: dynamic scene generation failed', e);
+    }
+    return null;
+  }, [default_view, response]);
+
+  // Optional flag to force dynamic scenes even if images exist
+  const forceDynamic = (process.env.REACT_APP_FORCE_DYNAMIC_SCENE || '').toLowerCase() === 'true' ||
+                       process.env.REACT_APP_FORCE_DYNAMIC_SCENE === '1';
   
   // Debug: Log visual data
   useEffect(() => {
@@ -119,15 +164,13 @@ export default function MentorResponseV2({ response, onInteraction }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-4 rounded-xl overflow-hidden border-2 border-purple-200 relative"
-            style={{ backgroundColor: default_view.hero_visual.placeholder_color || '#F3F4F6' }}
+            className="mb-4 relative"
+            style={{ backgroundColor: (dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual.placeholder_color || '#F3F4F6') }}
           >
-            {/* Debug info in development */}
-            {process.env.NODE_ENV === 'development' && visualDebugInfo.hasHeroVisual && (
-              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs p-2 rounded z-10">
-                Tier: {visualDebugInfo.tier || 'N/A'} | 
-                Type: {visualDebugInfo.urlType} | 
-                Size: {visualDebugInfo.urlLength}B
+            {/* Debug overlay removed for clean student experience */}
+            {(dynamicScene || forceDynamic) && (
+              <div className="w-full">
+                <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
               </div>
             )}
             
@@ -139,10 +182,10 @@ export default function MentorResponseV2({ response, onInteraction }) {
                 loading="eager"
                 onLoad={() => handleImageLoad('hero_visual')}
                 onError={(e) => handleImageError('hero_visual', e)}
-                style={{ minHeight: '200px' }}
+                style={{ minHeight: '200px', display: (dynamicScene || forceDynamic) ? 'none' : undefined }}
               />
             ) : (
-              <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6">
+              <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6" style={{ display: (dynamicScene || forceDynamic) ? 'none' : undefined }}>
                 <div className="text-center">
                   <div className="text-6xl mb-3">
                     {default_view.hero_visual.fallback_emoji || 

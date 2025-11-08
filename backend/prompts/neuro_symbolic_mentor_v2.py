@@ -70,12 +70,23 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
     region_context = regional_examples.get(region, regional_examples['Bangalore'])
     
     # Metaphor examples by category
+    # Broadened metaphor categories with safe fallback to avoid KeyError (e.g., 'accommodation', 'transport')
     metaphor_examples = {
         'cricket': f"Like Dhoni choosing which ball to hit vs defend, IPL team strategies, cricket fielding positions",
         'bollywood': f"Like a movie plot structure, Shahrukh Khan dialog timing, hero-heroine working together",
         'cooking': f"Like making {region_context['food']} - mixing ingredients, timing is key, step-by-step process",
-        'gaming': f"Like PUBG strategy, game leveling up, choosing right weapon at right time"
+        'gaming': f"Like PUBG strategy, game leveling up, choosing right weapon at right time",
+        'accommodation': "Like hotel floors and rooms – floors as energy levels, rooms as orbitals, beds as spins",
+        'transport': "Like train compartments and routes – coaches, berths, connections forming a system",
+        'festival': "Like festival sequences – steps in order, coordinated actions and flows",
+        'art': "Like rangoli patterns – interlinked motifs showing relationships",
+        'nature': "Like water flow and cycles – accumulation, transformation, return",
+        'market': "Like bazaar bargaining and bundles – combining parts into outcomes",
+        'city': "Like city systems – roads, zones, and movement",
+        'industry': "Like factory lines – inputs, processes, outputs",
+        'family': "Like family resemblance – traits shared and inherited"
     }
+    examples_text = metaphor_examples.get(metaphor_category, "Simple, familiar real-world analogy that matches the concept")
     
     # Tone adjustment based on emotional state
     tone_guidance = {
@@ -97,7 +108,7 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
 
 **STUDENT PROFILE:**
 - Region: {region} ({region_context['food']}, {region_context['transport']})
-- Preferred examples: {metaphor_category} ({metaphor_examples[metaphor_category]})
+- Preferred examples: {metaphor_category} ({examples_text})
 - Current state: {emotional_state}
 - Tone adjustment: {tone}
 - Visual learner: {student_profile.get('visual_learner_preference', True)}

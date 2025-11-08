@@ -6,9 +6,9 @@ import React from 'react';
 import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
-import VisualConceptBlock from './VisualConceptBlock'; // Importing the VisualConceptBlock
-import SketchAnimator from './SketchAnimator'; // Importing the SketchAnimator
-import { useExistingVisualEngine } from '../hooks/useExistingVisualEngine'; // Importing existing visual engine hook
+import VisualConceptBlock from '../VisualConceptBlock'; // Importing the VisualConceptBlock from components root
+import SketchAnimator from '../SketchAnimator'; // Importing the SketchAnimator from components root
+import { useExistingVisualEngine } from '../../hooks/useExistingVisualEngine'; // Importing visual engine hook from src/hooks
 
 export default function NeuroSymbolicResponse({ response, isLoading }) {
   if (isLoading) {
@@ -37,7 +37,10 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     visual_data // Added visual_data to handle dynamic visuals
   } = response;
 
-  const visualEngineData = useExistingVisualEngine(visual_data); // Using existing visual engine
+  // Prefer backend-provided visual_data; otherwise derive from available fields
+  const visualEngineData = useExistingVisualEngine(
+    visual_data || { metaphor, practical_explanation, ask }
+  );
 
   return (
     <div className="space-y-4 my-4">
@@ -93,8 +96,16 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
       )}
 
       {/* 5. Dynamic Visual Story Scene */}
-      {visualEngineData && visualEngineData.type === 'story_scene' && (
-        <VisualConceptBlock visualData={visualEngineData} /> // Using the VisualConceptBlock for dynamic story scenes
+      {visualEngineData && (
+        visualEngineData.scene_json?.elements?.length || visualEngineData.type === 'story_scene'
+      ) ? (
+        <VisualConceptBlock visualData={visualEngineData} />
+      ) : (
+        <div className="p-4 bg-purple-50 border border-purple-200 rounded">
+          <div className="text-sm text-purple-800">
+            Learning about {String(metaphor || practical_explanation || 'this concept').slice(0, 50)}
+          </div>
+        </div>
       )}
 
       {/* 6. Sketch Animator for real-time explanations */}

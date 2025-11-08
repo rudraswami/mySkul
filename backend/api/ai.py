@@ -768,7 +768,7 @@ async def stream_neuro_symbolic_response(
         
         # Get user profile
         db = await get_database()
-        user_doc = await db.users.find_one({"user_id": user.user_id})
+        user_doc = await db.users.find_one({"user_id": user.user_id}) or {}
         student_profile = {
             'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
             'region': user_doc.get('region', 'Bangalore'),

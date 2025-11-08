@@ -1356,13 +1356,14 @@ You're making great progress by actively seeking to understand. Keep up this exc
             logger.info(f"🎯 Intent classified: {intent}")
             
             # Get user profile for personalization
-            user_doc = await self.db.users.find_one({"user_id": user_id})
+            user_doc = await self.db.users.find_one({"user_id": user_id}) or {}
             # [JULES VISUAL ENHANCEMENT START]
+            # Defensive defaults when user record is absent during onboarding or tests
             student_profile = {
                 'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
                 'region': user_doc.get('region', 'Bangalore'),
-                'engagement_level': 'neutral',
-                'emotional_state': 'neutral',
+                'engagement_level': user_doc.get('engagement_level', 'neutral'),
+                'emotional_state': user_doc.get('emotional_state', 'neutral'),
                 'visual_learner_preference': user_doc.get('visual_learner_preference', True),
                 'device_type': user_doc.get('device_type', 'mobile'),
                 'network_speed': user_doc.get('network_speed', '3G')
