@@ -96,14 +96,14 @@ class TopicClassifier:
     # Metaphor preferences by topic
     TOPIC_TO_METAPHOR = {
         'quantum_physics': ['hotel_rooms', 'train_compartments', 'apartment_floors'],
-        'chemistry_bonding': ['cooking', 'tiffin_assembly', 'rangoli_patterns'],
+        'chemistry_bonding': ['cooking', 'tiffin_assembly', 'movie_scene'],
         'chemistry_reaction': ['cooking', 'street_food_prep', 'biryani_layers'],
         'physics_mechanics': ['cricket_strategy', 'train_motion', 'auto_rickshaw'],
         'physics_waves': ['music', 'cricket_crowd', 'festival_celebration'],
         'physics_electricity': ['water_flow', 'train_network', 'metro_system'],
         'calculus': ['cooking_process', 'journey_planning', 'cricket_strategy'],
         'algebra': ['puzzle', 'market_calculation', 'cricket_score'],
-        'geometry': ['rangoli', 'building_architecture', 'cricket_field'],
+        'geometry': ['kitchen_organization', 'cricket_strategy', 'hotel_rooms'],
         'trigonometry': ['kite_flying', 'building_heights', 'cricket_angles'],
         'probability': ['train_bogies', 'tiffin_distribution', 'cricket_prediction'],
         'biology_cell': ['city_system', 'factory', 'kitchen_organization'],

@@ -16,6 +16,10 @@ import {
 
 import DynamicSceneComposer from '../DynamicSceneComposer';
 import { buildSceneFromMetaphor } from '../../utils/svgGenerator';
+import atomicStructure from '../../teaching/scripts/atomicStructureElectronConfig';
+import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
+import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
+import TeachingVisualPlayer from '../TeachingVisualPlayer';
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
@@ -28,6 +32,70 @@ export default function MentorResponseV2({ response, onInteraction }) {
   }
   
   const { default_view, progressive_sections } = response;
+
+  // Compute domain-specific flags used across rendering and scene synthesis
+  const chemAtomic = useMemo(() => {
+    try {
+      const seed =
+        default_view?.metaphor?.text ||
+        default_view?.main_content?.title ||
+        default_view?.main_content?.content ||
+        default_view?.greeting || '';
+      const blob = [seed, progressive_sections?.explanation, progressive_sections?.key_takeaways]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return /(atomic structure|electron(ic)? configuration|bohr|shell|orbital)/i.test(blob);
+    } catch {
+      return false;
+    }
+  }, [default_view, progressive_sections]);
+
+  // Check for animated teaching visual from new Visual Teaching Engine
+  const animatedTeachingVisual = useMemo(() => {
+    try {
+      // Check if backend sent animated teaching visual data
+      // Could be at response.teaching_visual or response.dual_response.teaching_visual
+      const teachingVisual = response?.teaching_visual || response?.dual_response?.teaching_visual;
+
+      if (teachingVisual && teachingVisual?.stages) {
+        console.log('🎬 ANIMATED TEACHING VISUAL DETECTED:', {
+          visualId: teachingVisual.visual_id,
+          type: teachingVisual.type,
+          numStages: teachingVisual.stages?.length,
+          totalDuration: teachingVisual.total_duration_ms,
+          metadata: teachingVisual.metadata
+        });
+        return teachingVisual;
+      }
+    } catch (e) {
+      console.warn('VISUAL_ENGINE: animated teaching visual check failed', e);
+    }
+    return null;
+  }, [response]);
+
+  // CRITICAL FIX: Check for backend-generated SVG first (solution visuals)
+  const backendSVG = useMemo(() => {
+    try {
+      // Check if backend sent SVG content (from unified_visual_system.py)
+      if (response?.visual_data?.content && response?.visual_data?.type === 'svg') {
+        console.log('✅ BACKEND SVG DETECTED:', {
+          length: response.visual_data.content.length,
+          visualType: response.visual_data.visual_type,
+          friendTestPassed: response.visual_data.friend_test_passed
+        });
+        return {
+          hasSVG: true,
+          svg: response.visual_data.content,
+          visualType: response.visual_data.visual_type,
+          metadata: response.visual_data.metadata
+        };
+      }
+    } catch (e) {
+      console.warn('VISUAL_ENGINE: backend SVG check failed', e);
+    }
+    return { hasSVG: false };
+  }, [response]);
 
   // Prefer dynamic scene_json provided by backend; otherwise synthesize from metaphor text
   const dynamicScene = useMemo(() => {
@@ -60,12 +128,18 @@ export default function MentorResponseV2({ response, onInteraction }) {
         default_view?.main_content?.title ||
         default_view?.main_content?.content ||
         default_view?.greeting || '';
+      // Chemistry atomic structure override to prevent mismatched math visuals
+      if (chemAtomic) {
+        const { scene } = atomicStructure({ complexity: 'simple' });
+        try { console.debug('[TEACHING] Chemistry atomic override active'); } catch {}
+        return scene;
+      }
       if (seed) return buildSceneFromMetaphor(seed, 'general');
     } catch (e) {
       console.warn('VISUAL_ENGINE: dynamic scene generation failed', e);
     }
     return null;
-  }, [default_view, response]);
+  }, [default_view, response, chemAtomic]);
 
   // Optional flag to force dynamic scenes even if images exist
   const forceDynamic = (process.env.REACT_APP_FORCE_DYNAMIC_SCENE || '').toLowerCase() === 'true' ||
@@ -159,22 +233,72 @@ export default function MentorResponseV2({ response, onInteraction }) {
         </div>
         
         {/* Hero Visual - VISUAL-FIRST */}
-        {default_view.hero_visual && (
+        {(default_view.hero_visual || animatedTeachingVisual) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
             className="mb-4 relative"
-            style={{ backgroundColor: (dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual.placeholder_color || '#F3F4F6') }}
+            style={{ backgroundColor: (backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
           >
-            {/* Debug overlay removed for clean student experience */}
-            {(dynamicScene || forceDynamic) && (
+            {/* PRIORITY 0: Animated Teaching Visual (DISABLED until AnimationEngine is complete) */}
+            {/* TODO: Enable once AnimationEngine has implementations for all animation types */}
+            {false && animatedTeachingVisual && (
               <div className="w-full">
-                <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
+                <TeachingVisualPlayer
+                  visualData={animatedTeachingVisual}
+                  onComplete={(result) => {
+                    console.log('Teaching visual completed:', result);
+                    if (onInteraction) {
+                      onInteraction('visual_complete', result);
+                    }
+                  }}
+                  onInteraction={(interaction) => {
+                    console.log('Teaching visual interaction:', interaction);
+                    if (onInteraction) {
+                      onInteraction('visual_interaction', interaction);
+                    }
+                  }}
+                />
               </div>
             )}
-            
-            {!imageLoadError['hero_visual'] ? (
+
+            {/* PRIORITY 1: Backend-generated SVG (solution visuals from unified_visual_system.py) */}
+            {backendSVG.hasSVG && (
+              <div className="w-full overflow-x-auto bg-white rounded-lg border-2 border-purple-200 p-4">
+                <div
+                  dangerouslySetInnerHTML={{ __html: backendSVG.svg }}
+                  style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                />
+                {backendSVG.visualType === 'solution' && (
+                  <div className="mt-3 text-center">
+                    <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+                      ✓ Step-by-Step Solution Visual
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PRIORITY 2: Dynamic scene_json or frontend-generated visuals */}
+            {!backendSVG.hasSVG && (dynamicScene || forceDynamic) && (
+              <div className="w-full">
+                {chemAtomic ? (
+                  (() => {
+                    const covBlob = [default_view?.metaphor?.text, default_view?.main_content?.title, default_view?.main_content?.content]
+                      .filter(Boolean).join(' ').toLowerCase();
+                    return /covalent/.test(covBlob)
+                      ? <CovalentInteractiveCard />
+                      : <AtomicInteractiveCard visualData={dynamicScene} />;
+                  })()
+                ) : (
+                  <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
+                )}
+              </div>
+            )}
+
+            {/* PRIORITY 3: Static image fallback */}
+            {!backendSVG.hasSVG && !imageLoadError['hero_visual'] && default_view.hero_visual ? (
               <img
                 src={default_view.hero_visual.visual_url}
                 alt={default_view.hero_visual.alt_text || 'Hero Visual'}
@@ -184,12 +308,12 @@ export default function MentorResponseV2({ response, onInteraction }) {
                 onError={(e) => handleImageError('hero_visual', e)}
                 style={{ minHeight: '200px', display: (dynamicScene || forceDynamic) ? 'none' : undefined }}
               />
-            ) : (
+            ) : !backendSVG.hasSVG && imageLoadError['hero_visual'] && default_view.hero_visual && (
               <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6" style={{ display: (dynamicScene || forceDynamic) ? 'none' : undefined }}>
                 <div className="text-center">
                   <div className="text-6xl mb-3">
-                    {default_view.hero_visual.fallback_emoji || 
-                     getMetaphorIcon(default_view.metaphor?.category) || 
+                    {default_view.hero_visual.fallback_emoji ||
+                     getMetaphorIcon(default_view.metaphor?.category) ||
                      '💡'}
                   </div>
                   <p className="text-sm font-medium text-gray-700 mb-2">
@@ -508,3 +632,4 @@ function getMetaphorIcon(category) {
   };
   return icons[category] || '💡';
 }
+

@@ -14,9 +14,9 @@ env_file = ROOT_DIR / '.env'
 
 if env_file.exists():
     load_dotenv(env_file)
-    print(f"✅ Loaded environment variables from {env_file}")
+    print(f"[OK] Loaded environment variables from {env_file}")
 else:
-    print("ℹ️  .env file not found - using environment variables from container")
+    print("[INFO] .env file not found - using environment variables from container")
 
 
 class Settings:
@@ -223,12 +223,12 @@ class Settings:
         
         # Warn about CSRF secret (auto-generated if missing)
         if not os.getenv("CSRF_SECRET"):
-            print("⚠️  CSRF_SECRET not in .env - using auto-generated value")
+            print("[WARNING]  CSRF_SECRET not in .env - using auto-generated value")
             print("   Add CSRF_SECRET to .env for production consistency")
         
         # Warn about OAuth if missing
         if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_SECRET:
-            print("⚠️  Google OAuth credentials not configured")
+            print("[WARNING]  Google OAuth credentials not configured")
             print("   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET for Google login")
         
         return errors
@@ -261,7 +261,7 @@ settings = Settings()
 # Validate settings on import
 validation_errors = settings.validate()
 if validation_errors:
-    print("\n❌ CRITICAL CONFIGURATION ERRORS:")
+    print("\n[ERROR] CRITICAL CONFIGURATION ERRORS:")
     for error in validation_errors:
         print(f"   - {error}")
     print("\nApplication may not function correctly. Please check your .env file.\n")

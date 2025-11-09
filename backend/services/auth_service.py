@@ -6,7 +6,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
-from fastapi import HTTPException, Request, Header
+from fastapi import HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from models.core import User
@@ -44,7 +44,7 @@ class AuthService:
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-    async def get_current_user(self, request: Request, authorization: Optional[str] = Header(None)) -> User:
+    async def get_current_user(self, request: Request) -> User:
         """
         Hybrid authentication: Session token (OAuth) OR JWT token authentication
         Priority: dhruv_ai_session cookie > Authorization Bearer > dhruv_ai_auth cookie
@@ -72,7 +72,9 @@ class AuthService:
         
         # Priority 2: Check Authorization Bearer header
         token = None
-        if authorization and authorization.startswith('Bearer '):
+        # Read Authorization header directly from request
+        authorization = request.headers.get('Authorization')
+        if authorization and isinstance(authorization, str) and authorization.startswith('Bearer '):
             token = authorization.split(' ')[1]
         
         # Priority 3: Check JWT cookie (dhruv_ai_auth) for backward compatibility

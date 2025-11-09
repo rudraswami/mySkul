@@ -6,7 +6,7 @@ import Lottie from 'lottie-react';
  * Minimal renderer for visualData produced by a visual engine.
  * Supports inline SVG, base64 images, and a simple fallback.
  */
-export default function DynamicSceneComposer({ visualData }) {
+export default function DynamicSceneComposer({ visualData, sliderState, onSliderChange, hideControls = false, userZoom = 1 }) {
   if (!visualData) return null;
 
   // Render inline SVG content (back-compat)
@@ -51,6 +51,8 @@ export default function DynamicSceneComposer({ visualData }) {
     const tokens = elements.filter(e => e.type === 'token');
     const dropzones = elements.filter(e => e.type === 'dropzone');
     const sliders = elements.filter(e => e.type === 'slider');
+    const selects = elements.filter(e => e.type === 'select');
+    const renderOverlayControls = false;
     const [tokenPositions, setTokenPositions] = useState(() => {
       const pos = {};
       tokens.forEach(t => { pos[t.id] = { x: t.x, y: t.y }; });
@@ -68,6 +70,13 @@ export default function DynamicSceneComposer({ visualData }) {
       sliders.forEach(s => { meta[s.id] = { min: s.min ?? 0, max: s.max ?? 1, step: s.step ?? 0.01 }; });
       return meta;
     }, [sliders]);
+    // Accept external slider state to drive visuals
+    useEffect(() => {
+      if (sliderState && typeof sliderState === 'object') {
+        setSliderValues(prev => ({ ...prev, ...sliderState }));
+      }
+    }, [sliderState ? JSON.stringify(sliderState) : null]);
+
     const [labelOverrides, setLabelOverrides] = useState({}); // { elementId: text }
     const accepts = useMemo(() => {
       const map = {};
@@ -90,7 +99,25 @@ export default function DynamicSceneComposer({ visualData }) {
       const h = baseHeight;
       const pal = palette;
 
+      const shouldRender = (el) => {
+        if (!el || !el.id) return true;
+        if (!el.visibleIf) return true;
+        const v = el.visibleIf;
+        const meta = v.sliderId ? sliderMeta[v.sliderId] : null;
+        const cur = v.sliderId ? (sliderValues[v.sliderId] ?? (meta?.min ?? 0)) : undefined;
+        const target = Number(v.value);
+        switch (v.op) {
+          case '>': return cur > target;
+          case '>=': return cur >= target;
+          case '<': return cur < target;
+          case '<=': return cur <= target;
+          case '==': return cur === target;
+          default: return true;
+        }
+      };
+
       const renderEl = (el) => {
+        if (!shouldRender(el)) return '';
         const common = (extra = '') => `${extra} data-id='${el.id || ''}'`;
         switch (el.type) {
           case 'rect': {
@@ -108,7 +135,20 @@ export default function DynamicSceneComposer({ visualData }) {
           }
           case 'circle': {
             const active = highlight.has(el.id);
-            return `<circle cx='${el.cx}' cy='${el.cy}' r='${el.r || 5}' fill='${el.fill || 'none'}' stroke='${active ? '#ff7043' : el.stroke || '#333'}' stroke-width='${active ? 3 : 1}' ${common()} />`;
+            // Optional dynamic positioning via bindIndex + positions[] driven by a slider
+            let cx = el.cx, cy = el.cy;
+            if (el.positions && Array.isArray(el.positions) && el.bindIndex && el.bindIndex.sliderId) {
+              const meta = sliderMeta[el.bindIndex.sliderId];
+              if (meta) {
+                const { min, max } = meta;
+                const val = sliderValues[el.bindIndex.sliderId] ?? min;
+                let idx = Math.round(val) - 1 + (el.bindIndex.offset || 0);
+                idx = Math.max(0, Math.min(idx, el.positions.length - 1));
+                const p = el.positions[idx];
+                if (p && typeof p.cx === 'number' && typeof p.cy === 'number') { cx = p.cx; cy = p.cy; }
+              }
+            }
+            return `<circle cx='${cx}' cy='${cy}' r='${el.r || 5}' fill='${el.fill || 'none'}' stroke='${active ? '#ff7043' : el.stroke || '#333'}' stroke-width='${active ? 3 : 1}' ${common()} />`;
           }
           case 'arrow': {
             const [x1, y1] = el.from; const [x2, y2] = el.to;
@@ -429,8 +469,8 @@ export default function DynamicSceneComposer({ visualData }) {
         </div>
         <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4">
           <div
-            className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-            style={{ aspectRatio: `${baseWidth}/${baseHeight}`, maxHeight: '60vh' }}
+            className="relative w-full  rounded-2xl border border-slate-200 bg-white shadow-sm"
+            style={{ aspectRatio: `${baseWidth}/${baseHeight}`,  }}
           >
             <div
               ref={containerRef}
@@ -441,7 +481,7 @@ export default function DynamicSceneComposer({ visualData }) {
                 margin: 'auto',
                 width: baseWidth,
                 height: baseHeight,
-                transform: `scale(${scale})`,
+                transform: `scale(${(scale).toFixed(3)})`,
                 transformOrigin: 'center'
               }}
             >
@@ -494,7 +534,7 @@ export default function DynamicSceneComposer({ visualData }) {
                   />
                 );
               })}
-              {sliders.map(s => {
+              {renderOverlayControls && sliders.filter(s => s.ui !== false).map(s => {
                 const val = sliderValues[s.id] ?? (s.min ?? 0);
                 const onChange = (e) => {
                   const v = Number(e.target.value);
@@ -511,8 +551,29 @@ export default function DynamicSceneComposer({ visualData }) {
                     value={val}
                     onChange={onChange}
                     aria-label={s.ariaLabel || s.id}
-                    style={{ position: 'absolute', left: s.x, top: s.y, width: (s.w || 200), height: 32 }}
+                    className="w-full"
                   />
+                );
+              })}
+              {renderOverlayControls && selects.filter(sel => sel.ui !== false).map(sel => {
+                const target = sel.targetSliderId;
+                const cur = target ? (sliderValues[target] ?? (sliderMeta[target]?.min ?? 0)) : undefined;
+                const onChange = (e) => {
+                  const v = Number(e.target.value);
+                  if (target) {
+                    setSliderValues(prev => ({ ...prev, [target]: v }));
+                    applySliderBindings(target, v);
+                  }
+                };
+                return (
+                  <div key={sel.id} style={{ position: 'absolute', left: sel.x || 0, top: sel.y || 0, width: sel.w || 200, background: '#fff' }}>
+                    {sel.label && <div style={{ fontSize: 12, color: '#374151', marginBottom: 4 }}>{sel.label}</div>}
+                    <select value={String(cur ?? '')} onChange={onChange} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: 6, padding: '6px 8px', fontSize: 12 }}>
+                      {(sel.options || []).map(opt => (
+                        <option key={opt.value} value={String(opt.value)}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 );
               })}
               {lottieEls.map(el => {
@@ -566,3 +627,15 @@ export default function DynamicSceneComposer({ visualData }) {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
+
+
+
+
+
+
+
+
+
+
+
+

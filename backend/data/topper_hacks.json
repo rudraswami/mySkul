@@ -1,0 +1,208 @@
+{
+  "recursion": {
+    "concept": "Recursion with base case",
+    "keywords": ["recursion", "recursive", "base case", "call stack"],
+    "hacks": [
+      {
+        "rank": "AIR 124 (JEE 2023)",
+        "hack": "Pehle base case likhna, phir recursive call - examiner sequence dekhta hai",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12", "jee"]
+      },
+      {
+        "rank": "State Topper (Karnataka)",
+        "hack": "Recursion tree diagram banao - 100% marks milte hain",
+        "marks_saved": 3,
+        "board": "PUC",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      }
+    ]
+  },
+  "binary_search": {
+    "concept": "Binary search algorithm",
+    "keywords": ["binary search", "divide", "sorted array", "mid"],
+    "hacks": [
+      {
+        "rank": "State Topper (Maharashtra)",
+        "hack": "Mid calculation (left + right) / 2 ko bold/underline karo - marks guaranteed",
+        "marks_saved": 1,
+        "board": "HSC",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      },
+      {
+        "rank": "AIR 89 (JEE 2022)",
+        "hack": "Dry run example zaroori hai - bina example 40% marks jayenge",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12", "jee"]
+      }
+    ]
+  },
+  "sorting": {
+    "concept": "Sorting algorithms",
+    "keywords": ["sort", "bubble", "quick", "merge", "time complexity"],
+    "hacks": [
+      {
+        "rank": "99.8%ile (JEE Main)",
+        "hack": "Time complexity table yaad karo: Best, Average, Worst - teenon likhna compulsory",
+        "marks_saved": 3,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12", "jee"]
+      }
+    ]
+  },
+  "stack": {
+    "concept": "Stack data structure",
+    "keywords": ["stack", "push", "pop", "lifo", "top"],
+    "hacks": [
+      {
+        "rank": "AIR 234 (JEE 2023)",
+        "hack": "Underflow aur Overflow dono conditions dikhao - 2 marks pakka",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12"]
+      }
+    ]
+  },
+  "queue": {
+    "concept": "Queue data structure",
+    "keywords": ["queue", "enqueue", "dequeue", "fifo", "front", "rear"],
+    "hacks": [
+      {
+        "rank": "State Rank 12 (TN)",
+        "hack": "Circular queue diagram draw karo - examiner ko pasand aata hai",
+        "marks_saved": 2,
+        "board": "TN Board",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      }
+    ]
+  },
+  "linked_list": {
+    "concept": "Linked list",
+    "keywords": ["linked list", "node", "pointer", "head", "next"],
+    "hacks": [
+      {
+        "rank": "AIR 156 (JEE 2022)",
+        "hack": "Har step ka diagram banao - without diagram 50% marks nahi milte",
+        "marks_saved": 3,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12", "jee"]
+      }
+    ]
+  },
+  "tree": {
+    "concept": "Binary tree traversal",
+    "keywords": ["tree", "binary", "traversal", "inorder", "preorder", "postorder"],
+    "hacks": [
+      {
+        "rank": "State Topper (Delhi)",
+        "hack": "Inorder = Left-Root-Right yaad hai but recursion code likhna zaroori",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      }
+    ]
+  },
+  "dynamic_programming": {
+    "concept": "Dynamic Programming",
+    "keywords": ["dp", "dynamic programming", "memoization", "fibonacci", "optimal"],
+    "hacks": [
+      {
+        "rank": "AIR 78 (JEE Advanced)",
+        "hack": "Brute force pehle likhna, phir DP - comparison se full marks",
+        "marks_saved": 4,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["jee", "olympiad"]
+      }
+    ]
+  },
+  "graph": {
+    "concept": "Graph algorithms",
+    "keywords": ["graph", "bfs", "dfs", "dijkstra", "adjacency"],
+    "hacks": [
+      {
+        "rank": "99.9%ile (JEE Main)",
+        "hack": "Graph ka diagram mandatory - adjacency list bhi dikhao",
+        "marks_saved": 3,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12", "jee"]
+      }
+    ]
+  },
+  "oops": {
+    "concept": "Object Oriented Programming",
+    "keywords": ["class", "object", "inheritance", "polymorphism", "encapsulation"],
+    "hacks": [
+      {
+        "rank": "State Topper (UP)",
+        "hack": "Real-life example zaroori - Car/Student class se samjhao",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12"]
+      }
+    ]
+  },
+  "sql": {
+    "concept": "SQL queries",
+    "keywords": ["sql", "select", "join", "where", "group by", "database"],
+    "hacks": [
+      {
+        "rank": "AIR 198 (JEE 2023)",
+        "hack": "Query execution order likhna: FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY",
+        "marks_saved": 2,
+        "board": "CBSE",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      }
+    ]
+  },
+  "networking": {
+    "concept": "Computer Networks",
+    "keywords": ["network", "tcp", "ip", "protocol", "osi", "layer"],
+    "hacks": [
+      {
+        "rank": "State Rank 8 (Karnataka)",
+        "hack": "OSI layers mnemonic yaad karo: Please Do Not Throw Sausage Pizza Away",
+        "marks_saved": 1,
+        "board": "PUC",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_12"]
+      }
+    ]
+  },
+  "default": {
+    "concept": "General programming",
+    "keywords": ["algorithm", "program", "code", "logic"],
+    "hacks": [
+      {
+        "rank": "Multiple toppers",
+        "hack": "Pseudocode pehle likhna, code baad mein - logic clarity milti hai",
+        "marks_saved": 2,
+        "board": "All boards",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12"]
+      },
+      {
+        "rank": "Examiner tip",
+        "hack": "Variable names meaningful rakho - examiner easily samjh jayega",
+        "marks_saved": 1,
+        "board": "All boards",
+        "subject": "Computer Science",
+        "applicable_levels": ["class_11", "class_12"]
+      }
+    ]
+  }
+}

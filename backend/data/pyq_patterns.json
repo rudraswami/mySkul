@@ -1,0 +1,310 @@
+{
+  "recursion_base_case": {
+    "pattern_id": "REC_BC_001",
+    "description": "Recursion with base case explanation",
+    "keywords": ["recursion", "recursive", "base case", "recursive call", "function call"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q12(b)",
+        "marks": 3,
+        "similarity": 0.95,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q8",
+        "marks": 5,
+        "similarity": 0.87,
+        "exam_type": "Annual"
+      },
+      {
+        "board": "ISC",
+        "year": 2023,
+        "question_number": "Q6(c)",
+        "marks": 4,
+        "similarity": 0.90,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "binary_search_algorithm": {
+    "pattern_id": "BIN_SRCH_001",
+    "description": "Binary search implementation and analysis",
+    "keywords": ["binary search", "sorted", "array", "mid", "divide", "conquer"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q10",
+        "marks": 4,
+        "similarity": 0.92,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "CBSE",
+        "year": 2021,
+        "question_number": "Q7(b)",
+        "marks": 3,
+        "similarity": 0.85,
+        "exam_type": "Term 1"
+      },
+      {
+        "board": "HSC",
+        "year": 2023,
+        "question_number": "Q5",
+        "marks": 5,
+        "similarity": 0.88,
+        "exam_type": "Board Exam"
+      }
+    ]
+  },
+  "sorting_comparison": {
+    "pattern_id": "SORT_CMP_001",
+    "description": "Compare sorting algorithms with complexity",
+    "keywords": ["sort", "bubble", "selection", "insertion", "quick", "merge", "time complexity", "compare"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q11(a)",
+        "marks": 4,
+        "similarity": 0.94,
+        "exam_type": "Annual"
+      },
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q9",
+        "marks": 5,
+        "similarity": 0.91,
+        "exam_type": "Term 2"
+      }
+    ]
+  },
+  "stack_operations": {
+    "pattern_id": "STK_OPS_001",
+    "description": "Stack push/pop operations with overflow/underflow",
+    "keywords": ["stack", "push", "pop", "overflow", "underflow", "lifo", "top"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q4(c)",
+        "marks": 3,
+        "similarity": 0.89,
+        "exam_type": "Term 1"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q5",
+        "marks": 4,
+        "similarity": 0.86,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "ISC",
+        "year": 2022,
+        "question_number": "Q8(b)",
+        "marks": 5,
+        "similarity": 0.90,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "queue_operations": {
+    "pattern_id": "QUE_OPS_001",
+    "description": "Queue enqueue/dequeue with circular queue",
+    "keywords": ["queue", "enqueue", "dequeue", "circular", "fifo", "front", "rear"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q6(a)",
+        "marks": 4,
+        "similarity": 0.93,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "TN Board",
+        "year": 2023,
+        "question_number": "Q12",
+        "marks": 5,
+        "similarity": 0.88,
+        "exam_type": "Board Exam"
+      }
+    ]
+  },
+  "linked_list_operations": {
+    "pattern_id": "LL_OPS_001",
+    "description": "Linked list insertion and deletion",
+    "keywords": ["linked list", "node", "insert", "delete", "pointer", "head", "next"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q13",
+        "marks": 5,
+        "similarity": 0.91,
+        "exam_type": "Annual"
+      },
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q14(b)",
+        "marks": 4,
+        "similarity": 0.87,
+        "exam_type": "Term 2"
+      }
+    ]
+  },
+  "tree_traversal": {
+    "pattern_id": "TREE_TRV_001",
+    "description": "Binary tree traversal methods",
+    "keywords": ["tree", "traversal", "inorder", "preorder", "postorder", "binary", "node"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q15",
+        "marks": 5,
+        "similarity": 0.94,
+        "exam_type": "Annual"
+      },
+      {
+        "board": "CBSE",
+        "year": 2021,
+        "question_number": "Q12(c)",
+        "marks": 4,
+        "similarity": 0.89,
+        "exam_type": "Term 2"
+      }
+    ]
+  },
+  "sql_queries": {
+    "pattern_id": "SQL_QRY_001",
+    "description": "SQL SELECT queries with JOIN and GROUP BY",
+    "keywords": ["sql", "select", "join", "where", "group by", "having", "order by"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q18(b)",
+        "marks": 3,
+        "similarity": 0.92,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q16",
+        "marks": 4,
+        "similarity": 0.88,
+        "exam_type": "Annual"
+      },
+      {
+        "board": "ISC",
+        "year": 2023,
+        "question_number": "Q10",
+        "marks": 5,
+        "similarity": 0.90,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "oops_concepts": {
+    "pattern_id": "OOP_CONC_001",
+    "description": "OOP concepts with examples",
+    "keywords": ["class", "object", "inheritance", "polymorphism", "encapsulation", "abstraction"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q7(a)",
+        "marks": 4,
+        "similarity": 0.90,
+        "exam_type": "Term 1"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q9",
+        "marks": 5,
+        "similarity": 0.86,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "file_handling": {
+    "pattern_id": "FILE_HDL_001",
+    "description": "File operations in Python",
+    "keywords": ["file", "open", "read", "write", "close", "with", "pickle"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q20",
+        "marks": 3,
+        "similarity": 0.89,
+        "exam_type": "Term 2"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q17(b)",
+        "marks": 4,
+        "similarity": 0.85,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "networking_basics": {
+    "pattern_id": "NET_BSC_001",
+    "description": "Networking protocols and layers",
+    "keywords": ["network", "tcp", "ip", "http", "ftp", "protocol", "osi", "layer"],
+    "references": [
+      {
+        "board": "CBSE",
+        "year": 2023,
+        "question_number": "Q22(a)",
+        "marks": 2,
+        "similarity": 0.87,
+        "exam_type": "Term 1"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q19",
+        "marks": 3,
+        "similarity": 0.84,
+        "exam_type": "Annual"
+      }
+    ]
+  },
+  "dynamic_programming": {
+    "pattern_id": "DP_001",
+    "description": "Dynamic programming with memoization",
+    "keywords": ["dynamic programming", "dp", "memoization", "fibonacci", "optimal", "subproblem"],
+    "references": [
+      {
+        "board": "JEE",
+        "year": 2023,
+        "question_number": "Q28",
+        "marks": 6,
+        "similarity": 0.92,
+        "exam_type": "JEE Advanced"
+      },
+      {
+        "board": "CBSE",
+        "year": 2022,
+        "question_number": "Q14(c)",
+        "marks": 5,
+        "similarity": 0.88,
+        "exam_type": "Compartment"
+      }
+    ]
+  }
+}

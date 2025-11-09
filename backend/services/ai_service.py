@@ -22,6 +22,8 @@ from utils.svg_generator import SVGGenerator
 from utils.response_parser import ResponseParser
 from utils.motivational_generator import MotivationalGenerator
 from services.visual_engine import VisualEngine
+from services.unified_visual_system import generate_visual_for_question
+from services.grammar_visual_templates import get_grammar_visual_template
 from utils.format_validator import format_validator
 
 from models.core import ChatSession, ChatMessage
@@ -573,14 +575,75 @@ Depth Level: {depth_level}"""
                 logger.error(f"❌ AI generation failed: {e}")
                 raise Exception(f"AI Tutor encountered an error: {str(e)}")
             
-            # Step 4: Generate visual concept (SVG primary, Gemini fallback)
-            visual_svg = self.svg_generator.generate_concept_visual(message, subject)
-            visual_data = {
-                'type': 'svg',
-                'content': visual_svg,
-                'generated': visual_svg is not None
-            }
-            
+            # Step 4: Generate visual using Unified Visual System (concept or solution)
+            try:
+                # Build student profile from user info
+                student_profile = None
+                if user_id:
+                    user_info = await self.db.users.find_one({"user_id": user_id})
+                    if user_info:
+                        student_profile = {
+                            "locale_language": user_info.get("preferred_language", "hi-IN"),
+                            "board": user_info.get("board", "CBSE"),
+                            "level": user_info.get("grade", "class_12"),
+                            "interests": user_info.get("interests", [])
+                        }
+
+                # Generate visual using new unified system
+                visual_result = generate_visual_for_question(
+                    question=message,
+                    student_profile=student_profile,
+                    marks=None  # Auto-detect from question
+                )
+
+                visual_svg = visual_result["svg"]
+                visual_data = {
+                    'type': 'svg',
+                    'content': visual_svg,
+                    'generated': True,
+                    'visual_type': visual_result.get("visual_type", "concept"),
+                    'metadata': visual_result.get("metadata", {}),
+                    'friend_test_passed': visual_result.get("friend_test", {}).get("passed", False)
+                }
+
+                logger.info(f"✅ Visual generated: {visual_result.get('visual_type')} (Friend Test: {visual_data['friend_test_passed']})")
+
+            except Exception as e:
+                logger.error(f"❌ Visual generation failed: {e}, falling back to old system")
+                # Fallback to old system if new one fails
+                visual_svg = self.svg_generator.generate_concept_visual(message, subject)
+                visual_data = {
+                    'type': 'svg',
+                    'content': visual_svg,
+                    'generated': visual_svg is not None,
+                    'visual_type': 'concept',
+                    'fallback': True
+                }
+
+            # Step 4.5: Generate Teaching Visual (Animated Lessons)
+            teaching_visual = None
+            try:
+                # Check if question matches pre-built teaching templates
+                message_lower = message.lower()
+
+                # Grammar templates
+                if any(keyword in message_lower for keyword in ['active', 'passive', 'voice']):
+                    teaching_visual = get_grammar_visual_template("active_passive_voice")
+                    logger.info("🎬 Teaching visual: Active/Passive Voice template")
+                elif any(keyword in message_lower for keyword in ['subject verb agreement', 'subject-verb']):
+                    teaching_visual = get_grammar_visual_template("subject_verb_agreement")
+                    logger.info("🎬 Teaching visual: Subject-Verb Agreement template")
+                elif any(keyword in message_lower for keyword in ['tense', 'past present future']):
+                    teaching_visual = get_grammar_visual_template("tenses")
+                    logger.info("🎬 Teaching visual: Verb Tenses template")
+
+                # Log if teaching visual was generated
+                if teaching_visual:
+                    logger.info(f"✅ Teaching visual generated: {teaching_visual.get('metadata', {}).get('topic')} ({len(teaching_visual.get('stages', []))} stages)")
+            except Exception as e:
+                logger.warning(f"⚠️ Teaching visual generation failed: {e}")
+                teaching_visual = None
+
             # Skip slow Gemini visual generation for fast-first strategy
             # Visual generation moved to background task for better performance
             
@@ -646,7 +709,7 @@ Depth Level: {depth_level}"""
                     "weight": professor_weight
                 },
                 "secondary": {
-                    "type": "mentor", 
+                    "type": "mentor",
                     "response": mentor_sanitized,
                     "raw_text": mentor_content,
                     "mentor_sections": sanitized_mentor_sections,
@@ -655,6 +718,7 @@ Depth Level: {depth_level}"""
                     "weight": mentor_weight
                 },
                 "visual": visual_data,
+                "teaching_visual": teaching_visual,  # Animated teaching visual
                 "sentiment_analysis": sentiment_analysis,
                 "quick_actions": quick_actions,
                 "motivational_footer": motivational_data,
@@ -1438,6 +1502,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
             
             # Step 2: Use selected metaphor (not hardcoded user preference)
             selected_metaphor = metaphor_selection['metaphor_category']
+            # Enforce 5‑Muse categories for visuals to match PRD
+            allowed_muses = {"cricket", "cooking", "bollywood", "gaming"}
+            if selected_metaphor not in allowed_muses:
+                logger.info(f"🔧 Remapping metaphor '{selected_metaphor}' to 'cooking' (PRD 5‑Muse)")
+                selected_metaphor = "cooking"
             detected_topic = metaphor_selection['topic']
             
             # Detect question type
@@ -1455,42 +1524,78 @@ You're making great progress by actively seeking to understand. Keep up this exc
             logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual.get('hero_visual', 'N/A')}")
             logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
-            # PHASE 3: AI-Powered SVG Sketch Generation
-            # Generate educational sketch-style SVG (replaces static images)
-            from services.svg_sketch_generator import SVGSketchGenerator
-            from services.svg_cache import SVGCache
-            
-            svg_cache = SVGCache(ttl_hours=24)
-            svg_generator = SVGSketchGenerator(self.emergent_llm_key)
-            
-            # Try to get from cache first
-            cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
-            cached_svg = svg_cache.get(cache_key)
-            
-            if cached_svg:
-                logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
-                svg_visual = cached_svg
-            else:
-                # Generate new SVG sketch
-                logger.info("🎨 Generating new SVG sketch with GPT-4o...")
-                svg_visual = await svg_generator.generate_educational_sketch(
-                    concept=concept_key,
-                    topic=detected_topic,
-                    metaphor_category=selected_metaphor,
-                    metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
-                    region=student_profile['region']
+            # PHASE 3: UNIFIED VISUAL SYSTEM Integration
+            # Try unified visual system FIRST (handles both concept and solution questions)
+            try:
+                logger.info("🎨 Attempting unified visual system (concept + solution support)...")
+                unified_visual_result = generate_visual_for_question(
+                    question=message,
+                    student_profile={
+                        "locale_language": student_profile.get('region', 'hi-IN'),
+                        "board": user_doc.get('board', 'CBSE'),
+                        "level": user_doc.get('grade', 'class_12'),
+                        "interests": user_doc.get('interests', [])
+                    },
+                    marks=None  # Auto-detect from question
                 )
-                
-                # Cache for future use
-                if svg_visual['success']:
-                    svg_cache.set(cache_key, svg_visual)
-                    logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
-            
-            # Replace static image with SVG (Phase 3 upgrade)
-            metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
-            metaphor_visual['svg_data'] = svg_visual
-            metaphor_visual['visual_tier'] = svg_visual['tier']
-            logger.info(f"🚀 Using SVG visual (Tier {svg_visual['tier']}) instead of static image")
+
+                # Use unified visual system result
+                svg_visual = {
+                    'success': True,
+                    'svg_data_uri': f"data:image/svg+xml;utf8,{unified_visual_result['svg']}",
+                    'tier': 0,  # Highest quality (step-by-step or emotional)
+                    'size_kb': len(unified_visual_result['svg']) / 1024,
+                    'generation_method': f"unified_{unified_visual_result['visual_type']}_system",
+                    'visual_type': unified_visual_result['visual_type'],
+                    'friend_test_passed': unified_visual_result['friend_test'].get('passed', False)
+                }
+
+                metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
+                metaphor_visual['svg_data'] = svg_visual
+                metaphor_visual['visual_tier'] = svg_visual['tier']
+                metaphor_visual['visual_type'] = svg_visual['visual_type']
+
+                logger.info(f"✅ UNIFIED VISUAL SYSTEM: {unified_visual_result['visual_type']} visual generated!")
+                logger.info(f"   Size: {svg_visual['size_kb']:.1f}KB | Friend Test: {svg_visual['friend_test_passed']}")
+
+            except Exception as e:
+                # Fallback to old SVG sketch generator if unified system fails
+                logger.warning(f"⚠️ Unified visual system failed: {e}, falling back to SVG sketch generator")
+
+                from services.svg_sketch_generator import SVGSketchGenerator
+                from services.svg_cache import SVGCache
+
+                svg_cache = SVGCache(ttl_hours=24)
+                svg_generator = SVGSketchGenerator(self.emergent_llm_key)
+
+                # Try to get from cache first
+                cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
+                cached_svg = svg_cache.get(cache_key)
+
+                if cached_svg:
+                    logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
+                    svg_visual = cached_svg
+                else:
+                    # Generate new SVG sketch
+                    logger.info("🎨 Generating new SVG sketch with GPT-4o...")
+                    svg_visual = await svg_generator.generate_educational_sketch(
+                        concept=concept_key,
+                        topic=detected_topic,
+                        metaphor_category=selected_metaphor,
+                        metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
+                        region=student_profile['region']
+                    )
+
+                    # Cache for future use
+                    if svg_visual['success']:
+                        svg_cache.set(cache_key, svg_visual)
+                        logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
+
+                # Replace static image with SVG (Phase 3 upgrade)
+                metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
+                metaphor_visual['svg_data'] = svg_visual
+                metaphor_visual['visual_tier'] = svg_visual['tier']
+                logger.info(f"🚀 Using fallback SVG visual (Tier {svg_visual['tier']})")
             
             # Generate system prompt v2 with visual context
             # IMPORTANT: Update student profile to use dynamically selected metaphor
@@ -1669,6 +1774,28 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # Return response with metadata
             # [JULES VISUAL ENHANCEMENT START]
             response_dict['visual_metaphor'] = visual_metaphor
+
+            # CRITICAL: Add visual_data for frontend MentorResponseV2 component
+            # Frontend expects: response.visual_data.content (the actual SVG)
+            if svg_visual.get('success') and svg_visual.get('svg_data_uri'):
+                # Extract pure SVG from data URI
+                svg_content = svg_visual['svg_data_uri']
+                if svg_content.startswith('data:image/svg+xml;utf8,'):
+                    svg_content = svg_content.replace('data:image/svg+xml;utf8,', '')
+
+                response_dict['visual_data'] = {
+                    'type': 'svg',
+                    'content': svg_content,
+                    'generated': True,
+                    'visual_type': svg_visual.get('visual_type', 'concept'),
+                    'metadata': {
+                        'size_kb': svg_visual.get('size_kb', 0),
+                        'generation_method': svg_visual.get('generation_method', 'unified_system'),
+                        'tier': svg_visual.get('tier', 0)
+                    },
+                    'friend_test_passed': svg_visual.get('friend_test_passed', False)
+                }
+                logger.info(f"✅ Added visual_data to response for frontend consumption")
             # [JULES VISUAL ENHANCEMENT END]
 
             return {

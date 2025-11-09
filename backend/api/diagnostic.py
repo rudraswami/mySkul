@@ -12,6 +12,116 @@ class VisualTestRequest(BaseModel):
     metaphor_category: str = "cricket"
     region: str = "Bangalore"
 
+
+class BlendedSketchRequest(BaseModel):
+    question: str
+    student_dna: dict | None = None
+
+
+@router.post("/blended-sketch")
+async def blended_sketch(req: BlendedSketchRequest):
+    """
+    Generate appropriate visual (concept OR solution) with Friend Test validation.
+    Now dynamically understands the question and generates step-by-step solutions
+    or concept explanations based on question type.
+    """
+    try:
+        from services.unified_visual_system import generate_visual_for_question
+        from services.visual_library import VisualLibrary
+
+        # Initialize library
+        library = VisualLibrary()
+
+        # Extract marks from question
+        import re as _re
+        marks = 3
+        m = _re.search(r"(\d+)\s*marks?", req.question.lower())
+        if m:
+            try:
+                marks = int(m.group(1))
+            except Exception:
+                marks = 3
+
+        # Check library first (codebase-first approach)
+        existing = library.find_existing(req.question, marks, subject="cs")
+
+        if existing:
+            return {
+                "success": True,
+                "question": req.question,
+                "marks": marks,
+                "metaphors": existing["metadata"].get("metaphors_used", []),
+                "svg": existing["svg"],
+                "size_kb": round(len(existing["svg"]) / 1024.0, 2),
+                "topper_hack": existing["metadata"].get("topper_hack"),
+                "topper_rank": existing["metadata"].get("topper_rank"),
+                "pyq_references": existing["metadata"].get("pyq_references", []),
+                "friend_test": existing.get("analytics", {}).get("friend_test_score", 0),
+                "source": "cached",
+                "validated": True
+            }
+
+        # Generate visual using new unified system (auto-detects concept vs solution)
+        result = generate_visual_for_question(
+            question=req.question,
+            student_profile=req.student_dna,
+            marks=marks
+        )
+
+        svg = result["svg"]
+        visual_type = result.get("visual_type", "concept")
+        friend_result = result.get("friend_test", {})
+
+        # Cache if passes friend test
+        if friend_result.get("passed", False):
+            library.save_visual(
+                question=req.question,
+                marks=marks,
+                svg=svg,
+                metadata=result["metadata"],
+                subject="cs",
+                friend_test_score=friend_result.get("score_value", 0)
+            )
+
+        # Build response based on visual type
+        response = {
+            "success": friend_result.get("passed", False),
+            "question": req.question,
+            "marks": marks,
+            "visual_type": visual_type,
+            "svg": svg,
+            "size_kb": round(len(svg) / 1024.0, 2),
+            "friend_test": friend_result,
+            "source": "generated",
+            "validated": friend_result.get("passed", False)
+        }
+
+        # Add type-specific metadata
+        if visual_type == "solution":
+            response.update({
+                "problem_type": result["metadata"].get("problem_type"),
+                "num_steps": result["metadata"].get("num_steps", 0),
+                "final_answer": result["metadata"].get("final_answer"),
+                "subject": result["metadata"].get("subject")
+            })
+        else:  # concept
+            response.update({
+                "metaphors": result["metadata"].get("metaphors_used", []),
+                "topper_hack": result["metadata"].get("topper_hack"),
+                "topper_rank": result["metadata"].get("topper_rank"),
+                "pyq_references": result["metadata"].get("pyq_references", []),
+                "region": result["metadata"].get("region", "North")
+            })
+
+        return response
+
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"blended-sketch failed: {str(e)}\n{traceback.format_exc()}"
+        )
+
 @router.get("/visual-test")
 async def test_visual_generation(
     metaphor: str = "cricket",
@@ -64,6 +174,28 @@ async def test_visual_generation(
             "error": str(e),
             "test": "Visual generation pipeline FAILED"
         }
+
+
+@router.get("/library-stats")
+async def get_library_stats(subject: str | None = None):
+    """
+    Get Visual Library statistics
+    Shows cached visuals, performance metrics, and high performers
+    """
+    try:
+        from services.visual_library import VisualLibrary
+
+        library = VisualLibrary()
+        stats = library.get_library_stats(subject=subject)
+
+        return {
+            "success": True,
+            "subject": subject or "all",
+            "stats": stats
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"library-stats failed: {str(e)}")
 
 
 @router.get("/visual-render-test")

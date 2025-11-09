@@ -28,6 +28,8 @@ from api import (
     dashboard_analytics,
     gamification,
 )
+from api import metaphors
+from api import visual_teaching
 
 # Middleware
 from middleware.csrf import CSRFMiddleware
@@ -231,6 +233,8 @@ def create_app() -> FastAPI:
     app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])
     app.include_router(dashboard_analytics.router, prefix="/api", tags=["Dashboard Analytics"])
     app.include_router(gamification.router, prefix="/api", tags=["Gamification"])
+    app.include_router(metaphors.router, prefix="/api", tags=["Metaphors"])
+    app.include_router(visual_teaching.router, tags=["Visual Teaching"])
 
     # Diagnostic endpoints for visual testing (optional)
     try:
@@ -294,4 +298,3 @@ if __name__ == "__main__":
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )
-

@@ -159,6 +159,25 @@ async def get_csrf_token(request: Request, response: Response):
     return {"csrf_token": csrf_token}
 
 
+@router.get("/session")
+async def get_session(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """Return current authenticated user via cookie or JWT; 401 if none"""
+    from fastapi import HTTPException
+
+    try:
+        user = await auth_service.get_current_user(request)
+        # Sanitize sensitive fields
+        user_dict = user.dict()
+        user_dict.pop("password_hash", None)
+        user_dict.pop("session_token", None)
+        return {"authenticated": True, "user": user_dict}
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="No active session")
+
+
 @router.get("/google/login")
 async def google_login(request: Request, db = Depends(get_database)):
     """

@@ -7,6 +7,10 @@ import VisualSchema from './VisualSchema';
 import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
 import VisualConceptBlock from '../VisualConceptBlock'; // Importing the VisualConceptBlock from components root
+import SmartTeachingVisual from '../SmartTeachingVisual'; // Professor-style storytelling (Chemistry-only rollout)
+import atomicStructure from '../../teaching/scripts/atomicStructureElectronConfig';
+import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
+import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
 import SketchAnimator from '../SketchAnimator'; // Importing the SketchAnimator from components root
 import { useExistingVisualEngine } from '../../hooks/useExistingVisualEngine'; // Importing visual engine hook from src/hooks
 
@@ -51,6 +55,21 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
       (typeof visualEngineData.content === 'string' && visualEngineData.content.trim().length > 0)
     )
   );
+
+  // Chemistry-first rollout for teaching orchestrator
+  const subjectGuess = String(
+    response?.subject ||
+    response?.topic_subject ||
+    visualEngineData?.subject ||
+    visualEngineData?.domain ||
+    visualEngineData?.topic_subject ||
+    ''
+  ).toLowerCase();
+  const topicGuess = response?.topic || response?.concept || (typeof ask === 'string' ? ask : 'Concept');
+  const textBlob = [topicGuess, metaphor, practical_explanation, ask].filter(Boolean).join(' ').toLowerCase();
+  const teachesChemistry = subjectGuess === 'chemistry' || /(atomic structure|electron(ic)? configuration|bohr|shell|orbital)/i.test(textBlob);
+  const shouldUseTeaching = teachesChemistry;
+  const isAtomicConfig = /(atomic structure|electron(ic)? configuration|bohr|shell|orbital)/i.test(textBlob);
 
   return (
     <div className="space-y-4 my-4">
@@ -106,7 +125,20 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
       )}
 
       {/* 5. Dynamic Visual Story Scene */}
-      {hasRenderableVisual ? (
+      {shouldUseTeaching ? (
+        /covalent/i.test(textBlob) ? (
+          <CovalentInteractiveCard />
+        ) : isAtomicConfig ? (
+          <AtomicInteractiveCard visualData={(atomicStructure({ complexity: 'simple' }).scene)} />
+        ) : (
+          <SmartTeachingVisual
+            topic={topicGuess}
+            subject={subjectGuess || 'chemistry'}
+            visualData={visualEngineData}
+            complexity="simple"
+          />
+        )
+      ) : hasRenderableVisual ? (
         <VisualConceptBlock visualData={visualEngineData} />
       ) : (
         <div className="p-4 bg-purple-50 border border-purple-200 rounded">

@@ -44,11 +44,13 @@ class SubscriptionService:
             # Try AI Tutor config first, fallback to legacy
             ai_tutor_config_path = str(Path(__file__).parent.parent / 'planConfig_ai_tutor.json')
             if Path(ai_tutor_config_path).exists():
-                with open(ai_tutor_config_path, 'r') as f:
+                # Explicit UTF-8 to support emojis and special characters on Windows
+                with open(ai_tutor_config_path, 'r', encoding='utf-8') as f:
                     self.plan_config = json.load(f)
                 logger.info("✅ Loaded AI Tutor subscription configuration")
             else:
-                with open(self.config_path, 'r') as f:
+                # Fallback legacy config
+                with open(self.config_path, 'r', encoding='utf-8') as f:
                     self.plan_config = json.load(f)
                 logger.info("✅ Loaded legacy subscription configuration")
             

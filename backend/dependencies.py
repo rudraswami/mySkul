@@ -2,7 +2,7 @@
 Shared dependencies for FastAPI routers
 Centralized dependency injection for services and database
 """
-from fastapi import Depends, Request, Header
+from fastapi import Depends, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import Optional
 
@@ -84,14 +84,13 @@ def get_ai_service() -> AIService:
 
 async def get_current_user(
     request: Request,
-    authorization: Optional[str] = Header(None),
     service: AuthService = Depends(get_auth_service)
 ) -> User:
     """
     Get current authenticated user (required)
     Raises HTTPException if not authenticated
     """
-    return await service.get_current_user(request, authorization)
+    return await service.get_current_user(request)
 
 
 async def get_current_user_optional(
