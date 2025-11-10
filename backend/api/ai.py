@@ -316,19 +316,41 @@ async def reset_session_memory(
     session_id: str,
     user: User = Depends(get_current_user)
 ):
-    """Reset lightweight session memory fields (last_topic, last_visual_sig, recent_visual_sigs)."""
+    """
+    Reset session memory - clears conversation context and learning artifacts.
+    Use this when student wants to start fresh on a new topic.
+    """
     try:
+        import time
         db = await get_database()
         res = await db.chat_sessions.update_one(
             {"session_id": session_id, "user_id": user.user_id},
-            {"$unset": {"last_topic": "", "last_visual_sig": "", "recent_visual_sigs": ""}, "$set": {"last_updated": time.time()}}
+            {
+                "$unset": {
+                    "last_topic": "",
+                    "last_metaphor": "",
+                    "last_visual_sig": "",
+                    "recent_visual_sigs": "",
+                    "topics_covered": ""
+                },
+                "$set": {
+                    "last_updated": time.time(),
+                    "message_count": 0
+                }
+            }
         )
         if res.matched_count == 0:
             raise HTTPException(status_code=404, detail="Session not found")
+
         # Clear in-memory cache as well
         _LAST_TV_BY_SESSION.pop(session_id, None)
         _RECENT_TV_BY_SESSION.pop(session_id, None)
-        return {"success": True, "session_id": session_id}
+
+        return {
+            "success": True,
+            "session_id": session_id,
+            "message": "Session memory cleared. Ready for a fresh start!"
+        }
     except HTTPException:
         raise
     except Exception as e:

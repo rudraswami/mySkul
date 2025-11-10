@@ -4,10 +4,10 @@ Mentor-style, engaging, personalized learning (NOT textbook-style)
 ENHANCEMENT: Visual-first learning with metaphor library integration
 """
 
-def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None, visual_metaphor: dict = None) -> str:
+def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None, visual_metaphor: dict = None, memory_context: str = None) -> str:
     """
-    Generate mentor-style prompt for progressive disclosure with VISUAL-FIRST approach
-    
+    Generate mentor-style prompt for progressive disclosure with VISUAL-FIRST approach + MEMORY
+
     Args:
         subject: Subject name (Mathematics, Physics, Chemistry, etc.)
         message: Student's question
@@ -21,9 +21,10 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
             'device_type': 'mobile'|'tablet'|'desktop',
             'network_speed': '2G'|'3G'|'4G'|'5G'
         }
-    
+        memory_context: Structured conversation memory string (from MemoryContextBuilder)
+
     Returns:
-        System prompt string with visual-first enhancements
+        System prompt string with visual-first enhancements and conversation memory
     """
     
     # Extract profile preferences or use defaults
@@ -114,6 +115,8 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
 - Visual learner: {student_profile.get('visual_learner_preference', True)}
 - Device: {student_profile.get('device_type', 'mobile')}
 - Network: {student_profile.get('network_speed', '3G')}
+
+{memory_context if memory_context else ''}
 
 **🎨 VISUAL-FIRST MANDATE (P0 Priority):**
 

@@ -1625,13 +1625,20 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 metaphor_visual['visual_tier'] = svg_visual['tier']
                 logger.info(f"🚀 Using fallback SVG visual (Tier {svg_visual['tier']})")
             
-            # Generate system prompt v2 with visual context
+            # Generate system prompt v2 with visual context + MEMORY
             # IMPORTANT: Update student profile to use dynamically selected metaphor
             student_profile_dynamic = student_profile.copy()
             student_profile_dynamic['preferred_metaphor'] = selected_metaphor
             student_profile_dynamic['detected_topic'] = detected_topic
-            
-            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile_dynamic, visual_metaphor)
+
+            # Build memory context from conversation history
+            from utils.memory_builder import MemoryContextBuilder
+            memory_dict = MemoryContextBuilder.build_memory_context(message_history or [], max_messages=5)
+            memory_context_str = memory_dict.get('memory_context_str', '')
+
+            logger.info(f"🧠 Memory: {memory_dict['message_count']} messages | Topics: {memory_dict.get('topics_covered', [])} | Last: {memory_dict.get('last_topic', 'None')}")
+
+            system_prompt = get_mentor_prompt_v2(subject, message, exam_mode, student_profile_dynamic, visual_metaphor, memory_context_str)
             
             # Step 4: Create LLM chat instance with optimized prompt
             # Use compact prompt for faster response
@@ -1775,7 +1782,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 }
                 logger.info(f"✅ Fallback response created with REAL image: {metaphor_visual['hero_visual'][:100]}")
             
-            # Step 7: Save to database
+            # Step 7: Save to database with MEMORY metadata
             message_id = str(uuid.uuid4())
             message_doc = {
                 'message_id': message_id,
@@ -1787,16 +1794,33 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'question_type': question_type,
                 'student_profile': student_profile,
                 'timestamp': datetime.now(timezone.utc).isoformat(),
-                'generation_time_seconds': generation_time
+                'generation_time_seconds': generation_time,
+
+                # Memory-building metadata
+                'topic': detected_topic,  # For memory tracking
+                'metaphor': selected_metaphor,  # Track which metaphor was used
+                'metaphor_text': metaphor_visual.get('metaphor_text', ''),  # Actual metaphor text
+                'visual_type': svg_visual.get('visual_type', 'concept') if 'svg_visual' in locals() else 'concept',
+                'practical_explanation': response_dict.get('default_view', {}).get('main_content', {}).get('content', '')[:200]  # First 200 chars for memory
             }
-            
+
             await self.db.chat_messages.insert_one(message_doc)
-            logger.info(f"💾 Message saved: {message_id}")
+            logger.info(f"💾 Message saved: {message_id} | Topic: {detected_topic} | Metaphor: {selected_metaphor}")
             
-            # Step 8: Update session last_updated
+            # Step 8: Update session last_updated + memory metadata
             await self.db.chat_sessions.update_one(
                 {"session_id": session_id, "user_id": user_id},
-                {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
+                {
+                    "$set": {
+                        "last_updated": datetime.now(timezone.utc).isoformat(),
+                        "last_topic": detected_topic,  # Track last discussed topic
+                        "last_metaphor": selected_metaphor  # Track last used metaphor
+                    },
+                    "$addToSet": {
+                        "topics_covered": detected_topic  # Add to list of topics covered (unique)
+                    },
+                    "$inc": {"message_count": 1}  # Increment message count
+                }
             )
             
             # Return response with metadata
