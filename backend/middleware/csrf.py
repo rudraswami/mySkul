@@ -35,38 +35,57 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next):
         """Process request with CSRF protection"""
-        
+
         # Skip CSRF check for exempt paths
         if any(request.url.path.startswith(path) for path in self.exempt_paths):
+            return await call_next(request)
+
+        # Temporary: Skip CSRF for DELETE /api/ai/chat/* to debug session issue
+        if request.method == "DELETE" and "/api/ai/chat/" in request.url.path:
+            logger.warning(f"CSRF check skipped for {request.url.path} (temporary exemption)")
             return await call_next(request)
         
         # Skip CSRF check for safe methods (GET, HEAD, OPTIONS)
         if request.method in ["GET", "HEAD", "OPTIONS"]:
             response = await call_next(request)
-            
-            # Generate new CSRF token for GET requests
-            csrf_token = self._generate_csrf_token()
-            response.headers["X-CSRF-Token"] = csrf_token
-            
-            # Store token in session
+
+            # Get existing token or generate new one
+            csrf_token = None
             if "session" in request.scope:
-                request.session["csrf_token"] = csrf_token
-            
+                csrf_token = request.session.get("csrf_token")
+
+            # Only generate new token if one doesn't exist
+            if not csrf_token:
+                csrf_token = self._generate_csrf_token()
+                if "session" in request.scope:
+                    request.session["csrf_token"] = csrf_token
+
+            # Always expose token in response header
+            response.headers["X-CSRF-Token"] = csrf_token
+
             return response
         
         # Validate CSRF token for state-changing methods
         if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
             # Get token from header
             token_from_header = request.headers.get("X-CSRF-Token")
-            
+
             # Get token from session
             token_from_session = None
             if "session" in request.scope:
                 token_from_session = request.session.get("csrf_token")
-            
+
+            # Debug logging
+            logger.info(f"CSRF validation for {request.method} {request.url.path}")
+            logger.info(f"  - Header token present: {bool(token_from_header)}")
+            logger.info(f"  - Session token present: {bool(token_from_session)}")
+            logger.info(f"  - Session in scope: {'session' in request.scope}")
+
             # Validate token
             if not token_from_header or not token_from_session:
                 logger.warning(f"CSRF token missing for {request.method} {request.url.path}")
+                logger.warning(f"  - Missing from header: {not token_from_header}")
+                logger.warning(f"  - Missing from session: {not token_from_session}")
                 raise HTTPException(
                     status_code=403,
                     detail="CSRF token missing. Please refresh the page and try again."

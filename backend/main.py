@@ -155,6 +155,7 @@ def create_app() -> FastAPI:
             "/api/auth/register",
             "/api/auth/logout",
             "/api/auth/session",
+            "/api/auth/csrf-token",
             "/api/health",
             "/docs",
             "/openapi.json",

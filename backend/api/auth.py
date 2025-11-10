@@ -143,16 +143,29 @@ async def logout_user(
 @router.get("/csrf-token")
 async def get_csrf_token(request: Request, response: Response):
     """Get or generate CSRF token and return it in body and header"""
+    import logging
+    logger = logging.getLogger(__name__)
+
     # Prefer token from session; generate if missing
     csrf_token = None
-    if "session" in request.scope:
+    has_session = "session" in request.scope
+
+    logger.info(f"CSRF token endpoint called")
+    logger.info(f"  - Session in scope: {has_session}")
+
+    if has_session:
         csrf_token = request.session.get("csrf_token")
+        logger.info(f"  - Existing token in session: {bool(csrf_token)}")
 
     if not csrf_token:
         import secrets
         csrf_token = secrets.token_urlsafe(32)
-        if "session" in request.scope:
+        logger.info(f"  - Generated new token")
+        if has_session:
             request.session["csrf_token"] = csrf_token
+            logger.info(f"  - Stored token in session")
+        else:
+            logger.warning(f"  - Cannot store token - no session!")
 
     # Also expose via response header for clients that read headers
     response.headers["X-CSRF-Token"] = csrf_token
@@ -697,28 +710,6 @@ async def get_session(
             "profile_completed": user.profile_completed,
             "subscription_type": user.subscription_type
         }
-    }
-
-
-
-@router.get("/csrf-token")
-async def get_csrf_token(request: Request):
-    """
-    Get CSRF token for state-changing requests
-    The token is automatically generated and sent in the X-CSRF-Token header
-    """
-    import secrets
-    
-    # Generate new CSRF token
-    csrf_token = secrets.token_urlsafe(32)
-    
-    # Store in session
-    if hasattr(request, "session"):
-        request.session["csrf_token"] = csrf_token
-    
-    return {
-        "csrf_token": csrf_token,
-        "message": "CSRF token generated. Include this token in X-CSRF-Token header for all POST/PUT/PATCH/DELETE requests."
     }
 
 
