@@ -17,6 +17,10 @@ from dependencies import get_current_user, get_database, get_unified_subscriptio
 # Router instance
 router = APIRouter(prefix="/ai", tags=["ai"])
 
+# In-memory caches to avoid repeating visuals per session
+_LAST_TV_BY_SESSION: dict = {}
+_RECENT_TV_BY_SESSION: dict = {}
+
 
 # Dependency to get AI service
 async def get_ai_service(db = Depends(get_database)) -> AIService:
@@ -274,6 +278,61 @@ async def get_cache_statistics(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Streaming failed: {str(e)}")
+
+
+# =============== Session Memory Utilities (Debug/Inspection) ===============
+
+@router.get("/session-memory/{session_id}")
+async def get_session_memory(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Inspect lightweight session memory for the Tutor.
+
+    Returns last_topic and last_visual_sig for the given session owned by the user.
+    """
+    try:
+        db = await get_database()
+        sess = await db.chat_sessions.find_one({"session_id": session_id, "user_id": user.user_id})
+        if not sess:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        mem = {
+            "session_id": session_id,
+            "last_topic": sess.get("last_topic"),
+            "last_visual_sig": sess.get("last_visual_sig"),
+            "recent_visual_sigs": sess.get("recent_visual_sigs", []),
+            "last_updated": sess.get("last_updated")
+        }
+        return {"success": True, "memory": mem}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch session memory: {str(e)}")
+
+
+@router.post("/session-memory/{session_id}/reset")
+async def reset_session_memory(
+    session_id: str,
+    user: User = Depends(get_current_user)
+):
+    """Reset lightweight session memory fields (last_topic, last_visual_sig, recent_visual_sigs)."""
+    try:
+        db = await get_database()
+        res = await db.chat_sessions.update_one(
+            {"session_id": session_id, "user_id": user.user_id},
+            {"$unset": {"last_topic": "", "last_visual_sig": "", "recent_visual_sigs": ""}, "$set": {"last_updated": time.time()}}
+        )
+        if res.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Session not found")
+        # Clear in-memory cache as well
+        _LAST_TV_BY_SESSION.pop(session_id, None)
+        _RECENT_TV_BY_SESSION.pop(session_id, None)
+        return {"success": True, "session_id": session_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset session memory: {str(e)}")
 
 @router.post("/dual-response")
 async def generate_dual_ai_response(
@@ -572,6 +631,34 @@ async def get_chat_sessions(
     """Get all chat sessions for the current user"""
     try:
         sessions = await ai_service.get_user_sessions(user.user_id)
+        # Enrich with message_count and last_updated fallback
+        try:
+            db = await get_database()
+            enriched = []
+            for s in sessions:
+                sid = s.get("session_id")
+                if not sid:
+                    continue
+                try:
+                    count = await db.chat_messages.count_documents({
+                        "session_id": sid,
+                        "user_id": user.user_id
+                    })
+                    s["message_count"] = int(count)
+                    # If last_updated missing, infer from latest message
+                    if not s.get("last_updated"):
+                        last = await db.chat_messages.find_one(
+                            {"session_id": sid, "user_id": user.user_id},
+                            sort=[("timestamp", -1)]
+                        )
+                        if last and last.get("timestamp"):
+                            s["last_updated"] = last["timestamp"]
+                except Exception:
+                    s["message_count"] = s.get("message_count", 0)
+                enriched.append(s)
+            sessions = enriched
+        except Exception:
+            pass
         return {"sessions": sessions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get chat sessions: {str(e)}")
@@ -713,19 +800,43 @@ async def delete_chat_session(
     """Delete a chat session and all its messages"""
     try:
         # Delete session messages first
-        await db.chat_messages.delete_many({"session_id": session_id, "user_id": user.user_id})
-        
+        try:
+            await db.chat_messages.delete_many({"session_id": session_id, "user_id": user.user_id})
+        except Exception:
+            # Message collection may not exist; don't block deletion
+            pass
+
         # Delete session
         result = await db.chat_sessions.delete_one({"session_id": session_id, "user_id": user.user_id})
-        
+
         if result.deleted_count == 0:
+            # Soft-delete fallback: mark as deleted so UI won't show it
+            try:
+                import time as _t
+                soft = await db.chat_sessions.update_one(
+                    {"session_id": session_id, "user_id": user.user_id},
+                    {"$set": {"deleted": True, "last_updated": _t.time()}},
+                )
+                if soft.matched_count:
+                    return {"message": "Session marked deleted"}
+            except Exception:
+                pass
             raise HTTPException(status_code=404, detail="Session not found")
-        
+
         return {"message": "Session deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
+        # As a last resort, attempt soft-delete and then surface original error if that fails
+        try:
+            import time as _t
+            await db.chat_sessions.update_one(
+                {"session_id": session_id, "user_id": user.user_id},
+                {"$set": {"deleted": True, "last_updated": _t.time()}},
+            )
+            return {"message": "Session marked deleted"}
+        except Exception:
+            raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")
 
 
 # ===================== NEURO-SYMBOLIC AI TUTOR (v3.0) =====================
@@ -845,17 +956,35 @@ async def generate_neuro_symbolic_response(
                 detail=access_result.to_dict()
             )
         
-        # Get message history for emotion context (optional)
+        # Get message history for memory/context (optional)
         message_history = []
+        session_doc = None
         if request.session_id:
             history = await ai_service.get_session_messages(request.session_id, user.user_id)
             message_history = history[-5:] if history else []  # Last 5 messages for context
+            # Fetch session memory (e.g., last topic)
+            try:
+                db = await get_database()
+                session_doc = await db.chat_sessions.find_one({"session_id": request.session_id, "user_id": user.user_id})
+            except Exception:
+                session_doc = None
         
-        # Generate neuro-symbolic response
+        # Generate neuro-symbolic response (with memory-aware context for clarifications/deep-dives)
+        from services.adaptive_response import detect_intent as _detect_intent
+        _intent = _detect_intent(request.message)
+        contextual_message = request.message
+        try:
+            prev_topic = (session_doc or {}).get('last_topic') if session_doc else None
+            if _intent in {"clarification_or_followup", "deep_dive"} and prev_topic:
+                if prev_topic.lower() not in (request.message or "").lower():
+                    contextual_message = f"{request.message}\n\nContext: Previous topic was '{prev_topic}'. Please respond accordingly (no basic repetition; go deeper/clarify)."
+        except Exception:
+            pass
+
         result = await ai_service.generate_neuro_symbolic_response(
             user_id=user.user_id,
             session_id=request.session_id or f"temp_{user.user_id}",
-            message=request.message,
+            message=contextual_message,
             subject=request.subject,
             exam_mode=getattr(request, 'exam_mode', 'JEE'),
             message_history=message_history
@@ -881,10 +1010,37 @@ async def generate_neuro_symbolic_response(
             from services.subject_templates import plan_from_subject_templates as _tpl
             from services.universal_visual_planner import plan_universal_visual as _plan
             from services.question_scope import build_scope as _brief, should_generate_visual as _should
+            from services.adaptive_response import detect_intent as _detect_intent
 
             _scope = _brief(request.message)
 
-            if _should(request.message, request.subject):
+            # Detect high-level student intent
+            _intent = _detect_intent(request.message)
+            # Attach intent and rendering directives for frontend adaptivity
+            try:
+                if 'response' in result:
+                    result['response']['intent'] = _intent
+                    directives = {}
+                    if _intent == 'clarification_or_followup':
+                        directives = {"skip_greeting": True, "suppress_metaphor": True, "suppress_cta": True}
+                    elif _intent == 'application_based':
+                        directives = {"prefer_application_card": True}
+                    elif _intent == 'deep_dive':
+                        directives = {"prefer_layers": True, "suppress_basic_steps": True}
+                    elif _intent == 'compare_contrast':
+                        # Visuals are not for comparing; suppress hero visual
+                        directives = {"prefer_compare_layout": True, "suppress_basic_steps": True, "suppress_metaphor": True}
+                    elif _intent == 'conceptual_explanation':
+                        directives = {"prefer_paragraph_first": True}
+                    if directives:
+                        result['response']['render_directives'] = directives
+            except Exception:
+                pass
+
+            # Only attach a teaching visual when appropriate (not for compare/clarification)
+            allow_visual = _should(request.message, request.subject) and _intent not in {"compare_contrast", "clarification_or_followup"}
+
+            if allow_visual:
                 # 1) Try dynamic synthesis from the actual question (numbers + concept)
                 tv = _dyn(request.message, request.subject)
 
@@ -897,9 +1053,67 @@ async def generate_neuro_symbolic_response(
                     tv = _plan(request.message, request.subject, _scope)
 
                 if tv:
+                    # Repetition guard: persist + maintain a small ring buffer (last 3)
+                    try:
+                        sid = getattr(request, 'session_id', None) or f"temp_{user.user_id}"
+                        sig = f"{tv.get('visual_id','')}::{(tv.get('metadata') or {}).get('topic','')}"
+
+                        # Load persisted memory
+                        try:
+                            db = await get_database()
+                            sess_doc = await db.chat_sessions.find_one({"session_id": sid, "user_id": user.user_id})
+                            persisted_sig = (sess_doc or {}).get('last_visual_sig')
+                            recent_list = (sess_doc or {}).get('recent_visual_sigs', []) or []
+                        except Exception:
+                            persisted_sig = None
+                            recent_list = []
+
+                        # Load in-memory ring buffer
+                        mem_list = _RECENT_TV_BY_SESSION.get(sid, [])
+                        combined_recent = list(dict.fromkeys([*mem_list, *recent_list]))  # dedupe, preserve order
+
+                        # Check against last and recent
+                        if _LAST_TV_BY_SESSION.get(sid) == sig or sig in combined_recent or (persisted_sig and persisted_sig == sig):
+                            tv = None
+                        else:
+                            # Update in-memory caches
+                            _LAST_TV_BY_SESSION[sid] = sig
+                            new_recent = (combined_recent + [sig])[-3:]  # keep last 3
+                            _RECENT_TV_BY_SESSION[sid] = new_recent
+
+                            # Persist last + recent ring buffer
+                            try:
+                                await db.chat_sessions.update_one(
+                                    {"session_id": sid, "user_id": user.user_id},
+                                    {"$set": {"last_visual_sig": sig, "recent_visual_sigs": new_recent, "last_updated": time.time()}},
+                                    upsert=False
+                                )
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+                if tv:
                     result['response']['teaching_visual'] = tv
         except Exception:
             # Never block main response if visual planning fails
+            pass
+
+        # Update memory: store last topic from attached teaching visual (if any)
+        try:
+            db = await get_database()
+            tv = result.get('response', {}).get('teaching_visual')
+            last_topic = None
+            if tv and isinstance(tv, dict):
+                last_topic = (tv.get('metadata') or {}).get('topic')
+            if not last_topic:
+                # Fallback: short topic from message
+                last_topic = (request.message or '')[:60]
+            if request.session_id and last_topic:
+                await db.chat_sessions.update_one(
+                    {"session_id": request.session_id, "user_id": user.user_id},
+                    {"$set": {"last_topic": last_topic, "last_updated": time.time()}}
+                )
+        except Exception:
             pass
 
         return result

@@ -72,10 +72,10 @@ class AIService:
             raise Exception(f"Failed to create chat session: {str(e)}")
     
     async def get_user_sessions(self, user_id: str) -> List[Dict[str, Any]]:
-        """Get all chat sessions for a user"""
+        """Get all chat sessions for a user (excluding soft-deleted)"""
         try:
             sessions = await self.db.chat_sessions.find(
-                {"user_id": user_id}
+                {"user_id": user_id, "deleted": {"$ne": True}}
             ).sort("last_updated", -1).to_list(length=None)
             
             # Clean up ObjectId and datetime serialization

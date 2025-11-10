@@ -20,11 +20,24 @@ import atomicStructure from '../../teaching/scripts/atomicStructureElectronConfi
 import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
 import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
 import TeachingVisualPlayer from '../TeachingVisualPlayer';
+import TipCard from '../teaching/blocks/TipCard';
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
   const [imageLoadError, setImageLoadError] = useState({});
   const [visualDebugInfo, setVisualDebugInfo] = useState({});
+  
+  // Intent-driven rendering hints from backend
+  const intent = response?.intent || null;
+  const directives = response?.render_directives || {};
+  const skipGreeting = !!directives.skip_greeting;
+  const suppressMetaphor = !!directives.suppress_metaphor;
+  const suppressCTA = !!directives.suppress_cta;
+  const preferApplicationCard = !!directives.prefer_application_card;
+  const preferLayers = !!directives.prefer_layers;
+  const suppressBasicSteps = !!directives.suppress_basic_steps;
+  const preferCompareLayout = !!directives.prefer_compare_layout;
+  const preferParagraphFirst = !!directives.prefer_paragraph_first;
   
   if (!response || !response.default_view) {
     console.error('❌ Invalid response structure:', response);
@@ -194,6 +207,97 @@ export default function MentorResponseV2({ response, onInteraction }) {
     console.log(`✅ Image loaded successfully: ${imageKey}`);
   };
   
+  // Render helper: hero visual block with all priority fallbacks
+  const renderHeroVisual = () => {
+    // Suppress hero visuals for compare/contrast or when explicitly requested
+    if (preferCompareLayout || intent === 'compare_contrast') return null;
+    return (
+    (default_view.hero_visual || animatedTeachingVisual) && !suppressMetaphor && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mb-4 relative"
+        style={{ backgroundColor: (animatedTeachingVisual || backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
+      >
+        {/* PRIORITY 0: Animated Teaching Visual */}
+        {animatedTeachingVisual && (
+          <div className="w-full">
+            <TeachingVisualPlayer
+              visualData={animatedTeachingVisual}
+              onComplete={(result) => {
+                if (onInteraction) onInteraction('visual_complete', result);
+              }}
+              onInteraction={(interaction) => {
+                if (onInteraction) onInteraction('visual_interaction', interaction);
+              }}
+            />
+          </div>
+        )}
+
+        {/* PRIORITY 1: Backend-generated SVG */}
+        {!animatedTeachingVisual && backendSVG.hasSVG && (
+          <div className="w-full overflow-x-auto bg-white rounded-lg border-2 border-purple-200 p-4">
+            <div
+              dangerouslySetInnerHTML={{ __html: backendSVG.svg }}
+              style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+            />
+            {backendSVG.visualType === 'solution' && (
+              <div className="mt-3 text-center">
+                <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+                  ✓ Step-by-Step Solution Visual
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PRIORITY 2: Dynamic scene_json or frontend-generated visuals */}
+        {!backendSVG.hasSVG && (dynamicScene || forceDynamic) && (
+          <div className="w-full">
+            {chemAtomic ? (
+              (() => {
+                const covBlob = [default_view?.metaphor?.text, default_view?.main_content?.title, default_view?.main_content?.content]
+                  .filter(Boolean).join(' ').toLowerCase();
+                return /covalent/.test(covBlob)
+                  ? <CovalentInteractiveCard />
+                  : <AtomicInteractiveCard visualData={dynamicScene} />;
+              })()
+            ) : (
+              <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
+            )}
+          </div>
+        )}
+
+        {/* PRIORITY 3: Static image fallback */}
+        {!backendSVG.hasSVG && !imageLoadError['hero_visual'] && default_view.hero_visual ? (
+          <img
+            src={default_view.hero_visual.visual_url}
+            alt={default_view.hero_visual.alt_text || 'Hero Visual'}
+            className="w-full h-auto"
+            loading="eager"
+            onLoad={() => handleImageLoad('hero_visual')}
+            onError={(e) => handleImageError('hero_visual', e)}
+            style={{ minHeight: '200px', display: (dynamicScene || forceDynamic) ? 'none' : undefined }}
+          />
+        ) : !backendSVG.hasSVG && imageLoadError['hero_visual'] && default_view.hero_visual && (
+          <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6" style={{ display: (dynamicScene || forceDynamic) ? 'none' : undefined }}>
+            <div className="text-center">
+              <div className="text-6xl mb-3">
+                {default_view.hero_visual.fallback_emoji || getMetaphorIcon(default_view.metaphor?.category) || '💡'}
+              </div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                {default_view.hero_visual.alt_text || default_view.metaphor?.text || 'Visual concept'}
+              </p>
+              <p className="text-xs text-gray-500">Visual Tier {default_view.hero_visual.tier || 1} - Fallback Active</p>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    )
+    );
+  };
+
   return (
     <div className="mentor-response-v2 space-y-4">
       {/* Default View - Always Visible */}
@@ -202,9 +306,10 @@ export default function MentorResponseV2({ response, onInteraction }) {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-100"
       >
-        {/* Mentor Avatar + Greeting */}
+        {/* Mentor Avatar + Greeting (skipped for clarifications) */}
+        {!skipGreeting && (
         <div className="flex items-start gap-4 mb-4">
-          {default_view.mentor_avatar && (
+          {default_view.mentor_avatar && !suppressMetaphor && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -231,108 +336,13 @@ export default function MentorResponseV2({ response, onInteraction }) {
             </div>
           </div>
         </div>
-        
-        {/* Hero Visual - VISUAL-FIRST */}
-        {(default_view.hero_visual || animatedTeachingVisual) && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-4 relative"
-            style={{ backgroundColor: (animatedTeachingVisual || backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
-          >
-            {/* PRIORITY 0: Animated Teaching Visual (ENABLED with simplified rendering) */}
-            {animatedTeachingVisual && (
-              <div className="w-full">
-                <TeachingVisualPlayer
-                  visualData={animatedTeachingVisual}
-                  onComplete={(result) => {
-                    console.log('Teaching visual completed:', result);
-                    if (onInteraction) {
-                      onInteraction('visual_complete', result);
-                    }
-                  }}
-                  onInteraction={(interaction) => {
-                    console.log('Teaching visual interaction:', interaction);
-                    if (onInteraction) {
-                      onInteraction('visual_interaction', interaction);
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            {/* PRIORITY 1: Backend-generated SVG (solution visuals from unified_visual_system.py) */}
-            {!animatedTeachingVisual && backendSVG.hasSVG && (
-              <div className="w-full overflow-x-auto bg-white rounded-lg border-2 border-purple-200 p-4">
-                <div
-                  dangerouslySetInnerHTML={{ __html: backendSVG.svg }}
-                  style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                />
-                {backendSVG.visualType === 'solution' && (
-                  <div className="mt-3 text-center">
-                    <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
-                      ✓ Step-by-Step Solution Visual
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PRIORITY 2: Dynamic scene_json or frontend-generated visuals */}
-            {!backendSVG.hasSVG && (dynamicScene || forceDynamic) && (
-              <div className="w-full">
-                {chemAtomic ? (
-                  (() => {
-                    const covBlob = [default_view?.metaphor?.text, default_view?.main_content?.title, default_view?.main_content?.content]
-                      .filter(Boolean).join(' ').toLowerCase();
-                    return /covalent/.test(covBlob)
-                      ? <CovalentInteractiveCard />
-                      : <AtomicInteractiveCard visualData={dynamicScene} />;
-                  })()
-                ) : (
-                  <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
-                )}
-              </div>
-            )}
-
-            {/* PRIORITY 3: Static image fallback */}
-            {!backendSVG.hasSVG && !imageLoadError['hero_visual'] && default_view.hero_visual ? (
-              <img
-                src={default_view.hero_visual.visual_url}
-                alt={default_view.hero_visual.alt_text || 'Hero Visual'}
-                className="w-full h-auto"
-                loading="eager"
-                onLoad={() => handleImageLoad('hero_visual')}
-                onError={(e) => handleImageError('hero_visual', e)}
-                style={{ minHeight: '200px', display: (dynamicScene || forceDynamic) ? 'none' : undefined }}
-              />
-            ) : !backendSVG.hasSVG && imageLoadError['hero_visual'] && default_view.hero_visual && (
-              <div className="w-full h-64 flex flex-col items-center justify-center text-gray-600 bg-gradient-to-br from-purple-100 to-blue-100 p-6" style={{ display: (dynamicScene || forceDynamic) ? 'none' : undefined }}>
-                <div className="text-center">
-                  <div className="text-6xl mb-3">
-                    {default_view.hero_visual.fallback_emoji ||
-                     getMetaphorIcon(default_view.metaphor?.category) ||
-                     '💡'}
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    {default_view.hero_visual.alt_text || default_view.metaphor?.text || 'Visual concept'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Visual Tier {default_view.hero_visual.tier || 1} - Fallback Active
-                  </p>
-                  {process.env.NODE_ENV === 'development' && (
-                    <p className="text-xs text-red-500 mt-2">
-                      Debug: Image failed to load - check console
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </motion.div>
         )}
         
+        {/* Hero Visual - paragraph-first if directed */}
+        {!preferParagraphFirst && renderHeroVisual()}
+        
         {/* Metaphor Card */}
+        {!suppressMetaphor && (
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-purple-200">
           <div className="flex items-start gap-3">
             <div className="text-3xl mt-1">
@@ -345,6 +355,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
             </div>
           </div>
         </div>
+        )}
         
         {/* Main Content */}
         <div className="bg-gray-50 rounded-xl p-5 mb-4">
@@ -362,9 +373,19 @@ export default function MentorResponseV2({ response, onInteraction }) {
             )}
           </div>
         </div>
+
+        {/* Application Card (if requested) */}
+        {preferApplicationCard && (
+          <div className="mb-4">
+            <TipCard tip_type="application" text={"Real-world: Observe this concept today and note one example from your surroundings."} />
+          </div>
+        )}
+
+        {/* Hero visual after paragraph if requested */}
+        {preferParagraphFirst && renderHeroVisual()}
         
         {/* Interactive Buttons */}
-        {default_view.interactive_options && default_view.interactive_options.length > 0 && (
+        {!suppressCTA && default_view.interactive_options && default_view.interactive_options.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-4">
             {default_view.interactive_options.map((option, idx) => (
               <motion.button
@@ -419,7 +440,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
       {progressive_sections && (
         <AnimatePresence>
           {/* Strategy Section */}
-          {revealedSections.has('strategy') && progressive_sections.strategy && (
+          {(preferLayers || revealedSections.has('strategy')) && progressive_sections.strategy && (
             <ProgressiveSection
               title={progressive_sections.strategy.title || 'Step-by-Step Strategy'}
               icon={<Target className="w-6 h-6" />}
@@ -427,7 +448,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
             >
               <div className="prose prose-purple max-w-none">
                 {/* Strategy Steps */}
-                {progressive_sections.strategy.steps && progressive_sections.strategy.steps.length > 0 ? (
+                {!suppressBasicSteps && progressive_sections.strategy.steps && progressive_sections.strategy.steps.length > 0 ? (
                   <div className="space-y-4">
                     {progressive_sections.strategy.steps.map((step, idx) => (
                       <motion.div
@@ -631,4 +652,3 @@ function getMetaphorIcon(category) {
   };
   return icons[category] || '💡';
 }
-
