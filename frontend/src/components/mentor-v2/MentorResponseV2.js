@@ -239,11 +239,10 @@ export default function MentorResponseV2({ response, onInteraction }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
             className="mb-4 relative"
-            style={{ backgroundColor: (backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
+            style={{ backgroundColor: (animatedTeachingVisual || backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
           >
-            {/* PRIORITY 0: Animated Teaching Visual (DISABLED until AnimationEngine is complete) */}
-            {/* TODO: Enable once AnimationEngine has implementations for all animation types */}
-            {false && animatedTeachingVisual && (
+            {/* PRIORITY 0: Animated Teaching Visual (ENABLED with simplified rendering) */}
+            {animatedTeachingVisual && (
               <div className="w-full">
                 <TeachingVisualPlayer
                   visualData={animatedTeachingVisual}
@@ -264,7 +263,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
             )}
 
             {/* PRIORITY 1: Backend-generated SVG (solution visuals from unified_visual_system.py) */}
-            {backendSVG.hasSVG && (
+            {!animatedTeachingVisual && backendSVG.hasSVG && (
               <div className="w-full overflow-x-auto bg-white rounded-lg border-2 border-purple-200 p-4">
                 <div
                   dangerouslySetInnerHTML={{ __html: backendSVG.svg }}

@@ -29,16 +29,16 @@ async def init_database():
     if not settings.MONGO_URL:
         raise ValueError("MONGO_URL not configured in environment variables")
     
-    print(f"🔌 Connecting to MongoDB...")
+    print(f"[DB] Connecting to MongoDB...")
     _client = AsyncIOMotorClient(settings.MONGO_URL)
     _db = _client[settings.DB_NAME]
-    
+
     # Test connection
     try:
         await _client.admin.command('ping')
-        print(f"✅ Connected to MongoDB database: {settings.DB_NAME}")
+        print(f"[OK] Connected to MongoDB database: {settings.DB_NAME}")
     except Exception as e:
-        print(f"❌ Failed to connect to MongoDB: {e}")
+        print(f"[ERROR] Failed to connect to MongoDB: {e}")
         raise
     
     return _db
@@ -52,7 +52,7 @@ async def close_database():
     global _client
     if _client:
         _client.close()
-        print("🔌 MongoDB connection closed")
+        print("[DB] MongoDB connection closed")
 
 
 # Export for convenience

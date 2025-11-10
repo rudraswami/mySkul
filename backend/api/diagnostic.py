@@ -283,3 +283,34 @@ async def visual_render_test():
     """
     
     return HTMLResponse(content=html_content)
+
+
+class TeachingVisualRequest(BaseModel):
+    question: str
+    subject: str | None = None
+
+
+@router.post("/universal-teaching-visual")
+async def universal_teaching_visual(req: TeachingVisualRequest):
+    """
+    Return a block-based teaching visual for any question using
+    subject templates when available, otherwise the universal planner.
+    """
+    try:
+        from services.subject_templates import plan_from_subject_templates
+        from services.universal_visual_planner import plan_universal_visual
+
+        visual = plan_from_subject_templates(req.question, req.subject)
+        if not visual:
+            visual = plan_universal_visual(req.question, req.subject)
+
+        return {
+            "success": True,
+            "source": "template" if str(visual.get("visual_id", "")).startswith("tpl_") else "universal",
+            "visual": visual,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"universal-teaching-visual failed: {e}")
+
+
+# Removed dev-only HTML playground per requirement: render visuals only in Tutor UI

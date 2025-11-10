@@ -871,6 +871,37 @@ async def generate_neuro_symbolic_response(
         result['response']['symbolic_structures'] = visual_metaphor.get('symbolic_structure')
         result['response']['metaphor'] = visual_metaphor.get('metaphor')
         result['response']['student_persona'] = f"{getattr(request, 'exam_mode', 'JEE')} | {result['response'].get('student_profile', {}).get('region', 'Delhi')} | {result['response'].get('student_profile', {}).get('emotional_state', 'Confident')}"
+
+        # Attach teaching visual for Tutor rendering
+        # Priority: dynamic builder → subject templates → universal fallback
+        # Only attempt when question appears visual-worthy (heuristic gate)
+        try:
+            from core.config import settings as _settings
+            from services.dynamic_visual_builder import build_dynamic_visual as _dyn
+            from services.subject_templates import plan_from_subject_templates as _tpl
+            from services.universal_visual_planner import plan_universal_visual as _plan
+            from services.question_scope import build_scope as _brief, should_generate_visual as _should
+
+            _scope = _brief(request.message)
+
+            if _should(request.message, request.subject):
+                # 1) Try dynamic synthesis from the actual question (numbers + concept)
+                tv = _dyn(request.message, request.subject)
+
+                # 2) Fall back to curated subject templates (scope-aware)
+                if not tv:
+                    tv = _tpl(request.message, request.subject, _scope)
+
+                # 3) Ensure we never return empty by using universal fallback when enabled
+                if not tv and getattr(_settings, 'VISUAL_ENGINE_MODE', 'universal') == 'universal':
+                    tv = _plan(request.message, request.subject, _scope)
+
+                if tv:
+                    result['response']['teaching_visual'] = tv
+        except Exception:
+            # Never block main response if visual planning fails
+            pass
+
         return result
         # [JULES VISUAL ENHANCEMENT END]
         

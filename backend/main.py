@@ -236,14 +236,15 @@ def create_app() -> FastAPI:
     app.include_router(metaphors.router, prefix="/api", tags=["Metaphors"])
     app.include_router(visual_teaching.router, tags=["Visual Teaching"])
 
-    # Diagnostic endpoints for visual testing (optional)
-    try:
-        from api import diagnostic
+    # Diagnostic endpoints for visual testing (dev only)
+    if settings.DEBUG or settings.ENVIRONMENT == "development":
+        try:
+            from api import diagnostic
 
-        app.include_router(diagnostic.router, prefix="/api", tags=["Diagnostic"])
-        logger.info("Diagnostic router registered")
-    except Exception as e:
-        logger.warning(f"Could not load diagnostic router: {e}")
+            app.include_router(diagnostic.router, prefix="/api", tags=["Diagnostic"])
+            logger.info("Diagnostic router registered (dev)")
+        except Exception as e:
+            logger.warning(f"Could not load diagnostic router: {e}")
 
     logger.info("All routers registered")
 

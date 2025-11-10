@@ -629,20 +629,48 @@ Depth Level: {depth_level}"""
                 # Grammar templates
                 if any(keyword in message_lower for keyword in ['active', 'passive', 'voice']):
                     teaching_visual = get_grammar_visual_template("active_passive_voice")
-                    logger.info("🎬 Teaching visual: Active/Passive Voice template")
+                    logger.info("[VISUAL] Teaching visual: Active/Passive Voice template")
                 elif any(keyword in message_lower for keyword in ['subject verb agreement', 'subject-verb']):
                     teaching_visual = get_grammar_visual_template("subject_verb_agreement")
-                    logger.info("🎬 Teaching visual: Subject-Verb Agreement template")
+                    logger.info("[VISUAL] Teaching visual: Subject-Verb Agreement template")
                 elif any(keyword in message_lower for keyword in ['tense', 'past present future']):
                     teaching_visual = get_grammar_visual_template("tenses")
-                    logger.info("🎬 Teaching visual: Verb Tenses template")
+                    logger.info("[VISUAL] Teaching visual: Verb Tenses template")
 
                 # Log if teaching visual was generated
                 if teaching_visual:
-                    logger.info(f"✅ Teaching visual generated: {teaching_visual.get('metadata', {}).get('topic')} ({len(teaching_visual.get('stages', []))} stages)")
+                    logger.info(f"[OK] Teaching visual generated: {teaching_visual.get('metadata', {}).get('topic')} ({len(teaching_visual.get('stages', []))} stages)")
             except Exception as e:
-                logger.warning(f"⚠️ Teaching visual generation failed: {e}")
+                logger.warning(f"[WARNING] Teaching visual generation failed: {e}")
                 teaching_visual = None
+
+            # Subject templates (Physics/Biology) using universal blocks
+            if teaching_visual is None:
+                try:
+                    from .subject_templates import plan_from_subject_templates
+                    tv = plan_from_subject_templates(message, subject)
+                    if tv:
+                        teaching_visual = tv
+                        logger.info(
+                            f"[VISUAL] Subject template generated: "
+                            f"{teaching_visual.get('metadata',{}).get('topic')}"
+                        )
+                except Exception as e:
+                    logger.warning(f"[WARNING] Subject templates failed: {e}")
+
+            # Universal fallback: generate a question-agnostic plan if none of the
+            # domain templates matched and feature flag is enabled.
+            try:
+                from core.config import settings
+                if teaching_visual is None and getattr(settings, "VISUAL_ENGINE_MODE", "universal") == "universal":
+                    from .universal_visual_planner import plan_universal_visual
+                    teaching_visual = plan_universal_visual(message, subject)
+                    logger.info(
+                        f"[VISUAL] Universal planner generated teaching visual: "
+                        f"{teaching_visual.get('metadata',{}).get('topic')} ({len(teaching_visual.get('stages', []))} stages)"
+                    )
+            except Exception as e:
+                logger.warning(f"[WARNING] Universal planner failed: {e}")
 
             # Skip slow Gemini visual generation for fast-first strategy
             # Visual generation moved to background task for better performance

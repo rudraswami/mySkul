@@ -38,6 +38,10 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8001"))
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8001")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+    # Visual engine feature flags
+    VISUAL_ENGINE_MODE: str = os.getenv("VISUAL_ENGINE_MODE", "universal")  # universal|legacy
+    VISUAL_ENGINE_STRICT: bool = os.getenv("VISUAL_ENGINE_STRICT", "true").lower() == "true"
     
     # =============================================================================
     # DATABASE SETTINGS
