@@ -45,12 +45,16 @@ export default function MentorResponseV2({ response, onInteraction }) {
   }
   
   const { default_view, progressive_sections } = response;
+  const normalizedContent = useMemo(() => normalizeMainContentBlocks(default_view), [default_view]);
+  const mainContentText = normalizedContent.content || '';
+  const keyInsight = normalizedContent.keyInsight || '';
+  const metaphorText = normalizedContent.metaphor || '';
 
   // Compute domain-specific flags used across rendering and scene synthesis
   const chemAtomic = useMemo(() => {
     try {
       const seed =
-        default_view?.metaphor?.text ||
+        metaphorText ||
         default_view?.main_content?.title ||
         default_view?.main_content?.content ||
         default_view?.greeting || '';
@@ -62,7 +66,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
     } catch {
       return false;
     }
-  }, [default_view, progressive_sections]);
+  }, [default_view, progressive_sections, metaphorText]);
 
   // Check for animated teaching visual from new Visual Teaching Engine
   const animatedTeachingVisual = useMemo(() => {
@@ -121,7 +125,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
           scene_json: hv.scene_json,
           interaction_flow: hv.interaction_flow || [],
           neuro_symbolic_map: hv.neuro_symbolic_map || [],
-          caption_text: hv.caption_text || default_view?.metaphor?.text || ''
+          caption_text: hv.caption_text || metaphorText || ''
         };
       }
       if (response?.visual_data?.scene_json) {
@@ -132,12 +136,12 @@ export default function MentorResponseV2({ response, onInteraction }) {
           scene_json: vd.scene_json,
           interaction_flow: vd.interaction_flow || [],
           neuro_symbolic_map: vd.neuro_symbolic_map || [],
-          caption_text: vd.caption_text || default_view?.metaphor?.text || ''
+          caption_text: vd.caption_text || metaphorText || ''
         };
       }
       // As a last resort, synthesize from available text to avoid static visuals
       const seed =
-        default_view?.metaphor?.text ||
+        metaphorText ||
         default_view?.main_content?.title ||
         default_view?.main_content?.content ||
         default_view?.greeting || '';
@@ -152,7 +156,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
       console.warn('VISUAL_ENGINE: dynamic scene generation failed', e);
     }
     return null;
-  }, [default_view, response, chemAtomic]);
+  }, [default_view, response, chemAtomic, metaphorText]);
 
   // Optional flag to force dynamic scenes even if images exist
   const forceDynamic = (process.env.REACT_APP_FORCE_DYNAMIC_SCENE || '').toLowerCase() === 'true' ||
@@ -257,14 +261,14 @@ export default function MentorResponseV2({ response, onInteraction }) {
           <div className="w-full">
             {chemAtomic ? (
               (() => {
-                const covBlob = [default_view?.metaphor?.text, default_view?.main_content?.title, default_view?.main_content?.content]
+                const covBlob = [metaphorText, default_view?.main_content?.title, default_view?.main_content?.content]
                   .filter(Boolean).join(' ').toLowerCase();
                 return /covalent/.test(covBlob)
                   ? <CovalentInteractiveCard />
                   : <AtomicInteractiveCard visualData={dynamicScene} />;
               })()
             ) : (
-              <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
+              <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(metaphorText || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
             )}
           </div>
         )}
@@ -287,7 +291,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
                 {default_view.hero_visual.fallback_emoji || getMetaphorIcon(default_view.metaphor?.category) || '💡'}
               </div>
               <p className="text-sm font-medium text-gray-700 mb-2">
-                {default_view.hero_visual.alt_text || default_view.metaphor?.text || 'Visual concept'}
+                {default_view.hero_visual.alt_text || metaphorText || 'Visual concept'}
               </p>
               <p className="text-xs text-gray-500">Visual Tier {default_view.hero_visual.tier || 1} - Fallback Active</p>
             </div>
@@ -342,7 +346,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
         {!preferParagraphFirst && renderHeroVisual()}
         
         {/* Metaphor Card */}
-        {!suppressMetaphor && (
+        {!suppressMetaphor && metaphorText && (
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-purple-200">
           <div className="flex items-start gap-3">
             <div className="text-3xl mt-1">
@@ -350,7 +354,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
             </div>
             <div className="flex-1">
               <p className="text-gray-800 leading-relaxed">
-                {default_view.metaphor?.text}
+                {metaphorText}
               </p>
             </div>
           </div>
@@ -358,21 +362,25 @@ export default function MentorResponseV2({ response, onInteraction }) {
         )}
         
         {/* Main Content */}
-        <div className="bg-gray-50 rounded-xl p-5 mb-4">
-          <div className="prose prose-purple max-w-none">
-            <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap">
-              {default_view.main_content?.content}
-            </p>
-            {default_view.main_content?.key_insight && (
-              <div className="mt-4 flex items-center gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                <Lightbulb className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                <p className="text-sm text-yellow-900 font-medium m-0">
-                  {default_view.main_content.key_insight}
+        {(mainContentText || keyInsight) && (
+          <div className="bg-gray-50 rounded-xl p-5 mb-4">
+            <div className="prose prose-purple max-w-none">
+              {mainContentText && (
+                <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap">
+                  {mainContentText}
                 </p>
-              </div>
-            )}
+              )}
+              {keyInsight && (
+                <div className="mt-4 flex items-center gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                  <Lightbulb className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                  <p className="text-sm text-yellow-900 font-medium m-0">
+                    {keyInsight}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Application Card (if requested) */}
         {preferApplicationCard && (
@@ -640,6 +648,105 @@ function ProgressiveSection({ title, icon, children, onClose }) {
       </div>
     </motion.div>
   );
+}
+
+function normalizeMainContentBlocks(defaultView) {
+  const rawContent = defaultView?.main_content?.content || '';
+  const lines = rawContent.split(/\r?\n/);
+  let metaphorText = (defaultView?.metaphor?.text || '').trim();
+  let keyInsight = (defaultView?.main_content?.key_insight || '').trim();
+  const keptLines = [];
+  let awaitingLabel = null;
+  let contentStripped = false;
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (!awaitingLabel) {
+        keptLines.push(line);
+      }
+      return;
+    }
+
+    const sanitized = sanitizeLabelLine(trimmed);
+    const labelMatch = sanitized.match(/^(metaphor|memory hook|key insight|key takeaway)\b[:\-–=]?\s*(.*)$/i);
+    if (labelMatch) {
+      const label = labelMatch[1].toLowerCase();
+      const value = labelMatch[2].trim();
+      if (isMetaphorLabel(label)) {
+        contentStripped = true;
+        if (!metaphorText) {
+          if (value) {
+            metaphorText = value;
+            awaitingLabel = null;
+          } else {
+            awaitingLabel = 'metaphor';
+          }
+        } else {
+          awaitingLabel = null;
+        }
+        return;
+      }
+      if (isInsightLabel(label)) {
+        contentStripped = true;
+        if (!keyInsight) {
+          if (value) {
+            keyInsight = value;
+            awaitingLabel = null;
+          } else {
+            awaitingLabel = 'insight';
+          }
+        } else {
+          awaitingLabel = null;
+        }
+        return;
+      }
+    }
+
+    if (awaitingLabel === 'metaphor' && !metaphorText) {
+      contentStripped = true;
+      metaphorText = stripFormatting(trimmed);
+      awaitingLabel = null;
+      return;
+    }
+
+    if (awaitingLabel === 'insight' && !keyInsight) {
+      contentStripped = true;
+      keyInsight = stripFormatting(trimmed);
+      awaitingLabel = null;
+      return;
+    }
+
+    awaitingLabel = null;
+    keptLines.push(line);
+  });
+
+  const cleanedContent = keptLines.join('\n').trim();
+  return {
+    content: cleanedContent || (!contentStripped ? rawContent.trim() : ''),
+    keyInsight: keyInsight.trim(),
+    metaphor: metaphorText.trim()
+  };
+}
+
+function sanitizeLabelLine(line) {
+  return line
+    .replace(/\*\*/g, '')
+    .replace(/^[\s>*_\-`~0-9.()]+/, '')
+    .replace(/^(?:[\u{1F300}-\u{1FAFF}]|dY\S{0,2})\s*/u, '')
+    .trim();
+}
+
+function stripFormatting(text) {
+  return text.replace(/\*\*/g, '').trim();
+}
+
+function isMetaphorLabel(label) {
+  return label.includes('metaphor') || label.includes('memory');
+}
+
+function isInsightLabel(label) {
+  return label.includes('insight') || label.includes('takeaway');
 }
 
 // Helper function to get metaphor icon

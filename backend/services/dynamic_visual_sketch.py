@@ -18,6 +18,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from .metaphor_engine import select_metaphors, ConceptBundle, MetaphorCandidate, StudentDNA
+from .animation_library import resolve_animation_visual
 from .hinglish_annotations import generate_annotation, get_common_mistake, generate_marks_annotation
 from .topper_hack_selector import TopperHackSelector
 from .pyq_matcher import PYQMatcher
@@ -358,6 +359,15 @@ def create_visual_sketch(question: str, student_profile: Optional[Dict[str, Any]
         max_results=3
     )
 
+    # Optional Tier X: Animation descriptor (non-blocking; augments existing flow)
+    depth_target = bundle.marks_distribution.get("depth_target") if bundle and bundle.marks_distribution else None
+    animation = resolve_animation_visual(
+        question=question,
+        metaphors_used=[m.muse for m in top[:3]],
+        depth_target=depth_target,
+        topic_hint=None,
+    )
+
     return {
         "svg": svg,
         "metaphors_used": [m.muse for m in top[:3]],
@@ -366,5 +376,7 @@ def create_visual_sketch(question: str, student_profile: Optional[Dict[str, Any]
         "topper_rank": hack_obj["rank"] if hack_obj else None,
         "pyq_references": [f"{pyq.board} {pyq.year} {pyq.question_number}" for pyq in pyqs],
         "region": region,
-        "has_emotional_content": True
+        "has_emotional_content": True,
+        # New optional field; consumers must treat as additive
+        "animation": animation,
     }

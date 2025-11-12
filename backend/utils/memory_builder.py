@@ -39,7 +39,8 @@ class MemoryContextBuilder:
                 'concepts_explained': [],
                 'questions_asked': [],
                 'last_topic': None,
-                'conversation_summary': "This is the first question in this session."
+                'conversation_summary': "This is the first question in this session.",
+                'message_count': 0
             }
 
         # Limit to recent messages

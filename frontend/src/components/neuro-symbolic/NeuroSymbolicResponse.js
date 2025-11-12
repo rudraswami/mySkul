@@ -56,6 +56,13 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     )
   );
 
+  // Tier X: Optional animation layer (non-breaking augment)
+  const animationDescriptor =
+    response?.animation ||
+    response?.visual_data?.animation ||
+    (visualEngineData && visualEngineData.animation) ||
+    null;
+
   // Chemistry-first rollout for teaching orchestrator
   const subjectGuess = String(
     response?.subject ||
@@ -124,7 +131,26 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         <VisualSchema schema={visual_schema} />
       )}
 
-      {/* 5. Dynamic Visual Story Scene */}
+      {/* 5. Tier X Animation (if available) */}
+      {animationDescriptor && animationDescriptor.animation_asset_url && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold text-gray-800">Animated Metaphor</div>
+            <div className="text-xs text-gray-500">{String(animationDescriptor.metaphor || '').toUpperCase()} • {animationDescriptor.topic}</div>
+          </div>
+          <div className="rounded-lg overflow-hidden">
+            <video
+              src={animationDescriptor.animation_asset_url}
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full h-auto bg-black/5"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 6. Dynamic Visual Story Scene */}
       {shouldUseTeaching ? (
         /covalent/i.test(textBlob) ? (
           <CovalentInteractiveCard />
@@ -148,20 +174,20 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         </div>
       )}
 
-      {/* 6. Sketch Animator for real-time explanations */}
+      {/* 7. Sketch Animator for real-time explanations */}
       <SketchAnimator explanation={practical_explanation} />
 
-      {/* 7. Professor Verification (Collapsible) */}
+      {/* 8. Professor Verification (Collapsible) */}
       {professor_verification && (
         <ProfessorVerification verification={professor_verification} />
       )}
 
-      {/* 8. Mini Practice */}
+      {/* 9. Mini Practice */}
       {mini_practice && (
         <MiniPractice practice={mini_practice} />
       )}
 
-      {/* 9. Encouragement */}
+      {/* 10. Encouragement */}
       {encouragement && (
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
           <div className="flex items-center space-x-2 mb-3">

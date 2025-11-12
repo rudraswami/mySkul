@@ -1,0 +1,21 @@
+{
+  "fingerprint": "af6e391223b9",
+  "question": "Test question",
+  "marks": 3,
+  "svg": "<svg>test</svg>",
+  "metadata": {
+    "metaphors_used": [
+      "family"
+    ],
+    "topper_hack": "test hack"
+  },
+  "created_at": "2025-11-11T15:13:58.788783",
+  "analytics": {
+    "screenshots": 0,
+    "marks_conversion": 0.0,
+    "views": 0,
+    "friend_test_score": 7,
+    "shares": 0
+  },
+  "version": "2.0"
+}

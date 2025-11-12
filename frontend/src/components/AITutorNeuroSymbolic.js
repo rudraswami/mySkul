@@ -2,7 +2,7 @@
  * AI Tutor - Neuro-Symbolic v3.0
  * Indian Student-Centric, Karnataka-Friendly Learning Experience
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -28,10 +28,19 @@ import {
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
+import MentorStreamingResponse from './mentor-v2/MentorStreamingResponse';
 import UpgradeModal from './UpgradeModal';
 import apiClient from '../api/client';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const INITIAL_STREAM_PROGRESS = {
+  visual: null,
+  visualTier: 0,
+  textChunks: [],
+  complete: false,
+  cached: false,
+  error: null
+};
 
 export default function AITutorNeuroSymbolic() {
   const { user } = useAuth();
@@ -67,6 +76,11 @@ export default function AITutorNeuroSymbolic() {
   // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const streamingMessageIdRef = useRef(null);
+  const streamControllerRef = useRef(null);
+
+  const [streamProgress, setStreamProgress] = useState(INITIAL_STREAM_PROGRESS);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // Available subjects
   const SUBJECTS = [
@@ -78,6 +92,18 @@ export default function AITutorNeuroSymbolic() {
     'History',
     'Geography'
   ];
+
+  const cancelStream = useCallback(() => {
+    if (streamControllerRef.current) {
+      streamControllerRef.current.abort();
+      streamControllerRef.current = null;
+    }
+    setIsStreaming(false);
+  }, []);
+
+  const resetStreamProgress = useCallback(() => {
+    setStreamProgress({ ...INITIAL_STREAM_PROGRESS });
+  }, []);
 
   // Load default prompts when subject changes
   useEffect(() => {
@@ -94,6 +120,181 @@ export default function AITutorNeuroSymbolic() {
     setHeaderCollapsed(messages.length > 0);
     setShowWelcome(messages.length === 0);
   }, [messages.length]);
+
+  useEffect(() => {
+    setLoading(isStreaming);
+  }, [isStreaming]);
+
+  useEffect(() => {
+    return () => {
+      cancelStream();
+    };
+  }, [cancelStream]);
+
+  const processStreamEvent = useCallback((eventName, data) => {
+    switch (eventName) {
+      case 'visual_fallback':
+        setStreamProgress(prev => ({
+          ...prev,
+          visual: {
+            type: 'fallback',
+            tier: data.tier,
+            url: data.visual_url,
+            emoji: data.placeholder_emoji,
+            colorTheme: data.color_theme
+          },
+          visualTier: data.tier
+        }));
+        break;
+      case 'visual_upgrade':
+        setStreamProgress(prev => ({
+          ...prev,
+          visual: {
+            type: 'ai_generated',
+            tier: data.tier,
+            url: data.visual_url
+          },
+          visualTier: data.tier
+        }));
+        break;
+      case 'cache_hit':
+        setStreamProgress(prev => ({ ...prev, cached: true }));
+        break;
+      case 'text_chunk':
+        setStreamProgress(prev => ({
+          ...prev,
+          textChunks: [...prev.textChunks, data]
+        }));
+        break;
+      case 'visual_timeout':
+        console.log('⚠️ Visual timeout, keeping fallback', data);
+        break;
+      case 'complete':
+        setStreamProgress(prev => ({ ...prev, complete: true }));
+        setIsStreaming(false);
+        streamControllerRef.current = null;
+        break;
+      case 'error':
+        setStreamProgress(prev => ({
+          ...prev,
+          error: data.error || 'Stream error',
+          complete: true
+        }));
+        setIsStreaming(false);
+        streamControllerRef.current = null;
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  const startStreamingResponse = useCallback(async ({
+    messageToSend,
+    sessionId,
+    examMode
+  }) => {
+    const token = localStorage.getItem('dhruv_ai_token');
+    if (!token) {
+      throw new Error('Authentication token missing');
+    }
+
+    const controller = new AbortController();
+    streamControllerRef.current = controller;
+    setIsStreaming(true);
+    setStreamProgress({ ...INITIAL_STREAM_PROGRESS });
+
+    const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        message: messageToSend,
+        subject: selectedSubject,
+        session_id: sessionId,
+        exam_mode: examMode
+      }),
+      signal: controller.signal
+    });
+
+    if (response.status === 402) {
+      const detail = await response.json().catch(() => ({}));
+      const err = new Error('Upgrade required');
+      err.status = 402;
+      err.detail = detail.detail || detail;
+      throw err;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Stream request failed (${response.status})`);
+    }
+
+    if (!response.body) {
+      throw new Error('Stream response missing body');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    const handleRawEvent = (rawEvent) => {
+      if (!rawEvent) return;
+      const lines = rawEvent.split('\n');
+      let eventName = 'message';
+      const dataLines = [];
+      lines.forEach(line => {
+        if (line.startsWith('event:')) {
+          eventName = line.replace('event:', '').trim();
+        } else if (line.startsWith('data:')) {
+          dataLines.push(line.replace('data:', '').trim());
+        }
+      });
+      const dataString = dataLines.join('\n');
+      let parsed = {};
+      if (dataString) {
+        try {
+          parsed = JSON.parse(dataString);
+        } catch (err) {
+          console.warn('⚠️ Failed to parse SSE data', err, dataString);
+        }
+      }
+      processStreamEvent(eventName, parsed);
+    };
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let boundary = buffer.indexOf('\n\n');
+        while (boundary !== -1) {
+          const rawEvent = buffer.slice(0, boundary).trim();
+          buffer = buffer.slice(boundary + 2);
+          handleRawEvent(rawEvent);
+          boundary = buffer.indexOf('\n\n');
+        }
+      }
+      const lingering = buffer.trim();
+      if (lingering) {
+        handleRawEvent(lingering);
+      }
+      setIsStreaming(false);
+      streamControllerRef.current = null;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+      setStreamProgress(prev => ({
+        ...prev,
+        error: error.message || 'Stream failed',
+        complete: true
+      }));
+      setIsStreaming(false);
+      streamControllerRef.current = null;
+      throw error;
+    }
+  }, [selectedSubject, processStreamEvent]);
 
   // Load default prompts for subject
   const loadDefaultPrompts = async () => {
@@ -278,7 +479,6 @@ export default function AITutorNeuroSymbolic() {
     };
 
     setMessages(prev => [...prev, userMsg]);
-    setLoading(true);
 
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -307,49 +507,34 @@ export default function AITutorNeuroSymbolic() {
         }
       }
 
-      // Call neuro-symbolic endpoint
-      const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId,
-          exam_mode: examMode
-        })
-      });
-
-      if (!response.ok) {
-        if (response.status === 402) {
-          const errorData = await response.json();
-          setUpgradeModalData(errorData.detail);
-          setShowUpgradeModal(true);
-          // Remove optimistic user message
-          setMessages(prev => prev.filter(m => m.id !== userMsg.id));
-          return;
+      const streamId = `stream_${Date.now()}`;
+      streamingMessageIdRef.current = streamId;
+      setMessages(prev => [
+        ...prev,
+        {
+          type: 'ai_stream',
+          id: streamId,
+          streamData: null,
+          timestamp: new Date().toISOString()
         }
-        throw new Error(`Failed to get response: ${response.status}`);
-      }
+      ]);
 
-      const data = await response.json();
-
-      // Add AI response
-      const aiMsg = {
-        type: 'ai',
-        content: data.response,
-        timestamp: new Date().toISOString(),
-        message_id: data.message_id,
-        emotion_detected: data.emotion_detected,
-        generation_time: data.generation_time
-      };
-
-      setMessages(prev => [...prev, aiMsg]);
-
-      // Track usage
-      await trackFeatureUsage('ai_mentor');
+      startStreamingResponse({
+        messageToSend,
+        sessionId,
+        examMode
+      }).catch((err) => {
+        console.error('Streaming failed', err);
+        if (err.status === 402) {
+          setUpgradeModalData(err.detail || err.message || 'Upgrade required');
+          setShowUpgradeModal(true);
+        }
+        finalizeStreamWithError(
+          err.status === 402
+            ? 'Upgrade required to continue.'
+            : 'Failed to stream response. Please try again.'
+        );
+      });
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -362,7 +547,6 @@ export default function AITutorNeuroSymbolic() {
           timestamp: new Date().toISOString()
         }
       ]);
-    } finally {
       setLoading(false);
     }
   };
@@ -374,6 +558,12 @@ export default function AITutorNeuroSymbolic() {
 
   // Start new chat
   const startNewChat = () => {
+    if (isStreaming) {
+      cancelStream();
+      streamingMessageIdRef.current = null;
+      setLoading(false);
+    }
+    resetStreamProgress();
     setMessages([]);
     setCurrentSession(null);
     setShowWelcome(true);
@@ -462,6 +652,82 @@ export default function AITutorNeuroSymbolic() {
     window.addEventListener('click', onDocClick);
     return () => window.removeEventListener('click', onDocClick);
   }, []);
+
+  const buildResponseFromStream = useCallback(() => {
+    if (streamProgress.textChunks.length === 0) return null;
+    const defaultViewChunk = streamProgress.textChunks.find(chunk => chunk.type === 'default_view');
+    const progressiveChunk = streamProgress.textChunks.find(chunk => chunk.type === 'progressive_sections');
+    return {
+      default_view: defaultViewChunk?.data || {},
+      progressive_sections: progressiveChunk?.data || {},
+      visual: streamProgress.visual,
+      cached: streamProgress.cached
+    };
+  }, [streamProgress]);
+
+  const finalizeStreamWithError = useCallback((errorMessage) => {
+    const timestamp = new Date().toISOString();
+    if (!streamingMessageIdRef.current) {
+      setMessages(prev => [
+        ...prev,
+        {
+          type: 'error',
+          content: errorMessage,
+          timestamp
+        }
+      ]);
+      setLoading(false);
+      return;
+    }
+    const streamId = streamingMessageIdRef.current;
+    setMessages(prev => prev.map(msg => (
+      msg.id === streamId
+        ? { type: 'error', content: errorMessage, timestamp, id: streamId }
+        : msg
+    )));
+    streamingMessageIdRef.current = null;
+    setLoading(false);
+    resetStreamProgress();
+  }, [setMessages, setLoading, resetStreamProgress]);
+
+  const finalizeStreamSuccess = useCallback(() => {
+    if (!streamingMessageIdRef.current) return;
+    const finalResponse = buildResponseFromStream();
+    if (!finalResponse) return;
+    const streamId = streamingMessageIdRef.current;
+    const aiMsg = {
+      type: 'ai',
+      content: finalResponse,
+      timestamp: new Date().toISOString(),
+      id: streamId
+    };
+    setMessages(prev => prev.map(msg => (
+      msg.id === streamId ? aiMsg : msg
+    )));
+    streamingMessageIdRef.current = null;
+    setLoading(false);
+    resetStreamProgress();
+    trackFeatureUsage('ai_mentor');
+  }, [buildResponseFromStream, setMessages, setLoading, trackFeatureUsage, resetStreamProgress]);
+
+  useEffect(() => {
+    if (!streamingMessageIdRef.current) return;
+
+    if (streamProgress.error && streamProgress.complete) {
+      finalizeStreamWithError(streamProgress.error || 'Failed to stream response.');
+      return;
+    }
+
+    setMessages(prev => prev.map(msg => (
+      msg.id === streamingMessageIdRef.current
+        ? { ...msg, streamData: streamProgress }
+        : msg
+    )));
+
+    if (streamProgress.complete && !streamProgress.error) {
+      finalizeStreamSuccess();
+    }
+  }, [streamProgress, finalizeStreamSuccess, finalizeStreamWithError, setMessages]);
 
   // Close menu/dialog with Escape
   useEffect(() => {
@@ -803,6 +1069,26 @@ export default function AITutorNeuroSymbolic() {
                       </div>
                     )}
 
+                    {message.type === 'ai_stream' && (
+                      <div className="flex justify-start">
+                        <div className="max-w-4xl w-full">
+                          <MentorStreamingResponse
+                            defaultView={
+                              message.streamData?.textChunks?.find(chunk => chunk.type === 'default_view')?.data || {}
+                            }
+                            progressiveSections={
+                              message.streamData?.textChunks?.find(chunk => chunk.type === 'progressive_sections')?.data || {}
+                            }
+                            isThinking={
+                              !message.streamData ||
+                              (message.streamData?.textChunks || []).length === 0
+                            }
+                            isComplete={message.streamData?.complete}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {message.type === 'ai' && (
                       <div className="flex justify-start">
                         <div className="max-w-4xl w-full">
@@ -849,7 +1135,7 @@ export default function AITutorNeuroSymbolic() {
               </AnimatePresence>
 
               {/* AI Typing Indicator */}
-              {loading && (
+              {loading && !isStreaming && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

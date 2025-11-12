@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 import time
 
 logger = logging.getLogger(__name__)
@@ -46,9 +46,13 @@ class VisualEngine:
             }
         }
 
-    def resolve_visual_metaphor(self, topic: str, student_persona: Dict[str, Any]) -> Dict[str, Any]:
+    def resolve_visual_metaphor(self, topic: str, student_persona: Dict[str, Any], *,
+                                question: Optional[str] = None,
+                                metaphors_used: Optional[List[str]] = None,
+                                depth_target: Optional[str] = None) -> Dict[str, Any]:
         """
         Resolves a visual metaphor for a given topic and student persona.
+        Optionally augments with an animation descriptor (Tier X) without replacing existing keys.
         """
         start_time = time.time()  # Start timing
         topic_key = topic.lower().replace(" ", "_")
@@ -66,7 +70,22 @@ class VisualEngine:
                 }
             }
 
-        logger.info(f"Resolved visual metaphor for topic '{topic}': {metaphor['metaphor']}")
+        # Optional: Tier X animation augmentation (non-breaking)
+        try:
+            from .animation_library import resolve_animation_visual
+            anim = resolve_animation_visual(
+                question=question or "",
+                metaphors_used=metaphors_used or [],
+                depth_target=depth_target,
+                topic_hint=topic_key,
+            )
+            if anim:
+                metaphor = {**metaphor, "animation": anim, "fallback_visual_tier": "1"}
+        except Exception:
+            # Never break primary flow
+            pass
+
+        logger.info(f"Resolved visual metaphor for topic '{topic}': {metaphor.get('metaphor','?')}")
         self.log_frame_generation_success(topic)  # Log frame generation success
         elapsed_time = time.time() - start_time  # Calculate elapsed time
         logger.info(f"Frame generation for '{topic}' took {elapsed_time:.2f} seconds.")

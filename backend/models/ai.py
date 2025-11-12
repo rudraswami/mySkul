@@ -13,8 +13,9 @@ class ChatRequest(BaseModel):
 
 class DualAIRequest(BaseModel):
     message: str
-    session_id: str
+    session_id: Optional[str] = None
     subject: str
+    exam_mode: Optional[str] = None
 
 
 class MathValidationRequest(BaseModel):

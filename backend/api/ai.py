@@ -292,7 +292,7 @@ async def get_session_memory(
     Returns last_topic and last_visual_sig for the given session owned by the user.
     """
     try:
-        db = await get_database()
+        db = get_database()
         sess = await db.chat_sessions.find_one({"session_id": session_id, "user_id": user.user_id})
         if not sess:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -322,7 +322,7 @@ async def reset_session_memory(
     """
     try:
         import time
-        db = await get_database()
+        db = get_database()
         res = await db.chat_sessions.update_one(
             {"session_id": session_id, "user_id": user.user_id},
             {
@@ -655,7 +655,7 @@ async def get_chat_sessions(
         sessions = await ai_service.get_user_sessions(user.user_id)
         # Enrich with message_count and last_updated fallback
         try:
-            db = await get_database()
+            db = get_database()
             enriched = []
             for s in sessions:
                 sid = s.get("session_id")
@@ -900,7 +900,7 @@ async def stream_neuro_symbolic_response(
             )
         
         # Get user profile
-        db = await get_database()
+        db = get_database()
         user_doc = await db.users.find_one({"user_id": user.user_id}) or {}
         student_profile = {
             'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
@@ -986,7 +986,7 @@ async def generate_neuro_symbolic_response(
             message_history = history[-5:] if history else []  # Last 5 messages for context
             # Fetch session memory (e.g., last topic)
             try:
-                db = await get_database()
+                db = get_database()
                 session_doc = await db.chat_sessions.find_one({"session_id": request.session_id, "user_id": user.user_id})
             except Exception:
                 session_doc = None
@@ -1082,7 +1082,7 @@ async def generate_neuro_symbolic_response(
 
                         # Load persisted memory
                         try:
-                            db = await get_database()
+                            db = get_database()
                             sess_doc = await db.chat_sessions.find_one({"session_id": sid, "user_id": user.user_id})
                             persisted_sig = (sess_doc or {}).get('last_visual_sig')
                             recent_list = (sess_doc or {}).get('recent_visual_sigs', []) or []
@@ -1122,7 +1122,7 @@ async def generate_neuro_symbolic_response(
 
         # Update memory: store last topic from attached teaching visual (if any)
         try:
-            db = await get_database()
+            db = get_database()
             tv = result.get('response', {}).get('teaching_visual')
             last_topic = None
             if tv and isinstance(tv, dict):
@@ -1151,3 +1151,147 @@ async def generate_neuro_symbolic_response(
             status_code=500,
             detail=f"Failed to generate response: {str(e)}"
         )
+
+
+# ===================== LEARNING PROFILE & CROSS-SESSION MEMORY (Phase 2) =====================
+
+@router.get("/learning-profile")
+async def get_learning_profile(
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Get student's learning profile with cross-session memory
+
+    Returns:
+    - Topics mastered
+    - Weak areas
+    - Learning preferences
+    - Recent sessions history
+    - Stats (streak, total sessions, etc.)
+    """
+    try:
+        profile = await ai_service.learning_profile_service.get_learning_profile(user.user_id)
+        return {
+            "success": True,
+            "profile": profile
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get learning profile: {str(e)}")
+
+
+@router.get("/learning-profile/welcome-back")
+async def get_welcome_back_message(
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Get personalized welcome back message based on learning history
+
+    Returns:
+    - Last session summary
+    - Current learning focus
+    - Weak areas needing attention
+    - Suggested next topics
+    - Streak information
+    """
+    try:
+        welcome_message = await ai_service.learning_profile_service.get_welcome_back_message(user.user_id)
+
+        if not welcome_message:
+            return {
+                "success": True,
+                "is_new_user": True,
+                "message": "Welcome! Let's start your learning journey! 🚀"
+            }
+
+        return {
+            "success": True,
+            "is_new_user": False,
+            "welcome_data": welcome_message
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get welcome message: {str(e)}")
+
+
+@router.get("/learning-profile/insights")
+async def get_learning_insights(
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Get personalized learning insights
+
+    Returns:
+    - Progress insights (topics mastered)
+    - Strength areas
+    - Weak areas needing focus
+    - Recommendations
+    - Motivational messages
+    """
+    try:
+        insights = await ai_service.learning_profile_service.get_learning_insights(user.user_id)
+        return {
+            "success": True,
+            "insights": insights
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get learning insights: {str(e)}")
+
+
+@router.get("/learning-profile/topics-mastered")
+async def get_topics_mastered(
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Get list of topics student has mastered (mastery > 0.7)
+    """
+    try:
+        profile = await ai_service.learning_profile_service.get_learning_profile(user.user_id)
+        topics_mastered = profile.get('topics_mastered', [])
+
+        # Filter for high mastery topics
+        mastered = [
+            {
+                'topic': t.get('topic'),
+                'subject': t.get('subject'),
+                'mastery_level': t.get('mastery_level'),
+                'times_reviewed': t.get('times_reviewed'),
+                'last_reviewed': t.get('last_reviewed')
+            }
+            for t in topics_mastered
+            if t.get('mastery_level', 0) > 0.7
+        ]
+
+        return {
+            "success": True,
+            "topics_mastered": mastered,
+            "count": len(mastered)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get topics mastered: {str(e)}")
+
+
+@router.get("/learning-profile/weak-areas")
+async def get_weak_areas(
+    user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    Get topics where student struggles and needs more practice
+    """
+    try:
+        profile = await ai_service.learning_profile_service.get_learning_profile(user.user_id)
+        weak_areas = profile.get('weak_areas', [])
+
+        # Sort by struggle count (descending)
+        sorted_weak = sorted(weak_areas, key=lambda x: x.get('struggle_count', 0), reverse=True)
+
+        return {
+            "success": True,
+            "weak_areas": sorted_weak,
+            "count": len(sorted_weak)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get weak areas: {str(e)}")

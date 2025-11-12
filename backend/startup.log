@@ -1,0 +1,1270 @@
+2025-11-11 16:15:16,881 - __main__ - INFO - Starting Dhruv AI v1.0.0
+2025-11-11 16:15:16,881 - __main__ - INFO - Environment: development
+2025-11-11 16:15:16,881 - __main__ - INFO - Debug mode: True
+2025-11-11 16:15:16,882 - __main__ - INFO - Configuring Security Headers...
+2025-11-11 16:15:16,882 - __main__ - INFO -    - HSTS, CSP, X-Frame-Options, and other security headers enabled
+2025-11-11 16:15:16,882 - __main__ - INFO - Configuring SessionMiddleware...
+2025-11-11 16:15:16,882 - __main__ - INFO -    - same_site: lax
+2025-11-11 16:15:16,882 - __main__ - INFO -    - https_only: False
+2025-11-11 16:15:16,882 - __main__ - INFO -    - domain: auto (no restriction)
+2025-11-11 16:15:16,882 - __main__ - INFO -    - BACKEND_URL: http://localhost:8001
+2025-11-11 16:15:16,883 - __main__ - INFO - Configuring CORS...
+2025-11-11 16:15:16,883 - __main__ - INFO -    - Allowed origins: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8001']
+2025-11-11 16:15:16,883 - __main__ - INFO - Configuring CSRF Protection...
+2025-11-11 16:15:16,883 - __main__ - INFO -    - CSRF protection enabled for POST/PUT/PATCH/DELETE requests
+C:\Users\DELL\DruvAI\personal\backend\main.py:181: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+C:\Users\DELL\DruvAI\personal\backend\main.py:215: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+2025-11-11 16:15:16,883 - __main__ - INFO - Registering API routers...
+2025-11-11 16:15:16,934 - __main__ - INFO - Diagnostic router registered (dev)
+2025-11-11 16:15:16,934 - __main__ - INFO - All routers registered
+2025-11-11 16:15:16,934 - __main__ - INFO - Starting development server on 0.0.0.0:8001
+INFO:     Will watch for changes in these directories: ['C:\\Users\\DELL\\DruvAI\\personal\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [4620] using WatchFiles
+2025-11-11 16:15:22,629 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:26,450 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:30,459 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:30,825 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:31,202 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:31,823 - __mp_main__ - INFO - Starting Dhruv AI v1.0.0
+2025-11-11 16:15:31,823 - __mp_main__ - INFO - Environment: development
+2025-11-11 16:15:31,824 - __mp_main__ - INFO - Debug mode: True
+2025-11-11 16:15:31,824 - __mp_main__ - INFO - Configuring Security Headers...
+2025-11-11 16:15:31,825 - __mp_main__ - INFO -    - HSTS, CSP, X-Frame-Options, and other security headers enabled
+2025-11-11 16:15:31,825 - __mp_main__ - INFO - Configuring SessionMiddleware...
+2025-11-11 16:15:31,825 - __mp_main__ - INFO -    - same_site: lax
+2025-11-11 16:15:31,826 - __mp_main__ - INFO -    - https_only: False
+2025-11-11 16:15:31,826 - __mp_main__ - INFO -    - domain: auto (no restriction)
+2025-11-11 16:15:31,826 - __mp_main__ - INFO -    - BACKEND_URL: http://localhost:8001
+2025-11-11 16:15:31,827 - __mp_main__ - INFO - Configuring CORS...
+2025-11-11 16:15:31,828 - __mp_main__ - INFO -    - Allowed origins: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8001']
+2025-11-11 16:15:31,828 - __mp_main__ - INFO - Configuring CSRF Protection...
+2025-11-11 16:15:31,829 - __mp_main__ - INFO -    - CSRF protection enabled for POST/PUT/PATCH/DELETE requests
+2025-11-11 16:15:31,830 - __mp_main__ - INFO - Registering API routers...
+2025-11-11 16:15:31,942 - __mp_main__ - INFO - Diagnostic router registered (dev)
+2025-11-11 16:15:31,942 - __mp_main__ - INFO - All routers registered
+2025-11-11 16:15:32,069 - main - INFO - Starting Dhruv AI v1.0.0
+2025-11-11 16:15:32,070 - main - INFO - Environment: development
+2025-11-11 16:15:32,070 - main - INFO - Debug mode: True
+2025-11-11 16:15:32,070 - main - INFO - Configuring Security Headers...
+2025-11-11 16:15:32,070 - main - INFO -    - HSTS, CSP, X-Frame-Options, and other security headers enabled
+2025-11-11 16:15:32,070 - main - INFO - Configuring SessionMiddleware...
+2025-11-11 16:15:32,070 - main - INFO -    - same_site: lax
+2025-11-11 16:15:32,070 - main - INFO -    - https_only: False
+2025-11-11 16:15:32,070 - main - INFO -    - domain: auto (no restriction)
+2025-11-11 16:15:32,071 - main - INFO -    - BACKEND_URL: http://localhost:8001
+2025-11-11 16:15:32,071 - main - INFO - Configuring CORS...
+2025-11-11 16:15:32,071 - main - INFO -    - Allowed origins: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8001']
+2025-11-11 16:15:32,071 - main - INFO - Configuring CSRF Protection...
+2025-11-11 16:15:32,071 - main - INFO -    - CSRF protection enabled for POST/PUT/PATCH/DELETE requests
+2025-11-11 16:15:32,071 - main - INFO - Registering API routers...
+2025-11-11 16:15:32,178 - main - INFO - Diagnostic router registered (dev)
+2025-11-11 16:15:32,178 - main - INFO - All routers registered
+INFO:     Started server process [17672]
+INFO:     Waiting for application startup.
+2025-11-11 16:15:32,180 - main - INFO - Application startup initiated...
+2025-11-11 16:15:32,251 - main - INFO - Initializing services...
+2025-11-11 16:15:32,254 - main - INFO - Unified Subscription Service initialized
+2025-11-11 16:15:32,254 - main - INFO - All services initialized successfully
+2025-11-11 16:15:32,254 - main - INFO - Server ready at http://localhost:8001
+INFO:     Application startup complete.
+2025-11-11 16:15:37,599 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:38,428 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:40,726 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:15:50,257 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:17:53,041 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:47,872 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:48,231 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:48,583 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:48,948 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:55,525 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:18:58,230 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:12,068 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:34,617 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:34,977 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:35,341 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:37,222 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:19:39,008 - watchfiles.main - INFO - 1 change detected
+2025-11-11 16:20:17,450 - watchfiles.main - INFO - 1 change detected
+[OK] Loaded environment variables from C:\Users\DELL\DruvAI\personal\backend\.env
+[WARNING]  Google OAuth credentials not configured
+   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET for Google login
+[WARNING]  Google OAuth credentials not configured
+   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET for Google login
+[WARNING]  Google OAuth credentials not configured
+   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET for Google login
+[DB] Connecting to MongoDB...
+[OK] Connected to MongoDB database: demo_wizard_local
+INFO:     127.0.0.1:51712 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+2025-11-11 16:47:04,017 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 16:47:04,019 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 16:47:04,091 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 16:47:04,101 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 16:47:04,101 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 16:47:04,102 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.01 seconds.
+2025-11-11 16:47:04,102 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 16:47:04,123 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 16:47:04,123 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 16:47:04,123 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 16:47:04,123 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 16:47:04,123 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 16:47:04,124 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 16:47:04,124 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 16:47:04,124 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 16:47:04,124 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 16:47:04,124 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 16:47:04,125 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 16:47:04,129 - services.ai_service - INFO - \U0001f9e0 Memory: 1 messages | Topics: [] | Last: None
+2025-11-11 16:47:04,130 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 16:47:04,130 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 16:47:04,130 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m16:47:04 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 16:47:04,200 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m16:47:08 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 16:47:08,445 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 16:47:08,453 - services.ai_service - INFO - \u2705 Response generated in 4.32s
+2025-11-11 16:47:08,453 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 16:47:08,453 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 16:47:08,453 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 16:47:08,453 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 16:47:08,456 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 16:47:08,457 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:51716 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52726 - "OPTIONS /api/auth/session HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52727 - "OPTIONS /api/auth/session HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52726 - "OPTIONS /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52734 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:52726 - "OPTIONS /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52734 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:52734 - "GET /api/user/profile HTTP/1.1" 200 OK
+2025-11-11 18:28:36,118 - services.subscription_service - INFO - \u2705 Loaded AI Tutor subscription configuration
+INFO:     127.0.0.1:52735 - "GET /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52734 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52739 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:52739 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:52739 - "GET /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52739 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52739 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/auth/csrf-token HTTP/1.1" 200 OK
+2025-11-11 18:28:55,043 - api.auth - INFO - CSRF token endpoint called
+2025-11-11 18:28:55,043 - api.auth - INFO -   - Session in scope: True
+2025-11-11 18:28:55,044 - api.auth - INFO -   - Existing token in session: True
+INFO:     127.0.0.1:52740 - "GET /api/auth/csrf-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52740 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "OPTIONS /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "OPTIONS /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "OPTIONS /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "OPTIONS /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "OPTIONS /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52732 - "OPTIONS /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52757 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52740 - "GET /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52758 - "OPTIONS /api/subscription/check-access HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52772 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52758 - "POST /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52758 - "OPTIONS /api/ai/neuro-symbolic HTTP/1.1" 200 OK
+2025-11-11 18:29:08,719 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:29:08,721 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:29:08,732 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:29:08,732 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:29:08,733 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:29:08,734 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.00 seconds.
+2025-11-11 18:29:08,734 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:29:08,734 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:29:08,734 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:29:08,735 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:29:08,735 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:29:08,735 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:29:08,735 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:29:08,735 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:29:08,735 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:29:08,736 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:29:08,737 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:29:08,738 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:29:08,739 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:29:08,739 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:29:08,739 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:29:08,739 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:29:08 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:29:08,741 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:29:12 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:29:12,652 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:29:12,652 - services.ai_service - INFO - \u2705 Response generated in 3.91s
+2025-11-11 18:29:12,652 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:29:12,652 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:29:12,652 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:29:12,653 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:29:12,655 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:29:12,655 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:52759 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52798 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+2025-11-11 18:29:24,242 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:29:24,243 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:29:24,246 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:29:24,246 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:29:24,247 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:29:24,247 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.00 seconds.
+2025-11-11 18:29:24,247 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:29:24,247 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:29:24,247 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:29:24,247 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:29:24,247 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:29:24,248 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:29:24,248 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:29:24,248 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:29:24,248 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:29:24,249 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:29:24,249 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:29:24,249 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:29:24,250 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:29:24,250 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:29:24,250 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:29:24,251 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:29:24 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:29:24,255 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:29:27 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:29:27,811 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:29:27,812 - services.ai_service - INFO - \u2705 Response generated in 3.56s
+2025-11-11 18:29:27,812 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:29:27,812 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:29:27,812 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:29:27,812 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:29:27,814 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:29:27,814 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:52804 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52843 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+2025-11-11 18:30:00,771 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:30:00,771 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:30:00,773 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:30:00,774 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:30:00,774 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:30:00,774 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.00 seconds.
+2025-11-11 18:30:00,774 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:30:00,774 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:30:00,774 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:30:00,775 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:30:00,775 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:30:00,775 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:30:00,775 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:30:00,776 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:30:00,779 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:30:00,779 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:30:00,780 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:30:00,782 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:30:00,782 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:30:00,783 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:30:00,783 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:30:00,785 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:30:00 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:30:00,790 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:30:04 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:30:04,675 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:30:04,676 - services.ai_service - INFO - \u2705 Response generated in 3.89s
+2025-11-11 18:30:04,676 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:30:04,677 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:30:04,682 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:30:04,683 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:30:04,686 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:30:04,686 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:52848 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:52861 - "OPTIONS /api/auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52865 - "POST /api/auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52885 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:52945 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52955 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52954 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52956 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52955 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52954 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52956 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52956 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52954 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52954 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52955 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52955 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52982 - "GET /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52984 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52984 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52982 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52984 - "POST /api/ai/chat/sessions HTTP/1.1" 200 OK
+2025-11-11 18:32:02,385 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:32:02,385 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:32:02,387 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:32:02,389 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:32:02,389 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:32:02,389 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.00 seconds.
+2025-11-11 18:32:02,391 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:32:02,392 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:32:02,392 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:32:02,393 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:32:02,393 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:32:02,393 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:32:02,394 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:32:02,394 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:32:02,394 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:32:02,394 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:32:02,394 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:32:02,394 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:32:02,395 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:32:02,395 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:32:02,395 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:32:02,395 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:32:02 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:32:02,397 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:32:37 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:32:37,315 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:32:37,316 - services.ai_service - INFO - \u2705 Response generated in 34.92s
+2025-11-11 18:32:37,316 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:32:37,316 - services.ai_service - WARNING - \u26a0\ufe0f Response took 34.9s - adding visual fallback
+2025-11-11 18:32:37,316 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:32:37,316 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:32:37,316 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:32:37,318 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:32:37,318 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:52984 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:53517 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+2025-11-11 18:37:01,884 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:37:01,884 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:37:01,887 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:37:01,888 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:37:01,891 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:37:01,892 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.01 seconds.
+2025-11-11 18:37:01,892 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:37:01,894 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:37:01,894 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:37:01,895 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:37:01,895 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:37:01,895 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:37:01,895 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:37:01,896 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:37:01,897 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:37:01,898 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:37:01,898 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:37:01,898 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:37:01,898 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:37:01,899 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:37:01,899 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:37:01,899 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:37:01 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:37:01,900 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:37:06 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:37:06,342 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:37:06,343 - services.ai_service - INFO - \u2705 Response generated in 4.44s
+2025-11-11 18:37:06,344 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:37:06,349 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:37:06,350 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:37:06,350 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:37:06,360 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:37:06,361 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:53521 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:53572 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+2025-11-11 18:37:55,555 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:37:55,555 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:37:55,557 - services.visual_engine - WARNING - No metaphor found for topic 'What is valency?'. Using default metaphor.
+2025-11-11 18:37:55,557 - services.visual_engine - INFO - Resolved visual metaphor for topic 'What is valency?': A generic concept
+2025-11-11 18:37:55,557 - services.visual_engine - INFO - Frame generated successfully for topic: What is valency?
+2025-11-11 18:37:55,558 - services.visual_engine - INFO - Frame generation for 'What is valency?' took 0.00 seconds.
+2025-11-11 18:37:55,558 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:37:55,558 - services.ai_service - INFO - \U0001f3af Enhanced Intent: definition_query (confidence: 0.90)
+2025-11-11 18:37:55,559 - services.ai_service - INFO -    \u2192 Visual needed: False | Professor layer: False
+2025-11-11 18:37:55,560 - services.topic_classifier - INFO - \U0001f4ca Topic: generic (no specific match)
+2025-11-11 18:37:55,561 - services.topic_classifier - INFO - \U0001f504 Fallback metaphor: cricket (topic: generic)
+2025-11-11 18:37:55,562 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'cricket', 'topic': 'generic', 'reason': 'fallback'}
+2025-11-11 18:37:55,567 - services.ai_service - INFO - \U0001f4dd Question type: explanation
+2025-11-11 18:37:55,568 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: what_is_valency?
+2025-11-11 18:37:55,569 - prompts.metaphor_visual_library - INFO - \u2705 Using preferred category: cricket
+2025-11-11 18:37:55,571 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:37:55,571 - services.ai_service - INFO - \U0001f3a8 Metaphor category: cricket (was: cricket)
+2025-11-11 18:37:55,572 - services.ai_service - INFO - \U0001f6ab Visual SKIPPED - Intent doesn't require visual
+2025-11-11 18:37:55,572 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:37:55,572 - services.ai_service - INFO - \U0001f4cb Using template for intent: definition_query
+2025-11-11 18:37:55,572 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: definition_query
+2025-11-11 18:37:55,572 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:37:55 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:37:55,573 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+[92m18:37:58 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:37:58,642 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:37:58,642 - services.ai_service - INFO - \u2705 Response generated in 3.07s
+2025-11-11 18:37:58,644 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:37:58,644 - services.ai_service - INFO - \u2705 Added mentor avatar: https://assets.dhruvai.com/visuals/mentor/avatar-neutral.png
+2025-11-11 18:37:58,644 - services.ai_service - WARNING - \u26a0\ufe0f Hero visual missing from LLM response - injecting SVG from Phase 3
+2025-11-11 18:37:58,644 - services.ai_service - ERROR - \u274c Mentor v2 generation error: 'svg_data'
+2025-11-11 18:37:58,645 - services.ai_service - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\Users\DELL\DruvAI\personal\backend\services\ai_service.py", line 1755, in generate_neuro_symbolic_response
+    'greeting_animation': 'wave'
+                  ^^^^^^^^^^^^^^^
+KeyError: 'svg_data'
+
+2025-11-11 18:37:58,645 - api.ai - ERROR - Neuro-symbolic response error: Failed to generate mentor response: 'svg_data'
+INFO:     127.0.0.1:53576 - "POST /api/ai/neuro-symbolic HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:53639 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53640 - "GET /api/auth/session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53640 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53639 - "GET /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53640 - "GET /api/user/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53661 - "OPTIONS /api/auth/csrf-token HTTP/1.1" 200 OK
+2025-11-11 18:38:56,502 - api.auth - INFO - CSRF token endpoint called
+2025-11-11 18:38:56,502 - api.auth - INFO -   - Session in scope: True
+2025-11-11 18:38:56,502 - api.auth - INFO -   - Existing token in session: True
+INFO:     127.0.0.1:53665 - "GET /api/auth/csrf-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53661 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53665 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53673 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53678 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53681 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "OPTIONS /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "OPTIONS /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "OPTIONS /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53701 - "OPTIONS /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53702 - "OPTIONS /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53700 - "OPTIONS /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "GET /api/dashboard/analytics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "OPTIONS /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "OPTIONS /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "OPTIONS /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53700 - "GET /api/dashboard/streak HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53697 - "GET /api/user/recommendations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/dashboard/leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/ai/subjects/Mathematics/defaultPrompts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "OPTIONS /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53707 - "GET /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "OPTIONS /api/subscription/check-access HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53707 - "POST /api/subscription/check-access HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "POST /api/ai/chat/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "OPTIONS /api/ai/neuro-symbolic HTTP/1.1" 200 OK
+2025-11-11 18:39:33,369 - services.ai_service - INFO - \U0001f9e0 Generating mentor response v2.0 for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:39:33,371 - services.ai_service - INFO - \U0001f3af Intent classified: learning
+2025-11-11 18:39:33,375 - services.visual_engine - WARNING - No metaphor found for topic 'How do I solve quadratic equations in real-world problems?'. Using default metaphor.
+2025-11-11 18:39:33,375 - services.visual_engine - INFO - Resolved visual metaphor for topic 'How do I solve quadratic equations in real-world problems?': A generic concept
+2025-11-11 18:39:33,375 - services.visual_engine - INFO - Frame generated successfully for topic: How do I solve quadratic equations in real-world problems?
+2025-11-11 18:39:33,375 - services.visual_engine - INFO - Frame generation for 'How do I solve quadratic equations in real-world problems?' took 0.00 seconds.
+2025-11-11 18:39:33,376 - services.ai_service - INFO - \U0001f4da Learning intent - generating concept explanation
+2025-11-11 18:39:33,376 - services.ai_service - INFO - \U0001f3af Enhanced Intent: application_request (confidence: 0.85)
+2025-11-11 18:39:33,376 - services.ai_service - INFO -    \u2192 Visual needed: True | Professor layer: False
+2025-11-11 18:39:33,378 - services.topic_classifier - INFO - \U0001f4ca Topic classified: algebra (score: 3)
+2025-11-11 18:39:33,380 - services.topic_classifier - INFO - \U0001f3af Selected metaphor: gaming for topic: algebra
+2025-11-11 18:39:33,380 - services.ai_service - INFO - \U0001f3af Dynamic metaphor selection: {'metaphor_category': 'gaming', 'topic': 'algebra', 'reason': 'topic_appropriate'}
+2025-11-11 18:39:33,380 - services.ai_service - INFO - \U0001f4dd Question type: problem
+2025-11-11 18:39:33,380 - prompts.metaphor_visual_library - INFO - \U0001f504 Using generic fallback for concept: algebra
+2025-11-11 18:39:33,381 - prompts.metaphor_visual_library - INFO - \U0001f504 Fallback to category: cricket
+2025-11-11 18:39:33,381 - services.ai_service - INFO - \U0001f3a8 Visual metaphor loaded: https://images.unsplash.com/photo-1685541001104-91fe7ae1d8e1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxEaG9uaSUyMGNyaWNrZXQlMjBiYXR0aW5nfGVufDB8fHx8MTc2MjMyODQ0OXww&ixlib=rb-4.1.0&q=85
+2025-11-11 18:39:33,382 - services.ai_service - INFO - \U0001f3a8 Metaphor category: gaming (was: cricket)
+2025-11-11 18:39:33,382 - services.ai_service - INFO - \U0001f4a1 Visual SUGGESTED - Will ask user if they want to see it
+2025-11-11 18:39:33,382 - services.ai_service - INFO - \U0001f9e0 Memory: 0 messages | Topics: [] | Last: None
+2025-11-11 18:39:33,383 - services.ai_service - INFO - \U0001f4cb Using template for intent: application_request
+2025-11-11 18:39:33,383 - services.ai_service - INFO - \U0001f3af Using intent-driven system prompt for: application_request
+2025-11-11 18:39:33,383 - services.ai_service - INFO - \U0001f680 Calling LLM for mentor response v2.0...
+[92m18:39:33 - LiteLLM:INFO[0m: utils.py:3389 - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:39:33,393 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4o; provider = openai
+2025-11-11 18:40:33,764 - openai._base_client - INFO - Retrying request to /chat/completions in 0.404483 seconds
+2025-11-11 18:41:34,445 - openai._base_client - INFO - Retrying request to /chat/completions in 0.848996 seconds
+[92m18:42:22 - LiteLLM:INFO[0m: utils.py:1282 - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:42:22,793 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2025-11-11 18:42:22,794 - services.ai_service - INFO - \u2705 Response generated in 169.41s
+2025-11-11 18:42:22,794 - services.ai_service - INFO - \U0001f4ca JSON response parsed successfully
+2025-11-11 18:42:22,794 - services.ai_service - WARNING - \u26a0\ufe0f Response took 169.4s - adding visual fallback
+2025-11-11 18:42:22,794 - services.ai_service - INFO - \u2705 Hero visual present in LLM response: https://cdn.mgxai.com/visuals/placeholder.svg
+2025-11-11 18:42:22,794 - services.ai_service - INFO - \u2705 Added verification badge
+2025-11-11 18:42:22,801 - services.ai_service - INFO - \U0001f4be Message saved: 361e5832-fb67-435b-bd53-83273d70bb26 | Topic: algebra | Metaphor: gaming
+INFO:     127.0.0.1:53817 - "OPTIONS /api/mock-tests/subjects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "OPTIONS /api/gamification/leaderboard?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "OPTIONS /api/analytics/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "OPTIONS /api/gamification/leaderboard?limit=50 HTTP/1.1" 200 OK
+2025-11-11 18:42:22,828 - services.learning_profile_service - INFO - Updated topic mastery: algebra for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+INFO:     127.0.0.1:53817 - "OPTIONS /api/analytics/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "OPTIONS /api/mock-tests/subjects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "OPTIONS /api/mock-tests/library HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "OPTIONS /api/mock-tests/dashboard HTTP/1.1" 200 OK
+2025-11-11 18:42:22,850 - services.ai_service - INFO - \U0001f4ca Updated cross-session learning profile for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+2025-11-11 18:42:22,853 - services.ai_service - INFO - \U0001f4a1 Generated 3 smart suggestions
+INFO:     127.0.0.1:53817 - "OPTIONS /api/mock-tests/library/recent HTTP/1.1" 200 OK
+2025-11-11 18:42:22,858 - services.unified_subscription_service - INFO - Tracked 1 use(s) of ai_mentor for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+INFO:     127.0.0.1:53815 - "OPTIONS /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "OPTIONS /api/mock-tests/subjects?exam_type=JEE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "OPTIONS /api/mock-tests/bookmarked-questions HTTP/1.1" 200 OK
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 190, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\anyio\_backends\_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    |     return await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    |     raise RuntimeError("No response returned.")
+    | RuntimeError: No response returned.
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\applications.py", line 123, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 189, in __call__
+    with collapse_excgroups():
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\_utils.py", line 93, in collapse_excgroups
+    raise exc
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 191, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\DruvAI\personal\backend\middleware\csrf.py", line 41, in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DELL\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\middleware\base.py", line 166, in call_next
+    raise RuntimeError("No response returned.")
+RuntimeError: No response returned.
+INFO:     127.0.0.1:53698 - "POST /api/ai/neuro-symbolic HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53817 - "OPTIONS /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53814 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "OPTIONS /api/mock-tests/bookmarked-questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "OPTIONS /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53817 - "OPTIONS /api/mock-tests/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "OPTIONS /api/mock-tests/library HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "OPTIONS /api/mock-tests/library/recent HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "OPTIONS /api/mock-tests/subjects?exam_type=JEE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53814 - "OPTIONS /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "GET /api/user/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53817 - "GET /api/mock-tests/subjects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "OPTIONS /api/subscription/track-usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53814 - "GET /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/gamification/leaderboard?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "GET /api/mock-tests/bookmarked-questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53817 - "GET /api/mock-tests/subjects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53814 - "GET /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/mock-tests/bookmarked-questions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53818 - "GET /api/gamification/leaderboard?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "GET /api/subscription/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "GET /api/analytics/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "GET /api/analytics/performance HTTP/1.1" 200 OK
+2025-11-11 18:42:23,309 - api.mock_tests - INFO - Dashboard requested for user: 828e374f-7530-408d-aa25-d4acef3fc9b5
+INFO:     127.0.0.1:53888 - "GET /api/mock-tests/subjects?exam_type=JEE HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53886 - "GET /api/mock-tests/library HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53887 - "GET /api/mock-tests/library/recent HTTP/1.1" 200 OK
+2025-11-11 18:42:23,329 - api.mock_tests - INFO - Dashboard stats retrieved: {'total_tests': 0, 'submitted_tests': 0, 'average_score': 0.0, 'total_attempts': 0}
+INFO:     127.0.0.1:53885 - "GET /api/mock-tests/dashboard HTTP/1.1" 200 OK
+2025-11-11 18:42:23,339 - services.unified_subscription_service - INFO - Tracked 1 use(s) of ai_mentor for user 828e374f-7530-408d-aa25-d4acef3fc9b5
+INFO:     127.0.0.1:53886 - "GET /api/mock-tests/performance-trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53888 - "POST /api/subscription/track-usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "OPTIONS /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53888 - "GET /api/subscription/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53815 - "GET /api/subscription/usage HTTP/1.1" 200 OK
