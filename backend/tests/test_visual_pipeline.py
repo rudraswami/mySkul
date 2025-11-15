@@ -1,12 +1,16 @@
 import sys
 import os
+from pathlib import Path
 
-# Ensure package import works in local env
-sys.path.insert(0, os.getcwd())
+# Ensure package import works in local env (repo root + backend package)
+ROOT_DIR = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT_DIR / "backend"
+sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(BACKEND_DIR))
 
-from services.metaphor_engine import select_metaphors
-from services.dynamic_visual_sketch import create_visual_sketch
-from utils.visual_validator import validate_visual
+from backend.services.metaphor_engine import select_metaphors
+from backend.services.dynamic_visual_sketch import create_visual_sketch
+from backend.utils.visual_validator import validate_visual
 
 
 def test_select_metaphors_returns_three():
@@ -20,4 +24,3 @@ def test_create_visual_and_validate():
     svg = out["svg"]
     assert isinstance(svg, str) and svg.startswith("<svg") and svg.endswith("</svg>")
     assert validate_visual(svg)
-

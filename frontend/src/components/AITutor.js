@@ -27,7 +27,14 @@ import {
   Lightbulb,
   TrendingUp
 } from 'lucide-react';
-import SemanticAIResponse from './SemanticAIResponse';
+import {
+  MentorBlock,
+  ProfessorBlock,
+  StructuredBlockRenderer,
+  VisualOfferCard,
+  SuggestionList,
+} from './intent/AdaptiveResponseBlocks';
+import VisualPlayer from './intent/VisualPlayer';
 import UpgradeModal from './UpgradeModal';
 import '../styles/ai-tutor-redesign.css';
 
@@ -71,7 +78,6 @@ export default function AITutorPremium() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalData, setUpgradeModalData] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false); // Right drawer for reasoning/insights
-  const [expandedConcepts, setExpandedConcepts] = useState({}); // Track expanded concept cards
   
   // NEW: Dynamic default prompts
   const [defaultPrompts, setDefaultPrompts] = useState([]);
@@ -628,6 +634,14 @@ export default function AITutorPremium() {
     handleQuickSend(content);
   };
 
+  const handleVisualOffer = (topic) => {
+    const normalizedTopic = (topic || '').trim();
+    const messageToSend = normalizedTopic
+      ? `Show me a visual demo of ${normalizedTopic}`
+      : 'Show me a visual demo of this concept';
+    handleFollowUp(messageToSend);
+  };
+
   /**
    * Quick send for predefined questions
    */
@@ -809,40 +823,6 @@ export default function AITutorPremium() {
     setHeaderCollapsed(false); // NEW: Expand header
     clearChatStorage(); // NEW: Clear localStorage for this subject
     loadDefaultPrompts(selectedSubject); // NEW: Reload prompts
-  };
-  
-  /**
-   * Toggle concept card expansion
-   */
-  const toggleConcept = (messageId) => {
-    setExpandedConcepts(prev => ({
-      ...prev,
-      [messageId]: !prev[messageId]
-    }));
-  };
-  
-  /**
-   * Render concept card (collapsible with MathJax support)
-   */
-  const renderConceptCard = (concept, messageId) => {
-    if (!concept) return null;
-    
-    const isExpanded = expandedConcepts[messageId];
-    
-    return (
-      <div className="concept-card">
-        <div className="concept-card-header" onClick={() => toggleConcept(messageId)}>
-          <BookOpen className="h-4 w-4" />
-          <span>📘 View Concept</span>
-          <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-        </div>
-        {isExpanded && (
-          <div className="concept-card-content">
-            <div dangerouslySetInnerHTML={{ __html: concept }} />
-          </div>
-        )}
-      </div>
-    );
   };
   
   /**
@@ -1167,47 +1147,33 @@ export default function AITutorPremium() {
                       <div className="flex justify-start">
                         <div className="w-full max-w-full">
                           {message.dual_response ? (
-                            // Dual Response
                             <div className="space-y-4">
-                              {/* Professor Response */}
-                              <div className="ai-message-bubble">
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className="flex items-center space-x-2">
-                                    <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                    <span className="font-semibold">Professor</span>
-                                  </div>
-                                  <div className="message-timestamp">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{formatTime(message.timestamp)}</span>
-                                  </div>
-                                </div>
-                                <SemanticAIResponse 
-                                  content={message.dual_response.primary?.raw_text || message.dual_response.primary?.response}
-                                  type="professor"
+                              {message.dual_response.visual?.mode === 'auto' && (
+                                <VisualPlayer visual={message.dual_response.visual} />
+                              )}
+                              <MentorBlock
+                                mentor={message.dual_response.secondary}
+                                timestamp={formatTime(message.timestamp)}
+                              />
+                              <ProfessorBlock
+                                professor={message.dual_response.primary}
+                                timestamp={formatTime(message.timestamp)}
+                              />
+                              <StructuredBlockRenderer structuredBlocks={message.dual_response.structured_blocks} />
+                              {(message.dual_response.visual_offer ||
+                                (message.dual_response.visual &&
+                                  message.dual_response.visual.mode === 'offer')) && (
+                                <VisualOfferCard
+                                  offer={message.dual_response.visual_offer}
+                                  visualData={message.dual_response.visual}
+                                  topic={message.dual_response.intent_blueprint?.topic}
+                                  onTriggerVisual={handleVisualOffer}
                                 />
-                                {/* Concept Card */}
-                                {renderConceptCard(message.dual_response.primary?.concept, message.message_id + '_prof')}
-                                {/* Confidence Bar */}
-                                {renderConfidenceBar(0.95)}
-                              </div>
-                              
-                              {/* Mentor Response */}
-                              <div className="ai-message-bubble">
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className="flex items-center space-x-2">
-                                    <Heart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                    <span className="font-semibold">Mentor</span>
-                                  </div>
-                                  <div className="message-timestamp">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{formatTime(message.timestamp)}</span>
-                                  </div>
-                                </div>
-                                <SemanticAIResponse 
-                                  content={message.dual_response.secondary?.raw_text || message.dual_response.secondary?.response}
-                                  type="mentor"
-                                />
-                              </div>
+                              )}
+                              <SuggestionList
+                                suggestions={message.dual_response.suggested_questions}
+                                onSelect={handleFollowUp}
+                              />
                             </div>
                           ) : (
                             // Single Response

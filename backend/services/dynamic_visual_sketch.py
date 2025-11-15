@@ -48,7 +48,23 @@ def _escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _rough_circle(cx: float, cy: float, r: float, jitter: float = 1.0) -> str:
+    base = [
+        (cx - r, cy),
+        (cx - r / 2, cy - r),
+        (cx + r / 2, cy - r),
+        (cx + r, cy),
+        (cx + r / 2, cy + r),
+        (cx - r / 2, cy + r),
+        (cx - r, cy),
+    ]
+    return _path_from_points(_jitter_points(base, jitter))
+
+
 def _layer_skeleton(bundle: ConceptBundle) -> str:
+    question_text = (bundle.question or "").lower()
+    if any(keyword in question_text for keyword in ("valence", "valency", "valency?")):
+        return _layer_valency_sketch(bundle)
     # Minimal diagram: two boxes as paths and arrows (as paths)
     stroke = PALETTE["navy"]
     imp1 = _path_from_points(_jitter_points([(60, 120), (200, 120), (200, 170), (60, 170), (60, 120)], 2.5))
@@ -61,6 +77,85 @@ def _layer_skeleton(bundle: ConceptBundle) -> str:
         f'<path id="l1_box2" d="{imp2}" stroke="{stroke}" stroke-width="1.5" fill="none" />'
         f'<path id="l1_arrow" d="{arrow}" stroke="{stroke}" stroke-width="1.8" fill="none" />'
         f"{txt1}{txt2}"
+    )
+
+
+def _layer_valency_sketch(bundle: ConceptBundle) -> str:
+    stroke = PALETTE["navy"]
+    highlight = PALETTE["saffron"]
+    supportive = PALETTE["green"]
+    entity = (bundle.entities[:1] or ["Atom"])[0]
+    question = (bundle.question or "").lower()
+    valence_hint = None
+    match = re.search(r"(\d+)", question)
+    if match:
+        try:
+            valence_hint = int(match.group(1))
+        except ValueError:
+            valence_hint = None
+    slot_count = valence_hint if valence_hint and valence_hint < 8 else 3
+    filled_slots = max(1, slot_count - 1)
+
+    nucleus = _rough_circle(250, 185, 30, 1.2)
+    orbit_points = [
+        (160, 185),
+        (190, 115),
+        (310, 115),
+        (340, 185),
+        (310, 255),
+        (190, 255),
+        (160, 185),
+    ]
+    orbit = _path_from_points(_jitter_points(orbit_points, 1.4))
+
+    slot_positions = [
+        (250, 110),
+        (315, 150),
+        (315, 220),
+        (250, 260),
+        (185, 220),
+        (185, 150),
+    ]
+    slot_paths = []
+    connectors = []
+    for idx, (sx, sy) in enumerate(slot_positions[:max(slot_count, 3)]):
+        is_filled = idx < filled_slots
+        slot_path = _rough_circle(sx, sy, 12, 0.7)
+        slot_paths.append(
+            f'<path d="{slot_path}" stroke="{highlight if is_filled else stroke}" stroke-width="1.6" fill="{"#FFE9D6" if is_filled else "none"}" />'
+        )
+        conn = _path_from_points(_jitter_points([(250, 185), ((sx + 250) / 2, (sy + 185) / 2 - 10), (sx, sy)], 1.0))
+        connectors.append(f'<path d="{conn}" stroke="{highlight if is_filled else stroke}" stroke-width="1.2" fill="none" stroke-dasharray="4 4" />')
+
+    scoreboard_shape = _path_from_points(
+        _jitter_points([(380, 90), (580, 90), (560, 185), (360, 185), (380, 90)], 1.8)
+    )
+    professor_head = _rough_circle(130, 240, 16, 0.9)
+    professor_body = _path_from_points(_jitter_points([(130, 256), (130, 300), (110, 330)], 1.4))
+    professor_arm = _path_from_points(_jitter_points([(130, 275), (160, 255), (190, 250)], 1.2))
+    pointer_arrow = _path_from_points(_jitter_points([(188, 248), (260, 210), (290, 200)], 0.9))
+
+    return "".join(
+        [
+            f'<path id="valency_orbit" d="{orbit}" stroke="{stroke}" stroke-width="1.8" fill="none" stroke-dasharray="6 6" />',
+            f'<path id="valency_core" d="{nucleus}" stroke="{stroke}" stroke-width="1.5" fill="#FDF7E3" />',
+            "".join(connectors),
+            "".join(slot_paths),
+            _text(235, 190, entity, stroke, 12),
+            _text(230, 205, "core", stroke, 10),
+            _text(212, 95, "Valence slots", highlight, 11),
+            f'<path d="{scoreboard_shape}" stroke="{stroke}" stroke-width="1.4" fill="#FFFCEF" />',
+            _text(395, 115, "Cricket Strategy Board", stroke, 12),
+            _text(395, 135, f"Need mates: {slot_count}", stroke, 11),
+            _text(395, 155, f"Already ready: {filled_slots}", stroke, 11),
+            _text(395, 175, "Target: stable XI", stroke, 11),
+            f'<path d="{professor_head}" stroke="{stroke}" stroke-width="1.5" fill="#FFF" />',
+            f'<path d="{professor_body}" stroke="{stroke}" stroke-width="1.5" fill="none" />',
+            f'<path d="{professor_arm}" stroke="{stroke}" stroke-width="1.4" fill="none" />',
+            f'<path d="{pointer_arrow}" stroke="{supportive}" stroke-width="1.4" fill="none" />',
+            _text(90, 330, "Coach Sir: \"Get the missing players to seal bonds!\"", supportive, 11),
+            _text(180, 285, "open slots = bonding need", supportive, 10),
+        ]
     )
 
 
@@ -219,12 +314,14 @@ def _animation_block_interactive() -> str:
     True tap-to-advance with invisible click zones and progress indicator
     5 steps: Auto-draw skeleton, then click to reveal each layer
     """
-    return '''
+    # Tap zones use paths (not rect) to satisfy "no <rect>" constraint
+    full_canvas_path = "M0,0 L640,0 L640,360 L0,360 Z"
+    return f'''
     <style><![CDATA[
-        text{pointer-events:none}
-        .tap-zone{fill:transparent;cursor:pointer;opacity:0}
-        .tap-zone:hover{opacity:0.05;fill:#FFD700}
-        .progress-text{font-family:system-ui,Arial;font-size:11px;fill:#666}
+        text{{pointer-events:none}}
+        .tap-zone{{fill:transparent;cursor:pointer;opacity:0}}
+        .tap-zone:hover{{opacity:0.05;fill:#FFD700}}
+        .progress-text{{font-family:system-ui,Arial;font-size:11px;fill:#666}}
     ]]></style>
 
     <!-- Progress indicator -->
@@ -239,14 +336,14 @@ def _animation_block_interactive() -> str:
     <set xlink:href="#l1_arrow" attributeName="visibility" to="hidden" begin="0.5s" />
 
     <!-- Tap zone 1: Click anywhere to show arrows -->
-    <rect id="tap1" class="tap-zone" width="640" height="360" />
+    <path id="tap1" class="tap-zone" d="{full_canvas_path}" />
     <set xlink:href="#l1_arrow" attributeName="visibility" to="visible" begin="tap1.click" />
     <set xlink:href="#tap1" attributeName="display" to="none" begin="tap1.click" />
     <set xlink:href="#progress1" attributeName="visibility" to="hidden" begin="tap1.click" />
     <set xlink:href="#progress2" attributeName="visibility" to="visible" begin="tap1.click" />
 
     <!-- Tap zone 2: Show second box fully -->
-    <rect id="tap2" class="tap-zone" width="640" height="360" display="none" />
+    <path id="tap2" class="tap-zone" d="{full_canvas_path}" display="none" />
     <set xlink:href="#tap2" attributeName="display" to="block" begin="tap1.click" />
     <set xlink:href="#l1_box2" attributeName="opacity" from="0.5" to="1.0" begin="tap2.click" dur="0.3s" fill="freeze" />
     <set xlink:href="#tap2" attributeName="display" to="none" begin="tap2.click" />
@@ -254,7 +351,7 @@ def _animation_block_interactive() -> str:
     <set xlink:href="#progress3" attributeName="visibility" to="visible" begin="tap2.click" />
 
     <!-- Tap zone 3: Show exam layer (yellow sticky note) -->
-    <rect id="tap3" class="tap-zone" width="640" height="360" display="none" />
+    <path id="tap3" class="tap-zone" d="{full_canvas_path}" display="none" />
     <set xlink:href="#tap3" attributeName="display" to="block" begin="tap2.click" />
     <set xlink:href="#layer2" attributeName="visibility" to="visible" begin="tap3.click" />
     <animate xlink:href="#layer2" attributeName="opacity" from="0" to="1" begin="tap3.click" dur="0.4s" fill="freeze" />
@@ -263,7 +360,7 @@ def _animation_block_interactive() -> str:
     <set xlink:href="#progress4" attributeName="visibility" to="visible" begin="tap3.click" />
 
     <!-- Tap zone 4: Show metaphor layer (cultural blend) -->
-    <rect id="tap4" class="tap-zone" width="640" height="360" display="none" />
+    <path id="tap4" class="tap-zone" d="{full_canvas_path}" display="none" />
     <set xlink:href="#tap4" attributeName="display" to="block" begin="tap3.click" />
     <set xlink:href="#layer3" attributeName="visibility" to="visible" begin="tap4.click" />
     <animate xlink:href="#l3_meta" attributeName="opacity" from="0" to="0.10" begin="tap4.click" dur="0.5s" fill="freeze" />
@@ -297,6 +394,10 @@ def create_visual_sketch(question: str, student_profile: Optional[Dict[str, Any]
 
     Returns dict with svg (string), metaphors used, and metadata
     """
+    # Deterministic jitter for caching (stable per question + profile)
+    seed_input = question + repr(sorted(student_profile.items())) if student_profile else question
+    random.seed(hash(seed_input) % (2**32))
+
     # Initialize services
     topper_selector = TopperHackSelector()
     pyq_matcher = PYQMatcher()

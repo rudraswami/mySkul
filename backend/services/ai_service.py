@@ -3,6 +3,7 @@ AI service for chat sessions, dual AI responses, guardrails, and AI-powered feat
 Enhanced for AI Tutor 2.0 with adaptive personas, visual generation, and sentiment analysis
 Enhanced for Neuro-Symbolic AI Tutor 3.0 with Indian student-centric learning
 """
+import copy
 import os
 import logging
 import sys
@@ -10,8 +11,9 @@ import asyncio
 import time
 import uuid
 import traceback
+import urllib.parse
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
@@ -24,6 +26,8 @@ from utils.motivational_generator import MotivationalGenerator
 from services.visual_engine import VisualEngine
 from services.unified_visual_system import generate_visual_for_question
 from services.grammar_visual_templates import get_grammar_visual_template
+from services.intent_planner import IntentPlanner
+from services.topic_classifier import TopicClassifier
 from utils.format_validator import format_validator
 
 from models.core import ChatSession, ChatMessage
@@ -290,6 +294,13 @@ You've got this! Let's make learning engaging and effective. Ready when you are!
             if message_lower in simple_greetings or (len(message.strip()) < 10 and any(greeting in message_lower for greeting in simple_greetings)):
                 logger.info(f"🚀 Fast response for simple greeting: {message}")
                 return self._generate_simple_greeting_response(user_id, message, session_id, subject)
+            
+            # Step 0.5: Intent + topic understanding for adaptive layout
+            intent_plan = IntentPlanner.detect(message)
+            concept_name = IntentPlanner.extract_concept_name(message)
+            topic_key = TopicClassifier.classify_topic(message)
+            intent_context_flags = set(intent_plan.context_flags or ())
+            logger.info(f"🧭 Intent: {intent_plan.intent} | layout={intent_plan.layout} | topic={topic_key}")
             
             # Step 1: Analyze sentiment and user intent
             sentiment_analysis = self.sentiment_analyzer.analyze(message)
@@ -575,50 +586,92 @@ Depth Level: {depth_level}"""
                 logger.error(f"❌ AI generation failed: {e}")
                 raise Exception(f"AI Tutor encountered an error: {str(e)}")
             
-            # Step 4: Generate visual using Unified Visual System (concept or solution)
-            try:
-                # Build student profile from user info
-                student_profile = None
-                if user_id:
-                    user_info = await self.db.users.find_one({"user_id": user_id})
-                    if user_info:
-                        student_profile = {
-                            "locale_language": user_info.get("preferred_language", "hi-IN"),
-                            "board": user_info.get("board", "CBSE"),
-                            "level": user_info.get("grade", "class_12"),
-                            "interests": user_info.get("interests", [])
-                        }
+            # Step 4: Intent-aware visual gating (Metaphor engine is expensive; only use when needed)
+            visual_data, visual_offer, should_attempt_visual = self._resolve_visual_template(
+                intent_plan=intent_plan,
+                intent_context_flags=intent_context_flags,
+                visual_directives=visual_directives,
+                concept_name=concept_name,
+                topic_key=topic_key
+            )
 
-                # Generate visual using new unified system
-                visual_result = generate_visual_for_question(
-                    question=message,
-                    student_profile=student_profile,
-                    marks=None  # Auto-detect from question
+            if should_attempt_visual:
+                topic_has_depth = len(message or "") > 20
+                context_needs_visual = bool(intent_context_flags & {"diagram_eligible", "requires_motion", "real_life_required", "compare_visual"})
+                should_attempt_visual = (
+                    intent_plan.intent != 'clarification_follow_up'
+                    and topic_has_depth
+                    and (
+                        intent_plan.allow_visual
+                        or intent_plan.ask_before_visual
+                        or context_needs_visual
+                        or visual_directives.get('force_hero')
+                    )
+                )
+                auto_visual = should_attempt_visual and (
+                    intent_plan.auto_visual
+                    or ("diagram_eligible" in intent_context_flags and intent_plan.intent in {"definition_query", "concept_explanation"})
+                    or ("requires_motion" in intent_context_flags and intent_plan.intent in {"concept_explanation", "deep_dive"})
+                )
+                ask_visual = should_attempt_visual and not auto_visual and (
+                    intent_plan.ask_before_visual
+                    or visual_directives.get('requires_consent')
+                    or intent_plan.intent == 'application_request'
                 )
 
-                visual_svg = visual_result["svg"]
-                visual_data = {
-                    'type': 'svg',
-                    'content': visual_svg,
-                    'generated': True,
-                    'visual_type': visual_result.get("visual_type", "concept"),
-                    'metadata': visual_result.get("metadata", {}),
-                    'friend_test_passed': visual_result.get("friend_test", {}).get("passed", False)
-                }
+                if should_attempt_visual:
+                    try:
+                        student_profile = None
+                        if user_id:
+                            user_info = await self.db.users.find_one({"user_id": user_id})
+                            if user_info:
+                                student_profile = {
+                                    "locale_language": user_info.get("preferred_language", "hi-IN"),
+                                    "board": user_info.get("board", "CBSE"),
+                                    "level": user_info.get("grade", "class_12"),
+                                    "interests": user_info.get("interests", [])
+                                }
 
-                logger.info(f"✅ Visual generated: {visual_result.get('visual_type')} (Friend Test: {visual_data['friend_test_passed']})")
+                        visual_result = generate_visual_for_question(
+                            question=message,
+                            student_profile=student_profile,
+                            marks=None
+                        )
 
-            except Exception as e:
-                logger.error(f"❌ Visual generation failed: {e}, falling back to old system")
-                # Fallback to old system if new one fails
-                visual_svg = self.svg_generator.generate_concept_visual(message, subject)
-                visual_data = {
-                    'type': 'svg',
-                    'content': visual_svg,
-                    'generated': visual_svg is not None,
-                    'visual_type': 'concept',
-                    'fallback': True
-                }
+                        visual_svg = visual_result["svg"]
+                        visual_data = {
+                            'type': 'svg',
+                            'content': visual_svg,
+                            'generated': True,
+                            'mode': 'auto' if auto_visual else 'offer',
+                            'visual_type': visual_result.get("visual_type", "concept"),
+                            'metadata': visual_result.get("metadata", {}),
+                            'friend_test_passed': visual_result.get("friend_test", {}).get("passed", False)
+                        }
+
+                        logger.info(f"✅ Visual generated: {visual_result.get('visual_type')} (Friend Test: {visual_data.get('friend_test_passed')})")
+
+                    except Exception as e:
+                        logger.error(f"❌ Visual generation failed: {e}, falling back to old system")
+                        visual_svg = self.svg_generator.generate_concept_visual(message, subject)
+                        visual_data = {
+                            'type': 'svg',
+                            'content': visual_svg,
+                            'generated': visual_svg is not None,
+                            'mode': 'offer' if ask_visual else 'auto',
+                            'visual_type': 'concept',
+                            'fallback': True
+                        }
+
+                if ask_visual:
+                    visual_offer = {
+                        "message": visual_directives.get('offer_text') or "👉 Would you like to see a visual demo of this?",
+                        "concept": concept_name,
+                        "topic": topic_key,
+                        "available": True,
+                        "cta_text": visual_directives.get('cta_text', "Show Visual"),
+                        "visual_mode": "offer"
+                    }
 
             # Step 4.5: Generate Teaching Visual (Animated Lessons)
             teaching_visual = None
@@ -724,6 +777,20 @@ Depth Level: {depth_level}"""
                 else:
                     sanitized_mentor_sections[key] = value
             
+            structured_blocks = IntentPlanner.build_structured_blocks(
+                plan=intent_plan,
+                question=message,
+                micro_sections=sanitized_micro_sections,
+                mentor_sections=sanitized_mentor_sections,
+                professor_text=professor_content,
+                mentor_text=mentor_content,
+            )
+            suggested_questions = IntentPlanner.generate_suggestions(
+                intent_plan,
+                concept_name,
+                topic_key,
+            )
+             
             # Step 9: Create enhanced dual response structure with both raw and sanitized content
             dual_response = {
                 "primary": {
@@ -734,7 +801,9 @@ Depth Level: {depth_level}"""
                     "progressive_sections": progressive_sections,
                     "micro_lesson_sections": sanitized_micro_sections,
                     "raw_micro_lesson_sections": micro_lesson_sections,
-                    "weight": professor_weight
+                    "weight": professor_weight,
+                    "active": intent_plan.needs_professor,
+                    "deferred_reason": None if intent_plan.needs_professor else "Mentor handled this query. Tap to open professor notebook if you still need it."
                 },
                 "secondary": {
                     "type": "mentor",
@@ -746,10 +815,21 @@ Depth Level: {depth_level}"""
                     "weight": mentor_weight
                 },
                 "visual": visual_data,
+                "visual_offer": visual_offer,
                 "teaching_visual": teaching_visual,  # Animated teaching visual
                 "sentiment_analysis": sentiment_analysis,
                 "quick_actions": quick_actions,
                 "motivational_footer": motivational_data,
+                "structured_blocks": structured_blocks,
+                "suggested_questions": suggested_questions,
+                "intent_blueprint": {
+                    "intent": intent_plan.intent,
+                    "layout": intent_plan.layout,
+                    "topic": topic_key,
+                    "professor_enabled": intent_plan.needs_professor,
+                    "auto_visual": intent_plan.auto_visual,
+                    "ask_before_visual": intent_plan.ask_before_visual,
+                },
                 "session_id": session_id,
                 "subject": subject,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1429,6 +1509,16 @@ You're making great progress by actively seeking to understand. Keep up this exc
         Returns:
             Dict with progressive disclosure response structure
         """
+        placeholder_visual = {
+            "hero_visual": {
+                "url": "https://cdn.mgxai.com/visuals/placeholder.svg",
+                "alt_text": "Concept visual",
+                "style": "sketch",
+            },
+            "metaphor_text": "Visual explanation",
+            "visual_tier": 1,
+        }
+
         try:
             from prompts.neuro_symbolic_mentor_v2 import (
                 get_mentor_prompt_v2,
@@ -1445,7 +1535,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
             
             # CRITICAL FIX: Classify intent before generating response
             intent = IntentClassifier.classify_intent(message)
-            logger.info(f"🎯 Intent classified: {intent}")
+            intent_plan = IntentPlanner.detect(message)
+            intent_context_flags = set(intent_plan.context_flags or ())
+            topic_key = TopicClassifier.classify_topic(message)
+            concept_name = IntentPlanner.extract_concept_name(message)
+            logger.info(f"🎯 Intent classified: {intent} | blueprint={intent_plan.intent} | topic={topic_key}")
             
             # Get user profile for personalization
             user_doc = await self.db.users.find_one({"user_id": user_id}) or {}
@@ -1462,7 +1556,22 @@ You're making great progress by actively seeking to understand. Keep up this exc
             }
             
             # Resolve visual metaphor
-            visual_metaphor = self.visual_engine.resolve_visual_metaphor(message, student_profile)
+            visual_metaphor = self.visual_engine.resolve_visual_metaphor(
+                message,
+                student_profile,
+                intent_plan=intent_plan,
+                context_flags=intent_plan.context_flags,
+            )
+            metaphor_visual = copy.deepcopy(visual_metaphor)
+            visual_directives = visual_metaphor.get("visual_directives", {})
+            visual_data, visual_offer, should_attempt_visual = self._resolve_visual_template(
+                intent_plan=intent_plan,
+                intent_context_flags=intent_context_flags,
+                visual_directives=visual_directives,
+                concept_name=concept_name,
+                topic_key=topic_key
+            )
+            self._hydrate_hero_visual(metaphor_visual, visual_data, default_alt=visual_metaphor.get('metaphor'))
             # [JULES VISUAL ENHANCEMENT END]
 
             # If greeting detected, return mentor personality response
@@ -1517,9 +1626,6 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # Otherwise, proceed with concept explanation
             logger.info("📚 Learning intent - generating concept explanation")
             
-            # PHASE 2: Dynamic Metaphor Selection
-            from services.topic_classifier import TopicClassifier
-            
             # Step 1: Intelligently select metaphor based on topic
             metaphor_selection = TopicClassifier.select_metaphor(
                 message,
@@ -1543,87 +1649,115 @@ You're making great progress by actively seeking to understand. Keep up this exc
             
             # Step 3: Get visual metaphor using dynamic selection
             concept_key = detected_topic if detected_topic != 'generic' else message.lower()[:50].replace(' ', '_')
-            metaphor_visual = get_metaphor_visual(
-                concept_key,
-                selected_metaphor,
-                student_profile['region'],
-                question=message
-            )
+            metaphor_visual = copy.deepcopy(placeholder_visual)
+            try:
+                metaphor_visual = get_metaphor_visual(
+                    concept_key,
+                    selected_metaphor,
+                    student_profile['region'],
+                    question=message
+                )
+            except Exception as exc:
+                logger.warning(f"⚠️ Metaphor visual lookup failed: {exc}, using placeholder.")
             logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual.get('hero_visual', 'N/A')}")
             logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
             # PHASE 3: UNIFIED VISUAL SYSTEM Integration
             # Try unified visual system FIRST (handles both concept and solution questions)
-            try:
-                logger.info("🎨 Attempting unified visual system (concept + solution support)...")
-                unified_visual_result = generate_visual_for_question(
-                    question=message,
-                    student_profile={
-                        "locale_language": student_profile.get('region', 'hi-IN'),
-                        "board": user_doc.get('board', 'CBSE'),
-                        "level": user_doc.get('grade', 'class_12'),
-                        "interests": user_doc.get('interests', [])
-                    },
-                    marks=None  # Auto-detect from question
-                )
-
-                # Use unified visual system result
-                svg_visual = {
-                    'success': True,
-                    'svg_data_uri': f"data:image/svg+xml;utf8,{unified_visual_result['svg']}",
-                    'tier': 0,  # Highest quality (step-by-step or emotional)
-                    'size_kb': len(unified_visual_result['svg']) / 1024,
-                    'generation_method': f"unified_{unified_visual_result['visual_type']}_system",
-                    'visual_type': unified_visual_result['visual_type'],
-                    'friend_test_passed': unified_visual_result['friend_test'].get('passed', False)
-                }
-
-                metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
-                metaphor_visual['svg_data'] = svg_visual
-                metaphor_visual['visual_tier'] = svg_visual['tier']
-                metaphor_visual['visual_type'] = svg_visual['visual_type']
-
-                logger.info(f"✅ UNIFIED VISUAL SYSTEM: {unified_visual_result['visual_type']} visual generated!")
-                logger.info(f"   Size: {svg_visual['size_kb']:.1f}KB | Friend Test: {svg_visual['friend_test_passed']}")
-
-            except Exception as e:
-                # Fallback to old SVG sketch generator if unified system fails
-                logger.warning(f"⚠️ Unified visual system failed: {e}, falling back to SVG sketch generator")
-
-                from services.svg_sketch_generator import SVGSketchGenerator
-                from services.svg_cache import SVGCache
-
-                svg_cache = SVGCache(ttl_hours=24)
-                svg_generator = SVGSketchGenerator(self.emergent_llm_key)
-
-                # Try to get from cache first
-                cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
-                cached_svg = svg_cache.get(cache_key)
-
-                if cached_svg:
-                    logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
-                    svg_visual = cached_svg
-                else:
-                    # Generate new SVG sketch
-                    logger.info("🎨 Generating new SVG sketch with GPT-4o...")
-                    svg_visual = await svg_generator.generate_educational_sketch(
-                        concept=concept_key,
-                        topic=detected_topic,
-                        metaphor_category=selected_metaphor,
-                        metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
-                        region=student_profile['region']
+            if should_attempt_visual:
+                try:
+                    logger.info("🎨 Attempting unified visual system (concept + solution support)...")
+                    unified_visual_result = generate_visual_for_question(
+                        question=message,
+                        student_profile={
+                            "locale_language": student_profile.get('region', 'hi-IN'),
+                            "board": user_doc.get('board', 'CBSE'),
+                            "level": user_doc.get('grade', 'class_12'),
+                            "interests": user_doc.get('interests', [])
+                        },
+                        marks=None
                     )
 
-                    # Cache for future use
-                    if svg_visual['success']:
-                        svg_cache.set(cache_key, svg_visual)
-                        logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
+                    encoded_svg = urllib.parse.quote(unified_visual_result['svg'])
+                    svg_visual = {
+                        'success': True,
+                        'svg_data_uri': f"data:image/svg+xml;utf8,{encoded_svg}",
+                        'tier': 0,
+                        'size_kb': len(unified_visual_result['svg']) / 1024,
+                        'generation_method': f"unified_{unified_visual_result['visual_type']}_system",
+                        'visual_type': unified_visual_result['visual_type'],
+                        'friend_test_passed': unified_visual_result['friend_test'].get('passed', False)
+                    }
 
-                # Replace static image with SVG (Phase 3 upgrade)
-                metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
-                metaphor_visual['svg_data'] = svg_visual
-                metaphor_visual['visual_tier'] = svg_visual['tier']
-                logger.info(f"🚀 Using fallback SVG visual (Tier {svg_visual['tier']})")
+                    metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
+                    metaphor_visual['svg_data'] = svg_visual
+                    metaphor_visual['visual_tier'] = svg_visual['tier']
+                    metaphor_visual['visual_type'] = svg_visual['visual_type']
+
+                    visual_data = {
+                        'type': 'svg',
+                        'mode': 'auto',
+                        'content': unified_visual_result['svg'],
+                        'visual_type': unified_visual_result.get("visual_type", "concept"),
+                        'metadata': {
+                            'size_kb': svg_visual['size_kb'],
+                            'generation_method': svg_visual['generation_method'],
+                            'tier': svg_visual['tier']
+                        },
+                        'friend_test_passed': svg_visual['friend_test_passed']
+                    }
+
+                    logger.info(f"✅ UNIFIED VISUAL SYSTEM: {unified_visual_result['visual_type']} visual generated!")
+                    logger.info(f"   Size: {svg_visual['size_kb']:.1f}KB | Friend Test: {svg_visual['friend_test_passed']}")
+
+                except Exception as e:
+                    logger.warning(f"⚠️ Unified visual system failed: {e}, falling back to SVG sketch generator")
+
+                    from services.svg_sketch_generator import SVGSketchGenerator
+                    from services.svg_cache import SVGCache
+
+                    svg_cache = SVGCache(ttl_hours=24)
+                    svg_generator = SVGSketchGenerator(self.emergent_llm_key)
+
+                    cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
+                    cached_svg = svg_cache.get(cache_key)
+
+                    if cached_svg:
+                        svg_visual = cached_svg
+                        logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
+                    else:
+                        logger.info("🎨 Generating new SVG sketch with GPT-4o...")
+                        svg_visual = await svg_generator.generate_educational_sketch(
+                            concept=concept_key,
+                            topic=detected_topic,
+                            metaphor_category=selected_metaphor,
+                            metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
+                            region=student_profile['region']
+                        )
+                        if svg_visual['success']:
+                            svg_cache.set(cache_key, svg_visual)
+                            logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
+
+                    metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
+                    metaphor_visual['svg_data'] = svg_visual
+                    metaphor_visual['visual_tier'] = svg_visual['tier']
+                    logger.info(f"🚀 Using fallback SVG visual (Tier {svg_visual['tier']})")
+
+                    if svg_visual.get('success') and svg_visual.get('svg_data_uri'):
+                        decoded = svg_visual['svg_data_uri'].split(',', 1)[1] if ',' in svg_visual['svg_data_uri'] else svg_visual['svg_data_uri']
+                        decoded = urllib.parse.unquote(decoded)
+                        visual_data = {
+                            'type': 'svg',
+                            'mode': 'auto',
+                            'content': decoded,
+                            'visual_type': svg_visual.get("visual_type", "concept"),
+                            'metadata': {
+                                'size_kb': svg_visual.get('size_kb', 0),
+                                'generation_method': svg_visual.get('generation_method', 'unified_system'),
+                                'tier': svg_visual.get('tier', 0)
+                            },
+                            'friend_test_passed': svg_visual.get('friend_test_passed', False)
+                        }
             
             # Generate system prompt v2 with visual context
             # IMPORTANT: Update student profile to use dynamically selected metaphor
@@ -1697,24 +1831,33 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         logger.info(f"✅ Added mentor avatar: {avatar_url}")
                     
                     # CRITICAL: Add hero visual - NOW USING SVG (Phase 3)
-                    if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
-                        logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG from Phase 3")
-                        # Use SVG data URI (Phase 3 - generated above)
-                        default_view['hero_visual'] = {
-                            'visual_url': metaphor_visual['hero_visual'],  # NOW SVG data URI (set at line 1482)
-                            'alt_text': metaphor_visual['metaphor_text'],
-                            'load_priority': 'high',
-                            'size_bytes': metaphor_visual['svg_data']['size_kb'] * 1024,  # SVG size
-                            'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
-                            'tier': metaphor_visual['visual_tier'],  # SVG tier (0, 1, or 2)
-                            'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0],
-                            'cultural_context': metaphor_visual.get('cultural_context', 'General'),
-                            'svg_generation_method': metaphor_visual['svg_data']['generation_method']
-                        }
-                        logger.info(f"✅ Injected SVG hero visual (Tier {metaphor_visual['visual_tier']}): {metaphor_visual['svg_data']['generation_method']}")
-                        logger.info(f"✅ SVG size: {metaphor_visual['svg_data']['size_kb']:.1f}KB")
+                    hero_suppressed = intent_plan.intent in {'clarification_follow_up'} or (
+                        intent_plan.intent == 'application_request' and not visual_directives.get('force_hero')
+                    )
+
+                    if not hero_suppressed:
+                        if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
+                            logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG from Phase 3")
+                            # Use SVG data URI (Phase 3 - generated above)
+                            default_view['hero_visual'] = {
+                                'visual_url': metaphor_visual['hero_visual'],  # NOW SVG data URI (set at line 1482)
+                                'alt_text': metaphor_visual['metaphor_text'],
+                                'load_priority': 'high',
+                                'size_bytes': metaphor_visual['svg_data']['size_kb'] * 1024,  # SVG size
+                                'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
+                                'tier': metaphor_visual['visual_tier'],  # SVG tier (0, 1, or 2)
+                                'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0],
+                                'cultural_context': metaphor_visual.get('cultural_context', 'General'),
+                                'svg_generation_method': metaphor_visual['svg_data']['generation_method']
+                            }
+                            logger.info(f"✅ Injected SVG hero visual (Tier {metaphor_visual['visual_tier']}): {metaphor_visual['svg_data']['generation_method']}")
+                            logger.info(f"✅ SVG size: {metaphor_visual['svg_data']['size_kb']:.1f}KB")
+                        else:
+                            logger.info(f"✅ Hero visual present in LLM response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
                     else:
-                        logger.info(f"✅ Hero visual present in LLM response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
+                        logger.info("🎯 Hero visual suppressed for this intent (offer/clarification mode)")
+                    
+                    response_dict['hero_visual'] = default_view.get('hero_visual')
                     
                     # Add verification badge
                     if 'professor_badge' in default_view:
@@ -1802,28 +1945,35 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # Return response with metadata
             # [JULES VISUAL ENHANCEMENT START]
             response_dict['visual_metaphor'] = visual_metaphor
-
-            # CRITICAL: Add visual_data for frontend MentorResponseV2 component
-            # Frontend expects: response.visual_data.content (the actual SVG)
-            if svg_visual.get('success') and svg_visual.get('svg_data_uri'):
-                # Extract pure SVG from data URI
-                svg_content = svg_visual['svg_data_uri']
-                if svg_content.startswith('data:image/svg+xml;utf8,'):
-                    svg_content = svg_content.replace('data:image/svg+xml;utf8,', '')
-
-                response_dict['visual_data'] = {
-                    'type': 'svg',
-                    'content': svg_content,
-                    'generated': True,
-                    'visual_type': svg_visual.get('visual_type', 'concept'),
-                    'metadata': {
-                        'size_kb': svg_visual.get('size_kb', 0),
-                        'generation_method': svg_visual.get('generation_method', 'unified_system'),
-                        'tier': svg_visual.get('tier', 0)
-                    },
-                    'friend_test_passed': svg_visual.get('friend_test_passed', False)
-                }
-                logger.info(f"✅ Added visual_data to response for frontend consumption")
+            response_dict['visual_directives'] = visual_directives
+            if visual_data:
+                response_dict['visual_data'] = visual_data
+                if 'default_view' in response_dict:
+                    # Ensure hero_visual is always a dict before accessing ['url']
+                    existing_hero = response_dict['default_view'].get('hero_visual')
+                    if not isinstance(existing_hero, dict):
+                        # If hero_visual exists but is not a dict (e.g., string), create a new dict
+                        # Preserve the value as visual_url if it was a string
+                        hero_visual_fallback = visual_metaphor.get('hero_visual', {})
+                        if not isinstance(hero_visual_fallback, dict):
+                            hero_visual_fallback = {}
+                        response_dict['default_view']['hero_visual'] = hero_visual_fallback.copy()
+                        # If existing_hero was a string (e.g., SVG data URI), preserve it as visual_url
+                        if isinstance(existing_hero, str):
+                            response_dict['default_view']['hero_visual']['visual_url'] = existing_hero
+                    else:
+                        # It's already a dict, use it
+                        response_dict['default_view']['hero_visual'] = existing_hero.copy()
+                    
+                    # Now safely set url (hero_visual is guaranteed to be a dict)
+                    # Use existing url if it exists and is truthy, otherwise use fallback chain
+                    existing_url = response_dict['default_view']['hero_visual'].get('url')
+                    response_dict['default_view']['hero_visual']['url'] = existing_url or visual_data.get('asset_url') or visual_data.get('lottie_file') or "https://cdn.mgxai.com/visuals/placeholder.svg"
+                    # Set alt_text if not already present
+                    if not response_dict['default_view']['hero_visual'].get('alt_text'):
+                        response_dict['default_view']['hero_visual']['alt_text'] = visual_metaphor.get('metaphor', 'Concept visual')
+            if visual_offer:
+                response_dict['visual_offer'] = visual_offer
             # [JULES VISUAL ENHANCEMENT END]
 
             return {
@@ -1872,3 +2022,101 @@ You're making great progress by actively seeking to understand. Keep up this exc
         }
         
         return svg_templates.get(metaphor_category, svg_templates['cricket'])
+
+    def _resolve_visual_template(
+        self,
+        intent_plan: Any,
+        intent_context_flags: set,
+        visual_directives: Dict[str, Any],
+        concept_name: str,
+        topic_key: str,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], bool]:
+        """
+        Determine whether a metadata-driven visual template can handle this request.
+        Returns (visual_data, visual_offer, should_attempt_dynamic_generation)
+        """
+        render_strategy = visual_directives.get("render_strategy", {}) or {}
+        trigger_mode = render_strategy.get("trigger", "auto")
+        visual_mode = "auto" if trigger_mode == "auto" else "offer"
+
+        if intent_plan.intent == "application_request":
+            visual_mode = "offer"
+        if intent_plan.intent == "clarification_follow_up":
+            return None, None, True
+
+        template_visual: Optional[Dict[str, Any]] = None
+        if visual_directives.get("visual_type") == "animation" and visual_directives.get("lottie_file"):
+            template_visual = {
+                "type": "animation",
+                "lottie_file": visual_directives["lottie_file"]
+            }
+        elif visual_directives.get("asset_url"):
+            template_visual = {
+                "type": "scene",
+                "asset_url": visual_directives["asset_url"]
+            }
+
+        if not template_visual:
+            return None, None, True
+
+        visual_data = {
+            "type": template_visual["type"],
+            "mode": visual_mode,
+            "caption": visual_directives.get("caption"),
+            "persona": visual_directives.get("persona"),
+            "template": visual_directives.get("template"),
+            "library_topic": visual_directives.get("library_topic"),
+            "render_strategy": render_strategy,
+        }
+        if template_visual["type"] == "animation":
+            visual_data["lottie_file"] = template_visual["lottie_file"]
+        else:
+            visual_data["asset_url"] = template_visual["asset_url"]
+
+        visual_offer = None
+        if visual_mode == "offer":
+            visual_offer = {
+                "message": visual_directives.get("offer_text") or "👉 Would you like to see this visually?",
+                "concept": concept_name,
+                "topic": topic_key,
+                "available": True,
+                "cta_text": visual_directives.get("cta_text", "Show Visual"),
+                "visual_mode": "offer"
+        }
+
+        return visual_data, visual_offer, False
+
+    def _hydrate_hero_visual(
+        self,
+        metaphor_visual: Dict[str, Any],
+        visual_data: Optional[Dict[str, Any]],
+        default_alt: Optional[str] = None,
+    ) -> None:
+        # Ensure hero_visual is always a dict
+        existing_hero = metaphor_visual.get('hero_visual')
+        if not isinstance(existing_hero, dict):
+            # If hero_visual exists but is not a dict (e.g., string), create a new dict
+            # Preserve the value as visual_url if it was a string
+            hero = {}
+            if isinstance(existing_hero, str):
+                hero['visual_url'] = existing_hero
+            metaphor_visual['hero_visual'] = hero
+        else:
+            hero = existing_hero
+        
+        if not hero.get('alt_text') and default_alt:
+            hero['alt_text'] = default_alt
+
+        if hero.get('url'):
+            return
+
+        if visual_data:
+            if visual_data.get('asset_url'):
+                hero['url'] = visual_data['asset_url']
+                return
+            if visual_data.get('lottie_file'):
+                hero['url'] = visual_data['lottie_file']
+                return
+
+        fallback = metaphor_visual.get('hero_visual_fallback_url') or "https://cdn.mgxai.com/visuals/placeholder.svg"
+        hero['url'] = fallback

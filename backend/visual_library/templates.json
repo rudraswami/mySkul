@@ -1,0 +1,68 @@
+{
+  "valency": {
+    "intent_types": ["definition_query", "concept_explanation", "application_request"],
+    "visual_type": "animation",
+    "template": "cricket_bonding_match",
+    "metaphor": "Coach assembling a batting lineup to explain bonding slots",
+    "lottie_file": "https://cdn.ai-tutor.in/visuals/chemistry/valency_cricket_team.json",
+    "caption": "Coach Dhruv fills open slots just like atoms form bonds to complete a team.",
+    "offer_text": "Watch how this atom builds its team?",
+    "render_strategy": {
+      "trigger": "auto"
+    },
+    "context_flags": ["diagram_eligible", "chemistry_core"]
+  },
+  "velocity": {
+    "intent_types": ["concept_explanation", "deep_dive", "application_request"],
+    "visual_type": "animation",
+    "template": "delhi_metro_velocity",
+    "metaphor": "Metro sprint showing displacement + direction",
+    "lottie_file": "https://cdn.ai-tutor.in/visuals/physics/velocity_metro.json",
+    "caption": "Metro announcer shows how direction makes velocity different from speed.",
+    "offer_text": "See the metro sprint?",
+    "render_strategy": {
+      "trigger": "auto",
+      "requires_consent": false
+    },
+    "context_flags": ["requires_motion"]
+  },
+  "catalyst": {
+    "intent_types": ["concept_explanation", "application_request"],
+    "visual_type": "scene",
+    "template": "pressure_cooker_shortcut",
+    "metaphor": "Kitchen shortcut using a pressure cooker",
+    "asset_url": "https://cdn.ai-tutor.in/visuals/chemistry/catalyst_kitchen_scene.svg",
+    "caption": "Chef shows how a catalyst speeds up reactions like a cooker saves time.",
+    "offer_text": "Peek inside the kitchen reaction?",
+    "render_strategy": {
+      "trigger": "on_click"
+    },
+    "context_flags": ["real_life_required"]
+  },
+  "photosynthesis": {
+    "intent_types": ["definition_query", "concept_explanation"],
+    "visual_type": "scene",
+    "template": "park_energy_booths",
+    "metaphor": "Park kiosks turning sunlight into snacks",
+    "asset_url": "https://cdn.ai-tutor.in/visuals/biology/photosynthesis_park.svg",
+    "caption": "Sun kiosks collect energy, kitchen booths make glucose.",
+    "offer_text": "See the park model?",
+    "render_strategy": {
+      "trigger": "auto"
+    },
+    "context_flags": ["diagram_eligible"]
+  },
+  "generic": {
+    "intent_types": ["definition_query", "concept_explanation", "application_request", "deep_dive"],
+    "visual_type": "scene",
+    "template": "chalkboard_story",
+    "metaphor": "Friendly chalkboard walkthrough",
+    "asset_url": "https://cdn.mgxai.com/visuals/placeholder.svg",
+    "caption": "Dhruv sketches the idea on a chalkboard.",
+    "offer_text": "Want a quick sketch?",
+    "render_strategy": {
+      "trigger": "on_click"
+    },
+    "context_flags": []
+  }
+}
