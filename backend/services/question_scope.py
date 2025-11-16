@@ -64,9 +64,11 @@ def should_generate_visual(question: str, subject_hint: Optional[str] = None) ->
     Decide if a dynamic visual should be generated for this question.
     Heuristics:
     - Concept mapping hit OR
-    - Numbers present + action verbs (vary/compare/derive/solve/explain/draw) OR
+    - Definition/explanation queries (what is/explain/define) OR
+    - Numbers present + action verbs (vary/compare/derive/solve/draw/plot) OR
     - Marks specified and mode is explain/derive/compare
-    Always allow when concept is detected.
+    
+    Visual Learning Architecture: Visuals should be the default for concept questions.
     """
     try:
         from .concept_map import detect_concept  # Local import to avoid cycles
@@ -74,19 +76,27 @@ def should_generate_visual(question: str, subject_hint: Optional[str] = None) ->
         detect_concept = None
 
     q = (question or "").lower()
+    
     # 1) Concept mapping
     if detect_concept:
         subj, cid = detect_concept(q, subject_hint)
         if cid:
             return True
 
-    # 2) Numbers + verbs
+    # 2) Definition/Explanation queries (Visual Learning Architecture - visuals are mandatory)
+    # Questions like "What is X?", "Explain X", "Define X" should ALWAYS get visuals
+    is_definition = bool(re.search(r"\b(what is|define|explain|describe|tell me about)\b", q))
+    is_conceptual = bool(re.search(r"\b(how does|why does|how to|what are)\b", q))
+    if is_definition or is_conceptual:
+        return True
+
+    # 3) Numbers + verbs
     has_number = bool(re.search(r"\d", q))
-    has_action = bool(re.search(r"\b(vary|change|compare|derive|solve|draw|plot|explain)\b", q))
+    has_action = bool(re.search(r"\b(vary|change|compare|derive|solve|draw|plot)\b", q))
     if has_number and has_action:
         return True
 
-    # 3) Marks + mode (explain/derive/compare)
+    # 4) Marks + mode (explain/derive/compare)
     sc = build_scope(q)
     if sc.get("marks") and sc.get("mode") in {"explain", "derive", "compare"}:
         return True

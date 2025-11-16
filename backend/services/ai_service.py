@@ -1662,102 +1662,79 @@ You're making great progress by actively seeking to understand. Keep up this exc
             logger.info(f"🎨 Visual metaphor loaded: {metaphor_visual.get('hero_visual', 'N/A')}")
             logger.info(f"🎨 Metaphor category: {selected_metaphor} (was: {student_profile['preferred_metaphor']})")
             
-            # PHASE 3: UNIFIED VISUAL SYSTEM Integration
-            # Try unified visual system FIRST (handles both concept and solution questions)
+            # PHASE 3: VISUAL PROFESSOR ENGINE Integration (PRIORITY 1)
+            # Try Visual Professor Generator FIRST (dynamic, multi-step, professor-style)
+            logger.info(f"🎨 ========== VISUAL PROFESSOR ENGINE CHECK ==========")
+            logger.info(f"🎨 should_attempt_visual={should_attempt_visual}")
+            logger.info(f"🎨 Question: {message[:100]}")
+            logger.info(f"🎨 Subject: {subject}")
+            
             if should_attempt_visual:
                 try:
-                    logger.info("🎨 Attempting unified visual system (concept + solution support)...")
-                    unified_visual_result = generate_visual_for_question(
+                    logger.info("🎨 Importing VisualProfessorGenerator...")
+                    from services.visual_professor import VisualProfessorGenerator
+                    logger.info("✅ VisualProfessorGenerator imported successfully")
+                    
+                    vpg = VisualProfessorGenerator()
+                    logger.info("✅ VisualProfessorGenerator instance created")
+                    
+                    logger.info("🎨 Calling vpg.generate_visual()...")
+                    vpg_result = await vpg.generate_visual(
                         question=message,
-                        student_profile={
-                            "locale_language": student_profile.get('region', 'hi-IN'),
-                            "board": user_doc.get('board', 'CBSE'),
-                            "level": user_doc.get('grade', 'class_12'),
-                            "interests": user_doc.get('interests', [])
-                        },
-                        marks=None
+                        subject=subject,
+                        student_profile=student_profile
                     )
-
-                    encoded_svg = urllib.parse.quote(unified_visual_result['svg'])
-                    svg_visual = {
-                        'success': True,
-                        'svg_data_uri': f"data:image/svg+xml;utf8,{encoded_svg}",
-                        'tier': 0,
-                        'size_kb': len(unified_visual_result['svg']) / 1024,
-                        'generation_method': f"unified_{unified_visual_result['visual_type']}_system",
-                        'visual_type': unified_visual_result['visual_type'],
-                        'friend_test_passed': unified_visual_result['friend_test'].get('passed', False)
-                    }
-
-                    metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
-                    metaphor_visual['svg_data'] = svg_visual
-                    metaphor_visual['visual_tier'] = svg_visual['tier']
-                    metaphor_visual['visual_type'] = svg_visual['visual_type']
-
-                    visual_data = {
-                        'type': 'svg',
-                        'mode': 'auto',
-                        'content': unified_visual_result['svg'],
-                        'visual_type': unified_visual_result.get("visual_type", "concept"),
-                        'metadata': {
-                            'size_kb': svg_visual['size_kb'],
-                            'generation_method': svg_visual['generation_method'],
-                            'tier': svg_visual['tier']
-                        },
-                        'friend_test_passed': svg_visual['friend_test_passed']
-                    }
-
-                    logger.info(f"✅ UNIFIED VISUAL SYSTEM: {unified_visual_result['visual_type']} visual generated!")
-                    logger.info(f"   Size: {svg_visual['size_kb']:.1f}KB | Friend Test: {svg_visual['friend_test_passed']}")
-
-                except Exception as e:
-                    logger.warning(f"⚠️ Unified visual system failed: {e}, falling back to SVG sketch generator")
-
-                    from services.svg_sketch_generator import SVGSketchGenerator
-                    from services.svg_cache import SVGCache
-
-                    svg_cache = SVGCache(ttl_hours=24)
-                    svg_generator = SVGSketchGenerator(self.emergent_llm_key)
-
-                    cache_key = f"{concept_key}_{selected_metaphor}_{student_profile['region']}"
-                    cached_svg = svg_cache.get(cache_key)
-
-                    if cached_svg:
-                        svg_visual = cached_svg
-                        logger.info(f"✅ SVG from cache (Tier 0): {cached_svg['size_kb']:.1f}KB")
-                    else:
-                        logger.info("🎨 Generating new SVG sketch with GPT-4o...")
-                        svg_visual = await svg_generator.generate_educational_sketch(
-                            concept=concept_key,
-                            topic=detected_topic,
-                            metaphor_category=selected_metaphor,
-                            metaphor_text=metaphor_visual.get('metaphor_text', 'Visual concept'),
-                            region=student_profile['region']
-                        )
-                        if svg_visual['success']:
-                            svg_cache.set(cache_key, svg_visual)
-                            logger.info(f"✅ SVG generated and cached: {svg_visual['size_kb']:.1f}KB (Tier {svg_visual['tier']})")
-
-                    metaphor_visual['hero_visual'] = svg_visual['svg_data_uri']
-                    metaphor_visual['svg_data'] = svg_visual
-                    metaphor_visual['visual_tier'] = svg_visual['tier']
-                    logger.info(f"🚀 Using fallback SVG visual (Tier {svg_visual['tier']})")
-
-                    if svg_visual.get('success') and svg_visual.get('svg_data_uri'):
-                        decoded = svg_visual['svg_data_uri'].split(',', 1)[1] if ',' in svg_visual['svg_data_uri'] else svg_visual['svg_data_uri']
-                        decoded = urllib.parse.unquote(decoded)
+                    logger.info(f"📊 Visual Professor Generator returned: type={type(vpg_result)}, has_stages={bool(vpg_result and vpg_result.get('stages'))}")
+                    
+                    # Check if we got dynamic stages
+                    if vpg_result and vpg_result.get('stages') and len(vpg_result['stages']) > 0:
+                        logger.info(f"✅ Got {len(vpg_result['stages'])} stages from Visual Professor Generator")
+                        # Convert to visual_data format
                         visual_data = {
-                            'type': 'svg',
+                            'type': 'animated_lesson',
                             'mode': 'auto',
-                            'content': decoded,
-                            'visual_type': svg_visual.get("visual_type", "concept"),
+                            'visual_type': vpg_result.get('visual_type', 'animation'),
+                            'stages': vpg_result.get('stages', []),
                             'metadata': {
-                                'size_kb': svg_visual.get('size_kb', 0),
-                                'generation_method': svg_visual.get('generation_method', 'unified_system'),
-                                'tier': svg_visual.get('tier', 0)
+                                **vpg_result.get('metadata', {}),
+                                'generation_method': 'visual_professor_engine',
+                                'tier': 0
                             },
-                            'friend_test_passed': svg_visual.get('friend_test_passed', False)
+                            'total_duration_ms': vpg_result.get('total_duration_ms', 0),
+                            'interaction_points': vpg_result.get('interaction_points', []),
+                            'visual_id': vpg_result.get('visual_id'),
+                            'professor_avatar': vpg_result.get('professor_avatar', {}),
+                            'lottie_base_url': vpg_result.get('lottie_base_url', 'https://cdn.ai-tutor.in/visuals')
                         }
+                        # Set metaphor_visual for compatibility
+                        metaphor_visual['hero_visual'] = vpg_result.get('asset_url') or vpg_result.get('lottie_file') or "https://cdn.mgxai.com/visuals/placeholder.svg"
+                        metaphor_visual['svg_data'] = {'generation_method': 'visual_professor_engine', 'size_kb': 0, 'tier': 0}
+                        metaphor_visual['visual_tier'] = 0
+                        metaphor_visual['visual_type'] = vpg_result.get('visual_type', 'animation')
+                        logger.info(f"✅ VISUAL PROFESSOR ENGINE: {len(vpg_result.get('stages', []))} dynamic stages generated!")
+                        # Skip unified_visual_system since we have dynamic visual
+                        should_attempt_visual = False
+                    else:
+                        logger.warning(f"⚠️ Visual Professor Generator returned invalid result: vpg_result={vpg_result}, stages={vpg_result.get('stages') if vpg_result else 'None'}")
+                except Exception as e:
+                    # Use a fresh logger reference to avoid scope issues
+                    import logging as log_module
+                    err_logger = log_module.getLogger(__name__)
+                    error_msg = f"❌ Visual Professor Generator failed with exception: {e}"
+                    traceback_str = traceback.format_exc()
+                    err_logger.error(error_msg, exc_info=True)
+                    err_logger.error(f"❌ Full traceback:\n{traceback_str}")
+            else:
+                logger.info(f"ℹ️ Visual Professor Generator skipped: should_attempt_visual={should_attempt_visual}")
+            
+            # PHASE 3b: LEGACY VISUAL SYSTEMS DISABLED
+            # Visual Professor Engine is now the ONLY pathway for visuals
+            # Legacy systems (unified_visual_system, _dyn, _tpl, _plan) are disabled
+            # If Visual Professor Generator fails, it will retry with fallback multi-step template
+            if should_attempt_visual:
+                logger.warning("⚠️ Visual Professor Generator failed, but legacy systems are disabled. Retrying with universal fallback template...")
+                # Visual Professor Generator's _fallback_visual already generates multi-step visuals
+                # No need to fall back to static SVG systems
             
             # Generate system prompt v2 with visual context
             # IMPORTANT: Update student profile to use dynamically selected metaphor
@@ -1839,19 +1816,25 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
                             logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG from Phase 3")
                             # Use SVG data URI (Phase 3 - generated above)
+                            # Safely access svg_data with fallbacks
+                            svg_data = metaphor_visual.get('svg_data', {})
+                            size_kb = svg_data.get('size_kb', 0) if isinstance(svg_data, dict) else 0
+                            generation_method = svg_data.get('generation_method', 'placeholder') if isinstance(svg_data, dict) else 'placeholder'
+                            visual_tier = metaphor_visual.get('visual_tier', 2)
+                            
                             default_view['hero_visual'] = {
-                                'visual_url': metaphor_visual['hero_visual'],  # NOW SVG data URI (set at line 1482)
-                                'alt_text': metaphor_visual['metaphor_text'],
+                                'visual_url': metaphor_visual.get('hero_visual', 'https://cdn.mgxai.com/visuals/placeholder.svg'),  # NOW SVG data URI (set at line 1482)
+                                'alt_text': metaphor_visual.get('metaphor_text', 'Concept visual'),
                                 'load_priority': 'high',
-                                'size_bytes': metaphor_visual['svg_data']['size_kb'] * 1024,  # SVG size
+                                'size_bytes': size_kb * 1024 if size_kb > 0 else 50000,  # SVG size with fallback
                                 'placeholder_color': metaphor_visual.get('color_theme', '#6366F1'),
-                                'tier': metaphor_visual['visual_tier'],  # SVG tier (0, 1, or 2)
-                                'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0],
+                                'tier': visual_tier,  # SVG tier (0, 1, or 2)
+                                'fallback_emoji': metaphor_visual.get('animation_hint', '🏏').split('-')[0] if metaphor_visual.get('animation_hint') else '🏏',
                                 'cultural_context': metaphor_visual.get('cultural_context', 'General'),
-                                'svg_generation_method': metaphor_visual['svg_data']['generation_method']
+                                'svg_generation_method': generation_method
                             }
-                            logger.info(f"✅ Injected SVG hero visual (Tier {metaphor_visual['visual_tier']}): {metaphor_visual['svg_data']['generation_method']}")
-                            logger.info(f"✅ SVG size: {metaphor_visual['svg_data']['size_kb']:.1f}KB")
+                            logger.info(f"✅ Injected SVG hero visual (Tier {visual_tier}): {generation_method}")
+                            logger.info(f"✅ SVG size: {size_kb:.1f}KB" if size_kb > 0 else "✅ Using placeholder visual")
                         else:
                             logger.info(f"✅ Hero visual present in LLM response: {default_view['hero_visual'].get('visual_url', 'N/A')[:100]}")
                     else:
@@ -1871,6 +1854,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 avatar_url = get_mentor_avatar(student_profile['emotional_state'])
                 badge_url = get_verification_badge('verified')
                 
+                # Safely extract metaphor_visual values
+                hero_visual_url = metaphor_visual.get('hero_visual', 'https://cdn.mgxai.com/visuals/placeholder.svg')
+                if isinstance(hero_visual_url, dict):
+                    hero_visual_url = hero_visual_url.get('url') or hero_visual_url.get('visual_url') or 'https://cdn.mgxai.com/visuals/placeholder.svg'
+                metaphor_text = metaphor_visual.get('metaphor_text', 'Visual explanation')
+                
                 response_dict = {
                     "default_view": {
                         "mentor_avatar": {
@@ -1880,15 +1869,15 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         },
                         "greeting": "Let's tackle this together!",
                         "hero_visual": {
-                            "visual_url": metaphor_visual['hero_visual'],  # SVG data URI (Phase 3)
-                            "alt_text": metaphor_visual['metaphor_text'],
+                            "visual_url": hero_visual_url,  # SVG data URI (Phase 3)
+                            "alt_text": metaphor_text,
                             "placeholder_color": metaphor_visual.get('color_theme', '#6366F1'),
                             "tier": 2,  # Real image
                             "cultural_context": metaphor_visual.get('cultural_context', 'General')
                         },
                         "metaphor": {
                             "category": student_profile['preferred_metaphor'],
-                            "text": metaphor_visual['metaphor_text'],
+                            "text": metaphor_text,
                             "animation_hint": metaphor_visual.get('animation_hint', 'none')
                         },
                         "main_content": {
@@ -1916,7 +1905,8 @@ You're making great progress by actively seeking to understand. Keep up this exc
                         }
                     }
                 }
-                logger.info(f"✅ Fallback response created with REAL image: {metaphor_visual['hero_visual'][:100]}")
+                hero_visual_preview = hero_visual_url if isinstance(hero_visual_url, str) else str(hero_visual_url)
+                logger.info(f"✅ Fallback response created with visual: {hero_visual_preview[:100]}")
             
             # Step 7: Save to database
             message_id = str(uuid.uuid4())
@@ -1946,8 +1936,23 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # [JULES VISUAL ENHANCEMENT START]
             response_dict['visual_metaphor'] = visual_metaphor
             response_dict['visual_directives'] = visual_directives
-            if visual_data:
+            if visual_data and isinstance(visual_data, dict):
                 response_dict['visual_data'] = visual_data
+                # If visual_data has stages (from VisualProfessorGenerator), also add as teaching_visual
+                if visual_data.get('stages') and len(visual_data.get('stages', [])) > 0:
+                    response_dict['teaching_visual'] = {
+                        'visual_id': visual_data.get('visual_id', f"prof_{hash(message) % 1000000}"),
+                        'type': visual_data.get('type', 'animated_lesson'),
+                        'total_duration_ms': visual_data.get('total_duration_ms', 0),
+                        'metadata': visual_data.get('metadata', {}),
+                        'stages': visual_data.get('stages', []),
+                        'professor_avatar': visual_data.get('professor_avatar', {}),
+                        'lottie_base_url': visual_data.get('lottie_base_url', 'https://cdn.ai-tutor.in/visuals')
+                    }
+                    logger.info(f"✅ Added teaching_visual with {len(visual_data.get('stages', []))} stages to response")
+                    logger.info(f"📦 teaching_visual structure: visual_id={response_dict['teaching_visual'].get('visual_id')}, stages={len(response_dict['teaching_visual'].get('stages', []))}")
+                else:
+                    logger.warning(f"⚠️ visual_data exists but has no stages: visual_data={visual_data}")
                 if 'default_view' in response_dict:
                     # Ensure hero_visual is always a dict before accessing ['url']
                     existing_hero = response_dict['default_view'].get('hero_visual')
@@ -1986,8 +1991,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
             }
             
         except Exception as e:
-            logger.error(f"❌ Mentor v2 generation error: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            # Use a fresh logger reference to avoid scope issues
+            import logging as log_module
+            err_logger = log_module.getLogger(__name__)
+            err_logger.error(f"❌ Mentor v2 generation error: {str(e)}")
+            err_logger.error(f"Traceback: {traceback.format_exc()}")
             raise Exception(f"Failed to generate mentor response: {str(e)}")
 
             return False
@@ -2110,12 +2118,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
         if hero.get('url'):
             return
 
-        if visual_data:
+        if visual_data and isinstance(visual_data, dict):
             if visual_data.get('asset_url'):
-                hero['url'] = visual_data['asset_url']
+                hero['url'] = visual_data.get('asset_url')
                 return
             if visual_data.get('lottie_file'):
-                hero['url'] = visual_data['lottie_file']
+                hero['url'] = visual_data.get('lottie_file')
                 return
 
         fallback = metaphor_visual.get('hero_visual_fallback_url') or "https://cdn.mgxai.com/visuals/placeholder.svg"

@@ -33,6 +33,14 @@ def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_pro
     engagement_level = profile.get('engagement_level', 'neutral')
     emotional_state = profile.get('emotional_state', 'neutral')
     
+    # Safely extract visual_metaphor values with defaults
+    visual_metaphor = visual_metaphor or {}
+    hero_visual = visual_metaphor.get('hero_visual', {})
+    if not isinstance(hero_visual, dict):
+        hero_visual = {}
+    hero_visual_url = hero_visual.get('url') or hero_visual.get('visual_url') or "https://cdn.mgxai.com/visuals/placeholder.svg"
+    hero_visual_alt = hero_visual.get('alt_text') or "Concept visual"
+    
     # Regional context examples
     regional_examples = {
         'Delhi': {
@@ -172,8 +180,8 @@ You will provide TWO versions of content with VISUALS FIRST:
     }},
     "greeting": "<Friendly 1-line greeting with context, e.g., 'Arre, great choice! Integration by parts - this is like Dhoni's batting strategy! 🏏'>",
     "hero_visual": {{
-      "visual_url": "{visual_metaphor['hero_visual']['url']}",
-      "alt_text": "{visual_metaphor['hero_visual']['alt_text']}",
+      "visual_url": "{hero_visual_url}",
+      "alt_text": "{hero_visual_alt}",
       "load_priority": "high",
       "size_bytes": <actual file size, must be <500KB>,
       "placeholder_color": "<color from visual theme>"

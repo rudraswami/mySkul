@@ -71,8 +71,17 @@ export default function MentorResponseV2({ response, onInteraction }) {
       // Could be at response.teaching_visual or response.dual_response.teaching_visual
       const teachingVisual = response?.teaching_visual || response?.dual_response?.teaching_visual;
 
-      if (teachingVisual && teachingVisual?.stages) {
-        console.log('🎬 ANIMATED TEACHING VISUAL DETECTED:', {
+      // Debug logging
+      console.log('🔍 MentorResponseV2 - Checking for teaching_visual:', {
+        hasTeachingVisual: !!teachingVisual,
+        hasStages: !!(teachingVisual?.stages),
+        stagesLength: teachingVisual?.stages?.length,
+        responseKeys: Object.keys(response || {}),
+        teachingVisualKeys: teachingVisual ? Object.keys(teachingVisual) : []
+      });
+
+      if (teachingVisual && teachingVisual?.stages && teachingVisual.stages.length > 0) {
+        console.log('✅ ANIMATED TEACHING VISUAL DETECTED:', {
           visualId: teachingVisual.visual_id,
           type: teachingVisual.type,
           numStages: teachingVisual.stages?.length,
@@ -80,9 +89,15 @@ export default function MentorResponseV2({ response, onInteraction }) {
           metadata: teachingVisual.metadata
         });
         return teachingVisual;
+      } else {
+        console.warn('⚠️ Teaching visual missing or invalid:', {
+          hasTeachingVisual: !!teachingVisual,
+          hasStages: !!(teachingVisual?.stages),
+          stagesLength: teachingVisual?.stages?.length
+        });
       }
     } catch (e) {
-      console.warn('VISUAL_ENGINE: animated teaching visual check failed', e);
+      console.error('❌ VISUAL_ENGINE: animated teaching visual check failed', e);
     }
     return null;
   }, [response]);
@@ -220,8 +235,8 @@ export default function MentorResponseV2({ response, onInteraction }) {
         className="mb-4 relative"
         style={{ backgroundColor: (animatedTeachingVisual || backendSVG.hasSVG || dynamicScene || forceDynamic) ? 'transparent' : (default_view.hero_visual?.placeholder_color || '#F3F4F6') }}
       >
-        {/* PRIORITY 0: Animated Teaching Visual */}
-        {animatedTeachingVisual && (
+        {/* PRIORITY 0: Animated Teaching Visual (ALWAYS USE IF EXISTS) */}
+        {animatedTeachingVisual ? (
           <div className="w-full">
             <TeachingVisualPlayer
               visualData={animatedTeachingVisual}
@@ -233,10 +248,11 @@ export default function MentorResponseV2({ response, onInteraction }) {
               }}
             />
           </div>
-        )}
-
-        {/* PRIORITY 1: Backend-generated SVG */}
-        {!animatedTeachingVisual && backendSVG.hasSVG && (
+        ) : (
+          <>
+            {/* LEGACY VISUALS DISABLED - Only show if teaching_visual is missing */}
+            {/* PRIORITY 1: Backend-generated SVG (DISABLED - legacy system) */}
+            {false && backendSVG.hasSVG && (
           <div className="w-full overflow-x-auto bg-white rounded-lg border-2 border-purple-200 p-4">
             <div
               dangerouslySetInnerHTML={{ __html: backendSVG.svg }}
@@ -250,10 +266,10 @@ export default function MentorResponseV2({ response, onInteraction }) {
               </div>
             )}
           </div>
-        )}
+            )}
 
-        {/* PRIORITY 2: Dynamic scene_json or frontend-generated visuals */}
-        {!backendSVG.hasSVG && (dynamicScene || forceDynamic) && (
+            {/* PRIORITY 2: Dynamic scene_json (DISABLED - legacy system) */}
+            {false && !backendSVG.hasSVG && (dynamicScene || forceDynamic) && (
           <div className="w-full">
             {chemAtomic ? (
               (() => {
@@ -267,10 +283,10 @@ export default function MentorResponseV2({ response, onInteraction }) {
               <DynamicSceneComposer visualData={dynamicScene || buildSceneFromMetaphor(default_view?.metaphor?.text || default_view?.main_content?.title || default_view?.main_content?.content || default_view?.greeting || 'concept', 'general')} />
             )}
           </div>
-        )}
+            )}
 
-        {/* PRIORITY 3: Static image fallback */}
-        {!backendSVG.hasSVG && !imageLoadError['hero_visual'] && default_view.hero_visual ? (
+            {/* PRIORITY 3: Static image fallback (DISABLED - legacy system) */}
+            {false && !backendSVG.hasSVG && !imageLoadError['hero_visual'] && default_view.hero_visual ? (
           <img
             src={default_view.hero_visual.visual_url}
             alt={default_view.hero_visual.alt_text || 'Hero Visual'}
@@ -292,6 +308,8 @@ export default function MentorResponseV2({ response, onInteraction }) {
               <p className="text-xs text-gray-500">Visual Tier {default_view.hero_visual.tier || 1} - Fallback Active</p>
             </div>
           </div>
+            )}
+          </>
         )}
       </motion.div>
     )

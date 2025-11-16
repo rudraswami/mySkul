@@ -7,7 +7,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RotateCcw, ChevronRight, ChevronLeft, Lightbulb, BookOpen } from 'lucide-react';
+import Lottie from 'lottie-react';
 import InteractionLayer from './InteractionLayer';
+// NEW: Complete Visual Professor Engine Components
+import AnimatedScene from './visuals/AnimatedScene';
+import RobustAnimationEngine from './visuals/RobustAnimationEngine';
+import SimpleAnimationEngine from './visuals/SimpleAnimationEngine';
+import ProfessorAvatar from './visuals/ProfessorAvatar';
+import InteractiveControls from './visuals/InteractiveControls';
+import SceneRenderer from './visuals/SceneRenderer';
 // Block renderers (universal visual contract)
 import TitleCard from './teaching/blocks/TitleCard';
 import ConceptNodes from './teaching/blocks/ConceptNodes';
@@ -40,11 +48,56 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
   const [userResponses, setUserResponses] = useState({});
   const [animationSpeed, setAnimationSpeed] = useState(1);
   const [stageParams, setStageParams] = useState({});
+  const [lottieDataMap, setLottieDataMap] = useState({}); // Lottie animation data cache
+  // NEW: Interactive values for sliders/toggles
+  const [interactiveValues, setInteractiveValues] = useState({});
+  const [sceneTime, setSceneTime] = useState(0); // Track animation timeline
 
   // Refs
   const progressInterval = useRef(null);
   const startTimeRef = useRef(null);
   const stageTimeoutRef = useRef(null);
+
+  // Load Lottie animations for all stages
+  useEffect(() => {
+    if (!visualData || !visualData.stages) return;
+    
+    let cancelled = false;
+    const loadLottieAssets = async () => {
+      const allLottieUrls = new Set();
+      
+      // Collect all Lottie URLs from all stages
+      visualData.stages.forEach(stage => {
+        const lottieAssets = stage.lottie_assets || [];
+        lottieAssets.forEach(asset => {
+          if (asset.url && !lottieDataMap[asset.url]) {
+            allLottieUrls.add(asset.url);
+          }
+        });
+      });
+      
+      // Load each Lottie animation
+      for (const url of allLottieUrls) {
+        if (cancelled) break;
+        try {
+          const response = await fetch(url, { cache: 'force-cache' });
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (!cancelled) {
+            setLottieDataMap(prev => ({ ...prev, [url]: data }));
+          }
+        } catch (error) {
+          console.warn(`Failed to load Lottie animation from ${url}:`, error);
+        }
+      }
+    };
+    
+    loadLottieAssets();
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [visualData, lottieDataMap]);
 
   // Calculate progress based on current stage
   useEffect(() => {
@@ -246,6 +299,7 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
     // Prefer block-based universal visuals; fallback to legacy animation types
     const blocks = stageData.blocks || [];
     const animations = stageData.animations || [];
+    const lottieAssets = stageData.lottie_assets || []; // Lottie animations from universal template
 
     // Compute subject accent color
     const subject = (metadata.subject || 'general').toLowerCase();
@@ -288,8 +342,35 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
           </span>
         </motion.div>
 
-        {/* Prefer block-based visual contract; otherwise fall back to animations */}
-        {blocks && blocks.length > 0 ? (
+        {/* PRIORITY 1: Lottie animations from universal template */}
+        {lottieAssets && lottieAssets.length > 0 && (
+          <div className="w-full max-w-2xl relative">
+            {lottieAssets.map((asset, index) => {
+              const lottieData = lottieDataMap[asset.url];
+              if (!lottieData) return null;
+              return (
+                <motion.div
+                  key={`lottie-${index}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 + (index * 0.1) }}
+                  className="w-full h-64 sm:h-80 flex items-center justify-center"
+                >
+                  <Lottie
+                    animationData={lottieData}
+                    loop={asset.loop !== false}
+                    autoplay={asset.autoplay !== false && isPlaying}
+                    speed={asset.speed || 1.0}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* PRIORITY 2: Block-based visual contract */}
+        {blocks && blocks.length > 0 && (
           blocks.map((block, index) => (
             <motion.div
               key={`block-${index}`}
@@ -301,7 +382,10 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
               {renderBlock(block)}
             </motion.div>
           ))
-        ) : animations && animations.length > 0 ? (
+        )}
+
+        {/* PRIORITY 3: Legacy animations */}
+        {(!lottieAssets || lottieAssets.length === 0) && (!blocks || blocks.length === 0) && animations && animations.length > 0 && (
           animations.map((animation, index) => (
             <motion.div
               key={index}
@@ -313,14 +397,28 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
               {renderAnimation(animation)}
             </motion.div>
           ))
-        ) : (
+        )}
+
+        {/* FALLBACK: No visual content */}
+        {(!lottieAssets || lottieAssets.length === 0) && (!blocks || blocks.length === 0) && (!animations || animations.length === 0) && (
           <div className="w-full max-w-2xl bg-yellow-100 border-2 border-yellow-400 rounded-xl p-6 text-center">
-            <p className="text-yellow-900 font-medium">No animations found for this stage</p>
+            <p className="text-yellow-900 font-medium">No visual content found for this stage</p>
             <p className="text-sm text-yellow-700 mt-2">Stage: {currentStage + 1}</p>
-            <pre className="text-xs text-left mt-4 bg-yellow-50 p-3 rounded overflow-auto">
-              {JSON.stringify(stageData, null, 2)}
-            </pre>
           </div>
+        )}
+
+        {/* Professor Avatar Overlay */}
+        {visualData.professor_avatar && visualData.professor_avatar.visible && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+              <span className="text-white text-sm font-semibold">👨‍🏫</span>
+            </div>
+            <span className="text-sm font-medium text-gray-700">Professor</span>
+          </motion.div>
         )}
 
         {/* Friendly buddy narration (short); fallback to Hinglish microcopy for practical stages */}
@@ -439,6 +537,96 @@ export default function TeachingVisualPlayer({ visualData, onComplete, onInterac
         return <SceneCircuitOhm params={stageParams} />;
       case 'predict_card':
         return <PredictCard question={block.question} expected={block.expected} />;
+      case 'animated_scene':
+        // SCENE RENDERER - uses real SVG entities with Framer Motion
+        console.log('[TeachingVisualPlayer] Using SceneRenderer');
+        console.log('[TeachingVisualPlayer] Scene:', block.scene);
+        console.log('[TeachingVisualPlayer] Animation sequence:', block.animation_sequence);
+        
+        return (
+          <div className="w-full max-w-4xl space-y-4">
+            {/* Main scene with animated entities */}
+            <SceneRenderer
+              sceneSpec={block.scene}
+              animationSequence={block.animation_sequence || []}
+              currentStageIndex={currentStage}
+              isPlaying={isPlaying}
+            />
+            
+            {/* Interactive Controls for this scene */}
+            {block.scene?.interactivity && (
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-md">
+                <InteractiveControls
+                  controls={block.scene.interactivity}
+                  values={interactiveValues}
+                  onChange={(id, value) => {
+                    setInteractiveValues(prev => ({ ...prev, [id]: value }));
+                  }}
+                  showHinglish={true}
+                />
+              </div>
+            )}
+            
+            {/* Professor Avatar - Always visible */}
+            <div className="absolute bottom-4 right-4 z-50">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-6xl border-4 border-white shadow-2xl">
+                  👨‍🏫
+                </div>
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                  Professor
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'entity':
+        // Legacy entity block (kept for backward compatibility, but animated_scene preferred)
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ 
+              opacity: block.visible ? 1 : 0.3, 
+              scale: block.highlight ? 1.05 : 1 
+            }}
+            transition={{ duration: 0.3 }}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+              block.highlight 
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
+                : 'bg-gradient-to-r from-blue-50 to-purple-50 text-purple-700'
+            }`}
+          >
+            <span className="text-2xl">
+              {block.entity_id.includes('metro') && '🚇'}
+              {block.entity_id.includes('train') && '🚊'}
+              {block.entity_id.includes('car') && '🚗'}
+              {block.entity_id.includes('ball') && '🏏'}
+              {block.entity_id.includes('cricket') && '🏏'}
+              {block.entity_id.includes('atom') && '⚛️'}
+              {block.entity_id.includes('electron') && '⚡'}
+              {block.entity_id.includes('nucleus') && '🔵'}
+              {block.entity_id.includes('chloroplast') && '🌱'}
+              {block.entity_id.includes('mitochondria') && '🔴'}
+              {block.entity_id.includes('arrow') && '➡️'}
+              {block.entity_id.includes('speedometer') && '⏱️'}
+              {block.entity_id.includes('landmark') && '📍'}
+              {!block.entity_id.match(/(metro|train|car|ball|cricket|atom|electron|nucleus|chloroplast|mitochondria|arrow|speedometer|landmark)/) && '🔷'}
+            </span>
+            <span className="text-sm font-medium capitalize">
+              {block.entity_id.replace(/_/g, ' ')}
+            </span>
+          </motion.div>
+        );
+      case 'concept_detail':
+        // Concept detail block from expanded stages
+        return (
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+            <h3 className="text-lg font-bold text-indigo-900 mb-2">{block.title}</h3>
+            {block.description && (
+              <p className="text-indigo-700 text-sm">{block.description}</p>
+            )}
+          </div>
+        );
       default:
         return (
           <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-3">

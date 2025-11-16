@@ -4,14 +4,22 @@ Now with unified subscription service for consistent access control
 Streaming support for <5s response times
 """
 import os
+import logging
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from sse_starlette.sse import EventSourceResponse
+from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 from models.core import User, SessionCreateRequest, SessionRenameRequest, SessionPinRequest, SessionBookmarkRequest
 from models.ai import DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
 from services.ai_service import AIService
 from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
 from dependencies import get_current_user, get_database, get_unified_subscription_service
+from agents.supervisor import SupervisorAgent
+from agents.response_adapter import ResponseAdapter
+from visual_engine.scene_builder import SceneBuilder
 
 
 # Router instance
@@ -908,8 +916,7 @@ async def stream_neuro_symbolic_response(
     except HTTPException:
         raise
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+        # Use module-level logger (already defined at top of file)
         logger.error(f"Streaming error: {str(e)}")
         raise HTTPException(
             status_code=500,
@@ -981,14 +988,83 @@ async def generate_neuro_symbolic_response(
         except Exception:
             pass
 
-        result = await ai_service.generate_neuro_symbolic_response(
-            user_id=user.user_id,
-            session_id=request.session_id or f"temp_{user.user_id}",
-            message=contextual_message,
-            subject=request.subject,
-            exam_mode=getattr(request, 'exam_mode', 'JEE'),
-            message_history=message_history
-        )
+        # ====================================================================
+        # AGENTIC SYSTEM INTEGRATION (Optional - Feature Flag)
+        # ====================================================================
+        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "false").lower() == "true"
+        
+        if USE_AGENTIC_SYSTEM:
+            # Use new agentic system
+            logger.info("🤖 Using Agentic System for neuro-symbolic response")
+            try:
+                # Initialize Supervisor
+                emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                supervisor = SupervisorAgent(config={"emergent_llm_key": emergent_llm_key})
+                
+                # Prepare context for agentic system
+                agentic_context = {
+                    "subject": request.subject,
+                    "session_id": request.session_id,
+                    "user_id": user.user_id,
+                    "exam_mode": getattr(request, 'exam_mode', 'JEE'),
+                    "request_visual": True,  # Always request visual for neuro-symbolic
+                    "student_profile": {
+                        "level": "class_12",
+                        "interests": ["cricket", "gaming"],
+                        "board": "CBSE",
+                        "exam": getattr(request, 'exam_mode', 'JEE')
+                    }
+                }
+                
+                # Run Supervisor
+                agentic_response = await supervisor.run(contextual_message, agentic_context)
+                
+                # Build visual scene if present
+                if agentic_response.get("visual"):
+                    scene_builder = SceneBuilder()
+                    visual_spec = agentic_response["visual"]
+                    template_id = visual_spec.get("metadata", {}).get("template_id")
+                    
+                    if template_id:
+                        scene = scene_builder.build_scene(
+                            template_id=template_id,
+                            variables=visual_spec.get("variables", {}),
+                            context=agentic_context
+                        )
+                        agentic_response["visual"] = scene
+                
+                # Convert agentic response to neuro-symbolic format
+                result = ResponseAdapter.adapt_agentic_to_neuro_symbolic(
+                    agentic_response=agentic_response,
+                    query=contextual_message,
+                    subject=request.subject
+                )
+                
+                logger.info("✅ Agentic system response generated successfully")
+            except Exception as e:
+                logger.error(f"❌ Agentic system failed, falling back to legacy: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                # Fallback to legacy system
+                result = await ai_service.generate_neuro_symbolic_response(
+                    user_id=user.user_id,
+                    session_id=request.session_id or f"temp_{user.user_id}",
+                    message=contextual_message,
+                    subject=request.subject,
+                    exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                    message_history=message_history
+                )
+        else:
+            # Use legacy system (default)
+            logger.info("📚 Using legacy neuro-symbolic system")
+            result = await ai_service.generate_neuro_symbolic_response(
+                user_id=user.user_id,
+                session_id=request.session_id or f"temp_{user.user_id}",
+                message=contextual_message,
+                subject=request.subject,
+                exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                message_history=message_history
+            )
         
         # Track usage
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
@@ -1002,13 +1078,13 @@ async def generate_neuro_symbolic_response(
         result['response']['student_persona'] = f"{getattr(request, 'exam_mode', 'JEE')} | {result['response'].get('student_profile', {}).get('region', 'Delhi')} | {result['response'].get('student_profile', {}).get('emotional_state', 'Confident')}"
 
         # Attach teaching visual for Tutor rendering
-        # Priority: dynamic builder → subject templates → universal fallback
+        # Priority: Visual Professor Generator (dynamic, multi-step, professor-style)
         # Only attempt when question appears visual-worthy (heuristic gate)
+        logger.info(f"🎨 ========== VISUAL GENERATION START ==========")
+        logger.info(f"🎨 Question: {request.message[:100]}")
+        logger.info(f"🎨 Subject: {request.subject}")
+        logger.info(f"🎨 User ID: {user.user_id}")
         try:
-            from core.config import settings as _settings
-            from services.dynamic_visual_builder import build_dynamic_visual as _dyn
-            from services.subject_templates import plan_from_subject_templates as _tpl
-            from services.universal_visual_planner import plan_universal_visual as _plan
             from services.question_scope import build_scope as _brief, should_generate_visual as _should
             from services.adaptive_response import detect_intent as _detect_intent
 
@@ -1016,6 +1092,8 @@ async def generate_neuro_symbolic_response(
 
             # Detect high-level student intent
             _intent = _detect_intent(request.message)
+            logger.info(f"🎯 Detected intent: {_intent}")
+            
             # Attach intent and rendering directives for frontend adaptivity
             try:
                 if 'response' in result:
@@ -1034,23 +1112,93 @@ async def generate_neuro_symbolic_response(
                         directives = {"prefer_paragraph_first": True}
                     if directives:
                         result['response']['render_directives'] = directives
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to set render directives: {e}")
 
             # Only attach a teaching visual when appropriate (not for compare/clarification)
             allow_visual = _should(request.message, request.subject) and _intent not in {"compare_contrast", "clarification_or_followup"}
+            logger.info(f"🎨 allow_visual={allow_visual}, _should={_should(request.message, request.subject)}, _intent={_intent}")
 
             if allow_visual:
-                # 1) Try dynamic synthesis from the actual question (numbers + concept)
-                tv = _dyn(request.message, request.subject)
+                # ====================================================================
+                # FEATURE FLAG: Visual Generator (DISABLED FOR V1.0 MARKET RELEASE)
+                # ====================================================================
+                # Set to True to re-enable visual generation
+                VISUAL_GENERATOR_ENABLED = False
+                
+                if not VISUAL_GENERATOR_ENABLED:
+                    logger.info("🚫 Visual generator DISABLED (V1.0 market release - visuals disabled)")
+                    tv = None
+                else:
+                    # PRIORITY 1: Visual Professor Generator (dynamic, multi-step, professor-style)
+                    tv = None
+                    try:
+                        logger.info(f"🎨 Starting Visual Professor Generator for: {request.message[:50]}...")
+                        
+                        # Build student profile for metaphor selection
+                        student_profile = {
+                            "user_id": user.user_id if user else None,
+                            "region": "India",
+                            "interests": ["cricket", "technology"],
+                            "preferred_metaphor": "cricket",
+                            "emotional_state": "neutral"
+                        }
+                        
+                        from services.visual_professor import VisualProfessorGenerator
+                        vpg = VisualProfessorGenerator(student_profile=student_profile)
+                        logger.info("✅ VisualProfessorGenerator imported successfully")
+                        
+                        vpg_result = await vpg.generate_visual(
+                            question=request.message,
+                            subject=request.subject,
+                            student_profile=student_profile
+                        )
+                        logger.info(f"📊 Visual Professor Generator returned: {type(vpg_result)}, has stages: {bool(vpg_result and vpg_result.get('stages'))}")
+                        
+                        # Convert VisualProfessorGenerator output to TeachingVisual format
+                        if vpg_result and vpg_result.get('stages') and len(vpg_result['stages']) > 0:
+                            tv = {
+                                "visual_id": vpg_result.get('visual_id', f"prof_{hash(request.message) % 1000000}"),
+                                "type": vpg_result.get('type', 'animated_lesson'),
+                                "total_duration_ms": vpg_result.get('total_duration_ms', 0),
+                                "metadata": vpg_result.get('metadata', {}),
+                                "stages": vpg_result.get('stages', []),
+                                "professor_avatar": vpg_result.get('professor_avatar', {}),
+                                "lottie_base_url": vpg_result.get('lottie_base_url', 'https://cdn.ai-tutor.in/visuals')
+                            }
+                            logger.info(f"✅ Visual Professor Generator: {len(vpg_result.get('stages', []))} stages generated")
+                            logger.info(f"📦 Teaching visual structure: visual_id={tv['visual_id']}, type={tv['type']}, stages={len(tv['stages'])}")
+                        else:
+                            logger.warning(f"⚠️ Visual Professor Generator returned invalid result: stages={vpg_result.get('stages') if vpg_result else 'None'}")
+                    except Exception as e:
+                        logger.error(f"❌ Visual Professor Generator failed with exception: {e}", exc_info=True)
+                        import traceback
+                        logger.error(f"❌ Traceback: {traceback.format_exc()}")
 
-                # 2) Fall back to curated subject templates (scope-aware)
-                if not tv:
-                    tv = _tpl(request.message, request.subject, _scope)
-
-                # 3) Ensure we never return empty by using universal fallback when enabled
-                if not tv and getattr(_settings, 'VISUAL_ENGINE_MODE', 'universal') == 'universal':
-                    tv = _plan(request.message, request.subject, _scope)
+                    # LEGACY VISUAL SYSTEMS DISABLED
+                    # Visual Professor Engine is now the ONLY pathway
+                    # Legacy systems (_dyn, _tpl, _plan) are disabled
+                    # Visual Professor Generator's fallback already generates multi-step visuals
+                    if not tv:
+                        logger.warning("⚠️ Visual Professor Generator returned no visual, attempting fallback...")
+                        # Try to call fallback directly
+                        try:
+                            from services.visual_professor import VisualProfessorGenerator
+                            vpg_fallback = VisualProfessorGenerator()
+                            fallback_result = vpg_fallback._fallback_visual(request.message, request.subject)
+                            if fallback_result and fallback_result.get('stages') and len(fallback_result['stages']) > 0:
+                                tv = {
+                                    "visual_id": fallback_result.get('visual_id', f"prof_fallback_{hash(request.message) % 1000000}"),
+                                    "type": fallback_result.get('type', 'animated_lesson'),
+                                    "total_duration_ms": fallback_result.get('total_duration_ms', 0),
+                                    "metadata": fallback_result.get('metadata', {}),
+                                    "stages": fallback_result.get('stages', []),
+                                    "professor_avatar": fallback_result.get('professor_avatar', {}),
+                                    "lottie_base_url": fallback_result.get('lottie_base_url', 'https://cdn.ai-tutor.in/visuals')
+                                }
+                                logger.info(f"✅ Fallback visual generated: {len(tv.get('stages', []))} stages")
+                        except Exception as fallback_error:
+                            logger.error(f"❌ Fallback visual generation also failed: {fallback_error}", exc_info=True)
 
                 if tv:
                     # Repetition guard: persist + maintain a small ring buffer (last 3)
@@ -1073,13 +1221,19 @@ async def generate_neuro_symbolic_response(
                         combined_recent = list(dict.fromkeys([*mem_list, *recent_list]))  # dedupe, preserve order
 
                         # Check against last and recent
-                        if _LAST_TV_BY_SESSION.get(sid) == sig or sig in combined_recent or (persisted_sig and persisted_sig == sig):
+                        # TEMPORARILY DISABLED FOR TESTING - Allow all visuals
+                        allow_duplicate = True  # Set to False to re-enable repetition guard
+                        
+                        if not allow_duplicate and (_LAST_TV_BY_SESSION.get(sid) == sig or sig in combined_recent or (persisted_sig and persisted_sig == sig)):
                             tv = None
+                            logger.info(f"🔄 Duplicate visual suppressed: {sig}")
                         else:
                             # Update in-memory caches
                             _LAST_TV_BY_SESSION[sid] = sig
                             new_recent = (combined_recent + [sig])[-3:]  # keep last 3
                             _RECENT_TV_BY_SESSION[sid] = new_recent
+                            
+                            logger.info(f"✅ Visual allowed (metaphor may have changed!)")
 
                             # Persist last + recent ring buffer
                             try:
@@ -1094,9 +1248,16 @@ async def generate_neuro_symbolic_response(
                         pass
                 if tv:
                     result['response']['teaching_visual'] = tv
-        except Exception:
-            # Never block main response if visual planning fails
-            pass
+                    logger.info(f"✅ Added teaching_visual to response: {tv.get('visual_id')} with {len(tv.get('stages', []))} stages")
+                else:
+                    logger.warning(f"⚠️ No teaching_visual generated. tv=None, allow_visual={allow_visual}")
+            else:
+                logger.info(f"ℹ️ Visual generation skipped: allow_visual={allow_visual}")
+        except Exception as e:
+            # Never block main response if visual planning fails, but LOG IT
+            logger.error(f"❌ Visual planning failed completely: {e}", exc_info=True)
+            import traceback
+            logger.error(f"❌ Full traceback:\n{traceback.format_exc()}")
 
         # Update memory: store last topic from attached teaching visual (if any)
         try:
@@ -1122,8 +1283,7 @@ async def generate_neuro_symbolic_response(
     except HTTPException:
         raise
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+        # Use module-level logger (already defined at top of file)
         logger.error(f"Neuro-symbolic response error: {str(e)}")
         raise HTTPException(
             status_code=500,

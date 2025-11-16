@@ -247,7 +247,7 @@ class SemanticParser:
             ('chemistry', ConceptType.TRANSFORMATION): 'cooking_process',
             ('mathematics', ConceptType.PROCESS): 'rangoli_pattern',
             ('biology', ConceptType.CYCLE): 'season_cycle',
-            ('history', ConceptType.TIMELINE): 'festival_calendar'
+            ('history', ConceptType.PROCESS): 'festival_calendar'  # Fixed: use PROCESS instead of non-existent TIMELINE
         }
 
         return metaphors.get((subject, concept_type), 'daily_life')

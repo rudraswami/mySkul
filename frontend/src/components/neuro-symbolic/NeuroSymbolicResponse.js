@@ -8,6 +8,7 @@ import ProfessorVerification from './ProfessorVerification';
 import MiniPractice from './MiniPractice';
 import VisualConceptBlock from '../VisualConceptBlock'; // Importing the VisualConceptBlock from components root
 import SmartTeachingVisual from '../SmartTeachingVisual'; // Professor-style storytelling (Chemistry-only rollout)
+import TeachingVisualPlayer from '../TeachingVisualPlayer'; // PRIORITY: Visual Professor Engine player
 import atomicStructure from '../../teaching/scripts/atomicStructureElectronConfig';
 import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
 import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
@@ -38,8 +39,13 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
     encouragement,
     ask,
     student_emotion,
-    visual_data // Added visual_data to handle dynamic visuals
+    visual_data, // Added visual_data to handle dynamic visuals
+    teaching_visual // PRIORITY: Visual Professor Engine teaching visual
   } = response;
+
+  // Debug: Log teaching_visual
+  console.log('🎬 NeuroSymbolicResponse - teaching_visual:', teaching_visual);
+  console.log('🎬 NeuroSymbolicResponse - visual_data:', visual_data);
 
   // Prefer backend-provided visual_data; otherwise derive from available fields
   const visualEngineData = useExistingVisualEngine(
@@ -124,8 +130,28 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
         <VisualSchema schema={visual_schema} />
       )}
 
-      {/* 5. Dynamic Visual Story Scene */}
-      {shouldUseTeaching ? (
+      {/* PRIORITY 0: Visual Professor Engine Teaching Visual (ALWAYS USE IF EXISTS) */}
+      {teaching_visual && teaching_visual.stages && teaching_visual.stages.length > 0 ? (
+        <div className="w-full my-4">
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border-2 border-purple-200 p-2">
+            <div className="text-xs text-purple-600 font-semibold mb-2 px-2">
+              🎓 Professor-Led Visual Explanation
+            </div>
+            <TeachingVisualPlayer
+              visualData={teaching_visual}
+              onComplete={(result) => {
+                console.log('✅ Teaching visual completed:', result);
+              }}
+              onInteraction={(interaction) => {
+                console.log('👆 Teaching visual interaction:', interaction);
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {/* 5. Dynamic Visual Story Scene (LEGACY - Only if teaching_visual not available) */}
+      {!teaching_visual && shouldUseTeaching ? (
         /covalent/i.test(textBlob) ? (
           <CovalentInteractiveCard />
         ) : isAtomicConfig ? (

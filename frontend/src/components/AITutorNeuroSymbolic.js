@@ -336,6 +336,11 @@ export default function AITutorNeuroSymbolic() {
 
       const data = await response.json();
 
+      // Debug: Log full response to check for teaching_visual
+      console.log('🎨 FULL API RESPONSE:', data);
+      console.log('🎨 Teaching Visual:', data.response?.teaching_visual);
+      console.log('🎨 Visual Data:', data.response?.visual_data);
+
       // Add AI response
       const aiMsg = {
         type: 'ai',
@@ -343,7 +348,10 @@ export default function AITutorNeuroSymbolic() {
         timestamp: new Date().toISOString(),
         message_id: data.message_id,
         emotion_detected: data.emotion_detected,
-        generation_time: data.generation_time
+        generation_time: data.generation_time,
+        // CRITICAL: Extract teaching_visual from response
+        teaching_visual: data.response?.teaching_visual || null,
+        visual_data: data.response?.visual_data || null
       };
 
       setMessages(prev => [...prev, aiMsg]);
@@ -827,7 +835,12 @@ export default function AITutorNeuroSymbolic() {
                           </div>
                           
                           <MentorResponseV2 
-                            response={message.content}
+                            response={{
+                              ...message.content,
+                              // CRITICAL: Pass teaching_visual and visual_data from message
+                              teaching_visual: message.teaching_visual || message.content?.teaching_visual,
+                              visual_data: message.visual_data || message.content?.visual_data
+                            }}
                             onInteraction={(section) => {
                               console.log('User revealed section:', section);
                               // Can track engagement here
