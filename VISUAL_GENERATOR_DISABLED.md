@@ -130,3 +130,4 @@ All visual generation code remains intact:
 **Impact**: Zero (code preserved, just skipped)
 
 
+

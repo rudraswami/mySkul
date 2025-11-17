@@ -11,7 +11,11 @@ import {
   TrendingUp,
   ChevronDown,
   ChevronUp,
-  Users
+  Users,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  Check
 } from 'lucide-react';
 
 import DynamicSceneComposer from '../DynamicSceneComposer';
@@ -21,11 +25,14 @@ import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
 import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
 import TeachingVisualPlayer from '../TeachingVisualPlayer';
 import TipCard from '../teaching/blocks/TipCard';
+import { MarkdownParagraph } from '../../utils/markdownRenderer';
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
   const [imageLoadError, setImageLoadError] = useState({});
   const [visualDebugInfo, setVisualDebugInfo] = useState({});
+  const [feedback, setFeedback] = useState(null); // 'helpful' or 'not_helpful'
+  const [copied, setCopied] = useState(false);
   
   // Intent-driven rendering hints from backend
   const intent = response?.intent || null;
@@ -38,6 +45,11 @@ export default function MentorResponseV2({ response, onInteraction }) {
   const suppressBasicSteps = !!directives.suppress_basic_steps;
   const preferCompareLayout = !!directives.prefer_compare_layout;
   const preferParagraphFirst = !!directives.prefer_paragraph_first;
+  
+  // NEW: Greeting-specific directives (prevents duplication)
+  const suppressMainContent = !!directives.suppress_main_content;
+  const suppressVisualPlaceholder = !!directives.suppress_visual_placeholder;
+  const greetingOnly = !!directives.greeting_only;
   
   if (!response || !response.default_view) {
     console.error('❌ Invalid response structure:', response);
@@ -325,8 +337,8 @@ export default function MentorResponseV2({ response, onInteraction }) {
         className="bg-white rounded-2xl shadow-lg p-6 border-2 border-purple-100"
       >
         {/* Mentor Avatar + Greeting (skipped for clarifications) */}
-        {!skipGreeting && (
-        <div className="flex items-start gap-4 mb-4">
+        {!skipGreeting && default_view.greeting && (
+        <div className="flex items-start gap-4 mb-6">
           {default_view.mentor_avatar && !suppressMetaphor && (
             <motion.div
               initial={{ scale: 0 }}
@@ -349,7 +361,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
             </motion.div>
           )}
           <div className="flex-1">
-            <div className="text-xl font-bold text-purple-900">
+            <div className="text-xl md:text-2xl font-bold text-purple-800 leading-relaxed">
               {default_view.greeting}
             </div>
           </div>
@@ -357,40 +369,58 @@ export default function MentorResponseV2({ response, onInteraction }) {
         )}
         
         {/* Hero Visual - paragraph-first if directed */}
-        {!preferParagraphFirst && renderHeroVisual()}
+        {!preferParagraphFirst && !suppressVisualPlaceholder && renderHeroVisual()}
         
-        {/* Metaphor Card */}
-        {!suppressMetaphor && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-purple-200">
-          <div className="flex items-start gap-3">
-            <div className="text-3xl mt-1">
+        {/* Metaphor Card - SKIP if it's repetitive with main content */}
+        {!suppressMetaphor && default_view.metaphor?.text && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 mb-4 border-2 border-purple-200">
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">
               {getMetaphorIcon(default_view.metaphor?.category)}
             </div>
             <div className="flex-1">
-              <p className="text-gray-800 leading-relaxed">
+              <div className="text-xs font-semibold text-purple-600 uppercase mb-1">🎯 Intuitive Understanding</div>
+              <MarkdownParagraph className="text-gray-800 text-base leading-relaxed">
                 {default_view.metaphor?.text}
-              </p>
+              </MarkdownParagraph>
             </div>
           </div>
         </div>
         )}
         
-        {/* Main Content */}
-        <div className="bg-gray-50 rounded-xl p-5 mb-4">
-          <div className="prose prose-purple max-w-none">
-            <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap">
-              {default_view.main_content?.content}
-            </p>
+        {/* Main Content - HIDE if suppress_main_content is true (for greetings) */}
+        {/* Render as structured content with better formatting */}
+        {!suppressMainContent && default_view.main_content?.content && (
+        <div className="space-y-4 mb-4">
+          {/* Parse and render content with better structure */}
+          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-sm">
+            <div className="text-xs font-semibold text-gray-600 uppercase mb-3">📚 Detailed Explanation</div>
+            <div className="prose prose-lg max-w-none">
+              <div className="text-gray-800 leading-relaxed space-y-4">
+                {/* Smart content rendering with markdown support */}
+                {default_view.main_content.content.split('\n\n').map((paragraph, idx) => (
+                  <MarkdownParagraph key={idx} className="text-base leading-relaxed">
+                    {paragraph}
+                  </MarkdownParagraph>
+                ))}
+              </div>
+            </div>
+            
+            {/* Key Insight Badge - moved inside main content */}
             {default_view.main_content?.key_insight && (
-              <div className="mt-4 flex items-center gap-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                <Lightbulb className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                <p className="text-sm text-yellow-900 font-medium m-0">
-                  {default_view.main_content.key_insight}
-                </p>
+              <div className="mt-6 flex items-start gap-3 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200">
+                <Lightbulb className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-yellow-700 uppercase mb-1">💡 Key Insight</div>
+                  <MarkdownParagraph className="text-sm text-yellow-900 font-medium leading-relaxed">
+                    {default_view.main_content.key_insight}
+                  </MarkdownParagraph>
+                </div>
               </div>
             )}
           </div>
         </div>
+        )}
 
         {/* Application Card (if requested) */}
         {preferApplicationCard && (
@@ -455,7 +485,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
       </motion.div>
       
       {/* Progressive Sections - Revealed on Demand */}
-      {progressive_sections && (
+      {progressive_sections && Object.keys(progressive_sections).length > 0 && (
         <AnimatePresence>
           {/* Strategy Section */}
           {(preferLayers || revealedSections.has('strategy')) && progressive_sections.strategy && (
@@ -601,8 +631,9 @@ export default function MentorResponseV2({ response, onInteraction }) {
         </AnimatePresence>
       )}
       
-      {/* Encouragement & What's Next - Always at bottom */}
-      {progressive_sections && (
+      {/* Encouragement & What's Next - Only show if has actual content */}
+      {progressive_sections && Object.keys(progressive_sections).length > 0 && 
+       (progressive_sections.encouragement || (progressive_sections.whats_next && progressive_sections.whats_next.length > 0)) && (
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
           {progressive_sections.encouragement && (
             <p className="text-purple-900 font-medium mb-3">
@@ -627,6 +658,110 @@ export default function MentorResponseV2({ response, onInteraction }) {
           )}
         </div>
       )}
+      
+      {/* Follow-Up Question Suggestions */}
+      {!greetingOnly && (
+        <div className="mt-6 mb-4">
+          <div className="text-sm font-semibold text-gray-700 mb-3">💬 Continue Learning:</div>
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => onInteraction && onInteraction('followup', 'practice')}
+              className="px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 rounded-lg border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all text-sm font-medium"
+            >
+              ⚡ Practice problem
+            </button>
+            <button 
+              onClick={() => onInteraction && onInteraction('followup', 'example')}
+              className="px-4 py-2 bg-gradient-to-r from-blue-50 to-teal-50 text-blue-700 rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all text-sm font-medium"
+            >
+              🔍 More examples
+            </button>
+            <button 
+              onClick={() => onInteraction && onInteraction('followup', 'application')}
+              className="px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg border border-green-200 hover:border-green-400 hover:shadow-md transition-all text-sm font-medium"
+            >
+              🌍 Real-world use
+            </button>
+            <button 
+              onClick={() => onInteraction && onInteraction('followup', 'related')}
+              className="px-4 py-2 bg-gradient-to-r from-orange-50 to-yellow-50 text-orange-700 rounded-lg border border-orange-200 hover:border-orange-400 hover:shadow-md transition-all text-sm font-medium"
+            >
+              🔗 Related concepts
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Quick Actions Bar - Feedback & Copy */}
+      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600 font-medium">Was this helpful?</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setFeedback('helpful');
+                if (onInteraction) onInteraction('feedback_positive');
+              }}
+              className={`p-2 rounded-lg transition-all ${
+                feedback === 'helpful'
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
+              }`}
+              title="This was helpful!"
+            >
+              <ThumbsUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setFeedback('not_helpful');
+                if (onInteraction) onInteraction('feedback_negative');
+              }}
+              className={`p-2 rounded-lg transition-all ${
+                feedback === 'not_helpful'
+                  ? 'bg-red-100 text-red-600'
+                  : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
+              }`}
+              title="Not helpful"
+            >
+              <ThumbsDown className="w-4 h-4" />
+            </button>
+          </div>
+          {feedback === 'helpful' && (
+            <span className="text-sm text-green-600 font-medium">Thanks for the feedback! 🙌</span>
+          )}
+        </div>
+        
+        <button
+          onClick={() => {
+            // Copy full response to clipboard
+            const textToCopy = [
+              default_view.greeting,
+              default_view.metaphor?.text,
+              default_view.main_content?.content,
+              default_view.main_content?.key_insight
+            ].filter(Boolean).join('\n\n');
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+          title="Copy response"
+        >
+          {copied ? (
+            <>
+              <Check className="w-4 h-4" />
+              <span className="text-sm font-medium">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-4 h-4" />
+              <span className="text-sm font-medium">Copy</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -235,6 +235,14 @@ def create_app() -> FastAPI:
     app.include_router(gamification.router, prefix="/api", tags=["Gamification"])
     app.include_router(metaphors.router, prefix="/api", tags=["Metaphors"])
     app.include_router(visual_teaching.router, tags=["Visual Teaching"])
+    
+    # Memory & Learning Dashboard (NEW)
+    try:
+        from api import memory_dashboard
+        app.include_router(memory_dashboard.router, prefix="/api", tags=["Memory & Learning"])
+        logger.info("Memory dashboard router registered")
+    except Exception as e:
+        logger.warning(f"Could not load memory dashboard router: {e}")
 
     # Diagnostic endpoints for visual testing (dev only)
     if settings.DEBUG or settings.ENVIRONMENT == "development":

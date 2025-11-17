@@ -304,6 +304,19 @@ export default function AITutorNeuroSymbolic() {
           const sessionData = await sessionResponse.json();
           sessionId = sessionData.session.session_id;
           setCurrentSession(sessionId);
+          
+          // CRITICAL FIX: Immediately refresh sessions list to show new chat in sidebar
+          await loadSessions();
+          
+          // Optimistic update: Add new session to list immediately for better UX
+          const newSession = sessionData.session;
+          setSessions(prev => {
+            // Check if already exists (avoid duplicates)
+            const exists = prev.some(s => s.session_id === sessionId);
+            if (exists) return prev;
+            // Add to top of list
+            return [newSession, ...prev];
+          });
         }
       }
 
@@ -387,6 +400,8 @@ export default function AITutorNeuroSymbolic() {
     setShowWelcome(true);
     setHeaderCollapsed(false);
     inputRef.current?.focus();
+    // Refresh sessions list to ensure it's up-to-date
+    loadSessions();
   };
 
   // Load session
@@ -487,22 +502,28 @@ export default function AITutorNeuroSymbolic() {
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50">
       {/* Persistent Sidebar on large screens */}
       <div className="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 shadow-sm">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Chat History</h2>
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-purple-600" />
+            Chat History
+          </h2>
           <button
             onClick={() => loadSessions()}
-            className="text-xs px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center gap-1"
-            title="Refresh"
+            className="text-xs px-3 py-1.5 rounded-lg bg-white hover:bg-purple-50 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all hover:shadow-sm"
+            title="Refresh chat history"
           >
-            <RefreshCw className={sessionsLoading ? 'h-3 w-3 animate-spin' : 'h-3 w-3'} />
-            Refresh
+            <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+            <span className="font-medium">Refresh</span>
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {sessions.map(session => (
-            <div
+            <motion.div
               key={session.session_id}
-              className={`group w-full p-3 rounded-lg transition-colors border ${currentSession === session.session_id ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 border-gray-200'}`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`group w-full p-3 rounded-lg transition-all border cursor-pointer hover:shadow-md ${currentSession === session.session_id ? 'bg-gradient-to-r from-purple-100 to-indigo-100 border-purple-300 shadow-sm' : 'bg-white border-gray-200 hover:border-purple-200'}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <button onClick={() => loadSession(session.session_id)} className="text-left flex-1 min-w-0">
@@ -561,13 +582,23 @@ export default function AITutorNeuroSymbolic() {
                   </AnimatePresence>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-          {sessions.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <MessageCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No chat sessions yet</p>
-              <p className="text-xs mt-1">Start a new chat to begin!</p>
+          {sessions.length === 0 && !sessionsLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12 text-gray-500"
+            >
+              <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium text-gray-600">No chat sessions yet</p>
+              <p className="text-xs mt-2 text-gray-500">Start a new conversation to begin learning!</p>
+            </motion.div>
+          )}
+          {sessionsLoading && sessions.length === 0 && (
+            <div className="text-center py-12">
+              <Loader className="h-6 w-6 mx-auto animate-spin text-purple-600" />
+              <p className="text-xs mt-2 text-gray-500">Loading chat history...</p>
             </div>
           )}
         </div>
@@ -596,20 +627,43 @@ export default function AITutorNeuroSymbolic() {
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-gray-900">Chat History</h2>
-                  <button
-                    onClick={() => setShowSidebar(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => loadSessions()}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all"
+                      title="Refresh chat history"
+                    >
+                      <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+                      <span className="font-medium">Refresh</span>
+                    </button>
+                    <button
+                      onClick={() => setShowSidebar(false)}
+                      className="p-2 hover:bg-gray-100 rounded-lg"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
 
+                <div className="space-y-2 mb-4">
+                  <button
+                    onClick={() => loadSessions()}
+                    className="w-full text-xs px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 flex items-center justify-center gap-2 transition-all"
+                    title="Refresh chat history"
+                  >
+                    <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+                    <span className="font-medium">Refresh History</span>
+                  </button>
+                </div>
                 <div className="space-y-2">
                   {sessions.map((session) => (
-                    <div
+                    <motion.div
                       key={session.session_id}
-                      className={`w-full p-3 rounded-lg border transition-colors ${
-                        currentSession === session.session_id ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 border-gray-200'
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={`w-full p-3 rounded-lg border transition-all ${
+                        currentSession === session.session_id ? 'bg-gradient-to-r from-purple-100 to-indigo-100 border-purple-300 shadow-sm' : 'bg-white border-gray-200 hover:border-purple-200 hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -633,13 +687,23 @@ export default function AITutorNeuroSymbolic() {
                           <button title="Delete" onClick={(e) => { e.stopPropagation(); deleteSession(session); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="h-4 w-4 text-red-500" /></button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                  {sessions.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <MessageCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No chat sessions yet</p>
-                      <p className="text-xs mt-1">Start a new chat to begin!</p>
+                  {sessions.length === 0 && !sessionsLoading && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-12 text-gray-500"
+                    >
+                      <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                      <p className="text-sm font-medium text-gray-600">No chat sessions yet</p>
+                      <p className="text-xs mt-2 text-gray-500">Start a new conversation to begin learning!</p>
+                    </motion.div>
+                  )}
+                  {sessionsLoading && sessions.length === 0 && (
+                    <div className="text-center py-12">
+                      <Loader className="h-6 w-6 mx-auto animate-spin text-purple-600" />
+                      <p className="text-xs mt-2 text-gray-500">Loading chat history...</p>
                     </div>
                   )}
                 </div>
@@ -841,9 +905,29 @@ export default function AITutorNeuroSymbolic() {
                               teaching_visual: message.teaching_visual || message.content?.teaching_visual,
                               visual_data: message.visual_data || message.content?.visual_data
                             }}
-                            onInteraction={(section) => {
-                              console.log('User revealed section:', section);
-                              // Can track engagement here
+                            onInteraction={(action, data) => {
+                              console.log('User interaction:', action, data);
+                              
+                              // Handle follow-up question suggestions
+                              if (action === 'followup') {
+                                const followUpMap = {
+                                  'practice': 'Give me a practice problem on this',
+                                  'example': 'Show me more examples',
+                                  'application': 'Where is this used in real life?',
+                                  'related': 'What other concepts are related to this?'
+                                };
+                                const followUpQuestion = followUpMap[data];
+                                if (followUpQuestion) {
+                                  setInputMessage(followUpQuestion);
+                                  inputRef.current?.focus();
+                                }
+                              }
+                              
+                              // Track feedback
+                              if (action === 'feedback_positive' || action === 'feedback_negative') {
+                                // TODO: Send to analytics
+                                console.log('Feedback:', action);
+                              }
                             }}
                           />
                         </div>

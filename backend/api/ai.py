@@ -929,7 +929,8 @@ async def generate_neuro_symbolic_response(
     request: DualAIRequest,
     user: User = Depends(get_current_user),
     ai_service: AIService = Depends(get_ai_service),
-    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service)
+    sub_service: UnifiedSubscriptionService = Depends(get_unified_subscription_service),
+    db = Depends(get_database)  # ✅ Add db dependency
 ):
     """
     Generate Neuro-Symbolic AI Tutor response (Indian student-centric)
@@ -994,14 +995,74 @@ async def generate_neuro_symbolic_response(
         USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "false").lower() == "true"
         
         if USE_AGENTIC_SYSTEM:
-            # Use new agentic system
-            logger.info("🤖 Using Agentic System for neuro-symbolic response")
+            # Use new agentic system with MEMORY
+            logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:
                 # Initialize Supervisor
                 emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
                 supervisor = SupervisorAgent(config={"emergent_llm_key": emergent_llm_key})
                 
-                # Prepare context for agentic system
+                # ================================================================
+                # MEMORY SYSTEM INTEGRATION - Retrieve context before processing
+                # ================================================================
+                from services.memory_service import MemoryService
+                from services.semantic_memory import SemanticMemoryService
+                from services.mastery_tracker import MasteryTracker
+                from services.continuity_engine import ContinuityEngine
+                
+                # Initialize memory services (using db from dependency)
+                # Use OpenAI key for embeddings (NOT emergent key)
+                openai_api_key = os.environ.get('OPENAI_API_KEY') or emergent_llm_key
+                
+                memory_service = MemoryService(db)
+                semantic_memory = SemanticMemoryService(db, openai_api_key)
+                mastery_tracker = MasteryTracker(db)
+                continuity_engine = ContinuityEngine(db)
+                
+                logger.info("🧠 Memory services initialized")
+                
+                # Step 1: Get short-term conversation context (last 10 messages)
+                recent_context = await memory_service.get_conversation_context(
+                    session_id=request.session_id or f"temp_{user.user_id}",
+                    user_id=user.user_id,
+                    window_size=10
+                )
+                logger.info(f"📜 Retrieved {len(recent_context)} recent messages")
+                
+                # Step 2: Semantic search for relevant long-term memories
+                relevant_memories = await semantic_memory.search_relevant_memories(
+                    user_id=user.user_id,
+                    query=contextual_message,
+                    top_k=5,
+                    min_similarity=0.5
+                )
+                logger.info(f"🔍 Found {len(relevant_memories)} relevant memories")
+                
+                # Step 3: Check for topic continuation
+                continuity = await continuity_engine.detect_topic_continuation(
+                    user_id=user.user_id,
+                    current_query=contextual_message
+                )
+                logger.info(f"🔗 Continuity check: {continuity.get('is_continuation', False)}")
+                
+                # Step 4: Get mastery level for current topic
+                # Extract main topic from question
+                from services.memory_extraction import MemoryExtractor
+                temp_extractor = MemoryExtractor(db)
+                current_concepts = temp_extractor._extract_concepts(contextual_message, {})
+                current_topic = current_concepts[0] if current_concepts else "general"
+                
+                mastery_level = await mastery_tracker.get_mastery_level(user.user_id, current_topic)
+                logger.info(f"📊 Mastery level for {current_topic}: {mastery_level}/100")
+                
+                # Step 5: Get user profile with name
+                user_doc = await db.users.find_one({"user_id": user.user_id})
+                user_name = ""
+                if user_doc:
+                    full_name = user_doc.get("full_name", "")
+                    user_name = full_name.split()[0] if full_name else ""
+                
+                # Prepare enhanced context for agentic system
                 agentic_context = {
                     "subject": request.subject,
                     "session_id": request.session_id,
@@ -1009,12 +1070,24 @@ async def generate_neuro_symbolic_response(
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
                     "request_visual": True,  # Always request visual for neuro-symbolic
                     "student_profile": {
+                        "name": user_name,  # Personalized!
                         "level": "class_12",
                         "interests": ["cricket", "gaming"],
                         "board": "CBSE",
-                        "exam": getattr(request, 'exam_mode', 'JEE')
+                        "exam": getattr(request, 'exam_mode', 'JEE'),
+                        "mastery_level": mastery_level  # Adaptive depth!
+                    },
+                    # Memory context for agents
+                    "memory_context": {
+                        "recent_context": recent_context[-5:],  # Last 5 messages
+                        "relevant_memories": relevant_memories,
+                        "continuity": continuity,
+                        "mastery_level": mastery_level,
+                        "current_topic": current_topic
                     }
                 }
+                
+                logger.info(f"🧠 Memory context prepared: {len(recent_context)} recent, {len(relevant_memories)} relevant, continuity={continuity.get('is_continuation')}")
                 
                 # Run Supervisor
                 agentic_response = await supervisor.run(contextual_message, agentic_context)
@@ -1037,10 +1110,76 @@ async def generate_neuro_symbolic_response(
                 result = ResponseAdapter.adapt_agentic_to_neuro_symbolic(
                     agentic_response=agentic_response,
                     query=contextual_message,
-                    subject=request.subject
+                    subject=request.subject,
+                    intent=agentic_response.get('intent')  # Pass intent for greeting detection
                 )
                 
                 logger.info("✅ Agentic system response generated successfully")
+                
+                # ================================================================
+                # MEMORY UPDATE PIPELINE - Store learnings after response
+                # ================================================================
+                try:
+                    from services.spaced_repetition import SpacedRepetitionEngine
+                    
+                    # Extract learning facts from this interaction
+                    facts = await temp_extractor.extract_learning_facts(
+                        user_id=user.user_id,
+                        question=contextual_message,
+                        response=result,
+                        session_id=request.session_id or f"temp_{user.user_id}",
+                        message_id=None  # Will be set when message is saved
+                    )
+                    
+                    logger.info(f"🧠 Extracted {len(facts)} memory facts")
+                    
+                    # Store facts with embeddings
+                    sp_engine = SpacedRepetitionEngine()
+                    
+                    for fact in facts:
+                        if fact.get("fact_type") == "concept_learned":
+                            # Store with embedding
+                            fact_id = await semantic_memory.store_memory_with_embedding(
+                                user_id=user.user_id,
+                                content=fact["content"],
+                                metadata=fact
+                            )
+                            
+                            # Schedule first review (1 day for new concepts)
+                            review_schedule = sp_engine.calculate_next_review(
+                                current_interval_days=0,
+                                quality=3,  # Default: understood
+                                current_easiness=2.5
+                            )
+                            
+                            # Update review schedule in memory
+                            await db.user_memory_facts.update_one(
+                                {"fact_id": fact_id},
+                                {"$set": review_schedule}
+                            )
+                            
+                        elif fact.get("fact_type") == "mastery_update":
+                            # Update mastery level
+                            await mastery_tracker.update_mastery(
+                                user_id=user.user_id,
+                                topic=fact["topic"],
+                                delta=fact["mastery_delta"],
+                                reason=fact.get("reason", "question_answered")
+                            )
+                    
+                    # Update concept thread for continuity
+                    if current_concepts:
+                        await continuity_engine.update_concept_thread(
+                            user_id=user.user_id,
+                            topic=current_topic,
+                            concepts=current_concepts
+                        )
+                    
+                    logger.info("💾 Memory update pipeline complete")
+                    
+                except Exception as e:
+                    logger.error(f"⚠️ Memory update failed (non-critical): {e}")
+                    # Don't fail the request if memory update fails
             except Exception as e:
                 logger.error(f"❌ Agentic system failed, falling back to legacy: {e}")
                 import traceback
