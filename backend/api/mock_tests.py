@@ -291,34 +291,77 @@ async def generate_mock_test(
         test_id = str(uuid.uuid4())
         logger.info(f"[{trace_id}] Generated test_id: {test_id}")
         
-        # ==================== STEP 3: Generate Questions ====================
+        # ==================== STEP 3: Generate Questions using Agentic System ====================
         try:
             # Ensure subjects list is not empty (should be validated by Pydantic, but double-check)
             if not request.subjects:
                 raise ValueError("subjects list cannot be empty")
             
-            questions = []
-            # Generate requested number of questions (up to 100)
-            for i in range(min(request.num_questions, 100)):
-                # Safely select subject with modulo
-                subject = request.subjects[i % len(request.subjects)]
-                
-                questions.append({
-                    "question_id": str(uuid.uuid4()),
-                    "question_number": i + 1,
-                    "subject": subject,
-                    "question_text": f"Sample {request.exam_type} question {i + 1} - {subject}",
-                    "options": [
-                        f"Option A for question {i + 1}",
-                        f"Option B for question {i + 1}",
-                        f"Option C for question {i + 1}",
-                        f"Option D for question {i + 1}"
-                    ],
-                    "correct_answer": 0,  # Index of correct option
-                    "marks": 1,
-                    "difficulty": request.difficulty_level,
-                    "explanation": f"Explanation for question {i + 1}"
-                })
+            from services.agentic_test_generator import AgenticTestGenerator
+            from services.test_blueprint_generator import TestBlueprintGenerator
+            import os
+            
+            emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('EMERGENT_API_KEY')
+            if not emergent_llm_key:
+                logger.warning(f"[{trace_id}] EMERGENT_LLM_KEY missing. Using deterministic fallback generator.")
+                blueprint = TestBlueprintGenerator().generate_blueprint(
+                    exam_type=request.exam_type,
+                    subjects=request.subjects,
+                    num_questions=min(request.num_questions, 100),
+                    difficulty_level=request.difficulty_level,
+                    test_type=request.test_type,
+                    chapters=request.chapters,
+                    focus_areas=request.focus_areas
+                )
+                questions = []
+                for i in range(min(request.num_questions, 100)):
+                    subject = request.subjects[i % len(request.subjects)]
+                    questions.append({
+                        "question_id": str(uuid.uuid4()),
+                        "question_number": i + 1,
+                        "subject": subject,
+                        "topic": "General",
+                        "question_text": f"Placeholder {request.exam_type} question {i + 1} - {subject}",
+                        "options": [
+                            "A) Placeholder option",
+                            "B) Placeholder option",
+                            "C) Placeholder option",
+                            "D) Placeholder option"
+                        ],
+                        "correct_answer": "A",
+                        "marks": 1,
+                        "difficulty": request.difficulty_level,
+                        "explanation": "This is a fallback question generated because the AI question engine is unavailable.",
+                        "metadata": {"fallback": True}
+                    })
+                quality_report = {
+                    "requested_questions": request.num_questions,
+                    "generated_questions": len(questions),
+                    "validated_questions": len(questions),
+                    "fallback_mode": True
+                }
+            else:
+                agentic_config = {
+                    "emergent_llm_key": emergent_llm_key
+                }
+                test_generator = AgenticTestGenerator(config=agentic_config)
+                logger.info(f"[{trace_id}] Using Agentic Test Generator")
+
+                test_result = await test_generator.generate_test(
+                    exam_type=request.exam_type,
+                    subjects=request.subjects,
+                    num_questions=min(request.num_questions, 100),
+                    difficulty_level=request.difficulty_level,
+                    test_type=request.test_type,
+                    chapters=request.chapters if hasattr(request, 'chapters') else None,
+                    focus_areas=request.focus_areas if hasattr(request, 'focus_areas') else None,
+                    user_id=user.user_id
+                )
+
+                questions = test_result["questions"]
+                blueprint = test_result.get("blueprint", {})
+                quality_report = test_result.get("quality_report", {})
+                logger.info(f"[{trace_id}] Agentic generation complete: {len(questions)} questions")
             
             if not questions:
                 raise ValueError("Failed to generate any questions")
@@ -339,6 +382,9 @@ async def generate_mock_test(
         
         # ==================== STEP 4: Create Test Document ====================
         try:
+            time_limit_minutes = blueprint.get("time_limit_minutes", 180)
+            title = f"{request.exam_type} {request.test_type.replace('_', ' ').title()} Test"
+
             test_doc = {
                 "test_id": test_id,
                 "user_id": user.user_id,
@@ -351,12 +397,17 @@ async def generate_mock_test(
                 "generation_mode": request.generation_mode,
                 "status": "active",
                 "generated_at": datetime.now(timezone.utc).isoformat(),
-                "time_limit_minutes": 180,  # 3 hours default
+                "time_limit_minutes": time_limit_minutes,
+                "time_limit": time_limit_minutes,
                 "questions": questions,
                 "total_marks": len(questions),  # 1 mark per question
-                "title": f"{request.exam_type} {request.test_type.replace('_', ' ').title()} Test",
+                "title": title,
+                "test_name": title,
                 "trace_id": trace_id,
-                "created_by": "api_v2"
+                "created_by": "api_v2",
+                "blueprint": blueprint,
+                "quality_report": quality_report,
+                "question_schema_version": "v2"
             }
             
             logger.info(f"[{trace_id}] Test document created with {len(questions)} questions")

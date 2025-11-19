@@ -16,6 +16,67 @@ import BadgeUnlockAnimation from './BadgeUnlockAnimation';
 import MotivationalPopup from './MotivationalPopup';
 import TestGenerationProgress from './TestGenerationProgress';
 import UpgradeModal from './UpgradeModal';
+import GlobalModal from './modals/GlobalModal';
+
+const normalizeQuestionOptions = (options = []) =>
+  options.map((option, idx) => {
+    if (typeof option === 'string') {
+      const trimmed = option.trim();
+      const letterMatch = trimmed.match(/^[A-D]/i);
+      const label = letterMatch ? letterMatch[0].toUpperCase() : String.fromCharCode(65 + idx);
+      const text = trimmed.replace(/^[A-D][\)\.\:\-]?\s*/i, '').trim() || trimmed;
+      return { label, text, value: label };
+    }
+    if (option && typeof option === 'object') {
+      const label = (option.label || option.id || String.fromCharCode(65 + idx)).toString().toUpperCase();
+      const text = option.text || option.value || option.description || `Option ${label}`;
+      return { label, text, value: label };
+    }
+    return {
+      label: String.fromCharCode(65 + idx),
+      text: String(option),
+      value: String.fromCharCode(65 + idx)
+    };
+  });
+
+const getTimeLimitSeconds = (test, fallbackMinutes = 45) => {
+  const minutes = test?.time_limit ?? test?.time_limit_minutes ?? fallbackMinutes;
+  return Math.max(1, minutes) * 60;
+};
+
+const BlueprintSummary = ({ blueprint }) => {
+  if (!blueprint) return null;
+  const subjectPlan = blueprint.subject_plan || [];
+  return (
+    <Card className="border border-purple-100 shadow-sm bg-white">
+      <CardHeader>
+        <CardTitle className="text-purple-700 text-lg">Current Test Blueprint</CardTitle>
+        <p className="text-sm text-gray-500">{blueprint.summary}</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {subjectPlan.map((plan) => (
+            <div key={plan.subject} className="p-4 rounded-xl bg-purple-50 border border-purple-100">
+              <p className="text-sm font-semibold text-purple-800 mb-1">{plan.subject}</p>
+              <p className="text-xs text-gray-600 mb-2">{plan.question_count} questions</p>
+              <div className="text-xs text-gray-600 space-y-1">
+                <div>Easy: {plan.difficulty_split?.easy || 0}</div>
+                <div>Medium: {plan.difficulty_split?.medium || 0}</div>
+                <div>Hard: {plan.difficulty_split?.hard || 0}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {blueprint.focus_areas && blueprint.focus_areas.length > 0 && (
+          <div className="text-xs text-gray-600">
+            <span className="font-semibold text-purple-700">Focus Areas: </span>
+            {blueprint.focus_areas.join(', ')}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 // #PHASE3-SECURITY-FRONTEND - React Query Migration
 import { 
@@ -170,6 +231,7 @@ export default function MockTests() {
   // Performance optimization states
   const [generationProgress, setGenerationProgress] = useState({});
   const [estimatedTime, setEstimatedTime] = useState(null);
+  const [latestBlueprint, setLatestBlueprint] = useState(null);
   
   // Test execution states
   const [activeTest, setActiveTest] = useState(null);
@@ -268,7 +330,7 @@ export default function MockTests() {
 
       if (usageResponse.ok) {
         const usage = await usageResponse.json();
-        const mockTestUsage = usage.usage_details?.mock_tests_weekly || {};
+        const mockTestUsage = usage.usage_details?.mock_tests || {};
         return {
           used: mockTestUsage.used || 0,
           limit: mockTestUsage.limit || 2,
@@ -565,7 +627,7 @@ export default function MockTests() {
           // Prefer showing the modal immediately using backend-provided upsell info
           if (upsellInfo && setUpsellModal) {
             setUpsellModal({
-              featureName: 'mock_tests_weekly',
+              featureName: 'mock_tests',
               upsellInfo,
               currentUsage: detail.used || detail.current_usage || 0,
               limit: detail.limit || 0,
@@ -582,12 +644,12 @@ export default function MockTests() {
             console.log('✅ Upsell modal opened directly from 402/429 payload');
           } else {
             console.log('🎯 Calling triggerFeatureUpsell as fallback...');
-            await triggerFeatureUpsell('mock_tests_weekly'); // unified global modal
+            await triggerFeatureUpsell('mock_tests'); // unified global modal
           }
         } catch (parseError) {
           console.error('❌ Error parsing 402/429 response:', parseError);
           // Fallback to global helper
-          await triggerFeatureUpsell('mock_tests_weekly');
+          await triggerFeatureUpsell('mock_tests');
         }
         return;
       }
@@ -780,7 +842,7 @@ export default function MockTests() {
 
   const generateMockTest = async (examType, subject, difficulty = 3, numQuestions = 25, buttonId = 'default') => {
     // CRITICAL: Check subscription access FIRST
-    const accessInfo = await checkFeatureAccess('mock_tests_weekly');
+    const accessInfo = await checkFeatureAccess('mock_tests');
     if (!accessInfo.has_access) {
       // Upsell modal will be shown automatically by the context
       console.log('Mock test access blocked - upsell modal should appear');
@@ -806,7 +868,8 @@ export default function MockTests() {
     if (cachedTest && !quickGeneration) {
       console.log('🚀 Loading test from cache instantly!');
       setActiveTest(cachedTest);
-      setTimeRemaining(cachedTest.time_limit * 60);
+      setLatestBlueprint(cachedTest.blueprint || null);
+      setTimeRemaining(getTimeLimitSeconds(cachedTest, generationConfig?.timerDuration || 45));
       setCurrentQuestion(0);
       setAnswers({});
       
@@ -888,18 +951,21 @@ export default function MockTests() {
       clearTimeout(fallbackTimeout); // Clear fallback since we got a response
       
       if (response.ok) {
-        const testData = await response.json();
-        console.log('✅ Test generated successfully:', testData.test_name);
+        const payload = await response.json();
+        const generatedTest = payload.test || payload;
+        console.log('✅ Test generated successfully:', generatedTest.title || generatedTest.test_name);
+        setLatestBlueprint(generatedTest.blueprint || null);
         
         // Track feature usage for subscription
         await trackFeatureUsage('mock_tests');
         
         // Cache the test
-        cacheTest(cacheKey, testData);
+        cacheTest(cacheKey, generatedTest);
         
         // Set up the test
-        setActiveTest(testData);
-        setTimeRemaining(testData.time_limit * 60);
+        setActiveTest(generatedTest);
+        const timeLimitSeconds = getTimeLimitSeconds(generatedTest, generationConfig?.timerDuration || 45);
+        setTimeRemaining(timeLimitSeconds);
         setCurrentQuestion(0);
         setAnswers({});
 
@@ -932,7 +998,7 @@ export default function MockTests() {
         
         const errorResult = await handleSubscriptionError(
           errorObj, 
-          'mock_tests_weekly', 
+          'mock_tests', 
           checkFeatureAccess, 
           (message) => setGenerationError(message.message)
         );
@@ -962,7 +1028,7 @@ export default function MockTests() {
           errorMessage = 'AI system is busy. Please try again in 30 seconds.';
         } else if (response.status === 422 || response.status === 402 || response.status === 429) {
           // Trigger unified subscription modal for all subscription-related errors
-          await triggerFeatureUpsell('mock_tests_weekly');
+          await triggerFeatureUpsell('mock_tests');
           setGenerationError(null);
           return;
         }
@@ -980,7 +1046,7 @@ export default function MockTests() {
       
       const errorResult = await handleSubscriptionError(
         error, 
-        'mock_tests_weekly', 
+        'mock_tests', 
         checkFeatureAccess, 
         (message) => setGenerationError(message.message)
       );
@@ -1049,7 +1115,8 @@ export default function MockTests() {
         if (newTestResponse.ok) {
           const newTestData = await newTestResponse.json();
           setActiveTest(newTestData);
-          setTimeRemaining(newTestData.time_limit * 60);
+          setLatestBlueprint(newTestData.blueprint || null);
+          setTimeRemaining(getTimeLimitSeconds(newTestData));
           setCurrentQuestion(0);
           setAnswers({});
           setCurrentTestMode(`retake_${retakeMode}`);
@@ -1210,7 +1277,7 @@ export default function MockTests() {
         return;
       }
       
-      const timeTaken = (activeTest.time_limit * 60) - timeRemaining;
+      const timeTaken = getTimeLimitSeconds(activeTest) - timeRemaining;
       
       const response = await fetch(`${backendUrl}/api/mock-tests/${activeTest.test_id}/submit`, {
         method: 'POST',
@@ -1260,6 +1327,8 @@ export default function MockTests() {
     const isLastQuestion = currentQuestion === activeTest.questions.length - 1;
     const progress = ((currentQuestion + 1) / activeTest.questions.length) * 100;
     const answered = Object.keys(answers).filter(id => answers[id] && answers[id].trim()).length;
+    const testTitle = activeTest.test_name || activeTest.title || 'Mock Test';
+    const normalizedOptions = normalizeQuestionOptions(question.options || []);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -1272,7 +1341,7 @@ export default function MockTests() {
                   <GraduationCap className="h-6 w-6" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{activeTest.test_name}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{testTitle}</h1>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     <span>Question {currentQuestion + 1} of {activeTest.questions.length}</span>
                     <span>•</span>
@@ -1317,7 +1386,7 @@ export default function MockTests() {
                     Q{currentQuestion + 1}
                   </span>
                   <span className="text-gray-600 text-sm">
-                    {question.chapter ? `Chapter: ${question.chapter}` : 'General Question'}
+                    {question.topic ? `Topic: ${question.topic}` : question.chapter ? `Chapter: ${question.chapter}` : 'General Question'}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1348,10 +1417,8 @@ export default function MockTests() {
               
               {/* Enhanced Options */}
               <div className="space-y-3">
-                {question.options.map((option, index) => {
-                  const optionLetter = option.charAt(0);
-                  const isSelected = answers[question.question_id] === optionLetter;
-                  
+                {normalizedOptions.map((option, index) => {
+                  const isSelected = answers[question.question_id] === option.value;
                   return (
                     <div 
                       key={index}
@@ -1360,7 +1427,7 @@ export default function MockTests() {
                           ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
                           : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                       }`}
-                      onClick={() => setAnswers({...answers, [question.question_id]: optionLetter})}
+                      onClick={() => setAnswers({...answers, [question.question_id]: option.value})}
                     >
                       <div className="flex items-center space-x-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -1368,10 +1435,10 @@ export default function MockTests() {
                             ? 'bg-blue-500 text-white' 
                             : 'bg-gray-200 text-gray-600 group-hover:bg-blue-100'
                         }`}>
-                          {optionLetter}
+                          {option.label}
                         </div>
                         <span className={`flex-1 ${isSelected ? 'text-blue-900 font-medium' : 'text-gray-700'}`}>
-                          {option.substring(3).trim()}
+                          {option.text}
                         </span>
                         {isSelected && (
                           <CheckCircle className="h-5 w-5 text-blue-500" />
@@ -2070,9 +2137,9 @@ export default function MockTests() {
               <div className="flex items-center bg-gray-50 rounded-lg px-3 py-1">
                 <Zap className="h-4 w-4 text-orange-500 mr-2" />
                 <span className="text-sm text-gray-700">
-                  {getFeatureLimit('mock_tests_weekly') === Infinity ? 
+                  {getFeatureLimit('mock_tests') === Infinity ? 
                     'Unlimited' : 
-                    `${getFeatureRemaining('mock_tests_weekly')}/${getFeatureLimit('mock_tests_weekly')} left`
+                    `${getFeatureRemaining('mock_tests')}/${getFeatureLimit('mock_tests')} left`
                   }
                 </span>
                 {currentTier === 'FREE' && (
@@ -2191,6 +2258,12 @@ export default function MockTests() {
           </CardContent>
         </Card>
       </div>
+
+      {latestBlueprint && (
+        <div className="mb-8">
+          <BlueprintSummary blueprint={latestBlueprint} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Available Tests */}
@@ -2542,14 +2615,21 @@ export default function MockTests() {
           questions={examModeQuestions}
           onSubmit={handleExamSubmit}
           onExit={handleExamExit}
-          timerDuration={examModeTest.time_limit}
+          timerDuration={getTimeLimitSeconds(examModeTest)}
         />
       )}
 
       {/* Submission Loading Modal */}
       {showSubmitLoading && (
-        <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <Card className="max-w-lg w-full bg-white/95 backdrop-blur-md border-0 shadow-2xl">
+        <GlobalModal
+          isOpen
+          onClose={() => {}}
+          closeOnBackdrop={false}
+          closeOnEsc={false}
+          trapFocus={false}
+          maxWidth="32rem"
+        >
+          <Card className="w-full bg-white/95 backdrop-blur-md border-0 shadow-2xl">
             <CardContent className="p-12 text-center">
               <div className="mb-6">
                 <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4 animate-pulse">
@@ -2586,7 +2666,7 @@ export default function MockTests() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </GlobalModal>
       )}
 
       {/* Enhanced Results Modal */}

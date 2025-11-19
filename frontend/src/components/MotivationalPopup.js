@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { X, TrendingUp, Zap, Target, Award } from 'lucide-react';
-import { applyGlobalModalBehavior, getBackdropStyle, getModalContainerStyle, getModalContentStyle } from '../utils/modalBehavior';
-import { MODAL_BEHAVIOR } from '../config/modalConfig';
+import GlobalModal from './modals/GlobalModal';
 
 const MOTIVATIONAL_MESSAGES = {
   excellent: {
@@ -54,26 +53,12 @@ const MOTIVATIONAL_MESSAGES = {
 
 export default function MotivationalPopup({ performance, onClose, stats = {} }) {
   const [isVisible, setIsVisible] = useState(false);
-  const modalRef = useRef(null);
 
   useEffect(() => {
     // Fade in animation
     setTimeout(() => setIsVisible(true), 100);
   }, []);
   
-  // Apply global modal behavior
-  useEffect(() => {
-    if (modalRef.current) {
-      return applyGlobalModalBehavior(modalRef.current, {
-        trapFocus: true,
-        outsideClick: true, // Allow closing on backdrop click
-        onClose,
-        scrollLock: true,
-        closeOnEsc: true
-      });
-    }
-  }, [onClose]);
-
   const getMotivationalContent = () => {
     const score = performance?.percentage || 0;
     if (score >= 85) return MOTIVATIONAL_MESSAGES.excellent;
@@ -90,36 +75,12 @@ export default function MotivationalPopup({ performance, onClose, stats = {} }) 
     setTimeout(onClose, 300);
   };
 
-  // Get global modal styles
-  const backdropStyle = getBackdropStyle();
-  const containerStyle = getModalContainerStyle();
-  const contentStyle = getModalContentStyle({ maxWidth: '32rem' }); // max-w-lg
-
   return (
-    <div 
-      ref={modalRef}
-      style={{
-        ...backdropStyle,
-        position: 'fixed',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        transition: 'opacity 300ms',
-        opacity: isVisible ? 1 : 0
-      }}
-      data-modal-backdrop="true"
-      onClick={handleClose}
-    >
-      <Card 
-        style={{
-          ...contentStyle,
-          transition: 'all 500ms',
-          transform: isVisible ? 'scale(1)' : 'scale(0.75)'
-        }}
-        className={`w-full bg-gradient-to-br ${content.color} border-0 shadow-2xl`}
-        onClick={(e) => e.stopPropagation()}
+    <GlobalModal isOpen onClose={handleClose} maxWidth="32rem">
+      <Card
+        className={`w-full bg-gradient-to-br ${content.color} border-0 shadow-2xl transition-all duration-300 ${
+          isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
       >
         <button
           onClick={handleClose}
@@ -189,6 +150,6 @@ export default function MotivationalPopup({ performance, onClose, stats = {} }) 
           </div>
         </CardContent>
       </Card>
-    </div>
+    </GlobalModal>
   );
 }

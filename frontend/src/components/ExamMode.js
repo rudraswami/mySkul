@@ -17,6 +17,27 @@ import {
   Minimize2
 } from 'lucide-react';
 
+const normalizeOptions = (options = []) =>
+  options.map((option, idx) => {
+    if (typeof option === 'string') {
+      const trimmed = option.trim();
+      const labelMatch = trimmed.match(/^[A-D]/i);
+      const label = labelMatch ? labelMatch[0].toUpperCase() : String.fromCharCode(65 + idx);
+      const text = trimmed.replace(/^[A-D][\)\.\:\-]?\s*/i, '').trim() || trimmed;
+      return { label, text, value: label };
+    }
+    if (option && typeof option === 'object') {
+      const label = (option.label || option.id || String.fromCharCode(65 + idx)).toString().toUpperCase();
+      const text = option.text || option.value || option.description || `Option ${label}`;
+      return { label, text, value: label };
+    }
+    return {
+      label: String.fromCharCode(65 + idx),
+      text: String(option),
+      value: String.fromCharCode(65 + idx)
+    };
+  });
+
 export default function ExamMode({ 
   test, 
   questions, 
@@ -168,6 +189,7 @@ export default function ExamMode({
   const currentQuestionId = currentQ?.question_id;
   const currentAnswer = answers[currentQuestionId];
   const isMarked = markedForReview.has(currentQuestionId);
+  const normalizedOptions = normalizeOptions(currentQ?.options || []);
 
   // Stats for palette
   const answeredCount = Object.keys(answers).length;
@@ -273,14 +295,12 @@ export default function ExamMode({
 
               {/* Options */}
               <div className="space-y-3">
-                {currentQ.options?.map((option, idx) => {
-                  const optionLabel = String.fromCharCode(65 + idx); // A, B, C, D
-                  const isSelected = currentAnswer === option;
-
+                {normalizedOptions.map((option, idx) => {
+                  const isSelected = currentAnswer === option.value;
                   return (
                     <button
                       key={idx}
-                      onClick={() => selectAnswer(currentQuestionId, option)}
+                      onClick={() => selectAnswer(currentQuestionId, option.value)}
                       className={`w-full p-4 rounded-lg border-2 text-left transition-all hover:shadow-md ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50'
@@ -293,9 +313,9 @@ export default function ExamMode({
                             ? 'bg-blue-500 border-blue-500 text-white'
                             : 'border-gray-300 text-gray-600'
                         }`}>
-                          {optionLabel}
+                          {option.label}
                         </div>
-                        <span className="text-gray-800">{option}</span>
+                        <span className="text-gray-800">{option.text}</span>
                       </div>
                     </button>
                   );

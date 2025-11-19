@@ -114,20 +114,31 @@ class TestGenerationRequest(BaseModel):
     
     @validator('difficulty_level')
     def validate_difficulty(cls, v):
-        """Normalize difficulty level from int or string to string"""
-        # Accept int (1-3) or string (easy/medium/hard)
+        """Normalize difficulty level from slider (1-5) or textual input to canonical bucket"""
         if isinstance(v, int):
-            difficulty_map = {1: 'easy', 2: 'medium', 3: 'hard'}
-            if v not in difficulty_map:
-                raise ValueError(f"Invalid difficulty level: {v}. Must be 1-3")
-            return difficulty_map[v]
-        elif isinstance(v, str):
+            # Support UI slider range 1-5 by mapping to easy/medium/hard buckets
+            if v < 1 or v > 5:
+                raise ValueError(f"Invalid difficulty level: {v}. Must be between 1 and 5")
+            if v <= 2:
+                return 'easy'
+            if v == 3:
+                return 'medium'
+            return 'hard'
+        if isinstance(v, str):
             v_lower = v.lower().strip()
-            if v_lower not in ['easy', 'medium', 'hard']:
-                raise ValueError(f"Invalid difficulty level: {v}. Must be 'easy', 'medium', or 'hard'")
-            return v_lower
-        else:
-            raise ValueError(f"Invalid difficulty_level type: {type(v)}. Must be int or str")
+            aliases = {
+                'very easy': 'easy',
+                'easy': 'easy',
+                'medium': 'medium',
+                'moderate': 'medium',
+                'hard': 'hard',
+                'very hard': 'hard',
+                'difficult': 'hard'
+            }
+            if v_lower not in aliases:
+                raise ValueError(f"Invalid difficulty level: {v}. Must be one of {list(aliases.keys())}")
+            return aliases[v_lower]
+        raise ValueError(f"Invalid difficulty_level type: {type(v)}. Must be int or str")
     
     @validator('test_type')
     def validate_test_type(cls, v):

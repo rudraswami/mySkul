@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { CheckCircle, Circle, Loader2, Sparkles, Zap } from 'lucide-react';
+import GlobalModal from './modals/GlobalModal';
 
 const GENERATION_STEPS = [
   {
@@ -125,10 +126,10 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
 
   const totalProgress = ((currentStep + (progress / 100)) / GENERATION_STEPS.length) * 100;
 
-  return (
-    <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  const modalContent = (
+    <div className="bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 p-4 relative overflow-hidden rounded-3xl">
       {/* Animated background particles */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden opacity-60 pointer-events-none">
         {[...Array(20)].map((_, i) => (
           <div
             key={i}
@@ -479,5 +480,18 @@ export default function TestGenerationProgress({ onComplete, onStartTest, config
         .animate-confetti:nth-child(8) { --x: -90px; --y: -60px; }
       `}</style>
     </div>
+  );
+
+  return (
+    <GlobalModal
+      isOpen
+      onClose={() => {}}
+      closeOnBackdrop={false}
+      closeOnEsc={false}
+      trapFocus={false}
+      maxWidth="44rem"
+    >
+      {modalContent}
+    </GlobalModal>
   );
 }

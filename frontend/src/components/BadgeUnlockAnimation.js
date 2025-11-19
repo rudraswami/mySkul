@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { X, Sparkles } from 'lucide-react';
+import GlobalModal from './modals/GlobalModal';
 
 export default function BadgeUnlockAnimation({ badges, onClose }) {
   const [currentBadgeIndex, setCurrentBadgeIndex] = useState(0);
@@ -23,7 +24,8 @@ export default function BadgeUnlockAnimation({ badges, onClose }) {
   const currentBadge = badges[currentBadgeIndex];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <GlobalModal isOpen onClose={onClose} closeOnBackdrop={false} trapFocus={false} maxWidth="28rem">
+      <div className="relative">
       {/* Confetti effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(30)].map((_, i) => (
@@ -159,6 +161,7 @@ export default function BadgeUnlockAnimation({ badges, onClose }) {
           animation: badgeBounce 1s ease-in-out;
         }
       `}</style>
-    </div>
+      </div>
+    </GlobalModal>
   );
 }

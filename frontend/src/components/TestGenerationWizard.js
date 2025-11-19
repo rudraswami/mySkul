@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -18,6 +18,7 @@ import {
   Timer,
   BarChart3
 } from 'lucide-react';
+import GlobalModal from './modals/GlobalModal';
 
 const EXAM_TYPES = [
   { 
@@ -57,14 +58,6 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
   
-  // Prevent body scroll when modal is open
-  React.useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
   // Get available subjects for selected exam type
   const availableSubjects = EXAM_TYPES.find(e => e.id === config.examType)?.subjects || [];
 
@@ -135,7 +128,7 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 md:p-6">
+    <GlobalModal isOpen onClose={onCancel} maxWidth="56rem" closeOnBackdrop={false}>
       <div className="max-w-4xl w-full bg-white rounded-2xl shadow-2xl">
       <div className="p-6">
       {/* Progress Header */}
@@ -470,6 +463,6 @@ export default function TestGenerationWizard({ onGenerate, onCancel, defaultExam
       </div>
       </div>
       </div>
-    </div>
+    </GlobalModal>
   );
 }
