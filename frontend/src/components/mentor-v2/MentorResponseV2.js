@@ -15,7 +15,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   Copy,
-  Check
+  Check,
+  BookOpen,
+  Zap,
+  HelpCircle,
+  ArrowRight
 } from 'lucide-react';
 
 import DynamicSceneComposer from '../DynamicSceneComposer';
@@ -26,6 +30,7 @@ import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
 import TeachingVisualPlayer from '../TeachingVisualPlayer';
 import TipCard from '../teaching/blocks/TipCard';
 import { MarkdownParagraph } from '../../utils/markdownRenderer';
+import ComparisonTable from '../ComparisonTable';
 
 export default function MentorResponseV2({ response, onInteraction }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
@@ -56,7 +61,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
     return <div className="text-red-500">Error: Invalid response structure</div>;
   }
   
-  const { default_view, progressive_sections } = response;
+  const { default_view, progressive_sections, intelligent_format, format_type } = response;
 
   // Compute domain-specific flags used across rendering and scene synthesis
   const chemAtomic = useMemo(() => {
@@ -328,8 +333,43 @@ export default function MentorResponseV2({ response, onInteraction }) {
     );
   };
 
+  // Extract detected subject from response
+  const detectedSubject = response?.detected_subject;
+  
+  // Subject badge color mapping
+  const subjectColors = {
+    'Mathematics': 'bg-purple-100 text-purple-700 border-purple-200',
+    'Physics': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Chemistry': 'bg-orange-100 text-orange-700 border-orange-200',
+    'Biology': 'bg-green-100 text-green-700 border-green-200',
+    'Computer Science': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  };
+
+  // Follow-up action suggestions
+  const followUpActions = [
+    { icon: <HelpCircle className="w-4 h-4" />, text: "Explain simpler", prompt: "Can you explain this in simpler terms?" },
+    { icon: <Zap className="w-4 h-4" />, text: "Give example", prompt: "Can you give me a real-world example?" },
+    { icon: <BookOpen className="w-4 h-4" />, text: "Practice questions", prompt: "Show me practice questions on this topic" },
+    { icon: <Target className="w-4 h-4" />, text: "Common mistakes", prompt: "What are common mistakes students make with this?" }
+  ];
+
   return (
     <div className="mentor-response-v2 space-y-4">
+      {/* Subject Badge - Shows detected subject */}
+      {detectedSubject && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2"
+        >
+          <div className={`px-3 py-1.5 rounded-full text-sm font-bold border ${subjectColors[detectedSubject] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+            <span className="mr-1">📚</span>
+            {detectedSubject}
+          </div>
+          <span className="text-xs text-gray-500">Auto-detected</span>
+        </motion.div>
+      )}
+      
       {/* Default View - Always Visible */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -368,56 +408,60 @@ export default function MentorResponseV2({ response, onInteraction }) {
         </div>
         )}
         
-        {/* Hero Visual - paragraph-first if directed */}
+        {/* Hero Visual */}
         {!preferParagraphFirst && !suppressVisualPlaceholder && renderHeroVisual()}
         
-        {/* Metaphor Card - SKIP if it's repetitive with main content */}
-        {!suppressMetaphor && default_view.metaphor?.text && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 mb-4 border-2 border-purple-200">
-          <div className="flex items-start gap-4">
-            <div className="text-4xl">
-              {getMetaphorIcon(default_view.metaphor?.category)}
-            </div>
-            <div className="flex-1">
-              <div className="text-xs font-semibold text-purple-600 uppercase mb-1">🎯 Intuitive Understanding</div>
-              <MarkdownParagraph className="text-gray-800 text-base leading-relaxed">
-                {default_view.metaphor?.text}
-              </MarkdownParagraph>
-            </div>
-          </div>
-        </div>
+        {/* ========== INTELLIGENT FORMAT ROUTING ========== */}
+        {/* Show comparison table for "difference between" questions */}
+        {response.format_type === 'comparison' && response.intelligent_format && (
+          <ComparisonTable comparisonData={response.intelligent_format} />
         )}
         
-        {/* Main Content - HIDE if suppress_main_content is true (for greetings) */}
-        {/* Render as structured content with better formatting */}
-        {!suppressMainContent && default_view.main_content?.content && (
-        <div className="space-y-4 mb-4">
-          {/* Parse and render content with better structure */}
-          <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-sm">
-            <div className="text-xs font-semibold text-gray-600 uppercase mb-3">📚 Detailed Explanation</div>
-            <div className="prose prose-lg max-w-none">
-              <div className="text-gray-800 leading-relaxed space-y-4">
-                {/* Smart content rendering with markdown support */}
-                {default_view.main_content.content.split('\n\n').map((paragraph, idx) => (
-                  <MarkdownParagraph key={idx} className="text-base leading-relaxed">
-                    {paragraph}
-                  </MarkdownParagraph>
-                ))}
-              </div>
-            </div>
+        {/* Show normal flow for other question types */}
+        {response.format_type !== 'comparison' && (
+          <>
+        
+        {/* Metaphor Card */}
+        {!suppressMainContent && (
+        <div className="space-y-6 mb-6">
+          
+          {/* Metaphor + Main Content flow together naturally */}
+          <div className="space-y-5">
             
-            {/* Key Insight Badge - moved inside main content */}
-            {default_view.main_content?.key_insight && (
-              <div className="mt-6 flex items-start gap-3 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200">
-                <Lightbulb className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-yellow-700 uppercase mb-1">💡 Key Insight</div>
-                  <MarkdownParagraph className="text-sm text-yellow-900 font-medium leading-relaxed">
-                    {default_view.main_content.key_insight}
-                  </MarkdownParagraph>
-                </div>
-              </div>
+            {/* Metaphor text - inline, no separate card */}
+            {!suppressMetaphor && default_view.metaphor?.text && (
+              <MarkdownParagraph 
+                className="text-gray-900 font-medium leading-loose" 
+                style={{ fontSize: '18px', lineHeight: '1.9' }}
+              >
+                {default_view.metaphor?.text}
+              </MarkdownParagraph>
             )}
+            
+            {/* Main Content - flows naturally */}
+            {default_view.main_content?.content && (
+              <>
+                {default_view.main_content.content.split('\n\n').map((paragraph, idx) => {
+                  // Skip if too similar to metaphor (avoid repetition)
+                  const isDuplicate = default_view.metaphor?.text && 
+                    paragraph.toLowerCase().trim().substring(0, 50) === 
+                    default_view.metaphor.text.toLowerCase().trim().substring(0, 50);
+                  
+                  if (isDuplicate) return null;
+                  
+                  return (
+                    <MarkdownParagraph 
+                      key={idx} 
+                      className="text-gray-900 leading-loose" 
+                      style={{ fontSize: '18px', lineHeight: '1.9' }}
+                    >
+                      {paragraph}
+                    </MarkdownParagraph>
+                  );
+                })}
+              </>
+            )}
+            
           </div>
         </div>
         )}
@@ -429,6 +473,9 @@ export default function MentorResponseV2({ response, onInteraction }) {
           </div>
         )}
 
+        </>
+        )}
+        
         {/* Hero visual after paragraph if requested */}
         {preferParagraphFirst && renderHeroVisual()}
         
@@ -659,38 +706,28 @@ export default function MentorResponseV2({ response, onInteraction }) {
         </div>
       )}
       
-      {/* Follow-Up Question Suggestions */}
-      {!greetingOnly && (
-        <div className="mt-6 mb-4">
-          <div className="text-sm font-semibold text-gray-700 mb-3">💬 Continue Learning:</div>
-          <div className="flex flex-wrap gap-2">
-            <button 
-              onClick={() => onInteraction && onInteraction('followup', 'practice')}
-              className="px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 rounded-lg border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all text-sm font-medium"
+      {/* Follow-up Actions - Ask Related Questions */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <p className="text-sm font-semibold text-gray-700 mb-3">📌 Quick Follow-ups</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {followUpActions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                if (onInteraction) onInteraction('followup_click', action.prompt);
+                // Trigger new question with the prompt
+                window.dispatchEvent(new CustomEvent('send-question', { detail: { question: action.prompt } }));
+              }}
+              className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-all text-left group"
             >
-              ⚡ Practice problem
+              <div className="text-purple-600 group-hover:scale-110 transition-transform">
+                {action.icon}
+              </div>
+              <span className="text-xs font-medium text-gray-700">{action.text}</span>
             </button>
-            <button 
-              onClick={() => onInteraction && onInteraction('followup', 'example')}
-              className="px-4 py-2 bg-gradient-to-r from-blue-50 to-teal-50 text-blue-700 rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all text-sm font-medium"
-            >
-              🔍 More examples
-            </button>
-            <button 
-              onClick={() => onInteraction && onInteraction('followup', 'application')}
-              className="px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg border border-green-200 hover:border-green-400 hover:shadow-md transition-all text-sm font-medium"
-            >
-              🌍 Real-world use
-            </button>
-            <button 
-              onClick={() => onInteraction && onInteraction('followup', 'related')}
-              className="px-4 py-2 bg-gradient-to-r from-orange-50 to-yellow-50 text-orange-700 rounded-lg border border-orange-200 hover:border-orange-400 hover:shadow-md transition-all text-sm font-medium"
-            >
-              🔗 Related concepts
-            </button>
-          </div>
+          ))}
         </div>
-      )}
+      </div>
       
       {/* Quick Actions Bar - Feedback & Copy */}
       <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
@@ -731,36 +768,57 @@ export default function MentorResponseV2({ response, onInteraction }) {
           )}
         </div>
         
-        <button
-          onClick={() => {
-            // Copy full response to clipboard
-            const textToCopy = [
-              default_view.greeting,
-              default_view.metaphor?.text,
-              default_view.main_content?.content,
-              default_view.main_content?.key_insight
-            ].filter(Boolean).join('\n\n');
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            });
-          }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
-          title="Copy response"
-        >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4" />
-              <span className="text-sm font-medium">Copied!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" />
-              <span className="text-sm font-medium">Copy</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              // Copy full response to clipboard
+              const textToCopy = [
+                default_view.greeting,
+                default_view.metaphor?.text,
+                default_view.main_content?.content,
+                default_view.main_content?.key_insight
+              ].filter(Boolean).join('\n\n');
+              
+              navigator.clipboard.writeText(textToCopy).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+            title="Copy response"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span className="text-sm font-medium">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span className="text-sm font-medium">Copy</span>
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={() => {
+              // Create WhatsApp share text
+              const shareText = `Check out this amazing AI explanation I got on Druv AI! 🚀\n\n${[
+                default_view.greeting,
+                default_view.metaphor?.text,
+                default_view.main_content?.content?.substring(0, 200) + '...'
+              ].filter(Boolean).join('\n\n')}\n\nTry it: ${window.location.origin}`;
+              
+              const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+              window.open(whatsappUrl, '_blank');
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+            title="Share on WhatsApp"
+          >
+            <span className="text-lg">💬</span>
+            <span className="text-sm font-medium">WhatsApp</span>
+          </button>
+        </div>
       </div>
     </div>
   );

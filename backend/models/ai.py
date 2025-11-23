@@ -8,13 +8,17 @@ from pydantic import BaseModel, Field
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
-    subject: str
+    subject: Optional[str] = None  # Auto-detected if not provided
+    image_url: Optional[str] = None  # Base64 image or URL for vision analysis
+    image_context: Optional[str] = None  # Additional context about the image
 
 
 class DualAIRequest(BaseModel):
     message: str
     session_id: str
-    subject: str
+    subject: Optional[str] = None  # Auto-detected if not provided
+    image_url: Optional[str] = None  # Base64 image or URL for vision analysis  
+    image_context: Optional[str] = None  # Additional context about the image
 
 
 class MathValidationRequest(BaseModel):

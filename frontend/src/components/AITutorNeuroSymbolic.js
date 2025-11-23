@@ -24,14 +24,76 @@ import {
   RefreshCw,
   Check,
   X,
-  MoreVertical
+  MoreVertical,
+  ArrowRight,
+  Image as ImageIcon,
+  Paperclip,
+  XCircle
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
 import UpgradeModal from './UpgradeModal';
+import OnboardingTour from './OnboardingTour';
 import apiClient from '../api/client';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Typing Indicator Component with rotating tips
+function TypingIndicator() {
+  const [tipIndex, setTipIndex] = useState(0);
+  const tips = [
+    "Analyzing your question...",
+    "Consulting Professor AI...",
+    "Adding metaphors...",
+    "Did you know? Students who ask follow-up questions learn 3x faster!",
+    "Preparing your personalized explanation..."
+  ];
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex justify-start"
+    >
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl px-6 py-4 shadow-md border-2 border-purple-200">
+        <div className="flex items-center space-x-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="text-3xl"
+          >
+            🧠
+          </motion.div>
+          <div className="flex-1">
+            <div className="flex space-x-1 mb-2">
+              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={tipIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-sm text-gray-700 font-medium block"
+              >
+                {tips[tipIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function AITutorNeuroSymbolic() {
   const { user } = useAuth();
@@ -49,10 +111,14 @@ export default function AITutorNeuroSymbolic() {
   const [editing, setEditing] = useState({ id: null, title: '' });
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [confirmDlg, setConfirmDlg] = useState({ open: false, title: '', message: '', onConfirm: null });
+  
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   // UI state
   const [showSidebar, setShowSidebar] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalData, setUpgradeModalData] = useState(null);
 
@@ -61,8 +127,22 @@ export default function AITutorNeuroSymbolic() {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [hasInteraction, setHasInteraction] = useState(false);
 
-  // Default quick prompts (subject-specific)
-  const [defaultPrompts, setDefaultPrompts] = useState([]);
+  // Gamification state - XP and Streak
+  const [userProgress, setUserProgress] = useState({
+    xp: 0,
+    level: 1,
+    streak: 0
+  });
+
+  // Default quick prompts - Attractive and diverse (cross-subject, exam-focused)
+  const [defaultPrompts, setDefaultPrompts] = useState([
+    { text: "What is the difference between permutations and combinations?", subject: "Math", emoji: "🔢" },
+    { text: "Explain Newton's third law with real-world examples", subject: "Physics", emoji: "🚀" },
+    { text: "How do I solve quadratic equations in JEE?", subject: "Math", emoji: "✨" },
+    { text: "What happens during photosynthesis step-by-step?", subject: "Biology", emoji: "🌿" },
+    { text: "Explain chemical bonding with simple examples", subject: "Chemistry", emoji: "⚗️" },
+    { text: "How to solve integration by parts problems?", subject: "Math", emoji: "📐" }
+  ]);
 
   // Refs
   const messagesEndRef = useRef(null);
@@ -79,10 +159,24 @@ export default function AITutorNeuroSymbolic() {
     'Geography'
   ];
 
-  // Load default prompts when subject changes
+  // Load default prompts on mount
   useEffect(() => {
     loadDefaultPrompts();
-  }, [selectedSubject]);
+  }, []);
+  
+  // Listen for follow-up question events from MentorResponseV2
+  useEffect(() => {
+    const handleFollowUpQuestion = (event) => {
+      const { question } = event.detail;
+      setInputMessage(question);
+      setTimeout(() => {
+        handleSend();
+      }, 100);
+    };
+    
+    window.addEventListener('send-question', handleFollowUpQuestion);
+    return () => window.removeEventListener('send-question', handleFollowUpQuestion);
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -95,22 +189,19 @@ export default function AITutorNeuroSymbolic() {
     setShowWelcome(messages.length === 0);
   }, [messages.length]);
 
-  // Load default prompts for subject
+  // Load default prompts (generic, not subject-specific)
   const loadDefaultPrompts = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ai/subjects/${selectedSubject}/defaultPrompts`);
+      const response = await fetch(`${BACKEND_URL}/api/ai/subjects/Mathematics/defaultPrompts`);
       if (response.ok) {
         const data = await response.json();
-        setDefaultPrompts(data.prompts || []);
+        if (data.prompts && data.prompts.length > 0) {
+          setDefaultPrompts(data.prompts);
+        }
       }
     } catch (error) {
       console.error('Error loading default prompts:', error);
-      // Fallback prompts
-      setDefaultPrompts([
-        `Explain key concepts in ${selectedSubject}`,
-        `Common mistakes in ${selectedSubject}`,
-        `Exam strategies for ${selectedSubject}`
-      ]);
+      // Already have fallback in initial state
     }
   };
 
@@ -295,7 +386,7 @@ export default function AITutorNeuroSymbolic() {
           },
           body: JSON.stringify({
             title: messageToSend.substring(0, 50),
-            subject: selectedSubject,
+            subject: '', // Will be auto-detected
             topic: 'General'
           })
         });
@@ -320,19 +411,29 @@ export default function AITutorNeuroSymbolic() {
         }
       }
 
+      // Prepare request body
+      const requestBody = {
+        message: messageToSend,
+        subject: '', // Auto-detect from question
+        session_id: sessionId,
+        exam_mode: examMode
+      };
+      
+      // If image is selected, convert to base64 and include
+      if (selectedImage) {
+        const imageBase64 = await imageToBase64(selectedImage);
+        requestBody.image_url = imageBase64;
+        requestBody.image_context = 'CRITICAL: Student uploaded image. Analyze it carefully and answer based on actual content.';
+      }
+      
       // Call neuro-symbolic endpoint
       const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: messageToSend,
-          subject: selectedSubject,
-          session_id: sessionId,
-          exam_mode: examMode
-        })
+          },
+          body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -344,7 +445,18 @@ export default function AITutorNeuroSymbolic() {
           setMessages(prev => prev.filter(m => m.id !== userMsg.id));
           return;
         }
-        throw new Error(`Failed to get response: ${response.status}`);
+        
+        // Better error messages
+        let errorMessage = 'Oops! Something went wrong. Please try again.';
+        if (response.status === 429) {
+          errorMessage = 'Whoa! You\'re asking too many questions too fast. Take a short break and try again in a minute! ⏱️';
+        } else if (response.status === 500) {
+          errorMessage = 'Our AI brain is taking a quick break. Please try asking again! 🧠';
+        } else if (response.status === 503) {
+          errorMessage = 'We\'re experiencing high demand right now. Please try again in a few seconds! 🚀';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -371,21 +483,74 @@ export default function AITutorNeuroSymbolic() {
 
       // Track usage
       await trackFeatureUsage('ai_mentor');
+      
+      // Clear image after successful send
+      handleRemoveImage();
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add error message
+      // Add friendly error message
+      const errorMsg = error.message || 'Oops! Something went wrong. Please try again! 😅';
       setMessages(prev => [
         ...prev,
         {
           type: 'error',
-          content: 'Failed to get response. Please try again.',
+          content: errorMsg,
           timestamp: new Date().toISOString()
         }
       ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle image upload
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toastError('File too large', 'Please select an image smaller than 10MB');
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toastError('Invalid file', 'Please select an image file (JPG, PNG, etc.)');
+      return;
+    }
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+      setSelectedImage(file);
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  // Convert image to base64 for API
+  const imageToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Extract base64 part (remove data:image/jpeg;base64, prefix)
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   // Quick send from default prompts
@@ -500,12 +665,21 @@ export default function AITutorNeuroSymbolic() {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50">
+      {/* Onboarding Tour for First-Time Users */}
+      <OnboardingTour onComplete={() => {
+        console.log('Onboarding completed');
+        // Refresh user progress after onboarding
+        loadUserProgress();
+      }} />
+      
       {/* Persistent Sidebar on large screens */}
       <div className="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 shadow-sm">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-purple-600" />
-            Chat History
+        <div className="p-5 border-b-2 border-purple-200 flex items-center justify-between bg-gradient-to-br from-purple-100 via-pink-50 to-orange-50">
+          <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-sm">
+              <MessageCircle className="h-5 w-5 text-white" />
+            </div>
+            Chats
           </h2>
           <button
             onClick={() => loadSessions()}
@@ -590,9 +764,48 @@ export default function AITutorNeuroSymbolic() {
               animate={{ opacity: 1 }}
               className="text-center py-12 text-gray-500"
             >
-              <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium text-gray-600">No chat sessions yet</p>
-              <p className="text-xs mt-2 text-gray-500">Start a new conversation to begin learning!</p>
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-6xl mb-4"
+              >
+                📚
+              </motion.div>
+              <p className="text-lg font-bold text-gray-800 mb-2">Your learning journey starts here!</p>
+              <p className="text-sm text-gray-600 mb-6">Ask your first question below to get started</p>
+              
+              <div className="grid grid-cols-3 gap-3 max-w-md mx-auto mt-4">
+                <button
+                  onClick={() => {
+                    setInputMessage("Help me solve a math problem");
+                    inputRef.current?.focus();
+                  }}
+                  className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl border-2 border-purple-200 transition-all hover:scale-105"
+                >
+                  <span className="text-3xl mb-2 block">🔢</span>
+                  <span className="text-xs font-medium text-gray-700">Math Problem</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setInputMessage("Explain a science concept");
+                    inputRef.current?.focus();
+                  }}
+                  className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl border-2 border-blue-200 transition-all hover:scale-105"
+                >
+                  <span className="text-3xl mb-2 block">🔬</span>
+                  <span className="text-xs font-medium text-gray-700">Science Question</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setInputMessage("Help me prepare for exams");
+                    inputRef.current?.focus();
+                  }}
+                  className="p-4 bg-green-50 hover:bg-green-100 rounded-xl border-2 border-green-200 transition-all hover:scale-105"
+                >
+                  <span className="text-3xl mb-2 block">📝</span>
+                  <span className="text-xs font-medium text-gray-700">Exam Prep</span>
+                </button>
+              </div>
             </motion.div>
           )}
           {sessionsLoading && sessions.length === 0 && (
@@ -628,14 +841,16 @@ export default function AITutorNeuroSymbolic() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-gray-900">Chat History</h2>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => loadSessions()}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all"
-                      title="Refresh chat history"
-                    >
-                      <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
-                      <span className="font-medium">Refresh</span>
-                    </button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => loadSessions()}
+                    className="text-xs px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white flex items-center gap-2 transition-all shadow-sm"
+                    title="Refresh chat history"
+                  >
+                    <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+                    <span className="font-semibold">Refresh</span>
+                  </motion.button>
                     <button
                       onClick={() => setShowSidebar(false)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
@@ -656,14 +871,17 @@ export default function AITutorNeuroSymbolic() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {sessions.map((session) => (
+                  {sessions.map((session, idx) => (
                     <motion.div
                       key={session.session_id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className={`w-full p-3 rounded-lg border transition-all ${
-                        currentSession === session.session_id ? 'bg-gradient-to-r from-purple-100 to-indigo-100 border-purple-300 shadow-sm' : 'bg-white border-gray-200 hover:border-purple-200 hover:shadow-md'
+                      transition={{ duration: 0.3, delay: idx * 0.05 }}
+                      whileHover={{ x: 5 }}
+                      className={`w-full p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        currentSession === session.session_id 
+                          ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-400 shadow-lg' 
+                          : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -671,12 +889,12 @@ export default function AITutorNeuroSymbolic() {
                           onClick={() => loadSession(session.session_id)}
                           className="text-left flex-1"
                         >
-                          <div className="font-medium text-sm text-gray-900 truncate">{session.title || 'Untitled Chat'}</div>
-                          <div className="text-xs text-gray-500 mt-0.5 flex items-center justify-between">
-                            <span>{session.subject}</span>
-                            <span className="flex items-center gap-2">
+                          <div className="font-semibold text-base text-gray-900 truncate mb-1">{session.title || 'Untitled Chat'}</div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-md">{session.subject}</span>
+                            <span className="text-xs text-gray-500 flex items-center gap-2">
                               {sessionLoadingId === session.session_id ? (<Loader className="h-3 w-3 animate-spin" />) : null}
-                              <span>{(session.message_count || 0)} msgs • {formatLastUpdated(session.last_updated)}</span>
+                              <span>{(session.message_count || 0)} msgs</span>
                             </span>
                           </div>
                         </button>
@@ -695,9 +913,51 @@ export default function AITutorNeuroSymbolic() {
                       animate={{ opacity: 1 }}
                       className="text-center py-12 text-gray-500"
                     >
-                      <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                      <p className="text-sm font-medium text-gray-600">No chat sessions yet</p>
-                      <p className="text-xs mt-2 text-gray-500">Start a new conversation to begin learning!</p>
+                      <motion.div
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="text-6xl mb-4"
+                      >
+                        📚
+                      </motion.div>
+                      <p className="text-lg font-bold text-gray-800 mb-2">Your learning journey starts here!</p>
+                      <p className="text-sm text-gray-600 mb-6">Ask your first question below to get started</p>
+                      
+                      <div className="grid grid-cols-3 gap-3 max-w-md mx-auto mt-4">
+                        <button
+                          onClick={() => {
+                            setInputMessage("Help me solve a math problem");
+                            setShowSidebar(false);
+                            inputRef.current?.focus();
+                          }}
+                          className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl border-2 border-purple-200 transition-all hover:scale-105"
+                        >
+                          <span className="text-3xl mb-2 block">🔢</span>
+                          <span className="text-xs font-medium text-gray-700">Math Problem</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setInputMessage("Explain a science concept");
+                            setShowSidebar(false);
+                            inputRef.current?.focus();
+                          }}
+                          className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl border-2 border-blue-200 transition-all hover:scale-105"
+                        >
+                          <span className="text-3xl mb-2 block">🔬</span>
+                          <span className="text-xs font-medium text-gray-700">Science Question</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setInputMessage("Help me prepare for exams");
+                            setShowSidebar(false);
+                            inputRef.current?.focus();
+                          }}
+                          className="p-4 bg-green-50 hover:bg-green-100 rounded-xl border-2 border-green-200 transition-all hover:scale-105"
+                        >
+                          <span className="text-3xl mb-2 block">📝</span>
+                          <span className="text-xs font-medium text-gray-700">Exam Prep</span>
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                   {sessionsLoading && sessions.length === 0 && (
@@ -715,83 +975,104 @@ export default function AITutorNeuroSymbolic() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
+        {/* Header - Clean Premium Design */}
         <motion.div
           animate={{
-            height: headerCollapsed ? '80px' : '140px'
+            height: headerCollapsed ? '70px' : '110px'
           }}
           transition={{ duration: 0.3 }}
-          className="bg-white border-b border-gray-200 shadow-sm overflow-hidden"
+          className="bg-white border-b border-gray-200 shadow-sm"
         >
-          <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-center">
+          <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-center py-3">
             {/* Top row - Always visible */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center space-x-4 flex-1 min-w-0">
                 <button
                   onClick={() => setShowSidebar(true)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden flex-shrink-0"
                 >
                   <Menu className="h-6 w-6 text-gray-600" />
                 </button>
                 
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-xl">
-                    <Brain className="h-6 w-6 text-white" />
+                {/* Logo & Brand */}
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  {/* Mentor + Professor dual icons */}
+                  <div className="flex items-center -space-x-2">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className="bg-gradient-to-br from-green-400 to-emerald-500 p-2.5 rounded-xl shadow-md z-10"
+                      title="AI Mentor"
+                    >
+                      <span className="text-xl">🤝</span>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: -5 }}
+                      className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2.5 rounded-xl shadow-md"
+                      title="AI Professor"
+                    >
+                      <span className="text-xl">🎓</span>
+                    </motion.div>
                   </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">AI Tutor</h1>
+                  
+                  <div className="min-w-0">
+                    <h1 className="text-xl font-bold text-gray-900">
+                      Dhruv AI
+                    </h1>
                     {headerCollapsed && (
-                      <p className="text-xs text-gray-500">Neuro-Symbolic Learning</p>
+                      <p className="text-xs text-gray-500 font-medium">Your Learning Buddy</p>
                     )}
                   </div>
                 </div>
-
-                {headerCollapsed && (
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="ml-4 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    {SUBJECTS.map((subj) => (
-                      <option key={subj} value={subj}>
-                        {subj}
-                      </option>
-                    ))}
-                  </select>
-                )}
               </div>
 
-              <button
-                onClick={startNewChat}
-                className="hidden lg:flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all"
+              {/* XP and Streak Display - Always Visible */}
+              <div className="flex items-center gap-3 ml-auto mr-4 flex-shrink-0">
+                {/* Streak */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
+                  <span className="text-lg">🔥</span>
+                  <div>
+                    <p className="text-xs font-bold text-orange-700">{userProgress.streak} Day</p>
+                    <p className="text-xs text-orange-600">Streak</p>
+                  </div>
+                </div>
+                
+                {/* XP and Level */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
+                  <span className="text-lg">⭐</span>
+                  <div>
+                    <p className="text-xs font-bold text-purple-700">Level {userProgress.level}</p>
+                    <p className="text-xs text-purple-600">{userProgress.xp} XP</p>
+                  </div>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  startNewChat();
+                  setShowWelcome(true);
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg flex items-center space-x-2 shadow-md hover:shadow-lg transition-all flex-shrink-0 font-semibold"
               >
                 <Plus className="h-4 w-4" />
                 <span>New Chat</span>
-              </button>
+              </motion.button>
             </div>
 
-            {/* Expanded header content */}
+            {/* Expanded header content - Tagline only */}
             {!headerCollapsed && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3"
               >
-                <p className="text-gray-600 text-sm mb-3">
-                  Your personal learning companion - practical, verified, student-centric
+                <p className="text-sm text-gray-600 font-medium">
+                  🤝 Mentor explains intuitively • 🎓 Professor verifies academically
                 </p>
-
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
-                >
-                  {SUBJECTS.map((subj) => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Subject auto-detected from your question
+                </p>
               </motion.div>
             )}
           </div>
@@ -800,53 +1081,147 @@ export default function AITutorNeuroSymbolic() {
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-6">
-            {/* Welcome Screen */}
+            {/* Welcome Screen - PREMIUM STUDENT-CENTRIC DESIGN */}
             {showWelcome && messages.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center py-12"
+                className="text-center py-16 px-4"
               >
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 mb-6">
-                  <Brain className="h-10 w-10 text-white" />
-                </div>
+                {/* Animated Icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', duration: 0.8 }}
+                  className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 mb-8 shadow-2xl"
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Brain className="h-14 w-14 text-white" />
+                  </motion.div>
+                </motion.div>
 
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">
-                  Welcome to AI Tutor 3.0
-                </h2>
-                <p className="text-gray-600 mb-2">
-                  Neuro-Symbolic Learning • Indian Student-Centric
-                </p>
-                <p className="text-sm text-gray-500 mb-8">
-                  Real-life examples • Karnataka context • Practical learning
-                </p>
+                {/* Title with gradient */}
+                <motion.h1
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-5xl font-extrabold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent"
+                >
+                  Hey! Ready to Learn? 🚀
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xl text-gray-700 mb-3 font-medium"
+                >
+                  Your AI friend who explains things in the coolest way!
+                </motion.p>
+                
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-base text-gray-500 mb-12"
+                >
+                  Cricket analogies • Real examples • Exam tips • All in Hinglish! 🏏
+                </motion.p>
 
-                {/* Quick prompts */}
+                {/* Quick prompts - ENHANCED with subject badges */}
                 {defaultPrompts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
                     {defaultPrompts.map((prompt, index) => {
-                      // Handle both string prompts and object prompts {text, type}
                       const promptText = typeof prompt === 'string' ? prompt : prompt.text || prompt;
+                      const promptSubject = typeof prompt === 'object' ? prompt.subject : null;
+                      const promptEmoji = typeof prompt === 'object' ? prompt.emoji : null;
+                      
+                      // Different gradient for each card
+                      const gradients = [
+                        'from-purple-500 to-pink-500',
+                        'from-blue-500 to-cyan-500',
+                        'from-green-500 to-emerald-500',
+                        'from-orange-500 to-yellow-500',
+                        'from-red-500 to-pink-500',
+                        'from-indigo-500 to-purple-500'
+                      ];
+                      
+                      const subjectColors = {
+                        'Math': 'bg-purple-100 text-purple-700',
+                        'Physics': 'bg-blue-100 text-blue-700',
+                        'Chemistry': 'bg-orange-100 text-orange-700',
+                        'Biology': 'bg-green-100 text-green-700'
+                      };
+                      
                       return (
                         <motion.button
                           key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ delay: 0.5 + index * 0.08, type: 'spring', stiffness: 200 }}
+                          whileHover={{ scale: 1.05, y: -8 }}
+                          whileTap={{ scale: 0.97 }}
                           onClick={() => handleQuickSend(promptText)}
-                          className="p-4 bg-white rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all text-left group"
+                          className="group relative p-5 bg-white rounded-2xl border-2 border-gray-200 hover:border-transparent hover:shadow-2xl transition-all text-left overflow-hidden"
                         >
-                          <div className="flex items-start space-x-3">
-                            <Sparkles className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                            <p className="text-sm text-gray-700 leading-relaxed">
+                          {/* Gradient overlay on hover */}
+                          <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index % 6]} opacity-0 group-hover:opacity-15 transition-opacity`}></div>
+                          
+                          {/* Subject badge */}
+                          {promptSubject && (
+                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold ${subjectColors[promptSubject] || 'bg-gray-100 text-gray-700'}`}>
+                              {promptSubject}
+                            </div>
+                          )}
+                          
+                          {/* Content */}
+                          <div className="relative z-10 space-y-3">
+                            {promptEmoji && (
+                              <motion.div
+                                whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.2 }}
+                                transition={{ duration: 0.5 }}
+                                className="text-3xl"
+                              >
+                                {promptEmoji}
+                              </motion.div>
+                            )}
+                            <p 
+                              className="text-gray-900 font-semibold leading-relaxed group-hover:text-purple-900 transition-colors pr-12"
+                              style={{ fontSize: '15px', lineHeight: '1.6' }}
+                            >
                               {promptText}
                             </p>
                           </div>
+                          
+                          {/* Arrow hint */}
+                          <motion.div
+                            initial={{ x: -10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 0 }}
+                            className={`absolute right-3 bottom-3 group-hover:opacity-100 transition-opacity`}
+                            whileHover={{ x: 3 }}
+                          >
+                            <div className={`p-2 rounded-full bg-gradient-to-r ${gradients[index % 6]}`}>
+                              <ArrowRight className="h-4 w-4 text-white" />
+                            </div>
+                          </motion.div>
                         </motion.button>
                       );
                     })}
                   </div>
                 )}
+                
+                {/* Fun tagline */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  className="mt-12 text-gray-400 text-sm"
+                >
+                  <p>Ask anything - I'll explain it like a friend! 💪</p>
+                </motion.div>
               </motion.div>
             )}
 
@@ -863,40 +1238,78 @@ export default function AITutorNeuroSymbolic() {
                   >
                     {message.type === 'user' && (
                       <div className="flex justify-end">
-                        <div className="max-w-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl px-6 py-4 shadow-lg">
-                          <p className="leading-relaxed">{message.content}</p>
-                          <p className="text-xs text-purple-200 mt-2">
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="max-w-2xl bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 text-white rounded-3xl px-7 py-5 shadow-xl"
+                        >
+                          {/* Show image if uploaded */}
+                          {message.image_preview && (
+                            <div className="mb-4 rounded-xl overflow-hidden border-2 border-white/30">
+                              <img
+                                src={message.image_preview}
+                                alt="Uploaded"
+                                className="max-w-full max-h-64 object-contain bg-white/10"
+                              />
+                              <div className="bg-white/20 px-3 py-2 flex items-center gap-2 text-sm">
+                                <ImageIcon className="w-4 h-4" />
+                                <span>Student uploaded image</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <p 
+                            className="leading-loose font-medium"
+                            style={{ fontSize: '17px', lineHeight: '1.7' }}
+                          >
+                            {message.content}
+                          </p>
+                          <p className="text-xs text-purple-100 mt-3 font-medium">
                             {new Date(message.timestamp).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
                           </p>
-                        </div>
+                        </motion.div>
                       </div>
                     )}
 
                     {message.type === 'ai' && (
                       <div className="flex justify-start">
                         <div className="max-w-4xl w-full">
-                          <div className="flex items-start space-x-3 mb-2">
-                            <div className="bg-gradient-to-r from-green-500 to-teal-500 p-2 rounded-lg">
-                              <Brain className="h-5 w-5 text-white" />
-                            </div>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex items-start space-x-4 mb-4"
+                          >
+                            {/* Mentor Avatar - Unique Icon */}
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{ type: 'spring', delay: 0.1 }}
+                              className="bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 p-4 rounded-2xl shadow-lg relative"
+                            >
+                              <span className="text-3xl">🤝</span>
+                              {/* Tiny professor badge */}
+                              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md">
+                                <span className="text-xs">🎓</span>
+                              </div>
+                            </motion.div>
                             <div>
-                              <p className="font-semibold text-gray-900">Dhruv AI Mentor</p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(message.timestamp).toLocaleTimeString([], {
+                              <p className="font-extrabold text-gray-900 text-lg">Dhruv AI Mentor</p>
+                              <p className="text-xs text-gray-500 font-medium mt-1 flex items-center gap-2">
+                                <span>{new Date(message.timestamp).toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit'
-                                })}
+                                })}</span>
                                 {message.generation_time && (
-                                  <span className="ml-2">
+                                  <span className="text-green-600 font-semibold">
                                     • {message.generation_time.toFixed(1)}s
                                   </span>
                                 )}
                               </p>
                             </div>
-                          </div>
+                          </motion.div>
                           
                           <MentorResponseV2 
                             response={{
@@ -945,24 +1358,9 @@ export default function AITutorNeuroSymbolic() {
                 ))}
               </AnimatePresence>
 
-              {/* AI Typing Indicator */}
+              {/* AI Typing Indicator - Enhanced with tips */}
               {loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex justify-start"
-                >
-                  <div className="bg-white rounded-2xl px-6 py-4 shadow-md border border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      <span className="text-sm text-gray-600">AI is thinking...</span>
-                    </div>
-                  </div>
-                </motion.div>
+                <TypingIndicator />
               )}
 
               <div ref={messagesEndRef} />
@@ -973,6 +1371,27 @@ export default function AITutorNeuroSymbolic() {
         {/* Input Bar */}
         <div className="border-t border-gray-200 bg-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mb-3 relative inline-block">
+                <div className="relative rounded-xl overflow-hidden border-2 border-purple-300 shadow-md">
+                  <img
+                    src={imagePreview}
+                    alt="Upload preview"
+                    className="max-h-48 max-w-xs object-contain bg-gray-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">📷 Image attached - AI will analyze it!</p>
+              </div>
+            )}
+            
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -981,6 +1400,15 @@ export default function AITutorNeuroSymbolic() {
               className="flex items-end space-x-3"
             >
               <div className="flex-1">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                
                 <textarea
                   ref={inputRef}
                   value={inputMessage}
@@ -997,9 +1425,17 @@ export default function AITutorNeuroSymbolic() {
                   disabled={loading}
                 />
                 <div className="flex items-center justify-between mt-2 px-2">
-                  <p className="text-xs text-gray-500">
-                    Subject: <span className="font-medium text-purple-600">{selectedSubject}</span>
-                  </p>
+                  {/* Image upload button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg border border-purple-200 transition-all text-sm font-medium"
+                    title="Upload image or screenshot"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Attach Image</span>
+                  </button>
+                  
                   <p className="text-xs text-gray-500">
                     Press Enter to send • Shift+Enter for new line
                   </p>
@@ -1008,7 +1444,7 @@ export default function AITutorNeuroSymbolic() {
 
               <button
                 type="submit"
-                disabled={!inputMessage.trim() || loading}
+                disabled={(!inputMessage.trim() && !selectedImage) || loading}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {loading ? (

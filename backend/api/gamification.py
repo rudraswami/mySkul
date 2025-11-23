@@ -211,3 +211,110 @@ async def get_available_achievements(
             "total": 0,
             "unlocked_count": 0
         }
+
+
+@router.get("/daily-quests")
+async def get_daily_quests(
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Get daily quests for the current user.
+    Generates new quests if they don't exist for today.
+    """
+    try:
+        user_doc = await db.users.find_one({"user_id": user.user_id})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Check if quests exist for today
+        current_quests = user_doc.get("daily_quests", {})
+        if current_quests.get("date") == today_str:
+            return {"quests": current_quests.get("quests", []), "date": today_str}
+
+        # Generate new quests
+        import random
+        quest_pool = [
+            {"id": "ai_session", "title": "Complete 1 AI Session", "xp": 50, "type": "easy", "icon": "Zap"},
+            {"id": "quiz_score", "title": "Score 80%+ on a Quiz", "xp": 100, "type": "medium", "icon": "Trophy"},
+            {"id": "study_time", "title": "Study for 30 Minutes", "xp": 75, "type": "easy", "icon": "Clock"},
+            {"id": "ask_questions", "title": "Ask 5 Questions", "xp": 50, "type": "easy", "icon": "CheckCircle"},
+            {"id": "streak_maintain", "title": "Maintain 3-Day Streak", "xp": 150, "type": "hard", "icon": "Zap"},
+            {"id": "mock_test", "title": "Attempt a Mock Test", "xp": 120, "type": "medium", "icon": "FileText"},
+            {"id": "review_notes", "title": "Review Auto-Notes", "xp": 60, "type": "easy", "icon": "BookOpen"},
+        ]
+        
+        # Select 3 random quests
+        selected_quests = random.sample(quest_pool, 3)
+        formatted_quests = []
+        for q in selected_quests:
+            formatted_quests.append({
+                **q,
+                "completed": False,
+                "progress": 0,
+                "target": 1  # simplified for now
+            })
+
+        # Save to DB
+        await db.users.update_one(
+            {"user_id": user.user_id},
+            {"$set": {"daily_quests": {"date": today_str, "quests": formatted_quests}}}
+        )
+
+        return {"quests": formatted_quests, "date": today_str}
+
+    except Exception as e:
+        print(f"Error getting daily quests: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/daily-quests/{quest_id}/complete")
+async def complete_daily_quest(
+    quest_id: str,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Mark a daily quest as complete and award XP.
+    """
+    try:
+        user_doc = await db.users.find_one({"user_id": user.user_id})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        current_quests = user_doc.get("daily_quests", {})
+        quests_list = current_quests.get("quests", [])
+        
+        quest_index = next((i for i, q in enumerate(quests_list) if q["id"] == quest_id), -1)
+        
+        if quest_index == -1:
+            raise HTTPException(status_code=404, detail="Quest not found")
+            
+        if quests_list[quest_index]["completed"]:
+            return {"message": "Quest already completed", "xp_awarded": 0}
+
+        # Mark as complete
+        quests_list[quest_index]["completed"] = True
+        xp_reward = quests_list[quest_index]["xp"]
+
+        # Update DB: Mark quest complete AND add XP
+        await db.users.update_one(
+            {"user_id": user.user_id},
+            {
+                "$set": {"daily_quests.quests": quests_list},
+                "$inc": {"xp": xp_reward}
+            }
+        )
+
+        return {
+            "message": "Quest completed",
+            "xp_awarded": xp_reward,
+            "quest_id": quest_id,
+            "new_total_xp": user_doc.get("xp", 0) + xp_reward
+        }
+
+    except Exception as e:
+        print(f"Error completing quest: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

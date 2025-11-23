@@ -285,13 +285,16 @@ class UnifiedSubscriptionService:
                 
                 next_reset = await self._get_next_reset_time(feature)
                 
+                # Better error message based on feature type
+                period_text = "weekly" if feature == FeatureName.MOCK_TESTS.value else "daily"
+                
                 return FeatureAccessResult(
                     allowed=False,
                     current_tier=tier,
                     used=current_usage,
                     limit=limit,
                     remaining=0,
-                    message=f"Daily limit reached ({current_usage}/{limit} used)",
+                    message=f"{period_text.capitalize()} limit reached ({current_usage}/{limit} used)",
                     upgrade_message=upgrade_msg,
                     next_reset=next_reset
                 )
@@ -322,18 +325,25 @@ class UnifiedSubscriptionService:
         """
         Get current usage count for a feature with smart reset logic
         - AI Mentor: daily reset
-        - Mock Tests & Auto Notes: monthly reset
+        - Mock Tests: WEEKLY reset (per plan config)
+        - Auto Notes: daily reset
         """
         try:
             now = datetime.now(timezone.utc)
             
             # Determine reset period based on feature
-            if feature == FeatureName.AI_MENTOR.value:
+            if feature == FeatureName.AI_MENTOR.value or feature == FeatureName.AUTO_NOTES.value:
                 # Daily reset
                 reset_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
                 reset_end = reset_start + timedelta(days=1)
+            elif feature == FeatureName.MOCK_TESTS.value:
+                # WEEKLY reset for mock tests (plan says mock_tests_weekly)
+                # Week starts Monday (weekday 0)
+                days_since_monday = now.weekday()
+                reset_start = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+                reset_end = reset_start + timedelta(days=7)
             else:
-                # Monthly reset for mock_tests and auto_notes
+                # Default: monthly reset
                 reset_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
                 # Next month's first day
                 if now.month == 12:
@@ -347,7 +357,10 @@ class UnifiedSubscriptionService:
                 "usage_date": {"$gte": reset_start, "$lt": reset_end}
             })
             
-            return usage_doc.get("usage_count", 0) if usage_doc else 0
+            current_usage = usage_doc.get("usage_count", 0) if usage_doc else 0
+            
+            logger.info(f"📊 Usage check for {user_id} - {feature}: {current_usage} (period: {reset_start} to {reset_end})")
+            return current_usage
             
         except Exception as e:
             logger.error(f"Error getting current usage: {e}")
@@ -357,14 +370,22 @@ class UnifiedSubscriptionService:
         """
         Get next reset time based on feature type
         - AI Mentor: midnight UTC (daily)
-        - Mock Tests & Auto Notes: 1st of next month (monthly)
+        - Mock Tests: Next Monday at midnight (weekly)
+        - Auto Notes: midnight UTC (daily)
         """
         now = datetime.now(timezone.utc)
         
-        if feature == FeatureName.AI_MENTOR.value:
+        if feature == FeatureName.AI_MENTOR.value or feature == FeatureName.AUTO_NOTES.value:
             # Next day at midnight
             tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
             return tomorrow
+        elif feature == FeatureName.MOCK_TESTS.value:
+            # Next Monday at midnight (weekly reset)
+            days_until_monday = (7 - now.weekday()) % 7
+            if days_until_monday == 0:
+                days_until_monday = 7  # If today is Monday, next reset is next Monday
+            next_monday = (now + timedelta(days=days_until_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+            return next_monday
         else:
             # First day of next month
             if now.month == 12:
@@ -386,7 +407,8 @@ class UnifiedSubscriptionService:
         """
         Track feature usage after successful use with smart reset periods
         - AI Mentor: daily tracking
-        - Mock Tests & Auto Notes: monthly tracking
+        - Mock Tests: WEEKLY tracking
+        - Auto Notes: daily tracking
         
         Args:
             user_id: User's unique identifier
@@ -400,12 +422,19 @@ class UnifiedSubscriptionService:
             now = datetime.now(timezone.utc)
             
             # Determine tracking period based on feature
-            if feature == FeatureName.AI_MENTOR.value:
+            if feature == FeatureName.AI_MENTOR.value or feature == FeatureName.AUTO_NOTES.value:
                 # Daily tracking
                 tracking_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                reset_period = "daily"
+            elif feature == FeatureName.MOCK_TESTS.value:
+                # WEEKLY tracking for mock tests (week starts Monday)
+                days_since_monday = now.weekday()
+                tracking_date = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+                reset_period = "weekly"
             else:
-                # Monthly tracking for mock_tests and auto_notes
+                # Monthly tracking for other features
                 tracking_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                reset_period = "monthly"
             
             await self.db.usage_tracking.update_one(
                 {
@@ -417,11 +446,13 @@ class UnifiedSubscriptionService:
                     "$inc": {"usage_count": amount},
                     "$set": {
                         "updated_at": datetime.now(timezone.utc).isoformat(),
-                        "reset_period": "daily" if feature == FeatureName.AI_MENTOR.value else "monthly"
+                        "reset_period": reset_period
                     }
                 },
                 upsert=True
             )
+            
+            logger.info(f"✅ Usage tracked: {user_id} - {feature} +{amount} (reset_period: {reset_period})")
             
             logger.info(f"Tracked {amount} use(s) of {feature} for user {user_id}")
             return True

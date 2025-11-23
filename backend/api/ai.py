@@ -2,13 +2,15 @@
 AI router for chat sessions, dual AI responses, guardrails, and AI-powered features
 Now with unified subscription service for consistent access control
 Streaming support for <5s response times
+Image/Document upload support with GPT-4 Vision
 """
 import os
 import logging
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile
 from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel, Field
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,7 @@ from models.core import User, SessionCreateRequest, SessionRenameRequest, Sessio
 from models.ai import DualAIRequest, MathValidationRequest, FactVerificationRequest, StudyPlanRequest
 from services.ai_service import AIService
 from services.unified_subscription_service import UnifiedSubscriptionService, FeatureName
+from services.vision_analyzer import analyze_student_image
 from dependencies import get_current_user, get_database, get_unified_subscription_service
 from agents.supervisor import SupervisorAgent
 from agents.response_adapter import ResponseAdapter
@@ -896,6 +899,12 @@ async def stream_neuro_symbolic_response(
             'network_speed': user_doc.get('network_speed', '3G')
         }
         
+        # Auto-detect subject if not provided
+        detected_subject = request.subject
+        if not detected_subject or detected_subject.strip() == "":
+            detected_subject = _detect_subject_from_question(request.message)
+            logger.info(f"🔍 Auto-detected subject: {detected_subject} from question: {request.message[:50]}")
+        
         # Initialize streaming service
         from services.streaming_ai_service import StreamingAIService, SimpleRedisCache
         cache_service = SimpleRedisCache()
@@ -907,7 +916,7 @@ async def stream_neuro_symbolic_response(
                 user_id=user.user_id,
                 session_id=request.session_id or f"temp_{user.user_id}",
                 message=request.message,
-                subject=request.subject,
+                subject=detected_subject,
                 exam_mode=getattr(request, 'exam_mode', 'JEE'),
                 student_profile=student_profile
             )
@@ -924,6 +933,30 @@ async def stream_neuro_symbolic_response(
         )
 
 
+def _detect_subject_from_question(question: str) -> str:
+    """Auto-detect subject from question text"""
+    from services.question_classifier import QuestionClassifier, Subject
+    
+    if not question or not question.strip():
+        return "Mathematics"  # Default fallback
+    
+    classifier = QuestionClassifier()
+    analysis = classifier.classify(question)
+    detected_subject = analysis.subject
+    
+    # Map Subject enum to frontend format
+    subject_map = {
+        Subject.MATHEMATICS: "Mathematics",
+        Subject.PHYSICS: "Physics",
+        Subject.CHEMISTRY: "Chemistry",
+        Subject.BIOLOGY: "Biology",
+        Subject.COMPUTER_SCIENCE: "Computer Science",
+        Subject.GENERAL: "Mathematics"  # Default to Mathematics
+    }
+    
+    return subject_map.get(detected_subject, "Mathematics")
+
+
 @router.post("/neuro-symbolic")
 async def generate_neuro_symbolic_response(
     request: DualAIRequest,
@@ -936,7 +969,7 @@ async def generate_neuro_symbolic_response(
     Generate Neuro-Symbolic AI Tutor response (Indian student-centric)
     
     - **message**: Student's question
-    - **subject**: Subject (Mathematics, Physics, Chemistry, Biology, etc.)
+    - **subject**: Subject (Mathematics, Physics, Chemistry, Biology, etc.) - Auto-detected if not provided
     - **session_id**: Chat session ID
     - **exam_mode**: JEE, NEET, UPSC, etc. (default: JEE)
     
@@ -951,6 +984,61 @@ async def generate_neuro_symbolic_response(
     8. Ask (follow-up question)
     """
     try:
+        # ========== IMAGE/DOCUMENT ANALYSIS ==========
+        # If student uploaded an image, analyze it first
+        image_analysis = None
+        contextual_message = request.message
+        
+        if request.image_url:
+            logger.info(f"📷 Image uploaded - analyzing with GPT-4 Vision")
+            try:
+                image_analysis = await analyze_student_image(
+                    image_data=request.image_url,
+                    question=request.message,
+                    subject_hint=request.subject
+                )
+                
+                # Enhance the question with image context
+                extracted_info = image_analysis.get('extracted_text', '')
+                content_type = image_analysis.get('content_type', 'unknown')
+                
+                if extracted_info:
+                    # CRITICAL: Format message to force AI to focus on image content
+                    contextual_message = f"""IMPORTANT: Student uploaded a {content_type} image. Analyze the actual content shown in the image and answer directly.
+
+IMAGE CONTAINS:
+{extracted_info}
+
+STUDENT'S QUESTION: {request.message}
+
+INSTRUCTIONS FOR AI:
+1. Read the extracted content from the image above carefully
+2. If it's an MCQ, identify the question and all options (A, B, C, D)
+3. Answer the student's question based on ACTUAL image content
+4. NO random stories or metaphors - be DIRECT and FACTUAL
+5. If solving a problem, show step-by-step solution
+6. If explaining a concept from textbook, explain what's actually shown
+
+Focus on accuracy, not creativity. Answer based on the image content extracted above."""
+                    
+                    logger.info(f"✅ Image analyzed: {image_analysis.get('content_type')}, Subject: {image_analysis.get('subject_detected')}")
+                
+            except Exception as e:
+                logger.error(f"❌ Image analysis failed: {e}")
+                # Continue without image analysis
+        
+        # Auto-detect subject if not provided (consider image analysis)
+        detected_subject = request.subject
+        if not detected_subject or detected_subject.strip() == "":
+            if image_analysis and image_analysis.get('subject_detected'):
+                detected_subject = image_analysis['subject_detected']
+                logger.info(f"🔍 Subject detected from image: {detected_subject}")
+            else:
+                detected_subject = _detect_subject_from_question(contextual_message)
+                logger.info(f"🔍 Auto-detected subject: {detected_subject} from question: {request.message[:50]}")
+        
+        # Update request subject for downstream processing
+        request.subject = detected_subject
         # Check subscription access
         access_result = await sub_service.check_feature_access(
             user.user_id,
@@ -1055,16 +1143,28 @@ async def generate_neuro_symbolic_response(
                 mastery_level = await mastery_tracker.get_mastery_level(user.user_id, current_topic)
                 logger.info(f"📊 Mastery level for {current_topic}: {mastery_level}/100")
                 
-                # Step 5: Get user profile with name
+                # Step 5: Get user profile with name and preferences
                 user_doc = await db.users.find_one({"user_id": user.user_id})
                 user_name = ""
+                student_profile_data = {}
+                
                 if user_doc:
                     full_name = user_doc.get("full_name", "")
                     user_name = full_name.split()[0] if full_name else ""
+                    
+                    # Get learning profile for personalization
+                    learning_profile = await db.user_learning_profile.find_one({"user_id": user.user_id})
+                    if learning_profile:
+                        student_profile_data = {
+                            "preferences": learning_profile.get("preferences", {}),
+                            "patterns": learning_profile.get("patterns", {}),
+                            "mastery_levels": learning_profile.get("mastery_levels", {}),
+                            "response_style": learning_profile.get("preferences", {}).get("response_style")
+                        }
                 
                 # Prepare enhanced context for agentic system
                 agentic_context = {
-                    "subject": request.subject,
+                    "subject": detected_subject,
                     "session_id": request.session_id,
                     "user_id": user.user_id,
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
@@ -1075,7 +1175,8 @@ async def generate_neuro_symbolic_response(
                         "interests": ["cricket", "gaming"],
                         "board": "CBSE",
                         "exam": getattr(request, 'exam_mode', 'JEE'),
-                        "mastery_level": mastery_level  # Adaptive depth!
+                        "mastery_level": mastery_level,  # Adaptive depth!
+                        **student_profile_data  # Merge learning profile data
                     },
                     # Memory context for agents
                     "memory_context": {
@@ -1107,11 +1208,14 @@ async def generate_neuro_symbolic_response(
                         agentic_response["visual"] = scene
                 
                 # Convert agentic response to neuro-symbolic format
+                # Pass user_id and student_profile for dynamic template selection
                 result = ResponseAdapter.adapt_agentic_to_neuro_symbolic(
                     agentic_response=agentic_response,
                     query=contextual_message,
                     subject=request.subject,
-                    intent=agentic_response.get('intent')  # Pass intent for greeting detection
+                    intent=agentic_response.get('intent'),  # Pass intent for greeting detection
+                    user_id=user.user_id,  # For template variety tracking
+                    student_profile=agentic_context.get('student_profile')  # For personalization
                 )
                 
                 logger.info("✅ Agentic system response generated successfully")
@@ -1416,6 +1520,10 @@ async def generate_neuro_symbolic_response(
         except Exception:
             pass
 
+        # Add detected subject to response
+        if isinstance(result, dict):
+            result['detected_subject'] = detected_subject
+        
         return result
         # [JULES VISUAL ENHANCEMENT END]
         

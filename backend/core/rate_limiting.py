@@ -34,9 +34,10 @@ def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Res
         status_code=429,
         content={
             "error": "rate_limit_exceeded",
-            "message": "Too many requests. Please slow down and try again later.",
+            "message": "Whoa! You're asking too many questions too fast! 🚀 Take a quick break and try again in a minute. Or upgrade to Premium for unlimited questions!",
             "detail": exc.detail,
-            "retry_after": "60 seconds"
+            "retry_after": "60 seconds",
+            "upgrade_hint": "Upgrade to Premium for unlimited AI questions"
         },
         headers={
             "Retry-After": "60"  # Suggest retry after 60 seconds
@@ -64,5 +65,37 @@ RATE_LIMITS = {
     "payment_verify": "10/minute",      # 10 payment verifications per minute
 }
 
+# Tier-based rate limits for subscription tiers
+TIER_RATE_LIMITS = {
+    "FREE": {
+        "ai_chat_hourly": "10/hour",      # 10 AI questions per hour for free tier
+        "ai_chat_daily": "10/day",        # 10 AI questions per day total
+        "mock_tests_weekly": "2/week",    # 2 mock tests per week
+        "voice_input_daily": "5/day",     # 5 voice inputs per day
+    },
+    "STARTER": {
+        "ai_chat_hourly": "30/hour",      # 30 AI questions per hour
+        "ai_chat_daily": "20/day",        # 20 per day (matches plan config)
+        "mock_tests_weekly": "14/week",   # 2 per day = 14 per week
+    },
+    "SCHOLAR": {
+        "ai_chat_hourly": "200/hour",     # High limit for premium
+        "ai_chat_daily": "100/day",       # 100 per day (matches plan config)
+        "mock_tests_weekly": "35/week",   # 5 per day = 35 per week
+    },
+    "ACHIEVER": {
+        "ai_chat_hourly": "600/hour",     # Very high for premium
+        "ai_chat_daily": "300/day",       # 300 per day (matches plan config)
+    },
+    "LEGEND": {
+        # Unlimited - no rate limits applied beyond basic DDoS protection
+    }
+}
+
+def get_tier_rate_limit(tier: str, limit_type: str) -> str:
+    """Get rate limit for specific tier and limit type"""
+    tier_limits = TIER_RATE_LIMITS.get(tier, TIER_RATE_LIMITS["FREE"])
+    return tier_limits.get(limit_type, RATE_LIMITS.get("ai_chat", "30/minute"))
+
 # Export limiter instance and handler
-__all__ = ["limiter", "rate_limit_exceeded_handler", "RATE_LIMITS"]
+__all__ = ["limiter", "rate_limit_exceeded_handler", "RATE_LIMITS", "TIER_RATE_LIMITS", "get_tier_rate_limit"]

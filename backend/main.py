@@ -30,6 +30,7 @@ from api import (
 )
 from api import metaphors
 from api import visual_teaching
+from api import streaming_ai
 
 # Middleware
 from middleware.csrf import CSRFMiddleware
@@ -228,6 +229,7 @@ def create_app() -> FastAPI:
     app.include_router(user.router, prefix="/api", tags=["User"])
     app.include_router(subscription.router, prefix="/api", tags=["Subscription"])
     app.include_router(ai.router, prefix="/api", tags=["AI Tutor"])
+    app.include_router(streaming_ai.router, prefix="/api", tags=["AI Tutor Streaming"])
     app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
     app.include_router(auto_notes.router, prefix="/api", tags=["Auto Notes"])
     app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])

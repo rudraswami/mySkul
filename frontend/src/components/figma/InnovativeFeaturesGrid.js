@@ -1,0 +1,276 @@
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { Dna, ShieldCheck, FileText, Eye, Box, TrendingUp } from "lucide-react";
+import { useState } from "react";
+
+const features = [
+    {
+        icon: Dna,
+        title: "Error Genome™",
+        description: "Detects microscopic errors at the root level, just like a top-performing student would identify conceptual gaps.",
+        details: "Our AI analyzes your thought patterns and identifies where misconceptions begin, offering targeted corrections that stick.",
+        color: "from-purple-500 to-purple-600",
+        bgColor: "bg-purple-500/10",
+        borderColor: "border-purple-500/30",
+        iconColor: "text-purple-400",
+        stats: "99.9% error detection accuracy",
+    },
+    {
+        icon: ShieldCheck,
+        title: "Symbolic Verification Engine",
+        description: "Every generated answer is logically verified through symbolic reasoning, ensuring zero hallucination in solutions.",
+        details: "Mathematical proofs and logical chains validate each step, making our AI the most trustworthy learning companion.",
+        color: "from-pink-500 to-pink-600",
+        bgColor: "bg-pink-500/10",
+        borderColor: "border-pink-500/30",
+        iconColor: "text-pink-400",
+        stats: "100% verified solutions",
+    },
+    {
+        icon: FileText,
+        title: "Mock Test Engine",
+        description: "Generate high-quality JEE/NEET/UPSC mock tests instantly with adaptive difficulty tailored to your performance.",
+        details: "Tests adapt in real-time based on your answers, ensuring optimal challenge level for maximum learning efficiency.",
+        color: "from-blue-500 to-blue-600",
+        bgColor: "bg-blue-500/10",
+        borderColor: "border-blue-500/30",
+        iconColor: "text-blue-400",
+        stats: "100K+ tests generated",
+    },
+    {
+        icon: Eye,
+        title: "Visual Reasoning Engine",
+        description: "Complex concepts transformed into animated visual reasoning steps that make learning intuitive and memorable.",
+        details: "See abstract ideas come to life with dynamic visualizations that reveal the 'why' behind every concept.",
+        color: "from-cyan-500 to-cyan-600",
+        bgColor: "bg-cyan-500/10",
+        borderColor: "border-cyan-500/30",
+        iconColor: "text-cyan-400",
+        stats: "3x faster comprehension",
+    },
+    {
+        icon: Box,
+        title: "3D Visual Learning",
+        description: "Experience concepts through culturally relevant 3D metaphors - from cricket physics to temple geometry.",
+        details: "Learn through familiar contexts that resonate with Indian culture, making abstract concepts tangible and relatable.",
+        color: "from-violet-500 to-violet-600",
+        bgColor: "bg-violet-500/10",
+        borderColor: "border-violet-500/30",
+        iconColor: "text-violet-400",
+        stats: "50+ cultural modules",
+    },
+    {
+        icon: TrendingUp,
+        title: "Adaptive Learning Path",
+        description: "AI analyzes your strengths and weaknesses to create a personalized learning journey that accelerates growth.",
+        details: "Dynamic curriculum that evolves with you, focusing on areas that need attention while reinforcing strengths.",
+        color: "from-fuchsia-500 to-fuchsia-600",
+        bgColor: "bg-fuchsia-500/10",
+        borderColor: "border-fuchsia-500/30",
+        iconColor: "text-fuchsia-400",
+        stats: "2x faster progress",
+    },
+];
+
+function FlipCard({ feature, index }) {
+    const [isFlipped, setIsFlipped] = useState(false);
+    const Icon = feature.icon;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            className="h-[400px] cursor-pointer"
+            style={{ perspective: "1000px" }}
+            onHoverStart={() => setIsFlipped(true)}
+            onHoverEnd={() => setIsFlipped(false)}
+        >
+            <motion.div
+                className="relative w-full h-full"
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 0.6, type: "spring" }}
+                style={{ transformStyle: "preserve-3d" }}
+            >
+                {/* Front Side */}
+                <div
+                    className={`absolute inset-0 ${feature.bgColor} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden`}
+                    style={{ backfaceVisibility: "hidden" }}
+                >
+                    {/* Animated Icon */}
+                    <motion.div
+                        className={`w-20 h-20 ${feature.bgColor} rounded-2xl flex items-center justify-center mb-6 border ${feature.borderColor} relative`}
+                        animate={{
+                            rotateZ: [0, 5, -5, 0],
+                        }}
+                        transition={{
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                        }}
+                    >
+                        <Icon className={`w-10 h-10 ${feature.iconColor}`} />
+
+                        {/* Pulsing glow */}
+                        <motion.div
+                            className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl opacity-0 blur-xl`}
+                            animate={{
+                                opacity: [0, 0.4, 0],
+                                scale: [1, 1.2, 1],
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                        />
+                    </motion.div>
+
+                    <h3 className="text-2xl text-white mb-4">{feature.title}</h3>
+                    <p className="text-white/70 leading-relaxed mb-6">{feature.description}</p>
+
+                    {/* Hover hint */}
+                    <div className="absolute bottom-8 left-8 right-8">
+                        <div className={`flex items-center justify-between px-4 py-2 bg-gradient-to-r ${feature.color} rounded-full`}>
+                            <span className="text-white text-sm">Hover to learn more</span>
+                            <motion.div
+                                animate={{ x: [0, 5, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity }}
+                            >
+                                →
+                            </motion.div>
+                        </div>
+                    </div>
+
+                    {/* Floating particles */}
+                    {[...Array(3)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            className={`absolute w-1 h-1 bg-gradient-to-br ${feature.color} rounded-full`}
+                            style={{
+                                left: `${20 + i * 30}%`,
+                                top: `${20 + i * 20}%`,
+                            }}
+                            animate={{
+                                y: [0, -20, 0],
+                                opacity: [0, 1, 0],
+                            }}
+                            transition={{
+                                duration: 3,
+                                repeat: Infinity,
+                                delay: i * 0.5,
+                            }}
+                        />
+                    ))}
+                </div>
+
+                {/* Back Side */}
+                <div
+                    className={`absolute inset-0 bg-gradient-to-br ${feature.color} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden`}
+                    style={{
+                        backfaceVisibility: "hidden",
+                        transform: "rotateY(180deg)",
+                    }}
+                >
+                    <div className="h-full flex flex-col justify-between">
+                        <div>
+                            <div className={`w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6`}>
+                                <Icon className="w-8 h-8 text-white" />
+                            </div>
+
+                            <h3 className="text-2xl text-white mb-4">{feature.title}</h3>
+                            <p className="text-white/90 leading-relaxed mb-6">{feature.details}</p>
+                        </div>
+
+                        <div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <div className="text-white/80 text-sm mb-1">Performance</div>
+                                <div className="text-white text-xl">{feature.stats}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Animated background pattern */}
+                    <motion.div
+                        className="absolute inset-0 opacity-10"
+                        animate={{
+                            backgroundPosition: ["0% 0%", "100% 100%"],
+                        }}
+                        transition={{
+                            duration: 20,
+                            repeat: Infinity,
+                            ease: "linear",
+                        }}
+                        style={{
+                            backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+                            backgroundSize: "30px 30px",
+                        }}
+                    />
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+export function InnovativeFeaturesGrid() {
+    return (
+        <section id="features" className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="text-center mb-12"
+            >
+                <motion.div
+                    className="inline-block mb-6"
+                    animate={{
+                        y: [0, -10, 0],
+                    }}
+                    transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                    }}
+                >
+                    <div className="px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-full border border-purple-500/30">
+                        <span className="text-purple-300">✨ Revolutionary Features</span>
+                    </div>
+                </motion.div>
+
+                <h2 className="text-5xl lg:text-6xl text-white mb-6">
+                    Experience Learning{" "}
+                    <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Reimagined
+                    </span>
+                </h2>
+                <p className="text-white/70 text-xl max-w-3xl mx-auto">
+                    Hover over each card to discover how our cutting-edge AI features transform your learning journey
+                </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {features.map((feature, index) => (
+                    <FlipCard key={feature.title} feature={feature} index={index} />
+                ))}
+            </div>
+
+            {/* Bottom CTA */}
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="mt-16 text-center"
+            >
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:shadow-2xl hover:shadow-purple-500/50 transition-all text-lg"
+                >
+                    Explore All Features →
+                </motion.button>
+            </motion.div>
+        </section>
+    );
+}

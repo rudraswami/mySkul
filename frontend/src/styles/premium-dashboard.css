@@ -1,214 +1,159 @@
 /* ========================================
-   Premium Dashboard Styles - Dhruv AI
+   Modern Tech Dashboard Styles - Dhruv AI
    ======================================== */
 
 /* ========================================
-   GLASSMORPHISM & MODERN CARDS
+   1. VARIABLES & THEME SYSTEM
    ======================================== */
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+:root {
+  /* --- Brand Colors (Tech Palette) --- */
+  --tech-purple: #8b5cf6;
+  --tech-cyan: #06b6d4;
+  --tech-blue: #3b82f6;
+  --tech-gold: #f59e0b;
+  --tech-emerald: #10b981;
+  --tech-rose: #f43f5e;
+
+  /* --- Light Mode Defaults (Clean Tech) --- */
+  --bg-app: #f3f4f6;
+  --glass-surface: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+
+  --card-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+
+  --glow-primary: rgba(139, 92, 246, 0.15);
 }
 
-.glass-card-dark {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+/* --- Dark Mode Overrides (Deep Space / Cyberpunk) --- */
+[data-theme='dark'] {
+  --bg-app: #0f172a;
+  /* Deep Slate/Indigo */
+  --glass-surface: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #6b7280;
+
+  --card-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  --glow-primary: rgba(139, 92, 246, 0.3);
 }
 
-.glass-hover {
+/* ========================================
+   2. UNIFIED GLASS COMPONENT
+   ======================================== */
+
+.glass-panel {
+  background: var(--glass-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+.glass-panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px -8px var(--glow-primary),
+    var(--card-shadow);
+  border-color: var(--tech-purple);
 }
 
-/* Premium depth shadows */
-.shadow-premium {
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    0 4px 8px rgba(0, 0, 0, 0.05),
-    0 8px 16px rgba(0, 0, 0, 0.05);
-}
-
-.shadow-premium-lg {
-  box-shadow: 
-    0 4px 6px rgba(0, 0, 0, 0.07),
-    0 8px 16px rgba(0, 0, 0, 0.07),
-    0 16px 32px rgba(0, 0, 0, 0.07);
+/* High-emphasis panel (e.g., Hero) */
+.glass-panel-hero {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, var(--glass-surface) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 /* ========================================
-   PREMIUM GRADIENTS
+   3. UTILITIES & ANIMATIONS
    ======================================== */
 
-.gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.gradient-success {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.gradient-warning {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.gradient-info {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.gradient-purple-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b86e5 100%);
-}
-
-.gradient-ocean {
-  background: linear-gradient(135deg, #2E3192 0%, #1BFFFF 100%);
-}
-
-.gradient-sunset {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-}
-
-.gradient-cosmic {
-  background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
-}
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.text-gradient {
+  background: linear-gradient(135deg, var(--tech-blue) 0%, var(--tech-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-
-@keyframes float-gentle {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--tech-gold) 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(102, 126, 234, 0.6);
-  }
-}
+/* Animations */
+@keyframes float {
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
+  0%,
   100% {
-    background-position: 1000px 0;
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
   }
 }
 
-@keyframes confetti {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
-  }
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+
+  0%,
   100% {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
     opacity: 1;
   }
-}
 
-@keyframes scale-in {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
+  50% {
+    opacity: 0.7;
   }
 }
 
-@keyframes progress-fill {
-  from {
-    width: 0;
-  }
-  to {
-    width: var(--progress-width);
-  }
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
 }
 
-.animate-float-gentle {
-  animation: float-gentle 3s ease-in-out infinite;
+/* Scrollbar Polish */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.animate-shimmer {
-  background: linear-gradient(
-    to right,
-    #f0f0f0 0%,
-    #f8f8f8 20%,
-    #f0f0f0 40%,
-    #f0f0f0 100%
-  );
-  background-size: 1000px 100%;
-  animation: shimmer 2s linear infinite;
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.5s ease-out;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* ========================================
-   RADIAL PROGRESS RINGS
+   4. COMPONENT SPECIFIC STYLES
    ======================================== */
 
-.progress-ring {
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-}
-
-.progress-ring-circle {
-  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  stroke-linecap: round;
-}
-
-/* ========================================
-   STREAK HEATMAP (GitHub-style)
-   ======================================== */
-
+/* Streak Heatmap */
 .heatmap-container {
   display: grid;
   grid-template-columns: repeat(53, 1fr);
@@ -229,7 +174,11 @@
 }
 
 .heatmap-level-0 {
-  background-color: #ebedf0;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .heatmap-level-0 {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .heatmap-level-1 {
@@ -248,10 +197,7 @@
   background-color: #216e39;
 }
 
-/* ========================================
-   FLOATING QUICK ACTIONS TOOLBAR
-   ======================================== */
-
+/* Quick Actions Toolbar */
 .quick-actions-toolbar {
   position: fixed;
   bottom: 20px;
@@ -271,21 +217,22 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   cursor: pointer;
+  background: var(--glass-surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
 }
 
 .quick-action-button:hover {
   transform: scale(1.1) translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  border-color: var(--tech-purple);
 }
 
 .quick-action-button:active {
   transform: scale(0.95);
 }
 
-/* ========================================
-   ACHIEVEMENT BADGES
-   ======================================== */
-
+/* Achievement Badges */
 .badge-container {
   position: relative;
   display: inline-block;
@@ -294,7 +241,7 @@
 .badge-glow {
   position: absolute;
   inset: -4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--tech-blue) 0%, var(--tech-purple) 100%);
   border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -312,12 +259,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   animation: badge-shine 3s infinite;
 }
 
@@ -325,15 +267,14 @@
   0% {
     left: -100%;
   }
-  50%, 100% {
+
+  50%,
+  100% {
     left: 100%;
   }
 }
 
-/* ========================================
-   FOCUS MODE
-   ======================================== */
-
+/* Focus Mode */
 .focus-mode-overlay {
   position: fixed;
   inset: 0;
@@ -350,16 +291,14 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  background: white;
+  background: var(--bg-app);
   border-radius: 24px;
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
 }
 
-/* ========================================
-   LEADERBOARD ANIMATIONS
-   ======================================== */
-
+/* Leaderboard Animations */
 .rank-transition {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -378,9 +317,11 @@
     opacity: 0;
     background-color: rgba(34, 197, 94, 0.2);
   }
+
   50% {
     transform: translateY(-5px);
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -394,9 +335,11 @@
     opacity: 0;
     background-color: rgba(239, 68, 68, 0.2);
   }
+
   50% {
     transform: translateY(5px);
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -404,10 +347,7 @@
   }
 }
 
-/* ========================================
-   XP PROGRESS BAR
-   ======================================== */
-
+/* XP Progress Bar */
 .xp-bar {
   position: relative;
   height: 8px;
@@ -418,7 +358,7 @@
 
 .xp-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, var(--tech-blue) 0%, var(--tech-purple) 100%);
   border-radius: 999px;
   position: relative;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -428,12 +368,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   animation: xp-shimmer 2s infinite;
 }
 
@@ -441,15 +376,13 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
 }
 
-/* ========================================
-   AI MENTOR CHAT
-   ======================================== */
-
+/* AI Mentor Chat */
 .chat-container {
   max-height: 500px;
   overflow-y: auto;
@@ -465,149 +398,30 @@
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
-.chat-bubble {
-  max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  word-wrap: break-word;
+/* Utilities */
+.clip-hexagon {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
-.chat-bubble-user {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  margin-left: auto;
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
 }
 
-.chat-bubble-ai {
-  background: rgba(0, 0, 0, 0.05);
-  color: #1a1a1a;
-}
+@keyframes bounce-slow {
 
-/* ========================================
-   SKELETON LOADERS
-   ======================================== */
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s ease-in-out infinite;
-  border-radius: 8px;
-}
-
-@keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
+  0%,
   100% {
-    background-position: -200% 0;
+    transform: translateY(-5%);
   }
-}
 
-/* ========================================
-   RESPONSIVE OPTIMIZATIONS
-   ======================================== */
-
-@media (max-width: 768px) {
-  .quick-actions-toolbar {
-    bottom: 10px;
-    right: 10px;
-    gap: 8px;
+  50% {
+    transform: translateY(0);
   }
-  
-  .quick-action-button {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .heatmap-cell {
-    width: 10px;
-    height: 10px;
-  }
-  
-  .focus-mode-content {
-    padding: 24px;
-  }
-}
-
-/* ========================================
-   ACCESSIBILITY - HIGH CONTRAST MODE
-   ======================================== */
-
-@media (prefers-contrast: high) {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid #000;
-  }
-  
-  .glass-card-dark {
-    background: rgba(0, 0, 0, 0.95);
-    border: 2px solid #fff;
-  }
-}
-
-/* ========================================
-   REDUCED MOTION SUPPORT
-   ======================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ========================================
-   DARK MODE SUPPORT
-   ======================================== */
-
-.dark .glass-card {
-  background: rgba(15, 23, 42, 0.7);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .chat-bubble-ai {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f1f5f9;
-}
-
-.dark .skeleton {
-  background: linear-gradient(
-    90deg,
-    #1e293b 25%,
-    #334155 50%,
-    #1e293b 75%
-  );
-  background-size: 200% 100%;
-}
-
-.dark .heatmap-level-0 {
-  background-color: #1e293b;
-}
-
-/* ========================================
-   PERFORMANCE OPTIMIZATIONS
-   ======================================== */
-
-.will-change-transform {
-  will-change: transform;
-}
-
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
 }

@@ -65,8 +65,16 @@ class MentorAgent(BaseAgent):
             student_profile = context.get('student_profile', {})
             memory_context = context.get('memory_context')
             
-            # Build mentor prompt with memory
-            mentor_prompt = self._build_mentor_prompt(query, subject, student_profile, memory_context)
+            # Build dynamic mentor prompt (varied, conversational)
+            from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
+            
+            mentor_prompt = get_dynamic_mentor_prompt(
+                query=query,
+                subject=subject,
+                student_profile=student_profile,
+                memory_context=memory_context,
+                user_id=context.get('user_id', 'anonymous')
+            )
             
             # Call LLM for mentor response
             mentor_response = await self._generate_mentor_response(mentor_prompt)
@@ -140,11 +148,22 @@ Question: {query}
 Your role as MENTOR:
 1. {greeting} Be PERSONAL - use their name and reference their learning history
 2. {depth_instruction}
-3. Use METAPHORS from student's interests ({interests[0]} preferred)
-4. Give INTUITIVE explanations, not formal derivations
-5. Be friendly, encouraging, and culturally relevant
-6. If continuing a topic, acknowledge what was covered before
-7. Adapt your explanation depth to their mastery level
+3. **SPECIAL RULE FOR IMAGES**: If the question mentions "[Student uploaded an image" or contains "IMAGE CONTAINS:", this is an image-based question:
+   - Focus ONLY on the extracted content from the image
+   - NO metaphors or creative stories - be DIRECT and FACTUAL
+   - If it's an MCQ, identify the question and explain options
+   - If it's a problem, solve it step-by-step
+   - Be precise and educational, not creative
+4. For TEXT-only questions: Use METAPHORS from student's interests ({interests[0]} preferred)
+5. Give INTUITIVE explanations, not formal derivations
+6. Be friendly, encouraging, and culturally relevant
+7. If continuing a topic, acknowledge what was covered before
+8. Adapt your explanation depth to their mastery level
+9. HINGLISH SUPPORT: Naturally mix Hindi-English words like:
+   - "matlab" (means), "yaar" (friend), "bhai" (bro), "arre" (hey)
+   - "samjho" (understand), "dekho" (see), "basically" "actually"
+   - Example: "Dekho, basically force matlab push ya pull hai, samjhe?"
+   - Use 2-3 Hinglish words per response naturally, not forced
 
 Keep response concise (150-200 words) and warm in tone.
 
