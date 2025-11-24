@@ -226,6 +226,19 @@ async def get_resume_tests(
         raise HTTPException(status_code=500, detail=f"Failed to get resume tests: {str(e)}")
 
 
+@router.get("/presets")
+async def get_preset_tests():
+    """Get list of pre-made quick tests for instant access"""
+    from services.test_cache_service import get_preset_tests
+    
+    presets = get_preset_tests()
+    return {
+        "success": True,
+        "presets": presets,
+        "message": "Pre-made tests available for instant access"
+    }
+
+
 @router.post("/generate", response_model=TestGenerationResponse)
 async def generate_mock_test(
     request: TestGenerationRequest,
@@ -303,65 +316,66 @@ async def generate_mock_test(
             
             emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('EMERGENT_API_KEY')
             if not emergent_llm_key:
-                logger.warning(f"[{trace_id}] EMERGENT_LLM_KEY missing. Using deterministic fallback generator.")
-                blueprint = TestBlueprintGenerator().generate_blueprint(
-                    exam_type=request.exam_type,
-                    subjects=request.subjects,
-                    num_questions=min(request.num_questions, 100),
-                    difficulty_level=request.difficulty_level,
-                    test_type=request.test_type,
-                    chapters=request.chapters,
-                    focus_areas=request.focus_areas
+                # NO FALLBACK - Return error for better UX
+                logger.error(f"[{trace_id}] EMERGENT_LLM_KEY missing. Cannot generate test.")
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "success": False,
+                        "error_code": "LLM_KEY_MISSING",
+                        "message": "AI question engine unavailable. Please try again later or contact support.",
+                        "trace_id": trace_id
+                    }
                 )
-                questions = []
-                for i in range(min(request.num_questions, 100)):
-                    subject = request.subjects[i % len(request.subjects)]
-                    questions.append({
-                        "question_id": str(uuid.uuid4()),
-                        "question_number": i + 1,
-                        "subject": subject,
-                        "topic": "General",
-                        "question_text": f"Placeholder {request.exam_type} question {i + 1} - {subject}",
-                        "options": [
-                            "A) Placeholder option",
-                            "B) Placeholder option",
-                            "C) Placeholder option",
-                            "D) Placeholder option"
-                        ],
-                        "correct_answer": "A",
-                        "marks": 1,
-                        "difficulty": request.difficulty_level,
-                        "explanation": "This is a fallback question generated because the AI question engine is unavailable.",
-                        "metadata": {"fallback": True}
-                    })
-                quality_report = {
-                    "requested_questions": request.num_questions,
-                    "generated_questions": len(questions),
-                    "validated_questions": len(questions),
-                    "fallback_mode": True
-                }
             else:
-                agentic_config = {
-                    "emergent_llm_key": emergent_llm_key
-                }
-                test_generator = AgenticTestGenerator(config=agentic_config)
-                logger.info(f"[{trace_id}] Using Agentic Test Generator")
-
-                test_result = await test_generator.generate_test(
-                    exam_type=request.exam_type,
-                    subjects=request.subjects,
-                    num_questions=min(request.num_questions, 100),
-                    difficulty_level=request.difficulty_level,
-                    test_type=request.test_type,
-                    chapters=request.chapters if hasattr(request, 'chapters') else None,
-                    focus_areas=request.focus_areas if hasattr(request, 'focus_areas') else None,
-                    user_id=user.user_id
+                # CUTTING-EDGE: Use FAST batch generation for standard tests
+                # Falls back to slow agentic for complex custom tests
+                use_fast_mode = (
+                    request.num_questions <= 25 and  # Standard test size
+                    len(request.subjects) == 1 and  # Single subject
+                    not request.chapters and  # No specific chapters
+                    not request.focus_areas  # No specific focus areas
                 )
+                
+                if use_fast_mode:
+                    logger.info(f"[{trace_id}] ⚡ Using FAST batch generation mode")
+                    from services.fast_mock_test_generator import generate_fast_mock_test
+                    
+                    test_result = await generate_fast_mock_test(
+                        exam_type=request.exam_type,
+                        subject=request.subjects[0],
+                        num_questions=min(request.num_questions, 100),
+                        difficulty=request.difficulty_level,
+                        api_key=emergent_llm_key
+                    )
+                    
+                    questions = test_result["questions"]
+                    blueprint = test_result.get("blueprint", {})
+                    quality_report = test_result.get("quality_report", {})
+                    logger.info(f"[{trace_id}] ⚡ FAST generation complete: {len(questions)} questions in <30 seconds")
+                else:
+                    # Complex test - use agentic system
+                    logger.info(f"[{trace_id}] Using Agentic Test Generator (complex test)")
+                    agentic_config = {
+                        "emergent_llm_key": emergent_llm_key
+                    }
+                    test_generator = AgenticTestGenerator(config=agentic_config)
 
-                questions = test_result["questions"]
-                blueprint = test_result.get("blueprint", {})
-                quality_report = test_result.get("quality_report", {})
-                logger.info(f"[{trace_id}] Agentic generation complete: {len(questions)} questions")
+                    test_result = await test_generator.generate_test(
+                        exam_type=request.exam_type,
+                        subjects=request.subjects,
+                        num_questions=min(request.num_questions, 100),
+                        difficulty_level=request.difficulty_level,
+                        test_type=request.test_type,
+                        chapters=request.chapters if hasattr(request, 'chapters') else None,
+                        focus_areas=request.focus_areas if hasattr(request, 'focus_areas') else None,
+                        user_id=user.user_id
+                    )
+
+                    questions = test_result["questions"]
+                    blueprint = test_result.get("blueprint", {})
+                    quality_report = test_result.get("quality_report", {})
+                    logger.info(f"[{trace_id}] Agentic generation complete: {len(questions)} questions")
             
             if not questions:
                 raise ValueError("Failed to generate any questions")

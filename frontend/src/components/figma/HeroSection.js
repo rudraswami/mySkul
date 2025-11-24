@@ -317,7 +317,7 @@ export function HeroSection() {
                     
                     <p className="text-base text-white/70 mb-12 leading-relaxed max-w-xl">
                         🤝 AI Mentor explains intuitively • 🎓 AI Professor verifies academically • 
-                        🏏 Hinglish support • ₹99/month
+                        🏏 Hinglish support • Starting at ₹99/month
                     </p>
 
                     {/* CTAs */}

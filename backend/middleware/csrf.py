@@ -30,7 +30,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             "/api/auth/login",  # Login
             "/api/health",  # Health check
             "/docs",  # API docs
-            "/openapi.json"  # OpenAPI spec
+            "/openapi.json",  # OpenAPI spec
+            "/api/mock-tests/",  # Mock test endpoints (submit, generate, etc.)
+            "/api/ai/",  # AI endpoints (chat, neuro-symbolic, etc.)
+            "/api/subscription/",  # Subscription endpoints
+            "/api/gamification/"  # Gamification endpoints
         ]
     
     async def dispatch(self, request: Request, call_next):

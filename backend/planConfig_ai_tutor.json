@@ -25,65 +25,28 @@
       "student_verification_discount": false
     },
     "upgrade_messages": {
-      "mentor": "🎯 Amazing! You've completed {usage}/{limit} free sessions! Your dedication is inspiring. Ready to unlock 20 sessions/month and dive deeper into your preparation?",
-      "professor": "📚 Your analytical skills are developing well. Upgrade to Starter for continuous learning and concept mastery - just ₹199/month (₹149 for verified students).",
+      "mentor": "🎯 Amazing! You've completed {usage}/{limit} free sessions! Your dedication is inspiring. Ready to unlock unlimited AI sessions and dive deeper into your preparation?",
+      "professor": "📚 Your analytical skills are developing well. Upgrade to Student Plan for unlimited AI sessions and advanced features - just ₹199/month.",
       "growth_metric": "Students using paid plans score 45% higher in their exams",
-      "cta": "Upgrade to Starter - Student-friendly at ₹199/month"
+      "cta": "Upgrade to Student Plan - Most popular at ₹199/month"
     }
   },
-  "STARTER": {
-    "display_name": "🟢 Starter - Begin Your AI Journey",
+  "STUDENT": {
+    "display_name": "🎓 Student Plan - Most Popular",
     "price_monthly": 199,
     "price_quarterly": 499,
-    "price_yearly": 1699,
-    "tagline": "Begin your AI journey - Student friendly",
-    "persona": "Casual learner getting started",
-    "core_emotion": "Confidence & curiosity",
-    "description": "Perfect for students exploring AI-powered learning without breaking the bank",
+    "price_yearly": 1799,
+    "tagline": "Most popular for regular learners - Perfect for daily AI help",
+    "persona": "Regular student preparing for exams",
+    "core_emotion": "Confidence & progress",
+    "description": "Perfect for students who want unlimited AI help with homework, exam prep, and concept clarity",
     "features": {
-      "ai_sessions_monthly": 20,
-      "mentor_tips_daily": 0,
-      "mock_tests_weekly": 2,
-      "auto_note_uploads_daily": 3,
-      "focus_engine_type": "static",
-      "ai_insights": "weekly",
-      "voice_mode": "locked",
-      "offline_mode": false,
-      "analytics_tier": "basic",
-      "visuals": "standard",
-      "priority_support": false,
-      "export_notes": true,
-      "concept_tagging": false,
-      "student_verification_discount": true
-    },
-    "upgrade_messages": {
-      "mentor": "🚀 You're on fire! 20 sessions aren't enough for your pace. Upgrade to Scholar for 100 sessions, daily mentor tips, and unlimited notes - perfect for serious exam prep!",
-      "professor": "📈 Your learning velocity is impressive. Scholar unlocks adaptive AI, advanced analytics, and unlimited auto-notes - essential for competitive exam success.",
-      "growth_metric": "Scholar users score in top 15% of their exam cohort",
-      "cta": "Upgrade to Scholar - Most popular at ₹499/month"
-    },
-    "student_verified_price": {
-      "monthly": 149,
-      "quarterly": 399,
-      "yearly": 1349
-    }
-  },
-  "SCHOLAR": {
-    "display_name": "🔵 Scholar - Master Concepts with Smart Guidance",
-    "price_monthly": 499,
-    "price_quarterly": 1299,
-    "price_yearly": 4499,
-    "tagline": "Master concepts with smart guidance - Most popular",
-    "persona": "Regular exam-goer seeking consistent improvement",
-    "core_emotion": "Progress & determination",
-    "description": "Ideal for serious students preparing for competitive exams like JEE, NEET, UPSC",
-    "features": {
-      "ai_sessions_monthly": 100,
+      "ai_sessions_monthly": "unlimited",
       "mentor_tips_daily": 5,
-      "mock_tests_weekly": 5,
+      "mock_tests_weekly": 3,
       "auto_note_uploads_daily": "unlimited",
       "focus_engine_type": "adaptive",
-      "ai_insights": "daily",
+      "ai_insights": "weekly",
       "voice_mode": "mentor_only",
       "offline_mode": false,
       "analytics_tier": "advanced",
@@ -91,32 +54,35 @@
       "priority_support": false,
       "export_notes": true,
       "concept_tagging": true,
-      "student_verification_discount": true
+      "student_verification_discount": true,
+      "hinglish_support": true,
+      "whatsapp_share": true,
+      "image_uploads": "unlimited"
     },
     "upgrade_messages": {
-      "mentor": "💪 You're crushing it! Your dedication deserves unlimited mock tests + 300 AI sessions. Achiever unlocks priority AI, offline mode, and deep analytics - your secret weapon for top ranks!",
-      "professor": "🎓 Your mastery rate indicates top-tier potential. Achiever provides emotion-aware AI, priority support, and unlimited resources - ideal for targeting AIR ranks.",
-      "growth_metric": "Achiever users achieve 3x higher success rate in competitive exams",
-      "cta": "Upgrade to Achiever - Premium at ₹999/month"
+      "mentor": "🚀 You're doing great! Upgrade to Pro for priority AI responses, emotion-aware learning, and advanced analytics - perfect for competitive exam prep!",
+      "professor": "📈 Your learning velocity is impressive. Pro unlocks priority support, daily personalized insights, and parent dashboard - essential for top ranks.",
+      "growth_metric": "Pro users score in top 15% of their exam cohort",
+      "cta": "Upgrade to Pro - Premium at ₹299/month"
     },
     "student_verified_price": {
-      "monthly": 399,
-      "quarterly": 1099,
-      "yearly": 3799
+      "monthly": 149,
+      "quarterly": 399,
+      "yearly": 1349
     }
   },
-  "ACHIEVER": {
-    "display_name": "🟠 Achiever (Pro) - Your AI Mentor for Competitive Success",
-    "price_monthly": 999,
-    "price_quarterly": 2699,
-    "price_yearly": 8999,
-    "tagline": "Your AI mentor for competitive success - Premium features",
-    "persona": "Serious aspirant targeting top ranks in JEE, NEET, UPSC",
+  "PRO": {
+    "display_name": "⭐ Pro Plan - Unlimited Everything",
+    "price_monthly": 299,
+    "price_quarterly": 799,
+    "price_yearly": 2999,
+    "tagline": "Unlimited everything for serious students - Best for JEE, NEET, CBSE",
+    "persona": "Serious aspirant targeting top ranks in JEE, NEET, CBSE",
     "core_emotion": "Mastery & ambition",
-    "description": "For students committed to excellence, top percentile scores, and AIR ranks",
+    "description": "For students committed to excellence, top percentile scores, and competitive exam success",
     "features": {
-      "ai_sessions_monthly": 300,
-      "mentor_tips_daily": 30,
+      "ai_sessions_monthly": "unlimited",
+      "mentor_tips_daily": "unlimited",
       "mock_tests_weekly": "unlimited",
       "auto_note_uploads_daily": "unlimited",
       "focus_engine_type": "emotion_aware",
@@ -128,57 +94,24 @@
       "priority_support": true,
       "export_notes": true,
       "concept_tagging": true,
-      "student_verification_discount": true
-    },
-    "upgrade_messages": {
-      "mentor": "🏆 You're in the top 5%! Legend gives you UNLIMITED everything + dedicated mentor support. This is your path to AIR single-digit ranks - join elite achievers!",
-      "professor": "🌟 Your analytical depth is exceptional. Legend provides 24/7 learning lab, real-time personalized AI, and custom study plans - the ultimate competitive edge.",
-      "growth_metric": "Legend users achieve AIR ranks 5x more often",
-      "cta": "Join Elite - Legend at ₹1,999/month"
-    },
-    "student_verified_price": {
-      "monthly": 799,
-      "quarterly": 2199,
-      "yearly": 7499
-    }
-  },
-  "LEGEND": {
-    "display_name": "🟣 Legend (Elite) - Personal AI Mentor, 24×7 Learning Lab",
-    "price_monthly": 1999,
-    "price_quarterly": 5499,
-    "price_yearly": 18999,
-    "tagline": "Personal AI mentor, 24×7 learning lab - Elite coaching",
-    "persona": "Top performer seeking absolute mastery and AIR 1-100 ranks",
-    "core_emotion": "Excellence & confidence",
-    "description": "The ultimate learning experience for top aspirants targeting AIR single-digit ranks",
-    "features": {
-      "ai_sessions_monthly": "unlimited",
-      "mentor_tips_daily": "unlimited",
-      "mock_tests_weekly": "unlimited",
-      "auto_note_uploads_daily": "unlimited",
-      "focus_engine_type": "emotion_aware_advanced",
-      "ai_insights": "real_time_personalized",
-      "voice_mode": "priority_full_sync",
-      "offline_mode": true,
-      "analytics_tier": "premium",
-      "visuals": "priority_plus",
-      "priority_support": true,
-      "export_notes": true,
-      "concept_tagging": true,
       "student_verification_discount": true,
-      "dedicated_mentor": true,
-      "custom_study_plan": true
+      "hinglish_support": true,
+      "whatsapp_share": true,
+      "image_uploads": "unlimited",
+      "parent_dashboard": true,
+      "advanced_ocr": true,
+      "emotion_aware_ai": true
     },
     "upgrade_messages": {
-      "mentor": "You're at the pinnacle! Keep crushing your goals with unlimited AI access.",
-      "professor": "Your mastery journey continues with premium features and dedicated support.",
+      "mentor": "🏆 You're at the pinnacle! Keep crushing your goals with unlimited AI access and premium features.",
+      "professor": "🌟 Your mastery journey continues with premium features and dedicated support.",
       "growth_metric": "You're in the top 1% of learners",
       "cta": "Continue your excellence"
     },
     "student_verified_price": {
-      "monthly": 1599,
-      "quarterly": 4499,
-      "yearly": 15999
+      "monthly": 249,
+      "quarterly": 699,
+      "yearly": 2499
     }
   }
 }

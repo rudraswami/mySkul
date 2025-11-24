@@ -1,6 +1,8 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Brain, BookOpen } from 'lucide-react';
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'; // Temporarily disabled
 import './App.css';
 import './styles/mobile.css';
@@ -209,23 +211,29 @@ function AppContent() {
                 setMobileMenuOpen={setMobileMenuOpen} 
               />
               <main id="main-content" className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm lg:ml-0 dark:from-gray-900/40 dark:to-gray-800/60">
-                {/* Mobile Header with Hamburger */}
-                <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-                  <button
+                {/* Mobile Header with Hamburger - Professional */}
+                <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shadow-sm">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setMobileMenuOpen(true)}
-                    className="hamburger-menu min-h-12 min-w-12 p-3 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center mobile-transition"
+                    className="hamburger-menu min-h-10 min-w-10 p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center transition-colors"
                     aria-label="Open navigation menu"
                     aria-controls="mobile-menu"
                   >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
-                  </button>
-                  <div className="flex items-center">
-                    <svg className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">Dhruv AI</h1>
+                  </motion.button>
+                  <div className="flex items-center gap-2.5">
+                    {/* Logo: Brain + Book */}
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
+                      <Brain className="h-5 w-5 text-white absolute -top-0.5 -left-0.5" strokeWidth={2.5} />
+                      <BookOpen className="h-4 w-4 text-white absolute -bottom-0.5 -right-0.5" strokeWidth={2.5} />
+                    </div>
+                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                      Druv AI
+                    </h1>
                   </div>
                   <div className="w-10" /> {/* Spacer for centering */}
                 </div>
@@ -241,17 +249,16 @@ function AppContent() {
                       <AITutor />
                     </Suspense>
                   } />
-                  <Route path="/tests" element={
+                  {/* HIDDEN FOR V1 - Launching in V2 */}
+                  {/* <Route path="/tests" element={
                     <Suspense fallback={<PageLoader message="Loading Mock Tests..." />}>
                       <MockTests />
                     </Suspense>
-                  } />
-                  {/* Removed: Analytics and Wellness routes - not essential for core exam preparation */}
-                  <Route path="/auto-notes" element={
-                    <Suspense fallback={<PageLoader message="Loading Auto Notes..." />}>
-                      <AutoNoteMentor />
-                    </Suspense>
-                  } />
+                  } /> */}
+                  
+                  {/* HIDDEN FOR V1 - Launching in V2 */}
+                  <Route path="/tests" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/auto-notes" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/subscription" element={
                     <Suspense fallback={<PageLoader message="Loading Subscription..." />}>
                       <Subscription />

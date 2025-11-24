@@ -278,33 +278,12 @@ Generate the question now:"""
         difficulty: str,
         question_type: str
     ) -> Dict[str, Any]:
-        """Generate a fallback question if agentic generation fails"""
-        logger.warning(f"Using fallback question for Q{question_number}")
-        
-        question = {
-            "question_id": str(uuid.uuid4()),
-            "question_number": question_number,
-            "subject": subject,
-            "topic": "General",
-            "question_text": f"Sample {difficulty} {question_type} question {question_number} in {subject}. This is a placeholder question.",
-            "question_type": question_type,
-            "difficulty": difficulty,
-            "marks": 1,
-            "correct_answer": 0 if question_type == "mcq" else 42,
-            "explanation": "This is a fallback question. Please regenerate the test for AI-generated questions.",
-            "concepts_used": [],
-            "options": [
-                "Option A",
-                "Option B",
-                "Option C",
-                "Option D"
-            ] if question_type == "mcq" else []
-        }
-        question["metadata"] = {
-            "fallback": True,
-            "reason": "Agentic generation failed - placeholder inserted"
-        }
-        return question
+        """
+        NO FALLBACK QUESTIONS FOR V1 - Raise exception instead
+        Better to fail fast than show placeholder questions to students
+        """
+        logger.error(f"Question generation failed for Q{question_number} - {subject}")
+        raise Exception(f"Failed to generate question {question_number} for {subject}. Retry test generation.")
     
     def _difficulty_to_mastery(self, difficulty: str) -> int:
         """Map difficulty to mastery level for adaptive generation"""

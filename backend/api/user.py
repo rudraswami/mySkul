@@ -206,19 +206,8 @@ async def get_smart_recommendations(user: User = Depends(get_current_user), db =
                 "progress": 50
             })
         
-        # Mock test recommendation
-        test_count = await db.mock_tests.count_documents({"user_id": user_id})
-        if test_count < 5:
-            recommendations.append({
-                "id": "practice",
-                "type": "test",
-                "priority": "low",
-                "title": "Take a Mock Test",
-                "description": "Practice makes perfect. Test your knowledge!",
-                "action": "Start Test",
-                "route": "/tests",
-                "progress": (test_count / 5) * 100
-            })
+        # V1: Mock tests hidden - removed recommendation
+        # Will be added back in V2 when mock tests are available
         
         return {"recommendations": recommendations}
     except Exception as e:

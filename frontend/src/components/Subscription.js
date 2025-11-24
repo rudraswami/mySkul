@@ -15,7 +15,14 @@ import {
   Sparkles,
   ArrowRight,
   Clock,
-  X
+  X,
+  Infinity,
+  Rocket,
+  Brain,
+  Target,
+  TrendingUp,
+  Shield,
+  Gift
 } from 'lucide-react';
 
 // #PHASE3-SECURITY-FRONTEND - React Query Migration
@@ -126,48 +133,134 @@ export default function Subscription() {
     popular: plan.highlight,
     tier: plan.id,
     badge: plan.badge,
-    tagline: plan.tagline
+    tagline: plan.tagline,
+    emoji: plan.emoji,
+    color: plan.color
   }));
 
-  // Helper function to format plan features for display
+  // Helper function to format plan features for display - UPDATED FOR 3-TIER STRUCTURE
   function formatPlanFeatures(plan) {
     const features = [];
     const { features: planFeatures } = plan;
     
     if (plan.id === 'FREE') {
-      features.push(`🎯 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Perfect for trying`);
-      features.push(`📝 ${planFeatures.mock_tests_weekly} mock test weekly - Build confidence`);
-      features.push(`📁 ${planFeatures.auto_note_uploads_daily} file upload daily - Try note generation`);
-      features.push('📊 Basic analytics - See your progress');
-    } else if (plan.id === 'STARTER') {
-      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Get started`);
-      features.push(`📝 ${planFeatures.mock_tests_weekly} mock tests weekly - Regular practice`);
-      features.push(`📁 ${planFeatures.auto_note_uploads_daily} uploads daily - More content`);
-      features.push('📊 Basic analytics - Track improvement');
-      features.push('📤 Export notes - Save your work');
-    } else if (plan.id === 'SCHOLAR') {
-      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Serious learning`);
-      features.push(`📝 ${planFeatures.mock_tests_weekly} mock tests weekly - Intensive practice`);
-      features.push('📁 Unlimited uploads - All your material');
-      features.push(`💡 ${planFeatures.mentor_tips_daily} mentor tips daily - Expert guidance`);
-      features.push('📊 Advanced analytics - Deep insights');
-      features.push('🔍 Concept tagging - Connect topics');
-    } else if (plan.id === 'ACHIEVER') {
-      features.push(`🚀 ${planFeatures.ai_sessions_monthly} AI sessions monthly - Heavy usage`);
-      features.push(`💡 ${planFeatures.mentor_tips_daily} mentor tips daily - Constant guidance`);
-      features.push('🏆 Unlimited mock tests - Practice freely');
-      features.push('📁 Unlimited uploads - Everything');
-      features.push('⚡ Priority support - Fast responses');
-      features.push('🎙️ Voice mode - Hands-free learning');
-      features.push('📱 Offline mode - Learn anywhere');
-    } else if (plan.id === 'LEGEND') {
-      features.push('🚀 Unlimited AI sessions - No limits');
-      features.push('💡 Unlimited mentor tips - 24×7 guidance');
-      features.push('🏆 Unlimited everything - Full access');
-      features.push('👨‍🏫 Dedicated AI mentor - Personal coach');
-      features.push('📋 Custom study plans - Tailored for you');
-      features.push('📊 Premium analytics - Deepest insights');
-      features.push('🎯 AIR single-digit training - Elite prep');
+      features.push({
+        icon: '🎯',
+        text: `${planFeatures.ai_sessions_monthly || 10} AI sessions monthly`,
+        subtext: 'Perfect for trying out'
+      });
+      features.push({
+        icon: '📝',
+        text: `${planFeatures.mock_tests_weekly || 1} mock test weekly`,
+        subtext: 'Build confidence'
+      });
+      features.push({
+        icon: '📁',
+        text: `${planFeatures.auto_note_uploads_daily || 1} file upload daily`,
+        subtext: 'Try note generation'
+      });
+      features.push({
+        icon: '📊',
+        text: 'Basic analytics',
+        subtext: 'See your progress'
+      });
+    } else if (plan.id === 'STUDENT') {
+      features.push({
+        icon: '🚀',
+        text: 'Unlimited AI Tutor sessions',
+        subtext: 'Ask anything, anytime - No limits!'
+      });
+      features.push({
+        icon: '💡',
+        text: '5 mentor tips daily',
+        subtext: 'Daily motivation & study hacks'
+      });
+      features.push({
+        icon: '📝',
+        text: '3 mock tests weekly',
+        subtext: 'Regular practice for exams'
+      });
+      features.push({
+        icon: '📁',
+        text: 'Unlimited file uploads',
+        subtext: 'Upload notes, images, PDFs'
+      });
+      features.push({
+        icon: '🎤',
+        text: 'Voice input enabled',
+        subtext: 'Ask questions hands-free'
+      });
+      features.push({
+        icon: '📊',
+        text: 'Advanced analytics',
+        subtext: 'Track progress & insights'
+      });
+      features.push({
+        icon: '🔗',
+        text: 'Concept tagging',
+        subtext: 'Connect related topics'
+      });
+      features.push({
+        icon: '💾',
+        text: 'Export notes & reports',
+        subtext: 'Save your learning'
+      });
+      features.push({
+        icon: '🇮🇳',
+        text: 'Hinglish support',
+        subtext: 'Speak naturally in Hinglish'
+      });
+    } else if (plan.id === 'PRO') {
+      features.push({
+        icon: '♾️',
+        text: 'Unlimited everything',
+        subtext: 'AI sessions, tests, uploads - All unlimited!'
+      });
+      features.push({
+        icon: '🧠',
+        text: 'Emotion-aware AI',
+        subtext: 'AI adapts to your learning mood'
+      });
+      features.push({
+        icon: '⚡',
+        text: 'Priority AI responses',
+        subtext: 'Faster answers, always first'
+      });
+      features.push({
+        icon: '🏆',
+        text: 'Unlimited mock tests',
+        subtext: 'Practice as much as you want'
+      });
+      features.push({
+        icon: '💡',
+        text: 'Unlimited mentor tips',
+        subtext: '24×7 guidance & motivation'
+      });
+      features.push({
+        icon: '📱',
+        text: 'Offline mode',
+        subtext: 'Learn without internet'
+      });
+      features.push({
+        icon: '👨‍👩‍👧',
+        text: 'Parent dashboard',
+        subtext: 'Detailed progress reports'
+      });
+      features.push({
+        icon: '🔍',
+        text: 'Advanced OCR',
+        subtext: 'Better image & document analysis'
+      });
+      features.push({
+        icon: '📊',
+        text: 'Daily personalized insights',
+        subtext: 'AI-powered study recommendations'
+      });
+      features.push({
+        icon: '🛡️',
+        text: 'Priority support',
+        subtext: 'Fastest response time'
+      });
     }
     
     return features;
@@ -175,8 +268,8 @@ export default function Subscription() {
 
   if (loading || plansLoading) {
     return (
-      <div className="p-8 bg-gray-50 min-h-screen">
-        <div className="max-w-6xl mx-auto">
+      <div className="p-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <LoadingSpinner size="lg" className="text-blue-600 mb-4" />
             <p className="text-gray-600">Loading subscription information...</p>
@@ -187,62 +280,67 @@ export default function Subscription() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
-              <Crown className="h-8 w-8 text-white" />
+    <div className="p-4 md:p-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with gradient background */}
+        <div className="text-center mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 rounded-3xl blur-3xl"></div>
+          <div className="relative">
+            <div className="flex items-center justify-center mb-6">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-2xl shadow-xl transform hover:scale-105 transition-transform">
+                <Crown className="h-10 w-10 text-white" />
+              </div>
             </div>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Choose Your Learning Plan
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Unlock your full potential with AI-powered personalized learning
-          </p>
-          
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center space-x-4 p-1 bg-gray-100 rounded-lg inline-flex">
-            <button
-              onClick={() => setBillingCycle('monthly')}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                billingCycle === 'monthly' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle('yearly')}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                billingCycle === 'yearly' 
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span className="mr-2">Yearly</span>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                Save 17%
-              </Badge>
-            </button>
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+              Choose Your Learning Plan
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-700 mb-8 font-medium">
+              Unlock your full potential with AI-powered personalized learning
+            </p>
+            
+            {/* Billing Toggle - Enhanced */}
+            <div className="flex items-center justify-center space-x-2 p-1.5 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg inline-flex border-2 border-gray-200">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-3 rounded-lg transition-all font-semibold ${
+                  billingCycle === 'monthly' 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-6 py-3 rounded-lg transition-all font-semibold flex items-center gap-2 ${
+                  billingCycle === 'yearly' 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <span>Yearly</span>
+                <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
+                  Save 17%
+                </Badge>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Current Subscription */}
+        {/* Current Subscription - Enhanced */}
         {currentSubscription && (
-          <Card className="mb-8 border-blue-200 bg-blue-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Crown className="h-6 w-6 text-blue-600 mr-3" />
+          <div className="mb-10 relative">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 shadow-xl border-4 border-white">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                    <Crown className="h-8 w-8 text-white" />
+                  </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                    <h3 className="text-2xl font-bold text-white capitalize">
                       Current Plan: {currentSubscription.plan_name || currentSubscription.plan}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-white/90 text-lg">
                       {currentSubscription.plan_details ? 
                         `₹${currentSubscription.plan_details.price_monthly}/month`
                         : 'Free Plan'
@@ -251,157 +349,261 @@ export default function Subscription() {
                   </div>
                 </div>
                 <Badge 
-                  variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
-                  className={
-                    currentSubscription.status === 'active' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-500'
-                  }
+                  className="bg-white text-blue-600 px-4 py-2 text-lg font-bold shadow-lg"
                 >
-                  {currentSubscription.status}
+                  ✓ Active
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
-        {/* Subscription Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {subscriptionPlans.map((plan, index) => (
-            <Card 
-              key={plan.name} 
-              className={`relative border-2 transition-all hover:shadow-lg ${
-                plan.popular 
-                  ? 'border-blue-500 shadow-lg' 
-                  : plan.current 
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-blue-300'
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white px-4 py-1">
-                    <Star className="h-3 w-3 mr-1" />
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  {plan.name}
-                </CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-gray-900">
-                    ₹{billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
-                  </span>
-                  {plan.price_monthly > 0 && (
-                    <span className="text-gray-600">
-                      /{billingCycle === 'yearly' ? 'year' : 'month'}
-                    </span>
-                  )}
-                </div>
-                {plan.price_yearly > 0 && billingCycle === 'yearly' && (
-                  <p className="text-sm text-green-600 mt-2">
-                    Save ₹{(plan.price_monthly * 12) - plan.price_yearly} with yearly billing
-                  </p>
+        {/* Subscription Plans - Completely Redesigned */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
+          {subscriptionPlans.map((plan, index) => {
+            const isPopular = plan.popular;
+            const isCurrent = plan.current;
+            const monthlyPrice = billingCycle === 'yearly' ? Math.round(plan.price_yearly / 12) : plan.price_monthly;
+            const yearlySavings = billingCycle === 'yearly' ? (plan.price_monthly * 12) - plan.price_yearly : 0;
+            
+            return (
+              <div
+                key={plan.name}
+                className={`relative transform transition-all duration-300 hover:scale-105 ${
+                  isPopular ? 'md:-mt-4 md:mb-4' : ''
+                }`}
+              >
+                {/* Popular Badge */}
+                {isPopular && (
+                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-full shadow-xl flex items-center gap-2 font-bold text-sm">
+                      <Star className="h-4 w-4 fill-current" />
+                      MOST POPULAR
+                    </div>
+                  </div>
                 )}
-              </CardHeader>
 
-              <CardContent className="space-y-6">
-                <ul className="space-y-3">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Plan Card */}
+                <Card 
+                  className={`h-full border-4 transition-all duration-300 ${
+                    isPopular 
+                      ? 'border-blue-500 shadow-2xl bg-gradient-to-br from-blue-50 to-purple-50' 
+                      : isCurrent 
+                        ? 'border-green-500 shadow-xl bg-green-50'
+                        : 'border-gray-200 hover:border-blue-300 shadow-lg bg-white'
+                  }`}
+                >
+                  <CardHeader className={`text-center pb-6 pt-8 ${isPopular ? 'pt-12' : ''}`}>
+                    {/* Plan Emoji & Name */}
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <span className="text-5xl">{plan.emoji || '🎓'}</span>
+                      <CardTitle className="text-3xl font-bold text-gray-900">
+                        {plan.name}
+                      </CardTitle>
+                    </div>
 
-                <div className="space-y-3">
-                  {plan.current ? (
-                    <Button disabled className="w-full py-3 bg-green-100 text-green-800">
-                      <Check className="h-4 w-4 mr-2" />
-                      Current Plan
-                    </Button>
-                  ) : (
-                    <>
-                      {plan.price_monthly > 0 && (
+                    {/* Price */}
+                    <div className="mb-4">
+                      {plan.price_monthly === 0 ? (
+                        <div className="text-5xl font-bold text-gray-900">Free</div>
+                      ) : (
                         <>
-                          <Button
-                            onClick={() => handleUpgrade(plan.tier, billingCycle)}
-                            disabled={upgrading && selectedPlan === plan.tier}
-                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {upgrading && selectedPlan === plan.tier ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Zap className="h-4 w-4" />
-                            )}
-                            Upgrade {billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}
-                          </Button>
+                          <div className="flex items-baseline justify-center gap-2">
+                            <span className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              ₹{monthlyPrice}
+                            </span>
+                            <span className="text-gray-600 text-xl">
+                              /{billingCycle === 'yearly' ? 'month' : 'month'}
+                            </span>
+                          </div>
+                          {billingCycle === 'yearly' && yearlySavings > 0 && (
+                            <div className="mt-2">
+                              <Badge className="bg-green-100 text-green-800 text-sm px-3 py-1">
+                                Save ₹{yearlySavings}/year
+                              </Badge>
+                            </div>
+                          )}
                         </>
                       )}
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    </div>
+
+                    {/* Tagline */}
+                    {plan.tagline && (
+                      <p className="text-gray-600 text-sm italic mb-6">
+                        {plan.tagline}
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="px-6 pb-8">
+                    {/* Features List */}
+                    <ul className="space-y-4 mb-8">
+                      {plan.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-start gap-3 group">
+                          <div className="flex-shrink-0 mt-1">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              isPopular 
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                                : 'bg-green-500'
+                            }`}>
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{feature.icon}</span>
+                              <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                {feature.text}
+                              </span>
+                            </div>
+                            {feature.subtext && (
+                              <p className="text-sm text-gray-500 ml-8 mt-0.5">
+                                {feature.subtext}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA Button */}
+                    <div className="mt-auto">
+                      {isCurrent ? (
+                        <Button 
+                          disabled 
+                          className="w-full py-4 bg-green-100 text-green-800 font-bold text-lg rounded-xl cursor-not-allowed"
+                        >
+                          <Check className="h-5 w-5 mr-2" />
+                          Current Plan
+                        </Button>
+                      ) : (
+                        <>
+                          {plan.price_monthly > 0 && (
+                            <Button
+                              onClick={() => handleUpgrade(plan.tier, billingCycle)}
+                              disabled={upgrading && selectedPlan === plan.tier}
+                              className={`w-full py-4 font-bold text-lg rounded-xl transition-all transform hover:scale-105 ${
+                                isPopular
+                                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl hover:shadow-2xl'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                              } disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                            >
+                              {upgrading && selectedPlan === plan.tier ? (
+                                <>
+                                  <LoadingSpinner size="sm" />
+                                  <span>Processing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="h-5 w-5" />
+                                  Upgrade {billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}
+                                  <ArrowRight className="h-5 w-5" />
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Features Comparison */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Feature Comparison</CardTitle>
+        {/* Features Comparison Table - Enhanced */}
+        <Card className="mb-12 shadow-xl border-2 border-gray-200">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+            <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-3">
+              <Target className="h-8 w-8" />
+              Feature Comparison
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b">
-                    <th className="pb-3 pr-4">Features</th>
-                    <th className="pb-3 px-4 text-center">Free</th>
-                    <th className="pb-3 px-4 text-center">Premium</th>
-                    <th className="pb-3 px-4 text-center">Pro</th>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="pb-4 pr-6 text-lg font-bold text-gray-900">Features</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-gray-700">Free</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-blue-600">Student</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-purple-600">Pro</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">Mock Tests per Week</td>
-                    <td className="py-3 px-4 text-center">2</td>
-                    <td className="py-3 px-4 text-center">3</td>
-                    <td className="py-3 px-4 text-center">Unlimited</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">AI Tutor Queries</td>
+                    <td className="py-4 px-4 text-center text-gray-600">10/month</td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="font-bold text-blue-600 flex items-center justify-center gap-1">
+                        <Infinity className="h-4 w-4" />
+                        Unlimited
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                        <Infinity className="h-4 w-4" />
+                        Unlimited + Priority
+                      </span>
+                    </td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">AI Tutor Queries</td>
-                    <td className="py-3 px-4 text-center">5/day</td>
-                    <td className="py-3 px-4 text-center">Unlimited</td>
-                    <td className="py-3 px-4 text-center">Unlimited + Emotion-Aware</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Mock Tests per Week</td>
+                    <td className="py-4 px-4 text-center text-gray-600">1</td>
+                    <td className="py-4 px-4 text-center text-blue-600 font-semibold">3</td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                        <Infinity className="h-4 w-4" />
+                        Unlimited
+                      </span>
+                    </td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">File Uploads</td>
-                    <td className="py-3 px-4 text-center">1/day</td>
-                    <td className="py-3 px-4 text-center">Unlimited</td>
-                    <td className="py-3 px-4 text-center">Unlimited + Advanced OCR</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">File Uploads</td>
+                    <td className="py-4 px-4 text-center text-gray-600">1/day</td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="font-bold text-blue-600 flex items-center justify-center gap-1">
+                        <Infinity className="h-4 w-4" />
+                        Unlimited
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                        <Infinity className="h-4 w-4" />
+                        Unlimited + OCR
+                      </span>
+                    </td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">Analytics & Progress Tracking</td>
-                    <td className="py-3 px-4 text-center">Basic</td>
-                    <td className="py-3 px-4 text-center">Advanced + Weekly Insights</td>
-                    <td className="py-3 px-4 text-center">Advanced + Daily Personalized</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Analytics & Insights</td>
+                    <td className="py-4 px-4 text-center text-gray-600">Basic</td>
+                    <td className="py-4 px-4 text-center text-blue-600 font-semibold">Advanced + Weekly</td>
+                    <td className="py-4 px-4 text-center text-purple-600 font-semibold">Deep + Daily Personalized</td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">Parent Dashboard</td>
-                    <td className="py-3 px-4 text-center">❌</td>
-                    <td className="py-3 px-4 text-center">❌</td>
-                    <td className="py-3 px-4 text-center">✅ Detailed Reports</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Voice Input</td>
+                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
+                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅</td>
+                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅ Full Sync</td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 pr-4">Priority Support</td>
-                    <td className="py-3 px-4 text-center">Community</td>
-                    <td className="py-3 px-4 text-center">✅ Priority</td>
-                    <td className="py-3 px-4 text-center">✅ Fastest Response</td>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Parent Dashboard</td>
+                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
+                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
+                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅ Detailed Reports</td>
+                  </tr>
+                  <tr className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Priority Support</td>
+                    <td className="py-4 px-4 text-center text-gray-600">Community</td>
+                    <td className="py-4 px-4 text-center text-gray-600">Standard</td>
+                    <td className="py-4 px-4 text-center text-purple-600 font-semibold">✅ Fastest Response</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-gray-900">Offline Mode</td>
+                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
+                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
+                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅</td>
                   </tr>
                 </tbody>
               </table>
@@ -409,20 +611,42 @@ export default function Subscription() {
           </CardContent>
         </Card>
 
+        {/* Trust Signals */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
+            <Shield className="h-12 w-12 text-blue-600 mx-auto mb-3" />
+            <h3 className="font-bold text-lg text-gray-900 mb-2">100% Secure</h3>
+            <p className="text-gray-600">Your payment is safe and encrypted</p>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
+            <Gift className="h-12 w-12 text-purple-600 mx-auto mb-3" />
+            <h3 className="font-bold text-lg text-gray-900 mb-2">Cancel Anytime</h3>
+            <p className="text-gray-600">No long-term commitment required</p>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
+            <TrendingUp className="h-12 w-12 text-green-600 mx-auto mb-3" />
+            <h3 className="font-bold text-lg text-gray-900 mb-2">Student Discount</h3>
+            <p className="text-gray-600">Special pricing for verified students</p>
+          </div>
+        </div>
+
         {/* Contact Support */}
-        <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            Need help choosing the right plan? Our team is here to help!
+        <div className="text-center bg-white rounded-2xl p-8 shadow-xl border-2 border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            Need help choosing the right plan?
+          </h3>
+          <p className="text-gray-600 mb-6 text-lg">
+            Our team is here to help you find the perfect plan for your learning journey!
           </p>
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 text-lg font-semibold rounded-xl hover:shadow-xl transition-all">
             Contact Support
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Razorpay Payment Modal */}
       {showPaymentModal && paymentDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
           <div className="relative w-full max-w-lg">
             {/* Close Button */}
             <button

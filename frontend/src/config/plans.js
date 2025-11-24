@@ -15,165 +15,101 @@ export const PLAN_TIERS = {
   LEGEND: 'LEGEND'
 };
 
+// V1 SIMPLIFIED PRICING - 3 Tiers Only
 export const PLANS_CONFIG = {
   FREE: {
     id: 'FREE',
-    display_name: '🆓 Free - Try Before You Commit',
+    display_name: '🆓 Free Forever',
     short_name: 'Free',
     price_monthly: 0,
     price_quarterly: 0,
     price_yearly: 0,
-    tagline: 'Explore AI learning at your own pace',
-    description: 'Get started with AI Tutor basics - 10 sessions to experience the power of AI learning',
+    tagline: 'Perfect for exploring AI learning',
+    description: 'Try Dhruv AI risk-free with daily question limits',
     emoji: '🆓',
     color: 'gray',
     features: {
-      ai_sessions_monthly: 10,
-      mentor_tips_daily: 0,
-      mock_tests_weekly: 1,
-      auto_note_uploads_daily: 1,
-      analytics_tier: 'basic',
+      ai_sessions_monthly: 10,  // 10 questions per day
+      image_uploads: true,
+      hinglish_support: true,
+      whatsapp_share: true,
+      gamification: 'basic',
       priority_support: false
     },
     highlight: false
   },
   
-  STARTER: {
-    id: 'STARTER',
-    display_name: '🟢 Starter - Begin Your AI Journey',
-    short_name: 'Starter',
+  STUDENT: {
+    id: 'STUDENT',
+    display_name: '🎓 Student Plan',
+    short_name: 'Student',
     price_monthly: 199,
-    price_quarterly: 499,
-    price_yearly: 1699,
-    tagline: 'Begin your AI journey - Student friendly',
-    description: 'Perfect for students exploring AI-powered learning without breaking the bank',
-    emoji: '🟢',
-    color: 'green',
-    features: {
-      ai_sessions_monthly: 20,
-      mentor_tips_daily: 0,
-      mock_tests_weekly: 2,
-      auto_note_uploads_daily: 3,
-      analytics_tier: 'basic',
-      priority_support: false,
-      export_notes: true
-    },
-    student_verified_price: {
-      monthly: 149,
-      quarterly: 399,
-      yearly: 1349
-    },
-    highlight: false,
-    savings: {
-      quarterly: 'Save ₹98',
-      yearly: 'Save ₹689'
-    }
-  },
-  
-  SCHOLAR: {
-    id: 'SCHOLAR',
-    display_name: '🔵 Scholar - Master Concepts with Smart Guidance',
-    short_name: 'Scholar',
-    price_monthly: 499,
-    price_quarterly: 1299,
-    price_yearly: 4499,
-    tagline: 'Master concepts with smart guidance - Most popular',
-    description: 'Ideal for serious students preparing for competitive exams like JEE, NEET, UPSC',
-    emoji: '🔵',
+    price_quarterly: 499,  // ₹166/month - Save ₹98
+    price_yearly: 1799,  // ₹150/month - Save ₹589
+    tagline: 'Most popular for regular learners',
+    description: 'Perfect for students who want unlimited AI help with homework and exam prep',
+    emoji: '🎓',
     color: 'blue',
     features: {
-      ai_sessions_monthly: 100,
-      mentor_tips_daily: 5,
-      mock_tests_weekly: 5,
+      ai_sessions_monthly: 'unlimited',
+      mock_tests_weekly: 3,
       auto_note_uploads_daily: 'unlimited',
-      analytics_tier: 'advanced',
+      mentor_tips_daily: 5,
+      image_uploads: 'unlimited',
+      hinglish_support: true,
+      whatsapp_share: true,
+      gamification: 'full',
       priority_support: false,
+      response_speed: 'standard',
+      voice_mode: 'mentor_only',
+      analytics_tier: 'advanced',
       export_notes: true,
       concept_tagging: true
-    },
-    student_verified_price: {
-      monthly: 399,
-      quarterly: 1099,
-      yearly: 3799
     },
     highlight: true,
     badge: 'MOST POPULAR',
     savings: {
-      quarterly: 'Save ₹198',
-      yearly: 'Save ₹1487'
+      quarterly: 'Save ₹98',
+      yearly: 'Save ₹589'
     }
   },
   
-  ACHIEVER: {
-    id: 'ACHIEVER',
-    display_name: '🟠 Achiever (Pro) - Your AI Mentor for Competitive Success',
-    short_name: 'Achiever',
-    price_monthly: 999,
-    price_quarterly: 2699,
-    price_yearly: 8999,
-    tagline: 'Your AI mentor for competitive success - Premium features',
-    description: 'For students committed to excellence, top percentile scores, and AIR ranks',
-    emoji: '🟠',
-    color: 'orange',
-    features: {
-      ai_sessions_monthly: 300,
-      mentor_tips_daily: 30,
-      mock_tests_weekly: 'unlimited',
-      auto_note_uploads_daily: 'unlimited',
-      analytics_tier: 'deep',
-      priority_support: true,
-      export_notes: true,
-      concept_tagging: true,
-      offline_mode: true,
-      voice_mode: true
-    },
-    student_verified_price: {
-      monthly: 799,
-      quarterly: 2199,
-      yearly: 7499
-    },
-    highlight: false,
-    savings: {
-      quarterly: 'Save ₹298',
-      yearly: 'Save ₹2992'
-    }
-  },
-  
-  LEGEND: {
-    id: 'LEGEND',
-    display_name: '🟣 Legend (Elite) - Personal AI Mentor, 24×7 Learning Lab',
-    short_name: 'Legend',
-    price_monthly: 1999,
-    price_quarterly: 5499,
-    price_yearly: 18999,
-    tagline: 'Personal AI mentor, 24×7 learning lab - Elite coaching',
-    description: 'The ultimate learning experience for top aspirants targeting AIR single-digit ranks',
-    emoji: '🟣',
+  PRO: {
+    id: 'PRO',
+    display_name: '⭐ Pro Plan',
+    short_name: 'Pro',
+    price_monthly: 299,
+    price_quarterly: 799,  // ₹267/month - Save ₹98
+    price_yearly: 2999,  // ₹250/month - Save ₹589
+    tagline: 'Unlimited everything for serious students',
+    description: 'Best for JEE, NEET, CBSE students who need unlimited AI support',
+    emoji: '⭐',
     color: 'purple',
     features: {
       ai_sessions_monthly: 'unlimited',
-      mentor_tips_daily: 'unlimited',
       mock_tests_weekly: 'unlimited',
       auto_note_uploads_daily: 'unlimited',
-      analytics_tier: 'premium',
+      mentor_tips_daily: 'unlimited',
+      image_uploads: 'unlimited',
+      hinglish_support: true,
+      whatsapp_share: true,
+      gamification: 'full',
       priority_support: true,
+      response_speed: 'priority',
+      early_access: true,
+      voice_mode: 'full_sync',
+      analytics_tier: 'deep',
       export_notes: true,
       concept_tagging: true,
       offline_mode: true,
-      voice_mode: true,
-      dedicated_mentor: true,
-      custom_study_plan: true
-    },
-    student_verified_price: {
-      monthly: 1599,
-      quarterly: 4499,
-      yearly: 15999
+      parent_dashboard: true,
+      advanced_ocr: true,
+      emotion_aware_ai: true
     },
     highlight: false,
-    badge: 'ELITE',
     savings: {
-      quarterly: 'Save ₹498',
-      yearly: 'Save ₹5003'
+      quarterly: 'Save ₹98',
+      yearly: 'Save ₹589'
     }
   }
 };
@@ -193,22 +129,20 @@ export const getPaidPlans = () => {
 };
 
 /**
- * Get featured plans for landing page (typically SCHOLAR and ACHIEVER)
+ * Get featured plans for landing page (V1 - Student and Pro)
  */
 export const getFeaturedPlans = () => {
-  return [PLANS_CONFIG.SCHOLAR, PLANS_CONFIG.ACHIEVER];
+  return [PLANS_CONFIG.STUDENT, PLANS_CONFIG.PRO];
 };
 
 /**
- * Get all plans in order
+ * Get all plans in order (V1 - 3 tiers only)
  */
 export const getAllPlans = () => {
   return [
     PLANS_CONFIG.FREE,
-    PLANS_CONFIG.STARTER,
-    PLANS_CONFIG.SCHOLAR,
-    PLANS_CONFIG.ACHIEVER,
-    PLANS_CONFIG.LEGEND
+    PLANS_CONFIG.STUDENT,
+    PLANS_CONFIG.PRO
   ];
 };
 
@@ -222,10 +156,10 @@ export const formatPrice = (price) => {
 };
 
 /**
- * Get upgrade path from current tier
+ * Get upgrade path from current tier (V1 - simplified)
  */
 export const getUpgradePath = (currentTier) => {
-  const tierOrder = ['FREE', 'STARTER', 'SCHOLAR', 'ACHIEVER', 'LEGEND'];
+  const tierOrder = ['FREE', 'STUDENT', 'PRO'];
   const currentIndex = tierOrder.indexOf(currentTier);
   
   if (currentIndex === -1 || currentIndex === tierOrder.length - 1) {
