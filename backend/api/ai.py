@@ -3,9 +3,13 @@ AI router for chat sessions, dual AI responses, guardrails, and AI-powered featu
 Now with unified subscription service for consistent access control
 Streaming support for <5s response times
 Image/Document upload support with GPT-4 Vision
+Async visual generation for non-blocking responses
 """
 import os
 import logging
+import asyncio
+import uuid
+from datetime import datetime
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile
 from sse_starlette.sse import EventSourceResponse
@@ -1065,7 +1069,19 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
             except Exception:
                 session_doc = None
         
-        # Generate neuro-symbolic response (with memory-aware context for clarifications/deep-dives)
+        # ====================================================================
+        # INTELLIGENT RESPONSE ENGINE - Adaptive response structure
+        # ====================================================================
+        from services.intelligent_response_engine import get_response_config, detect_intent as smart_detect_intent
+        
+        # Get intelligent response configuration based on question type
+        response_config = get_response_config(request.message, request.subject)
+        smart_intent = response_config["intent"]
+        render_directives = response_config["render_directives"]
+        
+        logger.info(f"🧠 Intelligent Response: intent={smart_intent}, blocks={response_config['blocks']}")
+        
+        # Legacy intent detection for backward compatibility
         from services.adaptive_response import detect_intent as _detect_intent
         _intent = _detect_intent(request.message)
         contextual_message = request.message
@@ -1298,19 +1314,128 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
                     message_history=message_history
                 )
         else:
-            # Use legacy system (default)
-            logger.info("📚 Using legacy neuro-symbolic system")
+            # Use legacy system (default) WITH MEMORY INTEGRATION
+            logger.info("📚 Using legacy neuro-symbolic system with memory integration")
+            
+            # ================================================================
+            # MEMORY INTEGRATION (Always On - No Feature Flag)
+            # ================================================================
+            memory_context = {}
+            try:
+                from services.memory_integration import MemoryIntegrationService
+                memory_service = MemoryIntegrationService(db)
+                
+                # Get enhanced context for personalization
+                memory_context = await memory_service.get_enhanced_context(
+                    user_id=user.user_id,
+                    session_id=request.session_id or f"temp_{user.user_id}",
+                    question=contextual_message,
+                    subject=detected_subject
+                )
+                
+                logger.info(f"🧠 Memory context loaded: mastery={memory_context.get('mastery_level', 0)}, "
+                           f"continuation={memory_context.get('is_continuation', False)}")
+                
+            except Exception as mem_error:
+                logger.warning(f"⚠️ Memory context retrieval failed (non-blocking): {mem_error}")
+                memory_context = {}
+            
+            # Generate AI response
             result = await ai_service.generate_neuro_symbolic_response(
                 user_id=user.user_id,
                 session_id=request.session_id or f"temp_{user.user_id}",
                 message=contextual_message,
                 subject=request.subject,
                 exam_mode=getattr(request, 'exam_mode', 'JEE'),
-                message_history=message_history
+                message_history=message_history,
+                memory_context=memory_context  # Pass memory context
             )
+            
+            # ================================================================
+            # MEMORY UPDATE PIPELINE (Post-Response)
+            # ================================================================
+            try:
+                if memory_context:
+                    # Process interaction and update memory
+                    await memory_service.process_interaction(
+                        user_id=user.user_id,
+                        session_id=request.session_id or f"temp_{user.user_id}",
+                        question=contextual_message,
+                        response=result,
+                        feedback=None,  # Feedback comes later via separate endpoint
+                        message_id=None
+                    )
+                    logger.info("💾 Memory update pipeline completed")
+            except Exception as mem_update_error:
+                logger.warning(f"⚠️ Memory update failed (non-blocking): {mem_update_error}")
         
         # Track usage
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
+        
+        # ====================================================================
+        # ASYNC VISUAL SKETCH GENERATION (PERMANENT SOLUTION)
+        # Generate visual in background, don't block main response
+        # ====================================================================
+        visual_task_id = None
+        visual_sketch_data = None
+        
+        try:
+            # Only generate visual sketch for questions that benefit from visuals
+            question_length = len(request.message.strip())
+            # CRITICAL: Generate visuals for ALL concept explanations, not just specific question types
+            # Visuals are essential for understanding - Value-First principle
+            is_visual_worthy = (
+                question_length > 10 and  # Lower threshold - even short questions benefit from visuals
+                _intent not in {"greeting"} and  # Only skip greetings
+                # Always generate for concept explanations ("explain", "what is", "define", "describe")
+                (any(keyword in request.message.lower() for keyword in ["explain", "what is", "define", "describe", "how does", "tell me about"]) or
+                 (request.subject and request.subject.strip() != ""))  # Or if subject is provided
+            )
+            
+            if is_visual_worthy:
+                # Generate unique task ID for async visual generation
+                visual_task_id = str(uuid.uuid4())
+                
+                # Get user profile for personalization
+                user_doc = await db.users.find_one({"user_id": user.user_id})
+                student_profile = {
+                    "level": user_doc.get("education_level", "class_12") if user_doc else "class_12",
+                    "interests": user_doc.get("interests", []) if user_doc else [],
+                    "locale_language": user_doc.get("language", "hi-IN") if user_doc else "hi-IN",
+                    "board": user_doc.get("board", "CBSE") if user_doc else "CBSE",
+                    "gender": user_doc.get("gender") if user_doc else None,
+                    "exam": user_doc.get("exam_type", "JEE") if user_doc else "JEE"
+                }
+                
+                # Start async visual generation task (non-blocking)
+                logger.info(f"🎨 Starting async visual generation (task_id: {visual_task_id})")
+                
+                # Store task info for polling endpoint
+                await db.visual_generation_tasks.insert_one({
+                    "task_id": visual_task_id,
+                    "user_id": user.user_id,
+                    "question": request.message,
+                    "subject": request.subject,
+                    "student_profile": student_profile,
+                    "status": "generating",
+                    "created_at": datetime.now(),
+                    "session_id": request.session_id
+                })
+                
+                # Start background task (fire and forget)
+                asyncio.create_task(
+                    _generate_visual_async(visual_task_id, request.message, student_profile, db)
+                )
+                
+                logger.info(f"✅ Visual generation task started (non-blocking)")
+            else:
+                logger.info(f"⏭️ Skipping visual sketch (question too short or not visual-worthy)")
+                
+        except Exception as e:
+            logger.error(f"⚠️ Visual task creation failed (non-critical): {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            # Don't fail the request if visual task creation fails
         
         # [JULES VISUAL ENHANCEMENT START]
         visual_metaphor = result['response'].pop('visual_metaphor', {})
@@ -1338,23 +1463,19 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
             logger.info(f"🎯 Detected intent: {_intent}")
             
             # Attach intent and rendering directives for frontend adaptivity
+            # Using new intelligent response engine directives
             try:
                 if 'response' in result:
-                    result['response']['intent'] = _intent
-                    directives = {}
-                    if _intent == 'clarification_or_followup':
-                        directives = {"skip_greeting": True, "suppress_metaphor": True, "suppress_cta": True}
-                    elif _intent == 'application_based':
-                        directives = {"prefer_application_card": True}
-                    elif _intent == 'deep_dive':
-                        directives = {"prefer_layers": True, "suppress_basic_steps": True}
-                    elif _intent == 'compare_contrast':
-                        # Visuals are not for comparing; suppress hero visual
-                        directives = {"prefer_compare_layout": True, "suppress_basic_steps": True, "suppress_metaphor": True}
-                    elif _intent == 'conceptual_explanation':
-                        directives = {"prefer_paragraph_first": True}
-                    if directives:
-                        result['response']['render_directives'] = directives
+                    result['response']['intent'] = smart_intent  # Use intelligent intent
+                    # Merge intelligent directives with legacy handling
+                    result['response']['render_directives'] = {
+                        **render_directives,  # From intelligent engine
+                        # Legacy overrides for specific intents
+                        "skip_greeting": _intent == 'clarification_or_followup',
+                        "suppress_cta": smart_intent in ['greeting', 'conversational', 'simple_fact'],
+                        "greeting_only": smart_intent == 'greeting',
+                    }
+                    logger.info(f"✅ Applied render_directives: {result['response']['render_directives']}")
             except Exception as e:
                 logger.warning(f"⚠️ Failed to set render directives: {e}")
 
@@ -1523,6 +1644,38 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
         # Add detected subject to response
         if isinstance(result, dict):
             result['detected_subject'] = detected_subject
+            
+            # ====================================================================
+            # CRITICAL FIX: Save message to session for chat history
+            # ====================================================================
+            if request.session_id:
+                try:
+                    await ai_service.save_session_message(
+                        user.user_id,
+                        request.session_id,
+                        request.message,
+                        result.get('response', result)
+                    )
+                    logger.info(f"✅ Message saved to session {request.session_id}")
+                except Exception as save_error:
+                    logger.error(f"⚠️ Failed to save message to session: {save_error}")
+            
+            # Add visual task ID for async polling (if visual is being generated)
+            if visual_task_id:
+                if 'response' not in result:
+                    result['response'] = {}
+                result['response']['visual_sketch'] = {
+                    "status": "generating",
+                    "task_id": visual_task_id,
+                    "poll_url": f"/api/ai/visual/{visual_task_id}"
+                }
+                logger.info(f"✅ Visual generation task ID added to response (async)")
+            elif visual_sketch_data:
+                # If visual was generated synchronously (fallback)
+                if 'response' not in result:
+                    result['response'] = {}
+                result['response']['visual_sketch'] = visual_sketch_data
+                logger.info(f"✅ Visual sketch added to response")
         
         return result
         # [JULES VISUAL ENHANCEMENT END]
@@ -1536,3 +1689,172 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
             status_code=500,
             detail=f"Failed to generate response: {str(e)}"
         )
+
+
+# ====================================================================
+# ASYNC VISUAL GENERATION HELPER FUNCTION
+# ====================================================================
+async def _generate_visual_async(task_id: str, question: str, student_profile: dict, db):
+    """
+    Background task to generate visual sketch asynchronously
+    Updates task status in database when complete
+    """
+    try:
+        logger.info(f"🎨 [Background] Starting visual generation for task {task_id}")
+        
+        from services.dynamic_visual_sketch import create_visual_sketch
+        
+        # Generate visual sketch with error handling
+        try:
+            visual_result = create_visual_sketch(
+                question=question,
+                student_profile=student_profile
+            )
+            
+            # Validate SVG was generated
+            svg_content = visual_result.get("svg", "")
+            if not svg_content or len(svg_content) < 100:
+                logger.warning(f"⚠️ Visual generation returned empty/invalid SVG for question: {question[:50]}")
+                logger.warning(f"⚠️ SVG length: {len(svg_content) if svg_content else 0}")
+                # Generate fallback visual
+                visual_result = _generate_fallback_visual(question)
+                logger.info(f"✅ Using fallback visual for question: {question[:50]}")
+            else:
+                logger.info(f"✅ Visual generated successfully: {len(svg_content)} chars")
+                
+        except Exception as e:
+            logger.error(f"❌ Visual generation failed: {e}", exc_info=True)
+            # Always provide a fallback - visuals are essential
+            visual_result = _generate_fallback_visual(question)
+            logger.info(f"✅ Using fallback visual due to error")
+        
+        visual_sketch_data = {
+            "svg": visual_result.get("svg", ""),
+            "metaphors": visual_result.get("metaphors_used", []),
+            "estimated_marks": visual_result.get("estimated_marks", 3),
+            "has_emotional_content": visual_result.get("has_emotional_content", True),
+            "topper_hack": visual_result.get("topper_hack"),
+            "topper_rank": visual_result.get("topper_rank"),
+            "pyq_references": visual_result.get("pyq_references", []),
+            "region": visual_result.get("region", "North")
+        }
+        
+        logger.info(f"✅ Visual generated: {len(visual_sketch_data['svg'])} chars, {len(visual_sketch_data['metaphors'])} metaphors")
+        
+        # Update task status in database
+        await db.visual_generation_tasks.update_one(
+            {"task_id": task_id},
+            {
+                "$set": {
+                    "status": "completed",
+                    "visual_data": visual_sketch_data,
+                    "completed_at": datetime.now()
+                }
+            }
+        )
+        
+        logger.info(f"✅ [Background] Visual generation completed for task {task_id}")
+        
+    except Exception as e:
+        logger.error(f"❌ [Background] Visual generation failed for task {task_id}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        # Update task status to failed
+        try:
+            await db.visual_generation_tasks.update_one(
+                {"task_id": task_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "error": str(e),
+                        "completed_at": datetime.now()
+                    }
+                }
+            )
+        except Exception:
+            pass
+
+
+def _generate_fallback_visual(question: str) -> Dict[str, Any]:
+    """
+    Generate a simple fallback visual if main generation fails
+    Ensures visuals are always available for all concepts
+    """
+    # Simple concept explanation visual
+    concept_name = question.replace("explain", "").replace("what is", "").replace("define", "").strip()[:30]
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+        <defs>
+            <style>
+                .concept-text {{ font-family: system-ui, Arial; font-size: 24px; fill: #000080; font-weight: bold; }}
+                .explanation-text {{ font-family: system-ui, Arial; font-size: 16px; fill: #138808; }}
+            </style>
+        </defs>
+        <rect x="50" y="50" width="540" height="260" fill="#FFFCEF" stroke="#000080" stroke-width="2" rx="10"/>
+        <text x="320" y="120" text-anchor="middle" class="concept-text">{concept_name}</text>
+        <text x="320" y="180" text-anchor="middle" class="explanation-text">Visual Explanation</text>
+        <text x="320" y="220" text-anchor="middle" class="explanation-text">Interactive diagram coming soon!</text>
+    </svg>'''
+    
+    return {
+        "svg": svg,
+        "metaphors_used": ["concept"],
+        "estimated_marks": 3,
+        "has_emotional_content": False,
+        "region": "North"
+    }
+
+
+# ====================================================================
+# VISUAL STATUS POLLING ENDPOINT
+# ====================================================================
+@router.get("/visual/{task_id}")
+async def get_visual_status(
+    task_id: str,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Poll endpoint for async visual generation status
+    Returns visual data when ready, or status if still generating
+    """
+    try:
+        task = await db.visual_generation_tasks.find_one({
+            "task_id": task_id,
+            "user_id": user.user_id
+        })
+        
+        if not task:
+            raise HTTPException(status_code=404, detail="Visual generation task not found")
+        
+        if task["status"] == "completed":
+            visual_data = task.get("visual_data", {})
+            return {
+                "status": "completed",
+                "visual_sketch": {
+                    "svg": visual_data.get("svg", ""),
+                    "metaphors": visual_data.get("metaphors", []),
+                    "estimated_marks": visual_data.get("estimated_marks", 3),
+                    "has_emotional_content": visual_data.get("has_emotional_content", True),
+                    "topper_hack": visual_data.get("topper_hack"),
+                    "topper_rank": visual_data.get("topper_rank"),
+                    "pyq_references": visual_data.get("pyq_references", []),
+                    "region": visual_data.get("region", "North")
+                }
+            }
+        elif task["status"] == "failed":
+            return {
+                "status": "failed",
+                "error": task.get("error", "Visual generation failed")
+            }
+        else:
+            return {
+                "status": "generating",
+                "message": "Visual is being generated, please check back in a moment"
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching visual status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch visual status: {str(e)}")

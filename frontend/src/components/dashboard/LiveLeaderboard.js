@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, TrendingUp, Crown, Medal, Award } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Crown, Medal, Award, ArrowUp, ArrowDown, Target } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
- * Live Leaderboard Component
- * Shows top 10 users with gamified rankings
+ * Live Leaderboard Component - Enhanced for Engagement
+ * Shows top 10 users with gamified rankings, rank changes, and motivational messaging
+ * Research-backed: Social comparison theory, FOMO, competition drives engagement
  */
 const LiveLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [userRank, setUserRank] = useState(null);
+  const [previousRank, setPreviousRank] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,8 +32,15 @@ const LiveLeaderboard = () => {
 
       if (response.ok) {
         const data = await response.json();
+        const newRank = data.user_rank;
+        
+        // Store previous rank for comparison
+        if (userRank !== null && newRank !== userRank) {
+          setPreviousRank(userRank);
+        }
+        
         setLeaderboard(data.leaderboard || []);
-        setUserRank(data.user_rank);
+        setUserRank(newRank);
       }
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
@@ -78,7 +87,42 @@ const LiveLeaderboard = () => {
         {userRank && (
           <div className="text-right">
             <div className="text-sm text-gray-500 dark:text-gray-400">Your rank</div>
-            <div className="text-2xl font-bold gradient-text">#{userRank}</div>
+            <div className="flex items-center justify-end space-x-2">
+              <div className="text-2xl font-bold gradient-text">#{userRank}</div>
+              {previousRank && previousRank !== userRank && (
+                <div className={`flex items-center space-x-1 px-2 py-1 rounded-lg ${
+                  userRank < previousRank 
+                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' 
+                    : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                }`}>
+                  {userRank < previousRank ? (
+                    <>
+                      <ArrowUp className="h-4 w-4" />
+                      <span className="text-xs font-semibold">+{previousRank - userRank}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown className="h-4 w-4" />
+                      <span className="text-xs font-semibold">-{userRank - previousRank}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Distance to next rank */}
+            {userRank > 1 && leaderboard.length > 0 && (
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {(() => {
+                  const userEntry = leaderboard.find(e => e.is_current_user);
+                  const nextRankEntry = leaderboard.find(e => e.rank === userRank - 1);
+                  if (userEntry && nextRankEntry) {
+                    const xpNeeded = nextRankEntry.score - userEntry.score;
+                    return xpNeeded > 0 ? `${xpNeeded} XP to rank up!` : 'Almost there!';
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -105,7 +149,7 @@ const LiveLeaderboard = () => {
                 <h4 className="font-semibold text-gray-900 dark:text-white truncate">
                   {entry.name}
                   {entry.is_current_user && (
-                    <span className="ml-2 px-2 py-0.5 bg-purple-500 text-white text-xs rounded-full">You</span>
+                    <span className="ml-2 px-2 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-full font-semibold animate-pulse">You</span>
                   )}
                   {entry.is_pseudo && (
                     <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">(Demo)</span>
@@ -113,7 +157,8 @@ const LiveLeaderboard = () => {
                 </h4>
               </div>
               <div className="flex items-center space-x-3 mt-1">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                  <Crown className="h-3 w-3 mr-1 text-yellow-500" />
                   Level {entry.level}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
@@ -143,20 +188,65 @@ const LiveLeaderboard = () => {
         </div>
       )}
 
-      {/* Motivational Footer */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 rounded-xl border border-yellow-200 dark:border-yellow-700">
-        <div className="flex items-center space-x-2 mb-2">
-          <TrendingUp className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-          <span className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">Keep Climbing!</span>
-        </div>
-        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          {userRank && userRank <= 3 
-            ? "Amazing! You're in the top 3! Keep up the fantastic work! 🎆"
+      {/* Enhanced Motivational Footer */}
+      <div className="mt-6 space-y-3">
+        {/* Rank-specific messaging */}
+        <div className={`p-4 rounded-xl border-2 ${
+          userRank && userRank <= 3
+            ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 border-yellow-300 dark:border-yellow-600'
             : userRank && userRank <= 10
-            ? "Great job! You're in the top 10! Study more to reach the podium! 🚀"
-            : "Study consistently to climb the leaderboard and earn your spot! 💪"
-          }
-        </p>
+            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 border-blue-300 dark:border-blue-600'
+            : 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 border-purple-300 dark:border-purple-600'
+        }`}>
+          <div className="flex items-center space-x-2 mb-2">
+            {userRank && userRank <= 3 ? (
+              <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            ) : userRank && userRank <= 10 ? (
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            ) : (
+              <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            )}
+            <span className={`text-sm font-semibold ${
+              userRank && userRank <= 3
+                ? 'text-yellow-900 dark:text-yellow-100'
+                : userRank && userRank <= 10
+                ? 'text-blue-900 dark:text-blue-100'
+                : 'text-purple-900 dark:text-purple-100'
+            }`}>
+              {userRank && userRank <= 3 
+                ? "🏆 Top 3 Champion!"
+                : userRank && userRank <= 10
+                ? "🚀 Top 10 Achiever!"
+                : "💪 Climb Higher!"
+              }
+            </span>
+          </div>
+          <p className={`text-sm ${
+            userRank && userRank <= 3
+              ? 'text-yellow-800 dark:text-yellow-200'
+              : userRank && userRank <= 10
+              ? 'text-blue-800 dark:text-blue-200'
+              : 'text-purple-800 dark:text-purple-200'
+          }`}>
+            {userRank && userRank <= 3 
+              ? "Amazing! You're dominating the leaderboard! Keep up the fantastic work! 🎆"
+              : userRank && userRank <= 10
+              ? `Great job! You're in the top 10! ${userRank > 3 ? `Just ${userRank - 3} spots away from the podium!` : 'Study more to reach the podium!'} 🚀`
+              : userRank && userRank <= 20
+              ? `You're rank #${userRank}! Study consistently to break into the top 10! 💪`
+              : `You're rank #${userRank}! Every question brings you closer to the top! Keep going! 🔥`
+            }
+          </p>
+        </div>
+        
+        {/* Beat your friends CTA */}
+        {userRank && userRank > 1 && (
+          <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 rounded-xl border border-green-200 dark:border-green-700">
+            <p className="text-xs text-green-800 dark:text-green-200">
+              <strong>💡 Pro Tip:</strong> Ask 3 more questions today to beat {leaderboard.find(e => e.rank === userRank - 1)?.name || 'the person above you'}! 
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

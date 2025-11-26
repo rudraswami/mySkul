@@ -1493,7 +1493,8 @@ You're making great progress by actively seeking to understand. Keep up this exc
         message: str,
         subject: str,
         exam_mode: str = "JEE",
-        message_history: List[Dict[str, Any]] = None
+        message_history: List[Dict[str, Any]] = None,
+        memory_context: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
         Generate neuro-symbolic AI Mentor response v2.0 (Progressive Disclosure)
@@ -1505,10 +1506,13 @@ You're making great progress by actively seeking to understand. Keep up this exc
             subject: Subject (Mathematics, Physics, etc.)
             exam_mode: JEE, NEET, UPSC, etc.
             message_history: Previous messages for context
+            memory_context: Enhanced context from memory system (mastery, continuity, etc.)
         
         Returns:
             Dict with progressive disclosure response structure
         """
+        # Use memory context if provided
+        memory_context = memory_context or {}
         placeholder_visual = {
             "hero_visual": {
                 "url": "https://cdn.mgxai.com/visuals/placeholder.svg",
@@ -1543,17 +1547,37 @@ You're making great progress by actively seeking to understand. Keep up this exc
             
             # Get user profile for personalization
             user_doc = await self.db.users.find_one({"user_id": user_id}) or {}
+            
+            # Extract memory-based personalization
+            memory_preferences = memory_context.get('preferences', {})
+            memory_mastery = memory_context.get('mastery_level', 0)
+            memory_bucket = memory_context.get('mastery_bucket', 'beginner')
+            is_continuation = memory_context.get('is_continuation', False)
+            user_name_from_memory = memory_context.get('user_name', '')
+            
             # [JULES VISUAL ENHANCEMENT START]
             # Defensive defaults when user record is absent during onboarding or tests
+            # Enhanced with memory system data
             student_profile = {
-                'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
+                'preferred_metaphor': memory_preferences.get('metaphor_style') or user_doc.get('preferred_metaphor', 'cricket'),
                 'region': user_doc.get('region', 'Bangalore'),
                 'engagement_level': user_doc.get('engagement_level', 'neutral'),
                 'emotional_state': user_doc.get('emotional_state', 'neutral'),
-                'visual_learner_preference': user_doc.get('visual_learner_preference', True),
+                'visual_learner_preference': memory_preferences.get('visual_learner', True) if memory_preferences else user_doc.get('visual_learner_preference', True),
                 'device_type': user_doc.get('device_type', 'mobile'),
-                'network_speed': user_doc.get('network_speed', '3G')
+                'network_speed': user_doc.get('network_speed', '3G'),
+                # Memory-enhanced fields
+                'mastery_level': memory_mastery,
+                'mastery_bucket': memory_bucket,
+                'is_continuation': is_continuation,
+                'explanation_depth': memory_preferences.get('explanation_depth', 'medium'),
+                'language_preference': memory_preferences.get('preferred_language', 'hinglish'),
+                'user_name': user_name_from_memory or (user_doc.get('full_name', '').split()[0] if user_doc.get('full_name') else '')
             }
+            
+            # Log memory context usage
+            if memory_context:
+                logger.info(f"🧠 Using memory context: mastery={memory_mastery}, continuation={is_continuation}")
             
             # Resolve visual metaphor
             visual_metaphor = self.visual_engine.resolve_visual_metaphor(

@@ -3,6 +3,7 @@ Mastery Tracking Engine
 Tracks student mastery levels (0-100) per topic with history
 """
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 

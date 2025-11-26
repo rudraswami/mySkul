@@ -1,0 +1,180 @@
+# Physics.ForceBetweenTwoObjects
+# Grammar for visualizing force interactions between objects
+# Value-First: Shows cause-effect relationship visually (force → motion)
+# Professor's POV: Camera follows teacher's hand pointing at force arrow
+# Cultural: Uses auto-rickshaw (daily object) instead of abstract block
+
+grammar_id: "physics.force_between_two_objects"
+name: "Force Between Two Objects"
+description: "Visualize force interactions with real-world Indian objects. Shows how force causes motion, with interactive sliders to test 'what if?' scenarios."
+
+subject: "physics"
+syllabus_topic:
+  - "physics.force"
+  - "physics.friction"
+  - "physics.motion"
+ncert_reference: "Class 11, Chapter 5, Page 102, Fig 5.3"
+
+# Value Proposition: Why this visual is essential
+value_proposition: "Without this visual, students struggle to understand that force is a vector (direction matters) and that friction opposes motion. The visual shows cause-effect: when force increases, acceleration increases. If removed, students memorize formulas without understanding the physics."
+
+learning_objectives:
+  - "Understand force as a vector quantity (magnitude + direction)"
+  - "Visualize how friction opposes motion"
+  - "See cause-effect: force → acceleration → motion"
+  - "Test 'what if?' scenarios interactively"
+
+# Cultural Context
+cultural_context: "Uses auto-rickshaw (seen daily in Indian cities) instead of abstract blocks. Students relate to pushing an auto-rickshaw stuck in mud. Cultural hook: 'How many Dabbawalas to push your auto?'"
+
+recommended_assets:
+  - "auto_rickshaw"
+  - "muddy_road"
+  - "dry_road"
+
+# Parameters (what can be adjusted)
+parameters:
+  - name: "object_a"
+    type: "asset"
+    tag: "movable"
+    label: "Object (Auto-rickshaw)"
+    description: "The object being pushed"
+    cultural_hint: "Auto-rickshaw weight"
+    real_world_example: "Typical auto weighs 450kg"
+    default_value: "auto_rickshaw"
+  
+  - name: "object_b"
+    type: "asset"
+    tag: "surface"
+    label: "Surface"
+    description: "The surface the object moves on"
+    default_value: "muddy_road"
+  
+  - name: "force_slider"
+    type: "variable"
+    label: "Force (N)"
+    description: "Applied force in Newtons"
+    min: 0
+    max: 1000
+    unit: "N"
+    cultural_hint: "How hard you push"
+    real_world_example: "One person pushes ~200N, two people ~400N"
+    default_value: 200
+  
+  - name: "surface_type"
+    type: "enum"
+    label: "Surface Type"
+    description: "Type of surface affects friction"
+    enum_values:
+      - "dry"
+      - "wet"
+      - "oily"
+      - "muddy"
+    default_value: "dry"
+
+# Animation Steps (with pedagogical purpose)
+animation_steps:
+  - step_id: "show_objects"
+    purpose: "build_understanding"
+    description: "Show both objects (auto-rickshaw and surface)"
+    animation_code: "show(object_a); show(object_b)"
+    duration_ms: 500
+    camera_focus: "object_a"
+    highlight_elements: ["object_a"]
+    show_arrow: false
+  
+  - step_id: "show_force"
+    purpose: "show_cause_effect"
+    description: "Show force arrow pointing from pusher to auto"
+    animation_code: "force_arrow = create_arrow(direction='right', magnitude=force_slider)"
+    duration_ms: 800
+    camera_focus: "force_arrow"
+    highlight_elements: ["force_arrow"]
+    show_arrow: true
+    arrow_from: "pusher"
+    arrow_to: "object_a.center"
+    # Zero cognitive load: Arrow appears AFTER objects are shown
+    delay_ms: 200
+  
+  - step_id: "calculate_friction"
+    purpose: "demonstrate_concept"
+    description: "Show friction force opposing motion"
+    animation_code: |
+      friction_coefficient = surface_friction_coefficient[surface_type]
+      friction_force = object_a.mass * gravity * friction_coefficient
+      friction_arrow = create_arrow(direction='left', magnitude=friction_force, color='red')
+    duration_ms: 1000
+    camera_focus: "friction_arrow"
+    highlight_elements: ["friction_arrow"]
+    show_arrow: true
+    arrow_from: "object_a.center"
+    arrow_to: "surface"
+    # Professor's POV: Point at friction arrow
+    show_pointer: true
+    pointer_style: "hand"
+  
+  - step_id: "calculate_net_force"
+    purpose: "show_cause_effect"
+    description: "Show net force (force - friction)"
+    animation_code: |
+      net_force = force_slider - friction_force
+      if net_force > 0:
+        object_a.acceleration = net_force / object_a.mass
+      else:
+        object_a.acceleration = 0
+    duration_ms: 800
+    camera_focus: "object_a"
+    highlight_elements: ["object_a", "net_force_label"]
+    # Cause-effect: Show result AFTER showing inputs
+    delay_ms: 300
+  
+  - step_id: "animate_motion"
+    purpose: "demonstrate_concept"
+    description: "Animate motion if net force > 0"
+    animation_code: |
+      if object_a.acceleration > 0:
+        object_a.velocity += object_a.acceleration * timestep
+        object_a.position += object_a.velocity * timestep
+    duration_ms: 2000
+    camera_focus: "object_a"
+    pause_for_interaction: true
+    interaction_prompt: "Agar force double ho jaaye, kya hoga?" # What if force doubles?
+    # Zero cognitive load: Only animate if motion occurs
+    skip_if_no_value: false
+
+# Interactive Elements
+interactive_elements:
+  - "force_slider"
+  - "surface_type"
+
+# What-if scenarios (pre-defined questions)
+what_if_scenarios:
+  - "Agar force double ho jaaye?" # What if force doubles?
+  - "Agar surface oily ho jaaye?" # What if surface becomes oily?
+  - "Kitne log chahiye auto ko push karne ke liye?" # How many people needed to push?
+
+# Annotations (labels, callouts)
+annotations:
+  - label: "Static Friction Limit"
+    position: "friction_force"
+    color: "red"
+    ncert_citation: "Page 102, Fig 5.3"
+    show_pointer: true
+    pointer_style: "hand"
+    required_for_understanding: true
+  
+  - label: "Net Force"
+    position: "net_force"
+    color: "green"
+    show_pointer: true
+    pointer_style: "arrow"
+    required_for_understanding: true
+
+# Professor's POV Settings
+camera_style: "teacher_demonstration"  # Camera follows teacher's hand
+pacing: "deliberate"  # Slow, like teacher explaining
+show_hand_gestures: true  # Show pointing gestures
+
+version: "1.0.0"
+
+

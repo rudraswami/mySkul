@@ -22,7 +22,8 @@ import StreakHeatmap from './StreakHeatmap';
 import AchievementBadges from './AchievementBadges';
 import RadialProgress from './RadialProgress';
 import SmartRecommendations from './SmartRecommendations';
-import LiveLeaderboard from './LiveLeaderboard';
+// V1: Leaderboard hidden - will enable in V2 with Mock Tests
+// import LiveLeaderboard from './LiveLeaderboard';
 import UsageMeter from '../UsageMeter';
 import PlanBadge from '../PlanBadge';
 
@@ -584,61 +585,168 @@ const PremiumDashboard = () => {
             {/* Achievement Badges */}
             <AchievementBadges userXP={userXP} userLevel={userLevel} />
 
-            {/* Live Leaderboard */}
-            <LiveLeaderboard />
+            {/* V1: Leaderboard Hidden - Will enable in V2 when Mock Tests are available
+                Leaderboard makes more sense with competitive content (test scores, accuracy rates)
+                For V1, focusing on personal progress and achievements */}
+            {/* <LiveLeaderboard /> */}
 
-            {/* Weekly Challenge Card */}
+            {/* Weekly Challenge Card - Enhanced */}
             <div className="glass-card rounded-2xl p-6 shadow-premium animate-fade-in">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
-                Weekly Challenge
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                  <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
+                  Weekly Challenge
+                </h3>
+                {/* Countdown Timer */}
+                <div className="text-right">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Time left</div>
+                  <div className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                    {(() => {
+                      const now = new Date();
+                      const dayOfWeek = now.getDay();
+                      const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+                      return daysUntilSunday === 7 ? 'Today!' : `${daysUntilSunday}d left`;
+                    })()}
+                  </div>
+                </div>
+              </div>
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 rounded-xl border-2 border-yellow-200 dark:border-yellow-700">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 rounded-xl border-2 border-yellow-200 dark:border-yellow-700 relative overflow-hidden">
+                  {/* Celebration overlay when completed */}
+                  {(dashboardData?.total_sessions || 0) >= 10 && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20 animate-pulse"></div>
+                  )}
+                  
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center relative z-10">
                     🎯 Complete 10 AI Sessions
                     {(dashboardData?.total_sessions || 0) >= 10 && (
-                      <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Completed!</span>
+                      <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full animate-bounce">Completed! 🎉</span>
                     )}
                   </h4>
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  
+                  {/* Milestone Indicators */}
+                  <div className="flex items-center justify-between mb-2 relative z-10">
+                    {[3, 5, 7, 10].map((milestone) => {
+                      const sessions = dashboardData?.total_sessions || 0;
+                      const reached = sessions >= milestone;
+                      return (
+                        <div key={milestone} className="flex flex-col items-center">
+                          <div className={`w-2 h-2 rounded-full ${reached ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                          <span className={`text-xs mt-1 ${reached ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-400'}`}>
+                            {milestone}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-2 relative z-10">
                     <span>Progress</span>
                     <span className="font-bold">{dashboardData?.total_sessions || 0}/10</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden relative z-10">
                     <div 
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2.5 rounded-full transition-all duration-500"
+                      className={`h-2.5 rounded-full transition-all duration-500 ${
+                        (dashboardData?.total_sessions || 0) >= 10
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                          : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                      }`}
                       style={{ width: `${Math.min(100, ((dashboardData?.total_sessions || 0) / 10) * 100)}%` }}
                     ></div>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 relative z-10">
                     {(dashboardData?.total_sessions || 0) >= 10 
-                      ? "🎉 Challenge completed! You earned 100 XP + Consistency Badge"
+                      ? "🎉 Challenge completed! You earned 100 XP + Consistency Badge. Amazing work!"
                       : `Reward: 100 XP + Consistency Badge (${Math.max(0, 10 - (dashboardData?.total_sessions || 0))} more sessions needed)`
                     }
                   </p>
+                  
+                  {/* Next milestone indicator */}
+                  {(dashboardData?.total_sessions || 0) < 10 && (
+                    <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700 relative z-10">
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                        {(() => {
+                          const sessions = dashboardData?.total_sessions || 0;
+                          const nextMilestone = [3, 5, 7, 10].find(m => m > sessions);
+                          return nextMilestone 
+                            ? `🎯 ${nextMilestone - sessions} more to reach ${nextMilestone} sessions milestone!`
+                            : '';
+                        })()}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Daily Goal Card */}
+                {/* Daily Goal Card - Enhanced with Streak */}
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl border border-blue-200 dark:border-blue-700">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                    ⭐ Daily Goal: Ask 3 Questions
-                  </h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900 dark:text-white flex items-center">
+                      ⭐ Daily Goal: Ask 3 Questions
+                    </h4>
+                    {/* Streak Multiplier */}
+                    {currentStreak > 0 && (
+                      <div className="px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full">
+                        {currentStreak >= 7 ? '3x' : currentStreak >= 3 ? '2x' : '1.5x'} XP
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Streak Counter */}
+                  {currentStreak > 0 && (
+                    <div className="mb-2 flex items-center space-x-2">
+                      <span className="text-lg">🔥</span>
+                      <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                        {currentStreak} day{currentStreak !== 1 ? 's' : ''} in a row!
+                      </span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
                     <span>Today's Progress</span>
                     <span className="font-bold">
-                      {dashboardData?.study_time_today ? '1+' : '0'}/3
+                      {(() => {
+                        // Estimate based on study_time_today - if there's activity, assume at least 1 question
+                        const hasActivity = dashboardData?.study_time_today && dashboardData.study_time_today !== "0h 0m";
+                        return hasActivity ? '1+' : '0';
+                      })()}/3
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(100, (dashboardData?.study_time_today ? 33 : 0))}%` }}
+                      style={{ width: `${Math.min(100, (dashboardData?.study_time_today && dashboardData.study_time_today !== "0h 0m" ? 33 : 0))}%` }}
                     ></div>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Keep your streak alive! Ask questions daily to earn XP.
+                    {(() => {
+                      const hasActivity = dashboardData?.study_time_today && dashboardData.study_time_today !== "0h 0m";
+                      const remaining = hasActivity ? 2 : 3;
+                      if (currentStreak >= 7) {
+                        return `Perfect week! Keep it up! ${remaining} more questions today for 3x XP bonus! 🔥`;
+                      } else if (currentStreak >= 3) {
+                        return `Great streak! ${remaining} more questions today for 2x XP bonus! 💪`;
+                      } else if (currentStreak > 0) {
+                        return `Streak alive! ${remaining} more questions today to maintain it! ⚡`;
+                      }
+                      return `Keep your streak alive! Ask ${remaining} more questions today to earn XP.`;
+                    })()}
                   </p>
+                  
+                  {/* Next reward preview */}
+                  {(() => {
+                    const hasActivity = dashboardData?.study_time_today && dashboardData.study_time_today !== "0h 0m";
+                    const questionsDone = hasActivity ? 1 : 0;
+                    if (questionsDone < 3) {
+                      return (
+                        <div className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-700">
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            💰 Complete today's goal to earn {currentStreak >= 7 ? '30' : currentStreak >= 3 ? '20' : '15'} XP bonus!
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             </div>

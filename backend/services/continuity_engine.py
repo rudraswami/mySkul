@@ -265,4 +265,52 @@ class ContinuityEngine:
             concepts.append("force")
         
         return concepts
+    
+    async def get_due_reviews(
+        self,
+        user_id: str,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Get concepts due for review (spaced repetition)
+        
+        Args:
+            user_id: Student user ID
+            limit: Max number of reviews to return
+        
+        Returns:
+            List of concepts due for review
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            
+            # Find memories with next_review_at <= now
+            due_memories = await self.db.user_memory_facts.find({
+                "user_id": user_id,
+                "is_active": True,
+                "next_review_at": {"$lte": now}
+            }).sort("next_review_at", 1).limit(limit).to_list(None)
+            
+            reviews = []
+            for memory in due_memories:
+                next_review = memory.get("next_review_at")
+                due_hours = 0
+                if next_review:
+                    due_hours = (now - next_review).total_seconds() / 3600
+                
+                reviews.append({
+                    "fact_id": memory.get("fact_id"),
+                    "topic": memory.get("topic"),
+                    "content": memory.get("content"),
+                    "due_since_hours": due_hours,
+                    "review_count": memory.get("reinforcement_count", 0),
+                    "current_interval": memory.get("review_interval_days", 1)
+                })
+            
+            logger.info(f"📅 {len(reviews)} concepts due for review")
+            return reviews
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get due reviews: {e}")
+            return []
 

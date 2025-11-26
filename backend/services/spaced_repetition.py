@@ -26,7 +26,8 @@ class SpacedRepetitionEngine:
     - Easiness factor adjusts based on recall quality
     """
     
-    def __init__(self):
+    def __init__(self, db=None):
+        self.db = db
         self.min_easiness = 1.3
         self.max_easiness = 2.5
     

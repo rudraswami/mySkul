@@ -32,9 +32,16 @@ import {
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
+import SmartResponse from './SmartResponse';
 import UpgradeModal from './UpgradeModal';
 import OnboardingTour from './OnboardingTour';
 import apiClient from '../api/client';
+
+// V1 Enhancement Components
+import VisualSketchViewer from './visual/VisualSketchViewer';
+import SubjectBadge from './visual/SubjectBadge';
+import FollowUpQuestions from './visual/FollowUpQuestions';
+import ShareButtons from './visual/ShareButtons';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -102,6 +109,79 @@ export default function AITutorNeuroSymbolic() {
 
   // Core state
   const [messages, setMessages] = useState([]);
+  
+  // Poll for async visual generation
+  const pollForVisual = async (taskId, messageId, retries = 0) => {
+    const maxRetries = 30; // 30 seconds max (1s intervals)
+    if (retries >= maxRetries) {
+      console.log('Visual generation timeout');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${BACKEND_URL}/api/ai/visual/${taskId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.status === 'completed' && data.visual_sketch) {
+          // Debug: Log visual data structure
+          console.log('🎨 Visual data received:', {
+            hasSvg: !!data.visual_sketch?.svg,
+            svgLength: data.visual_sketch?.svg?.length || 0,
+            metaphors: data.visual_sketch?.metaphors,
+            structure: Object.keys(data.visual_sketch || {})
+          });
+          
+          // Update message with visual - CRITICAL: Preserve normalized structure
+          setMessages(prev => prev.map(msg => {
+            if (msg.message_id === messageId) {
+              // Ensure content is normalized before updating
+              let normalizedContent = msg.content;
+              if (typeof normalizedContent === 'string') {
+                normalizedContent = normalizeAIContent(normalizedContent);
+              } else if (!normalizedContent || typeof normalizedContent !== 'object' || Array.isArray(normalizedContent)) {
+                normalizedContent = normalizeAIContent(normalizedContent);
+              }
+              
+              // Ensure visual_sketch has proper structure
+              const visualSketch = data.visual_sketch?.svg 
+                ? data.visual_sketch  // Already has svg property
+                : { svg: data.visual_sketch?.svg || '', ...data.visual_sketch }; // Ensure svg property exists
+              
+              return {
+                ...msg,
+                content: {
+                  ...normalizedContent,
+                  visual_sketch: visualSketch
+                },
+                visual_sketch: visualSketch
+              };
+            }
+            return msg;
+          }));
+          console.log('✅ Visual loaded successfully');
+        } else if (data.status === 'generating') {
+          // Continue polling
+          setTimeout(() => pollForVisual(taskId, messageId, retries + 1), 1000);
+        } else if (data.status === 'failed') {
+          console.log('Visual generation failed:', data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error polling for visual:', error);
+      // Retry on error
+      if (retries < maxRetries) {
+        setTimeout(() => pollForVisual(taskId, messageId, retries + 1), 1000);
+      }
+    }
+  };
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentSession, setCurrentSession] = useState(null);
@@ -361,11 +441,14 @@ export default function AITutorNeuroSymbolic() {
     setShowWelcome(false);
 
     // Add user message optimistically
+    // FIXED: Ensure content is always a plain string
     const userMsg = {
       type: 'user',
-      content: messageToSend,
+      content: String(messageToSend), // Ensure it's always a string
       timestamp: new Date().toISOString(),
-      id: Date.now() + Math.random()
+      id: `user_${Date.now()}_${Math.random()}`,
+      // Store image preview separately for display (not in content)
+      image_preview: imagePreview || null
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -426,60 +509,227 @@ export default function AITutorNeuroSymbolic() {
         requestBody.image_context = 'CRITICAL: Student uploaded image. Analyze it carefully and answer based on actual content.';
       }
       
-      // Call neuro-symbolic endpoint
-      const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+      // ====================================================================
+      // STREAMING RESPONSE (Real-time token display like ChatGPT)
+      // ====================================================================
+      const USE_STREAMING = true; // Feature flag for streaming
+      
+      let data;
+      let streamingHandledFlag = false; // Track if streaming handled the message
+      
+      if (USE_STREAMING) {
+        // Create placeholder AI message for streaming
+        const streamingMsgId = `ai_${Date.now()}_${Math.random()}`;
+        const streamingAiMsg = {
+          type: 'ai',
+          content: {
+            default_view: {
+              greeting: '',
+              main_content: { content: '' },
+              metaphor: { text: '' }
+            },
+            progressive_sections: {},
+            streaming: true
+          },
+          timestamp: new Date().toISOString(),
+          message_id: streamingMsgId,
+          user_question: messageToSend,
+          isStreaming: true
+        };
+        
+        setMessages(prev => [...prev, streamingAiMsg]);
+        
+        try {
+          // Use streaming endpoint
+          const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic/stream`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let accumulatedText = '';
+          let finalResponse = null;
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const eventData = JSON.parse(line.slice(6));
+                  
+                  if (eventData.type === 'text_chunk' && eventData.content) {
+                    accumulatedText += eventData.content;
+                    // Update message with accumulated text
+                    setMessages(prev => prev.map(msg => 
+                      msg.message_id === streamingMsgId 
+                        ? {
+                            ...msg,
+                            content: {
+                              ...msg.content,
+                              default_view: {
+                                ...msg.content.default_view,
+                                main_content: { content: accumulatedText }
+                              }
+                            }
+                          }
+                        : msg
+                    ));
+                  } else if (eventData.type === 'complete' && eventData.data) {
+                    finalResponse = eventData.data;
+                  } else if (eventData.type === 'visual_fallback' && eventData.svg) {
+                    // Update with visual
+                    setMessages(prev => prev.map(msg => 
+                      msg.message_id === streamingMsgId 
+                        ? {
+                            ...msg,
+                            visual_sketch: { svg: eventData.svg }
+                          }
+                        : msg
+                    ));
+                  }
+                } catch (e) {
+                  // Ignore parse errors for incomplete chunks
+                }
+              }
+            }
+          }
+          
+          // Finalize with complete response
+          if (finalResponse) {
+            data = { response: finalResponse, detected_subject: finalResponse.detected_subject };
+            streamingHandledFlag = true; // Mark as handled
+            // Update final message
+            setMessages(prev => prev.map(msg => 
+              msg.message_id === streamingMsgId 
+                ? {
+                    ...msg,
+                    content: normalizeAIContent(finalResponse),
+                    isStreaming: false,
+                    user_question: messageToSend
+                  }
+                : msg
+            ));
+          } else if (accumulatedText.length > 0) {
+            // Fallback - use accumulated text
+            data = { 
+              response: { 
+                default_view: { 
+                  main_content: { content: accumulatedText },
+                  greeting: '',
+                  metaphor: { text: '' }
+                },
+                progressive_sections: {}
+              } 
+            };
+            streamingHandledFlag = true; // Mark as handled
+            setMessages(prev => prev.map(msg => 
+              msg.message_id === streamingMsgId 
+                ? { 
+                    ...msg, 
+                    isStreaming: false,
+                    user_question: messageToSend
+                  }
+                : msg
+            ));
+          }
+          
+        } catch (streamError) {
+          console.warn('⚠️ Streaming failed, falling back to regular endpoint:', streamError);
+          // Remove streaming message
+          setMessages(prev => prev.filter(msg => msg.message_id !== streamingMsgId));
+          // Fall through to regular endpoint
+        }
+      }
+      
+      // Fallback to non-streaming endpoint if streaming failed or disabled
+      if (!data) {
+        const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify(requestBody)
-      });
+        });
 
-      if (!response.ok) {
-        if (response.status === 402) {
-          const errorData = await response.json();
-          setUpgradeModalData(errorData.detail);
-          setShowUpgradeModal(true);
-          // Remove optimistic user message
-          setMessages(prev => prev.filter(m => m.id !== userMsg.id));
-          return;
+        if (!response.ok) {
+          if (response.status === 402) {
+            const errorData = await response.json();
+            setUpgradeModalData(errorData.detail);
+            setShowUpgradeModal(true);
+            // Remove optimistic user message
+            setMessages(prev => prev.filter(m => m.id !== userMsg.id));
+            return;
+          }
+          
+          // Better error messages
+          let errorMessage = 'Oops! Something went wrong. Please try again.';
+          if (response.status === 429) {
+            errorMessage = 'Whoa! You\'re asking too many questions too fast. Take a short break and try again in a minute! ⏱️';
+          } else if (response.status === 500) {
+            errorMessage = 'Our AI brain is taking a quick break. Please try asking again! 🧠';
+          } else if (response.status === 503) {
+            errorMessage = 'We\'re experiencing high demand right now. Please try again in a few seconds! 🚀';
+          }
+          
+          throw new Error(errorMessage);
         }
-        
-        // Better error messages
-        let errorMessage = 'Oops! Something went wrong. Please try again.';
-        if (response.status === 429) {
-          errorMessage = 'Whoa! You\'re asking too many questions too fast. Take a short break and try again in a minute! ⏱️';
-        } else if (response.status === 500) {
-          errorMessage = 'Our AI brain is taking a quick break. Please try asking again! 🧠';
-        } else if (response.status === 503) {
-          errorMessage = 'We\'re experiencing high demand right now. Please try again in a few seconds! 🚀';
-        }
-        
-        throw new Error(errorMessage);
+
+        data = await response.json();
       }
 
-      const data = await response.json();
-
-      // Debug: Log full response to check for teaching_visual
+      // Debug: Log full response to check for teaching_visual and visual_sketch
       console.log('🎨 FULL API RESPONSE:', data);
       console.log('🎨 Teaching Visual:', data.response?.teaching_visual);
       console.log('🎨 Visual Data:', data.response?.visual_data);
+      console.log('🎨 Visual Sketch:', data.response?.visual_sketch);
 
-      // Add AI response
-      const aiMsg = {
-        type: 'ai',
-        content: data.response,
-        timestamp: new Date().toISOString(),
-        message_id: data.message_id,
-        emotion_detected: data.emotion_detected,
-        generation_time: data.generation_time,
-        // CRITICAL: Extract teaching_visual from response
-        teaching_visual: data.response?.teaching_visual || null,
-        visual_data: data.response?.visual_data || null
-      };
+      // Skip creating new AI message if streaming already handled it
+      if (!streamingHandledFlag) {
+        // Add AI response - CRITICAL: Normalize content to ensure proper structure
+        const normalizedResponse = normalizeAIContent(data.response);
+        const aiMsg = {
+          type: 'ai',
+          content: {
+            ...normalizedResponse,
+            detected_subject: data.detected_subject || normalizedResponse?.detected_subject || data.response?.detected_subject,
+            // Include visual_sketch in content for easy access
+            visual_sketch: data.response?.visual_sketch || normalizedResponse?.visual_sketch || null
+          },
+          timestamp: new Date().toISOString(),
+          message_id: data.message_id,
+          emotion_detected: data.emotion_detected,
+          generation_time: data.generation_time,
+          // CRITICAL: Extract teaching_visual and visual_sketch from response
+          teaching_visual: data.response?.teaching_visual || normalizedResponse?.teaching_visual || null,
+          visual_data: data.response?.visual_data || normalizedResponse?.visual_data || null,
+          visual_sketch: data.response?.visual_sketch || normalizedResponse?.visual_sketch || null,
+          visual_task_id: data.response?.visual_task_id || data.response?.visual_sketch?.task_id || null,
+          // NEW: Store user question for Interactive Visual Engine
+          user_question: messageToSend
+        };
 
-      setMessages(prev => [...prev, aiMsg]);
+        setMessages(prev => [...prev, aiMsg]);
+        
+        // If visual is being generated async, poll for it
+        if (aiMsg.visual_task_id) {
+          pollForVisual(aiMsg.visual_task_id, aiMsg.message_id);
+        }
+      }
 
       // Track usage
       await trackFeatureUsage('ai_mentor');
@@ -569,6 +819,81 @@ export default function AITutorNeuroSymbolic() {
     loadSessions();
   };
 
+  // Helper function to normalize AI message content
+  const normalizeAIContent = (content) => {
+    // If content is already a proper object with default_view, return as is
+    if (typeof content === 'object' && content !== null && !Array.isArray(content) && content.default_view) {
+      return content;
+    }
+    
+    // If content is a string, wrap it in proper structure
+    if (typeof content === 'string') {
+      return {
+        default_view: {
+          greeting: content.substring(0, 100),
+          main_content: {
+            content: content
+          }
+        },
+        progressive_sections: {}
+      };
+    }
+    
+    // If content is an object but missing default_view, try to extract meaningful data
+    if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
+      // Check if it has any response-like structure
+      if (content.explanation || content.answer || content.response) {
+        return {
+          default_view: {
+            greeting: content.greeting || 'Here\'s the explanation:',
+            main_content: {
+              content: content.explanation || content.answer || content.response || JSON.stringify(content)
+            }
+          },
+          progressive_sections: {},
+          detected_subject: content.detected_subject || content.subject
+        };
+      }
+      
+      // If it's an object with visual_sketch but no default_view, wrap it
+      if (content.visual_sketch) {
+        return {
+          default_view: {
+            greeting: 'Visual explanation',
+            main_content: {
+              content: content.explanation || content.answer || 'Visual explanation provided'
+            }
+          },
+          progressive_sections: {},
+          visual_sketch: content.visual_sketch,
+          detected_subject: content.detected_subject || content.subject
+        };
+      }
+      
+      // Last resort: wrap the entire object
+      return {
+        default_view: {
+          greeting: 'Response',
+          main_content: {
+            content: JSON.stringify(content)
+          }
+        },
+        progressive_sections: {}
+      };
+    }
+    
+    // Fallback for any other type
+    return {
+      default_view: {
+        greeting: 'Response',
+        main_content: {
+          content: String(content || 'No content available')
+        }
+      },
+      progressive_sections: {}
+    };
+  };
+
   // Load session
   const loadSession = async (sessionId) => {
     try {
@@ -585,14 +910,33 @@ export default function AITutorNeuroSymbolic() {
           if (msg.user_message) {
             const uid = (msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${Math.random()}`);
             if (!ids.has(uid)) {
-              parsed.push({ type: 'user', content: msg.user_message, timestamp: msg.timestamp || new Date().toISOString(), message_id: uid });
+              // Ensure user content is always a string
+              const userContent = typeof msg.user_message === 'string' 
+                ? msg.user_message 
+                : (msg.user_message?.message || String(msg.user_message));
+              parsed.push({ 
+                type: 'user', 
+                content: userContent, 
+                timestamp: msg.timestamp || new Date().toISOString(), 
+                message_id: uid 
+              });
               ids.add(uid);
             }
             const aiPayload = msg.dual_response || msg.response || msg.ai_response;
             if (aiPayload) {
               const aid = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
               if (!ids.has(aid)) {
-                parsed.push({ type: 'ai', content: aiPayload, timestamp: msg.timestamp || new Date().toISOString(), message_id: aid });
+                // CRITICAL: Normalize AI content to ensure it's always a proper object
+                parsed.push({ 
+                  type: 'ai', 
+                  content: normalizeAIContent(aiPayload), 
+                  timestamp: msg.timestamp || new Date().toISOString(), 
+                  message_id: aid,
+                  // Preserve additional fields
+                  teaching_visual: msg.teaching_visual || aiPayload?.teaching_visual,
+                  visual_data: msg.visual_data || aiPayload?.visual_data,
+                  visual_sketch: msg.visual_sketch || aiPayload?.visual_sketch
+                });
                 ids.add(aid);
               }
             }
@@ -600,14 +944,33 @@ export default function AITutorNeuroSymbolic() {
             // Separate user message
             const uid = msg.message_id || `user_${Date.now()}_${Math.random()}`;
             if (!ids.has(uid)) {
-              parsed.push({ type: 'user', content: msg.message, timestamp: msg.timestamp || new Date().toISOString(), message_id: uid });
+              const userContent = typeof msg.message === 'string' 
+                ? msg.message 
+                : String(msg.message);
+              parsed.push({ 
+                type: 'user', 
+                content: userContent, 
+                timestamp: msg.timestamp || new Date().toISOString(), 
+                message_id: uid 
+              });
               ids.add(uid);
             }
           } else if (msg.response || msg.ai_response) {
             // Separate AI response
             const aid = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
             if (!ids.has(aid)) {
-              parsed.push({ type: 'ai', content: msg.response || msg.ai_response, timestamp: msg.timestamp || new Date().toISOString(), message_id: aid });
+              const aiPayload = msg.response || msg.ai_response;
+              // CRITICAL: Normalize AI content to ensure it's always a proper object
+              parsed.push({ 
+                type: 'ai', 
+                content: normalizeAIContent(aiPayload), 
+                timestamp: msg.timestamp || new Date().toISOString(), 
+                message_id: aid,
+                // Preserve additional fields
+                teaching_visual: msg.teaching_visual || aiPayload?.teaching_visual,
+                visual_data: msg.visual_data || aiPayload?.visual_data,
+                visual_sketch: msg.visual_sketch || aiPayload?.visual_sketch
+              });
               ids.add(aid);
             }
           }
@@ -1262,7 +1625,31 @@ export default function AITutorNeuroSymbolic() {
                             className="leading-loose font-medium"
                             style={{ fontSize: '17px', lineHeight: '1.7' }}
                           >
-                            {message.content}
+                            {/* FIXED: Extract ONLY the user's actual question text */}
+                            {(() => {
+                              // If it's already a string, use it directly
+                              if (typeof message.content === 'string') {
+                                return message.content;
+                              }
+                              // If it's an object, try to extract the original question
+                              if (typeof message.content === 'object' && message.content !== null) {
+                                // Check for common question fields
+                                const question = message.content.message || 
+                                                 message.content.text || 
+                                                 message.content.query ||
+                                                 message.content.question ||
+                                                 message.content.user_message;
+                                if (question && typeof question === 'string') {
+                                  return question;
+                                }
+                                // If default_view exists, it's likely an AI response - extract greeting
+                                if (message.content.default_view?.greeting) {
+                                  return message.content.default_view.greeting;
+                                }
+                              }
+                              // Last resort - return empty or placeholder
+                              return message.user_question || 'Question';
+                            })()}
                           </p>
                           <p className="text-xs text-purple-100 mt-3 font-medium">
                             {new Date(message.timestamp).toLocaleTimeString([], {
@@ -1304,45 +1691,108 @@ export default function AITutorNeuroSymbolic() {
                                 })}</span>
                                 {message.generation_time && (
                                   <span className="text-green-600 font-semibold">
-                                    • {message.generation_time.toFixed(1)}s
+                                    • {(() => {
+                                      const gt = message.generation_time;
+                                      if (typeof gt === 'number') {
+                                        return gt.toFixed(1) + 's';
+                                      } else if (typeof gt === 'string') {
+                                        return gt;
+                                      } else if (gt && typeof gt === 'object') {
+                                        // Extract numeric value from object if possible
+                                        const numVal = gt.value || gt.time || gt.duration || gt;
+                                        if (typeof numVal === 'number') {
+                                          return numVal.toFixed(1) + 's';
+                                        }
+                                        return '2.5s'; // Fallback
+                                      }
+                                      return '2.5s'; // Default fallback
+                                    })()}
                                   </span>
                                 )}
                               </p>
                             </div>
                           </motion.div>
                           
-                          <MentorResponseV2 
-                            response={{
-                              ...message.content,
-                              // CRITICAL: Pass teaching_visual and visual_data from message
-                              teaching_visual: message.teaching_visual || message.content?.teaching_visual,
-                              visual_data: message.visual_data || message.content?.visual_data
-                            }}
-                            onInteraction={(action, data) => {
-                              console.log('User interaction:', action, data);
-                              
-                              // Handle follow-up question suggestions
-                              if (action === 'followup') {
-                                const followUpMap = {
-                                  'practice': 'Give me a practice problem on this',
-                                  'example': 'Show me more examples',
-                                  'application': 'Where is this used in real life?',
-                                  'related': 'What other concepts are related to this?'
-                                };
-                                const followUpQuestion = followUpMap[data];
-                                if (followUpQuestion) {
-                                  setInputMessage(followUpQuestion);
-                                  inputRef.current?.focus();
+                          {/* UNIFIED RESPONSE CONTAINER - Permanent Solution */}
+                          <div className="unified-response-container bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-purple-100 dark:border-purple-900">
+                            {/* Subject Badge - Top */}
+                            {message.content?.detected_subject && (
+                              <div className="mb-4">
+                                <SubjectBadge subject={message.content.detected_subject} />
+                              </div>
+                            )}
+                            
+                            {/* Main Response - SMART ADAPTIVE RESPONSE (Like ChatGPT/Gemini) */}
+                            <SmartResponse 
+                              response={(() => {
+                                // Content should already be normalized, but add safety check
+                                let contentObj = message.content;
+                                
+                                // Double-check: if somehow content is still a string, normalize it
+                                if (typeof contentObj === 'string') {
+                                  contentObj = normalizeAIContent(contentObj);
                                 }
-                              }
-                              
-                              // Track feedback
-                              if (action === 'feedback_positive' || action === 'feedback_negative') {
-                                // TODO: Send to analytics
-                                console.log('Feedback:', action);
-                              }
-                            }}
-                          />
+                                
+                                // Ensure contentObj is a valid object
+                                if (typeof contentObj !== 'object' || contentObj === null || Array.isArray(contentObj)) {
+                                  contentObj = normalizeAIContent(contentObj);
+                                }
+                                
+                                // Ensure default_view exists
+                                if (!contentObj.default_view) {
+                                  contentObj = normalizeAIContent(contentObj);
+                                }
+                                
+                                // Return response object with all necessary fields
+                                return {
+                                  ...contentObj,
+                                  teaching_visual: message.teaching_visual || contentObj?.teaching_visual,
+                                  visual_data: message.visual_data || contentObj?.visual_data,
+                                  detected_subject: contentObj?.detected_subject || message.content?.detected_subject,
+                                  visual_sketch: message.content?.visual_sketch || message.visual_sketch
+                                };
+                              })()}
+                              visualSketch={message.content?.visual_sketch || message.visual_sketch}
+                              question={message.user_question || ''}
+                              onFollowUp={(question) => {
+                                if (question) {
+                                  setInputMessage(question);
+                                  inputRef.current?.focus();
+                                  setTimeout(() => handleSend(), 100);
+                                }
+                              }}
+                              onInteraction={(action, data) => {
+                                console.log('User interaction:', action, data);
+                                
+                                // Handle share actions
+                                if (action === 'share_whatsapp' || action === 'share_visual') {
+                                  if (data?.text) {
+                                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(data.text)}`;
+                                    window.open(whatsappUrl, '_blank');
+                                    toastSuccess('Shared on WhatsApp!');
+                                  }
+                                }
+                                
+                                // Track feedback
+                                if (action === 'feedback_positive' || action === 'feedback_negative') {
+                                  console.log('Feedback:', action);
+                                  toastSuccess(action === 'feedback_positive' ? 'Thanks for your feedback! 🙌' : 'We\'ll improve! 💪');
+                                }
+                              }}
+                            />
+                            
+                            {/* Loading state for async visual generation */}
+                            {message.visual_task_id && !(message.content?.visual_sketch?.svg || message.visual_sketch?.svg) && (
+                              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900 rounded-xl border border-purple-200 dark:border-purple-700">
+                                <div className="flex items-center space-x-3">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                                  <span className="text-sm text-purple-700 dark:text-purple-300">
+                                    🎨 Generating interactive visual explanation...
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1350,7 +1800,11 @@ export default function AITutorNeuroSymbolic() {
                     {message.type === 'error' && (
                       <div className="flex justify-center">
                         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-6 py-4 max-w-2xl">
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm">
+                            {typeof message.content === 'string' 
+                              ? message.content 
+                              : (message.content?.message || String(message.content || 'An error occurred'))}
+                          </p>
                         </div>
                       </div>
                     )}

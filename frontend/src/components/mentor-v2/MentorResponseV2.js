@@ -1,6 +1,7 @@
 /**
  * Mentor Response Component v2.0 - Progressive Disclosure
  * Default view + interactive reveal system
+ * GEMINI PRO STYLE: Visuals integrated within explanation flow
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,8 +32,9 @@ import TeachingVisualPlayer from '../TeachingVisualPlayer';
 import TipCard from '../teaching/blocks/TipCard';
 import { MarkdownParagraph } from '../../utils/markdownRenderer';
 import ComparisonTable from '../ComparisonTable';
+import VisualSketchViewer from '../visual/VisualSketchViewer';
 
-export default function MentorResponseV2({ response, onInteraction }) {
+export default function MentorResponseV2({ response, onInteraction, visualSketch, question = '' }) {
   const [revealedSections, setRevealedSections] = useState(new Set());
   const [imageLoadError, setImageLoadError] = useState({});
   const [visualDebugInfo, setVisualDebugInfo] = useState({});
@@ -421,48 +423,131 @@ export default function MentorResponseV2({ response, onInteraction }) {
         {response.format_type !== 'comparison' && (
           <>
         
-        {/* Metaphor Card */}
+        {/* ENHANCED STRUCTURED RESPONSE - Issue 4 Fix */}
         {!suppressMainContent && (
         <div className="space-y-6 mb-6">
           
-          {/* Metaphor + Main Content flow together naturally */}
-          <div className="space-y-5">
-            
-            {/* Metaphor text - inline, no separate card */}
-            {!suppressMetaphor && default_view.metaphor?.text && (
-              <MarkdownParagraph 
-                className="text-gray-900 font-medium leading-loose" 
-                style={{ fontSize: '18px', lineHeight: '1.9' }}
-              >
-                {default_view.metaphor?.text}
-              </MarkdownParagraph>
-            )}
-            
-            {/* Main Content - flows naturally */}
-            {default_view.main_content?.content && (
-              <>
+          {/* Quick Answer Card - Highlighted */}
+          {default_view.main_content?.content && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl p-5 border-2 border-blue-200 dark:border-blue-700 shadow-sm">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-blue-500 rounded-lg">
+                  <Lightbulb className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-lg">💡 Quick Answer</h3>
+                  <MarkdownParagraph 
+                    className="text-gray-800 dark:text-gray-200 leading-relaxed font-medium" 
+                    style={{ fontSize: '17px', lineHeight: '1.8' }}
+                  >
+                    {default_view.main_content.content.split('\n\n')[0].substring(0, 300)}
+                    {default_view.main_content.content.split('\n\n')[0].length > 300 ? '...' : ''}
+                  </MarkdownParagraph>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Detailed Explanation - Structured with Integrated Visuals (Gemini Pro Style) */}
+          {default_view.main_content?.content && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="flex items-start space-x-3 mb-4">
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">📚 Detailed Explanation</h3>
+              </div>
+              <div className="space-y-6">
                 {default_view.main_content.content.split('\n\n').map((paragraph, idx) => {
                   // Skip if too similar to metaphor (avoid repetition)
                   const isDuplicate = default_view.metaphor?.text && 
                     paragraph.toLowerCase().trim().substring(0, 50) === 
                     default_view.metaphor.text.toLowerCase().trim().substring(0, 50);
                   
-                  if (isDuplicate) return null;
+                  if (isDuplicate || idx === 0) return null; // Skip first paragraph (already in quick answer)
+                  
+                  // Check if paragraph contains key points (bullets)
+                  const hasBullets = paragraph.includes('•') || paragraph.includes('-') || paragraph.match(/^\d+\./);
+                  
+                  // GEMINI PRO STYLE: Embed visual after first meaningful paragraph (idx === 1)
+                  const shouldShowVisual = idx === 1 && (visualSketch?.svg || response?.visual_sketch?.svg);
                   
                   return (
-                    <MarkdownParagraph 
-                      key={idx} 
-                      className="text-gray-900 leading-loose" 
-                      style={{ fontSize: '18px', lineHeight: '1.9' }}
-                    >
-                      {paragraph}
-                    </MarkdownParagraph>
+                    <React.Fragment key={idx}>
+                      <div className={hasBullets ? 'bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4' : ''}>
+                        <MarkdownParagraph 
+                          className="text-gray-800 dark:text-gray-200 leading-relaxed" 
+                          style={{ fontSize: '16px', lineHeight: '1.75' }}
+                        >
+                          {paragraph}
+                        </MarkdownParagraph>
+                      </div>
+                      
+                      {/* GEMINI PRO STYLE: Visual embedded contextually within explanation */}
+                      {shouldShowVisual && (
+                        <VisualSketchViewer
+                          svg={visualSketch?.svg || response?.visual_sketch?.svg}
+                          metaphors={visualSketch?.metaphors || response?.visual_sketch?.metaphors || []}
+                          estimatedMarks={visualSketch?.estimated_marks || response?.visual_sketch?.estimated_marks}
+                          question={question} // Pass question for Interactive Visual Engine
+                          embedded={true} // Embedded mode: compact, click-to-expand
+                          onClose={null} // Don't show close button when embedded
+                          onShare={() => {
+                            if (onInteraction) {
+                              onInteraction('share_visual', {
+                                svg: visualSketch?.svg || response?.visual_sketch?.svg
+                              });
+                            }
+                          }}
+                        />
+                      )}
+                    </React.Fragment>
                   );
                 })}
-              </>
-            )}
-            
-          </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Indian Example Card - Highlighted */}
+          {default_view.indian_example && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 rounded-xl p-5 border-2 border-green-200 dark:border-green-700 shadow-sm">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-green-500 rounded-lg">
+                  <span className="text-xl">🇮🇳</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-lg">Real-World Example</h3>
+                  <MarkdownParagraph 
+                    className="text-gray-800 dark:text-gray-200 leading-relaxed" 
+                    style={{ fontSize: '16px', lineHeight: '1.75' }}
+                  >
+                    {default_view.indian_example}
+                  </MarkdownParagraph>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Memory Hook Card - Metaphor */}
+          {!suppressMetaphor && default_view.metaphor?.text && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-xl p-5 border-2 border-purple-200 dark:border-purple-700 shadow-sm">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <Target className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-lg">🎯 Memory Hook</h3>
+                  <MarkdownParagraph 
+                    className="text-gray-800 dark:text-gray-200 leading-relaxed font-medium" 
+                    style={{ fontSize: '16px', lineHeight: '1.75' }}
+                  >
+                    {default_view.metaphor?.text}
+                  </MarkdownParagraph>
+                </div>
+              </div>
+            </div>
+          )}
+          
         </div>
         )}
 
@@ -505,27 +590,90 @@ export default function MentorResponseV2({ response, onInteraction }) {
           </div>
         )}
         
-        {/* Professor Badge */}
+        {/* Key Takeaways - Structured Card */}
+        {progressive_sections?.key_takeaways && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 rounded-xl p-5 border-2 border-yellow-200 dark:border-yellow-700 shadow-sm mt-6">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-yellow-500 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 dark:text-white mb-3 text-lg">✅ Key Takeaways</h3>
+                <ul className="space-y-2">
+                  {Array.isArray(progressive_sections.key_takeaways) ? (
+                    progressive_sections.key_takeaways.map((takeaway, idx) => (
+                      <li key={idx} className="flex items-start space-x-2 text-gray-800 dark:text-gray-200">
+                        <span className="text-yellow-600 dark:text-yellow-400 mt-1">•</span>
+                        <span style={{ fontSize: '15px', lineHeight: '1.7' }}>{takeaway}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-gray-800 dark:text-gray-200" style={{ fontSize: '15px', lineHeight: '1.7' }}>
+                      {progressive_sections.key_takeaways}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Practice Problem - Interactive Card */}
+        {progressive_sections?.practice_problem && (
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900 dark:to-cyan-900 rounded-xl p-5 border-2 border-blue-200 dark:border-blue-700 shadow-sm mt-6">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 dark:text-white mb-3 text-lg">📝 Try This Practice Problem</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <MarkdownParagraph 
+                    className="text-gray-800 dark:text-gray-200 leading-relaxed" 
+                    style={{ fontSize: '15px', lineHeight: '1.75' }}
+                  >
+                    {progressive_sections.practice_problem}
+                  </MarkdownParagraph>
+                </div>
+                <button
+                  onClick={() => onInteraction && onInteraction('practice', 'solve')}
+                  className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                >
+                  Solve This Problem →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Professor Badge - Enhanced */}
         {default_view.professor_badge && (
-          <div className="flex items-center justify-between bg-green-50 rounded-lg p-3 border border-green-200">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 rounded-xl p-4 border-2 border-green-200 dark:border-green-700 shadow-sm mt-6">
+            <div className="flex items-center gap-3">
               {default_view.professor_badge.badge_visual && !imageLoadError['professor_badge'] ? (
                 <img
                   src={default_view.professor_badge.badge_visual}
                   alt="Professor Verified"
-                  className="w-6 h-6"
+                  className="w-8 h-8"
                   onError={() => handleImageError('professor_badge')}
                 />
               ) : (
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-6 h-6 text-green-600" />
               )}
-              <span className="text-sm font-medium text-green-900">
-                Professor-Verified ✓ {default_view.professor_badge.ncert_ref}
-              </span>
+              <div>
+                <span className="text-sm font-bold text-green-900 dark:text-green-100 block">
+                  ✅ Professor-Verified
+                </span>
+                {default_view.professor_badge.ncert_ref && (
+                  <span className="text-xs text-green-700 dark:text-green-300">
+                    {default_view.professor_badge.ncert_ref}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
               <Users className="w-4 h-4" />
-              <span>{default_view.professor_badge.students_solved || '10,000+'}  students solved this</span>
+              <span className="font-medium">{default_view.professor_badge.students_solved || '10,000+'} students solved</span>
             </div>
           </div>
         )}
@@ -706,30 +854,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
         </div>
       )}
       
-      {/* Follow-up Actions - Ask Related Questions */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <p className="text-sm font-semibold text-gray-700 mb-3">📌 Quick Follow-ups</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {followUpActions.map((action, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                if (onInteraction) onInteraction('followup_click', action.prompt);
-                // Trigger new question with the prompt
-                window.dispatchEvent(new CustomEvent('send-question', { detail: { question: action.prompt } }));
-              }}
-              className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-all text-left group"
-            >
-              <div className="text-purple-600 group-hover:scale-110 transition-transform">
-                {action.icon}
-              </div>
-              <span className="text-xs font-medium text-gray-700">{action.text}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      {/* Quick Actions Bar - Feedback & Copy */}
+      {/* Quick Actions Bar - Feedback & Copy (Moved before follow-ups) */}
       <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600 font-medium">Was this helpful?</span>
@@ -811,6 +936,7 @@ export default function MentorResponseV2({ response, onInteraction }) {
               
               const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
               window.open(whatsappUrl, '_blank');
+              if (onInteraction) onInteraction('share_whatsapp', { text: shareText });
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-all"
             title="Share on WhatsApp"
@@ -818,6 +944,29 @@ export default function MentorResponseV2({ response, onInteraction }) {
             <span className="text-lg">💬</span>
             <span className="text-sm font-medium">WhatsApp</span>
           </button>
+        </div>
+      </div>
+      
+      {/* Follow-up Actions - Ask Related Questions (Moved to END) */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <p className="text-sm font-semibold text-gray-700 mb-3">📌 Quick Follow-ups</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {followUpActions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                if (onInteraction) onInteraction('followup_click', action.prompt);
+                // Trigger new question with the prompt
+                window.dispatchEvent(new CustomEvent('send-question', { detail: { question: action.prompt } }));
+              }}
+              className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-all text-left group"
+            >
+              <div className="text-purple-600 group-hover:scale-110 transition-transform">
+                {action.icon}
+              </div>
+              <span className="text-xs font-medium text-gray-700">{action.text}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>

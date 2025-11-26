@@ -207,9 +207,23 @@ const AchievementBadges = ({ userXP = 0, userLevel = 1 }) => {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-6 h-6 border-2 border-gray-400 rounded-full"></div>
                     </div>
+                    {/* Progress overlay */}
+                    {userXP < badge.xpRequired && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-300 rounded-b-xl overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 transition-all duration-500"
+                          style={{ width: `${Math.min(100, (userXP / badge.xpRequired * 100))}%` }}
+                        ></div>
+                      </div>
+                    )}
                   </div>
                   <div className="text-center mt-2">
                     <p className="text-xs font-medium text-gray-500 truncate">{badge.name}</p>
+                    {userXP < badge.xpRequired && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {Math.ceil((badge.xpRequired - userXP) / 10)} questions away
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -235,15 +249,25 @@ const AchievementBadges = ({ userXP = 0, userLevel = 1 }) => {
             </div>
             <p className="text-xs text-gray-300">{showDetails.description}</p>
             {!showDetails.unlocked && (
-              <div className="mt-2 pt-2 border-t border-gray-700">
+              <div className="mt-2 pt-2 border-t border-gray-700 space-y-2">
                 <div className="text-xs text-gray-400">
                   Progress: {Math.min(100, (userXP / showDetails.xpRequired * 100)).toFixed(0)}%
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                <div className="w-full bg-gray-700 rounded-full h-1.5">
                   <div 
                     className="bg-gradient-to-r from-purple-500 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, (userXP / showDetails.xpRequired * 100))}%` }}
                   ></div>
+                </div>
+                <div className="text-xs text-gray-400">
+                  {(() => {
+                    const xpNeeded = showDetails.xpRequired - userXP;
+                    const questionsNeeded = Math.ceil(xpNeeded / 10); // ~10 XP per question
+                    const daysNeeded = Math.ceil(questionsNeeded / 3); // ~3 questions per day
+                    return xpNeeded > 0 
+                      ? `Unlock in ~${questionsNeeded} questions (${daysNeeded} day${daysNeeded !== 1 ? 's' : ''} at 3/day)`
+                      : 'Almost there!';
+                  })()}
                 </div>
               </div>
             )}
