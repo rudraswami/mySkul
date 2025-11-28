@@ -1070,6 +1070,57 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
                 session_doc = None
         
         # ====================================================================
+        # FAST-PATH FOR SIMPLE GREETINGS (< 100ms response)
+        # ====================================================================
+        message_lower = request.message.lower().strip()
+        simple_greetings = ['hi', 'hello', 'hey', 'namaste', 'hola', 'yo']
+        
+        if message_lower in simple_greetings:
+            logger.info(f"⚡ Fast-path: Simple greeting detected, skipping full AI pipeline")
+            
+            # Get user name for personalization
+            user_doc = await db.users.find_one({"user_id": user.user_id})
+            user_name = ""
+            if user_doc:
+                full_name = user_doc.get("full_name", "")
+                user_name = full_name.split()[0] if full_name else "there"
+            
+            # Quick greeting response
+            greeting_responses = {
+                'hi': f"Hi {user_name}! 👋 I'm your AI Tutor. Ask me anything about Math, Physics, Chemistry, or any subject!",
+                'hello': f"Hello {user_name}! 🎓 Ready to learn something awesome today?",
+                'hey': f"Hey {user_name}! 🚀 What would you like to explore today?",
+                'namaste': f"Namaste {user_name}! 🙏 Let's make learning fun!",
+                'hola': f"Hola {user_name}! 🌟 What can I help you learn today?",
+                'yo': f"Yo {user_name}! 💪 Ready to crush some concepts?"
+            }
+            
+            greeting_text = greeting_responses.get(message_lower, f"Hello {user_name}! Ask me anything!")
+            
+            # Return fast greeting response
+            return {
+                "response": {
+                    "default_view": {
+                        "greeting": greeting_text,
+                        "main_content": {
+                            "content": "I'm here to help you with:\n\n• Math problems and concepts\n• Physics explanations\n• Chemistry reactions\n• Biology processes\n• Exam preparation tips\n• Step-by-step solutions\n\nJust ask your question, and I'll explain it clearly!"
+                        },
+                        "metaphor": {
+                            "text": "Think of me as your study buddy who's always ready to help! 📚"
+                        }
+                    },
+                    "progressive_sections": {},
+                    "intent": "greeting",
+                    "render_directives": {
+                        "greeting_only": True,
+                        "suppress_cta": True
+                    }
+                },
+                "detected_subject": "General",
+                "generation_time": 0.05  # 50ms
+            }
+        
+        # ====================================================================
         # INTELLIGENT RESPONSE ENGINE - Adaptive response structure
         # ====================================================================
         from services.intelligent_response_engine import get_response_config, detect_intent as smart_detect_intent
@@ -1094,11 +1145,61 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
             pass
 
         # ====================================================================
-        # AGENTIC SYSTEM INTEGRATION (Optional - Feature Flag)
+        # UNIFIED INTELLIGENT PIPELINE (DEFAULT - Always On)
+        # ====================================================================
+        # CRITICAL: Use unified pipeline FIRST, it's cleaner and more intelligent
+        # Only fall back to agentic/legacy if explicitly requested
+        
+        USE_UNIFIED_FIRST = os.getenv("USE_UNIFIED_FIRST", "true").lower() == "true"
+        
+        # Initialize memory_context variable (used in both paths)
+        memory_context = {}
+        
+        if USE_UNIFIED_FIRST:
+            logger.info("🚀 Using UNIFIED intelligent pipeline (clean, adaptive)")
+            try:
+                from services.response_composer import ResponseComposer
+                
+                emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                composer = ResponseComposer(db, emergent_llm_key)
+                
+                # Get more message history (10 instead of 5)
+                extended_history = []
+                if request.session_id:
+                    history = await ai_service.get_session_messages(request.session_id, user.user_id)
+                    extended_history = history[-10:] if history else []
+                
+                # Single unified response generation
+                result = await composer.generate_response(
+                    user_id=user.user_id,
+                    session_id=request.session_id or f"temp_{user.user_id}",
+                    question=contextual_message,
+                    subject=detected_subject,
+                    exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                    message_history=extended_history
+                )
+                
+                logger.info(f"✅ Unified response generated in {result.get('generation_time', 0):.2f}s")
+                logger.info(f"🎯 Intent: {result.get('intent_detected')}, Context used: {result.get('context_used')}")
+                
+                # CRITICAL: Skip ALL other pipelines - unified succeeded
+                # Jump directly to post-processing
+                
+            except Exception as unified_error:
+                logger.error(f"❌ Unified pipeline failed: {unified_error}")
+                import traceback
+                logger.error(traceback.format_exc())
+                # Fall through to agentic system as backup
+                USE_UNIFIED_FIRST = False
+                result = None  # Ensure result is defined
+        
+        # ====================================================================
+        # AGENTIC SYSTEM (Backup - Only if unified fails)
         # ====================================================================
         USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "false").lower() == "true"
         
-        if USE_AGENTIC_SYSTEM:
+        # Only use agentic if unified failed AND agentic is enabled
+        if not USE_UNIFIED_FIRST and USE_AGENTIC_SYSTEM and result is None:
             # Use new agentic system with MEMORY
             logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:
@@ -1313,9 +1414,11 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
                     exam_mode=getattr(request, 'exam_mode', 'JEE'),
                     message_history=message_history
                 )
-        else:
-            # Use legacy system (default) WITH MEMORY INTEGRATION
-            logger.info("📚 Using legacy neuro-symbolic system with memory integration")
+        # ================================================================
+        # LEGACY FALLBACK (only if both unified and agentic fail)
+        # ================================================================
+        if result is None:
+            logger.info("📚 Using legacy neuro-symbolic system (fallback)")
             
             # ================================================================
             # MEMORY INTEGRATION (Always On - No Feature Flag)
@@ -1349,7 +1452,7 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
                 exam_mode=getattr(request, 'exam_mode', 'JEE'),
                 message_history=message_history,
                 memory_context=memory_context  # Pass memory context
-            )
+                )
             
             # ================================================================
             # MEMORY UPDATE PIPELINE (Post-Response)
@@ -1641,9 +1744,20 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
         except Exception:
             pass
 
-        # Add detected subject to response
+        # Add detected subject and memory context to response
         if isinstance(result, dict):
             result['detected_subject'] = detected_subject
+            
+            # Add memory context for frontend display
+            if memory_context and 'response' in result:
+                result['response']['memory_context'] = {
+                    'mastery_level': memory_context.get('mastery_level', 0),
+                    'mastery_bucket': memory_context.get('mastery_bucket', 'beginner'),
+                    'is_continuation': memory_context.get('is_continuation', False),
+                    'last_topic': memory_context.get('continuity', {}).get('last_topic', ''),
+                    'context_summary': memory_context.get('context_summary', ''),
+                    'weak_topics': memory_context.get('weak_topics', [])
+                }
             
             # ====================================================================
             # CRITICAL FIX: Save message to session for chat history

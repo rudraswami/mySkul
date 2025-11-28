@@ -68,6 +68,16 @@ def detect_intent(question: str, context: Dict[str, Any] = None) -> QuestionInte
     if q.strip('!?.') in ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo', 'good morning', 'good evening']:
         return QuestionIntent.GREETING
     
+    # CRITICAL: Follow-up questions - must detect BEFORE other patterns
+    follow_up_patterns = [
+        'what did we', 'what we discussed', 'earlier', 'before', 'previously',
+        'last time', 'you said', 'you mentioned', 'continue', 'go on',
+        'more about', 'tell me more', 'explain more', 'what about',
+        'and then', 'so what', 'what next', 'what else', 'anything else'
+    ]
+    if any(p in q for p in follow_up_patterns):
+        return QuestionIntent.FOLLOW_UP
+    
     # Conversational/casual
     if any(p in q for p in ['how are you', 'what\'s up', 'thank', 'thanks', 'okay', 'ok', 'got it', 'understood']):
         return QuestionIntent.CONVERSATIONAL
@@ -222,6 +232,10 @@ def get_response_blocks(intent: QuestionIntent, question: str, subject: str = No
             blocks.append(ResponseBlock.VISUAL)
         blocks.append(ResponseBlock.FOLLOW_UP)
         return blocks
+    
+    # FOLLOW_UP - Context-aware response, no templates
+    if intent == QuestionIntent.FOLLOW_UP:
+        return [ResponseBlock.DIRECT_ANSWER]  # Just answer, no forced structure
     
     # DEFINITION - Short answer + explanation
     if intent == QuestionIntent.DEFINITION:
@@ -398,5 +412,7 @@ __all__ = [
     'QuestionIntent',
     'ResponseBlock',
 ]
+
+
 
 

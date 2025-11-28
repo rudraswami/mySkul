@@ -1,8 +1,28 @@
 """
+  ⚠️ DEPRECATED - DO NOT USE FOR NEW CODE ⚠️
+
 Neuro-Symbolic AI Mentor v2.0 - Progressive Disclosure System + VISUAL-FIRST
-Mentor-style, engaging, personalized learning (NOT textbook-style)
-ENHANCEMENT: Visual-first learning with metaphor library integration
+
+This file is DEPRECATED and kept only for backward compatibility.
+The 500+ line rigid JSON template in this file causes:
+- Same response structure for ALL questions (not adaptive)
+- Duplicate content between Professor and Mentor
+- Forced visual placeholders that rarely work
+- Poor follow-up behavior
+
+USE INSTEAD:
+- services/response_composer.py - Unified adaptive pipeline
+- services/intelligent_response_engine.py - Intent-based response structure
+- services/conversation_state.py - Context tracking
+
+This file will be removed in a future version.
 """
+import warnings
+warnings.warn(
+    "neuro_symbolic_mentor_v2.py is deprecated. Use response_composer.py instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 def get_mentor_prompt_v2(subject: str, message: str, exam_mode: str, student_profile: dict = None, visual_metaphor: dict = None) -> str:
     """

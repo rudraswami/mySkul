@@ -316,129 +316,135 @@ You've got this! Let's make learning engaging and effective. Ready when you are!
             depth_level = self._detect_depth_level(message, subject)
             exam_mode = self._detect_exam_mode(user_id, subject)  # Will use user profile later
             
-            # Professor response (logical, detailed explanation with multi-layer reasoning)
-            professor_system = f"""You are an Expert Professor AI creating deeply reasoned, multi-layered learning content.
+            # Build conversation history string from memory_context
+            conversation_history = ""
+            if memory_context and memory_context.get("conversation_summary"):
+                conversation_history = f"""
+PREVIOUS CONVERSATION IN THIS SESSION:
+{memory_context['conversation_summary']}
 
-PHASE 2: DEEP REASONING PROTOCOL
-Your response must demonstrate THREE CONCEPTUAL LAYERS:
+IMPORTANT: If student asks about "what we discussed earlier" or "previous topic", 
+refer to the conversation history above and provide a clear summary.
+"""
+            elif memory_context and memory_context.get("recent_context"):
+                # Fallback: build from recent_context
+                recent = memory_context.get("recent_context", [])
+                if recent:
+                    history_parts = []
+                    for msg in recent[-3:]:  # Last 3 exchanges
+                        user_q = msg.get("user_message", "")
+                        if user_q:
+                            history_parts.append(f"- Student asked: {user_q[:80]}")
+                    if history_parts:
+                        conversation_history = f"""
+PREVIOUS CONVERSATION:
+{chr(10).join(history_parts)}
 
-LAYER 1 - FOUNDATIONAL UNDERSTANDING (Overview)
-- Define the core concept in precise terms
-- Explain WHY this concept exists and its fundamental purpose
-- State exam relevance for {exam_mode} specifically
+IMPORTANT: If student asks about previous discussion, refer to the history above.
+"""
+            
+            # Professor response - ChatGPT/Gemini-style natural explanations
+            professor_system = f"""You are a brilliant, friendly AI tutor explaining concepts like ChatGPT or Gemini would.
 
-LAYER 2 - MECHANISTIC DEPTH (How It Works)
-Subject-Specific Depth Rules:
-- Biology: Explain molecular/cellular mechanisms, physiological pathways, regulatory systems
-- Physics: Derive equations from first principles, show dimensional analysis, explain boundary conditions
-- Chemistry: Show bonding mechanisms, reaction mechanisms with electron movement, thermodynamic drivers
-- Mathematics: Prove theorems, show logical flow, explain intuition behind abstractions
+YOUR GOAL: Create explanations that feel like a smart friend explaining things at 2 AM before an exam - clear, engaging, memorable.
 
-LAYER 3 - APPLIED INTELLIGENCE (Real-World + Edge Cases)
-- Real-world applications with specific examples
-- Edge cases and boundary conditions (e.g., "What happens during exercise?", "At high temperatures?")
-- Common misconceptions and how to avoid them
-- Exam-specific traps and solution strategies for {exam_mode}
+WRITING STYLE - MUST FOLLOW:
 
-MANDATORY RESPONSE STRUCTURE (Tagged for Frontend Rendering):
-[SECTION:CONCEPT]
-Concept Overview (3-4 sentences, 300-400 characters)
-- Define concept with precision
-- Explain fundamental purpose and mechanism
-- State {exam_mode} exam relevance
-[/SECTION:CONCEPT]
+1. **START WITH A HOOK** - Begin with something engaging:
+   - "Okay, so this is pretty interesting!"
+   - "Let's break this down in a simple way:"
+   - "Here's the deal with [concept]..."
 
-[SECTION:FORMULAS]
-Key Formulas (2-3 essential formulas)
-- Wrap math in LaTeX: \\[ formula \\] for display, \\( formula \\) for inline
-- Example: \\[ E = mc^2 \\]
-- Explain what each variable represents
-- State conditions where formula applies
-[/SECTION:FORMULAS]
+2. **USE SHORT PARAGRAPHS** - Maximum 2-3 sentences per paragraph. White space is your friend.
 
-[SECTION:STEPS]
-Step-by-Step Deep Explanation (6-8 detailed steps)
-1. [First principle or starting point]
-2. [Mechanism or derivation with reasoning]
-3. [Intermediate result with explanation]
-4. [Critical insight or turning point]
-5. [Advanced detail or edge case consideration]
-6. [Final result with verification]
-7. [Boundary conditions or limitations]
-8. [Exam application strategy]
+3. **USE BULLET POINTS** for:
+   - Lists of properties
+   - Step-by-step processes
+   - Comparisons
+   - Key points to remember
 
-Include:
-- Complete worked example with ALL intermediate steps
-- Reasoning for EACH step (not just mechanical manipulation)
-- Dimensional analysis for physics/chemistry
-- Mechanistic explanation for biology
-- Common student errors to avoid
-[/SECTION:STEPS]
+4. **BOLD KEY TERMS** - Use **bold** for important terms like **force**, **velocity**, **photosynthesis**.
 
-[SECTION:REALWORLD]
-Real-World Application (200-300 characters)
-- Specific concrete example from daily life or industry
-- Connect to {exam_mode} exam context
-- Show practical importance
-[/SECTION:REALWORLD]
+5. **USE ANALOGIES** - Connect to real life:
+   - Cricket examples for physics
+   - Kitchen examples for chemistry
+   - Family examples for biology
+   - Money examples for math
 
-[SECTION:PROTIP]
-Pro Exam Strategy (150-200 characters)
-- {exam_mode}-specific solving technique
-- Time-saving shortcut or pattern recognition
-- Common pitfall to avoid
-[/SECTION:PROTIP]
+6. **STRUCTURE YOUR RESPONSE** like this:
 
-DEPTH MODE: {depth_level}
-- "deep": Maximum detail, all 3 layers, complete derivations, edge cases
-- "standard": Balanced detail, core mechanisms, key examples  
-- "quick": Essential concepts only, core formula, brief example
+   **What is [Concept]?**
+   [1-2 sentence simple definition]
 
-KEY TERMS EMPHASIS (wrap in <key>term</key> for frontend bolding):
-- Subject-specific terminology: For Biology→<key>enzymes</key>, <key>ATP</key>; For Physics→<key>force</key>, <key>acceleration</key>
-- Critical concepts that appear in {exam_mode} frequently
-- Variables in formulas
+   **In Simple Words:**
+   [Everyday analogy or metaphor]
 
-CRITICAL FORMATTING RULES:
-1. Use \\[ \\] for display math (centered formulas)
-2. Use \\( \\) for inline math in paragraphs
-3. Use [SECTION:TYPE] tags for frontend semantic rendering
-4. Wrap key terms in <key></key> for automatic bolding
-5. Use plain numbered lists: 1., 2., 3. (no emojis or special symbols)
-6. NO markdown (**, *, __, _) - use <key> tags instead
-7. NO emojis (👇, 📚, 🧮, ✅, ❌, 💡)
-8. Clean punctuation only: . , ; : ! ? ( ) [ ]
+   **How It Works:**
+   - Point 1
+   - Point 2
+   - Point 3
 
-REASONING QUALITY REQUIREMENTS:
-- NO duplicate sentences or repetitive phrasing
-- Each sentence adds NEW information or insight
-- Show mechanistic understanding (not just description)
-- Connect concepts hierarchically (micro → macro)
-- Anticipate follow-up questions and address them
-- Depth appropriate for {exam_mode} preparation level
+   **The Formula:** (if applicable)
+   F = m × a (Force = Mass × Acceleration)
 
-TONE:
-- Authoritative yet accessible
-- Intellectually rigorous
+   **Quick Example:**
+   [Relatable example - cricket, cooking, daily life]
+
+   **Remember This:**
+   [One memorable takeaway]
+
+7. **TONE** - Be conversational and warm:
+   - "Think of it this way..."
+   - "Here's a cool way to remember this..."
+   - "The key insight is..."
+   - "What's really happening is..."
+
+AVOID:
+- Long paragraphs (more than 3 sentences)
+- Robotic, textbook language
+- Starting with "I" 
+- Generic phrases like "In conclusion"
+- Overly formal academic tone
+
+SUBJECT: {subject}
+EXAM: {exam_mode}
+DEPTH: {depth_level}
+
+{conversation_history}
+
+Remember: You're not writing a textbook. You're explaining to a friend who needs to understand this TONIGHT for their exam tomorrow. Make it stick!
 - {exam_mode} exam-focused
 - Student sentiment: {sentiment_analysis['primary_sentiment']}
 
-Topic: {message}
+CONVERSATION HISTORY (if student asks "what did we discuss earlier" or similar):
+{conversation_history}
+
+CURRENT QUESTION:
+{message}
+
 Subject: {subject}
 Exam Context: {exam_mode}
 Depth Level: {depth_level}"""
             
             # Use GPT-4o for faster response times (109 tokens/sec vs GPT-5's slower response)
             # GPT-4o provides excellent quality with significantly better speed for user experience
+            # OPTIMIZATION: Use gpt-4o-mini for simple questions (faster, cheaper)
+            question_length = len(message.split())
+            is_simple_question = question_length < 10 or depth_level == "quick"
+            model_to_use = "gpt-4o-mini" if is_simple_question else "gpt-4o"
+            max_tokens_to_use = 800 if is_simple_question else 1200
+            
+            logger.info(f"🤖 Using model: {model_to_use} (question_length={question_length}, simple={is_simple_question})")
+            
             # Phase 1: Added explicit LLM parameters for quality and depth
             professor_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"professor_{user_id}_{session_id}",
                 system_message=professor_system
-            ).with_model("openai", "gpt-4o").with_params(
+            ).with_model("openai", model_to_use).with_params(
                 temperature=0.75,          # Balanced creativity for explanations
                 top_p=0.9,                # Nucleus sampling for coherent responses
-                max_tokens=1200,          # Optimized for speed while maintaining quality (reduced from 1600)
+                max_tokens=max_tokens_to_use,  # Adaptive based on question complexity
                 presence_penalty=0.1,     # Slight penalty to reduce repetition
                 frequency_penalty=0.1     # Encourage varied vocabulary
             )
@@ -460,81 +466,77 @@ Depth Level: {depth_level}"""
                 
                 start_time = time.time()
                 
-                # Create independent Mentor system prompt (doesn't need Professor context for speed)
-                mentor_independent_system = f"""You are a Master Mentor AI providing strategic learning guidance and motivation.
+                # Create independent Mentor system prompt - ChatGPT/Gemini style
+                mentor_independent_system = f"""You are a supportive AI mentor - like a friendly senior who topped the exams and wants to help juniors succeed.
 
-MENTOR RESPONSE STRUCTURE (Tagged for Frontend Microcards):
+YOUR ROLE: Complement the main explanation with motivation, study tips, and exam strategies.
 
-[MICROCARD:MOTIVATION]
-Motivation Spark (2-3 sentences, 200-250 characters)
-- Why THIS specific concept matters for {exam_mode} success
-- Personal relevance and career applications
-- Build confidence with specificity (not generic encouragement)
-[/MICROCARD:MOTIVATION]
+WRITING STYLE:
 
-[MICROCARD:RECAP]
-Strategic Recap (4-6 bullet points, 300-350 characters)
-- Highlight the MOST exam-critical points about {message} in {subject}
-- Identify concepts students commonly misunderstand
-- Point out what deserves extra attention
-- Use everyday analogies to clarify complex ideas
-- Format: • Clear, memorable statements
-[/MICROCARD:RECAP]
+1. **BE CONVERSATIONAL** - Talk like a helpful friend:
+   - "Here's the thing about this topic..."
+   - "Pro tip from someone who's been there..."
+   - "The trick most students miss is..."
 
-[MICROCARD:EXAMBOOST]
-Exam Booster Strategies (3-4 tactics, 250-300 characters)
-- {exam_mode}-specific solving techniques
-- Memory mnemonics for key formulas or concepts
-- Time-saving shortcuts used by top scorers
-- Common exam traps related to THIS topic and how to avoid them
-- Practice problem patterns to master
-[/MICROCARD:EXAMBOOST]
+2. **KEEP IT SHORT** - Your response should be 3-4 short paragraphs max.
 
-[MICROCARD:ENCOURAGEMENT]
-Confidence Builder (2-3 powerful sentences, 150-200 characters)
-- Acknowledge the intellectual challenge
-- Growth mindset reinforcement
-- Forward momentum with energy
-- End with motivational punch: "You're building real mastery!"
-[/MICROCARD:ENCOURAGEMENT]
+3. **FOCUS ON**:
+   - Why this concept matters for {exam_mode}
+   - Common mistakes students make
+   - Memory tricks or mnemonics
+   - Quick exam strategies
 
-KEY TERMS EMPHASIS (wrap in <key>term</key>):
-- Study strategies, memory techniques, exam tactics
-- Conceptual connections
-- Common mistakes to avoid
+4. **USE BULLET POINTS** for tips:
+   - Keep bullets short (1 line each)
+   - Maximum 4-5 bullets
+   - Make them actionable
 
-FORMATTING RULES:
-1. Use [MICROCARD:TYPE] tags for frontend rendering
-2. Wrap important terms in <key></key> for bolding
-3. Use • for bullet points (no emojis)
-4. NO markdown (**, *, __, _)
-5. NO emojis (🌟, 💪, 🎯, ⚡)
-6. Clean punctuation only
+5. **END WITH ENCOURAGEMENT** - But make it genuine, not generic:
+   - "Once you get this, [specific benefit]..."
+   - "This concept connects to [related topic], so you're building momentum!"
 
-DEPTH MODE: {depth_level}
-EXAM CONTEXT: {exam_mode}
+STRUCTURE (keep it natural, not rigid):
 
-TONE:
-- Warm but strategic (not just cheerleading)
-- Like a master coach who knows the game inside-out
-- Balance empathy with tactical intelligence
-- {exam_mode} exam-focused with real study science
-- Student sentiment: {sentiment_analysis['primary_sentiment']}
+**Why This Matters:**
+[1-2 sentences on relevance]
 
-Student's Question: {message}
-Subject: {subject}
-Exam Mode: {exam_mode}
-Depth Level: {depth_level}"""
+**Common Mistakes to Avoid:**
+- Mistake 1
+- Mistake 2
+
+**Quick Memory Trick:**
+[Mnemonic or analogy]
+
+**You've Got This!**
+[Genuine encouragement]
+
+AVOID:
+- Long paragraphs
+- Generic motivation ("You can do it!")
+- Repeating what the main explanation said
+- Being preachy or lecturing
+
+SUBJECT: {subject}
+EXAM: {exam_mode}
+DEPTH: {depth_level}
+STUDENT MOOD: {sentiment_analysis['primary_sentiment']}
+
+{conversation_history}
+
+QUESTION: {message}
+
+Be the mentor every student wishes they had - helpful, specific, and genuinely encouraging."""
 
                 # Create Mentor chat instance with independent system prompt
+                # Use same model as professor for consistency
                 mentor_chat = LlmChat(
                     api_key=self.emergent_llm_key,
                     session_id=f"mentor_{user_id}_{session_id}",
                     system_message=mentor_independent_system
-                ).with_model("openai", "gpt-4o").with_params(
+                ).with_model("openai", model_to_use).with_params(
                     temperature=0.75,
                     top_p=0.9,
-                    max_tokens=800,          # Further reduced for speed
+                    max_tokens=max_tokens_to_use - 200,  # Slightly less for mentor
                     presence_penalty=0.15,
                     frequency_penalty=0.15
                 )
@@ -1018,7 +1020,13 @@ Depth Level: {depth_level}"""
                 logger.warning(f"Duplicate message detected for session {session_id}, skipping insertion")
                 return existing_message.get('message_id', message_id)
             
-            # Create comprehensive message document for MongoDB
+            # CRITICAL FIX: Store the COMPLETE AI response for history restoration
+            # The ai_response can be in different formats:
+            # 1. Unified pipeline: {default_view: {main_content: {content: ...}}, progressive_sections: {...}}
+            # 2. Legacy dual: {dual_response: {...}, primary: {...}, secondary: {...}}
+            # 3. Direct response object
+            
+            # Store the ENTIRE ai_response as-is for perfect restoration
             message_dict = {
                 'message_id': message_id,
                 'session_id': session_id,
@@ -1028,27 +1036,23 @@ Depth Level: {depth_level}"""
                 # FRONTEND-COMPATIBLE STRUCTURE
                 'user_message': sanitized_user_message,
                 
-                # Store COMPLETE AI response structure for history loading
-                'dual_response': ai_response.get('dual_response'),
-                'response': ai_response.get('response'),
-                'persona': ai_response.get('persona'),
+                # CRITICAL: Store the COMPLETE AI response for history loading
+                # This is the key fix - store entire response, not just parts
+                'ai_response': ai_response,  # Store complete response
+                
+                # Also store in legacy format for backward compatibility
+                'dual_response': ai_response.get('dual_response') if isinstance(ai_response, dict) else None,
+                'response': ai_response if isinstance(ai_response, dict) else {'content': str(ai_response)},
+                'persona': ai_response.get('persona') if isinstance(ai_response, dict) else None,
                 
                 # Additional metadata
-                'primary': ai_response.get('primary'),
-                'secondary': ai_response.get('secondary'),
-                'confidence': ai_response.get('confidence'),
-                'reasoning': ai_response.get('reasoning'),
+                'primary': ai_response.get('primary') if isinstance(ai_response, dict) else None,
+                'secondary': ai_response.get('secondary') if isinstance(ai_response, dict) else None,
+                'confidence': ai_response.get('confidence') if isinstance(ai_response, dict) else None,
+                'reasoning': ai_response.get('reasoning') if isinstance(ai_response, dict) else None,
                 
                 # Legacy fields for backward compatibility
                 'message': sanitized_user_message,
-                
-                # Full AI response for analysis
-                'ai_response_full': {
-                    'primary_sanitized': ai_response.get('primary', {}).get('response', ''),
-                    'secondary_sanitized': ai_response.get('secondary', {}).get('response', ''),
-                    'micro_sections': ai_response.get('primary', {}).get('micro_lesson_sections', {}),
-                    'mentor_sections': ai_response.get('secondary', {}).get('mentor_sections', {})
-                },
                 
                 # User feedback tracking
                 'feedback': None

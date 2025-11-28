@@ -230,6 +230,14 @@ def create_app() -> FastAPI:
     app.include_router(subscription.router, prefix="/api", tags=["Subscription"])
     app.include_router(ai.router, prefix="/api", tags=["AI Tutor"])
     app.include_router(streaming_ai.router, prefix="/api", tags=["AI Tutor Streaming"])
+    
+    # Unified AI Tutor (NEW - Clean Pipeline)
+    try:
+        from api import ai_unified
+        app.include_router(ai_unified.router, prefix="/api", tags=["AI Tutor Unified"])
+        logger.info("Unified AI Tutor router registered")
+    except Exception as e:
+        logger.warning(f"Could not load unified AI router: {e}")
     app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
     app.include_router(auto_notes.router, prefix="/api", tags=["Auto Notes"])
     app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])

@@ -3,14 +3,12 @@
  * Displays interactive animated visual explanations
  * Auto-opens interactive visuals without requiring Play button!
  */
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, Minimize2, Sparkles, BookOpen, Trophy, Share2, RefreshCw } from 'lucide-react';
 
-// Lazy load the Interactive Visual Engine
-const InteractiveVisualCard = lazy(() => 
-  import('../../visual-engine/components/InteractiveVisualCard')
-);
+// Direct import from visual-engine (no lazy loading to avoid chunk errors)
+import InteractiveVisualCard from '../../visual-engine/components/InteractiveVisualCard';
 
 // Check if concept has interactive template
 const hasInteractiveTemplate = (question) => {

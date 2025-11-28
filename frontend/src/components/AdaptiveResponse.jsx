@@ -339,3 +339,7 @@ const FollowUpSection = ({ suggestions, onFollowUp }) => {
 export default AdaptiveResponse;
 
 
+
+
+
+

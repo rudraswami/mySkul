@@ -104,3 +104,7 @@ import { VisualScene } from './visual-engine';
 - **Lightweight**: Pure SVG + Framer Motion, no heavy 3D
 
 
+
+
+
+

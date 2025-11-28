@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Brain, 
   Sparkles, 
@@ -13,7 +14,10 @@ import {
   EyeOff,
   Sun,
   Moon,
-  Trophy
+  Trophy,
+  Flame,
+  Zap,
+  Award
 } from 'lucide-react';
 
 // Import premium components
@@ -26,6 +30,10 @@ import SmartRecommendations from './SmartRecommendations';
 // import LiveLeaderboard from './LiveLeaderboard';
 import UsageMeter from '../UsageMeter';
 import PlanBadge from '../PlanBadge';
+
+// 🎮 GAMIFICATION: Import progress dashboard components
+import ProgressDashboard, { StreakCard, LevelCard, TodayStats, BadgesCard } from '../gamification/ProgressDashboard';
+import { useGamification } from '../../hooks/useGamification';
 
 // Import premium styles
 import '../../styles/premium-dashboard.css';
@@ -40,6 +48,18 @@ const PremiumDashboard = () => {
   const { user } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const navigate = useNavigate();
+  
+  // 🎮 GAMIFICATION: Use the gamification hook for real-time stats
+  const {
+    stats: gamificationStats,
+    loading: gamificationLoading,
+    level: currentLevel,
+    xp: currentXP,
+    streak: currentStreak,
+    todayQuestions,
+    todayAccuracy,
+    badges
+  } = useGamification(user?.id);
 
   // Core State
   const [loading, setLoading] = useState(true);
@@ -48,15 +68,12 @@ const PremiumDashboard = () => {
   const [error, setError] = useState(null);
   
   // Feature States - Simplified for V1
-  // const [showAIMentor, setShowAIMentor] = useState(false);
-  // const [focusModeActive, setFocusModeActive] = useState(false);
-  // const [userMood, setUserMood] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  // User Progress
+  // Legacy User Progress (fallback if gamification fails)
   const [userXP, setUserXP] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
-  const [currentStreak, setCurrentStreak] = useState(0);
+  const [legacyStreak, setLegacyStreak] = useState(0);
 
   useEffect(() => {
     loadDashboardData();
@@ -91,7 +108,7 @@ const PremiumDashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setDashboardData(data);
-        setCurrentStreak(data.current_streak || 0);
+        setLegacyStreak(data.current_streak || 0);
         setError(null);
       } else {
         // Return empty state for new users
@@ -313,12 +330,53 @@ const PremiumDashboard = () => {
               </div>
             </div>
 
-            {/* Quick Stats & Actions */}
+            {/* 🎮 GAMIFICATION: Quick Stats & Actions */}
             <div className="flex items-center space-x-3">
-              <div className="text-right mr-4">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">Level {userLevel}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{userXP} XP</div>
-              </div>
+              {/* Streak Badge */}
+              <motion.div 
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
+                  (currentStreak || legacyStreak) > 0 
+                    ? 'bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border-2 border-orange-300' 
+                    : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200'
+                }`}
+                whileHover={{ scale: 1.05 }}
+              >
+                <motion.span 
+                  className="text-2xl"
+                  animate={(currentStreak || legacyStreak) > 0 ? { scale: [1, 1.2, 1] } : {}}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  🔥
+                </motion.span>
+                <div>
+                  <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    {currentStreak || legacyStreak || 0}
+                  </div>
+                  <div className="text-xs text-orange-500">Day Streak</div>
+                </div>
+              </motion.div>
+              
+              {/* Level & XP */}
+              <motion.div 
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-xl border-2 border-purple-300"
+                whileHover={{ scale: 1.05 }}
+              >
+                <span className="text-2xl">
+                  {currentLevel === 'Master' ? '👑' : 
+                   currentLevel === 'Scientist' ? '🧪' :
+                   currentLevel === 'Tactician' ? '🎯' :
+                   currentLevel === 'Analyst' ? '🔬' : '🔭'}
+                </span>
+                <div>
+                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                    {currentLevel || `Level ${userLevel}`}
+                  </div>
+                  <div className="text-xs text-purple-500 flex items-center gap-1">
+                    <Zap className="w-3 h-3" />
+                    {currentXP || userXP} XP
+                  </div>
+                </div>
+              </motion.div>
               
               {/* V1: Direct navigation to AI Tutor instead of modal */}
               <button
@@ -348,19 +406,46 @@ const PremiumDashboard = () => {
             </div>
           </div>
 
-          {/* XP Progress Bar */}
+          {/* 🎮 GAMIFICATION: XP Progress Bar with Level Info */}
           <div className="mt-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Progress to Level {userLevel + 1}
+                {gamificationStats?.level?.is_max_level 
+                  ? '👑 Maximum Level Achieved!' 
+                  : `Progress to ${gamificationStats?.level?.next_level_name || `Level ${userLevel + 1}`}`}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {userXP % 100}/100 XP
+                {gamificationStats?.level?.level_xp || (userXP % 100)}/{gamificationStats?.level?.next_level_xp || 100} XP
               </span>
             </div>
-            <div className="xp-bar">
-              <div className="xp-fill" style={{ width: `${(userXP % 100)}%` }}></div>
+            <div className="xp-bar relative overflow-hidden">
+              <motion.div 
+                className="xp-fill"
+                initial={{ width: 0 }}
+                animate={{ width: `${gamificationStats?.level?.progress_percent || (userXP % 100)}%` }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+              />
+              {/* Shimmer effect */}
+              <motion.div
+                className="absolute top-0 h-full w-16 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                animate={{ x: [-64, 400] }}
+                transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+              />
             </div>
+            
+            {/* Today's Quick Stats */}
+            {gamificationStats?.today && (
+              <div className="flex items-center gap-4 mt-3 text-sm">
+                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{gamificationStats.today.questions || 0} questions today</span>
+                </div>
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                  <Target className="w-4 h-4" />
+                  <span>{Math.round(gamificationStats.today.accuracy || 0)}% accuracy</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -457,19 +542,36 @@ const PremiumDashboard = () => {
             <div className="text-sm text-gray-500 dark:text-gray-400">AI Sessions</div>
           </div>
 
-          {/* Streak Card */}
-          <div className="glass-card glass-hover rounded-xl p-6 shadow-premium animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          {/* 🎮 GAMIFICATION: Streak Card with Animation */}
+          <motion.div 
+            className="glass-card glass-hover rounded-xl p-6 shadow-premium animate-fade-in" 
+            style={{ animationDelay: '0.2s' }}
+            whileHover={{ scale: 1.02 }}
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-white" />
+                <Flame className="h-5 w-5 text-white" />
               </div>
               <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">STREAK</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-              {currentStreak} 🔥
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+              <motion.span
+                animate={(currentStreak || legacyStreak) > 0 ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              >
+                {currentStreak || legacyStreak || 0}
+              </motion.span>
+              <motion.span
+                animate={(currentStreak || legacyStreak) > 0 ? { rotate: [0, 10, -10, 0] } : {}}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                🔥
+              </motion.span>
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Day Streak</div>
-          </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {gamificationStats?.streak?.motivation || 'Day Streak'}
+            </div>
+          </motion.div>
 
           {/* Progress Card */}
           <div className="glass-card glass-hover rounded-xl p-6 shadow-premium animate-fade-in" style={{ animationDelay: '0.3s' }}>

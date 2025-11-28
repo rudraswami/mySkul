@@ -102,6 +102,7 @@ class MemoryIntegrationService:
         3. Current mastery level for detected topic
         4. Topic continuation info
         5. User preferences
+        6. Formatted conversation summary for AI prompt
         
         Args:
             user_id: Student user ID
@@ -123,10 +124,16 @@ class MemoryIntegrationService:
             recent_messages = await self.memory_service.get_conversation_context(
                 session_id=session_id,
                 user_id=user_id,
-                window_size=5
+                window_size=10  # Increased from 5 to 10 for better context
             )
             context["recent_context"] = recent_messages
             context["has_prior_context"] = len(recent_messages) > 0
+            
+            # Build conversation summary for AI prompt
+            if recent_messages:
+                context["conversation_summary"] = self._build_conversation_summary(recent_messages)
+            else:
+                context["conversation_summary"] = ""
             
             # 2. Get relevant long-term memories
             relevant_memories = await self.semantic_memory.search_relevant_memories(
@@ -586,6 +593,40 @@ class MemoryIntegrationService:
             parts.append(f"Needs practice: {', '.join(weak[:2])}")
         
         return " | ".join(parts)
+    
+    def _build_conversation_summary(self, messages: List[Dict[str, Any]]) -> str:
+        """
+        Build formatted conversation summary from recent messages
+        
+        Args:
+            messages: List of recent messages
+        
+        Returns:
+            Formatted string of conversation history for AI prompt
+        """
+        if not messages:
+            return ""
+        
+        summary_parts = []
+        for msg in messages[-5:]:  # Last 5 messages only
+            user_msg = msg.get("user_message", "")
+            ai_response = msg.get("ai_response", {})
+            
+            if user_msg:
+                # Extract just the question
+                summary_parts.append(f"Student asked: {user_msg[:100]}")
+                
+                # Extract key points from AI response
+                if isinstance(ai_response, dict):
+                    response_text = str(ai_response.get("response", {}).get("default_view", {}).get("main_content", {}).get("content", ""))
+                    if response_text:
+                        # Get first 150 chars as summary
+                        summary_parts.append(f"AI explained: {response_text[:150]}...")
+        
+        if not summary_parts:
+            return ""
+        
+        return "\n".join(summary_parts)
 
 
 # Convenience function for easy import

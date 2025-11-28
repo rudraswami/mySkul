@@ -231,3 +231,7 @@ const MathPythagorasScene = ({ embedded = true }) => {
 export default MathPythagorasScene;
 
 
+
+
+
+

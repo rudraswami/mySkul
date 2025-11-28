@@ -1,18 +1,407 @@
 /**
- * Animation Library
- * Pre-built animations for physics concepts and interactions
- * All animations are non-destructive and work with the SceneObjectRegistry
+ * AnimationLibrary.js
+ * Phase 1.3: Enhanced animation system
+ * 
+ * Features:
+ * - Speed blur effects
+ * - Pulse animations
+ * - Micro-transitions
+ * - Particle effects
+ * - Smooth value changes
  */
 
-import { sceneRegistry } from './SceneObjectRegistry';
+// Animation presets for Framer Motion
+export const ANIMATION_PRESETS = {
+  // === ENTRANCE ANIMATIONS ===
+  fadeIn: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: 0.3 }
+  },
+  
+  slideUp: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.4, ease: 'easeOut' }
+  },
+  
+  slideDown: {
+    initial: { opacity: 0, y: -20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+    transition: { duration: 0.4, ease: 'easeOut' }
+  },
+  
+  slideLeft: {
+    initial: { opacity: 0, x: 30 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -30 },
+    transition: { duration: 0.4, ease: 'easeOut' }
+  },
+  
+  slideRight: {
+    initial: { opacity: 0, x: -30 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 30 },
+    transition: { duration: 0.4, ease: 'easeOut' }
+  },
+  
+  scaleIn: {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.8 },
+    transition: { duration: 0.3, ease: 'easeOut' }
+  },
+  
+  bounceIn: {
+    initial: { opacity: 0, scale: 0.3 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { 
+      type: 'spring', 
+      stiffness: 500, 
+      damping: 25 
+    }
+  },
 
-// Easing functions
+  // === CONTINUOUS ANIMATIONS ===
+  pulse: {
+    animate: {
+      scale: [1, 1.05, 1],
+      opacity: [1, 0.8, 1],
+    },
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }
+  },
+  
+  pulseFast: {
+    animate: {
+      scale: [1, 1.1, 1],
+    },
+    transition: {
+      duration: 0.8,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }
+  },
+  
+  glow: {
+    animate: {
+      boxShadow: [
+        '0 0 5px rgba(255, 165, 0, 0.5)',
+        '0 0 20px rgba(255, 165, 0, 0.8)',
+        '0 0 5px rgba(255, 165, 0, 0.5)',
+      ],
+    },
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }
+  },
+  
+  float: {
+    animate: {
+      y: [0, -10, 0],
+    },
+    transition: {
+      duration: 3,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }
+  },
+  
+  spin: {
+    animate: {
+      rotate: 360,
+    },
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: 'linear'
+    }
+  },
+  
+  shake: {
+    animate: {
+      x: [0, -5, 5, -5, 5, 0],
+    },
+    transition: {
+      duration: 0.5,
+      ease: 'easeInOut'
+    }
+  },
+  
+  wobble: {
+    animate: {
+      rotate: [0, -3, 3, -3, 3, 0],
+    },
+    transition: {
+      duration: 0.8,
+      ease: 'easeInOut'
+    }
+  },
+
+  // === PHYSICS ANIMATIONS ===
+  forceArrowPulse: {
+    animate: {
+      scaleX: [1, 1.15, 1],
+      opacity: [1, 0.9, 1],
+    },
+    transition: {
+      duration: 0.8,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }
+  },
+  
+  vectorGrow: {
+    initial: { scaleX: 0, originX: 0 },
+    animate: { scaleX: 1 },
+    transition: { duration: 0.5, ease: 'easeOut' }
+  },
+  
+  ballMotion: {
+    animate: (custom) => ({
+      x: custom.endX,
+      y: custom.trajectory ? 
+        [custom.startY, custom.peakY, custom.endY] : 
+        custom.endY,
+    }),
+    transition: (custom) => ({
+      duration: custom.duration || 1,
+      ease: custom.ease || 'easeOut'
+    })
+  },
+  
+  gravity: {
+    animate: (custom) => ({
+      y: custom.groundY,
+    }),
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+      damping: 10,
+    }
+  },
+  
+  bounce: {
+    animate: {
+      y: [0, -20, 0, -10, 0, -5, 0],
+    },
+    transition: {
+      duration: 1,
+      times: [0, 0.2, 0.4, 0.55, 0.7, 0.85, 1],
+      ease: 'easeOut'
+    }
+  },
+
+  // === VALUE CHANGE ANIMATIONS ===
+  valueIncrease: {
+    animate: {
+      scale: [1, 1.2, 1],
+      color: ['inherit', '#22c55e', 'inherit'],
+    },
+    transition: {
+      duration: 0.4,
+      ease: 'easeOut'
+    }
+  },
+  
+  valueDecrease: {
+    animate: {
+      scale: [1, 0.9, 1],
+      color: ['inherit', '#ef4444', 'inherit'],
+    },
+    transition: {
+      duration: 0.4,
+      ease: 'easeOut'
+    }
+  },
+  
+  highlightChange: {
+    animate: {
+      backgroundColor: ['transparent', 'rgba(255, 215, 0, 0.3)', 'transparent'],
+    },
+    transition: {
+      duration: 0.6,
+      ease: 'easeInOut'
+    }
+  },
+};
+
+// === SPEED BLUR EFFECT ===
+export const createSpeedBlur = (velocity, direction = 'horizontal') => {
+  const blurAmount = Math.min(velocity / 10, 10);
+  const stretchAmount = 1 + (velocity / 100);
+  
+  return {
+    filter: `blur(${blurAmount}px)`,
+    transform: direction === 'horizontal' 
+      ? `scaleX(${stretchAmount})`
+      : `scaleY(${stretchAmount})`,
+  };
+};
+
+// === SVG FILTER DEFINITIONS ===
+export const SVG_FILTERS = {
+  speedBlur: `
+    <filter id="speedBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3 0" />
+    </filter>
+  `,
+  
+  glow: `
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  `,
+  
+  shadow: `
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="3" stdDeviation="2" flood-opacity="0.3" />
+    </filter>
+  `,
+  
+  motionTrail: `
+    <filter id="motionTrail" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur1" />
+      <feOffset in="blur1" dx="-5" dy="0" result="offset1" />
+      <feGaussianBlur in="offset1" stdDeviation="3" result="blur2" />
+      <feOffset in="blur2" dx="-10" dy="0" result="offset2" />
+      <feMerge>
+        <feMergeNode in="offset2" />
+        <feMergeNode in="offset1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  `,
+};
+
+// === PARTICLE SYSTEM ===
+export class ParticleSystem {
+  constructor(config = {}) {
+    this.particles = [];
+    this.config = {
+      maxParticles: config.maxParticles || 50,
+      particleLife: config.particleLife || 1000,
+      emitRate: config.emitRate || 10,
+      gravity: config.gravity || 0.1,
+      ...config
+    };
+  }
+
+  emit(x, y, count = 1, options = {}) {
+    for (let i = 0; i < count; i++) {
+      if (this.particles.length >= this.config.maxParticles) break;
+      
+      this.particles.push({
+        id: Date.now() + Math.random(),
+        x,
+        y,
+        vx: (Math.random() - 0.5) * (options.spread || 5),
+        vy: (Math.random() - 0.5) * (options.spread || 5) - (options.upward ? 3 : 0),
+        life: this.config.particleLife,
+        maxLife: this.config.particleLife,
+        size: options.size || 4,
+        color: options.color || '#FFD700',
+        type: options.type || 'circle',
+      });
+    }
+  }
+
+  update(deltaTime) {
+    this.particles = this.particles.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += this.config.gravity;
+      p.life -= deltaTime;
+      return p.life > 0;
+    });
+  }
+
+  render() {
+    return this.particles.map(p => ({
+      ...p,
+      opacity: p.life / p.maxLife,
+      scale: (p.life / p.maxLife) * p.size,
+    }));
+  }
+
+  clear() {
+    this.particles = [];
+  }
+}
+
+// === SPRING PHYSICS ===
+export const springPhysics = {
+  // Soft spring (gentle bounce)
+  soft: {
+    type: 'spring',
+    stiffness: 100,
+    damping: 15,
+    mass: 1,
+  },
+  
+  // Medium spring (balanced)
+  medium: {
+    type: 'spring',
+    stiffness: 300,
+    damping: 25,
+    mass: 1,
+  },
+  
+  // Stiff spring (snappy)
+  stiff: {
+    type: 'spring',
+    stiffness: 500,
+    damping: 30,
+    mass: 1,
+  },
+  
+  // Bouncy spring
+  bouncy: {
+    type: 'spring',
+    stiffness: 400,
+    damping: 10,
+    mass: 1,
+  },
+  
+  // Wobbly spring
+  wobbly: {
+    type: 'spring',
+    stiffness: 180,
+    damping: 12,
+    mass: 1,
+  },
+};
+
+// === EASING FUNCTIONS ===
 export const easings = {
-  linear: t => t,
-  easeIn: t => t * t,
-  easeOut: t => 1 - (1 - t) * (1 - t),
-  easeInOut: t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-  bounce: t => {
+  // Standard easings
+  linear: [0, 0, 1, 1],
+  easeIn: [0.4, 0, 1, 1],
+  easeOut: [0, 0, 0.2, 1],
+  easeInOut: [0.4, 0, 0.2, 1],
+  
+  // Physics-based
+  accelerate: [0.4, 0, 0.8, 0.4],
+  decelerate: [0.2, 0.6, 0.4, 1],
+  
+  // Dramatic
+  anticipate: [0.36, 0, 0.66, -0.56],
+  overshoot: [0.34, 1.56, 0.64, 1],
+  
+  // Bounce
+  bounceOut: (t) => {
     const n1 = 7.5625;
     const d1 = 2.75;
     if (t < 1 / d1) return n1 * t * t;
@@ -20,356 +409,150 @@ export const easings = {
     if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
     return n1 * (t -= 2.625 / d1) * t + 0.984375;
   },
-  elastic: t => {
-    const c4 = (2 * Math.PI) / 3;
-    return t === 0 ? 0 : t === 1 ? 1 :
-      Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
-  },
-  spring: t => 1 - Math.cos(t * Math.PI * 2) * Math.exp(-t * 5),
 };
 
-/**
- * Base animation runner
- */
-export function animate(options) {
-  const {
-    duration = 1000,
-    easing = 'easeOut',
-    onUpdate,
-    onComplete,
-  } = options;
-
-  const startTime = performance.now();
-  const easingFn = typeof easing === 'function' ? easing : easings[easing] || easings.linear;
-
-  return new Promise((resolve) => {
-    function tick(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = easingFn(progress);
-
-      onUpdate?.(easedProgress, progress);
-
-      if (progress < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        onComplete?.();
-        resolve();
+// === ANIMATION SEQUENCES ===
+export const createSequence = (steps) => {
+  return {
+    animate: async (controls) => {
+      for (const step of steps) {
+        await controls.start(step.animation);
+        if (step.delay) {
+          await new Promise(resolve => setTimeout(resolve, step.delay));
+        }
       }
     }
+  };
+};
 
-    requestAnimationFrame(tick);
-  });
-}
-
-/**
- * Animation Presets for Visual Engine
- */
-export const animations = {
-  /**
-   * Move object from current position to target
-   */
-  moveTo: (objectId, targetX, targetY, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const startX = obj.x;
-    const startY = obj.y;
-
-    sceneRegistry.setAnimationState(objectId, 'moving');
-
-    return animate({
-      duration: options.duration || 800,
-      easing: options.easing || 'easeOut',
-      onUpdate: (progress) => {
-        const x = startX + (targetX - startX) * progress;
-        const y = startY + (targetY - startY) * progress;
-        sceneRegistry.update(objectId, { x, y });
-      },
-      onComplete: () => {
-        sceneRegistry.setAnimationState(objectId, 'idle');
-        sceneRegistry.update(objectId, { x: targetX, y: targetY });
-      },
-    });
+// === STAGGER ANIMATIONS ===
+export const staggerConfig = {
+  fast: {
+    staggerChildren: 0.05,
+    delayChildren: 0,
   },
-
-  /**
-   * Projectile motion (ball throw)
-   */
-  projectile: (objectId, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const {
-      force = 'medium',
-      angle = -30,
-      duration = 1500,
-    } = options;
-
-    const forceMultiplier = { low: 100, medium: 180, high: 280 }[force] || 180;
-    const angleRad = (angle * Math.PI) / 180;
-    const startX = obj.x;
-    const startY = obj.y;
-    const vx = forceMultiplier * Math.cos(angleRad);
-    const vy = forceMultiplier * Math.sin(angleRad);
-    const gravity = 200;
-
-    sceneRegistry.setAnimationState(objectId, 'projectile');
-
-    return animate({
-      duration,
-      easing: 'linear',
-      onUpdate: (progress) => {
-        const t = progress * 2;
-        const x = startX + vx * t;
-        const y = startY + vy * t + 0.5 * gravity * t * t;
-        const rotation = (obj.rotation || 0) + progress * 720; // Spin
-        sceneRegistry.update(objectId, { x, y, rotation });
-      },
-      onComplete: () => {
-        sceneRegistry.setAnimationState(objectId, 'idle');
-      },
-    });
+  medium: {
+    staggerChildren: 0.1,
+    delayChildren: 0.1,
   },
-
-  /**
-   * Force arrow grow animation
-   */
-  forceArrowGrow: (objectId, options = {}) => {
-    const {
-      direction = 'right',
-      magnitude = 100,
-      duration = 600,
-    } = options;
-
-    sceneRegistry.update(objectId, { 
-      visible: true, 
-      magnitude: 0, 
-      direction,
-      animationState: 'growing' 
-    });
-
-    return animate({
-      duration,
-      easing: 'easeOut',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, { 
-          magnitude: magnitude * progress,
-          opacity: Math.min(1, progress * 2),
-        });
-      },
-      onComplete: () => {
-        sceneRegistry.setAnimationState(objectId, 'idle');
-      },
-    });
+  slow: {
+    staggerChildren: 0.2,
+    delayChildren: 0.2,
   },
+};
 
-  /**
-   * Pulse/highlight effect
-   */
-  pulse: (objectId, options = {}) => {
-    const {
-      scale = 1.2,
-      duration = 600,
-      repeat = 2,
-    } = options;
-
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const originalScale = obj.scale || 1;
-    let currentRepeat = 0;
-
-    const runPulse = () => {
-      return animate({
-        duration: duration / 2,
-        easing: 'easeInOut',
-        onUpdate: (progress) => {
-          const currentScale = originalScale + (scale - originalScale) * Math.sin(progress * Math.PI);
-          sceneRegistry.update(objectId, { scale: currentScale, highlighted: true });
-        },
-      });
-    };
-
-    const loop = async () => {
-      while (currentRepeat < repeat) {
-        await runPulse();
-        currentRepeat++;
-      }
-      sceneRegistry.update(objectId, { scale: originalScale, highlighted: false });
-    };
-
-    return loop();
+// === MICRO-TRANSITION HELPERS ===
+export const microTransitions = {
+  // Smooth value interpolation
+  smoothValue: (from, to, progress) => {
+    return from + (to - from) * progress;
   },
-
-  /**
-   * Fade in
-   */
-  fadeIn: (objectId, options = {}) => {
-    sceneRegistry.update(objectId, { visible: true, opacity: 0 });
-
-    return animate({
-      duration: options.duration || 400,
-      easing: 'easeOut',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, { opacity: progress });
-      },
-    });
-  },
-
-  /**
-   * Fade out
-   */
-  fadeOut: (objectId, options = {}) => {
-    return animate({
-      duration: options.duration || 400,
-      easing: 'easeIn',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, { opacity: 1 - progress });
-      },
-      onComplete: () => {
-        sceneRegistry.update(objectId, { visible: false });
-      },
-    });
-  },
-
-  /**
-   * Shake effect (for emphasis or error)
-   */
-  shake: (objectId, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const originalX = obj.x;
-    const intensity = options.intensity || 5;
-
-    return animate({
-      duration: options.duration || 500,
-      easing: 'linear',
-      onUpdate: (progress) => {
-        const offset = Math.sin(progress * Math.PI * 8) * intensity * (1 - progress);
-        sceneRegistry.update(objectId, { x: originalX + offset });
-      },
-      onComplete: () => {
-        sceneRegistry.update(objectId, { x: originalX });
-      },
-    });
-  },
-
-  /**
-   * Rotate animation
-   */
-  rotate: (objectId, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const startRotation = obj.rotation || 0;
-    const targetRotation = options.angle || 360;
-
-    return animate({
-      duration: options.duration || 800,
-      easing: options.easing || 'easeInOut',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, { 
-          rotation: startRotation + targetRotation * progress 
-        });
-      },
-    });
-  },
-
-  /**
-   * Scale animation
-   */
-  scale: (objectId, targetScale, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const startScale = obj.scale || 1;
-
-    return animate({
-      duration: options.duration || 400,
-      easing: options.easing || 'easeOut',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, { 
-          scale: startScale + (targetScale - startScale) * progress 
-        });
-      },
-    });
-  },
-
-  /**
-   * Spring bounce (for landing/impact)
-   */
-  springBounce: (objectId, options = {}) => {
-    const obj = sceneRegistry.get(objectId);
-    if (!obj) return Promise.resolve();
-
-    const originalY = obj.y;
-    const bounceHeight = options.height || 20;
-
-    return animate({
-      duration: options.duration || 600,
-      easing: 'spring',
-      onUpdate: (progress) => {
-        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight * (1 - progress);
-        sceneRegistry.update(objectId, { y: originalY - bounce });
-      },
-      onComplete: () => {
-        sceneRegistry.update(objectId, { y: originalY });
-      },
-    });
-  },
-
-  /**
-   * Professor gesture animation
-   */
-  professorGesture: (objectId, gesture = 'point', options = {}) => {
-    const gestures = {
-      point: { armAngle: -45, duration: 400 },
-      explain: { armAngle: -30, duration: 300 },
-      think: { headTilt: -10, duration: 500 },
-      celebrate: { armAngle: -60, scale: 1.05, duration: 600 },
-    };
-
-    const config = gestures[gesture] || gestures.point;
+  
+  // Color interpolation
+  interpolateColor: (color1, color2, progress) => {
+    const r1 = parseInt(color1.slice(1, 3), 16);
+    const g1 = parseInt(color1.slice(3, 5), 16);
+    const b1 = parseInt(color1.slice(5, 7), 16);
     
-    return animate({
-      duration: config.duration,
-      easing: 'easeOut',
-      onUpdate: (progress) => {
-        sceneRegistry.update(objectId, {
-          gesture,
-          gestureProgress: progress,
-          armAngle: config.armAngle * progress,
-          headTilt: (config.headTilt || 0) * progress,
-        });
-      },
-    });
+    const r2 = parseInt(color2.slice(1, 3), 16);
+    const g2 = parseInt(color2.slice(3, 5), 16);
+    const b2 = parseInt(color2.slice(5, 7), 16);
+    
+    const r = Math.round(r1 + (r2 - r1) * progress);
+    const g = Math.round(g1 + (g2 - g1) * progress);
+    const b = Math.round(b1 + (b2 - b1) * progress);
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   },
-
-  /**
-   * Sequence multiple animations
-   */
-  sequence: async (animationList) => {
-    for (const anim of animationList) {
-      if (typeof anim === 'function') {
-        await anim();
-      } else if (anim.parallel) {
-        await Promise.all(anim.parallel.map(a => a()));
-      }
-    }
+  
+  // Size based on value
+  sizeFromValue: (value, minValue, maxValue, minSize, maxSize) => {
+    const normalized = (value - minValue) / (maxValue - minValue);
+    return minSize + (maxSize - minSize) * normalized;
   },
-
-  /**
-   * Run animations in parallel
-   */
-  parallel: (animationList) => {
-    return Promise.all(animationList.map(anim => 
-      typeof anim === 'function' ? anim() : Promise.resolve()
-    ));
+  
+  // Arrow thickness based on force
+  arrowThickness: (force, minForce = 0, maxForce = 50) => {
+    const normalized = Math.min(Math.max((force - minForce) / (maxForce - minForce), 0), 1);
+    return 2 + normalized * 8; // 2px to 10px
+  },
+  
+  // Opacity based on distance
+  distanceOpacity: (distance, maxDistance) => {
+    return Math.max(0, 1 - (distance / maxDistance));
   },
 };
 
-export default animations;
+// === TRAIL EFFECT ===
+export const createTrail = (positions, maxLength = 10) => {
+  const trail = positions.slice(-maxLength);
+  return trail.map((pos, idx) => ({
+    ...pos,
+    opacity: (idx + 1) / trail.length,
+    scale: 0.5 + (idx / trail.length) * 0.5,
+  }));
+};
 
+// === GESTURE ANIMATIONS ===
+export const gestureAnimations = {
+  tap: {
+    scale: 0.95,
+    transition: { duration: 0.1 }
+  },
+  
+  hover: {
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  },
+  
+  drag: {
+    scale: 1.1,
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+    transition: { duration: 0.2 }
+  },
+  
+  focus: {
+    boxShadow: '0 0 0 3px rgba(66, 153, 225, 0.5)',
+    transition: { duration: 0.2 }
+  },
+};
 
+// === CELEBRATION ANIMATIONS ===
+export const celebrationAnimations = {
+  confetti: {
+    particles: 50,
+    spread: 360,
+    colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'],
+    gravity: 0.3,
+  },
+  
+  sparkle: {
+    particles: 20,
+    spread: 180,
+    colors: ['#FFD700', '#FFF'],
+    gravity: 0.05,
+    upward: true,
+  },
+  
+  burst: {
+    particles: 30,
+    spread: 360,
+    colors: ['#FF5722', '#FF9800', '#FFC107'],
+    gravity: 0.2,
+  },
+};
+
+export default {
+  ANIMATION_PRESETS,
+  SVG_FILTERS,
+  ParticleSystem,
+  springPhysics,
+  easings,
+  createSequence,
+  staggerConfig,
+  microTransitions,
+  createTrail,
+  gestureAnimations,
+  celebrationAnimations,
+  createSpeedBlur,
+};

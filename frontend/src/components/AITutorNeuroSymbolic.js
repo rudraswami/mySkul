@@ -1,8 +1,10 @@
 /**
  * AI Tutor - Neuro-Symbolic v3.0
  * Indian Student-Centric, Karnataka-Friendly Learning Experience
+ * 
+ * GAMIFICATION INTEGRATED: XP, Streaks, Micro-rewards, Levels
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -28,7 +30,10 @@ import {
   ArrowRight,
   Image as ImageIcon,
   Paperclip,
-  XCircle
+  XCircle,
+  Flame,
+  Zap,
+  Trophy
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
@@ -42,6 +47,11 @@ import VisualSketchViewer from './visual/VisualSketchViewer';
 import SubjectBadge from './visual/SubjectBadge';
 import FollowUpQuestions from './visual/FollowUpQuestions';
 import ShareButtons from './visual/ShareButtons';
+import MemoryContextBanner from './MemoryContextBanner';
+
+// Gamification Components
+import MicroReward, { LevelUpCelebration, StreakCelebration } from './gamification/MicroReward';
+import { useGamification } from '../hooks/useGamification';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -106,6 +116,21 @@ export default function AITutorNeuroSymbolic() {
   const { user } = useAuth();
   const { checkFeatureAccess, trackFeatureUsage } = useSubscription();
   const { success: toastSuccess, error: toastError } = useToast();
+  
+  // 🎮 GAMIFICATION - Hook for XP, streaks, rewards
+  const {
+    stats: gamificationStats,
+    currentReward,
+    levelUp,
+    streakCelebration,
+    processInteraction,
+    dismissReward,
+    dismissLevelUp,
+    dismissStreakCelebration,
+    level: currentLevel,
+    xp: currentXP,
+    streak: currentStreak
+  } = useGamification(user?.id);
 
   // Core state
   const [messages, setMessages] = useState([]);
@@ -184,7 +209,28 @@ export default function AITutorNeuroSymbolic() {
   };
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentSession, setCurrentSession] = useState(null);
+  
+  // CRITICAL FIX: Persist currentSession to localStorage for ChatGPT-style persistence
+  const [currentSession, setCurrentSessionState] = useState(() => {
+    // Initialize from localStorage on mount
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dhruv_ai_current_session') || null;
+    }
+    return null;
+  });
+  
+  // Wrapper to persist session changes to localStorage
+  const setCurrentSession = useCallback((sessionId) => {
+    setCurrentSessionState(sessionId);
+    if (typeof window !== 'undefined') {
+      if (sessionId) {
+        localStorage.setItem('dhruv_ai_current_session', sessionId);
+      } else {
+        localStorage.removeItem('dhruv_ai_current_session');
+      }
+    }
+  }, []);
+  
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionLoadingId, setSessionLoadingId] = useState(null);
@@ -213,6 +259,9 @@ export default function AITutorNeuroSymbolic() {
     level: 1,
     streak: 0
   });
+  
+  // Offline detection
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Default quick prompts - Attractive and diverse (cross-subject, exam-focused)
   const [defaultPrompts, setDefaultPrompts] = useState([
@@ -256,6 +305,26 @@ export default function AITutorNeuroSymbolic() {
     
     window.addEventListener('send-question', handleFollowUpQuestion);
     return () => window.removeEventListener('send-question', handleFollowUpQuestion);
+  }, []);
+  
+  // Offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toastSuccess('Back online', 'Your connection is restored! 🎉');
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toastError('No internet', 'You\'re offline. Messages will be queued. 📡');
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Auto-scroll to bottom
@@ -426,6 +495,12 @@ export default function AITutorNeuroSymbolic() {
   const handleSend = async (messageText = null) => {
     const messageToSend = messageText || inputMessage.trim();
     if (!messageToSend || loading) return;
+    
+    // Check if online
+    if (!isOnline) {
+      toastError('No internet', 'Please check your connection and try again. 📡');
+      return;
+    }
 
     // Check feature access
     const access = await checkFeatureAccess('ai_mentor');
@@ -442,11 +517,12 @@ export default function AITutorNeuroSymbolic() {
 
     // Add user message optimistically
     // FIXED: Ensure content is always a plain string
+    // Use crypto.randomUUID() for unique IDs
     const userMsg = {
       type: 'user',
       content: String(messageToSend), // Ensure it's always a string
       timestamp: new Date().toISOString(),
-      id: `user_${Date.now()}_${Math.random()}`,
+      id: `user_${Date.now()}_${crypto.randomUUID()}`,
       // Store image preview separately for display (not in content)
       image_preview: imagePreview || null
     };
@@ -512,14 +588,17 @@ export default function AITutorNeuroSymbolic() {
       // ====================================================================
       // STREAMING RESPONSE (Real-time token display like ChatGPT)
       // ====================================================================
-      const USE_STREAMING = true; // Feature flag for streaming
+      // DISABLED: Streaming endpoint not yet implemented on backend
+      // TODO: Re-enable when /api/ai/neuro-symbolic/stream is ready
+      const USE_STREAMING = false; // Feature flag for streaming
       
       let data;
       let streamingHandledFlag = false; // Track if streaming handled the message
       
       if (USE_STREAMING) {
         // Create placeholder AI message for streaming
-        const streamingMsgId = `ai_${Date.now()}_${Math.random()}`;
+        // Use crypto.randomUUID() for unique IDs (no collisions)
+        const streamingMsgId = `ai_${Date.now()}_${crypto.randomUUID()}`;
         const streamingAiMsg = {
           type: 'ai',
           content: {
@@ -676,17 +755,31 @@ export default function AITutorNeuroSymbolic() {
             return;
           }
           
-          // Better error messages
+          // Better error messages (student-friendly)
           let errorMessage = 'Oops! Something went wrong. Please try again.';
+          let canRetry = true;
+          
           if (response.status === 429) {
-            errorMessage = 'Whoa! You\'re asking too many questions too fast. Take a short break and try again in a minute! ⏱️';
+            errorMessage = 'Whoa! You\'re asking too fast! Take a 30-second break and try again. 🧘';
+            canRetry = true;
           } else if (response.status === 500) {
-            errorMessage = 'Our AI brain is taking a quick break. Please try asking again! 🧠';
+            errorMessage = 'Our AI is taking a quick nap. Try again in 1 minute! 😴';
+            canRetry = true;
           } else if (response.status === 503) {
-            errorMessage = 'We\'re experiencing high demand right now. Please try again in a few seconds! 🚀';
+            errorMessage = 'Too many students asking right now. Try in 10 seconds! 🚀';
+            canRetry = true;
+          } else if (response.status === 0 || error.message === 'Failed to fetch') {
+            errorMessage = 'Check your internet connection and try again! 📡';
+            canRetry = true;
+          } else if (response.status === 401) {
+            errorMessage = 'Session expired. Please log in again.';
+            canRetry = false;
           }
           
-          throw new Error(errorMessage);
+          const err = new Error(errorMessage);
+          err.canRetry = canRetry;
+          err.originalMessage = messageToSend;
+          throw err;
         }
 
         data = await response.json();
@@ -734,21 +827,53 @@ export default function AITutorNeuroSymbolic() {
       // Track usage
       await trackFeatureUsage('ai_mentor');
       
+      // 🎮 GAMIFICATION: Process interaction for XP, streaks, rewards
+      const responseTime = Date.now() - new Date(userMsg.timestamp).getTime();
+      try {
+        await processInteraction({
+          interactionType: 'question',
+          isCorrect: true, // Questions are always "correct" - they're learning!
+          responseTimeMs: responseTime,
+          concept: data.detected_subject || '',
+          subject: data.detected_subject || ''
+        });
+      } catch (gamificationError) {
+        console.warn('Gamification processing failed:', gamificationError);
+        // Don't block the main flow
+      }
+      
       // Clear image after successful send
       handleRemoveImage();
+      
+      // Refresh session list to show updated message count
+      loadSessions();
+      
+      // Auto-focus input for next question
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add friendly error message
+      // Add friendly error message with retry option
       const errorMsg = error.message || 'Oops! Something went wrong. Please try again! 😅';
+      const canRetry = error.canRetry !== false; // Default to true
+      const originalMessage = error.originalMessage || messageToSend;
+      
       setMessages(prev => [
         ...prev,
         {
           type: 'error',
           content: errorMsg,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          canRetry: canRetry,
+          originalMessage: originalMessage,
+          id: `error_${Date.now()}`
         }
       ]);
+      
+      // Also show toast for immediate feedback
+      toastError('Message failed', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -806,6 +931,17 @@ export default function AITutorNeuroSymbolic() {
   // Quick send from default prompts
   const handleQuickSend = (prompt) => {
     handleSend(prompt);
+  };
+  
+  // Retry failed message
+  const handleRetry = (errorMessage) => {
+    if (!errorMessage.originalMessage) return;
+    
+    // Remove error message
+    setMessages(prev => prev.filter(m => m.id !== errorMessage.id));
+    
+    // Resend original message
+    handleSend(errorMessage.originalMessage);
   };
 
   // Start new chat
@@ -908,7 +1044,7 @@ export default function AITutorNeuroSymbolic() {
         list.forEach(msg => {
           // Combined format: user_message + ai response fields
           if (msg.user_message) {
-            const uid = (msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${Math.random()}`);
+            const uid = (msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${crypto.randomUUID()}`);
             if (!ids.has(uid)) {
               // Ensure user content is always a string
               const userContent = typeof msg.user_message === 'string' 
@@ -924,7 +1060,7 @@ export default function AITutorNeuroSymbolic() {
             }
             const aiPayload = msg.dual_response || msg.response || msg.ai_response;
             if (aiPayload) {
-              const aid = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
+              const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
               if (!ids.has(aid)) {
                 // CRITICAL: Normalize AI content to ensure it's always a proper object
                 parsed.push({ 
@@ -942,7 +1078,7 @@ export default function AITutorNeuroSymbolic() {
             }
           } else if (msg.message && !msg.response && !msg.ai_response) {
             // Separate user message
-            const uid = msg.message_id || `user_${Date.now()}_${Math.random()}`;
+            const uid = msg.message_id || `user_${Date.now()}_${crypto.randomUUID()}`;
             if (!ids.has(uid)) {
               const userContent = typeof msg.message === 'string' 
                 ? msg.message 
@@ -957,8 +1093,8 @@ export default function AITutorNeuroSymbolic() {
             }
           } else if (msg.response || msg.ai_response) {
             // Separate AI response
-            const aid = msg.message_id || `ai_${Date.now()}_${Math.random()}`;
-            if (!ids.has(aid)) {
+              const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
+              if (!ids.has(aid)) {
               const aiPayload = msg.response || msg.ai_response;
               // CRITICAL: Normalize AI content to ensure it's always a proper object
               parsed.push({ 
@@ -987,6 +1123,22 @@ export default function AITutorNeuroSymbolic() {
     } finally { setSessionLoadingId(null); }
   };
 
+  // CRITICAL FIX: Restore session messages on mount if we have a persisted session
+  // This ensures ChatGPT-style persistence when navigating away and back
+  useEffect(() => {
+    const restoreSession = async () => {
+      const persistedSession = localStorage.getItem('dhruv_ai_current_session');
+      if (persistedSession && messages.length === 0) {
+        console.log('🔄 Restoring persisted session:', persistedSession);
+        await loadSession(persistedSession);
+      }
+    };
+    
+    // Small delay to ensure loadSessions runs first
+    const timeoutId = setTimeout(restoreSession, 100);
+    return () => clearTimeout(timeoutId);
+  }, []); // Run once on mount
+  
   // Defer sessions load to next tick/idle to keep first paint fast
   useEffect(() => {
     let idleId = null;
@@ -1028,6 +1180,45 @@ export default function AITutorNeuroSymbolic() {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50">
+      {/* 🎮 GAMIFICATION: Micro-Reward Popup */}
+      <MicroReward 
+        reward={currentReward} 
+        onComplete={dismissReward}
+        autoHide={true}
+        hideAfter={3000}
+      />
+      
+      {/* 🎮 GAMIFICATION: Level Up Celebration */}
+      {levelUp && (
+        <LevelUpCelebration
+          oldLevel={levelUp.old_level}
+          newLevel={levelUp.new_level}
+          onClose={dismissLevelUp}
+        />
+      )}
+      
+      {/* 🎮 GAMIFICATION: Streak Celebration */}
+      {streakCelebration && (
+        <StreakCelebration
+          streakDays={streakCelebration.streakDays}
+          badgeEarned={streakCelebration.badgeEarned}
+        />
+      )}
+      
+      {/* Offline Banner */}
+      {!isOnline && (
+        <motion.div
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-3 shadow-lg"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
+            <span className="text-xl">📡</span>
+            <p className="font-semibold">You're offline. Messages will be queued until connection is restored.</p>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Onboarding Tour for First-Time Users */}
       <OnboardingTour onComplete={() => {
         console.log('Onboarding completed');
@@ -1388,25 +1579,53 @@ export default function AITutorNeuroSymbolic() {
                 </div>
               </div>
 
-              {/* XP and Streak Display - Always Visible */}
-              <div className="flex items-center gap-3 ml-auto mr-4 flex-shrink-0">
-                {/* Streak */}
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-lg">🔥</span>
+              {/* 🎮 GAMIFICATION: XP, Level, and Streak Display */}
+              <div className="flex items-center gap-2 ml-auto mr-4 flex-shrink-0">
+                {/* Streak - Animated when active */}
+                <motion.div 
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+                    currentStreak > 0 
+                      ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-300' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  title={currentStreak > 0 ? `${currentStreak} day streak! Keep it up!` : 'Start your streak today!'}
+                >
+                  <motion.span 
+                    className="text-lg"
+                    animate={currentStreak > 0 ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  >
+                    🔥
+                  </motion.span>
                   <div>
-                    <p className="text-xs font-bold text-orange-700">{userProgress.streak} Day</p>
+                    <p className={`text-xs font-bold ${currentStreak > 0 ? 'text-orange-700' : 'text-gray-500'}`}>
+                      {currentStreak || 0} Day{currentStreak !== 1 ? 's' : ''}
+                    </p>
                     <p className="text-xs text-orange-600">Streak</p>
                   </div>
-                </div>
+                </motion.div>
                 
-                {/* XP and Level */}
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
-                  <span className="text-lg">⭐</span>
-                  <div>
-                    <p className="text-xs font-bold text-purple-700">Level {userProgress.level}</p>
-                    <p className="text-xs text-purple-600">{userProgress.xp} XP</p>
+                {/* Level & XP with Progress Bar */}
+                <motion.div 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg"
+                  whileHover={{ scale: 1.05 }}
+                  title={`${currentXP || 0} XP total`}
+                >
+                  <span className="text-lg">
+                    {currentLevel === 'Master' ? '👑' : 
+                     currentLevel === 'Scientist' ? '🧪' :
+                     currentLevel === 'Tactician' ? '🎯' :
+                     currentLevel === 'Analyst' ? '🔬' : '🔭'}
+                  </span>
+                  <div className="min-w-[60px]">
+                    <p className="text-xs font-bold text-purple-700">{currentLevel || 'Explorer'}</p>
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-purple-500" />
+                      <p className="text-xs text-purple-600">{currentXP || 0} XP</p>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               <motion.button
@@ -1715,6 +1934,11 @@ export default function AITutorNeuroSymbolic() {
                           
                           {/* UNIFIED RESPONSE CONTAINER - Permanent Solution */}
                           <div className="unified-response-container bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-purple-100 dark:border-purple-900">
+                            {/* Memory Context Banner - Shows learning progress */}
+                            {message.content?.memory_context && (
+                              <MemoryContextBanner memoryContext={message.content.memory_context} />
+                            )}
+                            
                             {/* Subject Badge - Top */}
                             {message.content?.detected_subject && (
                               <div className="mb-4">
@@ -1799,13 +2023,39 @@ export default function AITutorNeuroSymbolic() {
 
                     {message.type === 'error' && (
                       <div className="flex justify-center">
-                        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-6 py-4 max-w-2xl">
-                          <p className="text-sm">
-                            {typeof message.content === 'string' 
-                              ? message.content 
-                              : (message.content?.message || String(message.content || 'An error occurred'))}
-                          </p>
-                        </div>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-red-50 border-2 border-red-200 text-red-700 rounded-xl px-6 py-5 max-w-2xl shadow-lg"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <span className="text-xl">⚠️</span>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium leading-relaxed">
+                                {typeof message.content === 'string' 
+                                  ? message.content 
+                                  : (message.content?.message || String(message.content || 'An error occurred'))}
+                              </p>
+                              
+                              {/* Retry Button */}
+                              {message.canRetry && message.originalMessage && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleRetry(message)}
+                                  className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+                                >
+                                  <RefreshCw className="h-4 w-4" />
+                                  Retry Message
+                                </motion.button>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
                       </div>
                     )}
                   </motion.div>

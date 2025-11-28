@@ -893,3 +893,7 @@ const handleObjectTap = (id) => {
 export default EnhancedForceScene;
 
 
+
+
+
+

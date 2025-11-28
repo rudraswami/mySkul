@@ -4,18 +4,25 @@
  * Intelligent response renderer that adapts structure based on question type.
  * Like ChatGPT/Gemini - different questions get different response structures.
  * 
- * NO MORE STATIC TEMPLATE!
+ * FIXED: Uses AdaptiveMarkdown EVERYWHERE for proper LaTeX, tables, and formatting.
  */
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Lightbulb, BookOpen, Target, AlertTriangle, 
-  Calculator, CheckCircle, ArrowRight, Brain,
-  Zap, HelpCircle, List, Info
-} from 'lucide-react';
-import { MarkdownParagraph } from '../utils/markdownRenderer';
+import { Lightbulb, Calculator } from 'lucide-react';
+import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
+
+// DEPRECATED: FormattedExplanation forces template structure
+// import { FormattedExplanation, formatExplanation } from '../utils/explanationFormatter';
+
+/**
+ * Check if this is a follow-up/context question
+ */
+const isFollowUpQuestion = (question) => {
+  const q = (question || '').toLowerCase();
+  return q.match(/(what did we|earlier|before|previously|last time|you said|you mentioned|continue|go on|more about)/);
+};
 
 /**
  * Detect response type from content
@@ -24,21 +31,38 @@ const detectResponseType = (response, question) => {
   const q = (question || '').toLowerCase();
   const directives = response?.render_directives || {};
   
-  // Check backend directives first
+  // Check backend directives first - these take priority
   if (directives.greeting_only) return 'greeting';
   if (directives.show_steps) return 'calculation';
   if (directives.prefer_compare_layout) return 'comparison';
   
-  // Detect from question
-  if (q.match(/^(hi|hello|hey|namaste|good morning|good evening)/)) return 'greeting';
-  if (q.match(/(solve|calculate|find|evaluate|compute)/)) return 'calculation';
-  if (q.match(/(difference|compare|vs|versus|distinguish)/)) return 'comparison';
-  if (q.match(/(what is|define|meaning|definition)/)) return 'definition';
-  if (q.match(/(explain|why|how|describe)/)) return 'explanation';
-  if (q.match(/(example|for instance)/)) return 'example';
-  if (q.match(/(thank|thanks|ok|got it)/)) return 'acknowledgment';
+  // CRITICAL: Follow-up questions should use adaptive markdown, NOT templates
+  if (isFollowUpQuestion(question)) return 'follow_up';
   
-  return 'standard';
+  // Simple acknowledgments
+  if (q.match(/^(hi|hello|hey|namaste|good morning|good evening)/)) return 'greeting';
+  if (q.match(/(thank|thanks|ok|got it|okay|cool|nice)/)) return 'acknowledgment';
+  
+  // Calculation - needs step-by-step
+  if (q.match(/(solve|calculate|find|evaluate|compute|integrate|differentiate)/)) return 'calculation';
+  
+  // Comparison - needs side-by-side
+  if (q.match(/(difference|compare|vs|versus|distinguish|contrast)/)) return 'comparison';
+  
+  // Short factual questions - direct answer
+  if (q.match(/^(who|when|where|which|how many|how much)\b/) && q.length < 50) return 'fact';
+  
+  // Definition - structured but concise
+  if (q.match(/(what is|define|meaning|definition)/)) return 'definition';
+  
+  // Explanation - the AI decides structure
+  if (q.match(/(explain|why|how|describe)/)) return 'explanation';
+  
+  // Example request
+  if (q.match(/(example|for instance|show me)/)) return 'example';
+  
+  // Default: let AI decide structure
+  return 'adaptive';
 };
 
 /**
@@ -194,6 +218,39 @@ const SmartResponse = ({
     case 'example':
       return <ExampleResponse content={content} />;
     
+    case 'follow_up':
+    case 'adaptive':
+      // For follow-ups and adaptive responses, use clean markdown
+      // The AI decides structure, not the frontend
+      return (
+        <motion.div 
+          className="space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <AdaptiveMarkdown content={content.mainContent} />
+          {showVisual && (
+            <VisualSketchViewer
+              svg={visualSketch?.svg || response?.visual_sketch?.svg}
+              question={question}
+              embedded={true}
+            />
+          )}
+        </motion.div>
+      );
+    
+    case 'fact':
+      // Short factual answer - minimal formatting
+      return (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-gray-800 dark:text-gray-200"
+        >
+          <AdaptiveMarkdown content={content.mainContent} />
+        </motion.div>
+      );
+    
     case 'explanation':
     default:
       return (
@@ -221,9 +278,7 @@ const GreetingResponse = ({ content }) => (
     className="text-gray-800 dark:text-gray-200 leading-relaxed"
     style={{ fontSize: '16px', lineHeight: '1.75' }}
   >
-    <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-      {content.greeting || content.mainContent || "Hey! How can I help you today? 👋"}
-    </MarkdownParagraph>
+    <AdaptiveMarkdown content={content.greeting || content.mainContent || "Hey! How can I help you today? 👋"} />
   </motion.div>
 );
 
@@ -237,14 +292,13 @@ const AcknowledgmentResponse = ({ content }) => (
     className="text-gray-800 dark:text-gray-200 leading-relaxed"
     style={{ fontSize: '16px', lineHeight: '1.75' }}
   >
-    <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-      {content.mainContent || "Got it! Let me know if you have any other questions. 😊"}
-    </MarkdownParagraph>
+    <AdaptiveMarkdown content={content.mainContent || "Got it! Let me know if you have any other questions. 😊"} />
   </motion.div>
 );
 
 /**
  * Calculation - Focus on step-by-step solution
+ * FIXED: Uses AdaptiveMarkdown for proper LaTeX rendering
  */
 const CalculationResponse = ({ content, showVisual, visualSketch, question, response }) => (
   <motion.div 
@@ -252,53 +306,16 @@ const CalculationResponse = ({ content, showVisual, visualSketch, question, resp
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
   >
-    {/* Solution Steps */}
+    {/* Main content with full markdown/LaTeX support */}
     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-100 dark:border-blue-800">
       <div className="flex items-center space-x-2 mb-4">
         <Calculator className="w-5 h-5 text-blue-600" />
         <h4 className="font-semibold text-blue-800 dark:text-blue-300">Solution</h4>
       </div>
       
-      {content.steps ? (
-        <div className="space-y-3">
-          {(Array.isArray(content.steps) ? content.steps : [content.steps]).map((step, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="flex items-start space-x-3"
-            >
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                {i + 1}
-              </span>
-              <div className="flex-1 pt-0.5">
-                <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-                  {typeof step === 'string' ? step : step.content || step.text || JSON.stringify(step)}
-                </MarkdownParagraph>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-          {content.mainContent}
-        </MarkdownParagraph>
-      )}
+      {/* Use AdaptiveMarkdown for full LaTeX/table support */}
+      <AdaptiveMarkdown content={content.mainContent} />
     </div>
-
-    {/* Formula if present */}
-    {content.formula && (
-      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-800">
-        <div className="flex items-center space-x-2 mb-2">
-          <Zap className="w-4 h-4 text-purple-600" />
-          <span className="font-medium text-purple-800 dark:text-purple-300 text-sm">Formula Used</span>
-        </div>
-        <div className="font-mono text-lg text-center py-2 bg-white dark:bg-gray-800 rounded-lg">
-          {content.formula}
-        </div>
-      </div>
-    )}
 
     {/* Visual if needed */}
     {showVisual && (
@@ -312,47 +329,34 @@ const CalculationResponse = ({ content, showVisual, visualSketch, question, resp
 );
 
 /**
- * Definition - Short answer with optional expansion
+ * Definition - Short answer
+ * REFACTORED: Uses AdaptiveMarkdown instead of forced template
  */
-const DefinitionResponse = ({ content, showVisual, visualSketch, question, response }) => (
-  <motion.div 
-    className="space-y-4"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-  >
-    {/* Direct Answer */}
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      <MarkdownParagraph>
-        {content.mainContent}
-      </MarkdownParagraph>
-    </div>
+const DefinitionResponse = ({ content, showVisual, visualSketch, question, response }) => {
+  return (
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* Direct Answer - Clean markdown */}
+      <AdaptiveMarkdown content={content.mainContent} />
 
-    {/* Example if present */}
-    {content.example && (
-      <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800">
-        <div className="flex items-center space-x-2 mb-2">
-          <Lightbulb className="w-4 h-4 text-green-600" />
-          <span className="font-medium text-green-800 dark:text-green-300 text-sm">Example</span>
-        </div>
-        <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-          {content.example}
-        </MarkdownParagraph>
-      </div>
-    )}
-
-    {/* Visual if needed */}
-    {showVisual && (
-      <VisualSketchViewer
-        svg={visualSketch?.svg || response?.visual_sketch?.svg}
-        question={question}
-        embedded={true}
-      />
-    )}
-  </motion.div>
-);
+      {/* Visual if needed */}
+      {showVisual && (
+        <VisualSketchViewer
+          svg={visualSketch?.svg || response?.visual_sketch?.svg}
+          question={question}
+          embedded={true}
+        />
+      )}
+    </motion.div>
+  );
+};
 
 /**
  * Comparison - Table/side-by-side format
+ * FIXED: Uses AdaptiveMarkdown for proper table and LaTeX rendering
  */
 const ComparisonResponse = ({ content }) => (
   <motion.div 
@@ -360,44 +364,14 @@ const ComparisonResponse = ({ content }) => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
   >
-    {/* Summary */}
-    {content.metaphor && (
-      <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800 mb-4">
-        <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-          {content.metaphor}
-        </MarkdownParagraph>
-      </div>
-    )}
-
-    {/* Main comparison content */}
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      <MarkdownParagraph>
-        {content.mainContent}
-      </MarkdownParagraph>
-    </div>
-
-    {/* Key Takeaways */}
-    {content.keyTakeaways && (
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-100 dark:border-yellow-800">
-        <div className="flex items-center space-x-2 mb-2">
-          <CheckCircle className="w-4 h-4 text-yellow-600" />
-          <span className="font-medium text-yellow-800 dark:text-yellow-300 text-sm">Key Differences</span>
-        </div>
-        <ul className="space-y-1">
-          {(Array.isArray(content.keyTakeaways) ? content.keyTakeaways : [content.keyTakeaways]).map((point, i) => (
-            <li key={i} className="flex items-start space-x-2 text-gray-800 dark:text-gray-200 text-sm">
-              <span className="text-yellow-600">•</span>
-              <span>{point}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )}
+    {/* Main comparison content - AdaptiveMarkdown handles tables properly */}
+    <AdaptiveMarkdown content={content.mainContent} />
   </motion.div>
 );
 
 /**
  * Example - Focus on practical examples
+ * FIXED: Uses AdaptiveMarkdown for proper formatting
  */
 const ExampleResponse = ({ content }) => (
   <motion.div 
@@ -411,25 +385,18 @@ const ExampleResponse = ({ content }) => (
         <Lightbulb className="w-5 h-5 text-green-600" />
         <h4 className="font-semibold text-green-800 dark:text-green-300">Example</h4>
       </div>
-      <MarkdownParagraph className="text-gray-800 dark:text-gray-200">
-        {content.example || content.mainContent}
-      </MarkdownParagraph>
+      <AdaptiveMarkdown content={content.example || content.mainContent} />
     </div>
   </motion.div>
 );
 
 /**
- * Explanation - Full explanation with optional visual and memory hook
- * CRITICAL: Explanation text ALWAYS comes first, visual comes after
+ * Explanation - Full explanation with optional visual
+ * 
+ * REFACTORED: Uses AdaptiveMarkdown - the AI decides the structure, not the frontend.
+ * NO MORE FORCED TEMPLATE SECTIONS.
  */
 const ExplanationResponse = ({ content, showVisual, visualSketch, question, response, onFollowUp }) => {
-  // Don't show memory hook if it's too similar to main content
-  const showMemoryHook = content.metaphor && 
-    content.mainContent && 
-    content.mainContent.length > 50 &&
-    !content.mainContent.toLowerCase().includes(content.metaphor?.toLowerCase()?.substring(0, 30) || '');
-
-  // Check if we have actual content to display
   const hasContent = content.mainContent && content.mainContent.length > 10;
 
   return (
@@ -438,13 +405,9 @@ const ExplanationResponse = ({ content, showVisual, visualSketch, question, resp
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      {/* PRIORITY 1: Main Explanation Text - ALWAYS FIRST */}
+      {/* Main Content - Rendered as clean markdown */}
       {hasContent ? (
-        <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
-          <MarkdownParagraph className="text-gray-800 dark:text-gray-200 leading-relaxed" style={{ fontSize: '16px', lineHeight: '1.75' }}>
-            {content.mainContent}
-          </MarkdownParagraph>
-        </div>
+        <AdaptiveMarkdown content={content.mainContent} />
       ) : (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
           <p className="text-yellow-800 dark:text-yellow-300">
@@ -453,33 +416,7 @@ const ExplanationResponse = ({ content, showVisual, visualSketch, question, resp
         </div>
       )}
 
-      {/* Example if present */}
-      {content.example && (
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800">
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="text-lg">🇮🇳</span>
-            <span className="font-medium text-green-800 dark:text-green-300 text-sm">Real-World Example</span>
-          </div>
-          <MarkdownParagraph className="text-gray-800 dark:text-gray-200 text-sm">
-            {content.example}
-          </MarkdownParagraph>
-        </div>
-      )}
-
-      {/* Memory Hook - Only if adds value */}
-      {showMemoryHook && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-800">
-          <div className="flex items-center space-x-2 mb-2">
-            <Brain className="w-4 h-4 text-purple-600" />
-            <span className="font-medium text-purple-800 dark:text-purple-300 text-sm">Memory Hook</span>
-          </div>
-          <MarkdownParagraph className="text-gray-700 dark:text-gray-300 text-sm italic">
-            {content.metaphor}
-          </MarkdownParagraph>
-        </div>
-      )}
-
-      {/* PRIORITY 2: Visual - AFTER explanation text */}
+      {/* Visual - AFTER explanation text */}
       {showVisual && (
         <VisualSketchViewer
           svg={visualSketch?.svg || response?.visual_sketch?.svg}

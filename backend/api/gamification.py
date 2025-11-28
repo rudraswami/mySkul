@@ -1,320 +1,334 @@
 """
-Gamification API - Leaderboard, achievements, rankings
+🎮 Gamification API Endpoints
+==============================
+Handles all gamification-related requests:
+- Get student stats
+- Process interactions
+- Award XP
+- Manage streaks
+- Track progress
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
-from datetime import datetime, timezone, timedelta
-from models.core import User
-from dependencies import get_current_user, get_database
 
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+import logging
+
+from services.gamification_engine import (
+    get_gamification_service,
+    GamificationService,
+    MicroDopamineEngine,
+    StreakEngine,
+    XPEngine
+)
+
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
 
-@router.get("/leaderboard")
-async def get_leaderboard(
-    limit: int = Query(default=50, ge=1, le=100),
-    period: str = Query(default="all_time", regex="^(all_time|weekly|monthly)$"),
-    user: User = Depends(get_current_user),
-    db = Depends(get_database)
-):
-    """
-    Get leaderboard with top users by XP
-    Supports filtering by time period: all_time, weekly, monthly
-    """
-    try:
-        # Calculate time filter based on period
-        time_filter = {}
-        if period == "weekly":
-            start_date = datetime.now(timezone.utc) - timedelta(days=7)
-            time_filter = {"last_activity": {"$gte": start_date.isoformat()}}
-        elif period == "monthly":
-            start_date = datetime.now(timezone.utc) - timedelta(days=30)
-            time_filter = {"last_activity": {"$gte": start_date.isoformat()}}
-        
-        # Fetch top users by XP
-        users = await db.users.find(
-            time_filter,
-            {"user_id": 1, "full_name": 1, "email": 1, "xp": 1, "level": 1, "badges": 1, "avatar_url": 1}
-        ).sort("xp", -1).limit(limit).to_list(length=limit)
-        
-        # Find current user's rank
-        current_user_xp = 0
-        current_user_rank = None
-        
-        for idx, u in enumerate(users, start=1):
-            if u.get("user_id") == user.user_id:
-                current_user_rank = idx
-                current_user_xp = u.get("xp", 0)
-                break
-        
-        # If current user not in top N, calculate their rank
-        if current_user_rank is None:
-            user_doc = await db.users.find_one({"user_id": user.user_id})
-            if user_doc:
-                current_user_xp = user_doc.get("xp", 0)
-                # Count users with more XP
-                higher_count = await db.users.count_documents({"xp": {"$gt": current_user_xp}})
-                current_user_rank = higher_count + 1
-        
-        # Format leaderboard
-        leaderboard = []
-        for idx, u in enumerate(users, start=1):
-            leaderboard.append({
-                "rank": idx,
-                "user_id": u.get("user_id"),
-                "name": u.get("full_name", "Anonymous"),
-                "xp": u.get("xp", 0),
-                "level": u.get("level", 1),
-                "badges": len(u.get("badges", [])),
-                "avatar": u.get("avatar_url", ""),
-                "is_current_user": u.get("user_id") == user.user_id
-            })
-        
-        return {
-            "leaderboard": leaderboard,
-            "current_user": {
-                "rank": current_user_rank,
-                "xp": current_user_xp,
-                "total_users": await db.users.count_documents({})
-            },
-            "period": period,
-            "total_shown": len(leaderboard)
-        }
-        
-    except Exception as e:
-        print(f"Error fetching leaderboard: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch leaderboard: {str(e)}")
+# ============ REQUEST MODELS ============
+
+class InteractionRequest(BaseModel):
+    """Request model for processing an interaction"""
+    user_id: str
+    interaction_type: str = "question"  # question, answer, followup
+    is_correct: bool = True
+    response_time_ms: int = 0
+    concept: str = ""
+    subject: str = ""
 
 
-@router.get("/progress")
-async def get_gamification_progress(
-    user: User = Depends(get_current_user),
-    db = Depends(get_database)
-):
+class XPAwardRequest(BaseModel):
+    """Request model for awarding XP"""
+    user_id: str
+    action: str
+    multiplier: float = 1.0
+
+
+# ============ RESPONSE MODELS ============
+
+class MicroRewardResponse(BaseModel):
+    """Micro reward response"""
+    message: str
+    emoji: str
+    xp_earned: int
+    celebration_type: str
+
+
+class StreakResponse(BaseModel):
+    """Streak information response"""
+    current: int
+    longest: int
+    motivation: str
+    badge_earned: Optional[str] = None
+
+
+class LevelProgressResponse(BaseModel):
+    """Level progress response"""
+    level_name: str
+    current_xp: int
+    level_xp: int
+    next_level_xp: Optional[int]
+    progress_percent: float
+    next_level_name: Optional[str]
+    is_max_level: bool
+
+
+class TodayStatsResponse(BaseModel):
+    """Today's stats response"""
+    questions: int
+    correct: int
+    accuracy: float
+    time_spent: int
+
+
+class StudentStatsResponse(BaseModel):
+    """Complete student stats response"""
+    user_id: str
+    level: LevelProgressResponse
+    streak: StreakResponse
+    today: TodayStatsResponse
+    badges: List[str]
+    difficulty: str
+    recommendations: List[Dict[str, Any]]
+
+
+class InteractionResponse(BaseModel):
+    """Response after processing an interaction"""
+    micro_reward: Optional[MicroRewardResponse]
+    streak_update: Dict[str, Any]
+    xp_earned: int
+    level_up: Optional[Dict[str, Any]]
+    difficulty_change: Optional[Dict[str, Any]]
+    badges_earned: List[str]
+    recommendations: List[Dict[str, Any]]
+    level_progress: Dict[str, Any]
+
+
+# ============ ENDPOINTS ============
+
+@router.get("/stats/{user_id}", response_model=StudentStatsResponse)
+async def get_student_stats(user_id: str):
     """
-    REDIRECT: This endpoint redirects to /api/user/progress
-    Kept for backward compatibility
+    Get complete gamification stats for a student.
     
-    Get user gamification progress (XP, level, badges, achievements)
+    Returns:
+    - Level and XP progress
+    - Current and longest streak
+    - Today's activity stats
+    - Earned badges
+    - Personalized recommendations
     """
     try:
-        user_doc = await db.users.find_one({"user_id": user.user_id})
+        service = get_gamification_service()
+        stats = await service.get_student_stats(user_id)
         
-        if not user_doc:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        xp = user_doc.get("xp", 0)
-        level = max(1, xp // 100)  # Level up every 100 XP
-        
-        # Get user's achievements
-        achievements = user_doc.get("achievements", [])
-        badges = user_doc.get("badges", [])
-        
-        # Calculate next level progress
-        xp_for_current_level = (level - 1) * 100
-        xp_for_next_level = level * 100
-        xp_progress = ((xp - xp_for_current_level) / 100) * 100  # Percentage to next level
-        
-        return {
-            "xp": xp,
-            "level": level,
-            "xp_progress": min(100, max(0, xp_progress)),
-            "xp_to_next_level": max(0, xp_for_next_level - xp),
-            "badges": badges,
-            "achievements": achievements,
-            "total_badges": len(badges),
-            "total_achievements": len(achievements)
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error fetching gamification progress: {e}")
-        # Return default data instead of error for graceful fallback
-        return {
-            "xp": 0,
-            "level": 1,
-            "xp_progress": 0,
-            "xp_to_next_level": 100,
-            "badges": [],
-            "achievements": [],
-            "total_badges": 0,
-            "total_achievements": 0
-        }
-
-
-@router.get("/achievements")
-async def get_available_achievements(
-    user: User = Depends(get_current_user),
-    db = Depends(get_database)
-):
-    """Get all available achievements and user's unlock status"""
-    try:
-        user_doc = await db.users.find_one({"user_id": user.user_id})
-        unlocked = user_doc.get("achievements", []) if user_doc else []
-        
-        # Define available achievements
-        achievements = [
-            {
-                "id": "first_test",
-                "name": "First Steps",
-                "description": "Complete your first mock test",
-                "xp_reward": 50,
-                "icon": "🎯",
-                "unlocked": "first_test" in unlocked
-            },
-            {
-                "id": "perfect_score",
-                "name": "Perfect Score",
-                "description": "Get 100% on any test",
-                "xp_reward": 200,
-                "icon": "💯",
-                "unlocked": "perfect_score" in unlocked
-            },
-            {
-                "id": "week_streak",
-                "name": "Week Warrior",
-                "description": "7-day login streak",
-                "xp_reward": 100,
-                "icon": "🔥",
-                "unlocked": "week_streak" in unlocked
-            },
-            {
-                "id": "ai_master",
-                "name": "AI Master",
-                "description": "Use AI Tutor 50 times",
-                "xp_reward": 150,
-                "icon": "🧠",
-                "unlocked": "ai_master" in unlocked
-            },
-            {
-                "id": "notes_guru",
-                "name": "Notes Guru",
-                "description": "Upload 20 auto-notes",
-                "xp_reward": 150,
-                "icon": "📝",
-                "unlocked": "notes_guru" in unlocked
-            }
-        ]
-        
-        return {
-            "achievements": achievements,
-            "total": len(achievements),
-            "unlocked_count": len([a for a in achievements if a["unlocked"]])
-        }
-        
-    except Exception as e:
-        print(f"Error fetching achievements: {e}")
-        # Return empty achievements instead of error
-        return {
-            "achievements": [],
-            "total": 0,
-            "unlocked_count": 0
-        }
-
-
-@router.get("/daily-quests")
-async def get_daily_quests(
-    user: User = Depends(get_current_user),
-    db = Depends(get_database)
-):
-    """
-    Get daily quests for the current user.
-    Generates new quests if they don't exist for today.
-    """
-    try:
-        user_doc = await db.users.find_one({"user_id": user.user_id})
-        if not user_doc:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        
-        # Check if quests exist for today
-        current_quests = user_doc.get("daily_quests", {})
-        if current_quests.get("date") == today_str:
-            return {"quests": current_quests.get("quests", []), "date": today_str}
-
-        # Generate new quests
-        import random
-        quest_pool = [
-            {"id": "ai_session", "title": "Complete 1 AI Session", "xp": 50, "type": "easy", "icon": "Zap"},
-            {"id": "quiz_score", "title": "Score 80%+ on a Quiz", "xp": 100, "type": "medium", "icon": "Trophy"},
-            {"id": "study_time", "title": "Study for 30 Minutes", "xp": 75, "type": "easy", "icon": "Clock"},
-            {"id": "ask_questions", "title": "Ask 5 Questions", "xp": 50, "type": "easy", "icon": "CheckCircle"},
-            {"id": "streak_maintain", "title": "Maintain 3-Day Streak", "xp": 150, "type": "hard", "icon": "Zap"},
-            {"id": "mock_test", "title": "Attempt a Mock Test", "xp": 120, "type": "medium", "icon": "FileText"},
-            {"id": "review_notes", "title": "Review Auto-Notes", "xp": 60, "type": "easy", "icon": "BookOpen"},
-        ]
-        
-        # Select 3 random quests
-        selected_quests = random.sample(quest_pool, 3)
-        formatted_quests = []
-        for q in selected_quests:
-            formatted_quests.append({
-                **q,
-                "completed": False,
-                "progress": 0,
-                "target": 1  # simplified for now
-            })
-
-        # Save to DB
-        await db.users.update_one(
-            {"user_id": user.user_id},
-            {"$set": {"daily_quests": {"date": today_str, "quests": formatted_quests}}}
+        return StudentStatsResponse(
+            user_id=stats["user_id"],
+            level=LevelProgressResponse(
+                level_name=stats["level"]["level_name"],
+                current_xp=stats["level"]["current_xp"],
+                level_xp=stats["level"]["level_xp"],
+                next_level_xp=stats["level"].get("next_level_xp"),
+                progress_percent=stats["level"]["progress_percent"],
+                next_level_name=stats["level"].get("next_level_name"),
+                is_max_level=stats["level"]["is_max_level"]
+            ),
+            streak=StreakResponse(
+                current=stats["streak"]["current"],
+                longest=stats["streak"]["longest"],
+                motivation=stats["streak"]["motivation"]
+            ),
+            today=TodayStatsResponse(
+                questions=stats["today"]["questions"],
+                correct=stats["today"]["correct"],
+                accuracy=stats["today"]["accuracy"],
+                time_spent=stats["today"]["time_spent"]
+            ),
+            badges=stats["badges"],
+            difficulty=stats["difficulty"],
+            recommendations=stats["recommendations"]
         )
-
-        return {"quests": formatted_quests, "date": today_str}
-
     except Exception as e:
-        print(f"Error getting daily quests: {e}")
+        logger.error(f"Error getting student stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/daily-quests/{quest_id}/complete")
-async def complete_daily_quest(
-    quest_id: str,
-    user: User = Depends(get_current_user),
-    db = Depends(get_database)
-):
+@router.post("/interaction", response_model=InteractionResponse)
+async def process_interaction(request: InteractionRequest):
     """
-    Mark a daily quest as complete and award XP.
+    Process a student interaction and return gamification rewards.
+    
+    This is called after every question/answer to:
+    - Update streak
+    - Award XP
+    - Check for level ups
+    - Adjust difficulty
+    - Generate micro rewards
     """
     try:
-        user_doc = await db.users.find_one({"user_id": user.user_id})
-        if not user_doc:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        current_quests = user_doc.get("daily_quests", {})
-        quests_list = current_quests.get("quests", [])
-        
-        quest_index = next((i for i, q in enumerate(quests_list) if q["id"] == quest_id), -1)
-        
-        if quest_index == -1:
-            raise HTTPException(status_code=404, detail="Quest not found")
-            
-        if quests_list[quest_index]["completed"]:
-            return {"message": "Quest already completed", "xp_awarded": 0}
-
-        # Mark as complete
-        quests_list[quest_index]["completed"] = True
-        xp_reward = quests_list[quest_index]["xp"]
-
-        # Update DB: Mark quest complete AND add XP
-        await db.users.update_one(
-            {"user_id": user.user_id},
-            {
-                "$set": {"daily_quests.quests": quests_list},
-                "$inc": {"xp": xp_reward}
-            }
+        service = get_gamification_service()
+        result = await service.process_interaction(
+            user_id=request.user_id,
+            interaction_type=request.interaction_type,
+            is_correct=request.is_correct,
+            response_time_ms=request.response_time_ms,
+            concept=request.concept,
+            subject=request.subject
         )
-
-        return {
-            "message": "Quest completed",
-            "xp_awarded": xp_reward,
-            "quest_id": quest_id,
-            "new_total_xp": user_doc.get("xp", 0) + xp_reward
-        }
-
+        
+        # Convert micro_reward to response format
+        micro_reward = None
+        if result.get("micro_reward"):
+            mr = result["micro_reward"]
+            micro_reward = MicroRewardResponse(
+                message=mr.message,
+                emoji=mr.emoji,
+                xp_earned=mr.xp_earned,
+                celebration_type=mr.celebration_type
+            )
+        
+        return InteractionResponse(
+            micro_reward=micro_reward,
+            streak_update=result["streak_update"],
+            xp_earned=result["xp_earned"],
+            level_up=result.get("level_up"),
+            difficulty_change=result.get("difficulty_change"),
+            badges_earned=result["badges_earned"],
+            recommendations=result["recommendations"],
+            level_progress=result["level_progress"]
+        )
     except Exception as e:
-        print(f"Error completing quest: {e}")
+        logger.error(f"Error processing interaction: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/award-xp")
+async def award_xp(request: XPAwardRequest):
+    """
+    Manually award XP for specific actions.
+    
+    Actions:
+    - correct_answer: 10 XP
+    - fast_correct: 15 XP
+    - concept_mastered: 50 XP
+    - subject_completed: 200 XP
+    - daily_goal_reached: 25 XP
+    """
+    try:
+        result = XPEngine.award_xp(
+            action=request.action,
+            multiplier=request.multiplier
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Error awarding XP: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/streak/{user_id}")
+async def get_streak(user_id: str):
+    """Get streak information for a user"""
+    try:
+        service = get_gamification_service()
+        stats = await service.get_student_stats(user_id)
+        return stats["streak"]
+    except Exception as e:
+        logger.error(f"Error getting streak: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/level/{user_id}")
+async def get_level(user_id: str):
+    """Get level and XP information for a user"""
+    try:
+        service = get_gamification_service()
+        stats = await service.get_student_stats(user_id)
+        return stats["level"]
+    except Exception as e:
+        logger.error(f"Error getting level: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/micro-reward/{reward_type}")
+async def get_micro_reward(reward_type: str, is_fast: bool = False, streak: int = 0):
+    """
+    Get a micro reward message for testing/preview.
+    
+    Types: correct, understanding, encouragement, streak
+    """
+    try:
+        if reward_type == "correct":
+            reward = MicroDopamineEngine.get_correct_answer_reward(is_fast, streak)
+        elif reward_type == "understanding":
+            reward = MicroDopamineEngine.get_understanding_reward()
+        elif reward_type == "encouragement":
+            reward = MicroDopamineEngine.get_encouragement()
+        elif reward_type == "streak":
+            reward = MicroDopamineEngine.get_streak_reward(streak)
+            if not reward:
+                return {"message": "No streak reward for this day count"}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid reward type")
+        
+        return {
+            "message": reward.message,
+            "emoji": reward.emoji,
+            "xp_earned": reward.xp_earned,
+            "celebration_type": reward.celebration_type
+        }
+    except Exception as e:
+        logger.error(f"Error getting micro reward: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(limit: int = 10):
+    """
+    Get XP leaderboard (placeholder - needs database integration).
+    """
+    # TODO: Implement with actual database query
+    return {
+        "message": "Leaderboard coming soon!",
+        "limit": limit
+    }
+
+
+@router.get("/badges/all")
+async def get_all_badges():
+    """Get list of all available badges"""
+    badges = {
+        "streak_badges": [
+            {"id": "flame_starter", "name": "Flame Starter", "emoji": "🔥", "requirement": "3-day streak"},
+            {"id": "blue_streak", "name": "Blue Streak", "emoji": "💙", "requirement": "7-day streak"},
+            {"id": "golden_streak", "name": "Golden Streak", "emoji": "🏆", "requirement": "30-day streak"},
+            {"id": "legendary_streak", "name": "Legendary Streak", "emoji": "👑", "requirement": "100-day streak"},
+        ],
+        "learning_badges": [
+            {"id": "first_question", "name": "First Step", "emoji": "🌟", "requirement": "Ask first question"},
+            {"id": "concept_crusher", "name": "Concept Crusher", "emoji": "💪", "requirement": "Master 10 concepts"},
+            {"id": "speed_demon", "name": "Speed Demon", "emoji": "⚡", "requirement": "Fast correct answers"},
+            {"id": "deep_diver", "name": "Deep Diver", "emoji": "🤿", "requirement": "Ask follow-up questions"},
+        ],
+        "special_badges": [
+            {"id": "night_owl", "name": "Night Owl", "emoji": "🦉", "requirement": "Study after 10 PM"},
+            {"id": "early_bird", "name": "Early Bird", "emoji": "🐦", "requirement": "Study before 6 AM"},
+            {"id": "weekend_warrior", "name": "Weekend Warrior", "emoji": "⚔️", "requirement": "Study on weekend"},
+            {"id": "comeback_kid", "name": "Comeback Kid", "emoji": "🔄", "requirement": "Return after break"},
+        ]
+    }
+    return badges
+
+
+@router.get("/levels/all")
+async def get_all_levels():
+    """Get list of all levels and XP requirements"""
+    levels = [
+        {"level": 1, "name": "Explorer", "emoji": "🔭", "xp_required": 0, "description": "Just starting your journey"},
+        {"level": 2, "name": "Analyst", "emoji": "🔬", "xp_required": 500, "description": "Building strong foundations"},
+        {"level": 3, "name": "Tactician", "emoji": "🎯", "xp_required": 1500, "description": "Strategic problem solver"},
+        {"level": 4, "name": "Scientist", "emoji": "🧪", "xp_required": 3500, "description": "Deep understanding achieved"},
+        {"level": 5, "name": "Master", "emoji": "👑", "xp_required": 7000, "description": "True mastery unlocked"},
+    ]
+    return {"levels": levels}

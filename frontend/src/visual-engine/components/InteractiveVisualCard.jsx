@@ -14,6 +14,9 @@ const GravityVisualScene = lazy(() => import('./GravityVisualScene'));
 const ChemistryAtomScene = lazy(() => import('./subjects/ChemistryAtomScene'));
 const BiologyCellScene = lazy(() => import('./subjects/BiologyCellScene'));
 const MathPythagorasScene = lazy(() => import('./subjects/MathPythagorasScene'));
+// Phase 8: New subject scenes
+const RefractionScene = lazy(() => import('./subjects/RefractionScene'));
+const PhotosynthesisScene = lazy(() => import('./subjects/PhotosynthesisScene'));
 
 // Scene component mapping
 const SCENE_COMPONENTS = {
@@ -25,7 +28,8 @@ const SCENE_COMPONENTS = {
   MomentumScene: CompactPhysicsScene,
   EnergyScene: CompactPhysicsScene,
   WaveScene: CompactPhysicsScene,
-  LightScene: CompactPhysicsScene,
+  LightScene: RefractionScene, // Updated to use new RefractionScene
+  RefractionScene: RefractionScene,
   ElectricityScene: CompactPhysicsScene,
   
   // Chemistry
@@ -39,7 +43,7 @@ const SCENE_COMPONENTS = {
   // Biology
   CellScene: BiologyCellScene,
   DNAScene: BiologyCellScene,
-  PhotosynthesisScene: BiologyCellScene,
+  PhotosynthesisScene: PhotosynthesisScene, // Updated to use new PhotosynthesisScene
   RespirationScene: BiologyCellScene,
   HeartScene: BiologyCellScene,
   CirculatoryScene: BiologyCellScene,

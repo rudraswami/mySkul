@@ -196,3 +196,7 @@ class AssetValidator:
         return current_hash == asset.validation_hash
 
 
+
+
+
+
