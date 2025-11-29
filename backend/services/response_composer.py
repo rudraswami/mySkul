@@ -10,13 +10,21 @@ Key Principles:
 3. Natural markdown output (not rigid JSON)
 4. Context-aware with conversation state
 5. Visual integration when relevant
+
+PERFORMANCE OPTIMIZATIONS (v2.0):
+- Aggressive timeouts (15s for simple, 45s for complex)
+- Smart model selection (gpt-4o-mini for 70%+ of questions)
+- Response caching for common patterns
+- Intent-based token limits
 """
 
 import asyncio
 import logging
 import time
+import hashlib
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+from functools import lru_cache
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 from .intelligent_response_engine import (

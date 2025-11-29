@@ -41,6 +41,7 @@ import SmartResponse from './SmartResponse';
 import UpgradeModal from './UpgradeModal';
 import OnboardingTour from './OnboardingTour';
 import apiClient from '../api/client';
+import '../styles/ai-tutor-redesign.css'; // Shared scroll stability styles
 
 // V1 Enhancement Components
 import VisualSketchViewer from './visual/VisualSketchViewer';
@@ -276,6 +277,11 @@ export default function AITutorNeuroSymbolic() {
   // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  
+  // Scroll state - tracks if user is near bottom
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [shouldScrollOnNewMessage, setShouldScrollOnNewMessage] = useState(false);
 
   // Available subjects
   const SUBJECTS = [
@@ -327,10 +333,53 @@ export default function AITutorNeuroSymbolic() {
     };
   }, []);
 
-  // Auto-scroll to bottom
+  // Smart auto-scroll - only scroll when user is near bottom or just sent a message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (shouldScrollOnNewMessage || isNearBottom) {
+      // Use requestAnimationFrame for smoother scrolling after DOM updates
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+      setShouldScrollOnNewMessage(false);
+    }
+  }, [messages, shouldScrollOnNewMessage, isNearBottom]);
+  
+  // Track scroll position to detect if user is near bottom
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Consider "near bottom" if within 150px of bottom
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      setIsNearBottom(nearBottom);
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  /**
+   * Scroll to bottom - smooth and non-jumpy
+   */
+  const scrollToBottom = (force = false) => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    // If not forced and user has scrolled up, don't auto-scroll
+    if (!force && !isNearBottom) return;
+    
+    const targetScrollTop = container.scrollHeight - container.clientHeight;
+    
+    // If already at bottom (within 10px), don't animate
+    if (Math.abs(container.scrollTop - targetScrollTop) < 10) return;
+    
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
+  };
 
   // Collapse header when chat starts
   useEffect(() => {
@@ -510,6 +559,9 @@ export default function AITutorNeuroSymbolic() {
       return;
     }
 
+    // Signal to scroll to bottom when new message is added
+    setShouldScrollOnNewMessage(true);
+    
     // Clear input immediately
     setInputMessage('');
     setHasInteraction(true);
@@ -1179,7 +1231,7 @@ export default function AITutorNeuroSymbolic() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50">
+    <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 overflow-hidden">
       {/* 🎮 GAMIFICATION: Micro-Reward Popup */}
       <MicroReward 
         reward={currentReward} 
@@ -1660,9 +1712,13 @@ export default function AITutorNeuroSymbolic() {
           </div>
         </motion.div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Chat Area - Scrollable container that fills available space */}
+        <div 
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ minHeight: 0 }}
+        >
+          <div className="max-w-4xl mx-auto px-4 py-6 min-h-full flex flex-col">
             {/* Welcome Screen - PREMIUM STUDENT-CENTRIC DESIGN */}
             {showWelcome && messages.length === 0 && (
               <motion.div
@@ -1807,8 +1863,8 @@ export default function AITutorNeuroSymbolic() {
               </motion.div>
             )}
 
-            {/* Messages */}
-            <div className="space-y-6">
+            {/* Messages - Grows to fill available space */}
+            <div className="space-y-6 flex-grow">
               <AnimatePresence>
                 {messages.map((message, index) => (
                   <motion.div

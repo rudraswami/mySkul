@@ -1,10 +1,14 @@
 /**
- * AdaptiveMarkdown - Clean markdown renderer
+ * AdaptiveMarkdown - Universal markdown + LaTeX renderer
  * 
- * Renders AI responses as clean markdown WITHOUT forcing template sections.
- * Like ChatGPT/Gemini - the AI decides the structure, not the frontend.
+ * Renders AI responses with full support for:
+ * - LaTeX math (inline and block, multi-line)
+ * - Markdown (headers, lists, bold, italic, code)
+ * - Tables
+ * - Chemical formulas
+ * - Code blocks
  * 
- * FIXED: Now properly renders LaTeX math and tables
+ * Works across all AI response types (mentor, professor, unified)
  */
 
 import React from 'react';
@@ -13,10 +17,55 @@ import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
 /**
- * Parse markdown and render as React elements
- * ENHANCED: Supports LaTeX math and tables
+ * Pre-process text to extract and protect block math BEFORE line splitting
+ * This handles multi-line \[...\] and $$...$$ blocks
  */
-const parseMarkdown = (text) => {
+const extractBlockMath = (text) => {
+  if (!text) return { processedText: text, blockMathMap: {} };
+  
+  const blockMathMap = {};
+  let counter = 0;
+  
+  // Handle \[...\] block math (including multi-line)
+  let processedText = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return `\n${placeholder}\n`;
+  });
+  
+  // Handle $$...$$ block math (including multi-line)
+  processedText = processedText.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return `\n${placeholder}\n`;
+  });
+  
+  // Handle \begin{equation}...\end{equation}
+  processedText = processedText.replace(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return `\n${placeholder}\n`;
+  });
+  
+  // Handle \begin{align}...\end{align}
+  processedText = processedText.replace(/\\begin\{align\*?\}([\s\S]*?)\\end\{align\*?\}/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return `\n${placeholder}\n`;
+  });
+  
+  return { processedText, blockMathMap };
+};
+
+/**
+ * Parse markdown and render as React elements
+ * ENHANCED: Full LaTeX support including multi-line blocks
+ */
+const parseMarkdown = (text, blockMathMap) => {
   if (!text) return null;
   
   const lines = text.split('\n');
@@ -26,6 +75,7 @@ const parseMarkdown = (text) => {
   let tableRows = [];
   let inCodeBlock = false;
   let codeBlockContent = [];
+  let codeLanguage = '';
   
   const flushList = () => {
     if (currentList.length > 0) {
@@ -93,15 +143,19 @@ const parseMarkdown = (text) => {
         // End code block
         elements.push(
           <pre key={`code-${elements.length}`} className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-3 text-sm font-mono">
-            <code>{codeBlockContent.join('\n')}</code>
+            <code className={codeLanguage ? `language-${codeLanguage}` : ''}>
+              {codeBlockContent.join('\n')}
+            </code>
           </pre>
         );
         codeBlockContent = [];
+        codeLanguage = '';
         inCodeBlock = false;
       } else {
         // Start code block
         flushList();
         flushTable();
+        codeLanguage = trimmed.slice(3).trim();
         inCodeBlock = true;
       }
       return;
@@ -109,6 +163,30 @@ const parseMarkdown = (text) => {
     
     if (inCodeBlock) {
       codeBlockContent.push(line);
+      return;
+    }
+    
+    // Check for block math placeholder
+    if (trimmed.match(/^__BLOCK_MATH_\d+__$/)) {
+      flushList();
+      flushTable();
+      const latex = blockMathMap[trimmed];
+      if (latex) {
+        try {
+          elements.push(
+            <div key={`block-math-${index}`} className="my-4 py-3 overflow-x-auto bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 rounded-lg">
+              <BlockMath math={latex} />
+            </div>
+          );
+        } catch (e) {
+          elements.push(
+            <div key={`block-math-err-${index}`} className="my-4 text-center font-mono text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+              <span className="block text-xs mb-1 opacity-70">Math rendering error:</span>
+              {latex}
+            </div>
+          );
+        }
+      }
       return;
     }
     
@@ -129,30 +207,17 @@ const parseMarkdown = (text) => {
       flushTable();
     }
     
-    // Block-level LaTeX (standalone \[...\] or $$...$$)
-    if (trimmed.match(/^\\\[[\s\S]*\\\]$/) || trimmed.match(/^\$\$[\s\S]*\$\$$/)) {
+    // Headers
+    if (trimmed.startsWith('#### ')) {
       flushList();
-      let latex = trimmed;
-      if (latex.startsWith('\\[')) latex = latex.slice(2, -2);
-      else if (latex.startsWith('$$')) latex = latex.slice(2, -2);
-      
-      try {
-        elements.push(
-          <div key={`block-math-${index}`} className="my-4 text-center overflow-x-auto">
-            <BlockMath math={latex.trim()} />
-          </div>
-        );
-      } catch (e) {
-        elements.push(
-          <div key={`block-math-err-${index}`} className="my-4 text-center font-mono text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded text-red-600 dark:text-red-400">
-            {latex}
-          </div>
-        );
-      }
+      elements.push(
+        <h4 key={`h4-${index}`} className="text-base font-semibold text-gray-900 dark:text-white mt-3 mb-2">
+          {renderInline(trimmed.slice(5))}
+        </h4>
+      );
       return;
     }
     
-    // Headers
     if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
@@ -239,7 +304,7 @@ const parseMarkdown = (text) => {
 
 /**
  * Render inline markdown (bold, italic, code, links, LaTeX)
- * ENHANCED: Properly handles inline LaTeX expressions
+ * ENHANCED: Properly handles all inline LaTeX and special characters
  */
 const renderInline = (text) => {
   if (!text) return null;
@@ -248,15 +313,20 @@ const renderInline = (text) => {
   let key = 0;
   
   // Pattern to match all inline elements including LaTeX
-  // Order matters: LaTeX first, then markdown
-  // FIXED: Use non-greedy matching for LaTeX to handle nested parentheses like \frac{n!}{(n-r)!}
+  // Order matters: more specific patterns first
   const patterns = [
-    { regex: /\\\((.+?)\\\)/g, type: 'inline-math' },         // \(...\) - non-greedy to handle nested parens
-    { regex: /\$([^\$\n]+)\$/g, type: 'inline-math-dollar' }, // $...$
+    // LaTeX inline math
+    { regex: /\\\((.+?)\\\)/g, type: 'inline-math' },         // \(...\)
+    { regex: /\$([^\$\n]+)\$/g, type: 'inline-math' },        // $...$
+    // Markdown formatting
+    { regex: /\*\*\*([^*]+)\*\*\*/g, type: 'bold-italic' },   // ***bold italic***
     { regex: /\*\*([^*]+)\*\*/g, type: 'bold' },              // **bold**
+    { regex: /__([^_]+)__/g, type: 'bold' },                  // __bold__
     { regex: /\*([^*]+)\*/g, type: 'italic' },                // *italic*
-    { regex: /_([^_]+)_/g, type: 'italic' },                  // _italic_
+    { regex: /_([^_\s][^_]*[^_\s])_/g, type: 'italic' },      // _italic_ (not matching subscripts)
     { regex: /`([^`]+)`/g, type: 'code' },                    // `code`
+    // Chemical subscripts/superscripts (like H₂O, CO₂)
+    { regex: /([A-Z][a-z]?)(\d+)/g, type: 'chemical' },       // H2O, CO2, etc.
   ];
   
   // Find all matches with their positions
@@ -270,6 +340,7 @@ const renderInline = (text) => {
         start: match.index,
         end: match.index + match[0].length,
         content: match[1],
+        extra: match[2], // For chemical formulas
         fullMatch: match[0],
         type
       });
@@ -279,7 +350,7 @@ const renderInline = (text) => {
   // Sort by position
   matches.sort((a, b) => a.start - b.start);
   
-  // Remove overlapping matches (keep first)
+  // Remove overlapping matches (keep first/longest)
   const filteredMatches = [];
   let lastEnd = 0;
   matches.forEach(m => {
@@ -301,9 +372,12 @@ const renderInline = (text) => {
     // Render the match based on type
     switch (m.type) {
       case 'inline-math':
-      case 'inline-math-dollar':
         try {
-          parts.push(<InlineMath key={key++} math={m.content.trim()} />);
+          parts.push(
+            <span key={key++} className="mx-0.5">
+              <InlineMath math={m.content.trim()} />
+            </span>
+          );
         } catch (e) {
           parts.push(
             <code key={key++} className="text-red-500 bg-red-50 dark:bg-red-900/20 px-1 rounded text-sm">
@@ -311,6 +385,13 @@ const renderInline = (text) => {
             </code>
           );
         }
+        break;
+      case 'bold-italic':
+        parts.push(
+          <strong key={key++} className="font-bold italic text-gray-900 dark:text-white">
+            {m.content}
+          </strong>
+        );
         break;
       case 'bold':
         parts.push(
@@ -333,6 +414,14 @@ const renderInline = (text) => {
           </code>
         );
         break;
+      case 'chemical':
+        // Render chemical formula with subscript
+        parts.push(
+          <span key={key++} className="font-medium">
+            {m.content}<sub className="text-xs">{m.extra}</sub>
+          </span>
+        );
+        break;
       default:
         parts.push(<span key={key++}>{m.fullMatch}</span>);
     }
@@ -351,20 +440,27 @@ const renderInline = (text) => {
 /**
  * Main AdaptiveMarkdown component
  */
-const AdaptiveMarkdown = ({ content, className = '' }) => {
+const AdaptiveMarkdown = ({ content, className = '', animate = true }) => {
   if (!content) return null;
   
+  // Pre-process to extract block math
+  const { processedText, blockMathMap } = extractBlockMath(content);
+  
+  const Container = animate ? motion.div : 'div';
+  const animationProps = animate ? {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3 }
+  } : {};
+  
   return (
-    <motion.div
-      className={`adaptive-markdown ${className}`}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <Container
+      className={`adaptive-markdown prose prose-gray dark:prose-invert max-w-none ${className}`}
+      {...animationProps}
     >
-      {parseMarkdown(content)}
-    </motion.div>
+      {parseMarkdown(processedText, blockMathMap)}
+    </Container>
   );
 };
 
 export default AdaptiveMarkdown;
-

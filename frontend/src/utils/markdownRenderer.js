@@ -1,12 +1,40 @@
 /**
  * Simple Markdown Renderer for Student-Friendly Content
- * Handles: **bold**, *italic*, `code`, LaTeX math, and preserves structure
- * ENHANCED: Now supports \(...\) and $...$ LaTeX math formulas!
+ * Handles: **bold**, *italic*, `code`, LaTeX math (inline & block), and preserves structure
+ * ENHANCED: Now supports \(...\), $...$, \[...\], and $$...$$ LaTeX formulas!
  */
 
 import React from 'react';
-import { InlineMath } from 'react-katex';
+import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+
+/**
+ * Pre-process text to extract block math before line-by-line parsing
+ */
+const extractBlockMath = (text) => {
+  if (!text) return { processedText: text, blockMathMap: {} };
+  
+  const blockMathMap = {};
+  let counter = 0;
+  
+  // Handle \[...\] block math (including multi-line)
+  let processedText = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return placeholder;
+  });
+  
+  // Handle $$...$$ block math (including multi-line)
+  processedText = processedText.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    const placeholder = `__BLOCK_MATH_${counter}__`;
+    blockMathMap[placeholder] = content.trim();
+    counter++;
+    return placeholder;
+  });
+  
+  return { processedText, blockMathMap };
+};
 
 /**
  * Parse markdown text and return React elements with proper formatting
@@ -16,10 +44,13 @@ import 'katex/dist/katex.min.css';
 export function parseMarkdown(text) {
   if (!text) return [];
   
+  // Extract block math first
+  const { processedText, blockMathMap } = extractBlockMath(text);
+  
   const elements = [];
-  let currentIndex = 0;
   // ENHANCED: Added LaTeX patterns - use non-greedy matching for nested parens
   const patterns = [
+    { regex: /__BLOCK_MATH_(\d+)__/g, type: 'block-math' },  // Block math placeholders
     { regex: /\\\((.+?)\\\)/g, type: 'math' },      // \(...\) - LaTeX inline
     { regex: /\$([^\$\n]+)\$/g, type: 'math' },     // $...$ - LaTeX inline  
     { regex: /\*\*(.+?)\*\*/g, type: 'bold' },      // **bold**
@@ -33,7 +64,7 @@ export function parseMarkdown(text) {
   patterns.forEach(pattern => {
     let match;
     const regex = new RegExp(pattern.regex.source, 'g');
-    while ((match = regex.exec(text)) !== null) {
+    while ((match = regex.exec(processedText)) !== null) {
       matches.push({
         type: pattern.type,
         start: match.index,
@@ -47,12 +78,22 @@ export function parseMarkdown(text) {
   // Sort by position
   matches.sort((a, b) => a.start - b.start);
   
-  // Build elements
+  // Remove overlapping matches
+  const filteredMatches = [];
   let lastEnd = 0;
-  matches.forEach((match, idx) => {
+  matches.forEach(m => {
+    if (m.start >= lastEnd) {
+      filteredMatches.push(m);
+      lastEnd = m.end;
+    }
+  });
+  
+  // Build elements
+  lastEnd = 0;
+  filteredMatches.forEach((match, idx) => {
     // Add text before this match
     if (match.start > lastEnd) {
-      const beforeText = text.substring(lastEnd, match.start);
+      const beforeText = processedText.substring(lastEnd, match.start);
       if (beforeText) {
         elements.push(<span key={`text-${idx}`}>{beforeText}</span>);
       }
@@ -60,14 +101,32 @@ export function parseMarkdown(text) {
     
     // Add formatted element
     switch (match.type) {
+      case 'block-math':
+        // Render block LaTeX math
+        const blockLatex = blockMathMap[match.fullMatch];
+        if (blockLatex) {
+          try {
+            elements.push(
+              <div key={`block-math-${idx}`} className="my-3 py-2 overflow-x-auto">
+                <BlockMath math={blockLatex} />
+              </div>
+            );
+          } catch (e) {
+            elements.push(
+              <div key={`block-math-err-${idx}`} className="my-3 bg-red-50 text-red-600 p-2 rounded font-mono text-sm">
+                {blockLatex}
+              </div>
+            );
+          }
+        }
+        break;
       case 'math':
-        // Render LaTeX math beautifully
+        // Render inline LaTeX math
         try {
           elements.push(
             <InlineMath key={`math-${idx}`} math={match.content.trim()} />
           );
         } catch (e) {
-          // Fallback for invalid LaTeX - show as styled code
           elements.push(
             <code 
               key={`math-err-${idx}`} 
@@ -113,8 +172,8 @@ export function parseMarkdown(text) {
   });
   
   // Add remaining text
-  if (lastEnd < text.length) {
-    const remainingText = text.substring(lastEnd);
+  if (lastEnd < processedText.length) {
+    const remainingText = processedText.substring(lastEnd);
     if (remainingText) {
       elements.push(<span key="text-end">{remainingText}</span>);
     }

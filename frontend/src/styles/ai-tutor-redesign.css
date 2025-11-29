@@ -69,6 +69,40 @@
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0; /* Critical for flex child to scroll */
+  scroll-behavior: smooth;
+  /* Prevent layout shifts during content expansion */
+  contain: layout style;
+  /* Smooth scroll anchoring */
+  overflow-anchor: auto;
+  /* Enable touch scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+  /* Make entire area scrollable (no dead zones) */
+  overscroll-behavior: contain;
+}
+
+/* Chat main zone - fills available height */
+.chat-main-zone {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Prevent individual messages from causing layout shifts */
+.chat-messages-container > * {
+  overflow-anchor: none;
+}
+
+/* Anchor element for scroll position */
+.chat-messages-container > *:last-child {
+  overflow-anchor: auto;
+}
+
+/* Prevent body scrolling when AI Tutor is active */
+body:has(.ai-tutor-redesign) {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
 .dark .ai-tutor-redesign {
@@ -128,6 +162,10 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   position: relative;
   animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Prevent layout shifts during content expansion */
+  contain: content;
+  /* Reserve minimum space for loading */
+  min-height: 60px;
 }
 
 .dark .ai-message-bubble {
@@ -623,5 +661,83 @@ button:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--dhruv-purple-start);
   outline-offset: 2px;
+}
+
+/* ============================================
+   Response Container Stability
+   Prevents layout shifts during AI response expansion
+   ============================================ */
+
+.unified-response-container {
+  /* Prevent layout shifts */
+  contain: layout style;
+}
+
+/* Smart Response wrapper - stable height handling */
+.smart-response-wrapper {
+  contain: content;
+  min-height: 80px;
+}
+
+/* Prevent images and visuals from causing jumps */
+.adaptive-markdown img,
+.visual-sketch-container,
+.teaching-visual-container {
+  /* Reserve space before loading */
+  min-height: 80px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+  border-radius: 12px;
+}
+
+/* Smooth content expansion */
+.adaptive-markdown,
+.smart-response-wrapper,
+.mentor-response-container {
+  animation: contentFadeIn 0.15s ease-out;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Override scroll anchor for messages */
+.chat-messages-container .message-wrapper {
+  overflow-anchor: none;
+}
+
+/* Last message anchors scroll position */
+.chat-messages-container .message-wrapper:last-of-type {
+  overflow-anchor: auto;
+}
+
+/* ============================================
+   AI Tutor NeuroSymbolic Specific Styles
+   Prevents white space scroll issue
+   ============================================ */
+
+/* Prevent body scroll for any full-height AI tutor screen */
+body:has(.h-screen.overflow-hidden) {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Make chat area fill available space with no dead zones */
+.h-screen.overflow-hidden > .flex-1.overflow-y-auto {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Inner container fills scroll area completely */
+.h-screen.overflow-hidden > .flex-1.overflow-y-auto > div {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 

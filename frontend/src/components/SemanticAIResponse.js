@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Book, Lightbulb, TrendingUp, Zap, CheckCircle, Brain, ChevronDown, ChevronUp, Heart } from 'lucide-react';
-import { InlineMath, BlockMath } from 'react-katex';
+import AdaptiveMarkdown from './AdaptiveMarkdown';
 import 'katex/dist/katex.min.css';
 
 /**
@@ -77,118 +77,10 @@ const SemanticAIResponse = ({ content, type = 'professor' }) => {
     return sections;
   };
 
-  // Render rich text with emphasis (key terms bolding, LaTeX, proper formatting)
+  // Use AdaptiveMarkdown for rich text rendering with full LaTeX support
   const renderRichText = (text) => {
     if (!text) return null;
-
-    // Split text into parts: plain text, inline math \( \), display math \[ \]
-    const parts = [];
-    let lastIndex = 0;
-    
-    // Regex to match LaTeX delimiters (handle both escaped and single backslash)
-    const latexRegex = /(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\\begin\{equation\}[\s\S]*?\\end\{equation\})/g;
-    let match;
-    
-    while ((match = latexRegex.exec(text)) !== null) {
-      // Add text before the math
-      if (match.index > lastIndex) {
-        const textBefore = text.substring(lastIndex, match.index);
-        parts.push({ type: 'text', content: textBefore });
-      }
-      
-      // Add the math part
-      const mathContent = match[1];
-      if (mathContent.startsWith('\\[')) {
-        // Display math (block)
-        const formula = mathContent.substring(2, mathContent.length - 2).trim();
-        parts.push({ type: 'block-math', content: formula });
-      } else if (mathContent.startsWith('\\(')) {
-        // Inline math
-        const formula = mathContent.substring(2, mathContent.length - 2).trim();
-        parts.push({ type: 'inline-math', content: formula });
-      } else if (mathContent.includes('\\begin{equation}')) {
-        // LaTeX equation environment
-        const formula = mathContent.replace(/\\begin\{equation\}|\\end\{equation\}/g, '').trim();
-        parts.push({ type: 'block-math', content: formula });
-      }
-      
-      lastIndex = match.index + match[0].length;
-    }
-    
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push({ type: 'text', content: text.substring(lastIndex) });
-    }
-    
-    // Render parts with proper formatting
-    return (
-      <div className="rich-text-content space-y-2">
-        {parts.map((part, idx) => {
-          if (part.type === 'text') {
-            // Process <key> tags for bold emphasis
-            let processedText = part.content;
-            
-            // Handle key terms
-            processedText = processedText.replace(
-              /<key>(.*?)<\/key>/g, 
-              '<strong class="text-gray-900 font-bold bg-yellow-100 px-1 rounded">$1</strong>'
-            );
-            
-            // Split by newlines and process each line
-            const lines = processedText.split('\n');
-            
-            return (
-              <div key={idx}>
-                {lines.map((line, lineIdx) => {
-                  const trimmedLine = line.trim();
-                  if (!trimmedLine) return <div key={lineIdx} className="h-2" />;
-                  
-                  // Check for numbered list (1., 2., etc.)
-                  const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.+)$/);
-                  if (numberedMatch) {
-                    return (
-                      <div key={lineIdx} className="flex items-start mb-2">
-                        <span className="font-bold text-blue-600 mr-2 mt-0.5">{numberedMatch[1]}.</span>
-                        <span dangerouslySetInnerHTML={{ __html: numberedMatch[2] }} />
-                      </div>
-                    );
-                  }
-                  
-                  // Check for bullet list (-, •, *, etc.)
-                  const bulletMatch = trimmedLine.match(/^[-•*]\s+(.+)$/);
-                  if (bulletMatch) {
-                    return (
-                      <div key={lineIdx} className="flex items-start mb-2 ml-4">
-                        <span className="text-blue-600 mr-2 mt-0.5">•</span>
-                        <span dangerouslySetInnerHTML={{ __html: bulletMatch[1] }} />
-                      </div>
-                    );
-                  }
-                  
-                  // Regular paragraph
-                  return (
-                    <p key={lineIdx} className="mb-2" dangerouslySetInnerHTML={{ __html: trimmedLine }} />
-                  );
-                })}
-              </div>
-            );
-          } else if (part.type === 'inline-math') {
-            return (
-              <span key={idx} className="mx-1">
-                <InlineMath math={part.content} />
-              </span>
-            );
-          } else if (part.type === 'block-math') {
-            return (
-              <div key={idx} className="my-4 overflow-x-auto">
-                <BlockMath math={part.content} />
-              </div>
-            );
-          }
-          return null;
-        })}
-      </div>
-    );
+    return <AdaptiveMarkdown content={text} animate={false} />;
   };
 
   const sections = parseSections(content);

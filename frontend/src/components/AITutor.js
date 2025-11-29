@@ -35,6 +35,7 @@ import {
   SuggestionList,
 } from './intent/AdaptiveResponseBlocks';
 import VisualPlayer from './intent/VisualPlayer';
+import AdaptiveMarkdown from './AdaptiveMarkdown';
 import UpgradeModal from './UpgradeModal';
 import '../styles/ai-tutor-redesign.css';
 
@@ -105,6 +106,11 @@ export default function AITutorPremium() {
   // Refs
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  
+  // Scroll state - tracks if user is near bottom
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [shouldScrollOnNewMessage, setShouldScrollOnNewMessage] = useState(false);
   
   /**
    * NEW: LocalStorage persistence utilities
@@ -170,10 +176,32 @@ export default function AITutorPremium() {
     }
   }, [messages]);
   
-  // Auto-scroll to bottom
+  // Smart auto-scroll - only scroll when user is near bottom or just sent a message
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (shouldScrollOnNewMessage || isNearBottom) {
+      // Use requestAnimationFrame for smoother scrolling after DOM updates
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+      setShouldScrollOnNewMessage(false);
+    }
+  }, [messages, shouldScrollOnNewMessage, isNearBottom]);
+  
+  // Track scroll position to detect if user is near bottom
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Consider "near bottom" if within 150px of bottom
+      const nearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      setIsNearBottom(nearBottom);
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Auto-resize textarea
   useEffect(() => {
@@ -455,6 +483,9 @@ export default function AITutorPremium() {
     // NEW: Hide welcome screen immediately
     setShowWelcome(false);
     setHasInteraction(true);
+    
+    // Signal to scroll to bottom when new message is added
+    setShouldScrollOnNewMessage(true);
 
     // Store message content before clearing input
     const messageToSend = inputMessage;
@@ -651,6 +682,9 @@ export default function AITutorPremium() {
     // NEW: Hide welcome screen immediately
     setShowWelcome(false);
     setHasInteraction(true);
+    
+    // Signal to scroll to bottom when new message is added
+    setShouldScrollOnNewMessage(true);
 
     // Clear input
     setInputMessage('');
@@ -788,10 +822,26 @@ export default function AITutorPremium() {
   };
   
   /**
-   * Scroll to bottom
+   * Scroll to bottom - smooth and non-jumpy
+   * Uses scrollTop for better control instead of scrollIntoView
    */
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (force = false) => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    // If not forced and user has scrolled up, don't auto-scroll
+    if (!force && !isNearBottom) return;
+    
+    // Use smooth scroll behavior
+    const targetScrollTop = container.scrollHeight - container.clientHeight;
+    
+    // If already at bottom (within 10px), don't animate
+    if (Math.abs(container.scrollTop - targetScrollTop) < 10) return;
+    
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
   };
   
   /**
@@ -1029,8 +1079,12 @@ export default function AITutorPremium() {
         </motion.div>
         
         {/* Messages Area - Only this should scroll */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden chat-messages-container" style={{ padding: '24px 24px', minHeight: 0 }}>
-          <div className="chat-main-zone space-y-6">
+        <div 
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden chat-messages-container" 
+          style={{ padding: '24px 24px', minHeight: 0 }}
+        >
+          <div className="chat-main-zone space-y-6 min-h-full flex flex-col">
             <AnimatePresence mode="popLayout">
               {/* Welcome Screen with Dynamic Prompts */}
               {showWelcome ? (
@@ -1194,8 +1248,8 @@ export default function AITutorPremium() {
                                   <span>{formatTime(message.timestamp)}</span>
                                 </div>
                               </div>
-                              <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {message.response}
+                              <div className="text-sm leading-relaxed">
+                                <AdaptiveMarkdown content={message.response} animate={false} />
                               </div>
                               {renderConfidenceBar(0.92)}
                             </div>
