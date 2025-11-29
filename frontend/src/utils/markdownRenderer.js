@@ -1,9 +1,12 @@
 /**
  * Simple Markdown Renderer for Student-Friendly Content
- * Handles: **bold**, *italic*, `code`, and preserves structure
+ * Handles: **bold**, *italic*, `code`, LaTeX math, and preserves structure
+ * ENHANCED: Now supports \(...\) and $...$ LaTeX math formulas!
  */
 
 import React from 'react';
+import { InlineMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 /**
  * Parse markdown text and return React elements with proper formatting
@@ -15,7 +18,10 @@ export function parseMarkdown(text) {
   
   const elements = [];
   let currentIndex = 0;
+  // ENHANCED: Added LaTeX patterns - use non-greedy matching for nested parens
   const patterns = [
+    { regex: /\\\((.+?)\\\)/g, type: 'math' },      // \(...\) - LaTeX inline
+    { regex: /\$([^\$\n]+)\$/g, type: 'math' },     // $...$ - LaTeX inline  
     { regex: /\*\*(.+?)\*\*/g, type: 'bold' },      // **bold**
     { regex: /\*(.+?)\*/g, type: 'italic' },         // *italic*
     { regex: /`(.+?)`/g, type: 'code' },             // `code`
@@ -54,6 +60,24 @@ export function parseMarkdown(text) {
     
     // Add formatted element
     switch (match.type) {
+      case 'math':
+        // Render LaTeX math beautifully
+        try {
+          elements.push(
+            <InlineMath key={`math-${idx}`} math={match.content.trim()} />
+          );
+        } catch (e) {
+          // Fallback for invalid LaTeX - show as styled code
+          elements.push(
+            <code 
+              key={`math-err-${idx}`} 
+              className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm font-mono"
+            >
+              {match.content}
+            </code>
+          );
+        }
+        break;
       case 'bold':
         elements.push(
           <strong key={`bold-${idx}`} className="font-bold text-gray-900">

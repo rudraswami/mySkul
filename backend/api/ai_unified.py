@@ -30,6 +30,22 @@ from services.conversation_state import ConversationStateManager
 from services.vision_analyzer import analyze_student_image
 from dependencies import get_current_user, get_database, get_unified_subscription_service
 
+# Cognitive OS Integration
+try:
+    from services.cognitive_model import get_adaptive_engine
+    COGNITIVE_ENABLED = True
+except ImportError:
+    COGNITIVE_ENABLED = False
+    get_adaptive_engine = None
+
+# Verification Integration  
+try:
+    from services.verified_response_service import get_verified_response_service
+    VERIFICATION_ENABLED = True
+except ImportError:
+    VERIFICATION_ENABLED = False
+    get_verified_response_service = None
+
 # Router instance
 router = APIRouter(prefix="/ai", tags=["ai-unified"])
 
@@ -41,6 +57,10 @@ class UnifiedAIRequest(BaseModel):
     session_id: Optional[str] = None
     exam_mode: str = Field(default="JEE")
     image_url: Optional[str] = None  # Base64 or URL for image analysis
+    # Cognitive OS options
+    enable_verification: bool = Field(default=True)  # Enable response verification
+    enable_adaptation: bool = Field(default=True)    # Enable cognitive adaptation
+    session_minutes: int = Field(default=0)          # Current session length
 
 
 class UnifiedAIResponse(BaseModel):
@@ -51,6 +71,10 @@ class UnifiedAIResponse(BaseModel):
     generation_time: float
     intent: str
     context_used: bool
+    # Cognitive OS additions
+    verified: Optional[bool] = None
+    verification_badge: Optional[Dict[str, Any]] = None
+    adaptive_context: Optional[Dict[str, Any]] = None
 
 
 @router.post("/unified", response_model=UnifiedAIResponse)
@@ -127,17 +151,58 @@ Answer based on the image content above. Be direct and accurate."""
         
         # Initialize ResponseComposer
         emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
-        composer = ResponseComposer(db, emergent_llm_key)
         
-        # Generate response using unified pipeline
-        result = await composer.generate_response(
-            user_id=user.user_id,
-            session_id=request.session_id or f"temp_{user.user_id}",
-            question=contextual_message,
-            subject=request.subject,
-            exam_mode=request.exam_mode,
-            message_history=message_history
-        )
+        # Get adaptive context if cognitive model is enabled
+        adaptive_context = None
+        if COGNITIVE_ENABLED and request.enable_adaptation and get_adaptive_engine:
+            try:
+                engine = get_adaptive_engine(db)
+                ctx = await engine.get_adaptive_context(
+                    user_id=user.user_id,
+                    subject=request.subject or "General",
+                    topic=contextual_message[:50],  # Use first part of message as topic hint
+                    current_session_length=request.session_minutes
+                )
+                adaptive_context = {
+                    "mastery": ctx.current_topic_mastery,
+                    "style": ctx.primary_learning_style,
+                    "difficulty": ctx.difficulty_level,
+                    "include_visuals": ctx.include_visuals,
+                    "focus_areas": ctx.focus_areas
+                }
+                logger.info(f"🧠 Cognitive context: mastery={ctx.current_topic_mastery:.2f}, style={ctx.primary_learning_style}")
+            except Exception as e:
+                logger.warning(f"Could not get adaptive context: {e}")
+        
+        # Use verified response service if enabled
+        result = None
+        if VERIFICATION_ENABLED and request.enable_verification and get_verified_response_service:
+            try:
+                verified_service = get_verified_response_service(db, emergent_llm_key)
+                result = await verified_service.generate_verified_response(
+                    user_id=user.user_id,
+                    session_id=request.session_id or f"temp_{user.user_id}",
+                    question=contextual_message,
+                    subject=request.subject,
+                    exam_mode=request.exam_mode,
+                    message_history=message_history
+                )
+                logger.info(f"✅ Verified response generated")
+            except Exception as e:
+                logger.warning(f"Verified response failed, falling back: {e}")
+                result = None
+        
+        # Fallback to regular ResponseComposer
+        if result is None:
+            composer = ResponseComposer(db, emergent_llm_key)
+            result = await composer.generate_response(
+                user_id=user.user_id,
+                session_id=request.session_id or f"temp_{user.user_id}",
+                question=contextual_message,
+                subject=request.subject,
+                exam_mode=request.exam_mode,
+                message_history=message_history
+            )
         
         # Track usage
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
@@ -159,13 +224,31 @@ Answer based on the image content above. Be direct and accurate."""
         except Exception as e:
             logger.warning(f"Failed to save message: {e}")
         
+        # Record interaction with cognitive model
+        if COGNITIVE_ENABLED and get_adaptive_engine and request.enable_adaptation:
+            try:
+                engine = get_adaptive_engine(db)
+                detected_subject = result.get("detected_subject", request.subject or "General")
+                await engine.record_response_interaction(
+                    user_id=user.user_id,
+                    subject=detected_subject,
+                    topic=contextual_message[:50],
+                    concepts_covered=[detected_subject],  # Basic tracking
+                    response_type=result.get("intent_detected", "explanation")
+                )
+            except Exception as e:
+                logger.warning(f"Could not record cognitive interaction: {e}")
+        
         return UnifiedAIResponse(
             response=result["response"],
             visual_data=result.get("visual_data"),
             detected_subject=result.get("detected_subject", "General"),
             generation_time=result.get("generation_time", 0),
             intent=result.get("intent_detected", "explanation"),
-            context_used=result.get("context_used", False)
+            context_used=result.get("context_used", False),
+            verified=result.get("verified"),
+            verification_badge=result.get("verification_badge"),
+            adaptive_context=adaptive_context
         )
         
     except HTTPException:

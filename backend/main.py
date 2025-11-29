@@ -263,6 +263,22 @@ def create_app() -> FastAPI:
             logger.info("Diagnostic router registered (dev)")
         except Exception as e:
             logger.warning(f"Could not load diagnostic router: {e}")
+        
+        # Neuro-Symbolic AI endpoints (Phase 1 of Cognitive OS)
+        try:
+            from api import neuro_symbolic
+            app.include_router(neuro_symbolic.router, prefix="/api", tags=["Neuro-Symbolic AI"])
+            logger.info("🧠 Neuro-Symbolic AI router registered")
+        except Exception as e:
+            logger.warning(f"Could not load neuro-symbolic router: {e}")
+    
+    # Cognitive Model API (Student Intelligence - Always enabled)
+    try:
+        from api import cognitive
+        app.include_router(cognitive.router, prefix="/api", tags=["Cognitive Model"])
+        logger.info("🧠 Cognitive Model router registered")
+    except Exception as e:
+        logger.warning(f"Could not load cognitive router: {e}")
 
     logger.info("All routers registered")
 

@@ -942,7 +942,7 @@ export default function AITutorPremium() {
       </AnimatePresence>
       
       {/* Main Chat Zone */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* NEW: Dynamic Header - Collapses when chat starts */}
         <motion.div
@@ -952,7 +952,7 @@ export default function AITutorPremium() {
             paddingBottom: headerCollapsed ? '12px' : '16px'
           }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="bg-white/60 dark:bg-white/10 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50"
+          className="bg-white/60 dark:bg-white/10 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 flex-shrink-0"
         >
           <div className="flex items-center justify-between max-w-[640px] mx-auto px-6">
             <div className="flex items-center space-x-3">
@@ -1028,8 +1028,8 @@ export default function AITutorPremium() {
           </div>
         </motion.div>
         
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto chat-messages-container" style={{ padding: '24px 24px' }}>
+        {/* Messages Area - Only this should scroll */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden chat-messages-container" style={{ padding: '24px 24px', minHeight: 0 }}>
           <div className="chat-main-zone space-y-6">
             <AnimatePresence mode="popLayout">
               {/* Welcome Screen with Dynamic Prompts */}

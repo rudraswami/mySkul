@@ -44,8 +44,31 @@
 .ai-tutor-redesign {
   display: flex;
   height: 100vh;
+  max-height: 100vh;
   background: linear-gradient(135deg, var(--bg-light-start) 0%, var(--bg-light-end) 100%);
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Main chat column - must fill height and contain scroll */
+.ai-tutor-redesign > .flex-1 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Messages container - this is the ONLY element that should scroll */
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* Critical for flex child to scroll */
 }
 
 .dark .ai-tutor-redesign {
@@ -57,13 +80,13 @@
    ============================================ */
 
 .chat-main-zone {
-  flex: 1;
   display: flex;
   flex-direction: column;
   max-width: 640px;
   margin: 0 auto;
   width: 100%;
   padding: 0 var(--safe-padding-desktop);
+  /* Don't use flex: 1 here - let parent control height */
 }
 
 @media (max-width: 768px) {
@@ -421,6 +444,9 @@
   background: var(--glass-bg-light);
   backdrop-filter: blur(var(--backdrop-blur));
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0; /* Prevent input area from shrinking */
+  position: relative;
+  z-index: 10;
 }
 
 .dark .chat-input-area {

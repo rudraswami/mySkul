@@ -1,10 +1,96 @@
 /**
  * Comparison Table Component
  * Shows side-by-side comparison for "difference between" questions
+ * ENHANCED: Now renders LaTeX math formulas beautifully!
  */
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight } from 'lucide-react';
+import { InlineMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
+
+/**
+ * Render text with inline LaTeX math support
+ * Handles: \(...\), $...$, and **bold** formatting
+ */
+const renderMathText = (text) => {
+  if (!text) return null;
+  
+  const parts = [];
+  let key = 0;
+  
+  // Combined pattern for LaTeX and bold
+  // Order: \(...\) first, then $...$, then **bold**
+  const patterns = [
+    { regex: /\\\((.+?)\\\)/g, type: 'math' },      // \(...\) - LaTeX inline
+    { regex: /\$([^\$\n]+)\$/g, type: 'math' },     // $...$ - LaTeX inline
+    { regex: /\*\*(.+?)\*\*/g, type: 'bold' },      // **bold**
+  ];
+  
+  // Find all matches
+  const matches = [];
+  patterns.forEach(({ regex, type }) => {
+    let match;
+    const r = new RegExp(regex.source, 'g');
+    while ((match = r.exec(text)) !== null) {
+      matches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[1],
+        type
+      });
+    }
+  });
+  
+  // Sort by position
+  matches.sort((a, b) => a.start - b.start);
+  
+  // Remove overlapping matches
+  const filtered = [];
+  let lastEnd = 0;
+  matches.forEach(m => {
+    if (m.start >= lastEnd) {
+      filtered.push(m);
+      lastEnd = m.end;
+    }
+  });
+  
+  // Build result
+  let pos = 0;
+  filtered.forEach(m => {
+    // Text before match
+    if (m.start > pos) {
+      parts.push(<span key={key++}>{text.slice(pos, m.start)}</span>);
+    }
+    
+    // Render match
+    if (m.type === 'math') {
+      try {
+        parts.push(
+          <InlineMath key={key++} math={m.content.trim()} />
+        );
+      } catch (e) {
+        // Fallback for invalid LaTeX
+        parts.push(
+          <code key={key++} className="bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded text-sm font-mono text-purple-700 dark:text-purple-300">
+            {m.content}
+          </code>
+        );
+      }
+    } else if (m.type === 'bold') {
+      parts.push(<strong key={key++} className="font-bold text-gray-900">{m.content}</strong>);
+    }
+    
+    pos = m.end;
+  });
+  
+  // Remaining text
+  if (pos < text.length) {
+    parts.push(<span key={key++}>{text.slice(pos)}</span>);
+  }
+  
+  return parts.length > 0 ? parts : text;
+};
 
 export default function ComparisonTable({ comparisonData }) {
   const { title, left, right, summary, example, exam_tip } = comparisonData;
@@ -48,8 +134,9 @@ export default function ComparisonTable({ comparisonData }) {
                 <p 
                   className="text-gray-900 leading-relaxed"
                   style={{ fontSize: '17px', lineHeight: '1.8' }}
-                  dangerouslySetInnerHTML={{ __html: point.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                />
+                >
+                  {renderMathText(point)}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -80,8 +167,9 @@ export default function ComparisonTable({ comparisonData }) {
                 <p 
                   className="text-gray-900 leading-relaxed"
                   style={{ fontSize: '17px', lineHeight: '1.8' }}
-                  dangerouslySetInnerHTML={{ __html: point.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                />
+                >
+                  {renderMathText(point)}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -99,8 +187,9 @@ export default function ComparisonTable({ comparisonData }) {
           <p 
             className="text-gray-900 font-semibold text-center"
             style={{ fontSize: '18px', lineHeight: '1.8' }}
-            dangerouslySetInnerHTML={{ __html: summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-          />
+          >
+            {renderMathText(summary)}
+          </p>
         </motion.div>
       )}
 
@@ -142,8 +231,9 @@ export default function ComparisonTable({ comparisonData }) {
           <p 
             className="text-gray-900 font-semibold"
             style={{ fontSize: '17px', lineHeight: '1.8' }}
-            dangerouslySetInnerHTML={{ __html: exam_tip.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-          />
+          >
+            {renderMathText(exam_tip)}
+          </p>
         </motion.div>
       )}
     </div>

@@ -249,8 +249,9 @@ const renderInline = (text) => {
   
   // Pattern to match all inline elements including LaTeX
   // Order matters: LaTeX first, then markdown
+  // FIXED: Use non-greedy matching for LaTeX to handle nested parentheses like \frac{n!}{(n-r)!}
   const patterns = [
-    { regex: /\\\(([^)]+)\\\)/g, type: 'inline-math' },      // \(...\)
+    { regex: /\\\((.+?)\\\)/g, type: 'inline-math' },         // \(...\) - non-greedy to handle nested parens
     { regex: /\$([^\$\n]+)\$/g, type: 'inline-math-dollar' }, // $...$
     { regex: /\*\*([^*]+)\*\*/g, type: 'bold' },              // **bold**
     { regex: /\*([^*]+)\*/g, type: 'italic' },                // *italic*
