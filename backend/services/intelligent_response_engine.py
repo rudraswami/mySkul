@@ -64,9 +64,23 @@ def detect_intent(question: str, context: Dict[str, Any] = None) -> QuestionInte
     """
     q = question.lower().strip()
     
-    # Greeting patterns
-    if q.strip('!?.') in ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo', 'good morning', 'good evening']:
+    # Greeting patterns (expanded)
+    greeting_words = ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo', 'good morning', 'good evening', 'good night', 'gm', 'gn']
+    if q.strip('!?.') in greeting_words or any(q.startswith(g) for g in greeting_words):
         return QuestionIntent.GREETING
+    
+    # Conversational/casual (CHECK EARLY - before academic patterns)
+    casual_patterns = [
+        'how are you', 'what\'s up', 'thank', 'thanks', 'okay', 'ok', 'got it', 'understood',
+        'remind me', 'reminder', 'schedule', 'tomorrow', 'today', 'later',
+        'can you help', 'will you', 'please help',
+        'bye', 'goodbye', 'see you', 'take care', 'ttyl',
+        'cool', 'nice', 'great', 'awesome', 'perfect', 'super',
+        'yes', 'no', 'sure', 'right', 'correct', 'wrong',
+        'start preparation', 'study plan', 'exam prep'
+    ]
+    if any(p in q for p in casual_patterns):
+        return QuestionIntent.CONVERSATIONAL
     
     # CRITICAL: Follow-up questions - must detect BEFORE other patterns
     follow_up_patterns = [
@@ -77,10 +91,6 @@ def detect_intent(question: str, context: Dict[str, Any] = None) -> QuestionInte
     ]
     if any(p in q for p in follow_up_patterns):
         return QuestionIntent.FOLLOW_UP
-    
-    # Conversational/casual
-    if any(p in q for p in ['how are you', 'what\'s up', 'thank', 'thanks', 'okay', 'ok', 'got it', 'understood']):
-        return QuestionIntent.CONVERSATIONAL
     
     # Verification
     if any(p in q for p in ['is this correct', 'am i right', 'check this', 'verify']):

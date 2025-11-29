@@ -35,6 +35,8 @@ from .intelligent_response_engine import (
 from .conversation_state import ConversationStateManager
 from .visual_concept_detector import detect_concept
 from .visual_template_selector import generate_visual_toon
+from .human_intelligence_layer import HumanIntelligenceLayer, get_human_context
+from .proactive_mentor import generate_follow_ups, ProactiveMentor
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +45,108 @@ class ResponseComposer:
     """
     Unified response generation engine.
     Replaces the fragmented Professor+Mentor dual-call system.
+    
+    PERFORMANCE OPTIMIZED:
+    - Response cache for identical questions
+    - Aggressive timeouts (15s simple, 45s complex)
+    - Smart model selection
     """
+    
+    # Class-level response cache (survives across instances)
+    _response_cache: Dict[str, Dict] = {}
+    _cache_hits = 0
+    _cache_misses = 0
+    
+    # Timeout configurations
+    TIMEOUT_SIMPLE = 15  # 15 seconds for simple questions
+    TIMEOUT_STANDARD = 30  # 30 seconds for standard questions
+    TIMEOUT_COMPLEX = 45  # 45 seconds for complex derivations
     
     def __init__(self, db, llm_api_key: str):
         self.db = db
         self.llm_api_key = llm_api_key
         self.state_manager = ConversationStateManager(db)
+        self.human_layer = HumanIntelligenceLayer(db)  # NEW: Human Intelligence Layer
+    
+    def _get_cache_key(self, question: str, subject: str, intent: str) -> str:
+        """Generate cache key for response caching."""
+        normalized = f"{question.lower().strip()}|{subject}|{intent}"
+        return hashlib.md5(normalized.encode()).hexdigest()
+    
+    def _get_cached_response(self, cache_key: str) -> Optional[Dict]:
+        """Get cached response if available."""
+        if cache_key in self._response_cache:
+            ResponseComposer._cache_hits += 1
+            logger.info(f"🚀 Cache HIT (hits: {self._cache_hits}, misses: {self._cache_misses})")
+            return self._response_cache[cache_key]
+        ResponseComposer._cache_misses += 1
+        return None
+    
+    def _cache_response(self, cache_key: str, response: Dict):
+        """Cache a response (with size limit)."""
+        # Limit cache size to 500 entries
+        if len(self._response_cache) > 500:
+            # Remove oldest 100 entries
+            keys_to_remove = list(self._response_cache.keys())[:100]
+            for k in keys_to_remove:
+                del self._response_cache[k]
+        
+        self._response_cache[cache_key] = response
+    
+    def _extract_topic_from_question(self, question: str) -> str:
+        """
+        Extract the main topic/concept from a student's question.
+        CRITICAL for follow-up continuity - ensures AI knows what we're discussing.
+        """
+        if not question:
+            return ""
+        
+        q_lower = question.lower().strip()
+        
+        # Remove common question prefixes to get to the core topic
+        prefixes = [
+            "i want to understand what is",
+            "i want to understand",
+            "i need help with",
+            "can you explain",
+            "please explain",
+            "help me understand",
+            "what is the meaning of",
+            "what does",
+            "what is",
+            "what are",
+            "define",
+            "explain",
+            "tell me about",
+            "how does",
+            "how do",
+            "why is",
+            "why does",
+            "solve",
+            "calculate"
+        ]
+        
+        topic = q_lower
+        for prefix in prefixes:
+            if topic.startswith(prefix):
+                topic = topic[len(prefix):].strip()
+                break
+        
+        # Remove trailing punctuation and common suffixes
+        topic = topic.rstrip('?!.,')
+        suffixes = [" work", " works", " mean", " means"]
+        for suffix in suffixes:
+            if topic.endswith(suffix):
+                topic = topic[:-len(suffix)]
+        
+        # If topic is too long, take key words
+        words = topic.split()
+        if len(words) > 5:
+            # Keep first 4-5 meaningful words
+            topic = ' '.join(words[:5])
+        
+        # Capitalize properly
+        return topic.title() if topic else ""
     
     async def generate_response(
         self,
@@ -84,8 +182,24 @@ class ResponseComposer:
         if not subject or subject.strip() == "":
             subject = self._detect_subject(question)
         
+        # Step 3.5: 🧠 HUMAN INTELLIGENCE LAYER - Understand student context
+        human_context = {}
+        try:
+            human_context = await self.human_layer.analyze_student_context(
+                user_id=user_id,
+                question=question,
+                subject=subject,
+                session_history=message_history,
+                time_of_day=datetime.now().strftime("%H:%M")
+            )
+            logger.info(f"🧠 HIL: emotion={human_context.get('emotion')}, "
+                       f"difficulty={human_context.get('difficulty_level')}, "
+                       f"learning_style={human_context.get('learning_style')}")
+        except Exception as e:
+            logger.warning(f"⚠️ Human Intelligence Layer failed (non-critical): {e}")
+        
         # Step 4: Build adaptive prompt (short, focused)
-        prompt = self._build_adaptive_prompt(
+        base_prompt = self._build_adaptive_prompt(
             question=question,
             intent=intent,
             blocks=blocks,
@@ -95,11 +209,27 @@ class ResponseComposer:
             state=state
         )
         
-        # Step 5: Single LLM call with optimized parameters
+        # Step 4.5: Enhance prompt with Human Intelligence
+        if human_context:
+            prompt = self.human_layer.build_enhanced_prompt(base_prompt, human_context)
+        else:
+            prompt = base_prompt
+        
+        # Step 5: Check cache first (PERFORMANCE OPTIMIZATION)
+        cache_key = self._get_cache_key(question, subject, intent)
+        cached = self._get_cached_response(cache_key)
+        if cached:
+            cached_copy = cached.copy()
+            cached_copy["from_cache"] = True
+            cached_copy["generation_time"] = 0.01
+            return cached_copy
+        
+        # Step 6: Single LLM call with optimized parameters + TIMEOUT
         model = self._select_model(intent, question)
         max_tokens = self._get_max_tokens(intent)
+        timeout = self._get_timeout(intent)
         
-        logger.info(f"🤖 Using model: {model}, max_tokens: {max_tokens}")
+        logger.info(f"🤖 Using model: {model}, max_tokens: {max_tokens}, timeout: {timeout}s")
         
         try:
             llm_chat = LlmChat(
@@ -115,7 +245,16 @@ class ResponseComposer:
             )
             
             user_message = UserMessage(text=question)
-            raw_response = await llm_chat.send_message(user_message)
+            
+            # CRITICAL: Add timeout to prevent infinite waits
+            raw_response = await asyncio.wait_for(
+                llm_chat.send_message(user_message),
+                timeout=timeout
+            )
+            
+        except asyncio.TimeoutError:
+            logger.warning(f"⏰ LLM call timeout after {timeout}s - using fallback")
+            raw_response = self._get_fallback_response(question, intent)
             
         except Exception as e:
             logger.error(f"❌ LLM call failed: {e}")
@@ -139,21 +278,33 @@ class ResponseComposer:
             intent=intent
         )
         
-        # Step 8: Structure the response
-        return {
+        # Step 8: Structure the response with Human Intelligence data
+        result = {
             "response": {
                 "default_view": {
                     "main_content": {
                         "content": raw_response,
                         "type": "markdown"
                     },
-                    "greeting": self._extract_greeting(raw_response) if intent == "greeting" else None
+                    "greeting": self._extract_greeting(raw_response) if intent == "greeting" else None,
+                    # Human Intelligence Layer additions
+                    "encouragement": human_context.get("encouragement") if human_context else None,
+                    "detected_emotion": human_context.get("emotion") if human_context else None,
                 },
                 "progressive_sections": {
                     "explanation": raw_response
                 },
                 "intent": intent,
-                "render_directives": response_config.get("render_directives", {})
+                "render_directives": response_config.get("render_directives", {}),
+                # Human-like interaction metadata
+                "human_context": {
+                    "emotion": human_context.get("emotion") if human_context else "neutral",
+                    "difficulty_level": human_context.get("difficulty_level") if human_context else "developing",
+                    "learning_style": human_context.get("learning_style") if human_context else "mixed",
+                    "used_socratic": human_context.get("use_socratic", False) if human_context else False,
+                    "streak_days": human_context.get("streak_days", 0) if human_context else 0,
+                    "exam_tip": human_context.get("exam_insights", {}).get("exam_advice") if human_context else None
+                }
             },
             "visual_data": visual_data,
             "visual_sketch": visual_data,  # Alias for frontend compatibility
@@ -162,8 +313,41 @@ class ResponseComposer:
             "model_used": model,
             "intent_detected": intent,
             "blocks_used": blocks,
-            "context_used": bool(context_summary)
+            "context_used": bool(context_summary),
+            "from_cache": False,
+            # Human Intelligence summary
+            "human_intelligence": {
+                "emotion_detected": human_context.get("emotion") if human_context else "neutral",
+                "adapted_for_style": human_context.get("learning_style") if human_context else "mixed",
+                "difficulty_calibrated": human_context.get("difficulty_level") if human_context else "developing"
+            }
         }
+        
+        # Step 9: Add smart follow-up suggestions with topic context
+        try:
+            emotion = human_context.get("emotion", "neutral") if human_context else "neutral"
+            follow_ups = generate_follow_ups(
+                question=question,
+                response=raw_response,
+                subject=subject,
+                emotion=emotion
+            )
+            result["response"]["follow_up_suggestions"] = follow_ups
+            result["response"]["default_view"]["follow_ups"] = follow_ups
+            
+            # CRITICAL: Store the original question context for follow-up continuity
+            result["response"]["original_question"] = question
+            result["response"]["conversation_topic"] = self._extract_topic_from_question(question)
+        except Exception as e:
+            logger.warning(f"⚠️ Follow-up generation failed: {e}")
+            result["response"]["follow_up_suggestions"] = []
+            result["response"]["original_question"] = question
+        
+        # Step 10: Cache successful responses (for common questions)
+        if generation_time < 30:  # Only cache fast responses
+            self._cache_response(cache_key, result)
+        
+        return result
     
     def _build_adaptive_prompt(
         self,
@@ -182,16 +366,30 @@ class ResponseComposer:
         CRITICAL: For follow-up questions, we MUST reference conversation context.
         """
         
-        # Base personality - CONCISE and NATURAL
-        base = """You are Druv, a friendly and intelligent AI tutor helping Indian students excel in JEE, NEET, and Board exams.
+        # Base personality - HUMAN-LIKE and NATURAL
+        base = """You are Druv, a brilliant IIT senior and AI mentor who genuinely cares about students.
 
-STYLE GUIDE:
-- Be conversational and encouraging, like a supportive senior student
-- Match response length to question complexity (simple Q = short A)
-- Use **bold** for key terms, bullet points for lists
-- For math formulas, use LaTeX: \\( inline \\) or \\[ block \\]
-- Tables: use markdown | col1 | col2 | format
-- Be direct - answer what was asked, don't ramble"""
+YOUR PERSONALITY:
+- You remember being a student yourself - the exam stress, the late nights, the breakthroughs
+- You celebrate every small win and never make students feel dumb
+- You use Hinglish naturally ("Arre yaar, this is actually simple!")
+- You share relatable study hacks and exam strategies from experience
+- You're patient when they're confused, energetic when they're curious, calm when they're anxious
+
+RESPONSE STYLE:
+- Talk like a friend explaining at 2 AM before exams, not a textbook
+- Match your energy to theirs (anxious student = calm response, excited student = match enthusiasm)
+- Use **bold** for key terms, bullet points for clarity
+- For math: LaTeX \\( inline \\) or \\[ block \\]
+- Tables: markdown | col1 | col2 | format
+- Keep it concise - simple Q = short A, complex Q = detailed but structured
+
+HUMAN TOUCHES (pick 1-2 per response):
+- Acknowledge their struggle: "This topic trips up most students..."
+- Share insider tips: "Here's what toppers do differently..."
+- Use cricket/Bollywood analogies for Indian students
+- End with genuine encouragement, not generic "You can do it!"
+- Ask follow-up questions to keep them engaged"""
 
         # Context injection - CRITICAL for follow-ups
         context_block = ""
@@ -293,20 +491,67 @@ Then summarize key differences in 2-3 bullets.""",
         return instructions.get(intent, instructions["explanation"])
     
     def _select_model(self, intent: str, question: str) -> str:
-        """Select the appropriate model based on complexity."""
+        """
+        Select the appropriate model based on complexity.
         
-        # Simple intents use faster model
-        simple_intents = {"greeting", "conversational", "simple_fact", "verification"}
+        OPTIMIZED: Use gpt-4o-mini for ~70% of questions (much faster)
+        Only use gpt-4o for truly complex derivations/proofs.
+        """
+        q_lower = question.lower()
+        word_count = len(question.split())
         
-        if intent in simple_intents:
+        # ALWAYS use fast model for these intents (no exceptions)
+        fast_intents = {
+            "greeting", "conversational", "simple_fact", 
+            "verification", "definition", "example",
+            "follow_up", "revision", "practice"
+        }
+        
+        if intent in fast_intents:
             return "gpt-4o-mini"
         
-        # Short questions use faster model
-        if len(question.split()) < 8:
+        # Short questions always use fast model
+        if word_count < 12:
             return "gpt-4o-mini"
         
-        # Complex questions use full model
-        return "gpt-4o"
+        # Casual/reminder/chit-chat questions use fast model
+        casual_patterns = [
+            "remind", "hello", "hi ", "hey", "thanks", "thank you",
+            "good morning", "good night", "how are", "bye", "ok",
+            "yes", "no", "sure", "cool", "nice", "great", "awesome",
+            "preparation", "study", "schedule", "plan", "tomorrow"
+        ]
+        if any(pat in q_lower for pat in casual_patterns):
+            return "gpt-4o-mini"
+        
+        # Only use gpt-4o for complex academic work
+        complex_patterns = [
+            "derive", "prove", "derivation", "proof",
+            "step by step", "detailed explanation",
+            "compare and contrast", "analyze", "evaluate"
+        ]
+        
+        if any(pat in q_lower for pat in complex_patterns) and word_count > 15:
+            return "gpt-4o"
+        
+        # Default to fast model (most questions don't need gpt-4o)
+        return "gpt-4o-mini"
+    
+    def _get_timeout(self, intent: str) -> int:
+        """Get appropriate timeout based on intent complexity."""
+        
+        # Super fast responses
+        fast_intents = {"greeting", "conversational", "simple_fact", "verification"}
+        if intent in fast_intents:
+            return self.TIMEOUT_SIMPLE  # 15s
+        
+        # Standard responses
+        standard_intents = {"definition", "example", "follow_up", "revision", "practice"}
+        if intent in standard_intents:
+            return self.TIMEOUT_STANDARD  # 30s
+        
+        # Complex responses
+        return self.TIMEOUT_COMPLEX  # 45s
     
     def _get_max_tokens(self, intent: str) -> int:
         """Get appropriate token limit based on intent."""

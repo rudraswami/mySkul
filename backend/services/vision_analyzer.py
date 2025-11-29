@@ -2,6 +2,8 @@
 Vision Analyzer Service
 Analyzes images/screenshots uploaded by students using GPT-4 Vision
 Extracts text, diagrams, equations, and provides intelligent answers
+
+USES LITELLM: Same API key configuration as the rest of the app
 """
 import logging
 import base64
@@ -12,10 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class VisionAnalyzer:
-    """Analyzes student-uploaded images using GPT-4 Vision"""
+    """Analyzes student-uploaded images using GPT-4 Vision via LiteLLM"""
     
     def __init__(self):
-        self.api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY')
+        # Use same key as LiteLLM for consistency
+        self.api_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('OPENAI_API_KEY')
+        logger.info(f"VisionAnalyzer initialized with API key: {'*' * 10}...{self.api_key[-4:] if self.api_key else 'None'}")
     
     async def analyze_image(
         self,
@@ -24,7 +28,7 @@ class VisionAnalyzer:
         subject_hint: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Analyze image and extract relevant information
+        Analyze image and extract relevant information using LiteLLM (same config as text responses)
         
         Args:
             image_data: Base64 encoded image or URL
@@ -41,24 +45,24 @@ class VisionAnalyzer:
             }
         """
         try:
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=self.api_key)
+            # Use LiteLLM instead of direct OpenAI - uses same API key config as rest of app
+            import litellm
             
             # Prepare image for API
             if image_data.startswith('http'):
                 # URL
-                image_content = {"type": "image_url", "image_url": {"url": image_data}}
+                image_url = image_data
             else:
-                # Base64
-                image_content = {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}
-                }
+                # Base64 - add proper data URI prefix
+                image_url = f"data:image/jpeg;base64,{image_data}"
             
-            # Call GPT-4 Vision
-            response = client.chat.completions.create(
+            logger.info(f"📷 Calling GPT-4o Vision via LiteLLM (image size: {len(image_data)} chars)")
+            
+            # CRITICAL: Explicitly pass API key to LiteLLM (it ignores self.api_key otherwise)
+            # LiteLLM defaults to OPENAI_API_KEY env var which may be invalid
+            response = await litellm.acompletion(
                 model="gpt-4o",  # GPT-4 with vision
+                api_key=self.api_key,  # Explicitly pass the correct key
                 messages=[
                     {
                         "role": "system",
@@ -103,12 +107,15 @@ Be FACTUAL and PRECISE. Extract exactly what you see."""
                                 "type": "text",
                                 "text": f"Student's question: {question}\n\nAnalyze this image and extract all relevant information:"
                             },
-                            image_content
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": image_url}
+                            }
                         ]
                     }
                 ],
-                max_tokens=1000,
-                temperature=0.3  # Lower temperature for accuracy
+                max_tokens=1500,
+                temperature=0.2  # Lower temperature for accuracy
             )
             
             analysis_text = response.choices[0].message.content

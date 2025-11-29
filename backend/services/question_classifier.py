@@ -104,10 +104,16 @@ class QuestionClassifier:
             r'\b(bond|ionic|covalent|oxidation|reduction)\b'
         ],
         Subject.COMPUTER_SCIENCE: [
-            r'\b(algorithm|code|program|recursion|loop)\b',
-            r'\b(data structure|array|tree|graph|stack|queue)\b',
-            r'\b(sorting|searching|complexity|big O)\b',
-            r'\b(class|object|inheritance|polymorphism)\b'
+            r'\b(algorithm|code|program|programming|recursion|loop|iterate)\b',
+            r'\b(data structure|array|tree|graph|stack|queue|linked list|hash)\b',
+            r'\b(sorting|searching|complexity|big O|binary search|time complexity)\b',
+            # Include common typos and variations of polymorphism
+            r'\b(class|object|inheritance|polymorphism|polimorphism|polymorpism|polimorpism|polimorfism)\b',
+            r'\b(encapsulation|abstraction|interface|abstract|virtual)\b',
+            r'\b(oop|object oriented|oops|function|method|variable|compiler|interpreter)\b',
+            r'\b(python|java|c\+\+|javascript|js|sql|database|html|css|react|node)\b',
+            r'\b(api|backend|frontend|server|client|http|rest|crud)\b',
+            r'\b(software|coding|developer|debug|runtime|compile|syntax)\b'
         ],
         Subject.BIOLOGY: [
             r'\b(cell|tissue|organ|organism|species)\b',

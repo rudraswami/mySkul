@@ -994,7 +994,7 @@ async def generate_neuro_symbolic_response(
         contextual_message = request.message
         
         if request.image_url:
-            logger.info(f"📷 Image uploaded - analyzing with GPT-4 Vision")
+            logger.info(f"📷 Image uploaded - analyzing with GPT-4 Vision (data length: {len(request.image_url)} chars)")
             try:
                 image_analysis = await analyze_student_image(
                     image_data=request.image_url,
@@ -1005,31 +1005,43 @@ async def generate_neuro_symbolic_response(
                 # Enhance the question with image context
                 extracted_info = image_analysis.get('extracted_text', '')
                 content_type = image_analysis.get('content_type', 'unknown')
+                analysis_text = image_analysis.get('analysis', '')
                 
-                if extracted_info:
+                logger.info(f"📷 Vision analysis result: content_type={content_type}, extracted_length={len(extracted_info)}")
+                
+                if extracted_info or analysis_text:
+                    # Use extracted_info if available, otherwise use analysis
+                    image_content = extracted_info if extracted_info else analysis_text
+                    
                     # CRITICAL: Format message to force AI to focus on image content
-                    contextual_message = f"""IMPORTANT: Student uploaded a {content_type} image. Analyze the actual content shown in the image and answer directly.
+                    contextual_message = f"""🖼️ IMPORTANT: Student uploaded an image ({content_type}). You MUST analyze and respond based on the image content below.
 
-IMAGE CONTAINS:
-{extracted_info}
+=== IMAGE CONTENT EXTRACTED BY VISION AI ===
+{image_content}
+=== END OF IMAGE CONTENT ===
 
 STUDENT'S QUESTION: {request.message}
 
-INSTRUCTIONS FOR AI:
-1. Read the extracted content from the image above carefully
-2. If it's an MCQ, identify the question and all options (A, B, C, D)
-3. Answer the student's question based on ACTUAL image content
-4. NO random stories or metaphors - be DIRECT and FACTUAL
-5. If solving a problem, show step-by-step solution
-6. If explaining a concept from textbook, explain what's actually shown
+INSTRUCTIONS:
+1. FIRST, acknowledge you can see the image and describe what's in it briefly
+2. If it's an MCQ: identify question, all options (A, B, C, D), and solve it step-by-step
+3. If it's a diagram/equation: explain exactly what is shown
+4. If it's a textbook page: summarize the key points shown
+5. Answer the student's specific question based on ACTUAL image content
+6. Be DIRECT and FACTUAL - no random metaphors unless explaining concepts
 
-Focus on accuracy, not creativity. Answer based on the image content extracted above."""
+You MUST reference specific content from the image in your response."""
                     
-                    logger.info(f"✅ Image analyzed: {image_analysis.get('content_type')}, Subject: {image_analysis.get('subject_detected')}")
+                    logger.info(f"✅ Image context prepared: {content_type}, Subject: {image_analysis.get('subject_detected')}, Content length: {len(image_content)} chars")
+                else:
+                    logger.warning(f"⚠️ Image analysis returned empty content. Full result: {image_analysis}")
                 
             except Exception as e:
+                import traceback
                 logger.error(f"❌ Image analysis failed: {e}")
-                # Continue without image analysis
+                logger.error(traceback.format_exc())
+                # Continue without image analysis but inform user
+                contextual_message = f"{request.message}\n\n(Note: There was an issue analyzing the uploaded image. Please describe what's in the image if you need help with it.)"
         
         # Auto-detect subject if not provided (consider image analysis)
         detected_subject = request.subject
@@ -1135,14 +1147,21 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
         # Legacy intent detection for backward compatibility
         from services.adaptive_response import detect_intent as _detect_intent
         _intent = _detect_intent(request.message)
-        contextual_message = request.message
-        try:
-            prev_topic = (session_doc or {}).get('last_topic') if session_doc else None
-            if _intent in {"clarification_or_followup", "deep_dive"} and prev_topic:
-                if prev_topic.lower() not in (request.message or "").lower():
-                    contextual_message = f"{request.message}\n\nContext: Previous topic was '{prev_topic}'. Please respond accordingly (no basic repetition; go deeper/clarify)."
-        except Exception:
-            pass
+        
+        # CRITICAL FIX: Only update contextual_message if NO IMAGE was analyzed
+        # (contextual_message already contains image context from above if image was uploaded)
+        has_image_context = image_analysis is not None and image_analysis.get('extracted_text')
+        if not has_image_context:
+            # No image - check for topic continuation context
+            try:
+                prev_topic = (session_doc or {}).get('last_topic') if session_doc else None
+                if _intent in {"clarification_or_followup", "deep_dive"} and prev_topic:
+                    if prev_topic.lower() not in (request.message or "").lower():
+                        contextual_message = f"{request.message}\n\nContext: Previous topic was '{prev_topic}'. Please respond accordingly (no basic repetition; go deeper/clarify)."
+            except Exception:
+                pass
+        else:
+            logger.info(f"📷 Preserving image context in message (has {len(image_analysis.get('extracted_text', ''))} chars of extracted content)")
 
         # ====================================================================
         # UNIFIED INTELLIGENT PIPELINE (DEFAULT - Always On)
@@ -1159,15 +1178,31 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
             logger.info("🚀 Using UNIFIED intelligent pipeline (clean, adaptive)")
             try:
                 from services.response_composer import ResponseComposer
+                from services.intelligent_response_engine import detect_intent, QuestionIntent
                 
                 emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
                 composer = ResponseComposer(db, emergent_llm_key)
                 
-                # Get more message history (10 instead of 5)
+                # PERFORMANCE: Quick intent detection for fast-path optimization
+                quick_intent = detect_intent(contextual_message)
+                is_simple_question = quick_intent in {
+                    QuestionIntent.GREETING, 
+                    QuestionIntent.CONVERSATIONAL,
+                    QuestionIntent.SIMPLE_FACT,
+                    QuestionIntent.VERIFICATION
+                }
+                
+                # PERFORMANCE: Only load history for complex questions
                 extended_history = []
-                if request.session_id:
+                if request.session_id and not is_simple_question:
                     history = await ai_service.get_session_messages(request.session_id, user.user_id)
                     extended_history = history[-10:] if history else []
+                elif request.session_id and is_simple_question:
+                    # For simple questions, just get last 3 messages (faster)
+                    history = await ai_service.get_session_messages(request.session_id, user.user_id)
+                    extended_history = history[-3:] if history else []
+                
+                logger.info(f"⚡ Quick intent: {quick_intent.value}, simple={is_simple_question}, history_size={len(extended_history)}")
                 
                 # Single unified response generation
                 result = await composer.generate_response(
@@ -1485,14 +1520,25 @@ Focus on accuracy, not creativity. Answer based on the image content extracted a
         try:
             # Only generate visual sketch for questions that benefit from visuals
             question_length = len(request.message.strip())
-            # CRITICAL: Generate visuals for ALL concept explanations, not just specific question types
-            # Visuals are essential for understanding - Value-First principle
+            q_lower = request.message.lower()
+            
+            # PERFORMANCE: Skip visuals for casual/simple questions
+            skip_visual_patterns = [
+                "remind", "hello", "hi ", "hey", "thanks", "thank you",
+                "bye", "good morning", "good night", "schedule", "plan",
+                "how are you", "what's up", "ok", "okay", "got it"
+            ]
+            is_casual = any(pat in q_lower for pat in skip_visual_patterns)
+            
+            # CRITICAL: Generate visuals for concept explanations
+            # But skip for casual chit-chat (PERFORMANCE OPTIMIZATION)
             is_visual_worthy = (
-                question_length > 10 and  # Lower threshold - even short questions benefit from visuals
-                _intent not in {"greeting"} and  # Only skip greetings
-                # Always generate for concept explanations ("explain", "what is", "define", "describe")
-                (any(keyword in request.message.lower() for keyword in ["explain", "what is", "define", "describe", "how does", "tell me about"]) or
-                 (request.subject and request.subject.strip() != ""))  # Or if subject is provided
+                question_length > 15 and  # Need substantial question
+                not is_casual and  # Skip casual questions
+                _intent not in {"greeting", "conversational"} and  # Skip greetings & casual
+                # Only for concept explanations
+                (any(keyword in q_lower for keyword in ["explain", "what is", "define", "describe", "how does", "derive", "prove"]) or
+                 (request.subject and request.subject.strip() != "" and question_length > 20))
             )
             
             if is_visual_worthy:
