@@ -19,7 +19,7 @@ export default function EnhancedChatInput({
   onSubmit,
   onStop,
   isLoading = false,
-  placeholder = "Ask anything — I'll explain & mentor you 💡",
+  placeholder = "Ask a question...",
   onImageAttach,
   imagePreview,
   onRemoveImage,

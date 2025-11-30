@@ -171,13 +171,12 @@ export default function EnhancedResponseCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden"
+      className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden"
     >
-      {/* Subject Badge (if available) */}
+      {/* Subject Badge (if available) - Subtle, top-right positioning */}
       {subject && (
-        <div className="px-4 pt-4">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg">
-            <BookOpen className="w-3 h-3" />
+        <div className="absolute top-3 right-4">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 text-xs font-medium rounded">
             {subject}
           </span>
         </div>
@@ -218,18 +217,8 @@ export default function EnhancedResponseCard({
 
       {/* Action Bar */}
       {showActions && (
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          {/* Left: Generation time */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            {generationTime && (
-              <>
-                <Zap className="w-3 h-3 text-yellow-500" />
-                <span>{generationTime}s</span>
-              </>
-            )}
-          </div>
-
-          {/* Right: Copy & Feedback */}
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end">
+          {/* Copy & Feedback - Right aligned */}
           <div className="flex items-center gap-2">
             <CopyButton content={plainTextContent} />
             <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />

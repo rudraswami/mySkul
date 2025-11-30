@@ -23,9 +23,7 @@ from utils.sentiment_analyzer import SentimentAnalyzer
 from utils.svg_generator import SVGGenerator
 from utils.response_parser import ResponseParser
 from utils.motivational_generator import MotivationalGenerator
-from services.visual_engine import VisualEngine
-from services.unified_visual_system import generate_visual_for_question
-from services.grammar_visual_templates import get_grammar_visual_template
+# Legacy visual imports removed - now using whiteboard_engine in api/ai.py
 from services.intent_planner import IntentPlanner
 from services.topic_classifier import TopicClassifier
 from utils.format_validator import format_validator
@@ -48,7 +46,7 @@ class AIService:
         self.svg_generator = SVGGenerator()
         self.response_parser = ResponseParser(emergent_llm_key)
         self.motivational_generator = MotivationalGenerator()
-        self.visual_engine = VisualEngine()
+        # Visual engine removed - now using whiteboard_engine in api/ai.py
         self.gemini_chat = None  # Lazy init for Gemini visual generation
         self.subscription_service = subscription_service  # For usage tracking
     
@@ -1583,14 +1581,9 @@ You're making great progress by actively seeking to understand. Keep up this exc
             if memory_context:
                 logger.info(f"🧠 Using memory context: mastery={memory_mastery}, continuation={is_continuation}")
             
-            # Resolve visual metaphor
-            visual_metaphor = self.visual_engine.resolve_visual_metaphor(
-                message,
-                student_profile,
-                intent_plan=intent_plan,
-                context_flags=intent_plan.context_flags,
-            )
-            metaphor_visual = copy.deepcopy(visual_metaphor)
+            # Visual metaphor resolution moved to whiteboard_engine in api/ai.py
+            visual_metaphor = {}  # Legacy - now handled by whiteboard_engine
+            metaphor_visual = {}
             visual_directives = visual_metaphor.get("visual_directives", {})
             visual_data, visual_offer, should_attempt_visual = self._resolve_visual_template(
                 intent_plan=intent_plan,

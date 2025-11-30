@@ -246,6 +246,14 @@ def create_app() -> FastAPI:
     app.include_router(metaphors.router, prefix="/api", tags=["Metaphors"])
     app.include_router(visual_teaching.router, tags=["Visual Teaching"])
     
+    # SketchSense V2 Visual Engine (Enhancement Layer)
+    try:
+        from api import sketchsense
+        app.include_router(sketchsense.router, prefix="/api", tags=["SketchSense V2"])
+        logger.info("🎨 SketchSense V2 router registered")
+    except Exception as e:
+        logger.warning(f"Could not load SketchSense V2 router: {e}")
+    
     # Memory & Learning Dashboard (NEW)
     try:
         from api import memory_dashboard

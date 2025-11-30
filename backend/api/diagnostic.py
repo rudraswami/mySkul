@@ -1,12 +1,14 @@
 """
-Visual Generation Diagnostic Tool
-Tests visual pipeline end-to-end
+Visual Generation Diagnostic Tool (V3.0)
+Tests visual pipeline end-to-end using Whiteboard Engine
 """
 import base64
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/diagnostic", tags=["diagnostic"])
+
 
 class VisualTestRequest(BaseModel):
     metaphor_category: str = "cricket"
@@ -21,19 +23,13 @@ class BlendedSketchRequest(BaseModel):
 @router.post("/blended-sketch")
 async def blended_sketch(req: BlendedSketchRequest):
     """
-    Generate appropriate visual (concept OR solution) with Friend Test validation.
-    Now dynamically understands the question and generates step-by-step solutions
-    or concept explanations based on question type.
+    Generate visual for a question using Whiteboard Engine V3.0.
     """
     try:
-        from services.unified_visual_system import generate_visual_for_question
-        from services.visual_library import VisualLibrary
-
-        # Initialize library
-        library = VisualLibrary()
+        from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
+        import re as _re
 
         # Extract marks from question
-        import re as _re
         marks = 3
         m = _re.search(r"(\d+)\s*marks?", req.question.lower())
         if m:
@@ -42,78 +38,38 @@ async def blended_sketch(req: BlendedSketchRequest):
             except Exception:
                 marks = 3
 
-        # Check library first (codebase-first approach)
-        existing = library.find_existing(req.question, marks, subject="cs")
-
-        if existing:
+        # Extract concept from question
+        concept = whiteboard_engine.extract_concept(req.question)
+        
+        if not concept:
             return {
-                "success": True,
+                "success": False,
                 "question": req.question,
                 "marks": marks,
-                "metaphors": existing["metadata"].get("metaphors_used", []),
-                "svg": existing["svg"],
-                "size_kb": round(len(existing["svg"]) / 1024.0, 2),
-                "topper_hack": existing["metadata"].get("topper_hack"),
-                "topper_rank": existing["metadata"].get("topper_rank"),
-                "pyq_references": existing["metadata"].get("pyq_references", []),
-                "friend_test": existing.get("analytics", {}).get("friend_test_score", 0),
-                "source": "cached",
-                "validated": True
+                "error": "No visual concept detected for this question",
+                "source": "whiteboard_engine"
             }
 
-        # Generate visual using new unified system (auto-detects concept vs solution)
-        result = generate_visual_for_question(
-            question=req.question,
-            student_profile=req.student_dna,
-            marks=marks
+        # Generate visual using whiteboard engine
+        subject = req.student_dna.get("subject", "physics") if req.student_dna else "physics"
+        result = generate_whiteboard_visual(
+            concept=concept,
+            subject=subject,
+            question=req.question
         )
 
-        svg = result["svg"]
-        visual_type = result.get("visual_type", "concept")
-        friend_result = result.get("friend_test", {})
-
-        # Cache if passes friend test
-        if friend_result.get("passed", False):
-            library.save_visual(
-                question=req.question,
-                marks=marks,
-                svg=svg,
-                metadata=result["metadata"],
-                subject="cs",
-                friend_test_score=friend_result.get("score_value", 0)
-            )
-
-        # Build response based on visual type
-        response = {
-            "success": friend_result.get("passed", False),
+        return {
+            "success": True,
             "question": req.question,
             "marks": marks,
-            "visual_type": visual_type,
-            "svg": svg,
-            "size_kb": round(len(svg) / 1024.0, 2),
-            "friend_test": friend_result,
-            "source": "generated",
-            "validated": friend_result.get("passed", False)
+            "concept": concept,
+            "visual": result,
+            "beats": len(result.get("beats", [])),
+            "title": result.get("title", ""),
+            "title_hindi": result.get("title_hindi", ""),
+            "source": "whiteboard_engine",
+            "validated": True
         }
-
-        # Add type-specific metadata
-        if visual_type == "solution":
-            response.update({
-                "problem_type": result["metadata"].get("problem_type"),
-                "num_steps": result["metadata"].get("num_steps", 0),
-                "final_answer": result["metadata"].get("final_answer"),
-                "subject": result["metadata"].get("subject")
-            })
-        else:  # concept
-            response.update({
-                "metaphors": result["metadata"].get("metaphors_used", []),
-                "topper_hack": result["metadata"].get("topper_hack"),
-                "topper_rank": result["metadata"].get("topper_rank"),
-                "pyq_references": result["metadata"].get("pyq_references", []),
-                "region": result["metadata"].get("region", "North")
-            })
-
-        return response
 
     except Exception as e:
         import traceback
@@ -122,162 +78,132 @@ async def blended_sketch(req: BlendedSketchRequest):
             detail=f"blended-sketch failed: {str(e)}\n{traceback.format_exc()}"
         )
 
+
 @router.get("/visual-test")
 async def test_visual_generation(
-    metaphor: str = "cricket",
-    region: str = "Bangalore"
+    concept: str = "force",
+    subject: str = "physics"
 ):
     """
-    Test visual generation pipeline
-    Returns diagnostic info + visual assets
+    Test visual generation pipeline with whiteboard engine.
+    Returns diagnostic info + visual blueprint.
     """
-    from services.ai_service import AIService
-    
-    # Create dummy AI service to access SVG method
-    service = AIService(db=None, emergent_llm_key="test")
-    
     try:
-        # Get SVG fallback
-        svg_fallback = service._get_svg_fallback(metaphor, region)
+        from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
         
-        # Decode base64 to verify it's valid
-        svg_data = svg_fallback['svg_template']
-        if svg_data.startswith('data:image/svg+xml;base64,'):
-            b64_data = svg_data.split(',')[1]
-            try:
-                decoded = base64.b64decode(b64_data)
-                svg_valid = True
-                svg_content = decoded.decode('utf-8')
-            except Exception as e:
-                svg_valid = False
-                svg_content = f"Error: {str(e)}"
-        else:
-            svg_valid = False
-            svg_content = "Invalid data URI format"
+        # Generate visual
+        result = generate_whiteboard_visual(
+            concept=concept,
+            subject=subject
+        )
         
         return {
             "success": True,
-            "metaphor_category": metaphor,
-            "region": region,
-            "svg_fallback": svg_fallback,
-            "svg_valid": svg_valid,
-            "svg_content": svg_content,
-            "svg_data_uri": svg_data,
-            "emoji": svg_fallback['emoji'],
-            "color_theme": svg_fallback['color_theme'],
-            "test": "Visual generation pipeline is working"
+            "concept": concept,
+            "subject": subject,
+            "visual": result,
+            "beats_count": len(result.get("beats", [])),
+            "total_duration_ms": result.get("total_duration_ms", 0),
+            "stats": whiteboard_engine.get_stats(),
+            "test": "Whiteboard Engine V3.0 is working"
         }
         
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "test": "Visual generation pipeline FAILED"
+            "test": "Whiteboard Engine FAILED"
         }
 
 
-@router.get("/library-stats")
-async def get_library_stats(subject: str | None = None):
+@router.get("/concepts-stats")
+async def get_concepts_stats(subject: str | None = None):
     """
-    Get Visual Library statistics
-    Shows cached visuals, performance metrics, and high performers
+    Get Visual Concepts statistics.
+    Shows available concepts by subject.
     """
     try:
-        from services.visual_library import VisualLibrary
+        from services.whiteboard_engine import whiteboard_engine
 
-        library = VisualLibrary()
-        stats = library.get_library_stats(subject=subject)
+        stats = whiteboard_engine.get_stats()
+        concepts = whiteboard_engine.get_available_concepts(subject)
 
         return {
             "success": True,
             "subject": subject or "all",
-            "stats": stats
+            "stats": stats,
+            "concepts": concepts,
+            "total": len(concepts)
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"library-stats failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"concepts-stats failed: {str(e)}")
 
 
 @router.get("/visual-render-test")
 async def visual_render_test():
     """
-    Returns HTML page to test visual rendering in browser
+    Returns HTML page to test visual rendering in browser.
     """
-    from fastapi.responses import HTMLResponse
-    
     html_content = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Visual Rendering Test</title>
+        <title>Visual Rendering Test - Whiteboard Engine V3.0</title>
         <style>
-            body { font-family: Arial; padding: 20px; }
-            .test-container { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
-            img { max-width: 400px; border: 2px solid #333; }
-            .error { color: red; }
+            body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+            .test-container { margin: 20px 0; padding: 20px; border: 1px solid #ccc; background: white; border-radius: 8px; }
             .success { color: green; }
+            .error { color: red; }
+            pre { background: #f0f0f0; padding: 10px; overflow-x: auto; border-radius: 4px; }
+            button { padding: 10px 20px; background: #FF9933; color: white; border: none; border-radius: 4px; cursor: pointer; }
+            button:hover { background: #e68a00; }
         </style>
     </head>
     <body>
-        <h1>Visual Rendering Diagnostic</h1>
+        <h1>🎨 Whiteboard Engine V3.0 - Diagnostic</h1>
         
         <div class="test-container">
-            <h2>Test 1: SVG Data URI (Cricket)</h2>
-            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNFRkY2RkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzEwQjk4MSI+8J+PjzwvdGV4dD48L3N2Zz4=" 
-                 onload="document.getElementById('test1-status').textContent = '✅ SUCCESS'; document.getElementById('test1-status').className = 'success';"
-                 onerror="document.getElementById('test1-status').textContent = '❌ FAILED'; document.getElementById('test1-status').className = 'error';">
-            <p id="test1-status">Loading...</p>
+            <h2>Test: Generate Visual Blueprint</h2>
+            <label>Concept: <input id="concept" value="force" style="padding: 5px;"></label>
+            <label>Subject: <input id="subject" value="physics" style="padding: 5px;"></label>
+            <button onclick="testGeneration()">Generate Visual</button>
+            <pre id="result">Click "Generate Visual" to test</pre>
         </div>
         
         <div class="test-container">
-            <h2>Test 2: SVG Data URI (Cooking)</h2>
-            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNGRUYzQzciLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iI0Y1OUUwQiI+8J+NszwvdGV4dD48L3N2Zz4="
-                 onload="document.getElementById('test2-status').textContent = '✅ SUCCESS'; document.getElementById('test2-status').className = 'success';"
-                 onerror="document.getElementById('test2-status').textContent = '❌ FAILED'; document.getElementById('test2-status').className = 'error';">
-            <p id="test2-status">Loading...</p>
+            <h2>Available Concepts</h2>
+            <button onclick="loadStats()">Load Statistics</button>
+            <pre id="stats">Click "Load Statistics" to view</pre>
         </div>
         
-        <div class="test-container">
-            <h2>Test 3: Direct SVG Rendering</h2>
-            <div id="svg-container"></div>
-            <script>
-                const svgB64 = 'PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNFRkY2RkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI4MCIgZmlsbD0iIzEwQjk4MSI+8J+PjzwvdGV4dD48L3N2Zz4=';
-                const svgDecoded = atob(svgB64);
-                document.getElementById('svg-container').innerHTML = svgDecoded;
-                document.getElementById('test3-status').textContent = '✅ SUCCESS';
-                document.getElementById('test3-status').className = 'success';
-            </script>
-            <p id="test3-status">Loading...</p>
-        </div>
-        
-        <div class="test-container">
-            <h2>Browser Info</h2>
-            <p><strong>User Agent:</strong> <span id="ua"></span></p>
-            <p><strong>Data URI Support:</strong> <span id="data-uri-support"></span></p>
-            <script>
-                document.getElementById('ua').textContent = navigator.userAgent;
-                // Test data URI support
-                const testImg = new Image();
-                testImg.onload = () => {
-                    document.getElementById('data-uri-support').textContent = '✅ Supported';
-                    document.getElementById('data-uri-support').className = 'success';
-                };
-                testImg.onerror = () => {
-                    document.getElementById('data-uri-support').textContent = '❌ Not Supported';
-                    document.getElementById('data-uri-support').className = 'error';
-                };
-                testImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-            </script>
-        </div>
-        
-        <div class="test-container">
-            <h2>Test Results Summary</h2>
-            <ul>
-                <li>If all tests show ✅ SUCCESS: Visual rendering is working</li>
-                <li>If tests show ❌ FAILED: Check browser console for errors</li>
-                <li>Check Network tab to see if images are being blocked</li>
-            </ul>
-        </div>
+        <script>
+            async function testGeneration() {
+                const concept = document.getElementById('concept').value;
+                const subject = document.getElementById('subject').value;
+                document.getElementById('result').textContent = 'Loading...';
+                
+                try {
+                    const res = await fetch(`/diagnostic/visual-test?concept=${concept}&subject=${subject}`);
+                    const data = await res.json();
+                    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                } catch (e) {
+                    document.getElementById('result').textContent = 'Error: ' + e.message;
+                }
+            }
+            
+            async function loadStats() {
+                document.getElementById('stats').textContent = 'Loading...';
+                
+                try {
+                    const res = await fetch('/diagnostic/concepts-stats');
+                    const data = await res.json();
+                    document.getElementById('stats').textContent = JSON.stringify(data, null, 2);
+                } catch (e) {
+                    document.getElementById('stats').textContent = 'Error: ' + e.message;
+                }
+            }
+        </script>
     </body>
     </html>
     """
@@ -290,27 +216,31 @@ class TeachingVisualRequest(BaseModel):
     subject: str | None = None
 
 
-@router.post("/universal-teaching-visual")
-async def universal_teaching_visual(req: TeachingVisualRequest):
+@router.post("/teaching-visual")
+async def teaching_visual(req: TeachingVisualRequest):
     """
-    Return a block-based teaching visual for any question using
-    subject templates when available, otherwise the universal planner.
+    Generate teaching visual using Whiteboard Engine.
     """
     try:
-        from services.subject_templates import plan_from_subject_templates
-        from services.universal_visual_planner import plan_universal_visual
+        from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
 
-        visual = plan_from_subject_templates(req.question, req.subject)
-        if not visual:
-            visual = plan_universal_visual(req.question, req.subject)
-
-        return {
-            "success": True,
-            "source": "template" if str(visual.get("visual_id", "")).startswith("tpl_") else "universal",
-            "visual": visual,
-        }
+        concept = whiteboard_engine.extract_concept(req.question)
+        subject = req.subject or "physics"
+        
+        if concept:
+            visual = generate_whiteboard_visual(concept, subject, req.question)
+            return {
+                "success": True,
+                "source": "whiteboard_engine",
+                "concept": concept,
+                "visual": visual,
+            }
+        else:
+            return {
+                "success": False,
+                "source": "whiteboard_engine",
+                "error": "No concept detected",
+                "available_concepts": whiteboard_engine.get_available_concepts(subject)[:10]
+            }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"universal-teaching-visual failed: {e}")
-
-
-# Removed dev-only HTML playground per requirement: render visuals only in Tutor UI
+        raise HTTPException(status_code=500, detail=f"teaching-visual failed: {e}")

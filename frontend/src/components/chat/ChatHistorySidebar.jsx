@@ -72,15 +72,19 @@ const ChatItem = ({
             />
           ) : (
             <>
-              <p className={`text-sm font-medium truncate ${
-                isActive ? 'text-purple-700 dark:text-purple-300' : 'text-gray-800 dark:text-gray-200'
-              }`}>
+              <p 
+                className={`text-sm font-medium truncate ${
+                  isActive ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-gray-200'
+                }`}
+                title={chat.title || 'New Chat'}
+                style={{ maxWidth: '160px' }}
+              >
                 {chat.title || 'New Chat'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {chat.date || 'Today'}
-                {chat.isPinned && <Pin className="w-3 h-3 text-purple-500 ml-1" />}
+                {chat.isPinned && <Pin className="w-3 h-3 text-violet-500 ml-1" />}
               </p>
             </>
           )}
@@ -168,10 +172,13 @@ export default function ChatHistorySidebar({
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-900 dark:text-white">Chats</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-violet-600" />
+            Chats
+          </h2>
           <button
             onClick={onNewChat}
-            className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+            className="w-8 h-8 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center justify-center transition-colors"
             title="New Chat"
           >
             <Plus className="w-4 h-4" />

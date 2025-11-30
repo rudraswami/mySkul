@@ -7,11 +7,12 @@
  * FIXED: Uses AdaptiveMarkdown EVERYWHERE for proper LaTeX, tables, and formatting.
  */
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Lightbulb, Calculator } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lightbulb, Calculator, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
+import RevolutionarySketch from '../visual-engine/components/RevolutionarySketch';
 
 // DEPRECATED: FormattedExplanation forces template structure
 // import { FormattedExplanation, formatExplanation } from '../utils/explanationFormatter';
@@ -104,8 +105,11 @@ const SmartResponse = ({
   visualSketch = null,
   onFollowUp,
   onInteraction,
-  isStreaming = false
+  isStreaming = false,
+  whiteboardVisual = null
 }) => {
+  // State for visual expand/collapse - DEFAULT COLLAPSED so user reads text first
+  const [isVisualExpanded, setIsVisualExpanded] = useState(false);
   const responseType = useMemo(() => 
     detectResponseType(response, question), 
     [response, question]
@@ -261,6 +265,9 @@ const SmartResponse = ({
           question={question}
           response={response}
           onFollowUp={onFollowUp}
+          whiteboardVisual={whiteboardVisual}
+          isVisualExpanded={isVisualExpanded}
+          setIsVisualExpanded={setIsVisualExpanded}
         />
       );
   }
@@ -391,13 +398,27 @@ const ExampleResponse = ({ content }) => (
 );
 
 /**
- * Explanation - Full explanation with optional visual
+ * Explanation - Full explanation with whiteboard visual
  * 
- * REFACTORED: Uses AdaptiveMarkdown - the AI decides the structure, not the frontend.
- * NO MORE FORCED TEMPLATE SECTIONS.
+ * NEXT-GEN: Uses WhiteboardSketch for animated, progressive visuals
+ * Philosophy: No MCQs, pure understanding, Indian context
  */
-const ExplanationResponse = ({ content, showVisual, visualSketch, question, response, onFollowUp }) => {
+const ExplanationResponse = ({ 
+  content, 
+  showVisual, 
+  visualSketch, 
+  question, 
+  response, 
+  onFollowUp,
+  whiteboardVisual,
+  isVisualExpanded,
+  setIsVisualExpanded
+}) => {
   const hasContent = content.mainContent && content.mainContent.length > 10;
+  
+  // Whiteboard visual is the ONLY visual system
+  const hasWhiteboardVisual = whiteboardVisual && whiteboardVisual.concept;
+  const hasAnyVisual = hasWhiteboardVisual;
 
   return (
     <motion.div 
@@ -416,15 +437,52 @@ const ExplanationResponse = ({ content, showVisual, visualSketch, question, resp
         </div>
       )}
 
-      {/* Visual - AFTER explanation text */}
-      {showVisual && (
-        <VisualSketchViewer
-          svg={visualSketch?.svg || response?.visual_sketch?.svg}
-          metaphors={visualSketch?.metaphors || response?.visual_sketch?.metaphors || []}
-          estimatedMarks={visualSketch?.estimated_marks || response?.visual_sketch?.estimated_marks}
-          question={question}
-          embedded={true}
-        />
+      {/* 🚀 Revolutionary Visual - Progressive, Animated, Next-Level */}
+      {hasAnyVisual && (
+        <div className="visual-section mt-6">
+          <AnimatePresence>
+            {isVisualExpanded ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                {/* Revolutionary Sketch - NO extra header needed, it has its own */}
+                <RevolutionarySketch
+                  concept={whiteboardVisual?.concept || 'force'}
+                  subject={whiteboardVisual?.subject || 'physics'}
+                  question={question}
+                />
+                
+                {/* Collapse button */}
+                <button
+                  onClick={() => setIsVisualExpanded?.(false)}
+                  className="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1 transition-colors"
+                >
+                  <ChevronUp className="w-3 h-3" />
+                  Hide visual
+                </button>
+              </motion.div>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setIsVisualExpanded?.(true)}
+                className="w-full py-4 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100 rounded-xl border-2 border-dashed border-orange-300 hover:border-orange-400 flex items-center justify-center gap-3 transition-all shadow-sm hover:shadow-md"
+              >
+                <span className="text-2xl">🎬</span>
+                <div className="text-left">
+                  <span className="text-sm font-semibold text-orange-700 block">Watch Visual Explanation</span>
+                  <span className="text-xs text-orange-500">Click to see animated diagram</span>
+                </div>
+                <ChevronDown className="w-5 h-5 text-orange-500 animate-bounce" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
       )}
 
       {/* Follow-up suggestions */}

@@ -59,6 +59,29 @@ import { useGamification } from '../hooks/useGamification';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper: Format relative time consistently
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    // For older dates, show short date
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
 // Typing Indicator Component with rotating tips
 function TypingIndicator() {
   const [tipIndex, setTipIndex] = useState(0);
@@ -138,6 +161,9 @@ export default function AITutorNeuroSymbolic() {
 
   // Core state
   const [messages, setMessages] = useState([]);
+  
+  // Follow-up suggestions (shown near input, not in response)
+  const [floatingFollowUps, setFloatingFollowUps] = useState([]);
   
   // Poll for async visual generation
   const pollForVisual = async (taskId, messageId, retries = 0) => {
@@ -315,6 +341,26 @@ export default function AITutorNeuroSymbolic() {
     window.addEventListener('send-question', handleFollowUpQuestion);
     return () => window.removeEventListener('send-question', handleFollowUpQuestion);
   }, []);
+  
+  // Update floating follow-ups when messages change
+  useEffect(() => {
+    // Find the last AI message with follow-up suggestions
+    const lastAIMessage = [...messages].reverse().find(m => m.type === 'ai');
+    if (lastAIMessage?.content?.follow_up_suggestions) {
+      const validSuggestions = lastAIMessage.content.follow_up_suggestions
+        .filter(followUp => {
+          const text = typeof followUp === 'string' ? followUp : followUp.text;
+          if (!text) return false;
+          const invalidPatterns = ['IMPORTANT:', 'Student Uploaded', 'IMAGE CONTAINS:', '[Student uploaded', '🖼️ Important'];
+          return !invalidPatterns.some(pattern => text.toLowerCase().includes(pattern.toLowerCase()));
+        })
+        .slice(0, 3)
+        .map(followUp => typeof followUp === 'string' ? followUp : followUp.text);
+      setFloatingFollowUps(validSuggestions);
+    } else {
+      setFloatingFollowUps([]);
+    }
+  }, [messages]);
   
   // Offline detection
   useEffect(() => {
@@ -855,6 +901,7 @@ export default function AITutorNeuroSymbolic() {
       console.log('🎨 Teaching Visual:', data.response?.teaching_visual);
       console.log('🎨 Visual Data:', data.response?.visual_data);
       console.log('🎨 Visual Sketch:', data.response?.visual_sketch);
+      console.log('🎨 Whiteboard Visual:', data.response?.whiteboard_visual);
 
       // Skip creating new AI message if streaming already handled it
       if (!streamingHandledFlag) {
@@ -877,6 +924,8 @@ export default function AITutorNeuroSymbolic() {
           visual_data: data.response?.visual_data || normalizedResponse?.visual_data || null,
           visual_sketch: data.response?.visual_sketch || normalizedResponse?.visual_sketch || null,
           visual_task_id: data.response?.visual_task_id || data.response?.visual_sketch?.task_id || null,
+          // NEW: Whiteboard Visual (Next-Gen Sketch Engine)
+          whiteboard_visual: data.response?.whiteboard_visual || null,
           // NEW: Store user question for Interactive Visual Engine
           user_question: messageToSend
         };
@@ -1244,7 +1293,7 @@ export default function AITutorNeuroSymbolic() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* 🎮 GAMIFICATION: Micro-Reward Popup */}
       <MicroReward 
         reward={currentReward} 
@@ -1292,21 +1341,18 @@ export default function AITutorNeuroSymbolic() {
       }} />
       
       {/* Persistent Sidebar on large screens */}
-      <div className="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 shadow-sm">
-        <div className="p-5 border-b-2 border-purple-200 flex items-center justify-between bg-gradient-to-br from-purple-100 via-pink-50 to-orange-50">
-          <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-sm">
-              <MessageCircle className="h-5 w-5 text-white" />
-            </div>
+      <div className="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-violet-600" />
             Chats
           </h2>
           <button
             onClick={() => loadSessions()}
-            className="text-xs px-3 py-1.5 rounded-lg bg-white hover:bg-purple-50 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all hover:shadow-sm"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
             title="Refresh chat history"
           >
-            <RefreshCw className={sessionsLoading ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
-            <span className="font-medium">Refresh</span>
+            <RefreshCw className={sessionsLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -1340,10 +1386,10 @@ export default function AITutorNeuroSymbolic() {
                     </div>
                   )}
                   <div className="text-xs text-gray-500 mt-1 flex items-center justify-between min-w-0">
-                    <span className="truncate" title={session.subject}>{session.subject}</span>
-                    <span className="flex items-center gap-2">
-                      {sessionLoadingId === session.session_id ? (<Loader className="h-3 w-3 animate-spin" />) : null}
-                      <span className="truncate" title={`${session.message_count || 0} msgs • ${formatLastUpdated(session.last_updated)}`}>{(session.message_count || 0)} msgs • {formatLastUpdated(session.last_updated)}</span>
+                    <span className="font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded" title={session.subject}>{session.subject || 'General'}</span>
+                    <span className="flex items-center gap-1">
+                      {sessionLoadingId === session.session_id && <Loader className="h-3 w-3 animate-spin" />}
+                      {formatRelativeTime(session.last_updated || session.created_at)}
                     </span>
                   </div>
                 </button>
@@ -1428,9 +1474,17 @@ export default function AITutorNeuroSymbolic() {
             </motion.div>
           )}
           {sessionsLoading && sessions.length === 0 && (
-            <div className="text-center py-12">
-              <Loader className="h-6 w-6 mx-auto animate-spin text-purple-600" />
-              <p className="text-xs mt-2 text-gray-500">Loading chat history...</p>
+            <div className="space-y-3 p-2">
+              {/* Skeleton loader for chat items */}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-3 rounded-lg border border-gray-100 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 bg-gray-100 rounded w-16" />
+                    <div className="h-3 bg-gray-100 rounded w-12" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1508,14 +1562,20 @@ export default function AITutorNeuroSymbolic() {
                           onClick={() => loadSession(session.session_id)}
                           className="text-left flex-1"
                         >
-                          <div className="font-semibold text-base text-gray-900 truncate mb-1">{session.title || 'Untitled Chat'}</div>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-md">{session.subject}</span>
-                            <span className="text-xs text-gray-500 flex items-center gap-2">
-                              {sessionLoadingId === session.session_id ? (<Loader className="h-3 w-3 animate-spin" />) : null}
-                              <span>{(session.message_count || 0)} msgs</span>
-                            </span>
-                          </div>
+<div 
+                                            className="font-medium text-sm text-gray-900 truncate mb-1" 
+                                            title={session.title || 'Untitled Chat'}
+                                            style={{ maxWidth: '180px' }}
+                                          >
+                                            {session.title || 'Untitled Chat'}
+                                          </div>
+                                          <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
+                                            <span className="font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">{session.subject || 'General'}</span>
+                                            <span className="flex items-center gap-1">
+                                              {sessionLoadingId === session.session_id && <Loader className="h-3 w-3 animate-spin" />}
+                                              {formatRelativeTime(session.created_at || session.updated_at)}
+                                            </span>
+                                          </div>
                         </button>
                         <div className="flex items-center gap-1">
                           <button title="Rename" onClick={(e) => { e.stopPropagation(); renameSession(session); }} className="p-1 hover:bg-gray-100 rounded"><Edit2 className="h-4 w-4" /></button>
@@ -1580,9 +1640,17 @@ export default function AITutorNeuroSymbolic() {
                     </motion.div>
                   )}
                   {sessionsLoading && sessions.length === 0 && (
-                    <div className="text-center py-12">
-                      <Loader className="h-6 w-6 mx-auto animate-spin text-purple-600" />
-                      <p className="text-xs mt-2 text-gray-500">Loading chat history...</p>
+                    <div className="space-y-3 p-2">
+                      {/* Skeleton loader for chat items */}
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="p-3 rounded-lg border border-gray-100 animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                          <div className="flex items-center justify-between">
+                            <div className="h-3 bg-gray-100 rounded w-16" />
+                            <div className="h-3 bg-gray-100 rounded w-12" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1624,94 +1692,57 @@ export default function AITutorNeuroSymbolic() {
                   <SathiNavMenu />
                 </div>
                 
-                {/* Logo & Brand - "Sathi" Identity */}
+                {/* Logo & Brand - "Sathi" Identity - Professional Design */}
                 <div className="flex items-center space-x-3 flex-shrink-0">
-                  {/* Sathi dual icons - Mentor + Professor */}
-                  <div className="flex items-center -space-x-2">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className="bg-gradient-to-br from-green-400 to-emerald-500 p-2.5 rounded-xl shadow-md z-10"
-                      title="AI Mentor"
-                    >
-                      <span className="text-xl">🤝</span>
-                    </motion.div>
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: -5 }}
-                      className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2.5 rounded-xl shadow-md"
-                      title="AI Professor"
-                    >
-                      <span className="text-xl">🎓</span>
-                    </motion.div>
+                  {/* Single professional Sathi icon */}
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-700 rounded-xl shadow-lg flex items-center justify-center">
+                      <Brain className="w-5 h-5 text-white" />
+                    </div>
+                    {/* Online indicator */}
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
                   </div>
                   
                   <div className="min-w-0">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                       Sathi
                     </h1>
-                    {headerCollapsed && (
-                      <p className="text-xs text-gray-500 font-medium">Your AI Learning Buddy</p>
-                    )}
+                    <p className="text-xs text-gray-500 font-medium">AI Learning Assistant</p>
                   </div>
                 </div>
               </div>
 
-              {/* 🎮 GAMIFICATION: XP, Level, and Streak Display */}
-              <div className="flex items-center gap-2 ml-auto mr-4 flex-shrink-0">
-                {/* Streak - Animated when active */}
-                <motion.div 
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
-                    currentStreak > 0 
-                      ? 'bg-gradient-to-r from-orange-50 to-red-50 border-orange-300' 
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  title={currentStreak > 0 ? `${currentStreak} day streak! Keep it up!` : 'Start your streak today!'}
-                >
-                  <motion.span 
-                    className="text-lg"
-                    animate={currentStreak > 0 ? { scale: [1, 1.2, 1] } : {}}
-                    transition={{ repeat: Infinity, duration: 2 }}
+              {/* Stats Display - Clean & Professional */}
+              <div className="flex items-center gap-3 ml-auto mr-4 flex-shrink-0">
+                {/* Streak - Minimal design */}
+                {currentStreak > 0 && (
+                  <div 
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-lg"
+                    title={`${currentStreak} day learning streak`}
                   >
-                    🔥
-                  </motion.span>
-                  <div>
-                    <p className={`text-xs font-bold ${currentStreak > 0 ? 'text-orange-700' : 'text-gray-500'}`}>
-                      {currentStreak || 0} Day{currentStreak !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-xs text-orange-600">Streak</p>
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm font-semibold text-orange-700">{currentStreak}</span>
                   </div>
-                </motion.div>
+                )}
                 
-                {/* Level & XP with Progress Bar */}
-                <motion.div 
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg"
-                  whileHover={{ scale: 1.05 }}
-                  title={`${currentXP || 0} XP total`}
+                {/* XP - Minimal design */}
+                <div 
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 border border-violet-200 rounded-lg"
+                  title={`${currentXP || 0} experience points`}
                 >
-                  <span className="text-lg">
-                    {currentLevel === 'Master' ? '👑' : 
-                     currentLevel === 'Scientist' ? '🧪' :
-                     currentLevel === 'Tactician' ? '🎯' :
-                     currentLevel === 'Analyst' ? '🔬' : '🔭'}
-                  </span>
-                  <div className="min-w-[60px]">
-                    <p className="text-xs font-bold text-purple-700">{currentLevel || 'Explorer'}</p>
-                    <div className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-purple-500" />
-                      <p className="text-xs text-purple-600">{currentXP || 0} XP</p>
-                    </div>
-                  </div>
-                </motion.div>
+                  <Zap className="w-4 h-4 text-violet-500" />
+                  <span className="text-sm font-semibold text-violet-700">{currentXP || 0}</span>
+                </div>
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   startNewChat();
                   setShowWelcome(true);
                 }}
-                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg flex items-center space-x-2 shadow-md hover:shadow-lg transition-all flex-shrink-0 font-semibold"
+                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center space-x-2 shadow-sm hover:shadow-md transition-all flex-shrink-0 text-sm font-medium"
               >
                 <Plus className="h-4 w-4" />
                 <span>New Chat</span>
@@ -1931,21 +1962,20 @@ export default function AITutorNeuroSymbolic() {
                         <motion.div
                           initial={{ opacity: 0, x: 10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className="max-w-[70%] bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-2xl rounded-br-md px-4 py-2.5 shadow-md"
+                          className="max-w-[70%] bg-gray-900 text-white rounded-2xl rounded-br-sm px-4 py-3 shadow-sm"
                         >
                           {/* Show image if uploaded */}
                           {message.image_preview && (
-                            <div className="mb-2 rounded-lg overflow-hidden border border-white/20">
+                            <div className="mb-2 rounded-lg overflow-hidden border border-gray-700">
                               <img
                                 src={message.image_preview}
                                 alt="Uploaded"
-                                className="max-w-full max-h-48 object-contain bg-white/10"
+                                className="max-w-full max-h-40 object-contain bg-gray-800"
                               />
                             </div>
                           )}
                           
-                          <p className="text-[15px] leading-relaxed">
-                            {/* Extract user's actual question text */}
+                          <p className="text-sm leading-relaxed">
                             {(() => {
                               if (typeof message.content === 'string') return message.content;
                               if (typeof message.content === 'object' && message.content !== null) {
@@ -1965,58 +1995,14 @@ export default function AITutorNeuroSymbolic() {
                     )}
 
                     {message.type === 'ai' && (() => {
-                      // Smart avatar display: Show only on first AI message after user message
-                      const prevMessage = index > 0 ? messages[index - 1] : null;
-                      const showAvatar = !prevMessage || prevMessage.type === 'user';
-                      
                       return (
                       <div className="flex justify-start">
-                        <div className="max-w-4xl w-full">
-                          {/* Avatar header - only shown for first message in AI sequence */}
-                          {showAvatar && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="flex items-center gap-2.5 mb-3"
-                            >
-                              {/* Compact Sathi Avatar */}
-                              <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-1.5 rounded-lg shadow-sm relative flex-shrink-0">
-                                <span className="text-base">🤝</span>
-                                <div className="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
-                                  <span className="text-[6px]">🎓</span>
-                                </div>
-                              </div>
-                              <span className="font-semibold text-gray-700 text-sm">Sathi</span>
-                              <span className="text-xs text-gray-400">
-                                {new Date(message.timestamp).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </span>
-                              {message.generation_time && (
-                                <span className="text-xs text-green-500 font-medium">
-                                  • {typeof message.generation_time === 'number' 
-                                      ? message.generation_time.toFixed(1) + 's' 
-                                      : typeof message.generation_time === 'string'
-                                        ? message.generation_time
-                                        : ''}
-                                </span>
-                              )}
-                            </motion.div>
-                          )}
-                          
-                          {/* UNIFIED RESPONSE CONTAINER - Clean Design */}
-                          <div className="unified-response-container bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-purple-100 dark:border-purple-900">
+                        <div className="max-w-3xl w-full">
+                          {/* CLEAN RESPONSE CONTAINER - Standard Chat Design (No avatar/header) */}
+                          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                             {/* Memory Context Banner - Shows learning progress */}
                             {message.content?.memory_context && (
                               <MemoryContextBanner memoryContext={message.content.memory_context} />
-                            )}
-                            
-                            {/* Subject Badge - Top */}
-                            {message.content?.detected_subject && (
-                              <div className="mb-4">
-                                <SubjectBadge subject={message.content.detected_subject} />
-                              </div>
                             )}
                             
                             {/* Main Response - SMART ADAPTIVE RESPONSE (Like ChatGPT/Gemini) */}
@@ -2051,6 +2037,7 @@ export default function AITutorNeuroSymbolic() {
                               })()}
                               visualSketch={message.content?.visual_sketch || message.visual_sketch}
                               question={message.user_question || ''}
+                              whiteboardVisual={message.whiteboard_visual || message.content?.whiteboard_visual}
                               onFollowUp={(question) => {
                                 if (question) {
                                   setInputMessage(question);
@@ -2080,160 +2067,62 @@ export default function AITutorNeuroSymbolic() {
                             
                             {/* Loading state for async visual generation */}
                             {message.visual_task_id && !(message.content?.visual_sketch?.svg || message.visual_sketch?.svg) && (
-                              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900 rounded-xl border border-purple-200 dark:border-purple-700">
-                                <div className="flex items-center space-x-3">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
-                                  <span className="text-sm text-purple-700 dark:text-purple-300">
-                                    🎨 Generating interactive visual explanation...
-                                  </span>
+                              <div className="mt-4 p-3 bg-violet-50 rounded-lg">
+                                <div className="flex items-center space-x-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-violet-500 border-t-transparent"></div>
+                                  <span className="text-sm text-violet-600">Generating visual...</span>
                                 </div>
                               </div>
                             )}
                             
-                            {/* Follow-up Questions - From Human Intelligence Layer */}
-                            {message.content?.follow_up_suggestions && message.content.follow_up_suggestions.length > 0 && (
-                              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                  <span>💬</span> Continue Learning
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {message.content.follow_up_suggestions.slice(0, 3).map((followUp, idx) => {
-                                    // Find the original user question that prompted this AI response
-                                    const findOriginalQuestion = () => {
-                                      const currentIndex = messages.findIndex(m => m === message);
-                                      if (currentIndex > 0) {
-                                        // Look for the user message before this AI message
-                                        for (let i = currentIndex - 1; i >= 0; i--) {
-                                          const prevMsg = messages[i];
-                                          if (prevMsg.type === 'user') {
-                                            // Extract the question text
-                                            if (typeof prevMsg.content === 'string') return prevMsg.content;
-                                            if (typeof prevMsg.content === 'object' && prevMsg.content) {
-                                              return prevMsg.content.message || prevMsg.content.text || 
-                                                     prevMsg.content.query || prevMsg.content.question || '';
-                                            }
-                                          }
-                                        }
-                                      }
-                                      return '';
-                                    };
-                                    
-                                    const originalQuestion = findOriginalQuestion();
-                                    const detectedSubject = message.detected_subject || message.content?.detected_subject || '';
-                                    
-                                    return (
-                                      <motion.button
-                                        key={idx}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={() => {
-                                          const followUpText = typeof followUp === 'string' ? followUp : followUp.text;
-                                          if (followUpText) {
-                                            // CRITICAL: Build context-aware follow-up message
-                                            // This ensures the AI knows what topic we're continuing from
-                                            let contextualMessage = followUpText;
-                                            
-                                            // If the follow-up is generic (contains "this" without topic), add context
-                                            const isGenericFollowUp = followUpText.toLowerCase().includes('this') && 
-                                                                     !followUpText.toLowerCase().includes('this concept') &&
-                                                                     originalQuestion;
-                                            
-                                            if (isGenericFollowUp || (originalQuestion && !followUpText.toLowerCase().includes(originalQuestion.toLowerCase().split(' ').slice(-2).join(' ')))) {
-                                              // Extract topic from original question
-                                              const extractTopic = (q) => {
-                                                const lower = q.toLowerCase();
-                                                const prefixes = ['what is', 'explain', 'define', 'tell me about', 'help me understand', 'i want to understand'];
-                                                let topic = lower;
-                                                for (const prefix of prefixes) {
-                                                  if (topic.startsWith(prefix)) {
-                                                    topic = topic.substring(prefix.length).trim();
-                                                    break;
-                                                  }
-                                                }
-                                                return topic.replace(/[?!.,]/g, '').trim();
-                                              };
-                                              
-                                              const topic = extractTopic(originalQuestion);
-                                              if (topic && topic.length > 2) {
-                                                // Prepend context to make the follow-up unambiguous
-                                                contextualMessage = `[Continuing from my question about "${topic}"] ${followUpText}`;
-                                              }
-                                            }
-                                            
-                                            setInputMessage(contextualMessage);
-                                            inputRef.current?.focus();
-                                            setTimeout(() => handleSend(), 100);
-                                          }
-                                        }}
-                                        className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
-                                      >
-                                        {typeof followUp === 'string' ? followUp : followUp.text}
-                                      </motion.button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Action Bar - Copy & Feedback */}
-                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end">
-                              {/* Copy & Feedback Buttons */}
-                              <div className="flex items-center gap-2">
-                                {/* Copy Button */}
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => {
-                                    const textContent = message.content?.default_view?.main_content?.content || 
-                                                       message.content?.response || 
-                                                       JSON.stringify(message.content);
-                                    navigator.clipboard.writeText(textContent);
-                                    toastSuccess('Copied to clipboard! 📋');
-                                  }}
-                                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                                  title="Copy response"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                </motion.button>
-                                
-                                <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-                                
-                                {/* Thumbs Up */}
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => {
-                                    toastSuccess('Thanks for your feedback! 🙌');
-                                    // Track positive feedback
-                                    console.log('Positive feedback for message:', message.id);
-                                  }}
-                                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
-                                  title="Good response"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                                  </svg>
-                                </motion.button>
-                                
-                                {/* Thumbs Down */}
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => {
-                                    toastSuccess('We\'ll improve! 💪');
-                                    // Track negative feedback
-                                    console.log('Negative feedback for message:', message.id);
-                                  }}
-                                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                                  title="Needs improvement"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-                                  </svg>
-                                </motion.button>
-                              </div>
+                            {/* Action Buttons - Copy & Feedback */}
+                            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1">
+                              {/* Copy Button */}
+                              <button
+                                onClick={() => {
+                                  const textContent = message.content?.default_view?.main_content?.content || 
+                                                     message.content?.response || 
+                                                     JSON.stringify(message.content);
+                                  navigator.clipboard.writeText(textContent);
+                                  toastSuccess('Copied!');
+                                }}
+                                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+                                title="Copy response"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                              
+                              <div className="w-px h-4 bg-gray-200 mx-1" />
+                              
+                              {/* Thumbs Up */}
+                              <button
+                                onClick={() => {
+                                  toastSuccess('Thanks for your feedback!');
+                                  console.log('Positive feedback for message:', message.id);
+                                }}
+                                className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-all"
+                                title="Good response"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                </svg>
+                              </button>
+                              
+                              {/* Thumbs Down */}
+                              <button
+                                onClick={() => {
+                                  toastSuccess('We\'ll improve!');
+                                  console.log('Negative feedback for message:', message.id);
+                                }}
+                                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                title="Needs improvement"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -2292,9 +2181,39 @@ export default function AITutorNeuroSymbolic() {
           </div>
         </div>
 
-        {/* Input Bar */}
+        {/* Input Bar with Floating Suggestions */}
         <div className="border-t border-gray-200 bg-white">
-          <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="max-w-4xl mx-auto px-4 py-3">
+            {/* Floating Follow-up Suggestions - Show above input when available */}
+            <AnimatePresence>
+              {floatingFollowUps.length > 0 && !loading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="mb-3 flex flex-wrap gap-2"
+                >
+                  {floatingFollowUps.map((suggestion, idx) => (
+                    <motion.button
+                      key={idx}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setInputMessage(suggestion);
+                        setFloatingFollowUps([]); // Clear after selection
+                        inputRef.current?.focus();
+                        setTimeout(() => handleSend(), 100);
+                      }}
+                      className="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 hover:border-violet-300 rounded-full text-sm text-violet-700 transition-all flex items-center gap-1.5"
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                      <span className="truncate max-w-[200px]">{suggestion}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
             {/* Image Preview */}
             {imagePreview && (
               <div className="mb-3 relative inline-block">
@@ -2332,14 +2251,14 @@ export default function AITutorNeuroSymbolic() {
                 className="hidden"
               />
               
-              {/* Main Input Container - Aligned properly */}
-              <div className="flex items-end gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 focus-within:border-purple-400 dark:focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-100 dark:focus-within:ring-purple-900/30 transition-all p-2">
+              {/* Main Input Container - Clean design */}
+              <div className="flex items-end gap-2 bg-white rounded-xl border border-gray-200 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 transition-all p-2 shadow-sm">
                 {/* Image Attach Button */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
-                  className="flex-shrink-0 p-2.5 text-gray-400 hover:text-purple-500 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+                  className="flex-shrink-0 p-2 text-gray-400 hover:text-violet-600 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
                   title="Attach image"
                 >
                   <ImageIcon className="w-5 h-5" />
@@ -2356,7 +2275,7 @@ export default function AITutorNeuroSymbolic() {
                       handleSend();
                     }
                   }}
-                  placeholder="Ask anything — I'll explain & mentor you 💡"
+                  placeholder="Ask a question..."
                   className="flex-1 px-2 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm leading-relaxed max-h-[120px]"
                   rows="1"
                   disabled={loading}
@@ -2372,13 +2291,13 @@ export default function AITutorNeuroSymbolic() {
                   {loading ? (
                     <motion.button
                       type="button"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         setLoading(false);
-                        toastSuccess('Generation stopped ⏹️');
+                        toastSuccess('Stopped');
                       }}
-                      className="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 transition-all flex items-center justify-center"
+                      className="w-9 h-9 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all flex items-center justify-center"
                       title="Stop generating"
                     >
                       <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
@@ -2389,12 +2308,12 @@ export default function AITutorNeuroSymbolic() {
                     <motion.button
                       type="submit"
                       disabled={!inputMessage.trim() && !selectedImage}
-                      whileHover={{ scale: inputMessage.trim() || selectedImage ? 1.05 : 1 }}
-                      whileTap={{ scale: inputMessage.trim() || selectedImage ? 0.95 : 1 }}
-                      className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center ${
+                      whileHover={{ scale: inputMessage.trim() || selectedImage ? 1.02 : 1 }}
+                      whileTap={{ scale: inputMessage.trim() || selectedImage ? 0.98 : 1 }}
+                      className={`w-9 h-9 rounded-lg transition-all flex items-center justify-center ${
                         inputMessage.trim() || selectedImage
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                          ? 'bg-violet-600 hover:bg-violet-700 text-white'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       }`}
                       title="Send message"
                     >
@@ -2404,20 +2323,16 @@ export default function AITutorNeuroSymbolic() {
                 </div>
               </div>
               
-              {/* Helper Text */}
-              <div className="flex items-center justify-between mt-2 px-2">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500 dark:text-gray-400 font-mono text-[10px]">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500 dark:text-gray-400 font-mono text-[10px]">Shift+Enter</kbd> for new line
+              {/* Helper Text - Minimal */}
+              <div className="flex items-center justify-between mt-1.5 px-1">
+                <p className="text-[11px] text-gray-400">
+                  <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-500 font-mono text-[10px]">Enter</kbd> to send
                 </p>
                 {loading && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-1.5 text-xs text-purple-500"
-                  >
-                    <Sparkles className="w-3 h-3 animate-pulse" />
-                    <span>Thinking...</span>
-                  </motion.div>
+                  <span className="text-[11px] text-violet-500 flex items-center gap-1">
+                    <Loader className="w-3 h-3 animate-spin" />
+                    Thinking...
+                  </span>
                 )}
               </div>
             </form>

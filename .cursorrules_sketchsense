@@ -1,0 +1,146 @@
+# SketchSense V2 - Cursor AI Implementation Rules
+# ================================================
+# These rules MUST be followed when modifying any visual-related files
+
+## CRITICAL: Non-Destructive Implementation
+
+When working on SketchSense V2 or any visual engine files:
+
+### ✅ DO ONLY:
+
+1. **Enhance** - Add new features alongside existing ones
+2. **Extend** - Create new modules that extend existing functionality
+3. **Add optional modules** - New features should be toggleable
+4. **Patch via small diffs** - Make targeted, minimal changes
+5. **Preserve existing behavior** - Never break what already works
+
+### ❌ DO NOT:
+
+1. **Override full files** - Never replace entire visual.ts, visual_engine.py, etc.
+2. **Delete existing logic** - Keep all existing code unless explicitly broken
+3. **Refactor large portions** - Avoid sweeping changes
+4. **Replace renderer** - The core rendering pipeline must stay intact
+5. **Remove backward compatibility** - Old visual code must still work
+
+## File Modification Guidelines
+
+### Backend (Python)
+
+```python
+# ✅ GOOD: Add new function that enhances existing
+def enhance_visual_with_sketchsense(existing_visual, concept, subject):
+    """Enhance - does NOT replace existing_visual"""
+    enhanced = {
+        **existing_visual,  # Preserve original
+        "sketchsense_v2": create_sketchsense_blueprint(concept, subject)
+    }
+    return enhanced
+
+# ❌ BAD: Replacing existing function
+def create_visual(concept):  # This overrides existing!
+    return sketchsense_only_version()
+```
+
+### Frontend (React/JS)
+
+```jsx
+// ✅ GOOD: Optional enhancement component
+const VisualWithSketchSense = ({ visual, useSketchSense = false }) => {
+  if (useSketchSense && visual.sketchsense_v2) {
+    return <SketchSenseRenderer blueprint={visual.sketchsense_v2} />;
+  }
+  return <ExistingVisualRenderer visual={visual} />;  // Fallback preserved
+};
+
+// ❌ BAD: Replacing existing component
+const VisualRenderer = ({ visual }) => {
+  return <SketchSenseRenderer ... />;  // No fallback!
+};
+```
+
+## SketchSense-Specific Files
+
+These files are safe to fully modify (they are new additions):
+
+- `backend/services/sketchsense_v2.py`
+- `backend/api/sketchsense.py`
+- `frontend/src/visual-engine/core/SketchSenseStyleSheet.js`
+- `frontend/src/visual-engine/components/SketchSenseRenderer.jsx`
+- `frontend/src/hooks/useSketchSense.js`
+- `frontend/src/components/visual/SketchSenseDemo.jsx`
+- `SKETCHSENSE_V2_README.md`
+
+## Files to NEVER Fully Override
+
+These files must only receive small, additive patches:
+
+- `backend/services/visual_engine.py`
+- `backend/services/handdrawn_sketch.py`
+- `backend/services/dynamic_visual_sketch.py`
+- `frontend/src/visual-engine/components/VisualScene.jsx`
+- `frontend/src/visual-engine/components/SceneRenderer.jsx`
+- `frontend/src/visual-engine/core/TOONParser.js`
+
+## Integration Pattern
+
+When integrating SketchSense V2 with existing visual flow:
+
+```python
+# backend/services/ai_service.py (example integration)
+
+# BEFORE (existing code - DO NOT MODIFY):
+def generate_visual(question, context):
+    visual = existing_visual_engine.create(question, context)
+    return visual
+
+# AFTER (ADD new code alongside):
+def generate_visual(question, context, use_sketchsense=False):
+    visual = existing_visual_engine.create(question, context)  # Keep existing
+    
+    if use_sketchsense:
+        from services.sketchsense_v2 import enhance_visual_with_sketchsense
+        visual = enhance_visual_with_sketchsense(
+            existing_visual=visual,
+            concept=context.get("concept"),
+            subject=context.get("subject")
+        )
+    
+    return visual
+```
+
+## Visual Decision Logic
+
+The Visual Agent's decision logic for when to show visuals MUST NOT be changed.
+SketchSense V2 only affects HOW visuals are rendered, not WHEN they are shown.
+
+```python
+# This logic stays EXACTLY as is:
+if visual_agent.should_show_visual(question):
+    visual = generate_visual(question, context)
+    # SketchSense enhancement happens INSIDE generate_visual
+```
+
+## Testing Requirements
+
+Before committing any SketchSense changes:
+
+1. Run existing visual tests: `pytest backend/tests/test_visual_pipeline.py`
+2. Run SketchSense tests: `pytest backend/tests/test_sketchsense_v2.py`
+3. Verify existing visuals still work (manual check)
+4. Check that SketchSense is opt-in, not forced
+
+## Error Handling
+
+SketchSense failures must NEVER break the visual pipeline:
+
+```python
+try:
+    enhanced = enhance_visual_with_sketchsense(visual, concept, subject)
+except Exception as e:
+    logger.warning(f"SketchSense enhancement failed: {e}")
+    enhanced = visual  # Fallback to original - NEVER fail
+```
+
+
+
+

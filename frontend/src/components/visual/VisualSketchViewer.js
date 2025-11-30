@@ -1,21 +1,53 @@
 /**
- * Visual Sketch Viewer Component
- * Displays interactive animated visual explanations
- * Auto-opens interactive visuals without requiring Play button!
+ * Visual Sketch Viewer Component (V3.0)
+ * Displays interactive animated visual explanations using RevolutionarySketch
  */
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, Minimize2, Sparkles, BookOpen, Trophy, Share2, RefreshCw } from 'lucide-react';
+import { X, Maximize2, Sparkles, BookOpen, Trophy, Share2 } from 'lucide-react';
 
-// Direct import from visual-engine (no lazy loading to avoid chunk errors)
-import InteractiveVisualCard from '../../visual-engine/components/InteractiveVisualCard';
+// Import RevolutionarySketch - the new visual engine
+import { RevolutionarySketch } from '../../visual-engine';
 
 // Check if concept has interactive template
 const hasInteractiveTemplate = (question) => {
   if (!question) return false;
-  const concepts = ['force', 'motion', 'velocity', 'acceleration', 'gravity', 'friction', 'momentum', 'newton'];
+  const concepts = [
+    'force', 'motion', 'velocity', 'acceleration', 'gravity', 'friction', 
+    'momentum', 'newton', 'energy', 'wave', 'photosynthesis', 'cell',
+    'atom', 'acid', 'base', 'dna', 'respiration', 'quadratic', 'pythagoras'
+  ];
   const lowerQ = question.toLowerCase();
   return concepts.some(c => lowerQ.includes(c));
+};
+
+// Extract concept from question
+const extractConcept = (question) => {
+  if (!question) return 'force';
+  const lowerQ = question.toLowerCase();
+  
+  const conceptMap = {
+    'velocity': 'velocity',
+    'speed': 'velocity',
+    'motion': 'velocity',
+    'force': 'force',
+    'push': 'force',
+    'pull': 'force',
+    'gravity': 'gravity',
+    'fall': 'gravity',
+    'photosynthesis': 'photosynthesis',
+    'plant': 'photosynthesis',
+    'cell': 'cell',
+    'atom': 'atom',
+  };
+  
+  for (const [keyword, concept] of Object.entries(conceptMap)) {
+    if (lowerQ.includes(keyword)) {
+      return concept;
+    }
+  }
+  
+  return 'force'; // default
 };
 
 const VisualSketchViewer = ({ 
@@ -27,16 +59,27 @@ const VisualSketchViewer = ({
   embedded = false,
   question = '',
   studentProfile = null,
+  whiteboardVisual = null, // New prop for whiteboard visual data
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLayer, setCurrentLayer] = useState(0);
-  const [showFallback, setShowFallback] = useState(false);
 
   // Check if we should use the new Interactive Visual Engine
   const shouldUseInteractive = useMemo(() => {
-    return hasInteractiveTemplate(question);
-  }, [question]);
+    return hasInteractiveTemplate(question) || whiteboardVisual;
+  }, [question, whiteboardVisual]);
+
+  const concept = useMemo(() => {
+    if (whiteboardVisual?.concept) return whiteboardVisual.concept;
+    return extractConcept(question);
+  }, [question, whiteboardVisual]);
+
+  const subject = useMemo(() => {
+    if (whiteboardVisual?.subject) return whiteboardVisual.subject;
+    if (studentProfile?.subject) return studentProfile.subject;
+    return 'physics';
+  }, [whiteboardVisual, studentProfile]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 300);
@@ -52,55 +95,21 @@ const VisualSketchViewer = ({
     }
   };
 
-  // If we have an interactive template - AUTO-SHOW IT!
-  if (shouldUseInteractive && !showFallback) {
+  // If we have an interactive template - use RevolutionarySketch!
+  if (shouldUseInteractive) {
     return (
-      <Suspense fallback={
-        <motion.div 
-          className="my-4 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="flex flex-col items-center justify-center h-64 space-y-3">
-            <motion.div 
-              className="w-12 h-12 border-3 border-orange-500 border-t-transparent rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-            />
-            <p className="text-orange-600 font-medium">Loading interactive visual...</p>
-            <p className="text-orange-500/70 text-sm">🎬 Professor demo coming up!</p>
-          </div>
-        </motion.div>
-      }>
-        <InteractiveVisualCard
+      <div className="my-4">
+        <RevolutionarySketch
+          concept={concept}
+          subject={subject}
           question={question}
-          subject="Physics"
-          studentProfile={studentProfile}
-          fallbackSvg={svg}
-          embedded={embedded && !isExpanded}
-          onInteraction={(type, data) => {
-            console.log('Visual interaction:', type, data);
-          }}
-          onClose={() => {
-            setIsExpanded(false);
-          }}
+          onComplete={() => console.log('Visual completed')}
         />
-        
-        {/* Fallback toggle (for debugging) */}
-        {svg && (
-          <button
-            onClick={() => setShowFallback(true)}
-            className="text-xs text-gray-400 hover:text-gray-600 mt-2 flex items-center space-x-1"
-          >
-            <RefreshCw className="w-3 h-3" />
-            <span>Switch to static view</span>
-          </button>
-        )}
-      </Suspense>
+      </div>
     );
   }
 
-  // Fallback: Show static SVG if no interactive template or user switched
+  // Fallback: Show static SVG if no interactive template
   if (!svg) return null;
 
   // Embedded compact view
@@ -234,17 +243,6 @@ const VisualSketchViewer = ({
                   <Sparkles className="h-4 w-4" />
                   <span>Layer {currentLayer}</span>
                 </div>
-              )}
-              
-              {/* Switch to interactive (if available) */}
-              {shouldUseInteractive && (
-                <button
-                  onClick={() => setShowFallback(false)}
-                  className="text-sm text-purple-600 hover:text-purple-700 flex items-center space-x-1"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Switch to interactive</span>
-                </button>
               )}
             </div>
           </motion.div>

@@ -111,24 +111,25 @@ const SathiNavMenu = ({ compact = false }) => {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Menu Trigger Button */}
+      {/* Menu Trigger Button - With clear context */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200
+          flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200
           ${isOpen 
-            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' 
+            ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' 
             : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
           }
         `}
+        title="Navigation menu"
       >
-        <Grid3X3 className="w-5 h-5" />
+        <Grid3X3 className="w-4 h-4" />
         {!compact && (
           <>
-            <span className="text-sm font-medium hidden sm:inline">Menu</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            <span className="text-sm font-medium hidden sm:inline">Navigate</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
           </>
         )}
       </motion.button>

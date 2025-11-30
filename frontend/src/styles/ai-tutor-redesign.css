@@ -4,37 +4,55 @@
    ============================================ */
 
 :root {
-  /* Dhruv AI Purple Gradient */
-  --dhruv-purple-start: #6C63FF;
-  --dhruv-purple-end: #836FFF;
+  /* Primary - Violet (Professional, consistent) */
+  --primary-50: #f5f3ff;
+  --primary-100: #ede9fe;
+  --primary-500: #8b5cf6;
+  --primary-600: #7c3aed;
+  --primary-700: #6d28d9;
   
-  /* Secondary Colors */
-  --soft-blue: #A5B4FC;
-  --accent-blue: #7DD3FC;
+  /* Accent - Emerald (Success, online status) */
+  --accent-500: #10b981;
+  --accent-600: #059669;
   
-  /* Background Gradients */
-  --bg-light-start: #F8F9FF;
-  --bg-light-end: #EEF2FF;
-  --bg-dark-start: #0F172A;
-  --bg-dark-end: #1E293B;
+  /* Neutral - Slate (Text, borders) */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-500: #64748b;
+  --neutral-700: #334155;
+  --neutral-900: #0f172a;
+  
+  /* Legacy support - map to new system */
+  --dhruv-purple-start: var(--primary-600);
+  --dhruv-purple-end: var(--primary-500);
+  --soft-blue: #a5b4fc;
+  --accent-blue: #7dd3fc;
+  
+  /* Background */
+  --bg-light-start: #fafafa;
+  --bg-light-end: #f5f5f5;
+  --bg-dark-start: #0f172a;
+  --bg-dark-end: #1e293b;
   
   /* Glass-morphism */
-  --glass-bg-light: rgba(255, 255, 255, 0.6);
-  --glass-bg-dark: rgba(255, 255, 255, 0.1);
-  --backdrop-blur: 12px;
+  --glass-bg-light: rgba(255, 255, 255, 0.8);
+  --glass-bg-dark: rgba(255, 255, 255, 0.08);
+  --backdrop-blur: 10px;
   
-  /* Border Radius */
-  --radius-sm: 16px;
-  --radius-md: 20px;
-  --radius-lg: 24px;
+  /* Border Radius - Slightly smaller for professional look */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   
-  /* Shadows */
-  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+  /* Shadows - Subtler */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
   
-  /* Spacing */
-  --safe-padding-desktop: 24px;
-  --safe-padding-mobile: 16px;
+  /* Spacing - Tighter */
+  --safe-padding-desktop: 16px;
+  --safe-padding-mobile: 12px;
 }
 
 /* ============================================
@@ -45,7 +63,7 @@
   display: flex;
   height: 100vh;
   max-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-light-start) 0%, var(--bg-light-end) 100%);
+  background: #fafafa;
   overflow: hidden;
   position: fixed;
   top: 0;
@@ -116,11 +134,11 @@ body:has(.ai-tutor-redesign) {
 .chat-main-zone {
   display: flex;
   flex-direction: column;
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   width: 100%;
   padding: 0 var(--safe-padding-desktop);
-  /* Don't use flex: 1 here - let parent control height */
+  gap: 16px; /* Tighter message spacing */
 }
 
 @media (max-width: 768px) {
@@ -133,39 +151,35 @@ body:has(.ai-tutor-redesign) {
    Message Bubbles
    ============================================ */
 
-/* User Bubble - Gradient Fill */
+/* User Bubble - Dark, professional */
 .user-message-bubble {
   align-self: flex-end;
-  background: linear-gradient(135deg, var(--dhruv-purple-start) 0%, var(--dhruv-purple-end) 100%);
+  background: #1f2937;
   color: white;
-  padding: 16px 20px;
-  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  border-radius: 16px;
   border-bottom-right-radius: 4px;
-  max-width: 80%;
-  box-shadow: var(--shadow-medium);
+  max-width: 70%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   position: relative;
   animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* AI Bubble - Glass-morphism */
+/* AI Bubble - Clean white */
 .ai-message-bubble {
   align-self: flex-start;
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--backdrop-blur));
-  color: #1F2937;
-  padding: 20px 24px;
-  border-radius: var(--radius-md);
+  background: white;
+  color: #1f2937;
+  padding: 16px 20px;
+  border-radius: 16px;
   border-bottom-left-radius: 4px;
-  max-width: 90%;
-  box-shadow: var(--shadow-medium);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-width: 80%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
   position: relative;
   animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Prevent layout shifts during content expansion */
   contain: content;
-  /* Reserve minimum space for loading */
-  min-height: 60px;
+  min-height: 40px;
 }
 
 .dark .ai-message-bubble {
@@ -479,21 +493,20 @@ body:has(.ai-tutor-redesign) {
 
 .chat-input-area {
   padding: var(--safe-padding-desktop);
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--backdrop-blur));
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  flex-shrink: 0; /* Prevent input area from shrinking */
+  background: white;
+  border-top: 1px solid var(--neutral-200);
+  flex-shrink: 0;
   position: relative;
   z-index: 10;
 }
 
 .dark .chat-input-area {
-  background: var(--glass-bg-dark);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--neutral-900);
+  border-top: 1px solid var(--neutral-700);
 }
 
 .chat-input-wrapper {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
 }
 

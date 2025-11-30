@@ -33,8 +33,7 @@ from .intelligent_response_engine import (
     QuestionIntent
 )
 from .conversation_state import ConversationStateManager
-from .visual_concept_detector import detect_concept
-from .visual_template_selector import generate_visual_toon
+from .whiteboard_engine import whiteboard_engine, generate_whiteboard_visual
 from .human_intelligence_layer import HumanIntelligenceLayer, get_human_context
 from .proactive_mentor import generate_follow_ups, ProactiveMentor
 
@@ -597,21 +596,24 @@ Then summarize key differences in 2-3 bullets.""",
         return "General"
     
     async def _get_visual_data(self, question: str, subject: str) -> Optional[Dict]:
-        """Get visual data if concept supports it."""
+        """Get visual data if concept supports it using Whiteboard Engine V3."""
         try:
-            concept = detect_concept(question, subject.lower() if subject else None)
+            concept = whiteboard_engine.extract_concept(question)
             
             if concept:
-                toon = generate_visual_toon(question, concept)
+                visual = generate_whiteboard_visual(
+                    concept=concept,
+                    subject=subject.lower() if subject else "physics",
+                    question=question
+                )
                 return {
                     "has_visual": True,
-                    "concept": concept.concept_name,
-                    "subject": concept.subject,
-                    "scene_component": toon.get("scene"),
-                    "scene_type": toon.get("scene"),
-                    "props": toon.get("props", []),
-                    "interactions": toon.get("interactions", []),
-                    "layers": toon.get("layers", [])
+                    "concept": concept,
+                    "subject": visual.get("subject", subject),
+                    "whiteboard_visual": visual,
+                    "beats": visual.get("beats", []),
+                    "title": visual.get("title", ""),
+                    "template": visual.get("template", "")
                 }
         except Exception as e:
             logger.warning(f"Visual detection failed: {e}")

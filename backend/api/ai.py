@@ -1759,11 +1759,47 @@ You MUST reference specific content from the image in your response."""
                                 pass
                     except Exception:
                         pass
-                if tv:
-                    result['response']['teaching_visual'] = tv
-                    logger.info(f"✅ Added teaching_visual to response: {tv.get('visual_id')} with {len(tv.get('stages', []))} stages")
-                else:
-                    logger.warning(f"⚠️ No teaching_visual generated. tv=None, allow_visual={allow_visual}")
+                # OLD VISUAL SYSTEM DISABLED - SketchSense V2 is now the primary visual system
+                # if tv:
+                #     result['response']['teaching_visual'] = tv
+                #     logger.info(f"✅ Added teaching_visual to response: {tv.get('visual_id')} with {len(tv.get('stages', []))} stages")
+                
+                # 🎨 WHITEBOARD SKETCH ENGINE - Next-Gen Visual System
+                # Progressive, animated, Indian context, NO boring MCQs!
+                try:
+                    from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
+                    
+                    # Extract concept from question
+                    msg_lower = (request.message or '').lower()
+                    concept = whiteboard_engine.extract_concept(request.message)
+                    
+                    # Also check for explicit visual requests
+                    if not concept and any(kw in msg_lower for kw in ['visual', 'diagram', 'draw', 'show', 'picture', 'sketch', 'explain']):
+                        # Default based on subject
+                        subject_defaults = {
+                            'physics': 'force',
+                            'chemistry': 'acids',
+                            'biology': 'cell',
+                            'math': 'geometry',
+                            'mathematics': 'geometry'
+                        }
+                        concept = subject_defaults.get((request.subject or 'physics').lower(), 'force')
+                    
+                    if concept:
+                        subject = request.subject or 'physics'
+                        whiteboard_scene = generate_whiteboard_visual(
+                            concept=concept,
+                            subject=subject,
+                            question=request.message
+                        )
+                        result['response']['whiteboard_visual'] = whiteboard_scene
+                        logger.info(f"🎨 Whiteboard visual generated for concept: {concept}")
+                    else:
+                        logger.info(f"ℹ️ No visual concept detected, skipping whiteboard visual")
+                except Exception as wb_err:
+                    logger.warning(f"⚠️ Whiteboard visual generation failed (non-blocking): {wb_err}")
+                    import traceback
+                    logger.warning(f"⚠️ Whiteboard traceback: {traceback.format_exc()}")
             else:
                 logger.info(f"ℹ️ Visual generation skipped: allow_visual={allow_visual}")
         except Exception as e:
@@ -1858,48 +1894,46 @@ async def _generate_visual_async(task_id: str, question: str, student_profile: d
     """
     Background task to generate visual sketch asynchronously
     Updates task status in database when complete
+    Now uses whiteboard_engine instead of legacy dynamic_visual_sketch
     """
     try:
         logger.info(f"🎨 [Background] Starting visual generation for task {task_id}")
         
-        from services.dynamic_visual_sketch import create_visual_sketch
+        from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
         
-        # Generate visual sketch with error handling
+        # Generate visual using whiteboard engine
         try:
-            visual_result = create_visual_sketch(
-                question=question,
-                student_profile=student_profile
-            )
+            concept = whiteboard_engine.extract_concept(question)
+            subject = student_profile.get("subject", "physics") if student_profile else "physics"
             
-            # Validate SVG was generated
-            svg_content = visual_result.get("svg", "")
-            if not svg_content or len(svg_content) < 100:
-                logger.warning(f"⚠️ Visual generation returned empty/invalid SVG for question: {question[:50]}")
-                logger.warning(f"⚠️ SVG length: {len(svg_content) if svg_content else 0}")
-                # Generate fallback visual
-                visual_result = _generate_fallback_visual(question)
-                logger.info(f"✅ Using fallback visual for question: {question[:50]}")
+            if concept:
+                visual_result = generate_whiteboard_visual(
+                    concept=concept,
+                    subject=subject,
+                    question=question
+                )
+                logger.info(f"✅ Whiteboard visual generated for concept: {concept}")
             else:
-                logger.info(f"✅ Visual generated successfully: {len(svg_content)} chars")
+                # No concept detected - use fallback
+                visual_result = _generate_fallback_visual(question)
+                logger.info(f"ℹ️ No concept detected, using fallback visual")
                 
         except Exception as e:
             logger.error(f"❌ Visual generation failed: {e}", exc_info=True)
-            # Always provide a fallback - visuals are essential
             visual_result = _generate_fallback_visual(question)
             logger.info(f"✅ Using fallback visual due to error")
         
         visual_sketch_data = {
-            "svg": visual_result.get("svg", ""),
-            "metaphors": visual_result.get("metaphors_used", []),
-            "estimated_marks": visual_result.get("estimated_marks", 3),
-            "has_emotional_content": visual_result.get("has_emotional_content", True),
-            "topper_hack": visual_result.get("topper_hack"),
-            "topper_rank": visual_result.get("topper_rank"),
-            "pyq_references": visual_result.get("pyq_references", []),
-            "region": visual_result.get("region", "North")
+            "whiteboard_visual": visual_result,  # New format
+            "svg": "",  # Legacy - not used anymore
+            "metaphors": [],
+            "estimated_marks": 3,
+            "has_emotional_content": True,
+            "concept": visual_result.get("concept", ""),
+            "title": visual_result.get("title", "")
         }
         
-        logger.info(f"✅ Visual generated: {len(visual_sketch_data['svg'])} chars, {len(visual_sketch_data['metaphors'])} metaphors")
+        logger.info(f"✅ Visual generated for concept: {visual_sketch_data.get('concept', 'unknown')}")
         
         # Update task status in database
         await db.visual_generation_tasks.update_one(
