@@ -1560,6 +1560,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
             # [JULES VISUAL ENHANCEMENT START]
             # Defensive defaults when user record is absent during onboarding or tests
             # Enhanced with memory system data
+            # Language preference: 'en' = English only, 'hi'/'hinglish' = Hindi-English mix
+            # Default to English - only use Hinglish if explicitly set in user preferences
+            user_language = memory_preferences.get('preferred_language') or user_doc.get('language', 'en')
+            # Normalize: 'hi-IN', 'hindi', 'hinglish' -> use Hinglish; else English
+            normalized_language = 'hi' if user_language in ['hi-IN', 'hi', 'hindi', 'hinglish'] else 'en'
+            
             student_profile = {
                 'preferred_metaphor': memory_preferences.get('metaphor_style') or user_doc.get('preferred_metaphor', 'cricket'),
                 'region': user_doc.get('region', 'Bangalore'),
@@ -1573,7 +1579,9 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 'mastery_bucket': memory_bucket,
                 'is_continuation': is_continuation,
                 'explanation_depth': memory_preferences.get('explanation_depth', 'medium'),
-                'language_preference': memory_preferences.get('preferred_language', 'hinglish'),
+                # Language preference: 'en' for English, 'hi' for Hinglish
+                'language': normalized_language,
+                'language_preference': user_language,  # Keep original for backward compat
                 'user_name': user_name_from_memory or (user_doc.get('full_name', '').split()[0] if user_doc.get('full_name') else '')
             }
             
@@ -1770,12 +1778,15 @@ You're making great progress by actively seeking to understand. Keep up this exc
             from prompts.optimized_mentor_prompt import get_optimized_mentor_prompt
             
             # Try optimized prompt first (60% token reduction)
+            # Pass language preference for conditional Hinglish/English
+            student_language = student_profile.get('language', 'en')
             optimized_prompt = get_optimized_mentor_prompt(
                 subject=subject,
                 message=message,
                 exam_mode=exam_mode,
                 metaphor=selected_metaphor,  # Use dynamically selected
-                region=student_profile['region']
+                region=student_profile['region'],
+                language=student_language  # Respect student language preference
             )
             
             neuro_chat = LlmChat(

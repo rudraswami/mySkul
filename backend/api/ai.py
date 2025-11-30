@@ -1164,6 +1164,95 @@ You MUST reference specific content from the image in your response."""
             logger.info(f"📷 Preserving image context in message (has {len(image_analysis.get('extracted_text', ''))} chars of extracted content)")
 
         # ====================================================================
+        # 🤖 SPECIALIZED AGENT ROUTING (Cognito OS v1.5)
+        # Check if query should go to a specialized agent BEFORE unified pipeline
+        # ====================================================================
+        specialized_agent_result = None
+        USE_SPECIALIZED_AGENTS = os.getenv("USE_SPECIALIZED_AGENTS", "true").lower() == "true"
+        
+        if USE_SPECIALIZED_AGENTS:
+            try:
+                from agents.doubt_resolver import DoubtResolverAgent
+                from agents.exam_coach import ExamCoachAgent
+                from agents.weak_area_detective import WeakAreaDetectiveAgent
+                from agents.study_buddy import StudyBuddyAgent
+                from agents.motivation import MotivationAgent
+                
+                # Detect if specialized agent should handle this
+                specialized_intent = None
+                
+                if DoubtResolverAgent.is_doubt_query(contextual_message):
+                    specialized_intent = 'doubt'
+                elif ExamCoachAgent.is_exam_strategy_query(contextual_message):
+                    specialized_intent = 'exam_strategy'
+                elif WeakAreaDetectiveAgent.is_weak_area_query(contextual_message):
+                    specialized_intent = 'weak_area'
+                elif StudyBuddyAgent.is_buddy_query(contextual_message):
+                    specialized_intent = 'study_buddy'
+                
+                if specialized_intent:
+                    logger.info(f"🤖 Specialized agent detected: {specialized_intent}")
+                    
+                    emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                    
+                    # Build context for specialized agent
+                    agent_context = {
+                        "subject": detected_subject,
+                        "session_id": request.session_id,
+                        "user_id": user.user_id,
+                        "student_profile": {
+                            "user_name": (await db.users.find_one({"user_id": user.user_id}) or {}).get("full_name", "").split()[0] if user else "",
+                            "exam": getattr(request, 'exam_mode', 'JEE'),
+                            "language": "en"
+                        },
+                        "session_data": {}
+                    }
+                    
+                    # Route to appropriate specialized agent
+                    if specialized_intent == 'doubt':
+                        agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
+                        agent_response = await agent.process(contextual_message, agent_context)
+                    elif specialized_intent == 'exam_strategy':
+                        agent = ExamCoachAgent({"emergent_llm_key": emergent_llm_key})
+                        agent_response = await agent.process(contextual_message, agent_context)
+                    elif specialized_intent == 'weak_area':
+                        agent = WeakAreaDetectiveAgent({"emergent_llm_key": emergent_llm_key})
+                        agent_response = await agent.process(contextual_message, agent_context)
+                    elif specialized_intent == 'study_buddy':
+                        agent = StudyBuddyAgent({"emergent_llm_key": emergent_llm_key})
+                        agent_response = await agent.process(contextual_message, agent_context)
+                    
+                    if agent_response and agent_response.get('success'):
+                        logger.info(f"✅ Specialized agent {specialized_intent} responded successfully")
+                        
+                        # Format as unified result
+                        specialized_agent_result = {
+                            "response": {
+                                "default_view": {
+                                    "greeting": "",
+                                    "main_content": {
+                                        "content": agent_response.get('content', '')
+                                    }
+                                },
+                                "progressive_sections": {
+                                    "explanation": agent_response.get('content', '')
+                                },
+                                "render_directives": render_directives
+                            },
+                            "detected_subject": detected_subject,
+                            "generation_time": 0.5,
+                            "agent_used": specialized_intent,
+                            "intent_detected": specialized_intent
+                        }
+                        
+            except Exception as agent_error:
+                logger.warning(f"⚠️ Specialized agent routing failed: {agent_error}")
+                specialized_agent_result = None
+        
+        # If specialized agent handled it, skip unified pipeline
+        result = specialized_agent_result
+        
+        # ====================================================================
         # UNIFIED INTELLIGENT PIPELINE (DEFAULT - Always On)
         # ====================================================================
         # CRITICAL: Use unified pipeline FIRST, it's cleaner and more intelligent
@@ -1174,7 +1263,7 @@ You MUST reference specific content from the image in your response."""
         # Initialize memory_context variable (used in both paths)
         memory_context = {}
         
-        if USE_UNIFIED_FIRST:
+        if USE_UNIFIED_FIRST and result is None:
             logger.info("🚀 Using UNIFIED intelligent pipeline (clean, adaptive)")
             try:
                 from services.response_composer import ResponseComposer
@@ -1872,6 +1961,41 @@ You MUST reference specific content from the image in your response."""
                     result['response'] = {}
                 result['response']['visual_sketch'] = visual_sketch_data
                 logger.info(f"✅ Visual sketch added to response")
+        
+        # ====================================================================
+        # 💪 MOTIVATION AGENT ENHANCEMENT (Cognito OS)
+        # Add emotional support elements based on detected student state
+        # ====================================================================
+        try:
+            from agents.motivation import MotivationAgent
+            
+            # Build context for motivation agent
+            motivation_context = {
+                "student_profile": {
+                    "user_name": user_doc.get("full_name", "").split()[0] if user_doc else "",
+                },
+                "session_data": {
+                    "wrong_answer_streak": 0,  # Could be tracked in session
+                    "current_streak": 0,
+                },
+                "original_query": request.message  # Pass the original query for emotion detection
+            }
+            
+            # Add query to result for emotion detection
+            result['query'] = request.message
+            
+            # Get motivation enhancement
+            motivation_agent = MotivationAgent({})
+            enhanced_result = motivation_agent.enhance_response(result, motivation_context)
+            
+            # If motivation was added, include it in response
+            if enhanced_result.get('motivation'):
+                if 'response' not in result:
+                    result['response'] = {}
+                result['response']['motivation'] = enhanced_result['motivation']
+                logger.info(f"💪 Motivation enhancement added: {enhanced_result['motivation'].get('type', 'general')}")
+        except Exception as motivation_error:
+            logger.debug(f"ℹ️ Motivation enhancement skipped: {motivation_error}")
         
         return result
         # [JULES VISUAL ENHANCEMENT END]

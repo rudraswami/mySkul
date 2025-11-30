@@ -81,9 +81,13 @@ const parseMarkdown = (text, blockMathMap) => {
     if (currentList.length > 0) {
       const ListTag = listType === 'ol' ? 'ol' : 'ul';
       elements.push(
-        <ListTag key={`list-${elements.length}`} className={listType === 'ol' ? 'list-decimal' : 'list-disc'} style={{ marginLeft: '1.5rem', marginBottom: '0.75rem' }}>
+        <ListTag 
+          key={`list-${elements.length}`} 
+          className={`${listType === 'ol' ? 'list-decimal' : 'list-disc'} space-y-2`} 
+          style={{ marginLeft: '1.5rem', marginBottom: '1rem', marginTop: '0.5rem' }}
+        >
           {currentList.map((item, i) => (
-            <li key={i} className="text-gray-800 dark:text-gray-200 mb-1">
+            <li key={i} className="text-[15px] text-gray-700 dark:text-gray-200 leading-[1.7] pl-1">
               {renderInline(item)}
             </li>
           ))}
@@ -207,11 +211,11 @@ const parseMarkdown = (text, blockMathMap) => {
       flushTable();
     }
     
-    // Headers
+    // Headers - IMPROVED: Better sizing and spacing for readability
     if (trimmed.startsWith('#### ')) {
       flushList();
       elements.push(
-        <h4 key={`h4-${index}`} className="text-base font-semibold text-gray-900 dark:text-white mt-3 mb-2">
+        <h4 key={`h4-${index}`} className="text-[15px] font-semibold text-gray-800 dark:text-white mt-4 mb-2">
           {renderInline(trimmed.slice(5))}
         </h4>
       );
@@ -221,7 +225,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={`h3-${index}`} className="text-lg font-semibold text-gray-900 dark:text-white mt-4 mb-2">
+        <h3 key={`h3-${index}`} className="text-[16px] font-semibold text-gray-800 dark:text-white mt-5 mb-2.5">
           {renderInline(trimmed.slice(4))}
         </h3>
       );
@@ -231,7 +235,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={`h2-${index}`} className="text-xl font-bold text-gray-900 dark:text-white mt-4 mb-2">
+        <h2 key={`h2-${index}`} className="text-[17px] font-bold text-gray-900 dark:text-white mt-5 mb-3">
           {renderInline(trimmed.slice(3))}
         </h2>
       );
@@ -241,7 +245,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={`h1-${index}`} className="text-2xl font-bold text-gray-900 dark:text-white mt-4 mb-3">
+        <h1 key={`h1-${index}`} className="text-[18px] font-bold text-gray-900 dark:text-white mt-6 mb-3">
           {renderInline(trimmed.slice(2))}
         </h1>
       );
@@ -288,10 +292,10 @@ const parseMarkdown = (text, blockMathMap) => {
       return;
     }
     
-    // Regular paragraph
+    // Regular paragraph - IMPROVED: Better font size and line height
     flushList();
     elements.push(
-      <p key={`p-${index}`} className="text-gray-800 dark:text-gray-200 mb-3 leading-relaxed">
+      <p key={`p-${index}`} className="text-[15px] text-gray-700 dark:text-gray-200 mb-3.5 leading-[1.75]">
         {renderInline(trimmed)}
       </p>
     );
