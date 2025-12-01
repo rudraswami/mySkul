@@ -35,6 +35,7 @@ from agents.exam_coach import ExamCoachAgent
 from agents.weak_area_detective import WeakAreaDetectiveAgent
 from agents.study_buddy import StudyBuddyAgent
 from agents.parent_report import ParentReportAgent
+from agents.proactive_companion import ProactiveCompanionAgent
 
 # New intelligent base class
 from agents.intelligent_agent_base import IntelligentAgentBase
@@ -56,6 +57,7 @@ __all__ = [
     'WeakAreaDetectiveAgent',
     'StudyBuddyAgent',
     'ParentReportAgent',
+    'ProactiveCompanionAgent',
     
     # Orchestration
     'SupervisorAgent',

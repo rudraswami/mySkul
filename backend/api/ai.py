@@ -1177,11 +1177,17 @@ You MUST reference specific content from the image in your response."""
                 from agents.weak_area_detective import WeakAreaDetectiveAgent
                 from agents.study_buddy import StudyBuddyAgent
                 from agents.motivation import MotivationAgent
+                from agents.proactive_companion import ProactiveCompanionAgent
                 
                 # Detect if specialized agent should handle this
                 specialized_intent = None
                 
-                if DoubtResolverAgent.is_doubt_query(contextual_message):
+                # Check for reminder/schedule requests FIRST (highest priority)
+                if ProactiveCompanionAgent.is_reminder_request(contextual_message):
+                    specialized_intent = 'reminder'
+                elif ProactiveCompanionAgent.is_schedule_request(contextual_message):
+                    specialized_intent = 'schedule'
+                elif DoubtResolverAgent.is_doubt_query(contextual_message):
                     specialized_intent = 'doubt'
                 elif ExamCoachAgent.is_exam_strategy_query(contextual_message):
                     specialized_intent = 'exam_strategy'
@@ -1209,7 +1215,15 @@ You MUST reference specific content from the image in your response."""
                     }
                     
                     # Route to appropriate specialized agent
-                    if specialized_intent == 'doubt':
+                    if specialized_intent == 'reminder':
+                        # 🌟 Proactive Companion handles reminders
+                        companion = ProactiveCompanionAgent(db)
+                        agent_response = await companion.process_reminder_request(contextual_message, agent_context)
+                    elif specialized_intent == 'schedule':
+                        # 📅 Proactive Companion handles scheduling
+                        companion = ProactiveCompanionAgent(db)
+                        agent_response = await companion.process_reminder_request(contextual_message, agent_context)
+                    elif specialized_intent == 'doubt':
                         agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
                         agent_response = await agent.process(contextual_message, agent_context)
                     elif specialized_intent == 'exam_strategy':
