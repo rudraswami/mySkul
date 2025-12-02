@@ -1083,7 +1083,7 @@ You MUST reference specific content from the image in your response."""
                     context={
                         'session_id': request.session_id,
                         'subject': detected_subject,
-                        'exam_mode': request.exam_mode
+                        'exam_mode': getattr(request, 'exam_mode', 'JEE')
                     },
                     db_client=db
                 )
