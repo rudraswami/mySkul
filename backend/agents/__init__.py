@@ -50,6 +50,7 @@ from agents.intelligent_agent_base import IntelligentAgentBase
 
 # 🧠 True Agentic System Components
 from agents.agentic_doubt_resolver import AgenticDoubtResolver, create_agentic_doubt_resolver
+from agents.agentic_companion import AgenticCompanion, create_agentic_companion, process_reminder_request
 from agents.core import (
     ReActAgent,
     AgentState,

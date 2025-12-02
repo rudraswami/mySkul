@@ -2,12 +2,16 @@
 Supervisor Agent - Orchestrates Multi-Agent Responses
 Routes queries to appropriate agents and combines their responses
 
-AGENT ECOSYSTEM:
+AGENT ECOSYSTEM (TRUE AGENTIC):
 - MentorAgent: Emotional, intuitive explanations
 - ProfessorAgent: Formal, structured explanations  
 - VisualiseAgent: Visual generation
-- DoubtResolverAgent: Quick, empathetic doubt clearing (NEW)
-- MotivationAgent: Emotional support, confidence building (NEW)
+- AgenticDoubtResolver: TRUE AGENT with ReAct loop, tools, memory (UPGRADED)
+- MotivationAgent: Emotional support middleware
+- ExamCoachAgent: Strategic exam preparation
+- WeakAreaDetectiveAgent: Knowledge gap analysis
+- StudyBuddyAgent: Peer learning simulation
+- ParentReportAgent: Guardian communication
 """
 import logging
 import asyncio
@@ -16,12 +20,14 @@ from agents.base_agent import BaseAgent
 from agents.mentor import MentorAgent
 from agents.professor import ProfessorAgent
 from agents.visualise import VisualiseAgent
-from agents.doubt_resolver import DoubtResolverAgent
+# Use TRUE agentic doubt resolver with ReAct loop
+from agents.agentic_doubt_resolver import AgenticDoubtResolver
 from agents.motivation import MotivationAgent
 from agents.exam_coach import ExamCoachAgent
 from agents.weak_area_detective import WeakAreaDetectiveAgent
 from agents.study_buddy import StudyBuddyAgent
 from agents.parent_report import ParentReportAgent
+from agents.core.tool_registry import create_tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -47,29 +53,40 @@ class SupervisorAgent(BaseAgent):
         """
         super().__init__(config)
         
+        # Initialize tool registry for TRUE agentic behavior
+        self.tool_registry = create_tool_registry(
+            include_default=True,
+            include_action_tools=True
+        )
+        
         # Initialize all sub-agents
         self.mentor = MentorAgent(config)
         self.professor = ProfessorAgent(config)
         self.visualise = VisualiseAgent(config)
         
+        # TRUE AGENTIC AGENTS - These use ReAct loop with tools
+        # AgenticDoubtResolver: ReAct loop, tools, memory, planning, verification
+        self.doubt_resolver = AgenticDoubtResolver(config)
+        self.doubt_resolver.tool_registry = self.tool_registry  # Inject tools
+        
         # Specialized agents for enhanced learning (Cognito OS)
-        self.doubt_resolver = DoubtResolverAgent(config)
         self.motivation = MotivationAgent(config)  # Middleware for emotional support
         self.exam_coach = ExamCoachAgent(config)  # Strategic exam preparation
         self.weak_area_detective = WeakAreaDetectiveAgent(config)  # Knowledge gap analysis
         self.study_buddy = StudyBuddyAgent(config)  # Peer learning simulation
         self.parent_report = ParentReportAgent(config)  # Guardian communication
         
-        logger.info("🤖 Supervisor initialized with all sub-agents (Cognito OS v1.5)")
+        logger.info("🤖 Supervisor initialized with TRUE AGENTIC system (Cognito OS v2.0)")
         logger.info("   ├── Mentor agent initialized")
         logger.info("   ├── Professor agent initialized")
         logger.info("   ├── Visualise agent initialized")
-        logger.info("   ├── DoubtResolver agent initialized")
+        logger.info("   ├── 🧠 AgenticDoubtResolver initialized (TRUE AGENT: ReAct + Tools)")
         logger.info("   ├── ExamCoach agent initialized")
         logger.info("   ├── WeakAreaDetective agent initialized")
         logger.info("   ├── StudyBuddy agent initialized")
-        logger.info("   ├── ParentReport agent initialized (NEW)")
-        logger.info("   └── Motivation agent initialized (MIDDLEWARE)")
+        logger.info("   ├── ParentReport agent initialized")
+        logger.info("   ├── Motivation agent initialized (MIDDLEWARE)")
+        logger.info("   └── ToolRegistry loaded with action tools")
     
     def get_agent_type(self) -> str:
         return "Supervisor"

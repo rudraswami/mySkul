@@ -150,6 +150,22 @@ class Settings:
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "4000"))
     
     # =============================================================================
+    # 🤖 AGENTIC SYSTEM SETTINGS - TRUE AGENT BEHAVIOR
+    # =============================================================================
+    # Enable the full agentic system (ReAct loop, tools, planning)
+    USE_AGENTIC_SYSTEM: bool = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
+    
+    # Enable action intent detection (reminders, notifications, etc.)
+    ENABLE_ACTION_DETECTION: bool = os.getenv("ENABLE_ACTION_DETECTION", "true").lower() == "true"
+    
+    # Enable background scheduler for processing reminders/notifications
+    ENABLE_BACKGROUND_SCHEDULER: bool = os.getenv("ENABLE_BACKGROUND_SCHEDULER", "true").lower() == "true"
+    
+    # Agent configuration
+    AGENT_MAX_ITERATIONS: int = int(os.getenv("AGENT_MAX_ITERATIONS", "10"))
+    AGENT_VERBOSE_LOGGING: bool = os.getenv("AGENT_VERBOSE_LOGGING", "true").lower() == "true"
+    
+    # =============================================================================
     # OAUTH SETTINGS
     # =============================================================================
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")

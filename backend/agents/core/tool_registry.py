@@ -215,12 +215,13 @@ class ToolRegistry:
 # Factory function for easy registry creation
 # ============================================
 
-def create_tool_registry(include_default: bool = True) -> ToolRegistry:
+def create_tool_registry(include_default: bool = True, include_action_tools: bool = True) -> ToolRegistry:
     """
     Create and configure a tool registry.
     
     Args:
         include_default: Whether to register default tools
+        include_action_tools: Whether to register action tools (reminder, notification)
     
     Returns:
         Configured ToolRegistry
@@ -248,6 +249,23 @@ def create_tool_registry(include_default: bool = True) -> ToolRegistry:
             
         except ImportError as e:
             logger.warning(f"Could not import default tools: {e}")
+    
+    if include_action_tools:
+        # Import and register ACTION tools (for true agentic behavior)
+        try:
+            from agents.core.tools.reminder_tool import ReminderTool
+            from agents.core.tools.notification_tool import NotificationTool, StudySummaryTool
+            
+            registry.register_many([
+                ReminderTool(),
+                NotificationTool(),
+                StudySummaryTool()
+            ])
+            
+            logger.info("✅ Action tools registered (reminder, notification, summary)")
+            
+        except ImportError as e:
+            logger.warning(f"Could not import action tools: {e}")
     
     return registry
 

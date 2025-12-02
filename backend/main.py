@@ -209,6 +209,17 @@ def create_app() -> FastAPI:
         dependencies.ai_service = ai_service
 
         logger.info("Unified Subscription Service initialized")
+        
+        # 🕐 Start Background Scheduler for TRUE AGENTIC BEHAVIOR
+        # This processes scheduled reminders, notifications, streak warnings
+        try:
+            from services.background_scheduler import start_background_scheduler
+            await start_background_scheduler(db)
+            logger.info("🕐 Background scheduler started - Agentic actions enabled!")
+        except Exception as e:
+            logger.error(f"Failed to start background scheduler: {e}")
+            logger.warning("⚠️ Scheduled reminders/notifications will NOT work!")
+        
         logger.info("All services initialized successfully")
         logger.info(f"Server ready at {settings.BACKEND_URL}")
 
@@ -220,6 +231,15 @@ def create_app() -> FastAPI:
     async def shutdown_event():
         """Clean up resources on shutdown"""
         logger.info("Application shutdown initiated...")
+        
+        # Stop background scheduler
+        try:
+            from services.background_scheduler import stop_background_scheduler
+            await stop_background_scheduler()
+            logger.info("Background scheduler stopped")
+        except Exception as e:
+            logger.error(f"Error stopping scheduler: {e}")
+        
         await close_database()
         logger.info("Shutdown complete")
 

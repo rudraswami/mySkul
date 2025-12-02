@@ -1068,6 +1068,55 @@ You MUST reference specific content from the image in your response."""
                 detail=access_result.to_dict()
             )
         
+        # ====================================================================
+        # 🤖 AGENTIC ROUTING - Handle ACTION requests (reminders, notifications)
+        # ====================================================================
+        # This enables TRUE agentic behavior - agents that DO things, not just talk
+        try:
+            from services.agentic_router import route_message
+            from core.config import settings
+            
+            if settings.ENABLE_ACTION_DETECTION:
+                handled, action_result = await route_message(
+                    message=request.message,
+                    user_id=user.user_id,
+                    context={
+                        'session_id': request.session_id,
+                        'subject': detected_subject,
+                        'exam_mode': request.exam_mode
+                    },
+                    db_client=db
+                )
+                
+                if handled and action_result:
+                    logger.info(f"🤖 Agentic action handled: {action_result.get('action_taken', 'unknown')}")
+                    
+                    # Return the action result as the AI response
+                    return {
+                        "response": {
+                            "default_view": {
+                                "greeting": "",
+                                "main_content": {
+                                    "title": "",
+                                    "content": action_result.get('response', '')
+                                },
+                                "metaphor": {"text": ""},
+                                "visual": None
+                            },
+                            "progressive_sections": {},
+                            "detected_subject": detected_subject,
+                            "action_taken": action_result.get('action_taken'),
+                            "is_agentic_response": True
+                        },
+                        "detected_subject": detected_subject,
+                        "message_id": f"agentic_{datetime.utcnow().timestamp()}",
+                        "generation_time": 0.1,
+                        "emotion_detected": "neutral"
+                    }
+        except Exception as e:
+            logger.warning(f"Agentic routing failed: {e}")
+            # Continue with normal flow if agentic routing fails
+        
         # Get message history for memory/context (optional)
         message_history = []
         session_doc = None
@@ -1181,13 +1230,12 @@ You MUST reference specific content from the image in your response."""
                 
                 # Detect if specialized agent should handle this
                 specialized_intent = None
+
+                # NOTE: Reminder/Schedule requests are now handled by AgenticRouter
+                # at the top of this function (TRUE AGENTIC path)
+                # The code below handles other specialized intents only
                 
-                # Check for reminder/schedule requests FIRST (highest priority)
-                if ProactiveCompanionAgent.is_reminder_request(contextual_message):
-                    specialized_intent = 'reminder'
-                elif ProactiveCompanionAgent.is_schedule_request(contextual_message):
-                    specialized_intent = 'schedule'
-                elif DoubtResolverAgent.is_doubt_query(contextual_message):
+                if DoubtResolverAgent.is_doubt_query(contextual_message):
                     specialized_intent = 'doubt'
                 elif ExamCoachAgent.is_exam_strategy_query(contextual_message):
                     specialized_intent = 'exam_strategy'
@@ -1215,15 +1263,8 @@ You MUST reference specific content from the image in your response."""
                     }
                     
                     # Route to appropriate specialized agent
-                    if specialized_intent == 'reminder':
-                        # 🌟 Proactive Companion handles reminders
-                        companion = ProactiveCompanionAgent(db)
-                        agent_response = await companion.process_reminder_request(contextual_message, agent_context)
-                    elif specialized_intent == 'schedule':
-                        # 📅 Proactive Companion handles scheduling
-                        companion = ProactiveCompanionAgent(db)
-                        agent_response = await companion.process_reminder_request(contextual_message, agent_context)
-                    elif specialized_intent == 'doubt':
+                    # NOTE: 'reminder' and 'schedule' are handled by AgenticRouter (line ~1072)
+                    if specialized_intent == 'doubt':
                         # 🧠 Use Agentic Doubt Resolver if enabled
                         USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
                         
@@ -1387,7 +1428,7 @@ You MUST reference specific content from the image in your response."""
         # ====================================================================
         # AGENTIC SYSTEM (Backup - Only if unified fails)
         # ====================================================================
-        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "false").lower() == "true"
+        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
         
         # Only use agentic if unified failed AND agentic is enabled
         if not USE_UNIFIED_FIRST and USE_AGENTIC_SYSTEM and result is None:

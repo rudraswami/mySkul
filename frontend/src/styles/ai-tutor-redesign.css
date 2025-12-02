@@ -999,3 +999,18 @@ body:has(.h-screen.overflow-hidden) {
   letter-spacing: 0.5px;
 }
 
+/* ============================================
+   Simple Thinking Indicator
+   ============================================
+   Clean, minimal three dots.
+*/
+
+/* Accessibility - respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dot,
+  [class*="thinking"] span {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

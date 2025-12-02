@@ -97,11 +97,38 @@ NEVER:
     def get_available_tools(self) -> List[str]:
         return [
             "calculator",
-            "knowledge_search", 
+            "knowledge_search",
             "formula_lookup",
             "fact_checker",
             "code_executor"
         ]
+    
+    @staticmethod
+    def is_doubt_query(query: str) -> bool:
+        """Detect if this is a doubt/confusion query - TRUE AGENTIC detection"""
+        query_lower = query.lower()
+        
+        doubt_phrases = [
+            # Direct doubt expressions
+            'don\'t understand', 'dont understand', 'not understanding',
+            'confused', 'confusion', 'doubt', 'unclear', 'not clear',
+            'samajh nahi', 'nahi samjha', 'समझ नहीं',
+            
+            # Questions indicating confusion
+            'why does', 'why is', 'how does', 'how is',
+            'what is', 'what are', 'what does',
+            'can you explain', 'please explain', 'explain again',
+            'help me understand', 'i\'m stuck', 'i am stuck',
+            
+            # Hinglish doubt expressions
+            'kaise', 'kyun', 'kya hai', 'samjhao', 'bata do',
+            
+            # Academic doubt triggers
+            'difference between', 'compare', 'versus', 'vs',
+            'what happens when', 'what if',
+        ]
+        
+        return any(phrase in query_lower for phrase in doubt_phrases)
     
     def get_system_prompt(self, state: AgentState) -> str:
         """Enhanced system prompt with memory and planning context"""
