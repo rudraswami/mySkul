@@ -323,13 +323,15 @@ class ResponseComposer:
         }
         
         # Step 9: Add smart follow-up suggestions with topic context
+        # CRITICAL: Skip follow-ups for greetings/conversational messages
         try:
             emotion = human_context.get("emotion", "neutral") if human_context else "neutral"
             follow_ups = generate_follow_ups(
                 question=question,
                 response=raw_response,
                 subject=subject,
-                emotion=emotion
+                emotion=emotion,
+                intent=intent  # Pass intent to skip follow-ups for non-educational messages
             )
             result["response"]["follow_up_suggestions"] = follow_ups
             result["response"]["default_view"]["follow_ups"] = follow_ups

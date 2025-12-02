@@ -170,6 +170,10 @@ def create_app() -> FastAPI:
             "/api/ai/professor-only",
             "/api/ai/neuro-symbolic",
             "/api/mock-tests/generate",
+            "/api/agentic/query",
+            "/api/agentic/doubt",
+            "/api/agentic/tools",
+            "/api/agentic/health",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
@@ -238,6 +242,15 @@ def create_app() -> FastAPI:
         logger.info("Unified AI Tutor router registered")
     except Exception as e:
         logger.warning(f"Could not load unified AI router: {e}")
+    
+    # 🧠 Agentic AI System (True Agents with ReAct Loop)
+    try:
+        from api import agentic
+        app.include_router(agentic.router, prefix="/api", tags=["Agentic AI"])
+        logger.info("🧠 Agentic AI router registered")
+    except Exception as e:
+        logger.warning(f"Could not load Agentic AI router: {e}")
+    
     app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
     app.include_router(auto_notes.router, prefix="/api", tags=["Auto Notes"])
     app.include_router(mock_tests.router, prefix="/api", tags=["Mock Tests"])

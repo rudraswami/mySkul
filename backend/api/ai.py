@@ -1224,8 +1224,47 @@ You MUST reference specific content from the image in your response."""
                         companion = ProactiveCompanionAgent(db)
                         agent_response = await companion.process_reminder_request(contextual_message, agent_context)
                     elif specialized_intent == 'doubt':
-                        agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
-                        agent_response = await agent.process(contextual_message, agent_context)
+                        # 🧠 Use Agentic Doubt Resolver if enabled
+                        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
+                        
+                        if USE_AGENTIC_SYSTEM:
+                            try:
+                                from agents.agentic_doubt_resolver import create_agentic_doubt_resolver
+                                logger.info("🧠 Using TRUE AGENTIC Doubt Resolver (ReAct + Tools)")
+                                
+                                agentic_agent = create_agentic_doubt_resolver({
+                                    'emergent_llm_key': emergent_llm_key,
+                                    'max_iterations': 8,
+                                    'verbose': True
+                                })
+                                
+                                # Run with full agentic capabilities
+                                agentic_result = await agentic_agent.run(contextual_message, agent_context)
+                                
+                                if agentic_result.get('success'):
+                                    agent_response = {
+                                        'success': True,
+                                        'content': agentic_result.get('content', ''),
+                                        'metadata': {
+                                            'agentic': True,
+                                            'tools_used': agentic_result.get('tools_used', []),
+                                            'iterations': agentic_result.get('iterations', 0),
+                                            'verified': agentic_result.get('verification', {}).get('status') == 'verified'
+                                        }
+                                    }
+                                    logger.info(f"✅ Agentic response generated (iterations: {agentic_result.get('iterations', 0)}, tools: {agentic_result.get('tools_used', [])})")
+                                else:
+                                    # Fall back to regular doubt resolver
+                                    logger.warning("⚠️ Agentic system failed, falling back to regular agent")
+                                    agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
+                                    agent_response = await agent.process(contextual_message, agent_context)
+                            except Exception as agentic_error:
+                                logger.error(f"❌ Agentic system error: {agentic_error}, falling back")
+                                agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
+                                agent_response = await agent.process(contextual_message, agent_context)
+                        else:
+                            agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
+                            agent_response = await agent.process(contextual_message, agent_context)
                     elif specialized_intent == 'exam_strategy':
                         agent = ExamCoachAgent({"emergent_llm_key": emergent_llm_key})
                         agent_response = await agent.process(contextual_message, agent_context)
@@ -1238,6 +1277,10 @@ You MUST reference specific content from the image in your response."""
                     
                     if agent_response and agent_response.get('success'):
                         logger.info(f"✅ Specialized agent {specialized_intent} responded successfully")
+                        
+                        # Extract agentic metadata if present
+                        agentic_metadata = agent_response.get('metadata', {})
+                        is_agentic = agentic_metadata.get('agentic', False)
                         
                         # Format as unified result
                         specialized_agent_result = {
@@ -1258,6 +1301,16 @@ You MUST reference specific content from the image in your response."""
                             "agent_used": specialized_intent,
                             "intent_detected": specialized_intent
                         }
+                        
+                        # Add agentic system info if used
+                        if is_agentic:
+                            specialized_agent_result["agentic_info"] = {
+                                "used_react_loop": True,
+                                "tools_used": agentic_metadata.get('tools_used', []),
+                                "iterations": agentic_metadata.get('iterations', 0),
+                                "self_verified": agentic_metadata.get('verified', False)
+                            }
+                            logger.info(f"🧠 Agentic response metadata: {specialized_agent_result['agentic_info']}")
                         
             except Exception as agent_error:
                 logger.warning(f"⚠️ Specialized agent routing failed: {agent_error}")

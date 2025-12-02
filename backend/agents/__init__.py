@@ -9,9 +9,17 @@ CORE AGENTS:
 - ProfessorAgent: Formal, structured academic explanations
 - VisualiseAgent: Visual/diagram generation
 
-SPECIALIZED AGENTS (NEW):
+SPECIALIZED AGENTS:
 - DoubtResolverAgent: Quick, empathetic doubt clearing
 - MotivationAgent: Emotional support middleware (detects burnout, frustration, anxiety)
+
+🧠 TRUE AGENTIC SYSTEM (NEW):
+- AgenticDoubtResolver: Full ReAct loop with tools, memory, planning, verification
+- ReActAgent: Think → Act → Observe reasoning loop
+- ToolRegistry: Tool management (calculator, search, fact-check, etc.)
+- MemorySystem: Short-term + Long-term student memory
+- Planner: Task decomposition for complex queries
+- Verifier: Self-verification of calculations and facts
 
 ORCHESTRATION:
 - SupervisorAgent: Routes queries to appropriate agents
@@ -40,6 +48,26 @@ from agents.proactive_companion import ProactiveCompanionAgent
 # New intelligent base class
 from agents.intelligent_agent_base import IntelligentAgentBase
 
+# 🧠 True Agentic System Components
+from agents.agentic_doubt_resolver import AgenticDoubtResolver, create_agentic_doubt_resolver
+from agents.core import (
+    ReActAgent,
+    AgentState,
+    ThoughtAction,
+    ToolRegistry,
+    BaseTool,
+    ToolResult,
+    create_tool_registry,
+    MemorySystem,
+    ShortTermMemory,
+    LongTermMemory,
+    Planner,
+    TaskPlan,
+    SubTask,
+    Verifier,
+    VerificationResult
+)
+
 __all__ = [
     # Base
     'BaseAgent',
@@ -58,6 +86,25 @@ __all__ = [
     'StudyBuddyAgent',
     'ParentReportAgent',
     'ProactiveCompanionAgent',
+    
+    # 🧠 True Agentic System
+    'AgenticDoubtResolver',
+    'create_agentic_doubt_resolver',
+    'ReActAgent',
+    'AgentState',
+    'ThoughtAction',
+    'ToolRegistry',
+    'BaseTool',
+    'ToolResult',
+    'create_tool_registry',
+    'MemorySystem',
+    'ShortTermMemory',
+    'LongTermMemory',
+    'Planner',
+    'TaskPlan',
+    'SubTask',
+    'Verifier',
+    'VerificationResult',
     
     # Orchestration
     'SupervisorAgent',

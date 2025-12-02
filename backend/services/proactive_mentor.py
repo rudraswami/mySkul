@@ -372,52 +372,81 @@ class ProactiveMentor:
 
 class SmartFollowUpGenerator:
     """
-    Generates intelligent, contextual follow-up questions.
-    Makes learning feel like a conversation, not a lecture.
+    Generates COMPACT, concept-specific follow-up suggestions.
     
-    CRITICAL: Follow-ups MUST include the actual topic so the AI understands context!
+    DESIGN PRINCIPLES:
+    1. COMPACT: Max 5-7 words per suggestion (fits nicely in UI chips)
+    2. CONCEPT-SPECIFIC: Include actual topic name
+    3. PROGRESSIVE: Based on what was just explained
+    4. NO GENERIC: Every suggestion must be contextual
     """
     
     @staticmethod
-    def _extract_topic_from_question(question: str) -> str:
-        """Extract the main topic/concept from the question"""
-        q_lower = question.lower().strip()
+    def _extract_short_topic(question: str) -> str:
+        """Extract SHORT topic name (1-3 words max)"""
+        q = question.lower().strip()
         
-        # Remove common question prefixes
+        # Strip common prefixes
         prefixes = [
-            "i want to understand what is",
-            "i want to understand",
-            "what is the meaning of",
-            "what is",
-            "what are",
-            "define",
-            "explain",
-            "tell me about",
-            "help me understand",
-            "how does",
-            "how do",
-            "why is",
-            "why does",
-            "can you explain",
-            "please explain"
+            "i want to understand what is", "i want to understand",
+            "what is the meaning of", "what is", "what are",
+            "define", "explain", "tell me about", "help me understand",
+            "how does", "how do", "why is", "why does", "why do",
+            "can you explain", "please explain", "solve", "calculate",
+            "find the", "find", "derive", "prove", "show"
         ]
         
-        topic = q_lower
         for prefix in prefixes:
-            if topic.startswith(prefix):
-                topic = topic[len(prefix):].strip()
+            if q.startswith(prefix):
+                q = q[len(prefix):].strip()
                 break
         
-        # Remove trailing punctuation
-        topic = topic.rstrip('?!.')
+        # Remove trailing punctuation and fillers
+        q = q.rstrip('?!.,')
+        fillers = ['a', 'an', 'the', 'of', 'in', 'for', 'to', 'and', 'or', 'that', 'this']
+        words = [w for w in q.split() if w not in fillers and len(w) > 1]
         
-        # If topic is too long, take first few words
-        words = topic.split()
-        if len(words) > 4:
-            topic = ' '.join(words[:4])
+        # Take first 2-3 meaningful words only
+        topic = ' '.join(words[:3]) if words else "this"
+        return topic.strip()
+    
+    @staticmethod
+    def _detect_response_type(response: str) -> str:
+        """Detect what type of content was in the AI response"""
+        if not response:
+            return "general"
+        r = response.lower()
         
-        # Capitalize properly
-        return topic.title() if topic else "this concept"
+        if any(s in r for s in ['step 1', 'step 2', '1.', '2.', 'first,', 'then,']):
+            return "steps"
+        if any(s in r for s in ['=', 'formula', '∫', 'Σ', '√']):
+            return "formula"
+        if any(s in r for s in ['example:', 'for example', 'e.g.', 'consider']):
+            return "example"
+        if any(s in r for s in ['vs', 'versus', 'difference', 'compare']):
+            return "comparison"
+        if any(s in r for s in ['diagram', 'visual', 'figure', 'draw']):
+            return "visual"
+        return "conceptual"
+    
+    @staticmethod
+    def _detect_question_type(question: str) -> str:
+        """Detect the type of question asked"""
+        q = question.lower()
+        
+        if any(w in q for w in ['what is', 'define', 'meaning']):
+            return "definition"
+        if any(w in q for w in ['solve', 'calculate', 'find', 'evaluate']):
+            return "calculation"
+        if any(w in q for w in ['derive', 'prove', 'show that']):
+            return "derivation"
+        if any(w in q for w in ['compare', 'difference', 'vs']):
+            return "comparison"
+        if any(w in q for w in ['why', 'how does', 'explain why']):
+            return "reasoning"
+        if any(w in q for w in ['example', 'real life', 'application']):
+            return "application"
+        return "general"
     
     @staticmethod
     def generate(
@@ -427,109 +456,104 @@ class SmartFollowUpGenerator:
         topic: str = None,
         emotion: str = "neutral"
     ) -> List[Dict[str, str]]:
-        """Generate smart follow-up questions based on conversation context"""
+        """
+        Generate 2-3 COMPACT follow-up suggestions.
+        Each suggestion: 5-7 words max, concept-specific.
+        """
         
-        # CRITICAL: Extract actual topic from question if not provided
-        extracted_topic = topic or SmartFollowUpGenerator._extract_topic_from_question(question)
+        # Get short topic (1-3 words)
+        t = topic or SmartFollowUpGenerator._extract_short_topic(question)
+        q_type = SmartFollowUpGenerator._detect_question_type(question)
+        r_type = SmartFollowUpGenerator._detect_response_type(response)
         
         follow_ups = []
-        q_lower = question.lower()
         
-        # If student asked "what is" → offer "why" or "how"
-        if "what is" in q_lower or "define" in q_lower or "understand" in q_lower:
-            follow_ups.append({
-                "text": f"Why does {extracted_topic} work the way it does?",
-                "intent": "deepen",
-                "context": f"Explaining deeper concepts of {extracted_topic} that we just discussed"
-            })
-            follow_ups.append({
-                "text": f"Show me a real-world example of {extracted_topic}",
-                "intent": "example",
-                "context": f"Providing practical examples of {extracted_topic}"
-            })
-            follow_ups.append({
-                "text": f"What are common mistakes students make with {extracted_topic}?",
-                "intent": "mistakes",
-                "context": f"Discussing common errors when learning {extracted_topic}"
-            })
+        # =====================================================
+        # PROGRESSIVE FOLLOW-UPS BY QUESTION TYPE
+        # =====================================================
         
-        # If calculation → offer similar problem
-        elif any(w in q_lower for w in ["solve", "calculate", "find", "evaluate"]):
-            follow_ups.append({
-                "text": f"Give me a similar problem on {extracted_topic} to practice 🎯",
-                "intent": "practice",
-                "context": f"Practice problem related to {extracted_topic}"
-            })
-            follow_ups.append({
-                "text": f"Show me a JEE Advanced level problem on {extracted_topic}",
-                "intent": "challenge",
-                "context": f"Advanced problem on {extracted_topic}"
-            })
-            follow_ups.append({
-                "text": f"What's the quickest method to solve {extracted_topic} problems?",
-                "intent": "shortcut",
-                "context": f"Exam shortcuts for {extracted_topic}"
-            })
-        
-        # If derivation → offer application
-        elif any(w in q_lower for w in ["derive", "prove", "show that"]):
-            follow_ups.append({
-                "text": f"How do I apply {extracted_topic} in exam problems?",
-                "intent": "apply",
-                "context": f"Application of {extracted_topic} in problems"
-            })
-            follow_ups.append({
-                "text": f"What are the key steps to remember for {extracted_topic}?",
-                "intent": "steps",
-                "context": f"Key steps for {extracted_topic}"
-            })
-        
-        # If comparison → offer deeper comparison
-        elif any(w in q_lower for w in ["compare", "difference", "vs", "versus"]):
-            follow_ups.append({
-                "text": f"Which is better to use when - give me scenarios for {extracted_topic}",
-                "intent": "scenarios",
-                "context": f"Use cases for {extracted_topic}"
-            })
-            follow_ups.append({
-                "text": f"How do toppers choose between these options in exams?",
-                "intent": "exam_strategy",
-                "context": f"Exam strategy for {extracted_topic}"
-            })
-        
-        # If confused → offer simpler explanation
-        if emotion == "confused":
-            follow_ups.insert(0, {
-                "text": f"Explain {extracted_topic} in simpler terms please",
-                "intent": "simplify",
-                "context": f"Simpler explanation of {extracted_topic}"
-            })
-            follow_ups.append({
-                "text": f"Use a cricket/daily life analogy for {extracted_topic}",
-                "intent": "analogy",
-                "context": f"Analogy for {extracted_topic}"
-            })
-        
-        # Default follow-ups (still include topic!)
-        if not follow_ups:
+        if q_type == "definition":
+            # Asked "what is X" → offer practice, mistakes, real use
             follow_ups = [
-                {
-                    "text": f"I have doubts about {extracted_topic} - can you clarify?",
-                    "intent": "clarify",
-                    "context": f"Clarification needed for {extracted_topic}"
-                },
-                {
-                    "text": f"Give me a quick practice question on {extracted_topic}",
-                    "intent": "practice",
-                    "context": f"Practice on {extracted_topic}"
-                },
-                {
-                    "text": f"What topics are related to {extracted_topic}?",
-                    "intent": "explore",
-                    "context": f"Related topics to {extracted_topic}"
-                }
+                {"text": f"Practice problem on {t}", "intent": "practice"},
+                {"text": f"Common mistakes in {t}", "intent": "mistakes"},
+                {"text": f"Real-life use of {t}", "intent": "application"}
             ]
         
+        elif q_type == "calculation":
+            # Solved a problem → offer similar or faster method
+            follow_ups = [
+                {"text": "Similar problem to practice", "intent": "practice"},
+                {"text": "Faster method for this?", "intent": "shortcut"},
+                {"text": f"JEE-level {t} problem", "intent": "challenge"}
+            ]
+        
+        elif q_type == "derivation":
+            # Derived something → offer application
+            follow_ups = [
+                {"text": "Where to apply this?", "intent": "application"},
+                {"text": "Key steps to memorize", "intent": "memorize"},
+                {"text": f"Exam question on {t}", "intent": "exam"}
+            ]
+        
+        elif q_type == "comparison":
+            # Compared two things → decision help
+            follow_ups = [
+                {"text": "When to use which?", "intent": "decision"},
+                {"text": "Exam trick for this", "intent": "exam"},
+                {"text": "Practice problem", "intent": "practice"}
+            ]
+        
+        elif q_type == "reasoning":
+            # Asked "why" → simpler or deeper
+            follow_ups = [
+                {"text": "Simpler analogy please", "intent": "simplify"},
+                {"text": f"Related concepts to {t}", "intent": "related"},
+                {"text": "Test my understanding", "intent": "test"}
+            ]
+        
+        elif q_type == "application":
+            # Asked for example → more or test
+            follow_ups = [
+                {"text": "Another example please", "intent": "more"},
+                {"text": "Practice problem now", "intent": "practice"},
+                {"text": f"Theory behind {t}", "intent": "theory"}
+            ]
+        
+        else:
+            # General → balanced
+            follow_ups = [
+                {"text": f"Practice {t}", "intent": "practice"},
+                {"text": "Explain simpler please", "intent": "simplify"},
+                {"text": "Exam patterns for this", "intent": "exam"}
+            ]
+        
+        # =====================================================
+        # ADJUST BY RESPONSE TYPE (what AI just explained)
+        # =====================================================
+        
+        if r_type == "formula":
+            follow_ups[0] = {"text": "When to use this formula?", "intent": "application"}
+        
+        if r_type == "steps":
+            follow_ups[0] = {"text": "Let me try these steps", "intent": "practice"}
+        
+        if r_type == "comparison":
+            follow_ups[0] = {"text": "Which one for exams?", "intent": "decision"}
+        
+        # =====================================================
+        # EMOTION ADJUSTMENTS
+        # =====================================================
+        
+        if emotion == "confused":
+            follow_ups.insert(0, {"text": f"Simpler explanation of {t}", "intent": "simplify"})
+            follow_ups = follow_ups[:3]
+        
+        if emotion == "frustrated":
+            follow_ups.insert(0, {"text": "Easier problem first", "intent": "easier"})
+            follow_ups = follow_ups[:3]
+        
+        # Return only 2-3 compact suggestions
         return follow_ups[:3]
 
 
@@ -554,13 +578,56 @@ async def get_proactive_suggestions(
     )
 
 
-def generate_follow_ups(question: str, response: str, subject: str, emotion: str = "neutral") -> List[Dict]:
-    """Quick helper to generate follow-up questions"""
+def generate_follow_ups(
+    question: str, 
+    response: str, 
+    subject: str, 
+    emotion: str = "neutral",
+    intent: str = None
+) -> List[Dict]:
+    """
+    Quick helper to generate follow-up questions.
+    
+    CRITICAL: Skip follow-ups for greetings and conversational messages!
+    """
+    # Skip follow-ups for non-educational intents
+    skip_intents = ["greeting", "conversational"]
+    if intent and intent in skip_intents:
+        return []
+    
+    # Detect greeting/conversational from question itself if intent not provided
+    q_lower = question.lower().strip()
+    greeting_patterns = [
+        'hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo', 'gm', 'gn',
+        'good morning', 'good evening', 'good night', 'what\'s up', 'whats up',
+        'how are you', 'how r u', 'wassup', 'sup'
+    ]
+    casual_patterns = [
+        'thank', 'thanks', 'okay', 'ok', 'got it', 'understood', 'cool',
+        'nice', 'great', 'awesome', 'perfect', 'super', 'yes', 'no', 'sure',
+        'bye', 'goodbye', 'see you', 'take care', 'ttyl', 'can we study',
+        'let\'s study', 'start preparation', 'help me study', 'study together',
+        'getting boring', 'bored'
+    ]
+    
+    # Clean question for pattern matching
+    q_clean = q_lower.strip('!?.,')
+    
+    if q_clean in greeting_patterns or any(p in q_lower for p in casual_patterns):
+        return []
+    
+    # Short messages that are conversational
+    if len(question.split()) <= 2 and not any(c.isdigit() for c in question):
+        # Very short messages are likely conversational unless they're topic names
+        return []
+    
     return SmartFollowUpGenerator.generate(
         question=question,
         response=response,
         subject=subject,
         emotion=emotion
     )
+
+
 
 

@@ -82,57 +82,180 @@ const formatRelativeTime = (dateString) => {
   }
 };
 
-// Typing Indicator Component with rotating tips
-function TypingIndicator() {
-  const [tipIndex, setTipIndex] = useState(0);
-  const tips = [
-    "Analyzing your question...",
-    "Consulting Professor AI...",
-    "Adding metaphors...",
-    "Did you know? Students who ask follow-up questions learn 3x faster!",
-    "Preparing your personalized explanation..."
+// 🧠 Enhanced Agentic Thinking Indicator - Shows actual reasoning process
+function TypingIndicator({ questionType = 'general', agenticState = null }) {
+  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+  const [showFunFact, setShowFunFact] = useState(false);
+  const [funFactIndex, setFunFactIndex] = useState(0);
+  const [completedPhases, setCompletedPhases] = useState([]);
+
+  // Agentic phases that show actual AI reasoning
+  const AGENTIC_PHASES = [
+    { id: 'understand', icon: '🤔', title: 'Understanding', desc: 'Reading your question carefully...', color: 'blue' },
+    { id: 'think', icon: '💭', title: 'Thinking', desc: 'Breaking down the concept...', color: 'purple' },
+    { id: 'search', icon: '🔍', title: 'Searching', desc: 'Looking up formulas & facts...', color: 'amber' },
+    { id: 'verify', icon: '✅', title: 'Verifying', desc: 'Double-checking accuracy...', color: 'green' },
+    { id: 'compose', icon: '✍️', title: 'Composing', desc: 'Writing your explanation...', color: 'indigo' }
   ];
-  
+
+  const FUN_FACTS = [
+    "💡 Students who ask 'why' learn 2x faster!",
+    "🎯 Top scorers focus on understanding, not memorizing",
+    "🧠 Your brain creates new connections right now!",
+    "⚡ Short breaks improve memory retention",
+    "🌟 Great learners ask lots of questions!"
+  ];
+
+  // Progress through phases
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % tips.length);
-    }, 2000);
-    return () => clearInterval(interval);
+    const phaseInterval = setInterval(() => {
+      setCurrentPhaseIndex(prev => {
+        const next = prev + 1;
+        if (next < AGENTIC_PHASES.length) {
+          setCompletedPhases(AGENTIC_PHASES.slice(0, next).map(p => p.id));
+          return next;
+        }
+        return prev;
+      });
+    }, 2200);
+
+    // Show fun fact after delay
+    const funFactTimer = setTimeout(() => setShowFunFact(true), 5500);
+    const funFactRotator = setInterval(() => {
+      setFunFactIndex(prev => (prev + 1) % FUN_FACTS.length);
+    }, 3500);
+
+    return () => {
+      clearInterval(phaseInterval);
+      clearTimeout(funFactTimer);
+      clearInterval(funFactRotator);
+    };
   }, []);
-  
+
+  const currentPhase = AGENTIC_PHASES[currentPhaseIndex];
+  const colorClasses = {
+    blue: { bg: 'from-blue-50 to-cyan-50', border: 'border-blue-200', text: 'from-blue-500 to-cyan-500', dot: 'bg-blue-500' },
+    purple: { bg: 'from-purple-50 to-pink-50', border: 'border-purple-200', text: 'from-purple-500 to-pink-500', dot: 'bg-purple-500' },
+    amber: { bg: 'from-amber-50 to-orange-50', border: 'border-amber-200', text: 'from-amber-500 to-orange-500', dot: 'bg-amber-500' },
+    green: { bg: 'from-green-50 to-emerald-50', border: 'border-green-200', text: 'from-green-500 to-emerald-500', dot: 'bg-green-500' },
+    indigo: { bg: 'from-indigo-50 to-purple-50', border: 'border-indigo-200', text: 'from-indigo-500 to-purple-500', dot: 'bg-indigo-500' }
+  };
+  const colors = colorClasses[currentPhase.color];
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="flex justify-start"
     >
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl px-6 py-4 shadow-md border-2 border-purple-200">
-        <div className="flex items-center space-x-4">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="text-3xl"
-          >
-            🧠
-          </motion.div>
-          <div className="flex-1">
-            <div className="flex space-x-1 mb-2">
-              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={tipIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="text-sm text-gray-700 font-medium block"
+      <div className={`
+        relative overflow-hidden rounded-2xl shadow-lg border-2
+        bg-gradient-to-r ${colors.bg} ${colors.border}
+        px-6 py-5 min-w-[320px] max-w-md
+      `}>
+        {/* Animated background pulse */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${colors.text} opacity-5 animate-pulse`} />
+        
+        {/* Agentic badge */}
+        <div className="absolute top-2 right-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm">
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+            AI Agent
+          </span>
+        </div>
+
+        {/* Main content */}
+        <div className="relative z-10">
+          <div className="flex items-center space-x-4 mb-4">
+            {/* Animated icon */}
+            <motion.div
+              animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="text-4xl"
+            >
+              {currentPhase.icon}
+            </motion.div>
+            
+            <div className="flex-1">
+              <motion.h4
+                key={currentPhase.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`text-base font-bold bg-gradient-to-r ${colors.text} bg-clip-text text-transparent`}
               >
-                {tips[tipIndex]}
-              </motion.span>
-            </AnimatePresence>
+                {currentPhase.title}
+              </motion.h4>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={currentPhase.desc}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="text-sm text-gray-600"
+                >
+                  {currentPhase.desc}
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
+
+          {/* Progress steps */}
+          <div className="flex items-center gap-2 mb-3">
+            {AGENTIC_PHASES.map((phase, index) => (
+              <React.Fragment key={phase.id}>
+                <motion.div
+                  animate={{
+                    scale: index === currentPhaseIndex ? 1.3 : 1,
+                    backgroundColor: 
+                      completedPhases.includes(phase.id) ? '#10B981' :
+                      index === currentPhaseIndex ? '#8B5CF6' : '#D1D5DB'
+                  }}
+                  className={`
+                    w-2.5 h-2.5 rounded-full transition-all
+                    ${index === currentPhaseIndex ? 'ring-2 ring-purple-300 ring-offset-1' : ''}
+                  `}
+                />
+                {index < AGENTIC_PHASES.length - 1 && (
+                  <div className={`flex-1 h-0.5 rounded ${completedPhases.includes(phase.id) ? 'bg-green-400' : 'bg-gray-200'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Animated dots */}
+          <div className="flex justify-center gap-1.5">
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.12 }}
+                className={`w-2 h-2 rounded-full ${colors.dot}`}
+              />
+            ))}
+          </div>
+
+          {/* Fun fact */}
+          <AnimatePresence>
+            {showFunFact && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-3 pt-3 border-t border-gray-200/50"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={funFactIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-gray-500 italic text-center"
+                  >
+                    {FUN_FACTS[funFactIndex]}
+                  </motion.p>
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
@@ -1340,89 +1463,130 @@ export default function AITutorNeuroSymbolic() {
         loadUserProgress();
       }} />
       
-      {/* Persistent Sidebar on large screens */}
-      <div className="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-violet-600" />
-            Chats
-          </h2>
-          <button
-            onClick={() => loadSessions()}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
-            title="Refresh chat history"
-          >
-            <RefreshCw className={sessionsLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {sessions.map(session => (
-            <motion.div
-              key={session.session_id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`group w-full p-3 rounded-lg transition-all border cursor-pointer hover:shadow-md ${currentSession === session.session_id ? 'bg-gradient-to-r from-purple-100 to-indigo-100 border-purple-300 shadow-sm' : 'bg-white border-gray-200 hover:border-purple-200'}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <button onClick={() => loadSession(session.session_id)} className="text-left flex-1 min-w-0">
-                  {editing.id === session.session_id ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        className="flex-1 text-sm border rounded px-2 py-1"
-                        value={editing.title}
-                        onChange={(e) => setEditing(prev => ({ ...prev, title: e.target.value }))}
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <button title="Save" onClick={(e) => { e.stopPropagation(); commitInlineRename(session); }} className="p-1 bg-green-50 hover:bg-green-100 rounded"><span className="text-green-700 text-xs font-semibold">✓</span></button>
-                      <button title="Cancel" onClick={(e) => { e.stopPropagation(); cancelInlineRename(); }} className="p-1 bg-gray-50 hover:bg-gray-100 rounded"><span className="text-gray-700 text-xs font-semibold">×</span></button>
-                    </div>
-                  ) : (
-                    <div className="font-medium text-sm text-gray-900 truncate flex items-center gap-2" title={session.title || 'Untitled Chat'}>
-                      {session.title || 'Untitled Chat'}
-                      {session.pinned ? <span className="text-yellow-600">📌</span> : null}
-                      {session.bookmarked ? <span className="text-green-600">🔖</span> : null}
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-500 mt-1 flex items-center justify-between min-w-0">
-                    <span className="font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded" title={session.subject}>{session.subject || 'General'}</span>
-                    <span className="flex items-center gap-1">
-                      {sessionLoadingId === session.session_id && <Loader className="h-3 w-3 animate-spin" />}
-                      {formatRelativeTime(session.last_updated || session.created_at)}
-                    </span>
-                  </div>
-                </button>
-                <div className="relative">
-                  <button
-                    title="More"
-                    onClick={(e) => { e.stopPropagation(); setMenuOpenId(prev => prev === session.session_id ? null : session.session_id); }}
-                    className="px-2 py-1 hover:bg-gray-100 rounded text-gray-600 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                    aria-label="More options"
-                  >
-                    {/* Fallback kebab icon */}
-                    <span style={{fontSize:'16px', lineHeight: 1}}>⋮</span>
-                  </button>
-                  <AnimatePresence>
-                  {menuOpenId === session.session_id && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
-                    >
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); setEditing({ id: session.session_id, title: session.title || '' }); setMenuOpenId(null); }}>Rename</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); togglePinSession(session); setMenuOpenId(null); }}>{session.pinned ? 'Unpin' : 'Pin'}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); toggleBookmarkSession(session); setMenuOpenId(null); }}>{session.bookmarked ? 'Unbookmark' : 'Bookmark'}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-600 border-t border-gray-100" onClick={(e) => { e.stopPropagation(); requestDeleteSession(session); setMenuOpenId(null); }}>Delete</button>
-                    </motion.div>
-                  )}
-                  </AnimatePresence>
-                </div>
+      {/* Persistent Sidebar on large screens - PREMIUM DESIGN */}
+      <div className="hidden lg:flex lg:flex-col lg:w-72 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/80">
+        {/* Header with gradient accent */}
+        <div className="p-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md shadow-violet-500/20">
+                <MessageCircle className="h-4 w-4 text-white" />
               </div>
-            </motion.div>
-          ))}
+              <div>
+                <h2 className="text-sm font-bold text-slate-800">Chats</h2>
+                <p className="text-[10px] text-slate-500">{sessions.length} conversations</p>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => loadSessions()}
+              className="p-2 rounded-lg bg-slate-100 hover:bg-violet-100 text-slate-500 hover:text-violet-600 transition-all"
+              title="Refresh chat history"
+            >
+              <RefreshCw className={sessionsLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            </motion.button>
+          </div>
+        </div>
+        
+        {/* Chat list with custom scrollbar */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#c4b5fd transparent' }}>
+          {sessions.map((session, idx) => {
+            const isActive = currentSession === session.session_id;
+            const subjectColors = {
+              'Mathematics': { bg: 'bg-purple-100', text: 'text-purple-700', icon: '📐' },
+              'Physics': { bg: 'bg-blue-100', text: 'text-blue-700', icon: '⚛️' },
+              'Chemistry': { bg: 'bg-orange-100', text: 'text-orange-700', icon: '🧪' },
+              'Biology': { bg: 'bg-green-100', text: 'text-green-700', icon: '🧬' },
+              'General': { bg: 'bg-slate-100', text: 'text-slate-600', icon: '💭' }
+            };
+            const subjectStyle = subjectColors[session.subject] || subjectColors['General'];
+            
+            return (
+              <motion.div
+                key={session.session_id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, delay: idx * 0.02 }}
+                className={`group w-full rounded-xl transition-all duration-200 cursor-pointer ${
+                  isActive 
+                    ? 'bg-gradient-to-r from-violet-100 via-purple-50 to-violet-100 shadow-md shadow-violet-200/50 border-l-4 border-violet-500' 
+                    : 'bg-white hover:bg-slate-50 border-l-4 border-transparent hover:border-violet-300 shadow-sm hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 p-3">
+                  <button onClick={() => loadSession(session.session_id)} className="text-left flex-1 min-w-0">
+                    {editing.id === session.session_id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="flex-1 text-sm border border-violet-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                          value={editing.title}
+                          onChange={(e) => setEditing(prev => ({ ...prev, title: e.target.value }))}
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button title="Save" onClick={(e) => { e.stopPropagation(); commitInlineRename(session); }} className="p-1.5 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"><Check className="h-3.5 w-3.5 text-green-700" /></button>
+                        <button title="Cancel" onClick={(e) => { e.stopPropagation(); cancelInlineRename(); }} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"><X className="h-3.5 w-3.5 text-slate-600" /></button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="text-sm">{subjectStyle.icon}</span>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${subjectStyle.bg} ${subjectStyle.text}`}>
+                            {session.subject || 'General'}
+                          </span>
+                          {session.pinned && <span className="text-amber-500 text-xs">📌</span>}
+                          {session.bookmarked && <span className="text-emerald-500 text-xs">🔖</span>}
+                        </div>
+                        <div className={`font-medium text-sm truncate ${isActive ? 'text-violet-900' : 'text-slate-800'}`} title={session.title || 'Untitled Chat'}>
+                          {session.title || 'Untitled Chat'}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
+                          {sessionLoadingId === session.session_id && <Loader className="h-3 w-3 animate-spin text-violet-500" />}
+                          <span>{formatRelativeTime(session.last_updated || session.created_at)}</span>
+                        </div>
+                      </>
+                    )}
+                  </button>
+                  <div className="relative">
+                    <button
+                      title="More"
+                      onClick={(e) => { e.stopPropagation(); setMenuOpenId(prev => prev === session.session_id ? null : session.session_id); }}
+                      className="p-1.5 hover:bg-slate-200/80 rounded-lg text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"
+                      aria-label="More options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                    <AnimatePresence>
+                    {menuOpenId === session.session_id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 z-20 overflow-hidden"
+                      >
+                        <button className="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors" onClick={(e) => { e.stopPropagation(); setEditing({ id: session.session_id, title: session.title || '' }); setMenuOpenId(null); }}>
+                          <Edit2 className="h-3.5 w-3.5 text-slate-500" /> Rename
+                        </button>
+                        <button className="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors" onClick={(e) => { e.stopPropagation(); togglePinSession(session); setMenuOpenId(null); }}>
+                          <Pin className="h-3.5 w-3.5 text-slate-500" /> {session.pinned ? 'Unpin' : 'Pin'}
+                        </button>
+                        <button className="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors" onClick={(e) => { e.stopPropagation(); toggleBookmarkSession(session); setMenuOpenId(null); }}>
+                          <Bookmark className="h-3.5 w-3.5 text-slate-500" /> {session.bookmarked ? 'Unbookmark' : 'Bookmark'}
+                        </button>
+                        <div className="border-t border-slate-100" />
+                        <button className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 transition-colors" onClick={(e) => { e.stopPropagation(); requestDeleteSession(session); setMenuOpenId(null); }}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </button>
+                      </motion.div>
+                    )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
           {sessions.length === 0 && !sessionsLoading && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -1503,16 +1667,19 @@ export default function AITutorNeuroSymbolic() {
                 className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
               />
 
-              {/* Sidebar */}
+              {/* Sidebar - Premium Glassmorphic Design */}
               <motion.div
-                initial={{ x: -280 }}
+                initial={{ x: -300 }}
                 animate={{ x: 0 }}
-                exit={{ x: -280 }}
-                transition={{ type: 'spring', damping: 25 }}
-                className="fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-50 p-6 overflow-y-auto"
+                exit={{ x: -300 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl shadow-2xl z-50 p-5 overflow-y-auto border-r border-gray-100"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold text-gray-900">Chat History</h2>
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-violet-600" />
+                    <h2 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Chats</h2>
+                  </div>
                   <div className="flex items-center gap-2">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -1667,13 +1834,13 @@ export default function AITutorNeuroSymbolic() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header - Clean Premium Design */}
+        {/* Header - Premium Glassmorphic Design */}
         <motion.div
           animate={{
             height: headerCollapsed ? '70px' : '110px'
           }}
           transition={{ duration: 0.3 }}
-          className="bg-white border-b border-gray-200 shadow-sm"
+          className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm"
         >
           <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-center py-3">
             {/* Top row - Always visible */}
@@ -1692,22 +1859,31 @@ export default function AITutorNeuroSymbolic() {
                   <SathiNavMenu />
                 </div>
                 
-                {/* Logo & Brand - "Sathi" Identity - Professional Design */}
+                {/* Logo & Brand - "Sathi" Identity - Premium Design */}
                 <div className="flex items-center space-x-3 flex-shrink-0">
-                  {/* Single professional Sathi icon */}
+                  {/* Professional animated Sathi icon */}
                   <div className="relative">
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-700 rounded-xl shadow-lg flex items-center justify-center">
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl blur-md opacity-40"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    />
+                    <div className="relative w-10 h-10 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 rounded-xl shadow-lg flex items-center justify-center">
                       <Brain className="w-5 h-5 text-white" />
                     </div>
-                    {/* Online indicator */}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+                    {/* Online indicator with pulse */}
+                    <motion.div 
+                      className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
                   </div>
                   
                   <div className="min-w-0">
-                    <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    <h1 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
                       Sathi
                     </h1>
-                    <p className="text-xs text-gray-500 font-medium">AI Learning Assistant</p>
+                    <p className="text-[11px] text-gray-500 font-medium tracking-wide">AI Learning Assistant</p>
                   </div>
                 </div>
               </div>
@@ -1736,13 +1912,13 @@ export default function AITutorNeuroSymbolic() {
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   startNewChat();
                   setShowWelcome(true);
                 }}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center space-x-2 shadow-sm hover:shadow-md transition-all flex-shrink-0 text-sm font-medium"
+                className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl flex items-center space-x-2 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-200 flex-shrink-0 text-sm font-semibold"
               >
                 <Plus className="h-4 w-4" />
                 <span>New Chat</span>
@@ -1771,162 +1947,198 @@ export default function AITutorNeuroSymbolic() {
           style={{ minHeight: 0 }}
         >
           <div className="max-w-4xl mx-auto px-4 py-6 min-h-full flex flex-col">
-            {/* Welcome Screen - PREMIUM STUDENT-CENTRIC DESIGN */}
+            {/* Welcome Screen - ULTRA PREMIUM STUDENT-CENTRIC DESIGN */}
             {showWelcome && messages.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center py-12 px-4"
+                className="text-center py-16 px-4 relative"
               >
+                {/* Background gradient mesh effect */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
+                  <div className="absolute top-20 right-1/4 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl" />
+                  <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-blue-500/8 rounded-full blur-3xl" />
+                </div>
+
                 {/* Premium Animated Logo - Sathi Identity */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', duration: 0.8 }}
-                  className="relative inline-block mb-8"
+                  transition={{ type: 'spring', duration: 0.8, bounce: 0.4 }}
+                  className="relative inline-block mb-10"
                 >
-                  {/* Outer glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl blur-2xl opacity-30 scale-150" />
+                  {/* Animated outer glow */}
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-3xl blur-2xl"
+                    animate={{ 
+                      opacity: [0.3, 0.5, 0.3],
+                      scale: [1.4, 1.6, 1.4]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
                   
-                  {/* Main logo container */}
-                  <div className="relative w-24 h-24 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-500/30">
+                  {/* Main logo container with animated gradient */}
+                  <div className="relative w-28 h-28 rounded-3xl shadow-2xl shadow-purple-500/40 overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 50%, #F97316 100%)',
+                        backgroundSize: '200% 200%'
+                      }}
+                      animate={{
+                        backgroundPosition: ['0% 0%', '100% 100%', '0% 0%']
+                      }}
+                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    
+                    {/* Glass overlay */}
+                    <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
+                    
                     {/* Sparkle effects */}
                     <motion.div
-                      animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                       className="absolute inset-0"
                     >
-                      <Sparkles className="w-5 h-5 text-white/30 absolute top-2 right-2" />
-                      <Sparkles className="w-4 h-4 text-white/20 absolute bottom-3 left-3" />
+                      <Sparkles className="w-5 h-5 text-white/40 absolute top-3 right-3" />
+                      <Sparkles className="w-4 h-4 text-white/30 absolute bottom-4 left-3" />
                     </motion.div>
                     
-                    {/* Handshake emoji - represents "Sathi" (friend) */}
-                    <motion.span
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="text-5xl"
-                    >
-                      🤝
-                    </motion.span>
+                    {/* Handshake emoji */}
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <motion.span
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="text-6xl"
+                      >
+                        🤝
+                      </motion.span>
+                    </div>
                   </div>
                   
-                  {/* Online status dot */}
+                  {/* Online status with pulse */}
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white flex items-center justify-center"
+                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white shadow-lg shadow-emerald-500/50 flex items-center justify-center"
                   >
-                    <div className="w-2 h-2 bg-white rounded-full" />
+                    <motion.div 
+                      className="w-2.5 h-2.5 bg-white rounded-full"
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
                   </motion.div>
                 </motion.div>
 
-                {/* Title with gradient */}
-                <motion.h1
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent"
+                {/* Title with animated gradient */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mb-6"
                 >
-                  Hey! Ready to Learn? 🚀
-                </motion.h1>
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
+                    <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                      Hey! Ready to Learn?
+                    </span>
+                    <motion.span 
+                      className="inline-block ml-2"
+                      animate={{ rotate: [0, 14, -8, 14, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
+                    >
+                      💪
+                    </motion.span>
+                  </h1>
+                </motion.div>
                 
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-lg md:text-xl text-gray-600 mb-3 font-medium max-w-md mx-auto"
+                  transition={{ delay: 0.4 }}
+                  className="text-lg md:text-xl text-gray-600 mb-4 font-medium max-w-lg mx-auto"
                 >
                   Your AI friend who explains things in the coolest way!
                 </motion.p>
                 
-                {/* Feature tags */}
+                {/* Feature tags - Premium glass design */}
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-500 mb-10"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-wrap items-center justify-center gap-2 mb-12"
                 >
-                  <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full">🏏 Cricket analogies</span>
-                  <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full">🎯 Real examples</span>
-                  <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full">📝 Exam tips</span>
-                  <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full">🗣️ Hinglish!</span>
+                  {[
+                    { icon: '🏏', text: 'Cricket analogies' },
+                    { icon: '🎯', text: 'Real examples' },
+                    { icon: '📝', text: 'Exam tips' },
+                    { icon: '🗣️', text: 'Hinglish!' }
+                  ].map((tag, i) => (
+                    <motion.span
+                      key={tag.text}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6 + i * 0.1 }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200/80 shadow-sm hover:shadow-md hover:border-violet-200 transition-all cursor-default"
+                    >
+                      <span>{tag.icon}</span>
+                      <span>{tag.text}</span>
+                    </motion.span>
+                  ))}
                 </motion.div>
 
-                {/* Quick prompts - ENHANCED with subject badges */}
+                {/* Quick prompts - PREMIUM GLASSMORPHIC CARDS */}
                 {defaultPrompts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {defaultPrompts.map((prompt, index) => {
                       const promptText = typeof prompt === 'string' ? prompt : prompt.text || prompt;
-                      const promptSubject = typeof prompt === 'object' ? prompt.subject : null;
-                      const promptEmoji = typeof prompt === 'object' ? prompt.emoji : null;
                       
-                      // Different gradient for each card
-                      const gradients = [
-                        'from-purple-500 to-pink-500',
-                        'from-blue-500 to-cyan-500',
-                        'from-green-500 to-emerald-500',
-                        'from-orange-500 to-yellow-500',
-                        'from-red-500 to-pink-500',
-                        'from-indigo-500 to-purple-500'
+                      // Premium icon and color schemes
+                      const cardStyles = [
+                        { icon: Book, gradient: 'from-blue-500 to-cyan-500', accent: 'text-blue-500', bg: 'hover:from-blue-50 hover:to-cyan-50' },
+                        { icon: Brain, gradient: 'from-violet-500 to-purple-500', accent: 'text-violet-500', bg: 'hover:from-violet-50 hover:to-purple-50' },
+                        { icon: Zap, gradient: 'from-orange-500 to-amber-500', accent: 'text-orange-500', bg: 'hover:from-orange-50 hover:to-amber-50' },
+                        { icon: Trophy, gradient: 'from-emerald-500 to-teal-500', accent: 'text-emerald-500', bg: 'hover:from-emerald-50 hover:to-teal-50' }
                       ];
                       
-                      const subjectColors = {
-                        'Math': 'bg-purple-100 text-purple-700',
-                        'Physics': 'bg-blue-100 text-blue-700',
-                        'Chemistry': 'bg-orange-100 text-orange-700',
-                        'Biology': 'bg-green-100 text-green-700'
-                      };
+                      const style = cardStyles[index % cardStyles.length];
+                      const IconComponent = style.icon;
                       
                       return (
                         <motion.button
                           key={index}
-                          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 30, scale: 0.9 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ delay: 0.5 + index * 0.08, type: 'spring', stiffness: 200 }}
-                          whileHover={{ scale: 1.05, y: -8 }}
+                          transition={{ 
+                            delay: 0.7 + index * 0.1, 
+                            type: 'spring', 
+                            stiffness: 100 
+                          }}
+                          whileHover={{ scale: 1.03, y: -4 }}
                           whileTap={{ scale: 0.97 }}
                           onClick={() => handleQuickSend(promptText)}
-                          className="group relative p-5 bg-white rounded-2xl border-2 border-gray-200 hover:border-transparent hover:shadow-2xl transition-all text-left overflow-hidden"
+                          className={`group relative flex items-start gap-4 p-5 rounded-2xl text-left overflow-hidden transition-all duration-300 bg-white/80 backdrop-blur-sm border border-gray-200/80 shadow-sm hover:shadow-xl hover:border-transparent hover:bg-gradient-to-r ${style.bg}`}
                         >
-                          {/* Gradient overlay on hover */}
-                          <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index % 6]} opacity-0 group-hover:opacity-15 transition-opacity`}></div>
+                          {/* Accent line on hover */}
+                          <motion.div
+                            className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${style.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                          />
                           
-                          {/* Subject badge */}
-                          {promptSubject && (
-                            <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-bold ${subjectColors[promptSubject] || 'bg-gray-100 text-gray-700'}`}>
-                              {promptSubject}
-                            </div>
-                          )}
+                          {/* Icon container */}
+                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${style.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
+                            <IconComponent className="w-6 h-6 text-white" />
+                          </div>
                           
-                          {/* Content */}
-                          <div className="relative z-10 space-y-3">
-                            {promptEmoji && (
-                              <motion.div
-                                whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.2 }}
-                                transition={{ duration: 0.5 }}
-                                className="text-3xl"
-                              >
-                                {promptEmoji}
-                              </motion.div>
-                            )}
-                            <p 
-                              className="text-gray-900 font-semibold leading-relaxed group-hover:text-purple-900 transition-colors pr-12"
-                              style={{ fontSize: '15px', lineHeight: '1.6' }}
-                            >
+                          {/* Text content */}
+                          <div className="flex-1 min-w-0 pt-1">
+                            <p className="text-sm font-medium text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors">
                               {promptText}
                             </p>
                           </div>
                           
-                          {/* Arrow hint */}
-                          <motion.div
-                            initial={{ x: -10, opacity: 0 }}
-                            animate={{ x: 0, opacity: 0 }}
-                            className={`absolute right-3 bottom-3 group-hover:opacity-100 transition-opacity`}
-                            whileHover={{ x: 3 }}
-                          >
-                            <div className={`p-2 rounded-full bg-gradient-to-r ${gradients[index % 6]}`}>
-                              <ArrowRight className="h-4 w-4 text-white" />
-                            </div>
+                          {/* Arrow indicator */}
+                          <motion.div className="flex-shrink-0 pt-1">
+                            <ArrowRight className={`w-5 h-5 ${style.accent} opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300`} />
                           </motion.div>
                         </motion.button>
                       );
@@ -1960,9 +2172,10 @@ export default function AITutorNeuroSymbolic() {
                     {message.type === 'user' && (
                       <div className="flex justify-end">
                         <motion.div
-                          initial={{ opacity: 0, x: 10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="max-w-[70%] bg-gray-900 text-white rounded-2xl rounded-br-sm px-4 py-3 shadow-sm"
+                          initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                          className="max-w-[75%] bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-br-md px-5 py-3.5 shadow-lg shadow-gray-900/20"
                         >
                           {/* Show image if uploaded */}
                           {message.image_preview && (
@@ -1998,8 +2211,13 @@ export default function AITutorNeuroSymbolic() {
                       return (
                       <div className="flex justify-start">
                         <div className="max-w-3xl w-full">
-                          {/* CLEAN RESPONSE CONTAINER - Standard Chat Design (No avatar/header) */}
-                          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                          {/* Premium Response Container - Glassmorphic Design */}
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg shadow-gray-200/40 border border-gray-100/80"
+                          >
                             {/* Memory Context Banner - Shows learning progress */}
                             {message.content?.memory_context && (
                               <MemoryContextBanner memoryContext={message.content.memory_context} />
@@ -2124,7 +2342,7 @@ export default function AITutorNeuroSymbolic() {
                                 </svg>
                               </button>
                             </div>
-                          </div>
+                          </motion.div>
                         </div>
                       </div>
                     );
@@ -2181,35 +2399,44 @@ export default function AITutorNeuroSymbolic() {
           </div>
         </div>
 
-        {/* Input Bar with Floating Suggestions */}
-        <div className="border-t border-gray-200 bg-white">
-          <div className="max-w-4xl mx-auto px-4 py-3">
-            {/* Floating Follow-up Suggestions - Show above input when available */}
+        {/* Input Bar with Floating Suggestions - Premium Design */}
+        <div className="border-t border-gray-100 bg-gradient-to-t from-gray-50/80 to-white">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            {/* Floating Follow-up Suggestions - Compact Horizontal Chips */}
             <AnimatePresence>
               {floatingFollowUps.length > 0 && !loading && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="mb-3 flex flex-wrap gap-2"
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-3"
                 >
-                  {floatingFollowUps.map((suggestion, idx) => (
-                    <motion.button
-                      key={idx}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setInputMessage(suggestion);
-                        setFloatingFollowUps([]); // Clear after selection
-                        inputRef.current?.focus();
-                        setTimeout(() => handleSend(), 100);
-                      }}
-                      className="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 hover:border-violet-300 rounded-full text-sm text-violet-700 transition-all flex items-center gap-1.5"
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                      <span className="truncate max-w-[200px]">{suggestion}</span>
-                    </motion.button>
-                  ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-slate-500 mr-1">💡</span>
+                    {floatingFollowUps.map((suggestion, idx) => {
+                      const suggestionText = typeof suggestion === 'string' ? suggestion : suggestion.text || suggestion;
+                      return (
+                        <motion.button
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          whileHover={{ scale: 1.03, y: -1 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => {
+                            setInputMessage(suggestionText);
+                            setFloatingFollowUps([]);
+                            inputRef.current?.focus();
+                            setTimeout(() => handleSend(), 100);
+                          }}
+                          className="px-3 py-1.5 bg-white hover:bg-violet-50 border border-slate-200 hover:border-violet-400 rounded-full text-xs font-medium text-slate-700 hover:text-violet-700 transition-all shadow-sm hover:shadow-md"
+                        >
+                          {suggestionText}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -2251,8 +2478,8 @@ export default function AITutorNeuroSymbolic() {
                 className="hidden"
               />
               
-              {/* Main Input Container - Clean design */}
-              <div className="flex items-end gap-2 bg-white rounded-xl border border-gray-200 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 transition-all p-2 shadow-sm">
+              {/* Main Input Container - Premium Glass Design */}
+              <div className="flex items-end gap-2 bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/80 focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100/50 transition-all duration-300 p-2.5 shadow-lg shadow-gray-200/50 hover:shadow-xl hover:shadow-gray-200/60">
                 {/* Image Attach Button */}
                 <button
                   type="button"
@@ -2264,7 +2491,7 @@ export default function AITutorNeuroSymbolic() {
                   <ImageIcon className="w-5 h-5" />
                 </button>
                 
-                {/* Textarea */}
+                {/* Textarea - Premium styling */}
                 <textarea
                   ref={inputRef}
                   value={inputMessage}
@@ -2275,12 +2502,12 @@ export default function AITutorNeuroSymbolic() {
                       handleSend();
                     }
                   }}
-                  placeholder="Ask a question..."
-                  className="flex-1 px-2 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm leading-relaxed max-h-[120px]"
+                  placeholder="Ask anything... I'll explain like a friend 💪"
+                  className="flex-1 px-3 py-2.5 bg-transparent border-0 focus:ring-0 outline-none resize-none text-slate-800 dark:text-gray-100 placeholder-slate-400 dark:placeholder-gray-500 text-sm leading-relaxed max-h-[120px] font-medium"
                   rows="1"
                   disabled={loading}
                   style={{ 
-                    minHeight: '40px',
+                    minHeight: '44px',
                     height: 'auto',
                     maxHeight: '120px'
                   }}
@@ -2308,11 +2535,11 @@ export default function AITutorNeuroSymbolic() {
                     <motion.button
                       type="submit"
                       disabled={!inputMessage.trim() && !selectedImage}
-                      whileHover={{ scale: inputMessage.trim() || selectedImage ? 1.02 : 1 }}
-                      whileTap={{ scale: inputMessage.trim() || selectedImage ? 0.98 : 1 }}
-                      className={`w-9 h-9 rounded-lg transition-all flex items-center justify-center ${
+                      whileHover={{ scale: inputMessage.trim() || selectedImage ? 1.05 : 1 }}
+                      whileTap={{ scale: inputMessage.trim() || selectedImage ? 0.95 : 1 }}
+                      className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
                         inputMessage.trim() || selectedImage
-                          ? 'bg-violet-600 hover:bg-violet-700 text-white'
+                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50'
                           : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       }`}
                       title="Send message"
@@ -2323,15 +2550,15 @@ export default function AITutorNeuroSymbolic() {
                 </div>
               </div>
               
-              {/* Helper Text - Minimal */}
-              <div className="flex items-center justify-between mt-1.5 px-1">
-                <p className="text-[11px] text-gray-400">
-                  <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-500 font-mono text-[10px]">Enter</kbd> to send
+              {/* Helper Text - Clean Design */}
+              <div className="flex items-center justify-between mt-2 px-1">
+                <p className="text-xs text-slate-500 font-medium">
+                  Press <kbd className="px-1.5 py-0.5 bg-slate-100 rounded-md text-slate-600 font-mono text-[10px] border border-slate-200">Enter</kbd> to send
                 </p>
                 {loading && (
-                  <span className="text-[11px] text-violet-500 flex items-center gap-1">
-                    <Loader className="w-3 h-3 animate-spin" />
-                    Thinking...
+                  <span className="text-xs text-violet-600 flex items-center gap-1.5 font-medium">
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
+                    Sathi is thinking...
                   </span>
                 )}
               </div>
