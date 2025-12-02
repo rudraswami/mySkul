@@ -9,9 +9,9 @@ import {
   Square, 
   Image as ImageIcon, 
   X,
-  Paperclip,
-  Sparkles
+  Paperclip
 } from 'lucide-react';
+import { NeuralSparkIndicator } from './NeuralThinkingIndicator';
 
 export default function EnhancedChatInput({
   value,
@@ -161,14 +161,14 @@ export default function EnhancedChatInput({
             <p className="text-xs text-gray-400 dark:text-gray-500">
               Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500 dark:text-gray-400 font-mono text-[10px]">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-500 dark:text-gray-400 font-mono text-[10px]">Shift+Enter</kbd> for new line
             </p>
+            {/* Neural processing indicator */}
             {isLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-1.5 text-xs text-purple-500"
+                className="flex items-center"
               >
-                <Sparkles className="w-3 h-3 animate-pulse" />
-                <span>Thinking...</span>
+                <NeuralSparkIndicator isLoading={true} size="small" />
               </motion.div>
             )}
           </div>

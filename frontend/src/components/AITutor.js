@@ -37,6 +37,7 @@ import {
 import VisualPlayer from './intent/VisualPlayer';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import UpgradeModal from './UpgradeModal';
+import { NeuralPulseIndicator } from './chat/NeuralThinkingIndicator';
 import '../styles/ai-tutor-redesign.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1293,27 +1294,16 @@ export default function AITutorPremium() {
               )}
             </AnimatePresence>
             
-            {/* NEW: AI Typing Indicator with accessibility */}
+            {/* Neural Thinking Indicator - NuroSpark Premium Animation */}
             {isAITyping && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="flex justify-start"
-                role="status"
-                aria-live="polite"
-                aria-label="AI is generating response"
+                className="flex justify-center w-full"
               >
-                <div className="ai-message-bubble flex items-center space-x-2 py-4">
-                  <Brain className="h-5 w-5 text-purple-600 animate-pulse" />
-                  <div className="flex space-x-1">
-                    <span className="typing-dot"></span>
-                    <span className="typing-dot"></span>
-                    <span className="typing-dot"></span>
-                  </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">AI is thinking...</span>
-                </div>
+                <NeuralPulseIndicator isLoading={true} />
               </motion.div>
             )}
             

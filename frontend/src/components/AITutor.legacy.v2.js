@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import SemanticAIResponse from './SemanticAIResponse';
 import UpgradeModal from './UpgradeModal';
+import { NeuralPulseIndicator } from './chat/NeuralThinkingIndicator';
 import '../styles/ai-tutor-redesign.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1285,15 +1286,7 @@ export default function AITutorPremium() {
                 aria-live="polite"
                 aria-label="AI is generating response"
               >
-                <div className="ai-message-bubble flex items-center space-x-2 py-4">
-                  <Brain className="h-5 w-5 text-purple-600 animate-pulse" />
-                  <div className="flex space-x-1">
-                    <span className="typing-dot"></span>
-                    <span className="typing-dot"></span>
-                    <span className="typing-dot"></span>
-                  </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">AI is thinking...</span>
-                </div>
+                <NeuralPulseIndicator isLoading={true} />
               </motion.div>
             )}
             

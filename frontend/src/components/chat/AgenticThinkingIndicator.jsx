@@ -9,10 +9,21 @@
  * 
  * This makes the AI feel more human and transparent,
  * showing students HOW it's thinking, not just THAT it's thinking.
+ * 
+ * UPDATE: Now includes NuroSpark Neural Thinking Indicators
+ * for premium, professional AI cognitive processing animation.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Re-export NuroSpark Neural Indicators for unified imports
+export { 
+  NeuralThinkingIndicator, 
+  NeuralPulseIndicator, 
+  NeuralFlickerIndicator,
+  NeuralSparkIndicator 
+} from './NeuralThinkingIndicator';
 
 // Agentic phases with icons and descriptions
 const AGENTIC_PHASES = [

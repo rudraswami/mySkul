@@ -14,15 +14,13 @@ import AtomicInteractiveCard from '../../teaching/AtomicInteractiveCard';
 import CovalentInteractiveCard from '../../teaching/CovalentInteractiveCard';
 import SketchAnimator from '../SketchAnimator'; // Importing the SketchAnimator from components root
 import { useExistingVisualEngine } from '../../hooks/useExistingVisualEngine'; // Importing visual engine hook from src/hooks
+import { NeuralThinkingIndicator } from '../chat/NeuralThinkingIndicator';
 
 export default function NeuroSymbolicResponse({ response, isLoading }) {
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-8 my-4">
-        <div className="flex items-center justify-center space-x-3">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-          <span className="text-gray-600">AI is thinking...</span>
-        </div>
+      <div className="flex justify-center w-full py-4">
+        <NeuralThinkingIndicator isLoading={true} variant="glow" />
       </div>
     );
   }

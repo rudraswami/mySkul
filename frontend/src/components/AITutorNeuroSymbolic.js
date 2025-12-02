@@ -57,6 +57,9 @@ import SathiNavMenu from './chat/SathiNavMenu';
 import MicroReward, { LevelUpCelebration, StreakCelebration } from './gamification/MicroReward';
 import { useGamification } from '../hooks/useGamification';
 
+// NuroSpark Neural Thinking Animation
+import { NeuralThinkingIndicator } from './chat/NeuralThinkingIndicator';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Helper: Format relative time consistently
@@ -82,182 +85,19 @@ const formatRelativeTime = (dateString) => {
   }
 };
 
-// 🧠 Enhanced Agentic Thinking Indicator - Shows actual reasoning process
-function TypingIndicator({ questionType = 'general', agenticState = null }) {
-  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const [showFunFact, setShowFunFact] = useState(false);
-  const [funFactIndex, setFunFactIndex] = useState(0);
-  const [completedPhases, setCompletedPhases] = useState([]);
-
-  // Agentic phases that show actual AI reasoning
-  const AGENTIC_PHASES = [
-    { id: 'understand', icon: '🤔', title: 'Understanding', desc: 'Reading your question carefully...', color: 'blue' },
-    { id: 'think', icon: '💭', title: 'Thinking', desc: 'Breaking down the concept...', color: 'purple' },
-    { id: 'search', icon: '🔍', title: 'Searching', desc: 'Looking up formulas & facts...', color: 'amber' },
-    { id: 'verify', icon: '✅', title: 'Verifying', desc: 'Double-checking accuracy...', color: 'green' },
-    { id: 'compose', icon: '✍️', title: 'Composing', desc: 'Writing your explanation...', color: 'indigo' }
-  ];
-
-  const FUN_FACTS = [
-    "💡 Students who ask 'why' learn 2x faster!",
-    "🎯 Top scorers focus on understanding, not memorizing",
-    "🧠 Your brain creates new connections right now!",
-    "⚡ Short breaks improve memory retention",
-    "🌟 Great learners ask lots of questions!"
-  ];
-
-  // Progress through phases
-  useEffect(() => {
-    const phaseInterval = setInterval(() => {
-      setCurrentPhaseIndex(prev => {
-        const next = prev + 1;
-        if (next < AGENTIC_PHASES.length) {
-          setCompletedPhases(AGENTIC_PHASES.slice(0, next).map(p => p.id));
-          return next;
-        }
-        return prev;
-      });
-    }, 2200);
-
-    // Show fun fact after delay
-    const funFactTimer = setTimeout(() => setShowFunFact(true), 5500);
-    const funFactRotator = setInterval(() => {
-      setFunFactIndex(prev => (prev + 1) % FUN_FACTS.length);
-    }, 3500);
-
-    return () => {
-      clearInterval(phaseInterval);
-      clearTimeout(funFactTimer);
-      clearInterval(funFactRotator);
-    };
-  }, []);
-
-  const currentPhase = AGENTIC_PHASES[currentPhaseIndex];
-  const colorClasses = {
-    blue: { bg: 'from-blue-50 to-cyan-50', border: 'border-blue-200', text: 'from-blue-500 to-cyan-500', dot: 'bg-blue-500' },
-    purple: { bg: 'from-purple-50 to-pink-50', border: 'border-purple-200', text: 'from-purple-500 to-pink-500', dot: 'bg-purple-500' },
-    amber: { bg: 'from-amber-50 to-orange-50', border: 'border-amber-200', text: 'from-amber-500 to-orange-500', dot: 'bg-amber-500' },
-    green: { bg: 'from-green-50 to-emerald-50', border: 'border-green-200', text: 'from-green-500 to-emerald-500', dot: 'bg-green-500' },
-    indigo: { bg: 'from-indigo-50 to-purple-50', border: 'border-indigo-200', text: 'from-indigo-500 to-purple-500', dot: 'bg-indigo-500' }
-  };
-  const colors = colorClasses[currentPhase.color];
-
+// 🧠 NuroSpark Neural Thinking Indicator
+// Premium, compact cognitive processing animation (max 32px height)
+// Uses: NeuralThinkingIndicator from ./chat/NeuralThinkingIndicator
+function TypingIndicator() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex justify-start"
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.15 }}
+      className="flex justify-center w-full"
     >
-      <div className={`
-        relative overflow-hidden rounded-2xl shadow-lg border-2
-        bg-gradient-to-r ${colors.bg} ${colors.border}
-        px-6 py-5 min-w-[320px] max-w-md
-      `}>
-        {/* Animated background pulse */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${colors.text} opacity-5 animate-pulse`} />
-        
-        {/* Agentic badge */}
-        <div className="absolute top-2 right-2">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-            AI Agent
-          </span>
-        </div>
-
-        {/* Main content */}
-        <div className="relative z-10">
-          <div className="flex items-center space-x-4 mb-4">
-            {/* Animated icon */}
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="text-4xl"
-            >
-              {currentPhase.icon}
-            </motion.div>
-            
-            <div className="flex-1">
-              <motion.h4
-                key={currentPhase.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className={`text-base font-bold bg-gradient-to-r ${colors.text} bg-clip-text text-transparent`}
-              >
-                {currentPhase.title}
-              </motion.h4>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={currentPhase.desc}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="text-sm text-gray-600"
-                >
-                  {currentPhase.desc}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Progress steps */}
-          <div className="flex items-center gap-2 mb-3">
-            {AGENTIC_PHASES.map((phase, index) => (
-              <React.Fragment key={phase.id}>
-                <motion.div
-                  animate={{
-                    scale: index === currentPhaseIndex ? 1.3 : 1,
-                    backgroundColor: 
-                      completedPhases.includes(phase.id) ? '#10B981' :
-                      index === currentPhaseIndex ? '#8B5CF6' : '#D1D5DB'
-                  }}
-                  className={`
-                    w-2.5 h-2.5 rounded-full transition-all
-                    ${index === currentPhaseIndex ? 'ring-2 ring-purple-300 ring-offset-1' : ''}
-                  `}
-                />
-                {index < AGENTIC_PHASES.length - 1 && (
-                  <div className={`flex-1 h-0.5 rounded ${completedPhases.includes(phase.id) ? 'bg-green-400' : 'bg-gray-200'}`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Animated dots */}
-          <div className="flex justify-center gap-1.5">
-            {[0, 1, 2].map(i => (
-              <motion.div
-                key={i}
-                animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.12 }}
-                className={`w-2 h-2 rounded-full ${colors.dot}`}
-              />
-            ))}
-          </div>
-
-          {/* Fun fact */}
-          <AnimatePresence>
-            {showFunFact && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-3 pt-3 border-t border-gray-200/50"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={funFactIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-xs text-gray-500 italic text-center"
-                  >
-                    {FUN_FACTS[funFactIndex]}
-                  </motion.p>
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+      <NeuralThinkingIndicator isLoading={true} variant="glow" />
     </motion.div>
   );
 }
@@ -2555,11 +2395,11 @@ export default function AITutorNeuroSymbolic() {
                 <p className="text-xs text-slate-500 font-medium">
                   Press <kbd className="px-1.5 py-0.5 bg-slate-100 rounded-md text-slate-600 font-mono text-[10px] border border-slate-200">Enter</kbd> to send
                 </p>
+                {/* Neural processing indicator in helper area */}
                 {loading && (
-                  <span className="text-xs text-violet-600 flex items-center gap-1.5 font-medium">
-                    <Loader className="w-3.5 h-3.5 animate-spin" />
-                    Sathi is thinking...
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <NeuralThinkingIndicator isLoading={true} variant="subtle" />
+                  </div>
                 )}
               </div>
             </form>
