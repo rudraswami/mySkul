@@ -1,27 +1,7 @@
 /**
- * NuroSpark Neural Thinking Indicator Styles
- * ==========================================
- * 
- * Premium, professional AI cognitive processing animation.
- * Brand: Electric Blue #2F6BFF, Spark Purple #7A42FF, Neon Yellow #FFD438
+ * NuroSpark Neural Thinking Indicator
+ * Single consistent animation for production use
  */
-
-/* ==========================================================================
-   CSS Custom Properties (Brand Colors)
-   ========================================================================== */
-
-:root {
-  --neural-blue: #2F6BFF;
-  --neural-purple: #7A42FF;
-  --neural-yellow: #FFD438;
-  --neural-glow-blue: rgba(47, 107, 255, 0.4);
-  --neural-glow-purple: rgba(122, 66, 255, 0.4);
-  --neural-glow-yellow: rgba(255, 212, 56, 0.3);
-}
-
-/* ==========================================================================
-   Screen Reader Only
-   ========================================================================== */
 
 .sr-only {
   position: absolute;
@@ -35,10 +15,6 @@
   border: 0;
 }
 
-/* ==========================================================================
-   Main Neural Thinking Indicator
-   ========================================================================== */
-
 .neural-thinking-container {
   display: flex;
   justify-content: center;
@@ -49,455 +25,65 @@
 }
 
 .neural-thinking-indicator {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 20px;
   background: rgba(47, 107, 255, 0.06);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
-/* Variant: Subtle (less visible container) */
-.neural-thinking--subtle {
-  background: transparent;
-  backdrop-filter: none;
-}
-
-/* Variant: Glow (more pronounced) */
-.neural-thinking--glow {
-  background: rgba(122, 66, 255, 0.08);
-  box-shadow: 0 0 20px rgba(122, 66, 255, 0.15);
-}
-
-/* ==========================================================================
-   Neural Dots Animation
-   ========================================================================== */
-
-.neural-dots {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.65;
-}
-
 .neural-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-primary, var(--neural-blue));
-  box-shadow: 0 0 8px var(--neural-glow-blue);
-  animation: neuralPulse var(--duration, 1s) ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
+  background: linear-gradient(135deg, #2F6BFF, #7A42FF);
   opacity: 0.5;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  animation: neuralPulse 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.15s);
+  box-shadow: 0 0 8px rgba(122, 66, 255, 0.3);
 }
 
-/* Staggered dot sizes for neural network feel */
-.neural-dot--0 { --duration: 0.8s; }
-.neural-dot--1 { --duration: 1.1s; width: 5px; height: 5px; }
-.neural-dot--2 { --duration: 0.7s; width: 7px; height: 7px; }
-.neural-dot--3 { --duration: 1.0s; width: 5px; height: 5px; }
-.neural-dot--4 { --duration: 0.9s; }
+/* Slight size variance for organic feel */
+.neural-dot:nth-child(2),
+.neural-dot:nth-child(4) {
+  width: 5px;
+  height: 5px;
+}
 
-/* Neural pulse keyframes - organic timing variance */
+.neural-dot:nth-child(3) {
+  width: 7px;
+  height: 7px;
+}
+
 @keyframes neuralPulse {
   0%, 100% {
     opacity: 0.4;
     transform: scale(0.85);
-    box-shadow: 0 0 4px var(--neural-glow-blue);
-  }
-  25% {
-    opacity: 0.7;
-    transform: scale(1);
+    box-shadow: 0 0 4px rgba(47, 107, 255, 0.3);
   }
   50% {
     opacity: 1;
     transform: scale(1.15);
-    box-shadow: 0 0 12px var(--neural-glow-purple);
-  }
-  75% {
-    opacity: 0.8;
-    transform: scale(1.05);
-    box-shadow: 0 0 8px var(--neural-glow-yellow);
+    box-shadow: 0 0 12px rgba(122, 66, 255, 0.5);
   }
 }
 
-/* ==========================================================================
-   Neural Spark Connections
-   ========================================================================== */
-
-.neural-connections {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: 20px;
+/* Dark mode */
+.dark .neural-thinking-indicator {
+  background: rgba(122, 66, 255, 0.1);
 }
 
-.neural-spark {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--neural-yellow);
-  border-radius: 50%;
-  opacity: 0;
-  box-shadow: 0 0 6px var(--neural-glow-yellow);
-}
-
-.neural-spark--1 {
-  animation: sparkTravel1 2.4s ease-in-out infinite;
-  animation-delay: 0.6s;
-}
-
-.neural-spark--2 {
-  animation: sparkTravel2 2.8s ease-in-out infinite;
-  animation-delay: 1.4s;
-}
-
-@keyframes sparkTravel1 {
-  0%, 100% {
-    left: 20%;
-    top: 50%;
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  10% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    left: 80%;
-    opacity: 0.8;
-  }
-  90% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-}
-
-@keyframes sparkTravel2 {
-  0%, 100% {
-    left: 75%;
-    top: 50%;
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  15% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  55% {
-    left: 25%;
-    opacity: 0.7;
-  }
-  85% {
-    opacity: 0.2;
-    transform: scale(0.6);
-  }
-}
-
-/* ==========================================================================
-   Neural Pulse Indicator (3 dots - minimal)
-   ========================================================================== */
-
-.neural-pulse-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-height: 32px;
-  padding: 8px 0;
-}
-
-.neural-pulse-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(47, 107, 255, 0.05);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.neural-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--neural-blue), var(--neural-purple));
-  opacity: 0.5;
-  animation: neuralWave 1.2s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.2s);
-  box-shadow: 0 0 10px var(--neural-glow-purple);
-}
-
-@keyframes neuralWave {
-  0%, 100% {
-    opacity: 0.4;
-    transform: translateY(0) scale(0.9);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-4px) scale(1.1);
-    box-shadow: 0 0 16px var(--neural-glow-blue);
-  }
-  60% {
-    opacity: 0.7;
-    transform: translateY(2px) scale(1);
-  }
-}
-
-/* ==========================================================================
-   Neural Flicker Indicator (Network nodes)
-   ========================================================================== */
-
-.neural-flicker-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-height: 32px;
-  padding: 8px 0;
-}
-
-.neural-flicker-indicator {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 16px;
-  border-radius: 20px;
-  background: rgba(122, 66, 255, 0.04);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.neural-node {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--neural-purple);
-  opacity: 0.35;
-  animation: nodeFlicker 1.8s ease-in-out infinite;
-  animation-delay: calc(var(--node-index, 0) * 0.25s);
-}
-
-.neural-node:nth-child(1) { --node-index: 0; }
-.neural-node:nth-child(3) { --node-index: 1; }
-.neural-node:nth-child(5) { --node-index: 2; }
-.neural-node:nth-child(7) { --node-index: 3; }
-
-.neural-node--active {
-  width: 8px;
-  height: 8px;
-  background: linear-gradient(135deg, var(--neural-blue), var(--neural-purple));
-  box-shadow: 0 0 10px var(--neural-glow-purple);
-  opacity: 0.7;
-}
-
-.neural-link {
-  width: 12px;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    var(--neural-blue) 0%, 
-    var(--neural-purple) 50%,
-    var(--neural-blue) 100%
-  );
-  opacity: 0.25;
-  border-radius: 1px;
-  animation: linkPulse 1.4s ease-in-out infinite;
-}
-
-.neural-link:nth-child(2) { animation-delay: 0s; }
-.neural-link:nth-child(4) { animation-delay: 0.35s; }
-.neural-link:nth-child(6) { animation-delay: 0.7s; }
-
-@keyframes nodeFlicker {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  25% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-    box-shadow: 0 0 12px var(--neural-glow-blue);
-  }
-  75% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes linkPulse {
-  0%, 100% {
-    opacity: 0.2;
-    background-size: 100% 100%;
-  }
-  50% {
-    opacity: 0.6;
-    background-size: 200% 100%;
-    box-shadow: 0 0 6px var(--neural-glow-yellow);
-  }
-}
-
-/* ==========================================================================
-   Neural Spark Indicator (Compact radial)
-   ========================================================================== */
-
-.neural-spark-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-height: 32px;
-  padding: 8px 0;
-}
-
-.neural-spark-indicator {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.neural-spark-indicator--sm {
-  width: 18px;
-  height: 18px;
-}
-
-.spark-core {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--neural-blue), var(--neural-purple));
-  box-shadow: 0 0 8px var(--neural-glow-purple);
-  animation: coreGlow 0.8s ease-in-out infinite;
-}
-
-.neural-spark-indicator--sm .spark-core {
-  width: 4px;
-  height: 4px;
-}
-
-.spark-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid var(--neural-purple);
-  opacity: 0;
-  animation: ringExpand 1.5s ease-out infinite;
-}
-
-.spark-ring--1 {
-  width: 10px;
-  height: 10px;
-  animation-delay: 0s;
-}
-
-.spark-ring--2 {
-  width: 16px;
-  height: 16px;
-  border-color: var(--neural-blue);
-  animation-delay: 0.5s;
-}
-
-.spark-ring--3 {
-  width: 22px;
-  height: 22px;
-  border-color: var(--neural-yellow);
-  animation-delay: 1s;
-}
-
-.neural-spark-indicator--sm .spark-ring--1 { width: 8px; height: 8px; }
-.neural-spark-indicator--sm .spark-ring--2 { width: 12px; height: 12px; }
-.neural-spark-indicator--sm .spark-ring--3 { width: 16px; height: 16px; }
-
-@keyframes coreGlow {
-  0%, 100% {
-    transform: scale(0.9);
-    box-shadow: 0 0 6px var(--neural-glow-purple);
-  }
-  50% {
-    transform: scale(1.2);
-    box-shadow: 0 0 14px var(--neural-glow-blue), 0 0 20px var(--neural-glow-purple);
-  }
-}
-
-@keyframes ringExpand {
-  0% {
-    transform: scale(0.5);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-
-/* ==========================================================================
-   Dark Mode Support
-   ========================================================================== */
-
-@media (prefers-color-scheme: dark) {
-  .neural-thinking-indicator,
-  .neural-pulse-indicator,
-  .neural-flicker-indicator {
-    background: rgba(122, 66, 255, 0.1);
-  }
-  
-  .neural-thinking--glow {
-    box-shadow: 0 0 24px rgba(122, 66, 255, 0.25);
-  }
-  
-  .neural-dots {
-    opacity: 0.75;
-  }
-}
-
-/* Dark mode class-based support */
-.dark .neural-thinking-indicator,
-.dark .neural-pulse-indicator,
-.dark .neural-flicker-indicator {
-  background: rgba(122, 66, 255, 0.12);
-}
-
-.dark .neural-thinking--glow {
-  box-shadow: 0 0 24px rgba(122, 66, 255, 0.3);
-}
-
-.dark .neural-dots {
-  opacity: 0.8;
-}
-
-/* ==========================================================================
-   Reduced Motion Support
-   ========================================================================== */
-
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .neural-dot,
-  .neural-pulse-dot,
-  .neural-node,
-  .neural-link,
-  .neural-spark,
-  .spark-core,
-  .spark-ring {
-    animation-duration: 2s;
-    animation-timing-function: linear;
+  .neural-dot {
+    animation: neuralFade 2s ease-in-out infinite;
   }
   
-  @keyframes neuralPulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.9; }
-  }
-  
-  @keyframes neuralWave {
-    0%, 100% { opacity: 0.5; }
+  @keyframes neuralFade {
+    0%, 100% { opacity: 0.4; }
     50% { opacity: 0.9; }
   }
 }

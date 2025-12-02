@@ -17,13 +17,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Re-export NuroSpark Neural Indicators for unified imports
-export { 
-  NeuralThinkingIndicator, 
-  NeuralPulseIndicator, 
-  NeuralFlickerIndicator,
-  NeuralSparkIndicator 
-} from './NeuralThinkingIndicator';
+// Re-export NuroSpark Neural Indicator
+export { NeuralThinkingIndicator } from './NeuralThinkingIndicator';
 
 // Agentic phases with icons and descriptions
 const AGENTIC_PHASES = [

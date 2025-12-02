@@ -11,7 +11,7 @@ import {
   X,
   Paperclip
 } from 'lucide-react';
-import { NeuralSparkIndicator } from './NeuralThinkingIndicator';
+import { NeuralThinkingIndicator } from './NeuralThinkingIndicator';
 
 export default function EnhancedChatInput({
   value,
@@ -163,13 +163,7 @@ export default function EnhancedChatInput({
             </p>
             {/* Neural processing indicator */}
             {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center"
-              >
-                <NeuralSparkIndicator isLoading={true} size="small" />
-              </motion.div>
+              <NeuralThinkingIndicator isLoading={true} />
             )}
           </div>
         </form>

@@ -37,7 +37,7 @@ import {
 import VisualPlayer from './intent/VisualPlayer';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import UpgradeModal from './UpgradeModal';
-import { NeuralPulseIndicator } from './chat/NeuralThinkingIndicator';
+import { NeuralThinkingIndicator } from './chat/NeuralThinkingIndicator';
 import '../styles/ai-tutor-redesign.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1303,7 +1303,7 @@ export default function AITutorPremium() {
                 transition={{ duration: 0.15 }}
                 className="flex justify-center w-full"
               >
-                <NeuralPulseIndicator isLoading={true} />
+                <NeuralThinkingIndicator isLoading={true} />
               </motion.div>
             )}
             

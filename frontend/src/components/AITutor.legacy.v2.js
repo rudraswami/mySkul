@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import SemanticAIResponse from './SemanticAIResponse';
 import UpgradeModal from './UpgradeModal';
-import { NeuralPulseIndicator } from './chat/NeuralThinkingIndicator';
+import { NeuralThinkingIndicator } from './chat/NeuralThinkingIndicator';
 import '../styles/ai-tutor-redesign.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1286,7 +1286,7 @@ export default function AITutorPremium() {
                 aria-live="polite"
                 aria-label="AI is generating response"
               >
-                <NeuralPulseIndicator isLoading={true} />
+                <NeuralThinkingIndicator isLoading={true} />
               </motion.div>
             )}
             

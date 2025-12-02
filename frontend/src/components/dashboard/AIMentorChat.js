@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, Mic, X, Sparkles, TrendingUp } from 'lucide-react';
-import { NeuralPulseIndicator } from '../chat/NeuralThinkingIndicator';
+import { NeuralThinkingIndicator } from '../chat/NeuralThinkingIndicator';
 
 /**
  * Interactive AI Mentor Chat Component
@@ -132,11 +132,9 @@ const AIMentorChat = ({ isOpen, onClose }) => {
             </div>
           ))}
           
-          {/* Neural Thinking Animation - NuroSpark Premium */}
+          {/* Neural Thinking Animation */}
           {isTyping && (
-            <div className="flex justify-center w-full py-2">
-              <NeuralPulseIndicator isLoading={true} />
-            </div>
+            <NeuralThinkingIndicator isLoading={true} />
           )}
           
           <div ref={messagesEndRef} />

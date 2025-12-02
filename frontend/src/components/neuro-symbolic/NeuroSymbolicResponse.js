@@ -20,7 +20,7 @@ export default function NeuroSymbolicResponse({ response, isLoading }) {
   if (isLoading) {
     return (
       <div className="flex justify-center w-full py-4">
-        <NeuralThinkingIndicator isLoading={true} variant="glow" />
+        <NeuralThinkingIndicator isLoading={true} />
       </div>
     );
   }

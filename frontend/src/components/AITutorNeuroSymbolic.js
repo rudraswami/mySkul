@@ -97,7 +97,7 @@ function TypingIndicator() {
       transition={{ duration: 0.15 }}
       className="flex justify-center w-full"
     >
-      <NeuralThinkingIndicator isLoading={true} variant="glow" />
+      <NeuralThinkingIndicator isLoading={true} />
     </motion.div>
   );
 }
@@ -2395,11 +2395,9 @@ export default function AITutorNeuroSymbolic() {
                 <p className="text-xs text-slate-500 font-medium">
                   Press <kbd className="px-1.5 py-0.5 bg-slate-100 rounded-md text-slate-600 font-mono text-[10px] border border-slate-200">Enter</kbd> to send
                 </p>
-                {/* Neural processing indicator in helper area */}
+                {/* Neural processing indicator */}
                 {loading && (
-                  <div className="flex items-center gap-2">
-                    <NeuralThinkingIndicator isLoading={true} variant="subtle" />
-                  </div>
+                  <NeuralThinkingIndicator isLoading={true} />
                 )}
               </div>
             </form>
