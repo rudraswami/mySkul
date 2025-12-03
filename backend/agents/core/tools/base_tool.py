@@ -62,6 +62,15 @@ class BaseTool(ABC):
         """
         pass
     
+    def validate_params(self, **kwargs) -> Optional[str]:
+        """
+        Validate input parameters.
+        Returns error message if invalid, None if valid.
+        Override for custom validation.
+        """
+        # By default, no validation required
+        return None
+    
     def get_schema(self) -> Dict[str, Any]:
         """Get tool schema for LLM function calling"""
         return {

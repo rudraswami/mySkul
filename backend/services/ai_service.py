@@ -1494,7 +1494,7 @@ You're making great progress by actively seeking to understand. Keep up this exc
         session_id: str,
         message: str,
         subject: str,
-        exam_mode: str = "JEE",
+        exam_mode: str = "General",  # Changed default from "JEE" to "General"
         message_history: List[Dict[str, Any]] = None,
         memory_context: Dict[str, Any] = None
     ) -> Dict[str, Any]:

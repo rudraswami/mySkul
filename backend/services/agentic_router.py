@@ -55,10 +55,12 @@ class AgenticRouter:
         """Lazy load tool registry"""
         if self._tool_registry is None:
             from agents.core.tool_registry import create_tool_registry
+            logger.info("🔧 Creating tool registry with action tools...")
             self._tool_registry = create_tool_registry(
                 include_default=True,
                 include_action_tools=True
             )
+            logger.info(f"🔧 Tool registry created with tools: {self._tool_registry.get_tool_names()}")
         return self._tool_registry
     
     async def route(
@@ -80,21 +82,30 @@ class AgenticRouter:
             - handled=True, result=dict: Action was executed, use this result
             - handled=False, result=None: Not an action, use normal LLM flow
         """
+        logger.info(f"🤖 AgenticRouter.route() called with message: '{message[:100]}'")
+        
         if not settings.ENABLE_ACTION_DETECTION:
+            logger.info("🤖 Action detection is disabled in settings")
             return (False, None)
         
         # Detect intent
         intent = self.intent_detector.detect(message)
         
-        logger.info(f"🎯 Detected intent: {intent.intent_type.value} (confidence: {intent.confidence:.2f})")
+        logger.info(f"🎯 Detected intent: {intent.intent_type.value}")
+        logger.info(f"   - Confidence: {intent.confidence:.2f}")
+        logger.info(f"   - Requires action: {intent.requires_action}")
+        logger.info(f"   - Params: {intent.extracted_params}")
         
         # If it's not an action request, let normal flow handle it
         if not intent.requires_action:
+            logger.info(f"🤖 Not an action request, returning to normal flow")
             return (False, None)
         
         # Handle action intent
         try:
+            logger.info(f"🤖 Handling action intent: {intent.intent_type.value}")
             result = await self._handle_action(intent, user_id, context or {})
+            logger.info(f"🤖 Action result: {result}")
             return (True, result)
         except Exception as e:
             logger.error(f"Action handling error: {e}", exc_info=True)
@@ -147,7 +158,11 @@ class AgenticRouter:
         message = params.get('message', 'Study reminder')
         remind_at = params.get('remind_at', 'tomorrow')
         
+        logger.info(f"🔔 Handling reminder: message='{message}', remind_at='{remind_at}'")
+        logger.info(f"🔔 Context: {context}")
+        
         # Execute reminder tool
+        logger.info(f"🔔 Executing schedule_reminder tool...")
         result = await self.tool_registry.execute_tool(
             'schedule_reminder',
             context=context,
@@ -155,13 +170,16 @@ class AgenticRouter:
             remind_at=remind_at,
             reminder_type='custom'
         )
+        logger.info(f"🔔 Tool result: success={result.success}, output={result.output}")
         
         if result.success:
+            # Handle both ToolResult variants: base_tool uses 'data', registry uses 'metadata'
+            result_data = getattr(result, 'data', None) or getattr(result, 'metadata', None)
             return {
                 'success': True,
                 'action_taken': 'reminder_scheduled',
                 'response': result.output,
-                'data': result.metadata
+                'data': result_data
             }
         else:
             return {
@@ -205,11 +223,13 @@ class AgenticRouter:
         )
         
         if result.success:
+            # Handle both ToolResult variants: base_tool uses 'data', registry uses 'metadata'
+            result_data = getattr(result, 'data', None) or getattr(result, 'metadata', None)
             return {
                 'success': True,
                 'action_taken': 'summary_sent',
                 'response': result.output,
-                'data': result.metadata
+                'data': result_data
             }
         else:
             return {
@@ -248,9 +268,8 @@ async def get_agentic_router(db_client=None) -> AgenticRouter:
     global _router_instance
     
     if _router_instance is None:
-        if db_client is None:
-            from db.mongo import get_database
-            db_client = await get_database()
+        # db_client should always be provided by ai.py endpoint
+        # If not, router will work without db (some tools may fail)
         _router_instance = AgenticRouter(db_client)
     
     return _router_instance
@@ -269,7 +288,13 @@ async def route_message(
         (handled, result) - If handled=True, use result instead of LLM response
     """
     router = await get_agentic_router(db_client)
-    return await router.route(message, user_id, context)
+    
+    # Add db_client to context so tools can use it
+    enriched_context = context.copy() if context else {}
+    if db_client is not None:
+        enriched_context['db'] = db_client
+    
+    return await router.route(message, user_id, enriched_context)
 
 
 

@@ -119,13 +119,13 @@ async def get_performance(
             "study_streak": analytics.get("study_streak", 0),
             "total_study_time": analytics.get("study_time_today", 0),
             "subjects_mastery": subject_progress.get("subjects", {}),
-            "performance_trend": "stable",  # TODO: Calculate from historical data
-            "rank_position": None,  # Leaderboard rank - implement when leaderboard ready
-            "percentile": None,  # User percentile - implement when leaderboard ready
+            "performance_trend": await self._calculate_performance_trend(user.user_id, db),
+            "rank_position": None,  # Available via /api/gamification/leaderboard
+            "percentile": None,  # Available via /api/gamification/leaderboard
             "weekly_progress": analytics.get("weekly_progress", []),
-            "strong_subjects": [],  # TODO: Calculate from accuracy data
-            "weak_subjects": [],  # TODO: Calculate from accuracy data
-            "recommended_actions": []  # TODO: AI-generated recommendations
+            "strong_subjects": await self._get_strong_subjects(user.user_id, db),
+            "weak_subjects": await self._get_weak_subjects(user.user_id, db),
+            "recommended_actions": await self._generate_recommendations(user.user_id, db)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get performance: {str(e)}")

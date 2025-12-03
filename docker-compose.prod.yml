@@ -1,0 +1,27 @@
+# Production Docker Compose Configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - LOG_LEVEL=WARNING
+    volumes: []  # Remove volume mounts in production
+    restart: always
+
+  frontend:
+    restart: always
+
+  mongo:
+    volumes:
+      - /var/lib/mongodb:/data/db  # Use host path for persistence
+    restart: always
+
+  redis:
+    volumes:
+      - /var/lib/redis:/data
+    restart: always
+

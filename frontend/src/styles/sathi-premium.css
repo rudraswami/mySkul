@@ -1,0 +1,1975 @@
+/* ============================================
+   Sathi Premium UI - Calm Learning Space
+   Design System: Minimal Cognitive Load
+   Font: Inter/System with Optimal Line Heights
+   ============================================ */
+
+/* ============================================
+   CSS Variables - Premium Theme
+   ============================================ */
+:root {
+  /* Sathi Brand Colors */
+  --sathi-primary: #7C3AED;
+  --sathi-primary-light: #8B5CF6;
+  --sathi-primary-dark: #6D28D9;
+  --sathi-primary-50: #F5F3FF;
+  --sathi-primary-100: #EDE9FE;
+  
+  /* Calm Neutrals */
+  --sathi-bg: #FAFAFA;
+  --sathi-bg-chat: #F8F9FB;
+  --sathi-surface: #FFFFFF;
+  --sathi-border: #E5E7EB;
+  --sathi-border-light: #F3F4F6;
+  
+  /* Text Hierarchy */
+  --sathi-text-primary: #111827;
+  --sathi-text-secondary: #6B7280;
+  --sathi-text-muted: #9CA3AF;
+  
+  /* Status Colors */
+  --sathi-online: #10B981;
+  --sathi-accent: #3B82F6;
+  --sathi-warning: #F59E0B;
+  
+  /* Spacing System (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --line-height-reading: 1.65;
+  --line-height-tight: 1.4;
+  
+  /* Shadows - Very Subtle */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  
+  /* Radius - Consistent */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+  
+  /* Chat Content Width */
+  --chat-max-width: 720px;
+  --chat-padding-x: 48px;
+}
+
+/* ============================================
+   Global Sathi Container
+   ============================================ */
+.sathi-container {
+  display: flex;
+  height: 100vh;
+  max-height: 100vh;
+  background: var(--sathi-bg);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   TOP NAVIGATION - Sticky Header
+   Clean, grouped icons, premium feel
+   ============================================ */
+.sathi-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--sathi-surface);
+  border-bottom: 1px solid var(--sathi-border-light);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-4) var(--space-6);
+  height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+.sathi-header-content {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Left: Logo & Brand */
+.sathi-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sathi-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--sathi-primary) 0%, var(--sathi-primary-light) 100%);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+
+.sathi-logo svg {
+  width: 22px;
+  height: 22px;
+  color: white;
+}
+
+.sathi-logo::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--sathi-online);
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.sathi-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sathi-brand-name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--sathi-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.sathi-brand-tagline {
+  font-size: var(--font-size-xs);
+  color: var(--sathi-text-muted);
+  font-weight: 500;
+}
+
+/* Center: Search (optional) */
+.sathi-search {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 var(--space-8);
+}
+
+/* Right: Icon Group */
+.sathi-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sathi-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--sathi-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sathi-icon-btn:hover {
+  background: var(--sathi-primary-50);
+  color: var(--sathi-primary);
+}
+
+.sathi-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* New Chat Button */
+.sathi-new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--sathi-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+}
+
+.sathi-new-chat-btn:hover {
+  background: var(--sathi-primary-dark);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   LEFT SIDEBAR - Chat List
+   3 sections: Filters, Chats, New Chat
+   ============================================ */
+.sathi-sidebar {
+  width: 280px;
+  min-width: 280px;
+  height: 100%;
+  background: var(--sathi-surface);
+  border-right: 1px solid var(--sathi-border-light);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sidebar Header */
+.sathi-sidebar-header {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--sathi-border-light);
+}
+
+.sathi-sidebar-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sathi-sidebar-title h2 {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--sathi-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sathi-sidebar-title span {
+  font-size: var(--font-size-xs);
+  color: var(--sathi-text-muted);
+  background: var(--sathi-border-light);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* Subject Filter Chips */
+.sathi-subject-filters {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--sathi-border-light);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sathi-subject-chip {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sathi-text-secondary);
+  background: var(--sathi-bg);
+  border: 1px solid var(--sathi-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sathi-subject-chip:hover,
+.sathi-subject-chip.active {
+  background: var(--sathi-primary-50);
+  border-color: var(--sathi-primary-light);
+  color: var(--sathi-primary);
+}
+
+/* Chat List */
+.sathi-chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sathi-chat-item {
+  padding: var(--space-3) var(--space-4);
+  background: var(--sathi-surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sathi-chat-item:hover {
+  background: var(--sathi-primary-50);
+  border-color: var(--sathi-primary-100);
+}
+
+.sathi-chat-item.active {
+  background: linear-gradient(135deg, var(--sathi-primary-50) 0%, #FDF2F8 100%);
+  border-color: var(--sathi-primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.sathi-chat-item-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--sathi-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--line-height-tight);
+}
+
+.sathi-chat-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sathi-chat-item-subject {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sathi-primary);
+  background: var(--sathi-primary-50);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sathi-chat-item-time {
+  font-size: var(--font-size-xs);
+  color: var(--sathi-text-muted);
+}
+
+/* New Chat Fixed Button */
+.sathi-sidebar-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--sathi-border-light);
+  background: var(--sathi-surface);
+}
+
+.sathi-new-chat-sidebar-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--sathi-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sathi-new-chat-sidebar-btn:hover {
+  background: var(--sathi-primary-dark);
+}
+
+/* ============================================
+   MAIN CHAT AREA - Core Reading Experience
+   720px max-width, optimal line-height
+   ============================================ */
+.sathi-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--sathi-bg-chat);
+}
+
+/* Messages Container - Scrollable */
+.sathi-messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-6) 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Chat Content Zone - 720px centered */
+.sathi-chat-content {
+  max-width: var(--chat-max-width);
+  margin: 0 auto;
+  padding: 0 var(--chat-padding-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .sathi-chat-content {
+    padding: 0 var(--space-5);
+  }
+}
+
+@media (max-width: 640px) {
+  .sathi-chat-content {
+    padding: 0 var(--space-4);
+  }
+}
+
+/* ============================================
+   MESSAGE BUBBLES - Clean, Readable
+   ============================================ */
+
+/* User Message - Right aligned, dark */
+.sathi-user-message {
+  align-self: flex-end;
+  max-width: 70%;
+  background: #1E293B;
+  color: white;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--space-1);
+  box-shadow: var(--shadow-sm);
+  animation: sathiMessageIn 0.2s ease-out;
+}
+
+.sathi-user-message p {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-reading);
+  margin: 0;
+}
+
+/* AI Message - Left aligned, light surface */
+.sathi-ai-message {
+  align-self: flex-start;
+  max-width: 85%;
+  background: var(--sathi-surface);
+  color: var(--sathi-text-primary);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--space-1);
+  border: 1px solid var(--sathi-border-light);
+  box-shadow: var(--shadow-sm);
+  animation: sathiMessageIn 0.2s ease-out;
+}
+
+/* AI Message Typography - Reading Optimized */
+.sathi-ai-message p {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-reading);
+  color: var(--sathi-text-primary);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.sathi-ai-message p:last-child {
+  margin-bottom: 0;
+}
+
+.sathi-ai-message strong,
+.sathi-ai-message b {
+  font-weight: 600;
+  color: var(--sathi-text-primary);
+}
+
+/* Highlighted Concepts - Yellow background */
+.sathi-ai-message .highlight,
+.sathi-ai-message mark {
+  background: linear-gradient(120deg, #FEF3C7 0%, #FDE68A 100%);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #92400E;
+  font-weight: 500;
+}
+
+/* Lists in AI Response */
+.sathi-ai-message ul,
+.sathi-ai-message ol {
+  margin: var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.sathi-ai-message li {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-reading);
+  margin-bottom: var(--space-2);
+  color: var(--sathi-text-primary);
+}
+
+.sathi-ai-message li::marker {
+  color: var(--sathi-primary);
+}
+
+/* Headings in AI Response */
+.sathi-ai-message h3,
+.sathi-ai-message h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--sathi-text-primary);
+  margin: var(--space-5) 0 var(--space-3) 0;
+}
+
+.sathi-ai-message h3:first-child,
+.sathi-ai-message h4:first-child {
+  margin-top: 0;
+}
+
+/* Code blocks */
+.sathi-ai-message pre,
+.sathi-ai-message code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+.sathi-ai-message code {
+  background: var(--sathi-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--sathi-primary-dark);
+}
+
+.sathi-ai-message pre {
+  background: #1E293B;
+  color: #E2E8F0;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+}
+
+.sathi-ai-message pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Message Animation */
+@keyframes sathiMessageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Message Timestamp */
+.sathi-message-time {
+  font-size: 11px;
+  color: var(--sathi-text-muted);
+  margin-top: var(--space-2);
+}
+
+/* AI Avatar */
+.sathi-ai-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--sathi-primary) 0%, var(--sathi-primary-light) 100%);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: var(--space-3);
+}
+
+.sathi-ai-avatar svg {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+/* Message with Avatar Layout */
+.sathi-message-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.sathi-message-row.user {
+  justify-content: flex-end;
+}
+
+/* ============================================
+   INPUT AREA - Clean, Focused
+   ============================================ */
+.sathi-input-area {
+  background: var(--sathi-surface);
+  border-top: 1px solid var(--sathi-border-light);
+  padding: var(--space-4) var(--space-6);
+}
+
+.sathi-input-wrapper {
+  max-width: var(--chat-max-width);
+  margin: 0 auto;
+}
+
+.sathi-input-container {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  background: var(--sathi-bg);
+  border: 1px solid var(--sathi-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  transition: all 0.2s ease;
+}
+
+.sathi-input-container:focus-within {
+  border-color: var(--sathi-primary-light);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.sathi-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--sathi-text-primary);
+  min-height: 24px;
+  max-height: 120px;
+}
+
+.sathi-textarea::placeholder {
+  color: var(--sathi-text-muted);
+}
+
+.sathi-send-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--sathi-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sathi-send-btn:hover:not(:disabled) {
+  background: var(--sathi-primary-dark);
+  transform: scale(1.05);
+}
+
+.sathi-send-btn:disabled {
+  background: var(--sathi-border);
+  cursor: not-allowed;
+}
+
+.sathi-send-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Input Helper Text */
+.sathi-input-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--sathi-text-muted);
+}
+
+.sathi-input-hint kbd {
+  background: var(--sathi-border-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 10px;
+  border: 1px solid var(--sathi-border);
+}
+
+/* ============================================
+   WELCOME SCREEN - Clean, Inviting
+   ============================================ */
+.sathi-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  min-height: 60vh;
+}
+
+.sathi-welcome-logo {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--sathi-primary) 0%, #EC4899 50%, #F97316 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.25);
+  position: relative;
+}
+
+.sathi-welcome-logo::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  background: var(--sathi-online);
+  border: 3px solid white;
+  border-radius: 50%;
+}
+
+.sathi-welcome-logo span {
+  font-size: 40px;
+}
+
+.sathi-welcome h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--sathi-primary) 0%, #EC4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.03em;
+}
+
+.sathi-welcome p {
+  font-size: var(--font-size-lg);
+  color: var(--sathi-text-secondary);
+  max-width: 400px;
+  line-height: var(--line-height-reading);
+  margin-bottom: var(--space-8);
+}
+
+/* Quick Start Cards */
+.sathi-quick-start {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  max-width: 500px;
+  width: 100%;
+}
+
+.sathi-quick-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--sathi-surface);
+  border: 1px solid var(--sathi-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sathi-quick-card:hover {
+  border-color: var(--sathi-primary-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.sathi-quick-card-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--sathi-primary-50);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sathi-quick-card-text {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--sathi-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+/* ============================================
+   THINKING INDICATOR - Minimal
+   ============================================ */
+.sathi-thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.sathi-thinking-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.sathi-thinking-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--sathi-primary);
+  border-radius: 50%;
+  animation: sathiThink 1s ease-in-out infinite;
+}
+
+.sathi-thinking-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.sathi-thinking-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes sathiThink {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   FOLLOW-UP SUGGESTIONS - Chips
+   ============================================ */
+.sathi-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.sathi-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--sathi-surface);
+  border: 1px solid var(--sathi-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--sathi-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sathi-suggestion-chip:hover {
+  background: var(--sathi-primary-50);
+  border-color: var(--sathi-primary-light);
+  color: var(--sathi-primary);
+}
+
+/* ============================================
+   SCROLLBAR - Minimal
+   ============================================ */
+.sathi-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sathi-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sathi-messages::-webkit-scrollbar-thumb {
+  background: var(--sathi-border);
+  border-radius: 3px;
+}
+
+.sathi-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--sathi-text-muted);
+}
+
+/* ============================================
+   RESPONSIVE - Mobile First
+   ============================================ */
+@media (max-width: 1024px) {
+  .sathi-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sathi-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .sathi-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 40;
+    backdrop-filter: blur(2px);
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --chat-padding-x: 16px;
+  }
+  
+  .sathi-header {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .sathi-user-message,
+  .sathi-ai-message {
+    max-width: 90%;
+  }
+  
+  .sathi-welcome h1 {
+    font-size: 1.75rem;
+  }
+  
+  .sathi-quick-start {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+.dark .sathi-container {
+  --sathi-bg: #0F172A;
+  --sathi-bg-chat: #1E293B;
+  --sathi-surface: #1E293B;
+  --sathi-border: #334155;
+  --sathi-border-light: #475569;
+  --sathi-text-primary: #F8FAFC;
+  --sathi-text-secondary: #94A3B8;
+  --sathi-text-muted: #64748B;
+}
+
+.dark .sathi-ai-message {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark .sathi-ai-message .highlight,
+.dark .sathi-ai-message mark {
+  background: linear-gradient(120deg, #422006 0%, #713F12 100%);
+  color: #FCD34D;
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.sathi-icon-btn:focus-visible,
+.sathi-send-btn:focus-visible,
+.sathi-chat-item:focus-visible {
+  outline: 2px solid var(--sathi-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   OVERRIDE STYLES FOR EXISTING COMPONENT
+   Apply premium design to current Tailwind classes
+   ============================================ */
+
+/* Main Container - Full viewport, calm background */
+.h-screen.overflow-hidden.flex.bg-gray-50 {
+  background: var(--sathi-bg) !important;
+  font-family: var(--font-sans);
+}
+
+/* ===== TOP HEADER REDESIGN ===== */
+/* Header - Clean, sticky, shadow-sm */
+.bg-white\/95.backdrop-blur-md.border-b.border-gray-100 {
+  background: var(--sathi-surface) !important;
+  border-bottom: 1px solid var(--sathi-border-light) !important;
+  box-shadow: var(--shadow-xs) !important;
+  height: auto !important;
+  min-height: 64px !important;
+  padding: 12px 24px !important;
+}
+
+/* Header content alignment */
+.max-w-5xl.mx-auto.px-6.h-full.flex.flex-col.justify-center {
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Brand section */
+.text-lg.font-bold.bg-gradient-to-r.from-gray-900.to-gray-700 {
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Stats badges - cleaner */
+.flex.items-center.gap-1\.5.px-2\.5.py-1.bg-orange-50,
+.flex.items-center.gap-1\.5.px-2\.5.py-1.bg-violet-50 {
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+}
+
+/* ===== LEFT SIDEBAR REDESIGN - COMPACT & CLEAN ===== */
+
+/* Sidebar container */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 {
+  background: var(--sathi-surface) !important;
+  border-right: 1px solid var(--sathi-border-light) !important;
+  width: 260px !important;
+  min-width: 260px !important;
+}
+
+/* Sidebar header - minimal */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 > .p-4.border-b {
+  padding: 16px !important;
+  border-bottom: 1px solid var(--sathi-border-light) !important;
+  background: var(--sathi-surface) !important;
+}
+
+/* HIDE the icon container in sidebar header */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .w-8.h-8.rounded-lg {
+  display: none !important;
+}
+
+/* Sidebar title text */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-sm.font-bold {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--sathi-text-secondary) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Sidebar subtitle (conversations count) */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-\[10px\].text-slate-500 {
+  font-size: 11px !important;
+  color: var(--sathi-text-muted) !important;
+}
+
+/* Chat list container - tighter spacing */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex-1.overflow-y-auto {
+  padding: 8px !important;
+}
+
+/* ===== CHAT HISTORY CARDS - MINIMAL & CLEAN ===== */
+/* Chat card container - COMPACT, NO WHITE BACKGROUND */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl {
+  padding: 8px 10px !important;
+  margin-bottom: 1px !important;
+  border-radius: 6px !important;
+  border-left-width: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: background 0.15s ease !important;
+}
+
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl:hover {
+  background: var(--sathi-primary-50) !important;
+}
+
+/* Active chat card - subtle highlight */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl.bg-gradient-to-r,
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl.bg-white {
+  background: var(--sathi-primary-50) !important;
+  border-left: 2px solid var(--sathi-primary) !important;
+  padding-left: 8px !important;
+}
+
+/* Remove all shadows */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl.shadow-sm,
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.rounded-xl.shadow-md {
+  box-shadow: none !important;
+}
+
+/* Inner container - compact padding */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex.items-start.justify-between.gap-2.p-3 {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* HIDE THE ICON EMOJI - This is the key fix! */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex.items-center.gap-1\.5.mb-1\.5 > span.text-sm:first-child {
+  display: none !important;
+}
+
+/* Subject badge row - remove icon, keep badge */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex.items-center.gap-1\.5.mb-1\.5 {
+  gap: 4px !important;
+  margin-bottom: 4px !important;
+}
+
+/* Subject badge - smaller, subtle */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-\[10px\].font-semibold.px-1\.5.py-0\.5 {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Hide pin/bookmark emojis */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-amber-500.text-xs,
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-emerald-500.text-xs {
+  display: none !important;
+}
+
+/* Chat title - clean typography */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .font-medium.text-sm.truncate {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--sathi-text-primary) !important;
+  line-height: 1.3 !important;
+  margin-bottom: 2px !important;
+}
+
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .font-medium.text-sm.truncate.text-violet-900 {
+  color: var(--sathi-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Time row - compact */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex.items-center.gap-1\.5.mt-1\.5 {
+  margin-top: 2px !important;
+  gap: 4px !important;
+}
+
+/* Time text */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-\[11px\].text-slate-500 {
+  font-size: 10px !important;
+  color: var(--sathi-text-muted) !important;
+}
+
+/* Hide loader icon in time */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .h-3.w-3.animate-spin {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+/* More button - show on hover */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group .opacity-0.group-hover\:opacity-100 {
+  opacity: 0 !important;
+}
+
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group:hover .opacity-0.group-hover\:opacity-100 {
+  opacity: 1 !important;
+}
+
+/* ===== HEADER CLEANUP ===== */
+/* Hide the tagline under header */
+.text-sm.text-gray-500.font-medium:has(span:contains("AI friend")),
+p.text-sm.text-gray-500.font-medium {
+  display: none !important;
+}
+
+/* Hide expanded header content */
+.mt-2 > p.text-sm.text-gray-500 {
+  display: none !important;
+}
+
+/* Compact header */
+.bg-white\/95.backdrop-blur-md {
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+}
+
+/* ===== MAIN CHAT AREA REDESIGN ===== */
+/* Chat container - centered with max-width */
+.max-w-4xl.mx-auto.px-4.py-6 {
+  max-width: 720px !important;
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+}
+
+@media (max-width: 900px) {
+  .max-w-4xl.mx-auto.px-4.py-6 {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .max-w-4xl.mx-auto.px-4.py-6 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+/* Chat scrollable area */
+.flex-1.overflow-y-auto.overflow-x-hidden {
+  background: var(--sathi-bg-chat) !important;
+}
+
+/* Message gap/spacing */
+.flex.flex-col.gap-6 {
+  gap: 24px !important;
+}
+
+/* ===== USER MESSAGE BUBBLE ===== */
+.bg-\[\#1f2937\].text-white.rounded-2xl.rounded-br-md {
+  background: #1E293B !important;
+  padding: 16px 20px !important;
+  border-radius: 16px !important;
+  border-bottom-right-radius: 4px !important;
+  max-width: 70% !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.bg-\[\#1f2937\].text-white.rounded-2xl.rounded-br-md p {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+}
+
+/* ===== AI MESSAGE BUBBLE ===== */
+/* AI response container */
+.bg-white.rounded-2xl.border.border-gray-100 {
+  background: var(--sathi-surface) !important;
+  border: 1px solid var(--sathi-border-light) !important;
+  border-radius: 16px !important;
+  border-bottom-left-radius: 4px !important;
+  padding: 20px 24px !important;
+  box-shadow: var(--shadow-sm) !important;
+  max-width: 85% !important;
+}
+
+/* AI message typography - CRITICAL for reading */
+.bg-white.rounded-2xl.border.border-gray-100 p,
+.unified-response-container p,
+.adaptive-markdown p {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  color: var(--sathi-text-primary) !important;
+  margin-bottom: 16px !important;
+}
+
+.bg-white.rounded-2xl.border.border-gray-100 p:last-child,
+.unified-response-container p:last-child,
+.adaptive-markdown p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Lists in AI responses */
+.bg-white.rounded-2xl.border.border-gray-100 ul,
+.bg-white.rounded-2xl.border.border-gray-100 ol,
+.adaptive-markdown ul,
+.adaptive-markdown ol {
+  margin: 16px 0 !important;
+  padding-left: 24px !important;
+}
+
+.bg-white.rounded-2xl.border.border-gray-100 li,
+.adaptive-markdown li {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  margin-bottom: 8px !important;
+  color: var(--sathi-text-primary) !important;
+}
+
+.bg-white.rounded-2xl.border.border-gray-100 li::marker,
+.adaptive-markdown li::marker {
+  color: var(--sathi-primary) !important;
+}
+
+/* Bold text / Key concepts */
+.bg-white.rounded-2xl.border.border-gray-100 strong,
+.bg-white.rounded-2xl.border.border-gray-100 b,
+.adaptive-markdown strong,
+.adaptive-markdown b {
+  font-weight: 600 !important;
+  color: var(--sathi-text-primary) !important;
+}
+
+/* Headings in AI response */
+.bg-white.rounded-2xl.border.border-gray-100 h3,
+.bg-white.rounded-2xl.border.border-gray-100 h4,
+.adaptive-markdown h3,
+.adaptive-markdown h4 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--sathi-text-primary) !important;
+  margin: 20px 0 12px 0 !important;
+}
+
+/* Highlighted concepts - Yellow background */
+.bg-white.rounded-2xl.border.border-gray-100 mark,
+.adaptive-markdown mark {
+  background: linear-gradient(120deg, #FEF3C7 0%, #FDE68A 100%) !important;
+  padding: 1px 4px !important;
+  border-radius: 4px !important;
+  color: #92400E !important;
+  font-weight: 500 !important;
+}
+
+/* ===== INPUT AREA REDESIGN ===== */
+/* Input container */
+.border-t.border-gray-100.bg-gradient-to-t.from-gray-50\/80.to-white {
+  background: var(--sathi-surface) !important;
+  border-top: 1px solid var(--sathi-border-light) !important;
+  padding: 16px 24px !important;
+}
+
+/* Input wrapper max-width */
+.max-w-4xl.mx-auto.px-4.py-4 {
+  max-width: 720px !important;
+  padding: 0 !important;
+}
+
+/* Input box styling */
+.flex.items-end.gap-2.bg-white\/90.backdrop-blur-sm.rounded-2xl.border {
+  background: var(--sathi-bg) !important;
+  border: 1px solid var(--sathi-border) !important;
+  border-radius: 16px !important;
+  padding: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.flex.items-end.gap-2.bg-white\/90.backdrop-blur-sm.rounded-2xl.border:focus-within {
+  border-color: var(--sathi-primary-light) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1) !important;
+}
+
+/* Textarea */
+.flex-1.px-3.py-2\.5.bg-transparent.border-0 {
+  font-family: var(--font-sans) !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  color: var(--sathi-text-primary) !important;
+}
+
+.flex-1.px-3.py-2\.5.bg-transparent.border-0::placeholder {
+  color: var(--sathi-text-muted) !important;
+}
+
+/* Send button */
+.w-10.h-10.rounded-xl.bg-gradient-to-r.from-violet-600.to-purple-600 {
+  background: var(--sathi-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+
+.w-10.h-10.rounded-xl.bg-gradient-to-r.from-violet-600.to-purple-600:hover {
+  background: var(--sathi-primary-dark) !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Helper text */
+.text-xs.text-slate-500.font-medium {
+  font-size: 12px !important;
+  color: var(--sathi-text-muted) !important;
+}
+
+/* Keyboard hint */
+.px-1\.5.py-0\.5.bg-slate-100.rounded-md.text-slate-600 {
+  background: var(--sathi-border-light) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  border: 1px solid var(--sathi-border) !important;
+}
+
+/* ===== FOLLOW-UP SUGGESTIONS ===== */
+.px-3.py-1\.5.bg-white.hover\:bg-violet-50.border.border-slate-200.rounded-full {
+  background: var(--sathi-surface) !important;
+  border: 1px solid var(--sathi-border) !important;
+  border-radius: 9999px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--sathi-text-secondary) !important;
+  transition: all 0.15s ease !important;
+}
+
+.px-3.py-1\.5.bg-white.hover\:bg-violet-50.border.border-slate-200.rounded-full:hover {
+  background: var(--sathi-primary-50) !important;
+  border-color: var(--sathi-primary-light) !important;
+  color: var(--sathi-primary) !important;
+}
+
+/* ===== WELCOME SCREEN ===== */
+/* Welcome container */
+.text-center.py-16.px-4.relative {
+  padding: 48px 24px !important;
+  min-height: 60vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Welcome title */
+.text-4xl.md\:text-5xl.lg\:text-6xl.font-black {
+  font-size: 2.5rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
+
+@media (max-width: 640px) {
+  .text-4xl.md\:text-5xl.lg\:text-6xl.font-black {
+    font-size: 1.75rem !important;
+  }
+}
+
+/* Welcome subtitle */
+.text-lg.md\:text-xl.text-gray-600.mb-4.font-medium {
+  font-size: 18px !important;
+  color: var(--sathi-text-secondary) !important;
+  line-height: 1.65 !important;
+  max-width: 400px !important;
+}
+
+/* Quick prompt cards */
+.group.relative.flex.items-start.gap-4.p-5.rounded-2xl {
+  padding: 16px !important;
+  border-radius: 12px !important;
+  background: var(--sathi-surface) !important;
+  border: 1px solid var(--sathi-border) !important;
+  transition: all 0.2s ease !important;
+}
+
+.group.relative.flex.items-start.gap-4.p-5.rounded-2xl:hover {
+  border-color: var(--sathi-primary-light) !important;
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ===== NEW CHAT BUTTON ===== */
+.px-4.py-2\.5.bg-gradient-to-r.from-violet-600.to-purple-600 {
+  background: var(--sathi-primary) !important;
+  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2) !important;
+  transition: all 0.15s ease !important;
+}
+
+.px-4.py-2\.5.bg-gradient-to-r.from-violet-600.to-purple-600:hover {
+  background: var(--sathi-primary-dark) !important;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===== WELCOME SCREEN CLEANUP ===== */
+/* Welcome logo - smaller */
+.relative.w-28.h-28.rounded-3xl {
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 20px !important;
+}
+
+.relative.w-28.h-28.rounded-3xl .text-6xl {
+  font-size: 36px !important;
+}
+
+/* Quick prompt cards - cleaner, NO icons */
+.grid.grid-cols-1.md\:grid-cols-2.gap-4 {
+  gap: 12px !important;
+  max-width: 560px !important;
+}
+
+/* Quick prompt card styling */
+.group.relative.flex.items-start.gap-4.p-5.rounded-2xl {
+  padding: 14px 16px !important;
+  border-radius: 10px !important;
+  gap: 12px !important;
+  background: var(--sathi-surface) !important;
+  border: 1px solid var(--sathi-border) !important;
+}
+
+/* HIDE icon circles in quick prompt cards */
+.group.relative.flex.items-start .w-12.h-12.rounded-xl,
+.group.relative.flex.items-start .w-11.h-11.rounded-xl {
+  display: none !important;
+}
+
+/* Quick prompt text - takes full width now */
+.group.relative.flex.items-start .flex-1.min-w-0 {
+  width: 100% !important;
+}
+
+.group.relative.flex.items-start .text-sm.font-semibold {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--sathi-text-primary) !important;
+  line-height: 1.4 !important;
+}
+
+/* Hide arrow icon in cards */
+.group.relative.flex.items-start .flex-shrink-0.ml-2 {
+  display: none !important;
+}
+
+/* Feature tags - smaller, cleaner */
+.flex.flex-wrap.items-center.justify-center.gap-2.mb-12 {
+  gap: 8px !important;
+  margin-bottom: 32px !important;
+}
+
+.flex.flex-wrap.items-center.justify-center.gap-2.mb-12 > span,
+.flex.items-center.gap-1\.5.px-4.py-2.bg-white\/80 {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  border-radius: 20px !important;
+  background: var(--sathi-surface) !important;
+  border: 1px solid var(--sathi-border) !important;
+}
+
+/* ===== MOBILE SIDEBAR OVERLAY ===== */
+.fixed.left-0.top-0.h-full.w-72.bg-white\/95.backdrop-blur-xl {
+  background: var(--sathi-surface) !important;
+  width: 280px !important;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.flex-1.overflow-y-auto::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.flex-1.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--sathi-border) !important;
+  border-radius: 3px !important;
+}
+
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--sathi-text-muted) !important;
+}
+
+/* ===== COMPREHENSIVE CHAT CARD CLEANUP - ALL SELECTORS ===== */
+/* Chat list spacing - MUCH tighter */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .space-y-1\.5 > * + *,
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .space-y-2 > * + * {
+  margin-top: 1px !important;
+}
+
+/* Remove ALL white backgrounds from cards */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.bg-white {
+  background: transparent !important;
+}
+
+/* Remove gradient backgrounds, use simple color */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.bg-gradient-to-r {
+  background: var(--sathi-primary-50) !important;
+  background-image: none !important;
+}
+
+/* Remove ALL borders except left border for active */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.border-l-4 {
+  border-left-width: 2px !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+}
+
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.border-transparent {
+  border-left-color: transparent !important;
+}
+
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .group.w-full.border-violet-500 {
+  border-left-color: var(--sathi-primary) !important;
+}
+
+/* Button inside card - full width, no padding */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .text-left.flex-1.min-w-0 {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+/* More button container - smaller */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .relative {
+  flex-shrink: 0 !important;
+}
+
+/* ===== HEADER CLEANUP - Remove tagline ===== */
+/* Hide the expanded header content with tagline */
+.mt-2 {
+  display: none !important;
+}
+
+/* Hide tagline badges */
+.text-sm.text-gray-500.font-medium:has(span),
+p.text-sm.text-gray-500.font-medium {
+  display: none !important;
+}
+
+/* Compact header height */
+.bg-white\/95.backdrop-blur-md.border-b {
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+/* Header content - single row */
+.max-w-5xl.mx-auto.px-6.h-full.flex.flex-col {
+  flex-direction: row !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+/* ===== SIDEBAR HEADER - Clean ===== */
+/* Sidebar header icon - hide */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .w-8.h-8.rounded-lg.bg-gradient-to-br {
+  display: none !important;
+}
+
+/* Sidebar header text - compact */
+.hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex.items-center.gap-2\.5 {
+  gap: 8px !important;
+}
+
+/* ===== MOBILE SIDEBAR - Same cleanup ===== */
+.fixed.left-0.top-0.h-full.w-72.bg-white\/95 {
+  background: var(--sathi-surface) !important;
+  width: 260px !important;
+}
+
+.fixed.left-0.top-0.h-full.w-72 .group.w-full.rounded-xl {
+  padding: 8px 10px !important;
+  margin-bottom: 1px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.fixed.left-0.top-0.h-full.w-72 .group.w-full.rounded-xl:hover {
+  background: var(--sathi-primary-50) !important;
+}
+
+.fixed.left-0.top-0.h-full.w-72 .group.w-full.bg-white,
+.fixed.left-0.top-0.h-full.w-72 .group.w-full.bg-gradient-to-r {
+  background: var(--sathi-primary-50) !important;
+  border-left: 2px solid var(--sathi-primary) !important;
+  padding-left: 8px !important;
+}
+
+/* Hide icon emoji in mobile */
+.fixed.left-0.top-0.h-full.w-72 .flex.items-center.gap-1\.5.mb-1\.5 > span.text-sm:first-child {
+  display: none !important;
+}
+
+.fixed.left-0.top-0.h-full.w-72 .flex.items-center.justify-between.gap-2.p-3 {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.fixed.left-0.top-0.h-full.w-72 .shadow-sm,
+.fixed.left-0.top-0.h-full.w-72 .shadow-md {
+  box-shadow: none !important;
+}
+
+/* ============================================
+   AGGRESSIVE OVERRIDES - Universal Chat Card Fixes
+   These rules MUST work regardless of class variations
+   ============================================ */
+
+/* ===== UNIVERSAL CHAT CARD FIXES ===== */
+/* Target ALL chat cards in sidebar - regardless of exact classes */
+[class*="sidebar"] .group[class*="rounded"],
+[class*="sidebar"] [class*="chat"][class*="card"],
+[class*="sidebar"] [class*="session"],
+.hidden.lg\:flex [class*="rounded-xl"],
+.fixed.left-0 [class*="rounded-xl"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 10px !important;
+  margin-bottom: 4px !important;
+  border-radius: 6px !important;
+  transition: background 0.15s ease !important;
+}
+
+/* Hover state for all cards */
+[class*="sidebar"] .group[class*="rounded"]:hover,
+[class*="sidebar"] [class*="chat"][class*="card"]:hover,
+.hidden.lg\:flex [class*="rounded-xl"]:hover,
+.fixed.left-0 [class*="rounded-xl"]:hover {
+  background: #F5F3FF !important;
+}
+
+/* Active state - purple left border */
+[class*="sidebar"] .group[class*="rounded"][class*="bg-gradient"],
+[class*="sidebar"] .group[class*="rounded"][class*="bg-white"],
+.hidden.lg\:flex [class*="rounded-xl"][class*="bg-gradient"],
+.hidden.lg\:flex [class*="rounded-xl"][class*="bg-white"],
+.fixed.left-0 [class*="rounded-xl"][class*="bg-gradient"],
+.fixed.left-0 [class*="rounded-xl"][class*="bg-white"] {
+  background: #F5F3FF !important;
+  border-left: 2px solid #7C3AED !important;
+  padding-left: 8px !important;
+}
+
+/* ===== HIDE ALL ICONS IN CHAT CARDS ===== */
+/* Hide emoji icons (first span in flex container with gap-1.5) */
+[class*="sidebar"] .flex[class*="items-center"][class*="gap"] > span:first-child,
+.hidden.lg\:flex .flex[class*="items-center"][class*="gap"] > span:first-child,
+.fixed.left-0 .flex[class*="items-center"][class*="gap"] > span:first-child {
+  display: none !important;
+}
+
+/* Hide icon containers (w-8, w-9, h-8, h-9) */
+[class*="sidebar"] [class*="w-8"][class*="h-8"],
+[class*="sidebar"] [class*="w-9"][class*="h-9"],
+[class*="sidebar"] [class*="flex-shrink-0"][class*="w-"],
+.hidden.lg\:flex [class*="w-8"][class*="h-8"],
+.hidden.lg\:flex [class*="w-9"][class*="h-9"],
+.fixed.left-0 [class*="w-8"][class*="h-8"],
+.fixed.left-0 [class*="w-9"][class*="h-9"] {
+  display: none !important;
+}
+
+/* Hide pin/bookmark emojis */
+[class*="sidebar"] span[class*="text-amber"],
+[class*="sidebar"] span[class*="text-emerald"],
+.hidden.lg\:flex span[class*="text-amber"],
+.hidden.lg\:flex span[class*="text-emerald"],
+.fixed.left-0 span[class*="text-amber"],
+.fixed.left-0 span[class*="text-emerald"] {
+  display: none !important;
+}
+
+/* ===== PROPER SPACING BETWEEN CHAT ITEMS ===== */
+/* Ensure consistent spacing in chat list containers */
+[class*="sidebar"] .space-y-1\.5 > * + *,
+[class*="sidebar"] .space-y-2 > * + *,
+.hidden.lg\:flex .space-y-1\.5 > * + *,
+.hidden.lg\:flex .space-y-2 > * + *,
+.fixed.left-0 .space-y-1\.5 > * + *,
+.fixed.left-0 .space-y-2 > * + * {
+  margin-top: 4px !important;
+}
+
+/* Direct child spacing */
+[class*="sidebar"] > div > div[class*="rounded"] + div[class*="rounded"],
+.hidden.lg\:flex > div > div[class*="rounded"] + div[class*="rounded"],
+.fixed.left-0 > div > div[class*="rounded"] + div[class*="rounded"] {
+  margin-top: 4px !important;
+}
+
+/* ===== REMOVE ALL WHITE BACKGROUNDS ===== */
+/* Force transparent backgrounds */
+[class*="sidebar"] [class*="bg-white"],
+[class*="sidebar"] [class*="bg-gradient"][class*="from-violet"],
+.hidden.lg\:flex [class*="bg-white"],
+.hidden.lg\:flex [class*="bg-gradient"][class*="from-violet"],
+.fixed.left-0 [class*="bg-white"],
+.fixed.left-0 [class*="bg-gradient"][class*="from-violet"] {
+  background: transparent !important;
+}
+
+/* Active cards get subtle purple */
+[class*="sidebar"] [class*="bg-white"][class*="hover:bg"],
+[class*="sidebar"] [class*="bg-gradient"][class*="from-violet-100"],
+.hidden.lg\:flex [class*="bg-gradient"][class*="from-violet-100"],
+.fixed.left-0 [class*="bg-gradient"][class*="from-violet-100"] {
+  background: #F5F3FF !important;
+}
+
+/* ===== REMOVE ALL SHADOWS ===== */
+[class*="sidebar"] [class*="shadow-sm"],
+[class*="sidebar"] [class*="shadow-md"],
+[class*="sidebar"] [class*="shadow-lg"],
+.hidden.lg\:flex [class*="shadow-sm"],
+.hidden.lg\:flex [class*="shadow-md"],
+.fixed.left-0 [class*="shadow-sm"],
+.fixed.left-0 [class*="shadow-md"] {
+  box-shadow: none !important;
+}
+
+/* ===== COMPACT CARD PADDING ===== */
+/* Reduce inner padding */
+[class*="sidebar"] .p-3,
+[class*="sidebar"] .p-4,
+.hidden.lg\:flex .p-3,
+.hidden.lg\:flex .p-4,
+.fixed.left-0 .p-3,
+.fixed.left-0 .p-4 {
+  padding: 0 !important;
+}
+
+/* Card container padding */
+[class*="sidebar"] .group[class*="rounded"] > div[class*="flex"][class*="items-start"],
+.hidden.lg\:flex .group[class*="rounded"] > div[class*="flex"][class*="items-start"],
+.fixed.left-0 .group[class*="rounded"] > div[class*="flex"][class*="items-start"] {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* ===== CLEAN TYPOGRAPHY ===== */
+/* Chat titles */
+[class*="sidebar"] [class*="font-medium"][class*="text-sm"],
+.hidden.lg\:flex [class*="font-medium"][class*="text-sm"],
+.fixed.left-0 [class*="font-medium"][class*="text-sm"] {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  margin-bottom: 2px !important;
+}
+
+/* Subject badges */
+[class*="sidebar"] [class*="text-\[10px\]"],
+[class*="sidebar"] [class*="text-xs"][class*="font-semibold"],
+.hidden.lg\:flex [class*="text-\[10px\]"],
+.fixed.left-0 [class*="text-\[10px\]"] {
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+}
+
+/* Time text */
+[class*="sidebar"] [class*="text-\[11px\]"],
+[class*="sidebar"] [class*="text-xs"][class*="text-slate-500"],
+.hidden.lg\:flex [class*="text-\[11px\]"],
+.fixed.left-0 [class*="text-\[11px\]"] {
+  font-size: 10px !important;
+  color: #9CA3AF !important;
+}
+
+/* ===== SIDEBAR CONTAINER SPACING ===== */
+/* Chat list container padding */
+[class*="sidebar"] .flex-1[class*="overflow-y-auto"],
+.hidden.lg\:flex .flex-1[class*="overflow-y-auto"],
+.fixed.left-0 .flex-1[class*="overflow-y-auto"] {
+  padding: 8px !important;
+}
+
+/* Ensure proper gap between items */
+[class*="sidebar"] .flex-1[class*="overflow-y-auto"] > div,
+.hidden.lg\:flex .flex-1[class*="overflow-y-auto"] > div,
+.fixed.left-0 .flex-1[class*="overflow-y-auto"] > div {
+  margin-bottom: 4px !important;
+}
+
+[class*="sidebar"] .flex-1[class*="overflow-y-auto"] > div:last-child,
+.hidden.lg\:flex .flex-1[class*="overflow-y-auto"] > div:last-child,
+.fixed.left-0 .flex-1[class*="overflow-y-auto"] > div:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ============================================
+   SPECIFIC COMPONENT TARGETING
+   Target exact classes from AITutorNeuroSymbolic.js
+   ============================================ */
+
+/* Chat card - exact match from component */
+.group.w-full.rounded-xl.transition-all.duration-200.cursor-pointer {
+  background: transparent !important;
+  padding: 8px 10px !important;
+  margin-bottom: 4px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.group.w-full.rounded-xl.transition-all.duration-200.cursor-pointer:hover {
+  background: #F5F3FF !important;
+}
+
+/* Active card */
+.group.w-full.rounded-xl.bg-gradient-to-r.from-violet-100.via-purple-50.to-violet-100,
+.group.w-full.rounded-xl.bg-white {
+  background: #F5F3FF !important;
+  border-left: 2px solid #7C3AED !important;
+  padding-left: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Remove border-l-4, use border-l-2 */
+.group.w-full.rounded-xl.border-l-4 {
+  border-left-width: 2px !important;
+}
+
+/* Hide icon emoji - exact selector */
+.flex.items-center.gap-1\.5.mb-1\.5 > span.text-sm:first-child {
+  display: none !important;
+}
+
+/* Subject badge row - remove icon spacing */
+.flex.items-center.gap-1\.5.mb-1\.5 {
+  gap: 4px !important;
+  margin-bottom: 4px !important;
+}
+
+/* Inner container - remove padding */
+.flex.items-start.justify-between.gap-2.p-3 {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* Chat list spacing - ensure 4px between items */
+.space-y-1\.5 > * + *,
+.space-y-2 > * + * {
+  margin-top: 4px !important;
+}
+
+/* ===== RESPONSIVE SPACING ===== */
+@media (min-width: 1024px) {
+  /* Desktop sidebar - proper spacing */
+  .hidden.lg\:flex.lg\:flex-col.lg\:w-72 .flex-1.overflow-y-auto .group.w-full.rounded-xl + .group.w-full.rounded-xl {
+    margin-top: 4px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  /* Mobile sidebar - same spacing */
+  .fixed.left-0.top-0.h-full.w-72 .group.w-full.rounded-xl + .group.w-full.rounded-xl {
+    margin-top: 4px !important;
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

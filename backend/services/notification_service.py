@@ -382,7 +382,8 @@ class NotificationService:
     
     def _is_quiet_hours(self, user_id: str) -> bool:
         """Check if current time is in user's quiet hours"""
-        # TODO: Get user's timezone and quiet hour preferences
+        # Default quiet hours: 10 PM - 7 AM (IST)
+        # TODO: Make this user-configurable in profile settings
         now = datetime.now()
         hour = now.hour
         

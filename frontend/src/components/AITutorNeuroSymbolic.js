@@ -42,6 +42,8 @@ import UpgradeModal from './UpgradeModal';
 import OnboardingTour from './OnboardingTour';
 import apiClient from '../api/client';
 import '../styles/ai-tutor-redesign.css'; // Shared scroll stability styles
+import '../styles/sathi-premium.css'; // Premium Sathi UI redesign
+import '../styles/sathi-ux-audit-fixes.css'; // UI/UX Audit Permanent Fixes
 
 // V1 Enhancement Components
 import VisualSketchViewer from './visual/VisualSketchViewer';

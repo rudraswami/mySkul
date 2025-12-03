@@ -37,13 +37,13 @@ from agents.response_adapter import ResponseAdapter
 from agents.enhanced_supervisor import EnhancedSupervisor, create_enhanced_supervisor
 
 # Specialized agents for Cognito OS
-from agents.doubt_resolver import DoubtResolverAgent
+# from agents.doubt_resolver import DoubtResolverAgent  # ARCHIVED - use AgenticDoubtResolver instead
 from agents.motivation import MotivationAgent
 from agents.exam_coach import ExamCoachAgent
 from agents.weak_area_detective import WeakAreaDetectiveAgent
 from agents.study_buddy import StudyBuddyAgent
 from agents.parent_report import ParentReportAgent
-from agents.proactive_companion import ProactiveCompanionAgent
+# from agents.proactive_companion import ProactiveCompanionAgent  # ARCHIVED - use AgenticCompanion instead
 
 # New intelligent base class
 from agents.intelligent_agent_base import IntelligentAgentBase
@@ -80,17 +80,20 @@ __all__ = [
     'VisualiseAgent',
     
     # Specialized Agents (Cognito OS)
-    'DoubtResolverAgent',
+    # 'DoubtResolverAgent',  # ARCHIVED - use AgenticDoubtResolver instead
     'MotivationAgent',
     'ExamCoachAgent',
     'WeakAreaDetectiveAgent',
     'StudyBuddyAgent',
     'ParentReportAgent',
-    'ProactiveCompanionAgent',
+    # 'ProactiveCompanionAgent',  # ARCHIVED - use AgenticCompanion instead
     
     # 🧠 True Agentic System
     'AgenticDoubtResolver',
     'create_agentic_doubt_resolver',
+    'AgenticCompanion',
+    'create_agentic_companion',
+    'process_reminder_request',
     'ReActAgent',
     'AgentState',
     'ThoughtAction',

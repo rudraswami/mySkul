@@ -137,12 +137,15 @@ class ProactiveScheduler:
                 logger.error(f"Failed to process reminder {reminder['reminder_id']}: {e}")
     
     async def _check_streaks(self):
-        """Check for streaks that need protection"""
-        from services.notification_service import NotificationService
-        from agents.proactive_companion import ProactiveCompanionAgent, NudgeType
+        """Check for streaks that need protection using TRUE agentic companion"""
+        from agents.agentic_companion import create_agentic_companion
+        from core.config import settings
         
-        notification_service = NotificationService(self.db)
-        companion = ProactiveCompanionAgent(self.db, notification_service)
+        # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
+        companion = create_agentic_companion({
+            'db_client': self.db,
+            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+        })
         
         now = datetime.utcnow()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -231,12 +234,16 @@ class ProactiveScheduler:
     async def _process_spaced_rep(self):
         """Process spaced repetition reviews"""
         from services.reminder_scheduler import SpacedRepetitionEngine
-        from services.notification_service import NotificationService
-        from agents.proactive_companion import ProactiveCompanionAgent, NudgeType
+        from agents.agentic_companion import create_agentic_companion
+        from core.config import settings
         
         sr_engine = SpacedRepetitionEngine(self.db)
-        notification_service = NotificationService(self.db)
-        companion = ProactiveCompanionAgent(self.db, notification_service)
+        
+        # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
+        companion = create_agentic_companion({
+            'db_client': self.db,
+            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+        })
         
         now = datetime.utcnow()
         
@@ -306,12 +313,15 @@ class ProactiveScheduler:
             logger.error(f"Spaced repetition check failed: {e}")
     
     async def _check_comebacks(self):
-        """Check for users who need comeback nudges"""
-        from services.notification_service import NotificationService
-        from agents.proactive_companion import ProactiveCompanionAgent, NudgeType
+        """Check for users who need comeback nudges using TRUE agentic companion"""
+        from agents.agentic_companion import create_agentic_companion
+        from core.config import settings
         
-        notification_service = NotificationService(self.db)
-        companion = ProactiveCompanionAgent(self.db, notification_service)
+        # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
+        companion = create_agentic_companion({
+            'db_client': self.db,
+            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+        })
         
         now = datetime.utcnow()
         
@@ -428,8 +438,14 @@ class ProactiveScheduler:
         # Only send morning greetings once per day per user
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         
-        notification_service = NotificationService(self.db)
-        companion = ProactiveCompanionAgent(self.db, notification_service)
+        from agents.agentic_companion import create_agentic_companion
+        from core.config import settings
+        
+        # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
+        companion = create_agentic_companion({
+            'db_client': self.db,
+            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+        })
         
         try:
             # Get users who want morning greetings and have been active recently

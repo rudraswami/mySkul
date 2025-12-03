@@ -4,10 +4,15 @@ Uses emergentintegrations library for consistent API access
 """
 import logging
 import uuid
+import asyncio
 from typing import Optional
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 logger = logging.getLogger(__name__)
+
+# Timeout constants
+DEFAULT_LLM_TIMEOUT = 30.0  # 30 seconds
+STREAMING_LLM_TIMEOUT = 120.0  # 2 minutes for streaming
 
 
 async def call_llm(
@@ -51,8 +56,15 @@ async def call_llm(
         # Create user message
         user_msg = UserMessage(content=prompt)
         
-        # Get response
-        response = await llm_client.send_message_async(user_msg)
+        # Get response with timeout protection
+        try:
+            response = await asyncio.wait_for(
+                llm_client.send_message_async(user_msg),
+                timeout=DEFAULT_LLM_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ LLM call exceeded {DEFAULT_LLM_TIMEOUT}s timeout")
+            raise Exception(f"LLM call timeout after {DEFAULT_LLM_TIMEOUT}s")
         
         if not response or not response.content:
             raise Exception("Empty response from LLM")

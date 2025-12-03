@@ -1,0 +1,338 @@
+/* ============================================
+   SATHI UI/UX AUDIT - PERMANENT FIXES
+   Senior UI Tester + UX Quality Analyst Report
+   ============================================
+
+   ISSUES IDENTIFIED & FIXES APPLIED:
+   1. Chat History Cards - Background & Spacing
+   2. Follow-up Questions - Horizontal Layout
+   3. Visual Hierarchy & Spacing System
+   4. Session Distinction
+   5. Component Consistency
+   ============================================ */
+
+/* ============================================
+   SPACING SYSTEM (8px base)
+   ============================================ */
+:root {
+  --sathi-space-xs: 4px;   /* Tight spacing */
+  --sathi-space-sm: 8px;   /* Standard spacing */
+  --sathi-space-md: 12px;  /* Comfortable spacing */
+  --sathi-space-lg: 16px;  /* Generous spacing */
+  --sathi-space-xl: 24px;  /* Section spacing */
+}
+
+/* ============================================
+   ISSUE #1: CHAT HISTORY CARDS
+   Priority: HIGH
+   Problem: White backgrounds create visual clutter
+   Solution: Transparent with subtle left border indicator
+   ============================================ */
+
+/* Remove ALL white/gradient backgrounds from chat cards */
+.hidden.lg\:flex .group.w-full.rounded-xl,
+.fixed.left-0 .group.w-full.rounded-xl {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: var(--sathi-space-sm) var(--sathi-space-md) !important;
+  margin-bottom: var(--sathi-space-xs) !important;
+  border-radius: 6px !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Hover state - subtle highlight */
+.hidden.lg\:flex .group.w-full.rounded-xl:hover,
+.fixed.left-0 .group.w-full.rounded-xl:hover {
+  background: rgba(124, 58, 237, 0.05) !important;
+}
+
+/* Active session - LEFT BORDER INDICATOR (Best Practice) */
+.hidden.lg\:flex .group.w-full.rounded-xl.bg-gradient-to-r,
+.hidden.lg\:flex .group.w-full.rounded-xl.bg-white,
+.fixed.left-0 .group.w-full.rounded-xl.bg-gradient-to-r,
+.fixed.left-0 .group.w-full.rounded-xl.bg-white {
+  background: rgba(124, 58, 237, 0.08) !important;
+  border-left: 3px solid #7C3AED !important;
+  padding-left: calc(var(--sathi-space-md) - 3px) !important;
+}
+
+/* Remove border-l-4, use border-l-3 for cleaner look */
+.hidden.lg\:flex .group.w-full.rounded-xl.border-l-4,
+.fixed.left-0 .group.w-full.rounded-xl.border-l-4 {
+  border-left-width: 3px !important;
+}
+
+/* ============================================
+   ISSUE #2: FOLLOW-UP QUESTIONS LAYOUT
+   Priority: HIGH
+   Problem: Vertical stacking, poor readability
+   Solution: Horizontal scrollable row with proper spacing
+   ============================================ */
+
+/* Follow-up container - horizontal scroll */
+.flex.flex-wrap.items-center.gap-2:has(button[class*="rounded-full"]) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  gap: var(--sathi-space-sm) !important;
+  padding-bottom: var(--sathi-space-xs) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(124, 58, 237, 0.3) transparent !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Hide emoji icon, use subtle indicator */
+.flex.flex-wrap.items-center.gap-2 > span.text-xs.text-slate-500.mr-1 {
+  display: none !important;
+}
+
+/* Follow-up chip buttons - consistent sizing */
+.flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"],
+.flex.flex-wrap.gap-2 button[class*="rounded-full"] {
+  flex-shrink: 0 !important;
+  padding: var(--sathi-space-sm) var(--sathi-space-md) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  min-height: 32px !important;
+  border-radius: 16px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  color: #374151 !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Hover state */
+.flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"]:hover,
+.flex.flex-wrap.gap-2 button[class*="rounded-full"]:hover {
+  background: #F5F3FF !important;
+  border-color: #7C3AED !important;
+  color: #7C3AED !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.1) !important;
+}
+
+/* Active/pressed state */
+.flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"]:active,
+.flex.flex-wrap.gap-2 button[class*="rounded-full"]:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.1) !important;
+}
+
+/* Scrollbar styling for follow-ups */
+.flex.flex-wrap.items-center.gap-2::-webkit-scrollbar {
+  height: 4px !important;
+}
+
+.flex.flex-wrap.items-center.gap-2::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.flex.flex-wrap.items-center.gap-2::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.3) !important;
+  border-radius: 2px !important;
+}
+
+.flex.flex-wrap.items-center.gap-2::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.5) !important;
+}
+
+/* Follow-up container wrapper - proper spacing */
+.mb-3:has(.flex.flex-wrap.items-center.gap-2) {
+  margin-bottom: var(--sathi-space-md) !important;
+  padding: 0 var(--sathi-space-sm) !important;
+}
+
+/* ============================================
+   ISSUE #3: VISUAL HIERARCHY & SPACING
+   Priority: MEDIUM
+   Problem: Inconsistent spacing, poor hierarchy
+   Solution: 8px base spacing system
+   ============================================ */
+
+/* Chat messages container - proper spacing */
+.max-w-4xl.mx-auto.px-4.py-6,
+.max-w-4xl.mx-auto.px-4 {
+  padding-left: var(--sathi-space-xl) !important;
+  padding-right: var(--sathi-space-xl) !important;
+  padding-top: var(--sathi-space-lg) !important;
+  padding-bottom: var(--sathi-space-lg) !important;
+}
+
+@media (max-width: 900px) {
+  .max-w-4xl.mx-auto.px-4 {
+    padding-left: var(--sathi-space-md) !important;
+    padding-right: var(--sathi-space-md) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .max-w-4xl.mx-auto.px-4 {
+    padding-left: var(--sathi-space-sm) !important;
+    padding-right: var(--sathi-space-sm) !important;
+  }
+}
+
+/* Message spacing - consistent gaps */
+.flex.flex-col.gap-6 > * + * {
+  margin-top: var(--sathi-space-xl) !important;
+}
+
+/* ============================================
+   ISSUE #4: SESSION DISTINCTION
+   Priority: MEDIUM
+   Problem: Hard to distinguish current vs old sessions
+   Solution: Left border + subtle background for active
+   ============================================ */
+
+/* Inactive sessions - completely transparent */
+.hidden.lg\:flex .group.w-full.rounded-xl:not(.bg-gradient-to-r):not(.bg-white),
+.fixed.left-0 .group.w-full.rounded-xl:not(.bg-gradient-to-r):not(.bg-white) {
+  background: transparent !important;
+  border-left: 2px solid transparent !important;
+}
+
+/* Active session - clear visual indicator */
+.hidden.lg\:flex .group.w-full.rounded-xl.bg-gradient-to-r.from-violet-100,
+.hidden.lg\:flex .group.w-full.rounded-xl.bg-white.hover\:bg-slate-50 {
+  background: rgba(124, 58, 237, 0.08) !important;
+  border-left: 3px solid #7C3AED !important;
+}
+
+/* ============================================
+   ISSUE #5: COMPONENT CONSISTENCY
+   Priority: LOW
+   Problem: Multiple follow-up implementations
+   Solution: Unified styling
+   ============================================ */
+
+/* All follow-up question containers */
+[class*="follow-up"],
+[class*="followup"],
+[class*="FollowUp"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: var(--sathi-space-sm) !important;
+}
+
+/* Remove background containers from follow-ups */
+.mt-4.p-4.bg-gradient-to-r.from-purple-50,
+.pt-3.border-t.border-gray-100 {
+  background: transparent !important;
+  border: none !important;
+  padding: var(--sathi-space-md) 0 !important;
+}
+
+/* ============================================
+   ISSUE #6: CHAT CARD TYPOGRAPHY
+   Priority: MEDIUM
+   Problem: Inconsistent font sizes
+   Solution: Standardized typography scale
+   ============================================ */
+
+/* Chat title */
+.hidden.lg\:flex .font-medium.text-sm.truncate,
+.fixed.left-0 .font-medium.text-sm.truncate {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: #111827 !important;
+}
+
+/* Subject badge */
+.hidden.lg\:flex .text-\[10px\].font-semibold,
+.fixed.left-0 .text-\[10px\].font-semibold {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Time text */
+.hidden.lg\:flex .text-\[11px\].text-slate-500,
+.fixed.left-0 .text-\[11px\].text-slate-500 {
+  font-size: 10px !important;
+  color: #9CA3AF !important;
+}
+
+/* ============================================
+   ISSUE #7: INPUT AREA SPACING
+   Priority: LOW
+   Problem: Follow-ups too close to input
+   Solution: Proper margin separation
+   ============================================ */
+
+/* Input area container */
+.border-t.border-gray-100.bg-gradient-to-t {
+  padding-top: var(--sathi-space-lg) !important;
+  padding-bottom: var(--sathi-space-lg) !important;
+}
+
+/* Follow-ups above input - proper spacing */
+.mb-3:has(button[class*="rounded-full"]) {
+  margin-bottom: var(--sathi-space-md) !important;
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+/* Focus states for keyboard navigation */
+.flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"]:focus-visible,
+.hidden.lg\:flex .group.w-full.rounded-xl:focus-visible {
+  outline: 2px solid #7C3AED !important;
+  outline-offset: 2px !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"],
+  .hidden.lg\:flex .group.w-full.rounded-xl {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   RESPONSIVE FIXES
+   ============================================ */
+
+@media (max-width: 640px) {
+  /* Mobile follow-ups - allow wrapping if needed */
+  .flex.flex-wrap.items-center.gap-2:has(button[class*="rounded-full"]) {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  
+  /* Mobile chat cards - slightly more padding */
+  .fixed.left-0 .group.w-full.rounded-xl {
+    padding: var(--sathi-space-md) !important;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+.dark .hidden.lg\:flex .group.w-full.rounded-xl:hover,
+.dark .fixed.left-0 .group.w-full.rounded-xl:hover {
+  background: rgba(124, 58, 237, 0.15) !important;
+}
+
+.dark .flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"] {
+  background: #1F2937 !important;
+  border-color: #374151 !important;
+  color: #E5E7EB !important;
+}
+
+.dark .flex.flex-wrap.items-center.gap-2 button[class*="rounded-full"]:hover {
+  background: rgba(124, 58, 237, 0.2) !important;
+  border-color: #7C3AED !important;
+  color: #F3F4F6 !important;
+}
+

@@ -5,12 +5,14 @@ Sends responses progressively like ChatGPT, not all at once
 import logging
 import json
 import asyncio
+import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from models.core import User
 from dependencies import get_current_user, get_database
+from utils.streaming_cleanup import safe_streaming_generator
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class StreamingRequest(BaseModel):
     message: str
     session_id: str
     subject: str = "General"
-    exam_mode: str = "JEE"
+    exam_mode: Optional[str] = None  # Will be resolved dynamically
 
 
 async def generate_streaming_response(
@@ -61,12 +63,19 @@ async def generate_streaming_response(
         
         supervisor = SupervisorAgent(config={"emergent_llm_key": emergent_llm_key})
         
+        # Resolve exam mode dynamically
+        exam_mode = await resolve_exam_mode(
+            request_exam_mode=None,  # Not in this flow
+            user_id=user.user_id,
+            db_client=db
+        )
+        
         # Build context
         agentic_context = {
             "subject": subject,
             "session_id": session_id,
             "user_id": user.user_id,
-            "exam_mode": "JEE",
+            "exam_mode": exam_mode,
             "student_profile": {
                 "name": user.full_name.split()[0] if user.full_name else "",
                 "level": "class_12",
@@ -136,9 +145,21 @@ async def generate_streaming_response(
         # Send complete signal
         yield f"data: {json.dumps({'type': 'complete', 'metadata': template_metadata})}\n\n"
         
+    except asyncio.CancelledError:
+        # Client disconnected - cleanup gracefully
+        logger.warning(f"Stream cancelled for user {user.user_id}")
+        # Don't yield error - connection is already closed
+        
     except Exception as e:
         logger.error(f"❌ Streaming generation error: {e}", exc_info=True)
-        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        try:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        except:
+            pass  # Connection might be closed
+            
+    finally:
+        # Ensure cleanup happens
+        logger.info(f"Streaming cleanup for user {user.user_id}")
 
 
 @router.post("/generate")
@@ -148,11 +169,15 @@ async def stream_ai_response(
     db = Depends(get_database)
 ):
     """
-    Stream AI response progressively
+    Stream AI response progressively with proper cleanup.
     
     Returns Server-Sent Events (SSE) stream
     """
-    return StreamingResponse(
+    # Generate unique stream ID for tracking
+    stream_id = f"stream_{user.user_id}_{uuid.uuid4().hex[:8]}"
+    
+    # Wrap generator with safety features
+    safe_generator = safe_streaming_generator(
         generate_streaming_response(
             message=request.message,
             session_id=request.session_id,
@@ -160,11 +185,18 @@ async def stream_ai_response(
             user=user,
             db=db
         ),
+        stream_id=stream_id,
+        timeout=120.0  # 2 minute timeout
+    )
+    
+    return StreamingResponse(
+        safe_generator,
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"  # Disable nginx buffering
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "X-Stream-ID": stream_id  # For debugging
         }
     )
 

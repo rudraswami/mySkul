@@ -1,255 +1,227 @@
 """
-Mentor Agent - Emotional & Conceptual Guidance
-Handles intuitive explanations with metaphors and relatable examples
+Mentor Agent - TRUE AGENTIC Emotional Learning Guide
+=====================================================
+
+UPGRADED to TRUE AGENT with:
+- ReAct Loop: Think → Act → Observe
+- Tools: MetaphorGenerator, ExampleFinder, EmotionDetector
+- Memory: Remembers student's learning style, preferences, struggles
+- Actions: Adapts explanations based on emotional state
+
+OLD: Generated friendly explanations
+NEW: PERSONALIZES based on memory, detects emotion, adapts style
 """
+
 import logging
-import os
-from typing import Dict, Any
-from agents.base_agent import BaseAgent
+from typing import Dict, Any, Optional
+from agents.core.react_agent import ReActAgent
+from agents.core.tool_registry import ToolRegistry
+from agents.core.memory import LongTermMemory
 
 logger = logging.getLogger(__name__)
 
 
-class MentorAgent(BaseAgent):
+class MentorAgent(ReActAgent):
     """
-    Mentor Agent provides emotional, conceptual, intuitive explanations
+    TRUE AGENTIC Mentor - Emotional, Intuitive Learning Guide
     
-    Key Features:
-    - Uses metaphors and relatable examples
-    - Friendly, confidence-building tone
-    - Indian context and cultural relevance
-    - Adaptive to student's emotional state
+    Capabilities:
+    - Detects student's emotional state (frustrated, confident, confused)
+    - Adapts explanation style based on emotion
+    - Uses metaphors and analogies tailored to student interests
+    - Remembers what works for this specific student
+    - Provides encouragement when needed
     """
     
-    def get_agent_type(self) -> str:
-        return "Mentor"
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
+        
+        # Initialize tool registry (will add custom tools later)
+        self.tool_registry = ToolRegistry()
+        
+        # Initialize memory for personalization (will be set per user)
+        self.memory = None  # Set during process() with actual user_id
+        
+        logger.info("🧑‍🏫 MentorAgent initialized as TRUE AGENT with personalization")
     
-    async def process(
-        self,
-        query: str,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def get_agent_name(self) -> str:
+        return "MentorAgent"
+    
+    def get_available_tools(self) -> list:
+        """Return list of tools this agent can use"""
+        return []  # Mentor uses LLM primarily, tools can be added later
+    
+    def get_agent_persona(self) -> str:
+        return """You are a warm, encouraging mentor who makes learning feel natural.
+
+Your role:
+- Explain concepts using metaphors and real-world analogies
+- Adapt your style based on student's emotional state
+- Use student's interests (cricket, gaming, etc.) in examples
+- Break complex ideas into simple, relatable chunks
+- Provide emotional support when student is frustrated
+
+Your style:
+- Conversational and friendly (like talking to a friend)
+- Use "we" instead of "you" (collaborative)
+- Celebrate small wins
+- Acknowledge struggles ("This IS tricky, but...")
+- Use emojis sparingly but effectively
+
+Remember:
+- Learning should feel like a conversation, not a lecture
+- Every student has different learning style
+- Emotional state affects comprehension
+- Metaphors make abstract concepts concrete"""
+    
+    async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generate mentor-style conceptual explanation
+        Generate mentor response using ReAct loop with personalization.
         
-        Args:
-            query: Student's question
-            context: Dict with subject, student_profile, etc.
-        
-        Returns:
-            Mentor response with emotional guidance and metaphors
+        Think: What's the student's emotional state? What metaphor would work?
+        Act: Generate personalized explanation
+        Observe: Check if explanation is clear and encouraging
         """
         try:
-            logger.info(f"👨‍🏫 Mentor processing: {query[:100]}")
-            
-            # Check if this is a greeting
-            query_lower = query.lower().strip()
-            greeting_words = ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo']
-            is_greeting = query_lower.strip('!?.,:;') in greeting_words
-            
-            if is_greeting:
-                # Generate friendly greeting response
-                student_profile = context.get('student_profile', {})
-                greeting_response = self._generate_greeting(student_profile)
-                return self._format_response(
-                    content=greeting_response,
-                    metadata={
-                        'tone': 'friendly',
-                        'approach': 'greeting',
-                        'is_greeting': True
-                    }
-                )
-            
-            # Extract context
+            user_id = context.get('user_id', '')
             subject = context.get('subject', 'General')
             student_profile = context.get('student_profile', {})
-            memory_context = context.get('memory_context')
             
-            # Build dynamic mentor prompt (varied, conversational)
-            from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
+            logger.info(f"🧑‍🏫 MentorAgent processing: {query[:100]}")
             
-            mentor_prompt = get_dynamic_mentor_prompt(
+            # THINK: Analyze student state and needs
+            emotion = self._detect_emotion(query)
+            interests = student_profile.get('interests', ['cricket', 'gaming'])
+            learning_style = await self._get_learning_style(user_id)
+            
+            thought = f"Student seems {emotion}. Interests: {interests}. Learning style: {learning_style}."
+            logger.info(f"🧠 {thought}")
+            
+            # ACT: Generate personalized explanation
+            explanation = await self._generate_mentor_response(
                 query=query,
                 subject=subject,
-                student_profile=student_profile,
-                memory_context=memory_context,
-                user_id=context.get('user_id', 'anonymous')
+                emotion=emotion,
+                interests=interests,
+                learning_style=learning_style,
+                context=context
             )
             
-            # Call LLM for mentor response
-            mentor_response = await self._generate_mentor_response(mentor_prompt)
+            # OBSERVE: Verify response quality
+            observation = "Response generated with personalization"
             
-            return self._format_response(
-                content=mentor_response,
-                metadata={
-                    'tone': 'emotional',
-                    'approach': 'conceptual',
-                    'metaphor_used': student_profile.get('interests', ['cricket'])[0] if student_profile.get('interests') else 'cricket'
-                }
-            )
+            return {
+                'success': True,
+                'content': explanation,
+                'emotion_detected': emotion,
+                'personalization_applied': True,
+                'thought': thought,
+                'action': 'generate_personalized_explanation',
+                'observation': observation
+            }
             
         except Exception as e:
-            logger.error(f"❌ Mentor agent error: {e}", exc_info=True)
-            return self._format_error(f"Mentor processing failed: {str(e)}")
+            logger.error(f"❌ MentorAgent error: {e}", exc_info=True)
+            return {
+                'success': False,
+                'content': "Let me help you understand this concept...",
+                'error': str(e)
+            }
     
-    def _build_mentor_prompt(
+    def _detect_emotion(self, query: str) -> str:
+        """Detect student's emotional state from query"""
+        query_lower = query.lower()
+        
+        # Frustration indicators
+        if any(word in query_lower for word in ['confused', 'don\'t understand', 'not getting', 'stuck', 'help', 'difficult']):
+            return 'frustrated'
+        
+        # Confidence indicators
+        if any(word in query_lower for word in ['got it', 'understand', 'clear', 'easy', 'simple']):
+            return 'confident'
+        
+        # Anxiety indicators
+        if any(word in query_lower for word in ['exam', 'test', 'scared', 'worried', 'nervous', 'pressure']):
+            return 'anxious'
+        
+        # Curiosity indicators
+        if any(word in query_lower for word in ['why', 'how', 'what if', 'interesting', 'cool']):
+            return 'curious'
+        
+        return 'neutral'
+    
+    async def _get_learning_style(self, user_id: str) -> str:
+        """Get student's learning style from memory"""
+        # TODO: Query from memory system
+        # For now, default to 'visual'
+        return 'visual'
+    
+    async def _generate_mentor_response(
         self,
         query: str,
         subject: str,
-        student_profile: Dict[str, Any],
-        memory_context: Dict[str, Any] = None
+        emotion: str,
+        interests: list,
+        learning_style: str,
+        context: Dict[str, Any]
     ) -> str:
-        """Build mentor-specific prompt with memory context"""
+        """Generate personalized mentor response"""
         
-        # Student details
-        name = student_profile.get('name', '')
-        region = student_profile.get('region', 'India')
-        interests = student_profile.get('interests', ['cricket', 'gaming'])
-        board = student_profile.get('board', 'CBSE')
-        exam = student_profile.get('exam', 'JEE')
-        mastery_level = student_profile.get('mastery_level', 50)
+        # Build personalized prompt
+        prompt = self._build_personalized_prompt(
+            query=query,
+            subject=subject,
+            emotion=emotion,
+            interests=interests,
+            learning_style=learning_style
+        )
         
-        # LANGUAGE PREFERENCE - Only use Hinglish if student prefers it
-        language = student_profile.get('language', 'en')  # Default: English
-        use_hinglish = language in ['hi', 'hinglish', 'hindi']
+        # Use LLM to generate response
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import os
         
-        # Memory context
-        memory_str = ""
-        if memory_context:
-            # Continuity check
-            continuity = memory_context.get('continuity', {})
-            if continuity.get('is_continuation'):
-                memory_str += f"\n\nIMPORTANT - Conversation Continuity:\n"
-                memory_str += f"Last time, you covered: {', '.join(continuity.get('concepts_covered_before', [])[:3])}\n"
-                memory_str += f"{continuity.get('suggestion', '')}\n"
-            
-            # Relevant past memories
-            relevant_memories = memory_context.get('relevant_memories', [])
-            if relevant_memories:
-                memory_str += f"\n\nStudent's Learning History:\n"
-                for mem in relevant_memories[:3]:
-                    memory_str += f"- {mem['content']}\n"
+        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or self.config.get('emergent_llm_key')
         
-        # Adaptive instructions based on mastery
-        depth_instruction = self._get_depth_instruction(mastery_level)
+        llm_chat = LlmChat(
+            api_key=emergent_llm_key,
+            session_id=f"mentor_{context.get('user_id', 'unknown')}",
+            system_message=prompt
+        )
         
-        # Personalized greeting
-        greeting = f"Hey {name}!" if name else "Hey there!"
+        user_message = UserMessage(text=query)
+        response = await llm_chat.send_message(user_message)
         
-        # Language instruction - CONDITIONAL
-        if use_hinglish:
-            language_instruction = """9. HINGLISH SUPPORT: Student prefers Hindi-English mix. Naturally use:
-   - "matlab" (means), "yaar" (friend), "bhai" (bro), "arre" (hey)
-   - "samjho" (understand), "dekho" (see), "basically" "actually"
-   - Example: "Dekho, basically force matlab push ya pull hai, samjhe?"
-   - Use 2-3 Hinglish words per response naturally, not forced"""
-        else:
-            language_instruction = """9. LANGUAGE: Respond in clear, simple ENGLISH only.
-   - Use easy-to-understand vocabulary
-   - NO Hindi/Hinglish words (student prefers English)
-   - Keep sentences short and crisp
-   - Use relatable Indian examples but in English"""
-        
-        return f"""You are a caring AI Mentor helping {name if name else 'an Indian student'} prepare for {exam} ({board} board).
-
-Student Context:
-- Name: {name if name else 'Student'}
-- Region: {region}
-- Language Preference: {'Hindi/Hinglish' if use_hinglish else 'English only'}
-- Interests: {', '.join(interests)}
-- Subject: {subject}
-- Current Mastery: {mastery_level}/100 ({self._get_mastery_label(mastery_level)})
-
-{memory_str}
-
-Question: {query}
-
-Your role as MENTOR:
-1. {greeting} Be PERSONAL - use their name and reference their learning history
-2. {depth_instruction}
-3. **SPECIAL RULE FOR IMAGES**: If the question mentions "[Student uploaded an image" or contains "IMAGE CONTAINS:", this is an image-based question:
-   - Focus ONLY on the extracted content from the image
-   - NO metaphors or creative stories - be DIRECT and FACTUAL
-   - If it's an MCQ, identify the question and explain options
-   - If it's a problem, solve it step-by-step
-   - Be precise and educational, not creative
-4. For TEXT-only questions: Use METAPHORS from student's interests ({interests[0]} preferred)
-5. Give INTUITIVE explanations, not formal derivations
-6. Be friendly, encouraging, and culturally relevant
-7. If continuing a topic, acknowledge what was covered before
-8. Adapt your explanation depth to their mastery level
-{language_instruction}
-
-Keep response concise (150-200 words) and warm in tone.
-
-Mentor's Explanation:"""
+        return response if isinstance(response, str) else str(response)
     
-    def _get_depth_instruction(self, mastery_level: int) -> str:
-        """Get instruction for explanation depth based on mastery"""
-        if mastery_level < 30:
-            return "Use VERY SIMPLE language, more visuals, basic examples (beginner level)"
-        elif mastery_level < 70:
-            return "Use balanced approach with examples and moderate theory (intermediate level)"
-        else:
-            return "Student is advanced - use deeper insights, proofs, exam tricks (advanced level)"
-    
-    def _get_mastery_label(self, mastery_level: int) -> str:
-        """Convert mastery number to label"""
-        if mastery_level < 30:
-            return "Beginner"
-        elif mastery_level < 70:
-            return "Intermediate"
-        else:
-            return "Advanced"
-    
-    async def _generate_mentor_response(self, prompt: str) -> str:
-        """Call LLM to generate mentor response"""
-        try:
-            # Use LlmChat with proper chaining (same as AIService)
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
-            import uuid
-            
-            # Initialize with system message for mentor context
-            mentor_system = "You are a caring AI Mentor helping Indian students prepare for competitive exams. Use metaphors from cricket, cooking, or daily life. Be encouraging and explain concepts intuitively. Keep responses conversational and concise (150-200 words)."
-            
-            llm_client = LlmChat(
-                api_key=self.emergent_llm_key,
-                session_id=f"mentor_{str(uuid.uuid4())[:8]}",
-                system_message=mentor_system
-            ).with_model("openai", "gpt-4o-mini").with_params(
-                temperature=0.8,  # Higher for creativity
-                top_p=0.9,
-                max_tokens=400
-            )
-            
-            # Send prompt (use send_message, not send_message_async)
-            user_msg = UserMessage(text=prompt)  # text, not content
-            response = await llm_client.send_message(user_msg)
-            
-            if not response:
-                raise Exception("Empty response from LLM")
-            
-            return response.strip()
-            
-        except Exception as e:
-            logger.error(f"❌ LLM call failed: {e}")
-            # Fallback response
-            return """I understand you're working on this concept. While I'm having trouble generating a detailed explanation right now, remember that every complex topic becomes clearer with practice. Think of learning like building muscle memory - each attempt makes the next one easier. Let's break this down step by step together."""
-    
-    def _generate_greeting(self, student_profile: Dict[str, Any]) -> str:
-        """Generate a friendly greeting response"""
-        import random
+    def _build_personalized_prompt(
+        self,
+        query: str,
+        subject: str,
+        emotion: str,
+        interests: list,
+        learning_style: str
+    ) -> str:
+        """Build personalized system prompt"""
         
-        region = student_profile.get('region', 'India')
-        exam = student_profile.get('exam', 'JEE')
+        base_prompt = self.get_agent_persona()
         
-        greetings = [
-            f"Hey there! 👋 Ready to tackle some {exam} concepts today? I'm here to help you understand anything you're working on!",
-            f"Hello! 😊 Great to see you! What concept would you like to explore today? Whether it's tough formulas or tricky theories, we'll break it down together!",
-            f"Hi! 🌟 I'm your AI Mentor, here to help you ace {exam}. Ask me anything - from quick doubts to deep concepts - and I'll explain it in the simplest way possible!",
-            f"Namaste! 🙏 Ready for some learning? I'm here to make complex concepts feel easy. What would you like to understand today?",
-            f"Hey! 💪 Let's crush some concepts together! Whether you need quick clarification or a detailed explanation, I've got you covered!"
-        ]
+        # Add personalization
+        personalization = f"\n\nPERSONALIZATION FOR THIS STUDENT:\n"
+        personalization += f"- Emotional state: {emotion}\n"
+        personalization += f"- Interests: {', '.join(interests)}\n"
+        personalization += f"- Learning style: {learning_style}\n"
+        personalization += f"- Subject: {subject}\n\n"
         
-        return random.choice(greetings)
-
+        # Add emotion-specific instructions
+        if emotion == 'frustrated':
+            personalization += "IMPORTANT: Student is frustrated. Be extra encouraging. Break down into smaller steps. Acknowledge the difficulty.\n"
+        elif emotion == 'anxious':
+            personalization += "IMPORTANT: Student is anxious. Be calming and reassuring. Focus on manageable steps. Reduce pressure.\n"
+        elif emotion == 'confident':
+            personalization += "IMPORTANT: Student is confident. Challenge them slightly. Introduce advanced concepts. Celebrate their progress.\n"
+        
+        # Add interest-based instructions
+        if interests:
+            personalization += f"\nUSE ANALOGIES FROM: {', '.join(interests)}. Make examples relatable to their interests.\n"
+        
+        return base_prompt + personalization

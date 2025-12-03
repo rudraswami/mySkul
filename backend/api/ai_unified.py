@@ -55,7 +55,7 @@ class UnifiedAIRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=10000)
     subject: Optional[str] = None
     session_id: Optional[str] = None
-    exam_mode: str = Field(default="JEE")
+    exam_mode: Optional[str] = None  # Will be resolved dynamically, not hardcoded
     image_url: Optional[str] = None  # Base64 or URL for image analysis
     # Cognitive OS options
     enable_verification: bool = Field(default=True)  # Enable response verification

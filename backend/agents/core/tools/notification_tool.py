@@ -82,9 +82,18 @@ class NotificationTool(BaseTool):
             if priority not in valid_priorities:
                 priority = 'medium'
             
-            # Get database client
-            from db.mongo import get_database
-            db = await get_database()
+            # Get database client from context (passed by agentic router)
+            db = context.get('db') if context else None
+            if db is None:
+                try:
+                    from dependencies import get_database
+                    db = get_database()
+                except Exception:
+                    return ToolResult(
+                        success=False,
+                        output="Cannot connect to database.",
+                        error="Database not available"
+                    )
             
             # Import and use NotificationService
             from services.notification_service import NotificationService
@@ -159,9 +168,18 @@ class StudySummaryTool(BaseTool):
                     error="Missing user_id"
                 )
             
-            # Get database
-            from db.mongo import get_database
-            db = await get_database()
+            # Get database from context (passed by agentic router)
+            db = context.get('db') if context else None
+            if db is None:
+                try:
+                    from dependencies import get_database
+                    db = get_database()
+                except Exception:
+                    return ToolResult(
+                        success=False,
+                        output="Cannot connect to database.",
+                        error="Database not available"
+                    )
             
             # Get study stats
             # This would fetch from analytics/gamification

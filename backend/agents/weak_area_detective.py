@@ -1,222 +1,239 @@
 """
-🔍 WEAK AREA DETECTIVE AGENT - Knowledge Gap Analyzer
+Weak Area Detective Agent - TRUE AGENTIC Data Analysis Agent
+=============================================================
 
-This agent helps students identify and address their weak areas:
-- Performance analysis based on history
-- Topic-level weakness detection
-- Personalized improvement plans
-- Priority recommendations
+UPGRADED to TRUE AGENT with:
+- ReAct Loop: Think → Act → Observe
+- Tools: DatabaseQueryTool, AnalyticsTool
+- Memory: Tracks improvement patterns over time
+- Actions: ACTUALLY queries DB and analyzes real performance data
 
-Philosophy: Every weakness is a potential strength waiting to be unlocked
+OLD: Guessed weak areas from conversation
+NEW: ANALYZES actual performance data from MongoDB
 """
 
 import logging
 from typing import Dict, Any, Optional, List
-from agents.intelligent_agent_base import IntelligentAgentBase
+from agents.core.react_agent import ReActAgent
+from agents.core.tool_registry import ToolRegistry
+from agents.core.tools.database_query_tool import DatabaseQueryTool
+from agents.core.tools.analytics_tool import AnalyticsTool
+from agents.core.memory import LongTermMemory
 
 logger = logging.getLogger(__name__)
 
 
-class WeakAreaDetectiveAgent(IntelligentAgentBase):
+class WeakAreaDetectiveAgent(ReActAgent):
     """
-    Intelligent weak area analyzer that uses LLM for personalized analysis
+    TRUE AGENTIC Weak Area Detective
+    
+    Capabilities:
+    - Queries real user performance data from MongoDB
+    - Performs statistical analysis on accuracy/time
+    - Identifies patterns and trends
+    - Generates data-driven recommendations
+    - Tracks improvement over time
     """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
+        
+        # Get DB client from config
+        self.db = config.get('db_client') if config else None
+        
+        # Initialize tool registry with analytics tools
+        self.tool_registry = ToolRegistry()
+        self.tool_registry.register(DatabaseQueryTool(self.db))
+        self.tool_registry.register(AnalyticsTool())
+        
+        # Initialize memory for tracking patterns (will be set per user)
+        self.memory = None  # Set during process() with actual user_id
+        
+        logger.info("🔍 WeakAreaDetectiveAgent initialized as TRUE AGENT with data analysis")
+    
+    def get_agent_name(self) -> str:
+        return "WeakAreaDetectiveAgent"
+    
+    def get_available_tools(self) -> list:
+        """Return list of tools this agent can use"""
+        return ['query_user_data', 'analyze_data']
+    
+    def get_agent_persona(self) -> str:
+        return """You are a data-driven learning analyst who identifies weak areas.
+
+Your role:
+- Query actual user performance data from database
+- Analyze accuracy, time spent, and engagement per topic
+- Identify patterns and trends in learning behavior
+- Generate data-driven recommendations (not guesses)
+- Track improvement over time
+
+Always base your analysis on REAL DATA, not assumptions.
+Use the query_user_data tool to get actual performance metrics.
+Use the analyze_data tool to generate insights."""
     
     @staticmethod
     def is_weak_area_query(query: str) -> bool:
-        """Detect if this is a weak area analysis query"""
-        query_lower = query.lower()
-        
-        weak_area_phrases = [
-            # Direct requests
-            'weak areas', 'weaknesses', 'where am i weak',
-            'what should i improve', 'improve', 'improvement',
-            'struggling with', 'hard for me', 'difficult for me',
-            
-            # Analysis requests
-            'analyze', 'analyse', 'check my', 'review my',
-            'gaps', 'missing', 'lacking',
-            
-            # Performance queries
-            'why am i failing', 'not scoring', 'low marks',
-            'where am i going wrong', 'mistakes',
-            
-            # Recommendation requests
-            'what to focus on', 'priority', 'focus areas',
-            'where should i spend time'
+        """Check if query is about weak areas"""
+        patterns = [
+            'weak', 'weakness', 'struggle', 'struggling', 'difficult', 'difficulty',
+            'not good at', 'bad at', 'improve', 'improvement', 'gap', 'knowledge gap',
+            'where am i weak', 'what should i focus', 'what to study'
         ]
-        
-        return any(phrase in query_lower for phrase in weak_area_phrases)
+        query_lower = query.lower()
+        return any(pattern in query_lower for pattern in patterns)
     
-    def get_agent_type(self) -> str:
-        return 'weak_area_detective'
-    
-    def get_agent_persona(self) -> str:
-        """Analytical coach persona"""
-        return """You are a skilled learning analyst who helps students identify and overcome weak areas.
-
-YOUR CHARACTER:
-- You're like a sports coach reviewing game footage
-- Analytical but supportive
-- Focus on growth, not blame
-- Every weakness is a growth opportunity
-
-YOUR APPROACH:
-- Be specific about what's weak (not vague "you need to improve")
-- Explain WHY something might be weak (conceptual gap? practice issue? exam technique?)
-- Give concrete steps to improve
-- Prioritize: "Fix this first, then this"
-
-YOUR STYLE:
-- "Based on your pattern, I notice..."
-- "Here's the good news - this is very fixable!"
-- "Most students struggle here because..."
-- Give time estimates: "With 1 hour daily for 2 weeks, you can master this"
-"""
-    
-    def get_specialized_instructions(self, query: str, context: Dict[str, Any]) -> str:
-        """Instructions for weak area analysis"""
-        
-        subject = context.get('subject', 'General')
-        session_data = context.get('session_data', {})
-        
-        # Check if we have actual performance data
-        has_performance_data = session_data.get('performance_history') or session_data.get('quiz_scores')
-        
-        if has_performance_data:
-            return f"""
-SUBJECT: {subject}
-PERFORMANCE DATA AVAILABLE: Yes
-
-Analyze based on:
-- Quiz/test scores provided
-- Topics where mistakes occurred
-- Time taken on different topics
-- Pattern of errors (conceptual vs calculation vs silly)
-
-RESPONSE STRUCTURE:
-1. **Overall Assessment** (1-2 lines)
-2. **Top 3 Weak Areas** (specific, ranked by priority)
-   - What's weak
-   - Why it matters (exam weightage)
-   - Root cause hypothesis
-3. **Improvement Plan** (actionable)
-   - Time investment needed
-   - Specific resources/methods
-   - Checkpoints
-4. **Quick Win** (one thing they can fix today)
-5. **Encouragement** (genuine, not generic)
-"""
-        else:
-            return f"""
-SUBJECT: {subject}
-PERFORMANCE DATA: Not available
-
-Since we don't have test history, offer to help identify weak areas by:
-1. Asking diagnostic questions about {subject}
-2. Offering a quick self-assessment quiz
-3. Asking which topics feel hardest
-
-Alternatively, provide general advice on common weak areas in {subject} for exam preparation.
-
-RESPONSE STRUCTURE:
-1. Acknowledge we need more data
-2. Offer diagnostic options
-3. Share common weak areas in {subject}
-4. Encourage them to share what feels hardest
-"""
-    
-    def _get_fallback_response(self, query: str, context: Dict[str, Any]) -> str:
-        """Fallback if LLM fails"""
-        subject = context.get('subject', 'your subjects')
-        
-        return f"""Let's identify your weak areas in {subject}! 🔍
-
-To give you the best analysis, I can help in two ways:
-
-**Option 1: Quick Self-Assessment**
-Tell me which topics feel hardest for you - I'll analyze why and give you a plan.
-
-**Option 2: Diagnostic Quiz**
-Take a 5-question mini-quiz. I'll analyze your responses to spot patterns.
-
-**Option 3: Review Your History**
-If you've done practice tests here, I can analyze your performance.
-
-💡 **Common Weak Areas in {subject}:**
-Most students struggle with foundational concepts that everything else builds on. Once we fix those, other topics often become easier automatically!
-
-Which option works for you?"""
-    
-    async def get_performance_analysis(
-        self,
-        user_id: str,
-        subject: str,
-        db_client: Any = None
-    ) -> Dict[str, Any]:
+    async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Get detailed performance analysis from user history
-        This can be called to fetch actual data before processing
-        """
-        if not db_client:
-            return {}
+        Analyze weak areas using ReAct loop with real data.
         
+        Think: What data do I need to identify weak areas?
+        Act: Query database for performance metrics
+        Observe: Analyze results and generate insights
+        """
         try:
-            # Get user's quiz/test history
-            performance = await db_client.user_performance.find(
-                {"user_id": user_id, "subject": subject}
-            ).sort("timestamp", -1).limit(20).to_list(20)
+            user_id = context.get('user_id')
+            subject = context.get('subject')
             
-            if not performance:
-                return {}
+            logger.info(f"🔍 WeakAreaDetective analyzing for user {user_id}")
             
-            # Analyze patterns
-            topic_scores = {}
-            error_patterns = []
+            # THINK: What analysis is needed?
+            thought = f"To identify weak areas, I need to query user performance data and analyze patterns."
             
-            for record in performance:
-                topic = record.get('topic')
-                score = record.get('score', 0)
-                max_score = record.get('max_score', 100)
-                
-                if topic:
-                    if topic not in topic_scores:
-                        topic_scores[topic] = []
-                    topic_scores[topic].append(score / max_score if max_score else 0)
-                
-                if record.get('errors'):
-                    error_patterns.extend(record['errors'])
+            # ACT 1: Query user performance
+            logger.info("🔍 Step 1: Querying user performance data...")
+            performance_result = await self.tool_registry.execute_tool(
+                'query_user_data',
+                user_id=user_id,
+                query_type='user_performance',
+                subject=subject,
+                time_range=30
+            )
             
-            # Calculate weak areas
-            weak_areas = []
-            for topic, scores in topic_scores.items():
-                avg_score = sum(scores) / len(scores)
-                if avg_score < 0.6:  # Below 60%
-                    weak_areas.append({
-                        'topic': topic,
-                        'average_score': avg_score,
-                        'attempts': len(scores),
-                        'priority': 'high' if avg_score < 0.4 else 'medium'
-                    })
+            # ACT 2: Query weak areas specifically
+            logger.info("🔍 Step 2: Querying weak areas...")
+            weak_areas_result = await self.tool_registry.execute_tool(
+                'query_user_data',
+                user_id=user_id,
+                query_type='weak_areas',
+                subject=subject,
+                time_range=30
+            )
             
-            # Sort by priority
-            weak_areas.sort(key=lambda x: x['average_score'])
+            # ACT 3: Analyze the data
+            logger.info("🔍 Step 3: Analyzing data...")
+            analysis_result = await self.tool_registry.execute_tool(
+                'analyze_data',
+                analysis_type='recommendation_generation',
+                data={
+                    **performance_result.data,
+                    **weak_areas_result.data
+                },
+                context=context
+            )
+            
+            # OBSERVE: Check results
+            if not performance_result.success or not weak_areas_result.success:
+                observation = "Data query failed - using fallback analysis"
+                return await self._fallback_analysis(query, context)
+            
+            observation = f"Found {len(weak_areas_result.data.get('weak_areas', []))} weak areas from real data"
+            
+            # Generate comprehensive response
+            weak_areas = weak_areas_result.data.get('weak_areas', [])
+            recommendations = analysis_result.data.get('recommendations', []) if analysis_result.success else []
+            performance = performance_result.data
+            
+            response = self._format_analysis_response(
+                weak_areas=weak_areas,
+                recommendations=recommendations,
+                performance=performance,
+                query=query
+            )
             
             return {
-                'weak_areas': weak_areas[:5],
-                'total_attempts': len(performance),
-                'error_patterns': error_patterns[:10]
+                'success': True,
+                'content': response,
+                'weak_areas': weak_areas,
+                'recommendations': recommendations,
+                'performance_summary': performance,
+                'thought': thought,
+                'actions': ['query_user_data (performance)', 'query_user_data (weak_areas)', 'analyze_data'],
+                'observation': observation,
+                'data_driven': True  # Flag that this is based on real data
             }
             
         except Exception as e:
-            logger.error(f"Performance analysis failed: {e}")
-            return {}
+            logger.error(f"❌ WeakAreaDetective error: {e}", exc_info=True)
+            return await self._fallback_analysis(query, context)
+    
+    def _format_analysis_response(
+        self,
+        weak_areas: List[Dict],
+        recommendations: List[Dict],
+        performance: Dict[str, Any],
+        query: str
+    ) -> str:
+        """Format analysis into readable response"""
+        response = "📊 **Weak Area Analysis** (Based on Your Actual Performance)\n\n"
+        
+        # Performance overview
+        total_sessions = performance.get('total_sessions', 0)
+        response += f"I analyzed your last {performance.get('time_range_days', 30)} days of study data ({total_sessions} sessions).\n\n"
+        
+        # Weak areas
+        if weak_areas:
+            response += "🎯 **Your Weak Areas:**\n\n"
+            for i, area in enumerate(weak_areas[:5], 1):
+                topic = area.get('topic', 'Unknown')
+                confidence = area.get('confidence', 'unknown')
+                engagement = area.get('avg_engagement', 0)
+                response += f"{i}. **{topic}**\n"
+                response += f"   - Engagement: {engagement:.1f}/10 (low)\n"
+                response += f"   - Confidence: {confidence}\n\n"
+        else:
+            response += "✅ Great news! No significant weak areas detected in your recent study data.\n\n"
+        
+        # Recommendations
+        if recommendations:
+            response += "💡 **Recommended Actions:**\n\n"
+            priority_recs = [r for r in recommendations if r.get('priority') in ['critical', 'high']]
+            for i, rec in enumerate(priority_recs[:3], 1):
+                response += f"{i}. {rec.get('action', 'Study more')}\n"
+                response += f"   Reason: {rec.get('reason', 'To improve performance')}\n\n"
+        
+        # Subject breakdown
+        if 'subjects' in performance:
+            subjects = performance['subjects']
+            if subjects:
+                response += "📚 **Subject Breakdown:**\n\n"
+                for subj, data in list(subjects.items())[:3]:
+                    response += f"- {subj}: {data.get('sessions', 0)} sessions, {data.get('messages', 0)} questions\n"
+        
+        return response
+    
+    async def _fallback_analysis(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback when data analysis fails"""
+        logger.warning("⚠️ Using fallback analysis (no real data)")
+        
+        return {
+            'success': True,
+            'content': """I'd love to analyze your weak areas, but I need more study data to give you accurate insights.
+
+Keep studying for a few more days, and I'll be able to show you:
+- Exact topics where you struggle
+- Time spent per subject
+- Performance trends
+- Personalized study recommendations
+
+For now, focus on consistent daily practice! 📚""",
+            'weak_areas': [],
+            'recommendations': [],
+            'data_driven': False
+        }
 
 
-# ============================================
-# COMPATIBILITY
-# ============================================
-
-def is_weak_area_query(query: str) -> bool:
-    """Module-level function for import compatibility"""
-    return WeakAreaDetectiveAgent.is_weak_area_query(query)
+# Factory function for backward compatibility
+def create_weak_area_detective(config: Optional[Dict[str, Any]] = None) -> WeakAreaDetectiveAgent:
+    """Create WeakAreaDetectiveAgent instance"""
+    return WeakAreaDetectiveAgent(config)

@@ -211,26 +211,48 @@ class ActionIntentDetector:
         text_lower = text.lower()
         
         if intent_type == IntentType.REMINDER:
-            # Extract time
+            # Extract time first
             time_str = self._extract_time(text)
             if time_str:
                 params['remind_at'] = time_str
             
-            # Extract what to remind about
-            # Remove the reminder trigger phrase to get the message
-            message = text
-            for pattern in self.ACTION_PATTERNS[IntentType.REMINDER]:
-                message = re.sub(pattern, '', message, flags=re.IGNORECASE)
+            # SMART MESSAGE EXTRACTION
+            # Try to extract message using common patterns:
+            # "remind me in 5min for physics study" -> message = "physics study"
+            # "remind me tomorrow to call mom" -> message = "call mom"
+            # "remind me at 4pm about the meeting" -> message = "the meeting"
             
-            # Clean up time phrases too
-            for pattern in self.TIME_PATTERNS:
-                message = re.sub(pattern, '', message, flags=re.IGNORECASE)
+            message = None
             
-            # Clean up connectors
-            message = re.sub(r'\b(?:to|about|that|for)\b', '', message, flags=re.IGNORECASE)
-            message = ' '.join(message.split()).strip()
+            # Pattern 1: "for <message>" - most common for study reminders
+            for_match = re.search(r'\bfor\s+(.+?)(?:\?|$)', text, re.IGNORECASE)
+            if for_match:
+                message = for_match.group(1).strip().rstrip('?')
             
-            if message:
+            # Pattern 2: "to <message>" - for action reminders
+            if not message:
+                to_match = re.search(r'\bto\s+(.+?)(?:\?|$)', text, re.IGNORECASE)
+                if to_match and 'remind' not in to_match.group(1).lower():
+                    message = to_match.group(1).strip().rstrip('?')
+            
+            # Pattern 3: "about <message>"
+            if not message:
+                about_match = re.search(r'\babout\s+(.+?)(?:\?|$)', text, re.IGNORECASE)
+                if about_match:
+                    message = about_match.group(1).strip().rstrip('?')
+            
+            # Fallback: Clean extraction by removing known patterns
+            if not message:
+                message = text
+                for pattern in self.ACTION_PATTERNS[IntentType.REMINDER]:
+                    message = re.sub(pattern, '', message, flags=re.IGNORECASE)
+                for pattern in self.TIME_PATTERNS:
+                    message = re.sub(pattern, '', message, flags=re.IGNORECASE)
+                # Clean up connectors but preserve the actual content
+                message = re.sub(r'^\s*(?:to|about|that|for)\s+', '', message, flags=re.IGNORECASE)
+                message = ' '.join(message.split()).strip().rstrip('?')
+            
+            if message and len(message) > 2:
                 params['message'] = message
             else:
                 params['message'] = "Study reminder"
@@ -264,6 +286,12 @@ class ActionIntentDetector:
         """Extract time reference from text"""
         text_lower = text.lower()
         
+        # NORMALIZE TYPOS FIRST - critical for user-friendly time parsing
+        # Handle common typos: "5mis", "5mns", "5mins", "5m" -> "5 minutes"
+        text_lower = re.sub(r'(\d+)\s*(mis|mns|mins?|m)\b', r'\1 minutes', text_lower)
+        # Handle "5hrs", "5hr", "5h" -> "5 hours"
+        text_lower = re.sub(r'(\d+)\s*(hrs?|h)\b', r'\1 hours', text_lower)
+        
         # Look for various time patterns
         
         # "tomorrow at 4pm", "tomorrow morning"
@@ -278,10 +306,10 @@ class ActionIntentDetector:
             
             return "tomorrow"
         
-        # "in X hours/minutes"
-        match = re.search(r'in\s+(\d+)\s*(minute|min|hour|hr|day|week)s?', text_lower)
+        # "in X minutes/hours" or just "X minutes/hours" (with normalized units)
+        match = re.search(r'(?:in\s+)?(\d+)\s*(minutes?|hours?|days?|weeks?)', text_lower)
         if match:
-            return match.group(0)
+            return f"in {match.group(1)} {match.group(2)}"
         
         # "at 4pm", "at 16:00"
         match = re.search(r'(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)', text_lower)

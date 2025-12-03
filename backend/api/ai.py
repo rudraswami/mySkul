@@ -921,7 +921,11 @@ async def stream_neuro_symbolic_response(
                 session_id=request.session_id or f"temp_{user.user_id}",
                 message=request.message,
                 subject=detected_subject,
-                exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                exam_mode=await resolve_exam_mode(
+                    request_exam_mode=getattr(request, 'exam_mode', None),
+                    user_id=user.user_id,
+                    db_client=db
+                ),
                 student_profile=student_profile
             )
         )
@@ -1076,17 +1080,36 @@ You MUST reference specific content from the image in your response."""
             from services.agentic_router import route_message
             from core.config import settings
             
+            logger.info(f"🤖 AGENTIC: Checking message for actions: '{request.message[:50]}...'")
+            logger.info(f"🤖 AGENTIC: ENABLE_ACTION_DETECTION = {settings.ENABLE_ACTION_DETECTION}")
+            
             if settings.ENABLE_ACTION_DETECTION:
+                # Get exam_mode dynamically: request > user profile > default
+                exam_mode = request.exam_mode  # Try from request first
+                if not exam_mode:
+                    # Try to get from user profile
+                    try:
+                        user_doc = await db.users.find_one({"user_id": user.user_id})
+                        if user_doc:
+                            exam_mode = user_doc.get('target_exam') or user_doc.get('exam_mode') or user_doc.get('education_standard')
+                    except Exception:
+                        pass
+                # Only use default if we couldn't get from anywhere else
+                exam_mode = exam_mode or 'General'
+                
+                logger.info(f"🤖 AGENTIC: Routing message to agentic router...")
                 handled, action_result = await route_message(
                     message=request.message,
                     user_id=user.user_id,
                     context={
                         'session_id': request.session_id,
                         'subject': detected_subject,
-                        'exam_mode': getattr(request, 'exam_mode', 'JEE')
+                        'exam_mode': exam_mode
                     },
                     db_client=db
                 )
+                
+                logger.info(f"🤖 AGENTIC: Route result - handled={handled}, action_result={action_result}")
                 
                 if handled and action_result:
                     logger.info(f"🤖 Agentic action handled: {action_result.get('action_taken', 'unknown')}")
@@ -1113,8 +1136,14 @@ You MUST reference specific content from the image in your response."""
                         "generation_time": 0.1,
                         "emotion_detected": "neutral"
                     }
+                else:
+                    logger.info(f"🤖 AGENTIC: Not an action request, continuing to normal flow")
+            else:
+                logger.info(f"🤖 AGENTIC: Action detection disabled in settings")
         except Exception as e:
-            logger.warning(f"Agentic routing failed: {e}")
+            import traceback
+            logger.error(f"🤖 AGENTIC ERROR: {e}")
+            logger.error(traceback.format_exc())
             # Continue with normal flow if agentic routing fails
         
         # Get message history for memory/context (optional)
@@ -1407,7 +1436,11 @@ You MUST reference specific content from the image in your response."""
                     session_id=request.session_id or f"temp_{user.user_id}",
                     question=contextual_message,
                     subject=detected_subject,
-                    exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                    exam_mode=await resolve_exam_mode(
+                        request_exam_mode=getattr(request, 'exam_mode', None),
+                        user_id=user.user_id,
+                        db_client=db
+                    ),
                     message_history=extended_history
                 )
                 
@@ -1643,7 +1676,11 @@ You MUST reference specific content from the image in your response."""
                     session_id=request.session_id or f"temp_{user.user_id}",
                     message=contextual_message,
                     subject=request.subject,
-                    exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                    exam_mode=await resolve_exam_mode(
+                        request_exam_mode=getattr(request, 'exam_mode', None),
+                        user_id=user.user_id,
+                        db_client=db
+                    ),
                     message_history=message_history
                 )
         # ================================================================
@@ -1681,7 +1718,11 @@ You MUST reference specific content from the image in your response."""
                 session_id=request.session_id or f"temp_{user.user_id}",
                 message=contextual_message,
                 subject=request.subject,
-                exam_mode=getattr(request, 'exam_mode', 'JEE'),
+                exam_mode=await resolve_exam_mode(
+                    request_exam_mode=getattr(request, 'exam_mode', None),
+                    user_id=user.user_id,
+                    db_client=db
+                ),
                 message_history=message_history,
                 memory_context=memory_context  # Pass memory context
                 )

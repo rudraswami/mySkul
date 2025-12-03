@@ -180,10 +180,10 @@ class SupervisorAgent(BaseAgent):
         if clean_query in greeting_words or len(query_lower.split()) <= 3 and any(word in query_lower for word in greeting_words):
             return 'greeting'
         
-        # DOUBT INTENT - Route to DoubtResolverAgent
+        # DOUBT INTENT - Route to AgenticDoubtResolver (TRUE AGENT with ReAct loop)
         # Check if student is confused or has a specific doubt
-        if DoubtResolverAgent.is_doubt_query(query):
-            logger.info("🎯 Detected DOUBT intent - routing to DoubtResolver")
+        if AgenticDoubtResolver.is_doubt_query(query):
+            logger.info("🎯 Detected DOUBT intent - routing to AgenticDoubtResolver")
             return 'doubt'
         
         # EXAM STRATEGY INTENT - Route to ExamCoachAgent

@@ -101,7 +101,13 @@ def create_app() -> FastAPI:
     # MIDDLEWARE CONFIGURATION
     # =============================================================================
 
-    # Security Headers Middleware (MUST be first to apply to all responses)
+    # Request ID Middleware (MUST be first for tracing)
+    logger.info("Configuring Request ID Middleware...")
+    from middleware.request_id import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+    logger.info("   - Request ID tracing enabled for all requests")
+    
+    # Security Headers Middleware
     logger.info("Configuring Security Headers...")
     app.add_middleware(SecurityHeadersMiddleware)
     logger.info("   - HSTS, CSP, X-Frame-Options, and other security headers enabled")

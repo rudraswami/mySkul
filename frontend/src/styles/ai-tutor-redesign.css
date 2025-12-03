@@ -128,7 +128,7 @@ body:has(.ai-tutor-redesign) {
 }
 
 /* ============================================
-   Central Chat Zone (~640px readable width)
+   Central Chat Zone (720px readable width)
    ============================================ */
 
 .chat-main-zone {
@@ -137,13 +137,19 @@ body:has(.ai-tutor-redesign) {
   max-width: 720px;
   margin: 0 auto;
   width: 100%;
-  padding: 0 var(--safe-padding-desktop);
-  gap: 16px; /* Tighter message spacing */
+  padding: 0 48px;
+  gap: 24px; /* Comfortable message spacing */
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .chat-main-zone {
-    padding: 0 var(--safe-padding-mobile);
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-main-zone {
+    padding: 0 16px;
   }
 }
 
@@ -165,21 +171,77 @@ body:has(.ai-tutor-redesign) {
   animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* AI Bubble - Clean white */
+/* AI Bubble - Clean white with optimal reading typography */
 .ai-message-bubble {
   align-self: flex-start;
   background: white;
-  color: #1f2937;
-  padding: 16px 20px;
+  color: #111827;
+  padding: 20px 24px;
   border-radius: 16px;
   border-bottom-left-radius: 4px;
-  max-width: 80%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  max-width: 85%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f3f4f6;
   position: relative;
   animation: messageSlideIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   contain: content;
   min-height: 40px;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* AI Bubble typography for reading comfort */
+.ai-message-bubble p {
+  font-size: 16px;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.ai-message-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-message-bubble strong,
+.ai-message-bubble b {
+  font-weight: 600;
+  color: #111827;
+}
+
+.ai-message-bubble ul,
+.ai-message-bubble ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.ai-message-bubble li {
+  font-size: 16px;
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+
+.ai-message-bubble li::marker {
+  color: #7C3AED;
+}
+
+.ai-message-bubble h3,
+.ai-message-bubble h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 20px 0 12px 0;
+}
+
+.ai-message-bubble h3:first-child,
+.ai-message-bubble h4:first-child {
+  margin-top: 0;
+}
+
+/* Highlighted key concepts */
+.ai-message-bubble mark {
+  background: linear-gradient(120deg, #FEF3C7 0%, #FDE68A 100%);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #92400E;
+  font-weight: 500;
 }
 
 .dark .ai-message-bubble {

@@ -107,9 +107,19 @@ class ReminderTool(BaseTool):
                     error="Reminder time is in the past"
                 )
             
-            # Get database client
-            from db.mongo import get_database
-            db = await get_database()
+            # Get database client from context (passed by agentic router)
+            db = context.get('db') if context else None
+            if db is None:
+                # Fallback: try to get from dependencies
+                try:
+                    from dependencies import get_database
+                    db = get_database()
+                except Exception:
+                    return ToolResult(
+                        success=False,
+                        output="Cannot connect to database to save reminder.",
+                        error="Database not available"
+                    )
             
             # Import and use ReminderScheduler
             from services.reminder_scheduler import ReminderScheduler
@@ -162,28 +172,43 @@ class ReminderTool(BaseTool):
         - "Monday 9am", "next Monday"
         - "5pm", "17:00"
         - ISO format
+        - Typos like "5mis", "5mns", "5min" for minutes
         """
         time_str = time_str.lower().strip()
         now = datetime.utcnow()
         
+        # Normalize common typos FIRST
+        # Handle "5mis", "5mns", "5mins", "5min" -> "5 minutes"
+        time_str = re.sub(r'(\d+)\s*(mis|mns|mins?|m)\b', r'\1 minutes', time_str)
+        # Handle "5hrs", "5hr", "5h" -> "5 hours"
+        time_str = re.sub(r'(\d+)\s*(hrs?|h)\b', r'\1 hours', time_str)
+        # Handle "5secs", "5sec", "5s" -> "5 seconds" (just ignore for reminders)
+        time_str = re.sub(r'(\d+)\s*(secs?|s)\b', r'\1 seconds', time_str)
+        
+        logger.info(f"🕐 Parsing time (normalized): '{time_str}'")
+        
         try:
             # Try relative time patterns first
             
-            # "in X minutes/hours/days"
-            match = re.search(r'in\s+(\d+)\s*(minute|min|hour|hr|day|week)s?', time_str)
+            # "in X minutes/hours/days" or just "X minutes/hours"
+            match = re.search(r'(?:in\s+)?(\d+)\s*(minutes?|hours?|days?|weeks?|seconds?)', time_str)
             if match:
                 amount = int(match.group(1))
                 unit = match.group(2)
-                if 'min' in unit:
+                logger.info(f"🕐 Matched relative time: {amount} {unit}")
+                if 'minute' in unit:
                     return now + timedelta(minutes=amount)
-                elif 'hour' in unit or 'hr' in unit:
+                elif 'hour' in unit:
                     return now + timedelta(hours=amount)
                 elif 'day' in unit:
                     return now + timedelta(days=amount)
                 elif 'week' in unit:
                     return now + timedelta(weeks=amount)
+                elif 'second' in unit:
+                    # For seconds, minimum 1 minute for practical purposes
+                    return now + timedelta(minutes=1)
             
-            # "X minutes/hours from now"
+            # "X minutes/hours from now" (legacy pattern)
             match = re.search(r'(\d+)\s*(minute|min|hour|hr|day|week)s?\s*(from now|later)', time_str)
             if match:
                 amount = int(match.group(1))

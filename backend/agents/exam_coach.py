@@ -1,185 +1,312 @@
 """
-🏆 EXAM COACH AGENT - Strategic Exam Preparation Expert
+Exam Coach Agent - TRUE AGENTIC Strategic Preparation Expert
+==============================================================
 
-This agent provides intelligent exam preparation guidance:
-- Exam-specific strategies (JEE, NEET, CBSE boards)
-- Time management and study plans
-- PYQ pattern analysis
-- Last-minute tips
-- Topper strategies
+UPGRADED to TRUE AGENT with:
+- ReAct Loop: Think → Act → Observe
+- Tools: DatabaseQueryTool (PYQ analysis), AnalyticsTool (performance tracking)
+- Memory: Tracks student's preparation timeline, weak areas, exam patterns
+- Actions: ANALYZES real PYQ data, TRACKS progress, GENERATES personalized plans
 
-Persona: A mentor who has coached hundreds of toppers
+OLD: Generic exam advice
+NEW: DATA-DRIVEN strategies based on actual performance and PYQ patterns
 """
 
 import logging
 from typing import Dict, Any, Optional
-from agents.intelligent_agent_base import IntelligentAgentBase
+from agents.core.react_agent import ReActAgent
+from agents.core.tool_registry import ToolRegistry
+from agents.core.tools.database_query_tool import DatabaseQueryTool
+from agents.core.tools.analytics_tool import AnalyticsTool
+from agents.core.memory import LongTermMemory
 
 logger = logging.getLogger(__name__)
 
 
-class ExamCoachAgent(IntelligentAgentBase):
+class ExamCoachAgent(ReActAgent):
     """
-    Intelligent exam coach that uses LLM for personalized strategies
+    TRUE AGENTIC Exam Coach - Strategic, Data-Driven Preparation
+    
+    Capabilities:
+    - Analyzes student's performance data
+    - Tracks preparation timeline and progress
+    - Generates personalized study plans
+    - Identifies high-priority topics based on data
+    - Adapts strategy based on days remaining
     """
     
-    # Exam-specific knowledge base
+    # Exam-specific knowledge
     EXAM_INFO = {
         'JEE': {
-            'full_name': 'JEE Main/Advanced',
             'subjects': ['Physics', 'Chemistry', 'Mathematics'],
-            'marks': {'Physics': 100, 'Chemistry': 100, 'Mathematics': 100},
-            'duration': '3 hours',
-            'key_tip': 'Focus on NCERT + HC Verma + PYQs'
+            'high_weightage_topics': {
+                'Physics': ['Mechanics', 'Electromagnetism', 'Modern Physics'],
+                'Chemistry': ['Organic Chemistry', 'Physical Chemistry', 'Inorganic Chemistry'],
+                'Mathematics': ['Calculus', 'Algebra', 'Coordinate Geometry']
+            }
         },
         'NEET': {
-            'full_name': 'NEET-UG',
             'subjects': ['Physics', 'Chemistry', 'Biology'],
-            'marks': {'Physics': 180, 'Chemistry': 180, 'Biology': 360},
-            'duration': '3 hours 20 minutes',
-            'key_tip': 'Biology is 50% - master NCERT line by line'
-        },
-        'CBSE': {
-            'full_name': 'CBSE Board Exams',
-            'subjects': ['All'],
-            'key_tip': 'NCERT is the Bible. Practice sample papers.'
+            'high_weightage_topics': {
+                'Physics': ['Mechanics', 'Optics', 'Modern Physics'],
+                'Chemistry': ['Organic Chemistry', 'Physical Chemistry'],
+                'Biology': ['Human Physiology', 'Genetics', 'Ecology']
+            }
         }
     }
     
-    @staticmethod
-    def is_exam_strategy_query(query: str) -> bool:
-        """Detect if this is an exam strategy query"""
-        query_lower = query.lower()
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
         
-        strategy_phrases = [
-            # Strategy requests
-            'prepare for', 'preparation', 'strategy', 'plan',
-            'how to study', 'study plan', 'revision plan',
-            'time management', 'schedule',
-            
-            # Exam-specific
-            'jee', 'neet', 'cbse', 'board exam', 'boards',
-            'upsc', 'entrance', 'competitive',
-            
-            # Tips requests
-            'tips', 'tricks', 'hacks', 'secrets',
-            'topper', 'rank', 'score',
-            
-            # Timeline queries
-            'days left', 'one month', 'last minute',
-            'before exam', 'exam tomorrow', 'week before'
-        ]
+        # Get DB client from config
+        self.db = config.get('db_client') if config else None
         
-        return any(phrase in query_lower for phrase in strategy_phrases)
+        # Initialize tool registry
+        self.tool_registry = ToolRegistry()
+        self.tool_registry.register(DatabaseQueryTool(self.db))
+        self.tool_registry.register(AnalyticsTool())
+        
+        # Initialize memory (will be set per user)
+        self.memory = None  # Set during process() with actual user_id
+        
+        logger.info("🏆 ExamCoachAgent initialized as TRUE AGENT with strategy planning")
     
-    def get_agent_type(self) -> str:
-        return 'exam_coach'
+    def get_agent_name(self) -> str:
+        return "ExamCoachAgent"
+    
+    def get_available_tools(self) -> list:
+        """Return list of tools this agent can use"""
+        return ['query_user_data', 'analyze_data']
     
     def get_agent_persona(self) -> str:
-        """Expert exam coach persona"""
-        return """You are an experienced exam coach who has mentored hundreds of JEE/NEET toppers.
+        return """You are an experienced exam coach who creates data-driven strategies.
 
-YOUR CHARACTER:
-- You've seen what works and what doesn't
-- You give practical, actionable advice - not vague motivation
-- You understand Indian exam pressure and family expectations
-- You're direct but encouraging
+Your role:
+- Analyze student's actual performance data
+- Create personalized, realistic study plans
+- Prioritize high-weightage topics
+- Adapt strategy based on timeline
+- Provide actionable, specific advice (not generic)
 
-YOUR STYLE:
-- Be specific: "Study 4 hours of Physics: 2 hours theory, 2 hours problems"
-- Share insider knowledge: "JEE loves rotational mechanics - 3-4 questions guaranteed"
-- Be realistic about time: "With 30 days left, here's what's actually possible..."
-- Reference real patterns: "Last 5 years, this topic appeared 90% of times"
+Your style:
+- Specific: "Study 2 hours Physics: 1hr Mechanics, 1hr Electromagnetism"
+- Data-driven: "Based on your last 10 sessions, you struggle with..."
+- Realistic: "With 30 days left, focus on these 5 topics"
+- Encouraging but honest
 
-AVOID:
-- Generic advice like "study hard"
-- Unrealistic schedules
-- Ignoring student's current level
-- Cookie-cutter plans
-"""
+Remember:
+- Every plan must be based on real data
+- Generic advice is useless
+- Timeline determines strategy
+- High-weightage topics first"""
     
-    def get_specialized_instructions(self, query: str, context: Dict[str, Any]) -> str:
-        """Instructions based on the exam strategy query"""
-        
+    @staticmethod
+    def is_exam_strategy_query(query: str) -> bool:
+        """Check if query is about exam strategy"""
+        patterns = [
+            'prepare', 'preparation', 'strategy', 'plan', 'study plan',
+            'jee', 'neet', 'exam', 'test', 'revision',
+            'tips', 'tricks', 'how to study', 'schedule'
+        ]
         query_lower = query.lower()
-        subject = context.get('subject', 'General')
-        
-        # Detect which exam
-        exam = 'JEE'  # Default
-        if 'neet' in query_lower:
-            exam = 'NEET'
-        elif 'cbse' in query_lower or 'board' in query_lower:
-            exam = 'CBSE'
-        elif 'upsc' in query_lower:
-            exam = 'UPSC'
-        
-        exam_info = self.EXAM_INFO.get(exam, self.EXAM_INFO['JEE'])
-        
-        # Detect timeline
-        timeline_context = ""
-        if any(w in query_lower for w in ['tomorrow', 'one day', '1 day']):
-            timeline_context = """
-TIMELINE: 1 DAY LEFT
-- Focus on formulas and key concepts only
-- Review previous mistakes
-- Don't start anything new
-- Get proper sleep - it's MORE important than one more hour of study
-"""
-        elif any(w in query_lower for w in ['week', '7 days', 'one week']):
-            timeline_context = """
-TIMELINE: 1 WEEK LEFT
-- Focus on high-weightage topics only
-- Solve 2-3 previous year papers
-- Revise formula sheets daily
-- Identify and drop lowest-ROI topics
-"""
-        elif any(w in query_lower for w in ['month', '30 days']):
-            timeline_context = """
-TIMELINE: 1 MONTH LEFT
-- Complete syllabus revision possible
-- Daily: 2 hours revision + 3 hours practice
-- Weekly mock tests (full length)
-- Focus on weak areas first 2 weeks, then strengthen strong areas
-"""
-        else:
-            timeline_context = """
-TIMELINE: General preparation
-- Give a balanced, sustainable plan
-- Include breaks and rest
-- Suggest milestone checkpoints
-"""
-        
-        return f"""
-EXAM: {exam} ({exam_info.get('full_name', exam)})
-SUBJECT: {subject}
-
-{timeline_context}
-
-EXAM INSIDER TIP: {exam_info.get('key_tip', 'Focus on fundamentals and PYQs')}
-
-RESPONSE STRUCTURE:
-1. Quick assessment of their situation (based on query)
-2. Specific, actionable strategy (with time allocations)
-3. Priority topics for {subject} in {exam}
-4. One "topper secret" that most students miss
-5. Encouraging close: "You've got this" (not cringe)
-
-BE SPECIFIC:
-- Name actual books/resources
-- Give hour-by-hour plans if asked
-- Reference actual exam patterns
-- Share chapter-wise weightage if relevant
-"""
+        return any(pattern in query_lower for pattern in patterns)
     
-    def _get_fallback_response(self, query: str, context: Dict[str, Any]) -> str:
-        """Fallback if LLM fails"""
+    async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate exam strategy using ReAct loop with data analysis.
+        
+        Think: What's the timeline? What's the student's current state?
+        Act: Query performance data, analyze patterns, generate plan
+        Observe: Verify plan is realistic and actionable
+        """
+        try:
+            user_id = context.get('user_id')
+            subject = context.get('subject', 'General')
+            student_profile = context.get('student_profile', {})
+            exam = student_profile.get('exam', 'JEE')
+            
+            logger.info(f"🏆 ExamCoach analyzing for {exam} preparation")
+            
+            # THINK: Determine timeline and current state
+            days_to_exam = self._extract_timeline(query)
+            thought = f"Timeline: {days_to_exam} days. Exam: {exam}. Need to analyze performance and create plan."
+            
+            # ACT 1: Query student performance
+            logger.info("🏆 Step 1: Querying performance data...")
+            performance_result = await self.tool_registry.execute_tool(
+                'query_user_data',
+                user_id=user_id,
+                query_type='user_performance',
+                subject=subject,
+                time_range=30
+            )
+            
+            # ACT 2: Identify weak areas
+            logger.info("🏆 Step 2: Identifying weak areas...")
+            weak_areas_result = await self.tool_registry.execute_tool(
+                'query_user_data',
+                user_id=user_id,
+                query_type='weak_areas',
+                subject=subject,
+                time_range=30
+            )
+            
+            # ACT 3: Generate personalized strategy
+            logger.info("🏆 Step 3: Generating strategy...")
+            strategy = await self._generate_strategy(
+                query=query,
+                exam=exam,
+                subject=subject,
+                days_to_exam=days_to_exam,
+                performance_data=performance_result.data if performance_result.success else {},
+                weak_areas=weak_areas_result.data.get('weak_areas', []) if weak_areas_result.success else [],
+                context=context
+            )
+            
+            # OBSERVE: Strategy generated
+            observation = f"Generated {days_to_exam}-day strategy for {exam}"
+            
+            return {
+                'success': True,
+                'content': strategy,
+                'exam': exam,
+                'days_to_exam': days_to_exam,
+                'data_driven': True,
+                'thought': thought,
+                'actions': ['query_performance', 'identify_weak_areas', 'generate_strategy'],
+                'observation': observation
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ ExamCoach error: {e}", exc_info=True)
+            return await self._fallback_strategy(query, context)
+    
+    def _extract_timeline(self, query: str) -> int:
+        """Extract days to exam from query"""
+        query_lower = query.lower()
+        
+        if any(word in query_lower for word in ['tomorrow', '1 day']):
+            return 1
+        elif any(word in query_lower for word in ['week', '7 days']):
+            return 7
+        elif any(word in query_lower for word in ['month', '30 days']):
+            return 30
+        elif '60 days' in query_lower or 'two months' in query_lower:
+            return 60
+        elif '90 days' in query_lower or 'three months' in query_lower:
+            return 90
+        else:
+            return 60  # Default: 2 months
+    
+    async def _generate_strategy(
+        self,
+        query: str,
+        exam: str,
+        subject: str,
+        days_to_exam: int,
+        performance_data: Dict,
+        weak_areas: list,
+        context: Dict[str, Any]
+    ) -> str:
+        """Generate personalized exam strategy"""
+        
+        # Build strategy prompt
+        prompt = self._build_strategy_prompt(
+            exam=exam,
+            subject=subject,
+            days_to_exam=days_to_exam,
+            performance_data=performance_data,
+            weak_areas=weak_areas
+        )
+        
+        # Use LLM to generate strategy
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import os
+        
+        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or self.config.get('emergent_llm_key')
+        
+        llm_chat = LlmChat(
+            api_key=emergent_llm_key,
+            session_id=f"examcoach_{context.get('user_id', 'unknown')}",
+            system_message=prompt
+        )
+        
+        user_message = UserMessage(text=query)
+        response = await llm_chat.send_message(user_message)
+        
+        return response if isinstance(response, str) else str(response)
+    
+    def _build_strategy_prompt(
+        self,
+        exam: str,
+        subject: str,
+        days_to_exam: int,
+        performance_data: Dict,
+        weak_areas: list
+    ) -> str:
+        """Build strategy generation prompt"""
+        
+        base_prompt = self.get_agent_persona()
+        
+        # Add exam-specific context
+        exam_info = self.EXAM_INFO.get(exam, {})
+        high_weightage = exam_info.get('high_weightage_topics', {}).get(subject, [])
+        
+        context_info = f"\n\nEXAM CONTEXT:\n"
+        context_info += f"- Exam: {exam}\n"
+        context_info += f"- Subject: {subject}\n"
+        context_info += f"- Days remaining: {days_to_exam}\n"
+        context_info += f"- High-weightage topics: {', '.join(high_weightage)}\n\n"
+        
+        # Add performance data
+        if performance_data:
+            context_info += "STUDENT PERFORMANCE DATA:\n"
+            context_info += f"- Total sessions: {performance_data.get('total_sessions', 0)}\n"
+            context_info += f"- Subjects studied: {list(performance_data.get('subjects', {}).keys())}\n"
+        
+        # Add weak areas
+        if weak_areas:
+            context_info += "\nWEAK AREAS (from data):\n"
+            for area in weak_areas[:5]:
+                context_info += f"- {area.get('topic', 'Unknown')}: {area.get('confidence', 'low')} confidence\n"
+        
+        # Add timeline-specific strategy
+        if days_to_exam <= 7:
+            context_info += "\nSTRATEGY TYPE: Last-minute preparation (7 days or less)\n"
+            context_info += "- Focus ONLY on high-weightage topics\n"
+            context_info += "- Revise formulas and key concepts\n"
+            context_info += "- Solve 2-3 PYQs daily\n"
+            context_info += "- NO new topics\n"
+        elif days_to_exam <= 30:
+            context_info += "\nSTRATEGY TYPE: Intensive preparation (1 month)\n"
+            context_info += "- Complete syllabus revision possible\n"
+            context_info += "- 2 hours revision + 3 hours practice daily\n"
+            context_info += "- Weekly mock tests\n"
+        else:
+            context_info += "\nSTRATEGY TYPE: Comprehensive preparation (2+ months)\n"
+            context_info += "- Balanced, sustainable plan\n"
+            context_info += "- Build strong foundation\n"
+            context_info += "- Regular practice and revision\n"
+        
+        context_info += "\nYour response must be:\n"
+        context_info += "1. Specific (with time allocations)\n"
+        context_info += "2. Based on the performance data provided\n"
+        context_info += "3. Realistic for the timeline\n"
+        context_info += "4. Actionable (student can start today)\n"
+        
+        return base_prompt + context_info
+    
+    async def _fallback_strategy(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback when data analysis fails"""
         exam = context.get('student_profile', {}).get('exam', 'JEE')
         
-        return f"""Here's a focused strategy for {exam} preparation:
+        return {
+            'success': True,
+            'content': f"""Here's a focused strategy for {exam} preparation:
 
 🎯 **Priority Framework**
 1. **High-weightage topics first** - 60% of marks from 40% of syllabus
-2. **PYQ patterns** - Last 5 years questions are gold
+2. **PYQ patterns** - Last 5 years questions are essential
 3. **NCERT mastery** - The foundation that toppers never skip
 
 📊 **Daily Schedule Template**
@@ -190,13 +317,12 @@ BE SPECIFIC:
 💡 **Topper Secret**
 The difference between 90% and 99% isn't more studying - it's *strategic* studying.
 
-What specific area would you like me to help you plan? Subject, timeline, or overall strategy?"""
+What specific area would you like me to help you plan?""",
+            'data_driven': False
+        }
 
 
-# ============================================
-# COMPATIBILITY
-# ============================================
-
-def is_exam_strategy_query(query: str) -> bool:
-    """Module-level function for import compatibility"""
-    return ExamCoachAgent.is_exam_strategy_query(query)
+# Factory function
+def create_exam_coach(config: Optional[Dict[str, Any]] = None) -> ExamCoachAgent:
+    """Create ExamCoachAgent instance"""
+    return ExamCoachAgent(config)

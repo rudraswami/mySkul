@@ -19,6 +19,7 @@ class DualAIRequest(BaseModel):
     subject: Optional[str] = None  # Auto-detected if not provided
     image_url: Optional[str] = None  # Base64 image or URL for vision analysis  
     image_context: Optional[str] = None  # Additional context about the image
+    exam_mode: Optional[str] = None  # Dynamic exam mode: JEE, NEET, CBSE, etc. - fetched from user profile if not provided
 
 
 class MathValidationRequest(BaseModel):

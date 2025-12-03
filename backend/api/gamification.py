@@ -286,13 +286,35 @@ async def get_micro_reward(reward_type: str, is_fast: bool = False, streak: int 
 @router.get("/leaderboard")
 async def get_leaderboard(limit: int = 10):
     """
-    Get XP leaderboard (placeholder - needs database integration).
+    Get XP leaderboard with actual database query.
     """
-    # TODO: Implement with actual database query
-    return {
-        "message": "Leaderboard coming soon!",
-        "limit": limit
-    }
+    try:
+        # Get top 100 users by XP
+        top_users = await db.users.find(
+            {},
+            {"user_id": 1, "full_name": 1, "xp": 1, "level": 1, "photo_url": 1}
+        ).sort("xp", -1).limit(100).to_list(length=100)
+        
+        # Format leaderboard
+        leaderboard = []
+        for idx, user in enumerate(top_users, start=1):
+            leaderboard.append({
+                "rank": idx,
+                "user_id": user.get("user_id"),
+                "name": user.get("full_name", "Anonymous"),
+                "xp": user.get("xp", 0),
+                "level": user.get("level", 1),
+                "photo_url": user.get("photo_url")
+            })
+        
+        return {
+            "success": True,
+            "leaderboard": leaderboard,
+            "limit": limit
+        }
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/badges/all")

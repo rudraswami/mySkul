@@ -213,6 +213,12 @@ class Settings:
     ALLOWED_IMAGE_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
     
     # =============================================================================
+    # REDIS SETTINGS (Optional - for production caching)
+    # =============================================================================
+    REDIS_URL: str = os.getenv("REDIS_URL", "")
+    RATE_LIMIT_STORAGE_URI: str = os.getenv("RATE_LIMIT_STORAGE_URI", "memory://")
+    
+    # =============================================================================
     # LOGGING SETTINGS
     # =============================================================================
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

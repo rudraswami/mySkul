@@ -153,7 +153,7 @@ class ResponseComposer:
         session_id: str,
         question: str,
         subject: str = None,
-        exam_mode: str = "JEE",
+        exam_mode: str = "General",  # Changed default from "JEE"
         message_history: List[Dict] = None
     ) -> Dict[str, Any]:
         """
