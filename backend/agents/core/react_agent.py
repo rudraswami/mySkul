@@ -136,7 +136,15 @@ class ReActAgent(ABC):
     2. ACT: Choose a tool and execute it
     3. OBSERVE: Process the tool's output
     4. REPEAT or FINISH
+    
+    TIMEOUT PROTECTION:
+    - Global timeout (default 25s) prevents infinite loops
+    - On timeout, gracefully falls back to simple response
+    - Never leaves student waiting indefinitely
     """
+    
+    # Default timeout in seconds for the entire ReAct loop
+    DEFAULT_GLOBAL_TIMEOUT = 25.0
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -146,7 +154,10 @@ class ReActAgent(ABC):
         self.max_iterations = self.config.get('max_iterations', 10)
         self.verbose = self.config.get('verbose', True)
         
-        logger.info(f"🤖 {self.get_agent_name()} initialized (ReAct mode)")
+        # Global timeout for entire ReAct loop (configurable)
+        self.global_timeout = self.config.get('global_timeout', self.DEFAULT_GLOBAL_TIMEOUT)
+        
+        logger.info(f"🤖 {self.get_agent_name()} initialized (ReAct mode, timeout={self.global_timeout}s)")
     
     @abstractmethod
     def get_agent_name(self) -> str:
@@ -231,7 +242,12 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Main entry point - runs the ReAct loop until completion
+        Main entry point - runs the ReAct loop until completion.
+        
+        TIMEOUT PROTECTION:
+        - Wrapped in global timeout (default 25s)
+        - On timeout, returns graceful fallback response
+        - Never leaves student waiting indefinitely
         
         Args:
             query: The student's question
@@ -240,14 +256,38 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         Returns:
             Agent response with reasoning chain and final answer
         """
+        logger.info(f"🧠 {self.get_agent_name()} starting (timeout={self.global_timeout}s): {query[:50]}...")
+        
+        try:
+            # Wrap entire ReAct loop in global timeout
+            return await asyncio.wait_for(
+                self._run_react_loop(query, context),
+                timeout=self.global_timeout
+            )
+            
+        except asyncio.TimeoutError:
+            # TIMEOUT: Generate graceful fallback
+            logger.warning(f"⏰ {self.get_agent_name()} TIMEOUT after {self.global_timeout}s - falling back")
+            return self._generate_timeout_fallback(query, context)
+            
+        except Exception as e:
+            logger.error(f"❌ {self.get_agent_name()} error: {e}", exc_info=True)
+            return self._generate_error_fallback(query, context, str(e))
+    
+    async def _run_react_loop(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Internal ReAct loop - separated for timeout wrapping.
+        """
         # Initialize state
         state = AgentState(
             query=query,
             context=context,
             max_iterations=self.max_iterations
         )
-        
-        logger.info(f"🧠 {self.get_agent_name()} starting ReAct loop for: {query[:50]}...")
         
         try:
             # Run the ReAct loop
@@ -292,11 +332,99 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
             return self._format_response(state)
             
         except Exception as e:
-            logger.error(f"❌ {self.get_agent_name()} error: {e}", exc_info=True)
+            logger.error(f"❌ {self.get_agent_name()} loop error: {e}", exc_info=True)
             state.status = AgentStatus.ERROR
             state.error = str(e)
             state.end_time = datetime.now()
             return self._format_error_response(state)
+    
+    def _generate_timeout_fallback(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Generate a helpful fallback response when ReAct loop times out.
+        
+        Never leave the student with no response!
+        """
+        subject = context.get('subject', 'your question')
+        
+        fallback_content = f"""I'm working on a thorough answer to your question about {subject}, but it's taking longer than expected! 🤔
+
+Let me give you a quick response while I process:
+
+**Your question:** {query[:100]}{'...' if len(query) > 100 else ''}
+
+For now, here's what I can tell you:
+- This is a great question that deserves a detailed answer
+- Try breaking it down into smaller parts if it's complex
+- Feel free to ask a simpler version, and I'll build from there!
+
+Would you like me to:
+1. **Try again** with a simpler explanation?
+2. **Focus on one specific part** of your question?
+3. **Give you a quick summary** instead?
+
+Just let me know! 📚"""
+        
+        logger.info(f"⏰ Generated timeout fallback for: {query[:50]}...")
+        
+        return {
+            "success": True,  # Still successful - we provided a response
+            "agent": self.get_agent_name(),
+            "content": fallback_content,
+            "confidence": 0.4,
+            "reasoning_chain": [],
+            "tools_used": [],
+            "iterations": 0,
+            "metadata": {
+                "agent_type": "react",
+                "timeout_fallback": True,
+                "timeout_seconds": self.global_timeout
+            }
+        }
+    
+    def _generate_error_fallback(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        error: str
+    ) -> Dict[str, Any]:
+        """
+        Generate a graceful error response.
+        """
+        subject = context.get('subject', 'your question')
+        
+        fallback_content = f"""I encountered a small hiccup while processing your question about {subject}! 😅
+
+Don't worry - let me try a different approach:
+
+**What you asked:** {query[:80]}{'...' if len(query) > 80 else ''}
+
+Could you try:
+1. **Rephrasing your question** slightly differently?
+2. **Asking about one concept at a time** if it's multi-part?
+
+I'm here to help you understand! 📚"""
+        
+        logger.warning(f"❌ Generated error fallback for: {query[:50]}... (error: {error[:50]})")
+        
+        return {
+            "success": False,
+            "agent": self.get_agent_name(),
+            "content": fallback_content,
+            "error": error,
+            "confidence": 0.3,
+            "reasoning_chain": [],
+            "tools_used": [],
+            "iterations": 0,
+            "metadata": {
+                "agent_type": "react",
+                "error_fallback": True,
+                "original_error": error[:200]
+            }
+        }
     
     async def _think(self, state: AgentState) -> Optional[ThoughtAction]:
         """Generate the next thought and action using LLM"""

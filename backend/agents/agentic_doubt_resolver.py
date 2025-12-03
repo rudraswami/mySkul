@@ -105,30 +105,92 @@ NEVER:
     
     @staticmethod
     def is_doubt_query(query: str) -> bool:
-        """Detect if this is a doubt/confusion query - TRUE AGENTIC detection"""
-        query_lower = query.lower()
+        """
+        Detect if this is a TRUE doubt/confusion query needing agentic handling.
         
-        doubt_phrases = [
-            # Direct doubt expressions
-            'don\'t understand', 'dont understand', 'not understanding',
-            'confused', 'confusion', 'doubt', 'unclear', 'not clear',
-            'samajh nahi', 'nahi samjha', 'समझ नहीं',
+        IMPORTANT: This is RESTRICTIVE by design!
+        - Normal tutor questions ("what is X", "explain Y") → ResponseComposer
+        - TRUE confusion/frustration ("I don't understand", "stuck") → here
+        
+        The goal is to route ONLY genuine confusion to the agentic system,
+        not every academic question.
+        """
+        query_lower = query.lower().strip()
+        
+        # ==========================================================================
+        # TIER 1: EXPLICIT CONFUSION (High confidence - definitely a doubt)
+        # ==========================================================================
+        explicit_confusion = [
+            # Direct confusion statements
+            "don't understand", "dont understand", "do not understand",
+            "not understanding", "can't understand", "cannot understand",
+            "confused about", "i'm confused", "i am confused", "so confused",
+            "still confused", "very confused", "really confused",
+            "makes no sense", "doesn't make sense", "does not make sense",
             
-            # Questions indicating confusion
-            'why does', 'why is', 'how does', 'how is',
-            'what is', 'what are', 'what does',
-            'can you explain', 'please explain', 'explain again',
-            'help me understand', 'i\'m stuck', 'i am stuck',
+            # Stuck/blocked expressions
+            "i'm stuck", "i am stuck", "getting stuck", "got stuck",
+            "can't figure", "cannot figure", "struggling with",
             
-            # Hinglish doubt expressions
-            'kaise', 'kyun', 'kya hai', 'samjhao', 'bata do',
+            # Frustration indicators
+            "still don't get", "still dont get", "not getting it",
+            "don't get it", "dont get it", "what am i missing",
+            "where am i going wrong", "help me understand",
             
-            # Academic doubt triggers
-            'difference between', 'compare', 'versus', 'vs',
-            'what happens when', 'what if',
+            # Request for re-explanation
+            "explain again", "explain it again", "one more time",
+            "clarify this", "need clarification",
+            
+            # Hindi/Hinglish confusion expressions
+            "samajh nahi aa raha", "samajh nahi aaya", "समझ नहीं आ रहा",
+            "samajh me nahi", "clear nahi hai", "confuse ho gaya",
         ]
         
-        return any(phrase in query_lower for phrase in doubt_phrases)
+        if any(phrase in query_lower for phrase in explicit_confusion):
+            logger.info(f"🤔 TRUE DOUBT detected (explicit confusion): '{query[:50]}...'")
+            return True
+        
+        # ==========================================================================
+        # DEFAULT: NOT A DOUBT - Normal questions go to ResponseComposer
+        # ==========================================================================
+        # "what is", "how does", "why is", "explain" are NORMAL tutor questions
+        # They should NOT trigger agentic doubt resolution
+        return False
+    
+    @staticmethod
+    def is_deep_reasoning_query(query: str) -> bool:
+        """
+        Detect if query needs deep multi-step reasoning with tools.
+        
+        This is for complex problems that benefit from:
+        - Tool usage (calculator, knowledge search)
+        - Step-by-step verification
+        - ReAct loop reasoning
+        
+        NOT for simple conceptual questions.
+        """
+        query_lower = query.lower().strip()
+        
+        deep_reasoning_triggers = [
+            # Multi-step problem solving
+            "solve this step by step", "show all steps", "step by step solution",
+            "derive and prove", "prove that", "prove this",
+            "calculate and explain", "solve and verify",
+            
+            # Verification requests
+            "verify my solution", "check my answer", "is this correct",
+            "check if this is right", "verify this calculation",
+            
+            # Complex analysis
+            "analyze in detail", "comprehensive analysis",
+            "find all the formulas", "list all methods",
+        ]
+        
+        if any(trigger in query_lower for trigger in deep_reasoning_triggers):
+            logger.info(f"🧠 DEEP REASONING query detected: '{query[:50]}...'")
+            return True
+        
+        return False
     
     def get_system_prompt(self, state: AgentState) -> str:
         """Enhanced system prompt with memory and planning context"""

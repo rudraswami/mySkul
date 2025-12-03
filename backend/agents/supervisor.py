@@ -146,10 +146,17 @@ class SupervisorAgent(BaseAgent):
             
             # Step 6: 💪 MOTIVATION MIDDLEWARE - Add emotional support if needed
             # This enhances the response with motivational content based on student state
-            combined_response = self.motivation.enhance_response(
-                original_response=combined_response,
-                context=context
-            )
+            try:
+                motivation_result = self.motivation.enhance_response(
+                    result=combined_response,
+                    context=context
+                )
+                # Merge motivation into combined response if present
+                if motivation_result and motivation_result.get('motivation'):
+                    combined_response['motivation'] = motivation_result['motivation']
+            except Exception as motivation_error:
+                logger.warning(f"⚠️ Motivation enhancement failed (non-critical): {motivation_error}")
+                # Continue without motivation - not critical
             
             logger.info("✅ Supervisor orchestration complete")
             return combined_response
@@ -180,10 +187,10 @@ class SupervisorAgent(BaseAgent):
         if clean_query in greeting_words or len(query_lower.split()) <= 3 and any(word in query_lower for word in greeting_words):
             return 'greeting'
         
-        # DOUBT INTENT - Route to AgenticDoubtResolver (TRUE AGENT with ReAct loop)
-        # Check if student is confused or has a specific doubt
+        # DOUBT INTENT - Route to AgenticDoubtResolver ONLY for TRUE confusion
+        # NOTE: is_doubt_query() is now RESTRICTIVE - normal questions go to concept/application
         if AgenticDoubtResolver.is_doubt_query(query):
-            logger.info("🎯 Detected DOUBT intent - routing to AgenticDoubtResolver")
+            logger.info("🎯 Detected TRUE DOUBT intent (genuine confusion) - routing to AgenticDoubtResolver")
             return 'doubt'
         
         # EXAM STRATEGY INTENT - Route to ExamCoachAgent

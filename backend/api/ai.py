@@ -27,6 +27,7 @@ from dependencies import get_current_user, get_database, get_unified_subscriptio
 from agents.supervisor import SupervisorAgent
 from agents.response_adapter import ResponseAdapter
 from visual_engine.scene_builder import SceneBuilder
+from utils.exam_mode_resolver import resolve_exam_mode
 
 
 # Router instance
@@ -1242,36 +1243,62 @@ You MUST reference specific content from the image in your response."""
             logger.info(f"📷 Preserving image context in message (has {len(image_analysis.get('extracted_text', ''))} chars of extracted content)")
 
         # ====================================================================
-        # 🤖 SPECIALIZED AGENT ROUTING (Cognito OS v1.5)
-        # Check if query should go to a specialized agent BEFORE unified pipeline
+        # 🤖 SPECIALIZED AGENT ROUTING (Cognito OS v2.0 - RESTRICTIVE)
+        # =============================================================
+        # IMPORTANT DESIGN PRINCIPLE:
+        # - ResponseComposer is the DEFAULT for all normal tutor questions
+        # - Specialized agents ONLY for specific, clearly-identified intents
+        # - "what is / explain / why" → ResponseComposer (fast, simple)
+        # - TRUE doubt/confusion → AgenticDoubtResolver (only when stuck)
+        # - Exam strategy requests → ExamCoachAgent
         # ====================================================================
         specialized_agent_result = None
         USE_SPECIALIZED_AGENTS = os.getenv("USE_SPECIALIZED_AGENTS", "true").lower() == "true"
         
         if USE_SPECIALIZED_AGENTS:
             try:
-                from agents.doubt_resolver import DoubtResolverAgent
+                from agents.doubt_resolver import DoubtResolverAgent, is_doubt_query, is_deep_reasoning_query
                 from agents.exam_coach import ExamCoachAgent
                 from agents.weak_area_detective import WeakAreaDetectiveAgent
                 from agents.study_buddy import StudyBuddyAgent
                 from agents.motivation import MotivationAgent
-                from agents.proactive_companion import ProactiveCompanionAgent
                 
                 # Detect if specialized agent should handle this
+                # NOTE: Order matters! More specific intents checked first.
                 specialized_intent = None
 
-                # NOTE: Reminder/Schedule requests are now handled by AgenticRouter
-                # at the top of this function (TRUE AGENTIC path)
+                # NOTE: Reminder/Schedule requests are handled by AgenticRouter above
                 # The code below handles other specialized intents only
                 
-                if DoubtResolverAgent.is_doubt_query(contextual_message):
-                    specialized_intent = 'doubt'
-                elif ExamCoachAgent.is_exam_strategy_query(contextual_message):
+                # 1. EXAM STRATEGY - Explicit exam prep requests
+                if ExamCoachAgent.is_exam_strategy_query(contextual_message):
                     specialized_intent = 'exam_strategy'
+                    logger.info(f"🎯 ROUTING: exam_strategy (ExamCoachAgent)")
+                
+                # 2. WEAK AREA ANALYSIS - Performance/weakness queries
                 elif WeakAreaDetectiveAgent.is_weak_area_query(contextual_message):
                     specialized_intent = 'weak_area'
+                    logger.info(f"🎯 ROUTING: weak_area (WeakAreaDetectiveAgent)")
+                
+                # 3. STUDY BUDDY - Collaborative learning requests
                 elif StudyBuddyAgent.is_buddy_query(contextual_message):
                     specialized_intent = 'study_buddy'
+                    logger.info(f"🎯 ROUTING: study_buddy (StudyBuddyAgent)")
+                
+                # 4. TRUE DOUBT - Only genuine confusion (RESTRICTIVE check)
+                # NOTE: is_doubt_query() is now RESTRICTIVE - only catches real confusion
+                elif is_doubt_query(contextual_message):
+                    # Additional check: is this deep reasoning or simple doubt?
+                    if is_deep_reasoning_query(contextual_message):
+                        specialized_intent = 'deep_doubt'  # Use full agentic
+                        logger.info(f"🎯 ROUTING: deep_doubt (AgenticDoubtResolver with ReAct)")
+                    else:
+                        specialized_intent = 'doubt'  # Lighter doubt handling
+                        logger.info(f"🎯 ROUTING: doubt (lightweight doubt resolution)")
+                
+                # 5. DEFAULT: No specialized intent → ResponseComposer handles it
+                else:
+                    logger.info(f"🎯 ROUTING: tutor (ResponseComposer - default fast path)")
                 
                 if specialized_intent:
                     logger.info(f"🤖 Specialized agent detected: {specialized_intent}")
@@ -1292,49 +1319,67 @@ You MUST reference specific content from the image in your response."""
                     }
                     
                     # Route to appropriate specialized agent
-                    # NOTE: 'reminder' and 'schedule' are handled by AgenticRouter (line ~1072)
-                    if specialized_intent == 'doubt':
-                        # 🧠 Use Agentic Doubt Resolver if enabled
-                        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
-                        
-                        if USE_AGENTIC_SYSTEM:
-                            try:
-                                from agents.agentic_doubt_resolver import create_agentic_doubt_resolver
-                                logger.info("🧠 Using TRUE AGENTIC Doubt Resolver (ReAct + Tools)")
-                                
-                                agentic_agent = create_agentic_doubt_resolver({
-                                    'emergent_llm_key': emergent_llm_key,
-                                    'max_iterations': 8,
-                                    'verbose': True
-                                })
-                                
-                                # Run with full agentic capabilities
-                                agentic_result = await agentic_agent.run(contextual_message, agent_context)
-                                
-                                if agentic_result.get('success'):
-                                    agent_response = {
-                                        'success': True,
-                                        'content': agentic_result.get('content', ''),
-                                        'metadata': {
-                                            'agentic': True,
-                                            'tools_used': agentic_result.get('tools_used', []),
-                                            'iterations': agentic_result.get('iterations', 0),
-                                            'verified': agentic_result.get('verification', {}).get('status') == 'verified'
-                                        }
+                    # NOTE: 'reminder' and 'schedule' are handled by AgenticRouter above
+                    
+                    if specialized_intent == 'deep_doubt':
+                        # 🧠 DEEP DOUBT: Use full Agentic Doubt Resolver with ReAct loop
+                        # This is for complex multi-step problems needing tools
+                        try:
+                            from agents.agentic_doubt_resolver import create_agentic_doubt_resolver
+                            logger.info("🧠 DEEP DOUBT: Using AgenticDoubtResolver (ReAct + Tools, timeout=25s)")
+                            
+                            agentic_agent = create_agentic_doubt_resolver({
+                                'emergent_llm_key': emergent_llm_key,
+                                'max_iterations': 5,  # Reduced from 8 for faster response
+                                'global_timeout': 25.0,  # 25 second timeout
+                                'verbose': True
+                            })
+                            
+                            # Run with full agentic capabilities (has timeout protection)
+                            agentic_result = await agentic_agent.run(contextual_message, agent_context)
+                            
+                            if agentic_result.get('success'):
+                                agent_response = {
+                                    'success': True,
+                                    'content': agentic_result.get('content', ''),
+                                    'metadata': {
+                                        'agentic': True,
+                                        'tools_used': agentic_result.get('tools_used', []),
+                                        'iterations': agentic_result.get('iterations', 0),
+                                        'verified': agentic_result.get('verification', {}).get('status') == 'verified',
+                                        'timeout_fallback': agentic_result.get('metadata', {}).get('timeout_fallback', False)
                                     }
-                                    logger.info(f"✅ Agentic response generated (iterations: {agentic_result.get('iterations', 0)}, tools: {agentic_result.get('tools_used', [])})")
-                                else:
-                                    # Fall back to regular doubt resolver
-                                    logger.warning("⚠️ Agentic system failed, falling back to regular agent")
-                                    agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
-                                    agent_response = await agent.process(contextual_message, agent_context)
-                            except Exception as agentic_error:
-                                logger.error(f"❌ Agentic system error: {agentic_error}, falling back")
-                                agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
-                                agent_response = await agent.process(contextual_message, agent_context)
-                        else:
-                            agent = DoubtResolverAgent({"emergent_llm_key": emergent_llm_key})
-                            agent_response = await agent.process(contextual_message, agent_context)
+                                }
+                                logger.info(f"✅ Deep doubt resolved (iterations: {agentic_result.get('iterations', 0)})")
+                            else:
+                                # Agentic failed/timed out but still returned response
+                                agent_response = {
+                                    'success': True,  # Still success - we have fallback content
+                                    'content': agentic_result.get('content', ''),
+                                    'metadata': {'agentic_fallback': True}
+                                }
+                                logger.warning("⚠️ Agentic system used fallback response")
+                                
+                        except Exception as agentic_error:
+                            logger.error(f"❌ Deep doubt error: {agentic_error}")
+                            # Fall through to ResponseComposer
+                            specialized_intent = None
+                            agent_response = None
+                    
+                    elif specialized_intent == 'doubt':
+                        # 🤔 SIMPLE DOUBT: Lightweight handling - mostly let ResponseComposer handle
+                        # This is for simple clarifications, not complex problems
+                        logger.info("🤔 SIMPLE DOUBT: Using lightweight doubt handling")
+                        
+                        # For simple doubts, we'll let ResponseComposer handle it
+                        # but with a hint that this is a doubt/confusion scenario
+                        agent_context['is_doubt'] = True
+                        agent_context['doubt_type'] = 'simple_clarification'
+                        
+                        # Skip to ResponseComposer - it handles this better
+                        specialized_intent = None
+                        agent_response = None
+                        logger.info("📝 Simple doubt → delegating to ResponseComposer")
                     elif specialized_intent == 'exam_strategy':
                         agent = ExamCoachAgent({"emergent_llm_key": emergent_llm_key})
                         agent_response = await agent.process(contextual_message, agent_context)
@@ -1577,17 +1622,21 @@ You MUST reference specific content from the image in your response."""
                 
                 # Build visual scene if present
                 if agentic_response.get("visual"):
-                    scene_builder = SceneBuilder()
                     visual_spec = agentic_response["visual"]
-                    template_id = visual_spec.get("metadata", {}).get("template_id")
                     
-                    if template_id:
-                        scene = scene_builder.build_scene(
-                            template_id=template_id,
-                            variables=visual_spec.get("variables", {}),
-                            context=agentic_context
-                        )
-                        agentic_response["visual"] = scene
+                    # Only process if visual_spec is a dict with proper structure
+                    if isinstance(visual_spec, dict) and visual_spec.get("metadata"):
+                        scene_builder = SceneBuilder()
+                        template_id = visual_spec.get("metadata", {}).get("template_id")
+
+                        if template_id:
+                            scene = scene_builder.build_scene(
+                                template_id=template_id,
+                                variables=visual_spec.get("variables", {}),
+                                context=agentic_context
+                            )
+                            agentic_response["visual"] = scene
+                    # If visual_spec is a string or other type, keep it as is (description)
                 
                 # Convert agentic response to neuro-symbolic format
                 # Pass user_id and student_profile for dynamic template selection

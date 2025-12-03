@@ -37,7 +37,7 @@ from agents.response_adapter import ResponseAdapter
 from agents.enhanced_supervisor import EnhancedSupervisor, create_enhanced_supervisor
 
 # Specialized agents for Cognito OS
-# from agents.doubt_resolver import DoubtResolverAgent  # ARCHIVED - use AgenticDoubtResolver instead
+from agents.doubt_resolver import DoubtResolverAgent, is_doubt_query, is_deep_reasoning_query  # Compatibility layer
 from agents.motivation import MotivationAgent
 from agents.exam_coach import ExamCoachAgent
 from agents.weak_area_detective import WeakAreaDetectiveAgent
@@ -80,7 +80,9 @@ __all__ = [
     'VisualiseAgent',
     
     # Specialized Agents (Cognito OS)
-    # 'DoubtResolverAgent',  # ARCHIVED - use AgenticDoubtResolver instead
+    'DoubtResolverAgent',  # Compatibility layer - uses restrictive is_doubt_query
+    'is_doubt_query',
+    'is_deep_reasoning_query',
     'MotivationAgent',
     'ExamCoachAgent',
     'WeakAreaDetectiveAgent',
