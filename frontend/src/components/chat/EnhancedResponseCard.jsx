@@ -108,7 +108,7 @@ const CopyButton = ({ content }) => {
   );
 };
 
-// Feedback buttons
+// Feedback buttons - ENHANCED with larger targets and better contrast
 const FeedbackButtons = ({ onFeedback, messageId }) => {
   const [feedback, setFeedback] = useState(null);
 
@@ -118,32 +118,34 @@ const FeedbackButtons = ({ onFeedback, messageId }) => {
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => handleFeedback('up')}
-        className={`p-2 rounded-lg transition-all duration-200 ${
+        className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
           feedback === 'up'
-            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-300 shadow-sm'
+            : 'bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:border-emerald-300'
         }`}
-        title="Good response"
+        title="This was helpful"
+        aria-label="Mark response as helpful"
       >
-        <ThumbsUp className="w-4 h-4" />
+        <ThumbsUp className="w-5 h-5" />
       </motion.button>
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => handleFeedback('down')}
-        className={`p-2 rounded-lg transition-all duration-200 ${
+        className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
           feedback === 'down'
-            ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+            ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 shadow-sm'
+            : 'bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300'
         }`}
         title="Needs improvement"
+        aria-label="Mark response as needing improvement"
       >
-        <ThumbsDown className="w-4 h-4" />
+        <ThumbsDown className="w-5 h-5" />
       </motion.button>
     </div>
   );

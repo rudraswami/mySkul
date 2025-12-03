@@ -276,18 +276,40 @@ const SmartResponse = ({
 // ============ Response Type Components ============
 
 /**
- * Greeting - Simple, friendly, minimal
+ * Greeting - Simple, friendly, minimal, globally impressive
+ * No subject lists, no robotic tone - just warm & welcoming
  */
-const GreetingResponse = ({ content }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="text-gray-800 dark:text-gray-200 leading-relaxed"
-    style={{ fontSize: '16px', lineHeight: '1.75' }}
-  >
-    <AdaptiveMarkdown content={content.greeting || content.mainContent || "Hey! How can I help you today? 👋"} />
-  </motion.div>
-);
+const GreetingResponse = ({ content }) => {
+  // Get the greeting text - prioritize greeting field
+  const greetingText = content.greeting || content.mainContent || "Hey! Great to see you. What would you like to explore? 👋";
+  const tagline = content.mainContent && content.greeting ? content.mainContent : null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-2"
+    >
+      {/* Main greeting - prominent */}
+      <div className="text-gray-900 dark:text-gray-100 font-medium" style={{ fontSize: '17px', lineHeight: '1.6' }}>
+        <AdaptiveMarkdown content={greetingText} />
+      </div>
+      
+      {/* Optional tagline - subtle */}
+      {tagline && tagline !== greetingText && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-gray-600 dark:text-gray-400"
+          style={{ fontSize: '15px', lineHeight: '1.5' }}
+        >
+          <AdaptiveMarkdown content={tagline} />
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
 
 /**
  * Acknowledgment - Very short response

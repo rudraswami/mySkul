@@ -40,19 +40,19 @@ const ChatItem = ({
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`group relative px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+      className={`group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
         isActive 
-          ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800' 
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+          ? 'bg-violet-50 dark:bg-violet-900/30 border-l-[3px] border-l-violet-500 border-y border-r border-violet-200 dark:border-violet-700 shadow-sm' 
+          : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-l-[3px] border-l-transparent'
       }`}
       onClick={() => !isEditing && onClick?.(chat)}
     >
       <div className="flex items-start gap-2.5">
-        {/* Icon */}
-        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+        {/* Icon - ENHANCED with better active state */}
+        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${
           isActive 
-            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' 
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+            ? 'bg-violet-500 text-white shadow-sm' 
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 group-hover:bg-violet-100 group-hover:text-violet-600'
         }`}>
           <MessageCircle className="w-4 h-4" />
         </div>
@@ -73,11 +73,20 @@ const ChatItem = ({
           ) : (
             <>
               <p 
-                className={`text-sm font-medium truncate ${
-                  isActive ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-gray-200'
+                className={`text-sm font-medium transition-colors duration-200 ${
+                  isActive ? 'text-violet-700 dark:text-violet-300 font-semibold' : 'text-gray-800 dark:text-gray-200'
                 }`}
                 title={chat.title || 'New Chat'}
-                style={{ maxWidth: '160px' }}
+                style={{ 
+                  maxWidth: '160px',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'normal',
+                  lineHeight: '1.3'
+                }}
               >
                 {chat.title || 'New Chat'}
               </p>
@@ -169,19 +178,28 @@ export default function ChatHistorySidebar({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
+      {/* Header - ENHANCED with count badge */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <MessageCircle className="w-4 h-4 text-violet-600" />
-            Chats
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-violet-600" />
+              Chats
+            </h2>
+            {/* Count Badge */}
+            {chats.length > 0 && (
+              <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-semibold rounded-full">
+                {chats.length}
+              </span>
+            )}
+          </div>
           <button
             onClick={onNewChat}
-            className="w-8 h-8 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center justify-center transition-colors"
-            title="New Chat"
+            className="w-9 h-9 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+            title="New Chat (Ctrl+N)"
+            aria-label="Start new chat"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
           </button>
         </div>
 

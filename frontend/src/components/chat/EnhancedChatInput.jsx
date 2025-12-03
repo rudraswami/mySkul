@@ -90,16 +90,17 @@ export default function EnhancedChatInput({
           )}
         </AnimatePresence>
 
-        {/* Main Input Container */}
+        {/* Main Input Container - ENHANCED with visual depth */}
         <form onSubmit={handleSubmit} className="relative">
-          <div className="flex items-end gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 focus-within:border-purple-400 dark:focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-100 dark:focus-within:ring-purple-900/30 transition-all duration-200">
-            {/* Image Attach Button */}
+          <div className="flex items-end gap-3 bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 focus-within:border-violet-400 dark:focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-100 dark:focus-within:ring-violet-900/30 focus-within:bg-white shadow-sm hover:shadow-md focus-within:shadow-lg transition-all duration-200">
+            {/* Image Attach Button - ENHANCED */}
             <button
               type="button"
               onClick={handleImageClick}
               disabled={isLoading || disabled}
-              className="flex-shrink-0 p-3 text-gray-400 hover:text-purple-500 transition-colors disabled:opacity-50"
-              title="Attach image"
+              className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Attach image (Ctrl+U)"
+              aria-label="Attach image"
             >
               <ImageIcon className="w-5 h-5" />
             </button>
@@ -141,16 +142,17 @@ export default function EnhancedChatInput({
                 <motion.button
                   type="submit"
                   disabled={!value.trim() || disabled}
-                  whileHover={{ scale: value.trim() ? 1.05 : 1 }}
+                  whileHover={{ scale: value.trim() ? 1.05 : 1, y: value.trim() ? -1 : 0 }}
                   whileTap={{ scale: value.trim() ? 0.95 : 1 }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 ${
                     value.trim() && !disabled
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/30'
+                      ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-violet-600 hover:from-violet-600 hover:via-purple-600 hover:to-violet-700 text-white shadow-lg shadow-violet-500/40 hover:shadow-violet-500/50'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                   }`}
-                  title="Send message"
+                  title="Send message (Enter)"
+                  aria-label="Send message"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 </motion.button>
               )}
             </div>

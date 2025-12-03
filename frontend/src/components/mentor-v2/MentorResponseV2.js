@@ -855,41 +855,47 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
       )}
       
       {/* Quick Actions Bar - Feedback & Copy (Moved before follow-ups) */}
-      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600 font-medium">Was this helpful?</span>
-          <div className="flex items-center gap-2">
+      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600 font-semibold">Was this helpful?</span>
+          <div className="flex items-center gap-3">
+            {/* LARGER FEEDBACK ICONS - 40x40 with better contrast */}
             <button
               onClick={() => {
                 setFeedback('helpful');
                 if (onInteraction) onInteraction('feedback_positive');
               }}
-              className={`p-2 rounded-lg transition-all ${
+              className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
                 feedback === 'helpful'
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600'
+                  ? 'bg-emerald-100 text-emerald-600 border-emerald-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300'
               }`}
               title="This was helpful!"
+              aria-label="Mark as helpful"
             >
-              <ThumbsUp className="w-4 h-4" />
+              <ThumbsUp className="w-5 h-5" />
             </button>
             <button
               onClick={() => {
                 setFeedback('not_helpful');
                 if (onInteraction) onInteraction('feedback_negative');
               }}
-              className={`p-2 rounded-lg transition-all ${
+              className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
                 feedback === 'not_helpful'
-                  ? 'bg-red-100 text-red-600'
-                  : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
+                  ? 'bg-red-100 text-red-600 border-red-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300'
               }`}
               title="Not helpful"
+              aria-label="Mark as not helpful"
             >
-              <ThumbsDown className="w-4 h-4" />
+              <ThumbsDown className="w-5 h-5" />
             </button>
           </div>
           {feedback === 'helpful' && (
-            <span className="text-sm text-green-600 font-medium">Thanks for the feedback! 🙌</span>
+            <span className="text-sm text-emerald-600 font-semibold animate-pulse">Thanks for your feedback! 🙌</span>
+          )}
+          {feedback === 'not_helpful' && (
+            <span className="text-sm text-gray-500 font-medium">We'll work on improving this</span>
           )}
         </div>
         

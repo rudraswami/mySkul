@@ -33,7 +33,9 @@ import {
   XCircle,
   Flame,
   Zap,
-  Trophy
+  Trophy,
+  Search,
+  Pencil
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
@@ -44,6 +46,7 @@ import apiClient from '../api/client';
 import '../styles/ai-tutor-redesign.css'; // Shared scroll stability styles
 import '../styles/sathi-premium.css'; // Premium Sathi UI redesign
 import '../styles/sathi-ux-audit-fixes.css'; // UI/UX Audit Permanent Fixes
+import '../styles/ui-comprehensive-fixes.css'; // Comprehensive UI/UX Fixes - ALL ISSUES
 
 // V1 Enhancement Components
 import VisualSketchViewer from './visual/VisualSketchViewer';
@@ -61,6 +64,12 @@ import { useGamification } from '../hooks/useGamification';
 
 // Neural Thinking Indicator - Minimal, premium cognitive processing animation
 import { NeuralThinkingIndicator } from './chat/NeuralThinkingIndicator';
+
+// New UI Components - Comprehensive Fixes
+import FeedbackToast, { useFeedbackToast } from './ui/FeedbackToast';
+import FloatingFollowUps from './ui/FloatingFollowUps';
+import useKeyboardShortcuts, { ShortcutsHelpPanel } from '../hooks/useKeyboardShortcuts';
+import MasteryIndicator from './ui/MasteryIndicator';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -106,6 +115,9 @@ export default function AITutorNeuroSymbolic() {
     xp: currentXP,
     streak: currentStreak
   } = useGamification(user?.id);
+
+  // 🎨 FEEDBACK TOAST - Show confirmation on feedback
+  const { toastState: feedbackToastState, showFeedbackToast, hideFeedbackToast } = useFeedbackToast();
 
   // Core state
   const [messages, setMessages] = useState([]);
@@ -240,6 +252,23 @@ export default function AITutorNeuroSymbolic() {
   
   // Offline detection
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Search in chat history
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Message editing state
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingMessageContent, setEditingMessageContent] = useState('');
+  
+  // Messages loading state (for session load)
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  
+  // User mastery state (from backend memory system)
+  const [userMastery, setUserMastery] = useState({
+    subjects: {},
+    weakAreas: [],
+    recentTopics: []
+  });
 
   // Default quick prompts - Attractive and diverse (cross-subject, exam-focused)
   const [defaultPrompts, setDefaultPrompts] = useState([
@@ -328,6 +357,40 @@ export default function AITutorNeuroSymbolic() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, []);
+  
+  // AUTO-SAVE DRAFT: Save input to localStorage as user types
+  useEffect(() => {
+    // Debounced save (only save after 500ms of no typing)
+    const timeoutId = setTimeout(() => {
+      if (inputMessage.trim()) {
+        localStorage.setItem('sathi_draft_message', inputMessage);
+        localStorage.setItem('sathi_draft_session', currentSession || '');
+      } else {
+        localStorage.removeItem('sathi_draft_message');
+        localStorage.removeItem('sathi_draft_session');
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [inputMessage, currentSession]);
+  
+  // RESTORE DRAFT: Load saved draft on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('sathi_draft_message');
+    const savedSession = localStorage.getItem('sathi_draft_session');
+    
+    if (savedDraft) {
+      // Only restore if we're in the same session or no session
+      if (!savedSession || savedSession === currentSession || !currentSession) {
+        setInputMessage(savedDraft);
+        // Show toast that draft was restored
+        if (savedDraft.length > 10) {
+          toastSuccess('Draft restored', 'Your unsent message was restored 📝');
+        }
+      }
+    }
+    // Only run once on mount - intentionally empty dependency array
   }, []);
 
   // Smart auto-scroll - only scroll when user is near bottom or just sent a message
@@ -907,6 +970,25 @@ export default function AITutorNeuroSymbolic() {
       // Clear image after successful send
       handleRemoveImage();
       
+      // Clear draft from localStorage after successful send
+      localStorage.removeItem('sathi_draft_message');
+      localStorage.removeItem('sathi_draft_session');
+      
+      // Update mastery from response if available
+      if (data.response?.memory_context) {
+        const memoryCtx = data.response.memory_context;
+        setUserMastery(prev => ({
+          subjects: {
+            ...prev.subjects,
+            [data.detected_subject || 'General']: memoryCtx.mastery_level || 0
+          },
+          weakAreas: memoryCtx.weak_topics || prev.weakAreas,
+          recentTopics: memoryCtx.last_topic 
+            ? [memoryCtx.last_topic, ...prev.recentTopics.filter(t => t !== memoryCtx.last_topic)].slice(0, 10)
+            : prev.recentTopics
+        }));
+      }
+      
       // Refresh session list to show updated message count
       loadSessions();
       
@@ -1096,6 +1178,7 @@ export default function AITutorNeuroSymbolic() {
   const loadSession = async (sessionId) => {
     try {
       setSessionLoadingId(sessionId);
+      setMessagesLoading(true); // Show skeleton while loading
       const res = await apiClient.get(`/ai/chat/${sessionId}/messages`);
 
       if (res.status === 200) {
@@ -1182,7 +1265,11 @@ export default function AITutorNeuroSymbolic() {
       }
     } catch (error) {
       console.error('Error loading session:', error);
-    } finally { setSessionLoadingId(null); }
+      toastError('Failed to load chat', 'Please try again');
+    } finally { 
+      setSessionLoadingId(null); 
+      setMessagesLoading(false);
+    }
   };
 
   // CRITICAL FIX: Restore session messages on mount if we have a persisted session
@@ -1281,6 +1368,14 @@ export default function AITutorNeuroSymbolic() {
         </motion.div>
       )}
       
+      {/* 🎨 FEEDBACK TOAST - Confirmation when user gives feedback */}
+      <FeedbackToast
+        type={feedbackToastState.type}
+        show={feedbackToastState.show}
+        onClose={hideFeedbackToast}
+        autoHideDuration={3000}
+      />
+
       {/* Onboarding Tour for First-Time Users */}
       <OnboardingTour onComplete={() => {
         console.log('Onboarding completed');
@@ -1312,11 +1407,41 @@ export default function AITutorNeuroSymbolic() {
               <RefreshCw className={sessionsLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             </motion.button>
           </div>
+          
+          {/* Search Input */}
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-100 border-0 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:bg-white transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 rounded-full"
+              >
+                <X className="w-3 h-3 text-slate-400" />
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Chat list with custom scrollbar */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#c4b5fd transparent' }}>
-          {sessions.map((session, idx) => {
+          {/* Filter sessions by search query */}
+          {sessions
+            .filter(session => {
+              if (!searchQuery.trim()) return true;
+              const query = searchQuery.toLowerCase();
+              return (
+                session.title?.toLowerCase().includes(query) ||
+                session.subject?.toLowerCase().includes(query)
+              );
+            })
+            .map((session, idx) => {
             const isActive = currentSession === session.session_id;
             const subjectColors = {
               'Mathematics': { bg: 'bg-purple-100', text: 'text-purple-700', icon: '📐' },
@@ -1665,9 +1790,10 @@ export default function AITutorNeuroSymbolic() {
             height: headerCollapsed ? '70px' : '110px'
           }}
           transition={{ duration: 0.3 }}
-          className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm"
+          className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm relative"
+          style={{ overflow: 'visible', zIndex: 40 }}
         >
-          <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-center py-3">
+          <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-center py-3" style={{ overflow: 'visible' }}>
             {/* Top row - Always visible */}
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -1680,7 +1806,7 @@ export default function AITutorNeuroSymbolic() {
                 </button>
                 
                 {/* Desktop: Integrated Navigation Menu */}
-                <div className="hidden lg:block">
+                <div className="hidden lg:block" style={{ position: 'relative', zIndex: 50 }}>
                   <SathiNavMenu />
                 </div>
                 
@@ -1715,6 +1841,20 @@ export default function AITutorNeuroSymbolic() {
 
               {/* Stats Display - Clean & Professional */}
               <div className="flex items-center gap-3 ml-auto mr-4 flex-shrink-0">
+                {/* Mastery Indicator - Compact */}
+                {Object.keys(userMastery.subjects).length > 0 && (
+                  <MasteryIndicator
+                    mastery={userMastery.subjects}
+                    weakAreas={userMastery.weakAreas}
+                    recentTopics={userMastery.recentTopics}
+                    compact={true}
+                    onTopicClick={(topic) => {
+                      setInputMessage(`Help me understand ${topic} better`);
+                      inputRef.current?.focus();
+                    }}
+                  />
+                )}
+                
                 {/* Streak - Minimal design */}
                 {currentStreak > 0 && (
                   <div 
@@ -1983,6 +2123,21 @@ export default function AITutorNeuroSymbolic() {
               </motion.div>
             )}
 
+            {/* Messages Loading Skeleton */}
+            {messagesLoading && (
+              <div className="space-y-4 py-6 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`${i % 2 === 0 ? 'max-w-[60%]' : 'max-w-[80%]'} space-y-2`}>
+                      <div className={`h-4 ${i % 2 === 0 ? 'bg-gray-300' : 'bg-gray-200'} rounded-lg w-full`}></div>
+                      <div className={`h-4 ${i % 2 === 0 ? 'bg-gray-300' : 'bg-gray-200'} rounded-lg w-3/4`}></div>
+                      {i % 2 !== 0 && <div className="h-4 bg-gray-200 rounded-lg w-1/2"></div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Messages - Grows to fill available space */}
             <div className="space-y-6 flex-grow">
               <AnimatePresence>
@@ -1995,13 +2150,32 @@ export default function AITutorNeuroSymbolic() {
                     transition={{ duration: 0.3 }}
                   >
                     {message.type === 'user' && (
-                      <div className="flex justify-end">
+                      <div className="flex justify-end group">
                         <motion.div
                           initial={{ opacity: 0, x: 10, scale: 0.95 }}
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                          className="max-w-[75%] bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-br-md px-5 py-3.5 shadow-lg shadow-gray-900/20"
+                          className="max-w-[75%] bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-br-md px-5 py-3.5 shadow-lg shadow-gray-900/20 relative"
                         >
+                          {/* Edit Button - Show on hover */}
+                          {!loading && (
+                            <button
+                              onClick={() => {
+                                const content = typeof message.content === 'string' 
+                                  ? message.content 
+                                  : message.content?.message || message.content?.text || '';
+                                setEditingMessageId(message.id);
+                                setEditingMessageContent(content);
+                                setInputMessage(content);
+                                inputRef.current?.focus();
+                              }}
+                              className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 bg-white rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-violet-600 hover:bg-violet-50"
+                              title="Edit message"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          
                           {/* Show image if uploaded */}
                           {message.image_preview && (
                             <div className="mb-2 rounded-lg overflow-hidden border border-gray-700">
@@ -2375,17 +2549,25 @@ export default function AITutorNeuroSymbolic() {
                 </div>
               </div>
               
-              {/* Helper Text - Clean Design */}
+              {/* Helper Text - Clean Design with Character Count */}
               <div className="flex items-center justify-between mt-2 px-1">
                 <p className="text-xs text-slate-500 font-medium">
                   Press <kbd className="px-1.5 py-0.5 bg-slate-100 rounded-md text-slate-600 font-mono text-[10px] border border-slate-200">Enter</kbd> to send
                 </p>
-                {loading && (
-                  <span className="text-xs text-violet-600 flex items-center gap-1.5 font-medium">
-                    <Loader className="w-3.5 h-3.5 animate-spin" />
-                    Sathi is thinking...
-                  </span>
-                )}
+                <div className="flex items-center gap-3">
+                  {/* Character Count */}
+                  {inputMessage.length > 0 && (
+                    <span className={`text-xs font-medium ${inputMessage.length > 1800 ? 'text-red-500' : inputMessage.length > 1500 ? 'text-amber-500' : 'text-slate-400'}`}>
+                      {inputMessage.length}/2000
+                    </span>
+                  )}
+                  {loading && (
+                    <span className="text-xs text-violet-600 flex items-center gap-1.5 font-medium">
+                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                      Sathi is thinking...
+                    </span>
+                  )}
+                </div>
               </div>
             </form>
           </div>
