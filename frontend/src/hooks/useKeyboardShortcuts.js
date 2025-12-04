@@ -166,3 +166,8 @@ export const ShortcutsHelpPanel = ({ show, onClose }) => {
 
 export default useKeyboardShortcuts;
 
+
+
+
+
+

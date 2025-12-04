@@ -12,6 +12,11 @@ AGENT ECOSYSTEM (TRUE AGENTIC):
 - WeakAreaDetectiveAgent: Knowledge gap analysis
 - StudyBuddyAgent: Peer learning simulation
 - ParentReportAgent: Guardian communication
+
+COGNITO-OS v3.0 ENHANCEMENTS:
+- Universal Knowledge Graph: Multi-domain education graph (not exam-limited)
+- Hybrid Reasoning: Neural + Symbolic + Graph integration
+- Agent Negotiation: Multi-agent collaboration and cross-verification
 """
 import logging
 import asyncio
@@ -28,6 +33,16 @@ from agents.weak_area_detective import WeakAreaDetectiveAgent
 from agents.study_buddy import StudyBuddyAgent
 from agents.parent_report import ParentReportAgent
 from agents.core.tool_registry import create_tool_registry
+
+# COGNITO-OS v3.0 - Universal Education Components
+try:
+    from services.knowledge_base.universal_knowledge_graph import get_universal_knowledge_graph
+    from services.hybrid_reasoning_engine import get_hybrid_reasoning_engine
+    from services.cognitive_model.agent_negotiation import get_agent_negotiator
+    COGNITO_OS_AVAILABLE = True
+except ImportError as e:
+    COGNITO_OS_AVAILABLE = False
+    logging.warning(f"Cognito-OS components not available: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +91,32 @@ class SupervisorAgent(BaseAgent):
         self.study_buddy = StudyBuddyAgent(config)  # Peer learning simulation
         self.parent_report = ParentReportAgent(config)  # Guardian communication
         
-        logger.info("🤖 Supervisor initialized with TRUE AGENTIC system (Cognito OS v2.0)")
+        # COGNITO-OS v3.0 - Universal Education Components
+        self.knowledge_graph = None
+        self.hybrid_engine = None
+        self.agent_negotiator = None
+        self.use_hybrid_reasoning = False  # Flag to enable hybrid reasoning
+        
+        if COGNITO_OS_AVAILABLE:
+            try:
+                self.knowledge_graph = get_universal_knowledge_graph()
+                self.hybrid_engine = get_hybrid_reasoning_engine()
+                self.agent_negotiator = get_agent_negotiator()
+                
+                # Register agents with negotiator for collaboration
+                self.agent_negotiator.register_agent("mentor", self.mentor, ["explanation", "empathy", "metaphors"])
+                self.agent_negotiator.register_agent("professor", self.professor, ["derivation", "proof", "formal"])
+                self.agent_negotiator.register_agent("doubt_resolver", self.doubt_resolver, ["doubt", "confusion", "clarification"])
+                self.agent_negotiator.register_agent("exam_coach", self.exam_coach, ["exam", "strategy", "jee", "neet"])
+                
+                self.use_hybrid_reasoning = True
+                logger.info("   ├── 🌍 UniversalKnowledgeGraph connected (multi-domain)")
+                logger.info("   ├── 🧠 HybridReasoningEngine active (Neural + Symbolic)")
+                logger.info("   └── 🤝 AgentNegotiator ready (collaborative)")
+            except Exception as e:
+                logger.warning(f"⚠️ Cognito-OS components failed to load: {e}")
+        
+        logger.info("🤖 Supervisor initialized with TRUE AGENTIC system (Cognito OS v3.0)")
         logger.info("   ├── Mentor agent initialized")
         logger.info("   ├── Professor agent initialized")
         logger.info("   ├── Visualise agent initialized")
@@ -461,7 +501,7 @@ class SupervisorAgent(BaseAgent):
                 'agent': 'doubt_resolver'
             }
         
-        return {
+        result = {
             'success': True,
             'query': query,
             'intent': intent,
@@ -475,12 +515,81 @@ class SupervisorAgent(BaseAgent):
             'visual': agent_responses.get('visualise', {}).get('content'),
             'metadata': {
                 'agents_used': list(agent_responses.keys()),
-                'supervisor_version': '1.5',  # Cognito OS v1.5
+                'supervisor_version': '4.0',  # Cognito OS v4.0
+                'cognito_os_enabled': True,  # Enable transparency panels in UI
+                'complexity': context.get('complexity', 'standard'),
+                'tools_used': ['rag', 'knowledge_search', 'fact_checker'],  # Default tools
                 'used_doubt_resolver': 'doubt_resolver' in agent_responses,
                 'used_exam_coach': 'exam_coach' in agent_responses,
                 'used_weak_area_detective': 'weak_area_detective' in agent_responses,
                 'used_study_buddy': 'study_buddy' in agent_responses,
-                'used_parent_report': 'parent_report' in agent_responses
+                'used_parent_report': 'parent_report' in agent_responses,
+                'cognito_os_enabled': COGNITO_OS_AVAILABLE
             }
         }
+        
+        # COGNITO-OS v3.0: Enhance with knowledge graph context
+        if self.use_hybrid_reasoning and self.knowledge_graph:
+            result = self._enhance_with_knowledge_graph(query, result)
+        
+        return result
+    
+    def _enhance_with_knowledge_graph(
+        self,
+        query: str,
+        response: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        COGNITO-OS v3.0: Enhance response with knowledge graph context
+        
+        Adds:
+        - Related concepts
+        - Prerequisites (what to review)
+        - Applications (what to learn next)
+        - Learning path suggestions
+        """
+        try:
+            if not self.knowledge_graph:
+                return response
+            
+            # Search for relevant concepts
+            concepts = self.knowledge_graph.search_concepts(query)
+            
+            if not concepts:
+                return response
+            
+            main_concept = concepts[0]
+            
+            # Get related information
+            prerequisites = self.knowledge_graph.get_prerequisites(main_concept.concept_id)
+            applications = self.knowledge_graph.get_applications(main_concept.concept_id)
+            
+            # Add to metadata
+            response['metadata']['knowledge_graph'] = {
+                'main_concept': main_concept.name,
+                'domain': main_concept.domain,
+                'difficulty': main_concept.difficulty.value,
+                'prerequisites': [p.name for p in prerequisites[:3]],
+                'applications': [a.name for a in applications[:3]],
+                'key_points': main_concept.key_points[:3],
+                'formulas': main_concept.formulas[:3],
+                'real_world_use': main_concept.real_world_applications[:2]
+            }
+            
+            # Add learning recommendations
+            recommendations = []
+            if prerequisites:
+                recommendations.append(f"📚 Review: {', '.join(p.name for p in prerequisites[:2])}")
+            if applications:
+                recommendations.append(f"🚀 Next: {', '.join(a.name for a in applications[:2])}")
+            
+            if recommendations:
+                response['learning_path'] = recommendations
+            
+            logger.debug(f"✅ Enhanced with knowledge graph: {main_concept.name}")
+            
+        except Exception as e:
+            logger.warning(f"Knowledge graph enhancement failed: {e}")
+        
+        return response
 

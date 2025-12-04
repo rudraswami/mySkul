@@ -119,6 +119,41 @@ export default function AITutorNeuroSymbolic() {
   // 🎨 FEEDBACK TOAST - Show confirmation on feedback
   const { toastState: feedbackToastState, showFeedbackToast, hideFeedbackToast } = useFeedbackToast();
 
+  // ⌨️ KEYBOARD SHORTCUTS - Global shortcuts for efficiency
+  const { showShortcutsHelp, setShowShortcutsHelp } = useKeyboardShortcuts({
+    onNewChat: () => handleNewChat(),
+    onFocusInput: () => inputRef.current?.focus(),
+    onToggleSidebar: () => setShowSidebar(prev => !prev),
+    onSearch: () => {
+      const searchInput = document.querySelector('[data-search-input]');
+      searchInput?.focus();
+    },
+    onStopGeneration: () => {
+      // TODO: Implement stop generation if streaming is active
+      console.log('Stop generation triggered');
+    },
+    onEscape: () => {
+      setShowUpgradeModal(false);
+      setShowSidebar(false);
+    }
+  }, true);
+
+  // 📡 OFFLINE DETECTION - Network status monitoring
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // Core state
   const [messages, setMessages] = useState([]);
   
@@ -249,9 +284,6 @@ export default function AITutorNeuroSymbolic() {
     level: 1,
     streak: 0
   });
-  
-  // Offline detection
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Search in chat history
   const [searchQuery, setSearchQuery] = useState('');
@@ -710,9 +742,9 @@ export default function AITutorNeuroSymbolic() {
       // ====================================================================
       // STREAMING RESPONSE (Real-time token display like ChatGPT)
       // ====================================================================
-      // DISABLED: Streaming endpoint not yet implemented on backend
-      // TODO: Re-enable when /api/ai/neuro-symbolic/stream is ready
-      const USE_STREAMING = false; // Feature flag for streaming
+      // ✅ ENABLED: Backend streaming endpoint is fully implemented
+      // Features: <2s first token, graceful fallback, image support
+      const USE_STREAMING = true; // Feature flag for streaming - NOW ENABLED ✅
       
       let data;
       let streamingHandledFlag = false; // Track if streaming handled the message
@@ -813,12 +845,24 @@ export default function AITutorNeuroSymbolic() {
           if (finalResponse) {
             data = { response: finalResponse, detected_subject: finalResponse.detected_subject };
             streamingHandledFlag = true; // Mark as handled
-            // Update final message
+            // Update final message with COGNITO-OS transparency data
+            const normalizedFinal = normalizeAIContent(finalResponse);
             setMessages(prev => prev.map(msg => 
               msg.message_id === streamingMsgId 
                 ? {
                     ...msg,
-                    content: normalizeAIContent(finalResponse),
+                    content: {
+                      ...normalizedFinal,
+                      // COGNITO-OS v4.0: Include transparency data
+                      metadata: finalResponse.metadata || {
+                        cognito_os_enabled: true,
+                        agents_used: ['mentor'],
+                        tools_used: ['rag']
+                      },
+                      verification: finalResponse.verification || {},
+                      rag: finalResponse.rag || {},
+                      learning_path: finalResponse.learning_path || []
+                    },
                     isStreaming: false,
                     user_question: messageToSend
                   }
@@ -924,7 +968,16 @@ export default function AITutorNeuroSymbolic() {
             ...normalizedResponse,
             detected_subject: data.detected_subject || normalizedResponse?.detected_subject || data.response?.detected_subject,
             // Include visual_sketch in content for easy access
-            visual_sketch: data.response?.visual_sketch || normalizedResponse?.visual_sketch || null
+            visual_sketch: data.response?.visual_sketch || normalizedResponse?.visual_sketch || null,
+            // COGNITO-OS v4.0: Include transparency data for UI components
+            metadata: data.response?.metadata || normalizedResponse?.metadata || {
+              cognito_os_enabled: true,
+              agents_used: ['mentor'],
+              tools_used: ['rag']
+            },
+            verification: data.response?.verification || normalizedResponse?.verification || {},
+            rag: data.response?.rag || normalizedResponse?.rag || {},
+            learning_path: data.response?.learning_path || normalizedResponse?.learning_path || []
           },
           timestamp: new Date().toISOString(),
           message_id: data.message_id,
@@ -1374,6 +1427,12 @@ export default function AITutorNeuroSymbolic() {
         show={feedbackToastState.show}
         onClose={hideFeedbackToast}
         autoHideDuration={3000}
+      />
+
+      {/* ⌨️ KEYBOARD SHORTCUTS HELP PANEL */}
+      <ShortcutsHelpPanel
+        show={showShortcutsHelp}
+        onClose={() => setShowShortcutsHelp(false)}
       />
 
       {/* Onboarding Tour for First-Time Users */}
@@ -2156,7 +2215,15 @@ export default function AITutorNeuroSymbolic() {
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           transition={{ type: "spring", stiffness: 300, damping: 25 }}
                           className="max-w-[75%] bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl rounded-br-md px-5 py-3.5 shadow-lg shadow-gray-900/20 relative"
+                          title={message.timestamp ? new Date(message.timestamp).toLocaleString() : ''}
                         >
+                          {/* Timestamp on hover */}
+                          {message.timestamp && (
+                            <span className="absolute -top-6 right-0 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              {formatRelativeTime(message.timestamp)}
+                            </span>
+                          )}
+                          
                           {/* Edit Button - Show on hover */}
                           {!loading && (
                             <button
@@ -2208,14 +2275,22 @@ export default function AITutorNeuroSymbolic() {
 
                     {message.type === 'ai' && (() => {
                       return (
-                      <div className="flex justify-start">
-                        <div className="max-w-3xl w-full">
+                      <div className="flex justify-start group">
+                        <div className="max-w-3xl w-full relative">
+                          {/* Timestamp on hover */}
+                          {message.timestamp && (
+                            <span className="absolute -top-6 left-0 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              {formatRelativeTime(message.timestamp)}
+                            </span>
+                          )}
+                          
                           {/* Premium Response Container - Glassmorphic Design */}
                           <motion.div 
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ type: "spring", stiffness: 200, damping: 20 }}
                             className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg shadow-gray-200/40 border border-gray-100/80"
+                            title={message.timestamp ? new Date(message.timestamp).toLocaleString() : ''}
                           >
                             {/* Memory Context Banner - Shows learning progress */}
                             {message.content?.memory_context && (

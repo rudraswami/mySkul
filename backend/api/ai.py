@@ -29,6 +29,110 @@ from agents.response_adapter import ResponseAdapter
 from visual_engine.scene_builder import SceneBuilder
 from utils.exam_mode_resolver import resolve_exam_mode
 
+# COGNITO-OS v4.0 - Unified Supervisor Routing
+try:
+    from agents.enhanced_supervisor import EnhancedSupervisor
+    ENHANCED_SUPERVISOR_AVAILABLE = True
+except ImportError:
+    ENHANCED_SUPERVISOR_AVAILABLE = False
+    logger.warning("EnhancedSupervisor not available, using standard routing")
+
+
+def analyze_query_complexity(query: str) -> str:
+    """
+    COGNITO-OS v4.0 - Analyze query complexity for intelligent routing
+    
+    Returns:
+        - "simple": Greetings, acknowledgments, short facts
+        - "standard": Most educational queries
+        - "complex": Derivations, proofs, multi-step problems
+    """
+    import re
+    query_lower = query.lower().strip()
+    
+    # SIMPLE: Greetings, acknowledgments only
+    simple_patterns = [
+        'hi', 'hello', 'hey', 'namaste', 'thanks', 'thank you', 'ok', 'okay',
+        'got it', 'cool', 'nice', 'good morning', 'good evening', 'bye', 'goodbye'
+    ]
+    if any(query_lower.startswith(p) or query_lower == p for p in simple_patterns):
+        return "simple"
+    
+    # COMPLEX: Derivations, proofs, multi-step problems
+    complex_patterns = [
+        'derive', 'prove', 'proof', 'step by step', 'show that', 
+        'why does', 'mathematically show', 'logical proof',
+        'compare and contrast', 'analyze', 'evaluate critically',
+        'solve', 'calculate', 'find the value'
+    ]
+    if any(p in query_lower for p in complex_patterns):
+        return "complex"
+    
+    # Check for math equations (likely need symbolic verification)
+    if re.search(r'[=+\-*/^√∫∑]', query) or re.search(r'\d+\s*[+\-*/]\s*\d+', query):
+        return "complex"
+    
+    # EDUCATIONAL QUERIES: Always at least standard complexity
+    educational_keywords = [
+        'explain', 'what is', 'how does', 'why', 'define', 'describe',
+        'photosynthesis', 'physics', 'chemistry', 'biology', 'math',
+        'newton', 'force', 'energy', 'atom', 'molecule', 'cell',
+        'equation', 'formula', 'theorem', 'law', 'principle'
+    ]
+    if any(kw in query_lower for kw in educational_keywords):
+        return "standard"
+    
+    # Very short queries without educational content = simple
+    if len(query.split()) <= 3:
+        return "simple"
+    
+    # DEFAULT: Standard complexity for most queries
+    return "standard"
+
+
+def get_appropriate_supervisor(query: str, config: dict) -> SupervisorAgent:
+    """
+    COGNITO-OS v4.0 - Intelligent supervisor selection based on query complexity
+    
+    Routing Strategy:
+    - simple → SupervisorAgent (fast mode, <500ms)
+    - standard → EnhancedSupervisor (RAG + math verify)
+    - complex → EnhancedSupervisor (full verify + knowledge graph)
+    """
+    complexity = analyze_query_complexity(query)
+    logger.info(f"🎯 Query complexity: {complexity}")
+    
+    if complexity == "simple":
+        # Fast mode - just SupervisorAgent
+        return SupervisorAgent(config=config)
+    
+    elif complexity == "standard" and ENHANCED_SUPERVISOR_AVAILABLE:
+        # Standard mode - RAG + light verification
+        supervisor = EnhancedSupervisor(config=config)
+        supervisor.configure(
+            enable_rag=True,
+            verify_math=True,
+            verify_facts=False,  # Skip for speed
+            verify_logic=False
+        )
+        logger.info("🔧 Using EnhancedSupervisor (standard mode)")
+        return supervisor
+    
+    elif complexity == "complex" and ENHANCED_SUPERVISOR_AVAILABLE:
+        # Full mode - complete verification + knowledge graph
+        supervisor = EnhancedSupervisor(config=config)
+        supervisor.configure(
+            enable_rag=True,
+            verify_math=True,
+            verify_facts=True,
+            verify_logic=True
+        )
+        logger.info("🔧 Using EnhancedSupervisor (full verification mode)")
+        return supervisor
+    
+    # Fallback to standard SupervisorAgent
+    return SupervisorAgent(config=config)
+
 
 # Router instance
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -904,10 +1008,35 @@ async def stream_neuro_symbolic_response(
             'network_speed': user_doc.get('network_speed', '3G')
         }
         
+        # ========== IMAGE/DOCUMENT ANALYSIS (FOR STREAMING) ==========
+        # If student uploaded an image, analyze it first and augment the question
+        image_analysis = None
+        contextual_message = request.message
+        
+        if hasattr(request, 'image_url') and request.image_url:
+            logger.info(f"📷 Image uploaded in streaming - analyzing with GPT-4 Vision")
+            try:
+                image_analysis = await analyze_student_image(
+                    image_data=request.image_url,
+                    question=request.message,
+                    subject_hint=request.subject
+                )
+                
+                if image_analysis and 'analysis' in image_analysis:
+                    # Augment the message with image context
+                    contextual_message = (
+                        f"{request.message}\n\n"
+                        f"[Image Context: {image_analysis['analysis'][:200]}...]\n"
+                        f"Type: {image_analysis.get('content_type', 'Unknown')}"
+                    )
+                    logger.info(f"✅ Image analyzed: {image_analysis.get('content_type', 'Unknown')}")
+            except Exception as img_err:
+                logger.warning(f"⚠️ Image analysis failed (streaming), continuing with text: {img_err}")
+        
         # Auto-detect subject if not provided
         detected_subject = request.subject
         if not detected_subject or detected_subject.strip() == "":
-            detected_subject = _detect_subject_from_question(request.message)
+            detected_subject = _detect_subject_from_question(contextual_message)
             logger.info(f"🔍 Auto-detected subject: {detected_subject} from question: {request.message[:50]}")
         
         # Initialize streaming service
@@ -915,19 +1044,20 @@ async def stream_neuro_symbolic_response(
         cache_service = SimpleRedisCache()
         streaming_service = StreamingAIService(ai_service, cache_service)
         
-        # Stream response
+        # Stream response (with augmented message if image was analyzed)
         return EventSourceResponse(
             streaming_service.stream_mentor_response(
                 user_id=user.user_id,
                 session_id=request.session_id or f"temp_{user.user_id}",
-                message=request.message,
+                message=contextual_message,  # Use augmented message with image context
                 subject=detected_subject,
                 exam_mode=await resolve_exam_mode(
                     request_exam_mode=getattr(request, 'exam_mode', None),
                     user_id=user.user_id,
                     db_client=db
                 ),
-                student_profile=student_profile
+                student_profile=student_profile,
+                image_analysis=image_analysis  # Pass image analysis for potential use
             )
         )
         
@@ -1581,9 +1711,12 @@ You MUST reference specific content from the image in your response."""
             # Use new agentic system with MEMORY
             logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:
-                # Initialize Supervisor
+                # Initialize Supervisor with INTELLIGENT ROUTING (Cognito-OS v4.0)
                 emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
-                supervisor = SupervisorAgent(config={"emergent_llm_key": emergent_llm_key})
+                config = {"emergent_llm_key": emergent_llm_key}
+                
+                # Use intelligent routing based on query complexity
+                supervisor = get_appropriate_supervisor(contextual_message, config)
                 
                 # ================================================================
                 # MEMORY SYSTEM INTEGRATION - Retrieve context before processing

@@ -30,10 +30,11 @@ class StreamingAIService:
         message: str,
         subject: str,
         exam_mode: str = "JEE",
-        student_profile: dict = None
+        student_profile: dict = None,
+        image_analysis: dict = None
     ) -> AsyncGenerator[str, None]:
         """
-        Stream mentor response progressively
+        Stream mentor response progressively (with optional image analysis support)
         
         Yields:
         - event: visual_fallback (Tier 1-3)

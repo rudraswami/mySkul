@@ -14,6 +14,9 @@ import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
 import RevolutionarySketch from '../visual-engine/components/RevolutionarySketch';
 
+// COGNITO-OS v4.0 - Intelligence Chips (minimal, tappable)
+import IntelligenceChips from './ui/IntelligenceChips';
+
 // DEPRECATED: FormattedExplanation forces template structure
 // import { FormattedExplanation, formatExplanation } from '../utils/explanationFormatter';
 
@@ -98,6 +101,12 @@ const shouldShowVisual = (question, visualSketch, response) => {
 
 /**
  * Main Smart Response Component
+ * 
+ * COGNITO-OS v4.0: Now includes transparency components
+ * - Agent Avatar: Shows which agent helped
+ * - Verification Badge: Shows trust signals
+ * - Reasoning Panel: Shows AI thinking process
+ * - Learning Path: Shows knowledge graph connections
  */
 const SmartResponse = ({ 
   response, 
@@ -110,6 +119,63 @@ const SmartResponse = ({
 }) => {
   // State for visual expand/collapse - DEFAULT COLLAPSED so user reads text first
   const [isVisualExpanded, setIsVisualExpanded] = useState(false);
+  
+  // COGNITO-OS v4.0 - Extract transparency data from response
+  const cognitoData = useMemo(() => {
+    if (!response) return null;
+    
+    const metadata = response.metadata || {};
+    const verification = response.verification || {};
+    const knowledgeGraph = metadata.knowledge_graph || null;
+    const learningPath = response.learning_path || [];
+    
+    // Determine which agent was primary
+    const agentsUsed = metadata.agents_used || [];
+    let primaryAgent = 'mentor';
+    if (agentsUsed.includes('professor')) primaryAgent = 'professor';
+    if (agentsUsed.includes('doubt_resolver')) primaryAgent = 'doubt_resolver';
+    if (agentsUsed.includes('exam_coach')) primaryAgent = 'exam_coach';
+    if (metadata.used_doubt_resolver) primaryAgent = 'doubt_resolver';
+    
+    // Build verification status
+    const verificationStatus = {
+      math: {
+        status: verification.status === 'verified' ? 'verified' : 'not_checked',
+        confidence: verification.confidence || 0.5
+      },
+      source: {
+        status: response.rag?.curriculum_aligned ? 'verified' : 'not_checked'
+      },
+      logic: {
+        status: verification.status === 'verified' ? 'verified' : 'not_checked'
+      }
+    };
+    
+    // Get sources
+    const sources = response.rag?.sources_used || [];
+    
+    // Build reasoning chain from metadata
+    const reasoningChain = metadata.reasoning_chain || [];
+    const toolsUsed = metadata.tools_used || [];
+    
+    // COGNITO-OS v4.0: Always show transparency for educational content
+    // Only hide for greetings/acknowledgments (determined in render)
+    const showTransparency = metadata.cognito_os_enabled !== false; // Default to TRUE
+    
+    return {
+      primaryAgent,
+      agentsUsed,
+      verification: verificationStatus,
+      sources,
+      reasoningChain,
+      toolsUsed,
+      knowledgeGraph,
+      learningPath,
+      confidence: verification.confidence || 0.75,
+      complexity: metadata.complexity || 'standard',
+      showTransparency
+    };
+  }, [response]);
   const responseType = useMemo(() => 
     detectResponseType(response, question), 
     [response, question]
@@ -186,13 +252,14 @@ const SmartResponse = ({
 
   if (!content) return null;
 
-  // Render based on response type
-  switch (responseType) {
-    case 'greeting':
-      return <GreetingResponse content={content} />;
-    
-    case 'acknowledgment':
-      return <AcknowledgmentResponse content={content} />;
+  // COGNITO-OS v4.0 - Render response with transparency wrapper
+  const renderMainContent = () => {
+    switch (responseType) {
+      case 'greeting':
+        return <GreetingResponse content={content} />;
+      
+      case 'acknowledgment':
+        return <AcknowledgmentResponse content={content} />;
     
     case 'calculation':
       return (
@@ -270,7 +337,29 @@ const SmartResponse = ({
           setIsVisualExpanded={setIsVisualExpanded}
         />
       );
-  }
+    }
+  };
+
+  // COGNITO-OS v4.0 - Clean answer + minimal intelligence chips
+  const isSimpleResponse = responseType === 'greeting' || responseType === 'acknowledgment';
+  
+  return (
+    <div className="smart-response-container">
+      {/* CLEAN FINAL ANSWER - No panels, no badges, just content */}
+      {renderMainContent()}
+      
+      {/* INTELLIGENCE CHIPS - Minimal tappable buttons (ChatGPT/Gemini style) */}
+      {!isSimpleResponse && (
+        <IntelligenceChips
+          isVerified={cognitoData?.confidence >= 0.6}
+          sources={cognitoData?.sources || []}
+          hasConceptMap={!!cognitoData?.knowledgeGraph}
+          knowledgeGraph={cognitoData?.knowledgeGraph}
+          learningPath={cognitoData?.learningPath || []}
+        />
+      )}
+    </div>
+  );
 };
 
 // ============ Response Type Components ============

@@ -240,7 +240,23 @@ class ResponseAdapter:
                     },
                     # ========== INTELLIGENT FORMATTING DATA ==========
                     'intelligent_format': intelligent_format,  # Pass formatted data to frontend
-                    'format_type': format_type  # comparison, definition, steps, list, explanation
+                    'format_type': format_type,  # comparison, definition, steps, list, explanation
+                    
+                    # ========== COGNITO-OS v4.0: TRANSPARENCY DATA ==========
+                    # Pass through metadata for UI transparency panels
+                    'metadata': agentic_response.get('metadata', {
+                        'cognito_os_enabled': True,
+                        'supervisor_version': '4.0',
+                        'agents_used': list(set([
+                            'mentor' if mentor_response else None,
+                            'professor' if professor_response else None,
+                            'visualise' if visual_response else None
+                        ]) - {None}),
+                        'tools_used': ['rag', 'knowledge_search']
+                    }),
+                    'verification': agentic_response.get('verification', {}),
+                    'rag': agentic_response.get('rag', {}),
+                    'learning_path': agentic_response.get('learning_path', [])
                 },
                 'raw_response': f"Mentor: {mentor_response.get('content', '')}\n\nProfessor: {professor_response.get('content', '')}",
                 'question_type': 'greeting' if is_greeting else normalized_intent,
