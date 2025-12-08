@@ -33,6 +33,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             "/openapi.json",  # OpenAPI spec
             "/api/mock-tests/",  # Mock test endpoints (submit, generate, etc.)
             "/api/ai/",  # AI endpoints (chat, neuro-symbolic, etc.)
+            "/api/ai/teach-me-back",  # Teach Me Back feature
             "/api/subscription/",  # Subscription endpoints
             "/api/gamification/"  # Gamification endpoints
         ]
@@ -40,8 +41,21 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         """Process request with CSRF protection"""
         
+        path = request.url.path
+        
+        # ALWAYS exempt teach-me-back (explicit check first)
+        if '/teach-me-back' in path:
+            logger.info(f"✅ CSRF exempting teach-me-back: {path}")
+            return await call_next(request)
+        
         # Skip CSRF check for exempt paths
-        if any(request.url.path.startswith(path) for path in self.exempt_paths):
+        is_exempt = any(
+            path.startswith(exempt_path) or 
+            path.startswith(exempt_path.rstrip('/'))
+            for exempt_path in self.exempt_paths
+        )
+        
+        if is_exempt:
             return await call_next(request)
         
         # Skip CSRF check for safe methods (GET, HEAD, OPTIONS)

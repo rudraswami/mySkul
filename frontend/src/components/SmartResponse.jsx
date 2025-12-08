@@ -14,8 +14,8 @@ import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
 import RevolutionarySketch from '../visual-engine/components/RevolutionarySketch';
 
-// COGNITO-OS v4.0 - Intelligence Chips (minimal, tappable)
-import IntelligenceChips from './ui/IntelligenceChips';
+// COGNITO-OS v4.0 - Teach Me Back (modal-based)
+import TeachMeBackModal from './ui/TeachMeBackModal';
 
 // DEPRECATED: FormattedExplanation forces template structure
 // import { FormattedExplanation, formatExplanation } from '../utils/explanationFormatter';
@@ -340,24 +340,38 @@ const SmartResponse = ({
     }
   };
 
-  // COGNITO-OS v4.0 - Clean answer + minimal intelligence chips
+  // COGNITO-OS v4.0 - Clean answer only
   const isSimpleResponse = responseType === 'greeting' || responseType === 'acknowledgment';
+  
+  // Teach Me Back Modal - show for explanation responses (not greetings, not short facts)
+  const [showTeachMeBackModal, setShowTeachMeBackModal] = useState(false);
+  const showTeachMeBackOption = responseType === 'explanation' && content?.mainContent?.length > 200;
   
   return (
     <div className="smart-response-container">
-      {/* CLEAN FINAL ANSWER - No panels, no badges, just content */}
+      {/* CLEAN FINAL ANSWER - No panels, no badges, no chips, just content */}
       {renderMainContent()}
       
-      {/* INTELLIGENCE CHIPS - Minimal tappable buttons (ChatGPT/Gemini style) */}
-      {!isSimpleResponse && (
-        <IntelligenceChips
-          isVerified={cognitoData?.confidence >= 0.6}
-          sources={cognitoData?.sources || []}
-          hasConceptMap={!!cognitoData?.knowledgeGraph}
-          knowledgeGraph={cognitoData?.knowledgeGraph}
-          learningPath={cognitoData?.learningPath || []}
-        />
+      {/* TEACH ME BACK - Subtle invitation for complex explanations */}
+      {showTeachMeBackOption && (
+        <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <button
+            onClick={() => setShowTeachMeBackModal(true)}
+            className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center gap-2 transition-colors"
+          >
+            <span>💭</span>
+            <span>Think you got it? Try explaining it back</span>
+          </button>
+        </div>
       )}
+      
+      {/* TEACH ME BACK MODAL - Full screen experience */}
+      <TeachMeBackModal
+        isOpen={showTeachMeBackModal}
+        onClose={() => setShowTeachMeBackModal(false)}
+        concept={question?.substring(0, 100) || 'this concept'}
+        originalExplanation={content?.mainContent || ''}
+      />
     </div>
   );
 };

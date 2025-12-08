@@ -21,7 +21,8 @@ async def call_llm(
     temperature: float = 0.7,
     max_tokens: int = 500,
     model: str = "gpt-4o-mini",
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    system_message: Optional[str] = None
 ) -> str:
     """
     Call LLM API with given prompt
@@ -29,10 +30,11 @@ async def call_llm(
     Args:
         prompt: The prompt to send to LLM
         api_key: API key for emergent integrations
-        temperature: Creativity level (0.0-1.0) - NOTE: not used by LlmChat
-        max_tokens: Maximum response length - NOTE: not used by LlmChat
-        model: Model to use - NOTE: not used by LlmChat
+        temperature: Creativity level (0.0-1.0)
+        max_tokens: Maximum response length
+        model: Model to use (e.g., "gpt-4o-mini")
         session_id: Session ID for LLM client (optional)
+        system_message: System message for LLM context (optional)
     
     Returns:
         LLM response text
@@ -45,31 +47,38 @@ async def call_llm(
         if not session_id:
             session_id = f"llm_{str(uuid.uuid4())[:8]}"
         
+        # Default system message if not provided
+        if not system_message:
+            system_message = "You are a helpful AI assistant. Respond concisely and accurately."
+        
         # Initialize LLM client with correct API
-        # NOTE: LlmChat from emergentintegrations uses api_key + session_id
-        # temperature/max_tokens/model are not supported in constructor
         llm_client = LlmChat(
             api_key=api_key,
-            session_id=session_id
+            session_id=session_id,
+            system_message=system_message
+        ).with_model("openai", model).with_params(
+            temperature=temperature,
+            max_tokens=max_tokens
         )
         
         # Create user message
-        user_msg = UserMessage(content=prompt)
+        user_msg = UserMessage(text=prompt)
         
         # Get response with timeout protection
         try:
             response = await asyncio.wait_for(
-                llm_client.send_message_async(user_msg),
+                llm_client.send_message(user_msg),
                 timeout=DEFAULT_LLM_TIMEOUT
             )
         except asyncio.TimeoutError:
             logger.error(f"⏱️ LLM call exceeded {DEFAULT_LLM_TIMEOUT}s timeout")
             raise Exception(f"LLM call timeout after {DEFAULT_LLM_TIMEOUT}s")
         
-        if not response or not response.content:
+        if not response:
             raise Exception("Empty response from LLM")
         
-        return response.content
+        # Response is already a string (or needs to be converted)
+        return response if isinstance(response, str) else str(response)
         
     except Exception as e:
         logger.error(f"❌ LLM API call failed: {e}")
@@ -82,7 +91,8 @@ async def call_llm_streaming(
     temperature: float = 0.7,
     max_tokens: int = 500,
     model: str = "gpt-4o-mini",
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    system_message: Optional[str] = None
 ):
     """
     Call LLM API with streaming response
@@ -90,10 +100,11 @@ async def call_llm_streaming(
     Args:
         prompt: The prompt to send to LLM
         api_key: API key for emergent integrations
-        temperature: Creativity level (0.0-1.0) - NOTE: not used by LlmChat
-        max_tokens: Maximum response length - NOTE: not used by LlmChat
-        model: Model to use - NOTE: not used by LlmChat
+        temperature: Creativity level (0.0-1.0)
+        max_tokens: Maximum response length
+        model: Model to use (e.g., "gpt-4o-mini")
         session_id: Session ID for LLM client (optional)
+        system_message: System message for LLM context (optional)
     
     Yields:
         Response chunks as they arrive
@@ -106,26 +117,39 @@ async def call_llm_streaming(
         if not session_id:
             session_id = f"llm_stream_{str(uuid.uuid4())[:8]}"
         
+        # Default system message if not provided
+        if not system_message:
+            system_message = "You are a helpful AI assistant. Respond concisely and accurately."
+        
         # Initialize LLM client with correct API
         llm_client = LlmChat(
             api_key=api_key,
-            session_id=session_id
+            session_id=session_id,
+            system_message=system_message
+        ).with_model("openai", model).with_params(
+            temperature=temperature,
+            max_tokens=max_tokens
         )
         
         # Create user message
-        user_msg = UserMessage(content=prompt)
+        user_msg = UserMessage(text=prompt)
         
-        # NOTE: Check if stream_message_async exists, otherwise use send_message_async
-        if hasattr(llm_client, 'stream_message_async'):
+        # NOTE: Check if stream_message exists, otherwise use send_message
+        if hasattr(llm_client, 'stream_message'):
             # Stream response
-            async for chunk in llm_client.stream_message_async(user_msg):
-                if chunk and hasattr(chunk, 'content') and chunk.content:
-                    yield chunk.content
+            async for chunk in llm_client.stream_message(user_msg):
+                if chunk:
+                    # Handle both string and object responses
+                    if isinstance(chunk, str):
+                        yield chunk
+                    elif hasattr(chunk, 'content') and chunk.content:
+                        yield chunk.content
         else:
             # Fallback to non-streaming
-            response = await llm_client.send_message_async(user_msg)
-            if response and response.content:
-                yield response.content
+            response = await llm_client.send_message(user_msg)
+            if response:
+                # Response is already a string or needs conversion
+                yield response if isinstance(response, str) else str(response)
         
     except Exception as e:
         logger.error(f"❌ LLM streaming call failed: {e}")

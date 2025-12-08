@@ -2357,15 +2357,7 @@ export default function AITutorNeuroSymbolic() {
                               }}
                             />
                             
-                            {/* Loading state for async visual generation */}
-                            {message.visual_task_id && !(message.content?.visual_sketch?.svg || message.visual_sketch?.svg) && (
-                              <div className="mt-4 p-3 bg-violet-50 rounded-lg">
-                                <div className="flex items-center space-x-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-violet-500 border-t-transparent"></div>
-                                  <span className="text-sm text-violet-600">Generating visual...</span>
-                                </div>
-                              </div>
-                            )}
+                            {/* Visual loading indicator removed - was adding noise */}
                             
                             {/* Action Buttons - Copy & Feedback */}
                             <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1">

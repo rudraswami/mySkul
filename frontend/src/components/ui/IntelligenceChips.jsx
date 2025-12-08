@@ -3,7 +3,7 @@
  * 
  * NOT panels. NOT inline dumps. Just small chips that open modals.
  * 
- * Shows: [ Verified ✓ ]  [ Reasoning 🔍 ]  [ Concept Map 🧠 ]  [ Teach Me Back 🎯 ]
+ * Shows: [ Verified ✓ ]  [ Reasoning 🔍 ]  [ Concept Map 🧠 ]
  */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,13 +14,7 @@ import {
   X,
   BookOpen,
   Sparkles,
-  ArrowRight,
-  MessageCircle,
-  Send,
-  Award,
-  Lightbulb,
-  Target,
-  Loader2
+  ArrowRight
 } from 'lucide-react';
 
 // Simple Modal for chip content
@@ -72,111 +66,11 @@ const IntelligenceChips = ({
   sources = [],
   hasConceptMap = false,
   knowledgeGraph = null,
-  learningPath = [],
-  originalAnswer = '',
-  topic = '',
-  onTeachBack = null
+  learningPath = []
 }) => {
   const [activeModal, setActiveModal] = useState(null);
-  const [teachBackInput, setTeachBackInput] = useState('');
-  const [teachBackFeedback, setTeachBackFeedback] = useState(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
 
-  const closeModal = () => {
-    setActiveModal(null);
-    setTeachBackInput('');
-    setTeachBackFeedback(null);
-  };
-
-  // Evaluate student's explanation using existing AI
-  const handleTeachBackSubmit = async () => {
-    if (!teachBackInput.trim() || teachBackInput.length < 20) return;
-    
-    setIsEvaluating(true);
-    
-    try {
-      // Use existing AI endpoint to evaluate
-      const token = localStorage.getItem('dhruv_ai_token');
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/ai/neuro-symbolic`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: `[TEACH ME BACK EVALUATION]
-          
-Student is trying to explain this concept in their own words. 
-Evaluate their explanation and give encouraging, constructive feedback.
-
-ORIGINAL TOPIC/CONCEPT: ${topic || 'the concept explained above'}
-
-STUDENT'S EXPLANATION:
-"${teachBackInput}"
-
-Please respond in this JSON format ONLY (no markdown, just raw JSON):
-{
-  "score": <number 1-5>,
-  "concepts_covered": ["concept1", "concept2"],
-  "concepts_missing": ["missing1"],
-  "clarity": "<good/okay/needs work>",
-  "encouragement": "<friendly 1-line encouragement>",
-  "tip": "<one specific tip to improve>",
-  "emoji": "<one relevant emoji>"
-}`,
-          subject: 'General'
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Try to parse the AI response as JSON
-        const content = data.response?.default_view?.main_content?.content || 
-                       data.response?.progressive_sections?.explanation || '';
-        
-        try {
-          // Extract JSON from response
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const feedback = JSON.parse(jsonMatch[0]);
-            setTeachBackFeedback(feedback);
-          } else {
-            // Fallback feedback
-            setTeachBackFeedback({
-              score: 3,
-              concepts_covered: ['main idea'],
-              concepts_missing: [],
-              clarity: 'good',
-              encouragement: "Great effort! You're on the right track!",
-              tip: "Try adding a real-world example next time.",
-              emoji: "👍"
-            });
-          }
-        } catch {
-          // Fallback if JSON parsing fails
-          setTeachBackFeedback({
-            score: 3,
-            concepts_covered: ['explanation attempt'],
-            concepts_missing: [],
-            clarity: 'okay',
-            encouragement: "Nice try! Keep practicing!",
-            tip: "Try to include the key formula or definition.",
-            emoji: "💪"
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Teach back evaluation failed:', error);
-      setTeachBackFeedback({
-        score: 3,
-        encouragement: "Great effort explaining! Keep it up!",
-        tip: "Practice makes perfect.",
-        emoji: "🌟"
-      });
-    } finally {
-      setIsEvaluating(false);
-    }
-  };
+  const closeModal = () => setActiveModal(null);
 
   return (
     <>
@@ -218,17 +112,6 @@ Please respond in this JSON format ONLY (no markdown, just raw JSON):
             Concept Map
           </motion.button>
         )}
-
-        {/* 🎯 Teach Me Back Chip - Active Learning */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveModal('teachBack')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
-        >
-          <Target className="w-4 h-4" />
-          Teach Me Back
-        </motion.button>
       </div>
 
       {/* MODALS - Only shown when chip is clicked */}

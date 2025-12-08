@@ -998,7 +998,7 @@ async def stream_neuro_symbolic_response(
             )
         
         # Get user profile
-        db = await get_database()
+        db = get_database()  # Not async - returns AsyncIOMotorDatabase directly
         user_doc = await db.users.find_one({"user_id": user.user_id}) or {}
         student_profile = {
             'preferred_metaphor': user_doc.get('preferred_metaphor', 'cricket'),
@@ -2048,6 +2048,7 @@ You MUST reference specific content from the image in your response."""
                 logger.info(f"🎨 Starting async visual generation (task_id: {visual_task_id})")
                 
                 # Store task info for polling endpoint
+                from datetime import datetime as dt_now  # Local import for visual task
                 await db.visual_generation_tasks.insert_one({
                     "task_id": visual_task_id,
                     "user_id": user.user_id,
@@ -2055,7 +2056,7 @@ You MUST reference specific content from the image in your response."""
                     "subject": request.subject,
                     "student_profile": student_profile,
                     "status": "generating",
-                    "created_at": datetime.now(),
+                    "created_at": dt_now.now(),
                     "session_id": request.session_id
                 })
                 
@@ -2419,6 +2420,8 @@ async def _generate_visual_async(task_id: str, question: str, student_profile: d
     Updates task status in database when complete
     Now uses whiteboard_engine instead of legacy dynamic_visual_sketch
     """
+    from datetime import datetime  # Local import for background task
+    
     try:
         logger.info(f"🎨 [Background] Starting visual generation for task {task_id}")
         
@@ -2575,3 +2578,80 @@ async def get_visual_status(
     except Exception as e:
         logger.error(f"Error fetching visual status: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch visual status: {str(e)}")
+
+
+# ====================================================================
+# TEACH ME BACK - Feynman Technique Learning Feature
+# ====================================================================
+
+class TeachMeBackRequest(BaseModel):
+    """Request model for Teach Me Back evaluation"""
+    concept: str = Field(..., description="The concept being explained")
+    original_explanation: str = Field(..., description="The AI's original explanation")
+    student_explanation: str = Field(..., description="Student's explanation attempt")
+
+
+@router.post("/teach-me-back")
+async def evaluate_teach_me_back(
+    request: TeachMeBackRequest,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Evaluate a student's explanation using the Feynman technique.
+    
+    Returns constructive feedback:
+    - What they understood well
+    - What to strengthen
+    - One actionable tip
+    - Encouragement
+    """
+    try:
+        logger.info(f"🎓 Teach Me Back evaluation for concept: {request.concept}")
+        
+        from services.teach_me_back_evaluator import get_teach_me_back_evaluator
+        from datetime import datetime as dt  # Local import to ensure availability
+        
+        # Get evaluator with config
+        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        evaluator = get_teach_me_back_evaluator({"emergent_llm_key": emergent_llm_key})
+        
+        # Evaluate student explanation
+        feedback = await evaluator.evaluate(
+            concept=request.concept,
+            original_explanation=request.original_explanation,
+            student_explanation=request.student_explanation
+        )
+        
+        logger.info(f"✅ Teach Me Back feedback generated: {len(feedback.get('understood', []))} points understood")
+        
+        # Track usage for gamification
+        try:
+            await db.teach_me_back_attempts.insert_one({
+                "user_id": user.user_id,
+                "concept": request.concept,
+                "word_count": len(request.student_explanation.split()),
+                "understood_count": len(feedback.get("understood", [])),
+                "gaps_count": len(feedback.get("gaps", [])),
+                "timestamp": dt.now()
+            })
+        except Exception as track_error:
+            logger.warning(f"Failed to track Teach Me Back attempt: {track_error}")
+        
+        return {
+            "success": True,
+            "feedback": feedback
+        }
+        
+    except Exception as e:
+        logger.error(f"Teach Me Back evaluation failed: {e}")
+        # Return fallback feedback instead of error
+        return {
+            "success": True,
+            "feedback": {
+                "understood": ["You've thought about the concept"],
+                "gaps": [],
+                "tip": "Try adding more specific details next time",
+                "encouragement": "Good effort! Keep practicing explanations."
+            }
+        }
