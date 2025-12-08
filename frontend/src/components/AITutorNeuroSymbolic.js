@@ -2274,6 +2274,21 @@ export default function AITutorNeuroSymbolic() {
                     )}
 
                     {message.type === 'ai' && (() => {
+                      // FIX: Skip rendering placeholder messages during streaming
+                      // The thinking indicator is shown separately via the `loading` state
+                      // This prevents showing empty/placeholder AI cards before real content arrives
+                      if (message.isStreaming) {
+                        // Check if there's actual content to show (not just empty placeholders)
+                        const hasRealContent = 
+                          message.content?.default_view?.main_content?.content?.trim?.()?.length > 0 ||
+                          message.content?.default_view?.greeting?.trim?.()?.length > 0;
+                        
+                        if (!hasRealContent) {
+                          // Don't render empty placeholder - thinking indicator handles this
+                          return null;
+                        }
+                      }
+                      
                       return (
                       <div className="flex justify-start group">
                         <div className="max-w-3xl w-full relative">

@@ -254,15 +254,17 @@ def create_tool_registry(include_default: bool = True, include_action_tools: boo
         # Import and register ACTION tools (for true agentic behavior)
         try:
             from agents.core.tools.reminder_tool import ReminderTool
+            from agents.core.tools.recurring_reminder_tool import RecurringReminderTool
             from agents.core.tools.notification_tool import NotificationTool, StudySummaryTool
             
             registry.register_many([
                 ReminderTool(),
+                RecurringReminderTool(),
                 NotificationTool(),
                 StudySummaryTool()
             ])
             
-            logger.info("✅ Action tools registered (reminder, notification, summary)")
+            logger.info("✅ Action tools registered (reminder, recurring_reminder, notification, summary)")
             
         except ImportError as e:
             logger.warning(f"Could not import action tools: {e}")

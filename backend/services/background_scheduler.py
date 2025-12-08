@@ -182,35 +182,164 @@ class BackgroundScheduler:
         - Morning greetings with study suggestions
         - Comeback messages for inactive users
         - Time-based study nudges
+        - Streak protection (Level 2)
+        - Intelligent nudges (Level 4)
         """
         try:
             now = datetime.utcnow()
             current_hour = now.hour
+            # Convert to IST for timing decisions
+            ist_hour = (current_hour + 5) % 24  # Approximate IST
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             
             from services.notification_service import NotificationService
             notification_service = NotificationService(self.db)
             
             # ===========================================
-            # 1. MORNING GREETINGS (6 AM - 8 AM window)
+            # 🧠 INTELLIGENT PROACTIVE MENTOR (Level 2 & 4)
             # ===========================================
-            if 6 <= current_hour < 8:
+            await self._process_intelligent_nudges(notification_service)
+            
+            # ===========================================
+            # 1. MORNING GREETINGS (6 AM - 8 AM IST)
+            # ===========================================
+            if 6 <= ist_hour < 8:
                 await self._send_morning_greetings(notification_service, today_start)
             
             # ===========================================
-            # 2. COMEBACK MESSAGES (7 PM window for inactive users)
+            # 2. COMEBACK MESSAGES (6 PM - 8 PM IST)
             # ===========================================
-            if 18 <= current_hour < 20:
+            if 18 <= ist_hour < 20:
                 await self._send_comeback_messages(notification_service, today_start)
             
             # ===========================================
-            # 3. EVENING REVIEW NUDGE (8 PM - 9 PM)
+            # 3. EVENING REVIEW NUDGE (8 PM - 9 PM IST)
             # ===========================================
-            if 20 <= current_hour < 21:
+            if 20 <= ist_hour < 21:
                 await self._send_review_nudges(notification_service, today_start)
+            
+            # ===========================================
+            # 4. DAILY SUMMARY (9 PM IST)
+            # ===========================================
+            if ist_hour == 21:
+                await self._send_daily_summaries(notification_service)
                 
         except Exception as e:
             logger.error(f"Proactive trigger error: {e}")
+    
+    async def _process_intelligent_nudges(self, notification_service):
+        """
+        🧠 Level 2 & 4: Process intelligent proactive nudges
+        
+        Uses IntelligentProactiveMentor to generate contextual nudges:
+        - Streak protection
+        - Weak topic focus
+        - Study fatigue detection
+        - Motivation boosts
+        """
+        try:
+            from services.intelligent_proactive_mentor import get_proactive_mentor
+            
+            mentor = await get_proactive_mentor(self.db)
+            
+            # Get active users (limit to prevent overload)
+            active_users = await self.db.users.find({
+                'is_active': True
+            }).limit(100).to_list(length=100)
+            
+            nudges_sent = 0
+            
+            for user in active_users:
+                user_id = user.get('user_id') or str(user.get('_id'))
+                
+                try:
+                    # Get all applicable nudges for this user
+                    nudges = await mentor.get_all_nudges(user_id)
+                    
+                    # Only send the highest priority nudge (don't spam)
+                    if nudges:
+                        top_nudge = nudges[0]
+                        
+                        # Check if we've sent this type of nudge recently
+                        recent_nudge = await self.db.user_notifications.find_one({
+                            'user_id': user_id,
+                            'type': top_nudge.nudge_type.value,
+                            'created_at': {'$gte': datetime.utcnow() - timedelta(hours=6)}
+                        })
+                        
+                        if not recent_nudge:
+                            # Send the nudge as notification
+                            await notification_service.send_notification(
+                                user_id=user_id,
+                                title=top_nudge.title,
+                                message=top_nudge.message,
+                                notification_type=top_nudge.nudge_type.value,
+                                priority=top_nudge.priority,
+                                data={
+                                    'actions': top_nudge.actions,
+                                    **top_nudge.data
+                                }
+                            )
+                            
+                            nudges_sent += 1
+                            logger.debug(f"🧠 Nudge sent to {user_id}: {top_nudge.nudge_type.value}")
+                            
+                except Exception as e:
+                    logger.error(f"Error processing nudges for user {user_id}: {e}")
+                    continue
+            
+            if nudges_sent > 0:
+                logger.info(f"🧠 Intelligent nudges sent: {nudges_sent}")
+                
+        except Exception as e:
+            logger.error(f"Intelligent nudges processing error: {e}")
+    
+    async def _send_daily_summaries(self, notification_service):
+        """Send end-of-day study summaries"""
+        try:
+            from services.intelligent_proactive_mentor import get_proactive_mentor
+            
+            mentor = await get_proactive_mentor(self.db)
+            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0)
+            
+            # Find users who studied today
+            active_today = await self.db.chat_sessions.aggregate([
+                {'$match': {'updated_at': {'$gte': today_start}}},
+                {'$group': {'_id': '$user_id'}}
+            ]).to_list(length=100)
+            
+            for user_doc in active_today:
+                user_id = user_doc['_id']
+                
+                try:
+                    # Check if summary already sent
+                    existing = await self.db.user_notifications.find_one({
+                        'user_id': user_id,
+                        'type': 'daily_summary',
+                        'created_at': {'$gte': today_start}
+                    })
+                    
+                    if existing:
+                        continue
+                    
+                    # Generate summary
+                    summary_nudge = await mentor.generate_daily_summary(user_id)
+                    
+                    if summary_nudge:
+                        await notification_service.send_notification(
+                            user_id=user_id,
+                            title=summary_nudge.title,
+                            message=summary_nudge.message,
+                            notification_type='daily_summary',
+                            priority='low',
+                            data=summary_nudge.data
+                        )
+                        
+                except Exception as e:
+                    logger.error(f"Daily summary error for {user_id}: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Daily summaries error: {e}")
     
     async def _send_morning_greetings(self, notification_service, today_start):
         """Send personalized morning greetings"""

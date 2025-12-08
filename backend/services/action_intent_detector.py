@@ -27,11 +27,17 @@ logger = logging.getLogger(__name__)
 class IntentType(Enum):
     """Types of user intents"""
     INFORMATION = "information"      # Just needs an answer
-    REMINDER = "reminder"            # Wants to be reminded
+    REMINDER = "reminder"            # Wants to be reminded (one-time)
+    RECURRING_REMINDER = "recurring_reminder"  # Daily/weekly reminders
     NOTIFICATION = "notification"    # Wants a notification sent
     SUMMARY = "summary"              # Wants a study summary
     GOAL = "goal"                    # Wants to set a goal
     SCHEDULE = "schedule"            # Wants to schedule study time
+    STUDY_PLAN = "study_plan"        # Wants help planning for exam
+    PROGRESS_CHECK = "progress_check"  # Wants to know how they're doing
+    BREAK_REQUEST = "break_request"  # Needs a break
+    MOTIVATION = "motivation"        # Feeling demotivated
+    WEAK_TOPICS = "weak_topics"      # Wants to know weak areas
     FEEDBACK = "feedback"            # Giving feedback
     GREETING = "greeting"            # Just saying hi
     ACTION = "action"                # Generic action request
@@ -66,6 +72,18 @@ class ActionIntentDetector:
     
     # Patterns for ACTION intents (require tool usage)
     ACTION_PATTERNS = {
+        # RECURRING REMINDERS - Check this BEFORE regular reminders
+        IntentType.RECURRING_REMINDER: [
+            r'remind\s+(?:me\s+)?(?:every\s*)?(?:daily|everyday|each\s+day)',
+            r'remind\s+(?:me\s+)?(?:every\s+)?(?:week|weekly)',
+            r'remind\s+(?:me\s+)?(?:every\s+)?(?:morning|evening|night)',
+            r'remind\s+(?:me\s+)?(?:on\s+)?(?:weekdays?|weekends?)',
+            r'daily\s+remind',
+            r'(?:set|create)\s+(?:a\s+)?(?:daily|weekly|recurring)\s+remind',
+            r'remind\s+(?:me\s+)?(?:every|each)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)',
+            r'रोज़\s+याद',  # Hindi: daily remind
+            r'हर\s+दिन',   # Hindi: every day
+        ],
         IntentType.REMINDER: [
             r'remind\s+(me|us)',
             r'set\s+(?:a\s+)?reminder',
@@ -91,18 +109,54 @@ class ActionIntentDetector:
             r'how\s+(?:much|many)\s+have\s+i\s+(?:done|studied)',
             r'email\s+me\s+(?:a\s+)?summary',
         ],
+        IntentType.STUDY_PLAN: [
+            r'help\s+(?:me\s+)?(?:prepare|plan)\s+(?:for\s+)?(?:jee|neet|boards?|exam)',
+            r'(?:create|make)\s+(?:a\s+)?(?:study\s+)?plan',
+            r'(?:i\s+have|my)\s+(?:jee|neet|exam)\s+in\s+\d+\s+(?:days?|months?|weeks?)',
+            r'plan\s+(?:for|my)\s+(?:jee|neet|exam)',
+            r'how\s+(?:should|do)\s+i\s+(?:prepare|study)\s+for',
+            r'preparation\s+strategy',
+        ],
+        IntentType.PROGRESS_CHECK: [
+            r'how\s+am\s+i\s+doing',
+            r'(?:show|check)\s+(?:my\s+)?progress',
+            r'am\s+i\s+(?:improving|getting\s+better)',
+            r'(?:my|show)\s+(?:weak|strong)\s+(?:areas?|topics?|points?)',
+            r'where\s+(?:am\s+i|do\s+i)\s+(?:weak|struggling)',
+            r'analytics|statistics|stats',
+        ],
+        IntentType.WEAK_TOPICS: [
+            r'(?:what|which)\s+(?:are\s+)?(?:my\s+)?weak\s+(?:topics?|areas?|points?)',
+            r'where\s+(?:am\s+i|do\s+i)\s+(?:need|have)\s+(?:to\s+)?(?:improve|work)',
+            r'(?:show|tell)\s+(?:me\s+)?(?:my\s+)?weak',
+            r'(?:i\'?m?|am)\s+(?:weak|struggling)\s+(?:in|at|with)',
+        ],
+        IntentType.BREAK_REQUEST: [
+            r'(?:i\s+)?need\s+(?:a\s+)?break',
+            r'(?:i\'?m?|feeling)\s+(?:tired|exhausted|burnt?\s*out)',
+            r'take\s+(?:a\s+)?(?:break|rest)',
+            r'pause\s+(?:for|study)',
+            r'थक\s+गया',  # Hindi: tired
+        ],
+        IntentType.MOTIVATION: [
+            r'(?:i\'?m?|feeling)\s+(?:demotivated|unmotivated|low|sad|down)',
+            r'(?:i\s+)?(?:can\'?t|cannot)\s+(?:focus|concentrate|study)',
+            r'(?:i\s+)?(?:don\'?t|do\s+not)\s+(?:feel|want)\s+(?:like\s+)?study',
+            r'motivate\s+me',
+            r'(?:i\s+)?(?:give|need)\s+(?:up|motivation)',
+            r'हिम्मत\s+नहीं',  # Hindi: no courage
+            r'मन\s+नहीं',     # Hindi: don't feel like
+        ],
         IntentType.GOAL: [
             r'set\s+(?:a\s+)?(?:study\s+)?goal',
             r'i\s+want\s+to\s+(?:study|learn|complete)',
             r'my\s+goal\s+is',
             r'target\s+(?:is|set)',
-            r'plan\s+my\s+study',
         ],
         IntentType.SCHEDULE: [
             r'schedule\s+(?:my\s+)?(?:study|learning)',
             r'book\s+(?:a\s+)?(?:study\s+)?(?:time|session)',
             r'when\s+should\s+i\s+study',
-            r'create\s+(?:a\s+)?(?:study\s+)?(?:plan|schedule)',
         ],
         IntentType.FEEDBACK: [
             r'(?:this|that)\s+(?:was|is)\s+(?:helpful|good|bad|wrong)',
@@ -210,7 +264,102 @@ class ActionIntentDetector:
         params = {}
         text_lower = text.lower()
         
-        if intent_type == IntentType.REMINDER:
+        if intent_type == IntentType.RECURRING_REMINDER:
+            # Extract frequency
+            if 'daily' in text_lower or 'everyday' in text_lower or 'each day' in text_lower:
+                params['frequency'] = 'daily'
+            elif 'weekday' in text_lower:
+                params['frequency'] = 'weekdays'
+            elif 'weekend' in text_lower:
+                params['frequency'] = 'weekends'
+            elif 'weekly' in text_lower or 'every week' in text_lower:
+                params['frequency'] = 'weekly'
+            else:
+                params['frequency'] = 'daily'
+            
+            # Extract specific days
+            days = []
+            day_names = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            for day in day_names:
+                if day in text_lower:
+                    days.append(day)
+            if days:
+                params['days'] = ','.join(days)
+                params['frequency'] = 'weekly'
+            
+            # Extract time
+            time_str = self._extract_time(text)
+            if time_str:
+                params['time'] = time_str
+            elif 'morning' in text_lower:
+                params['time'] = 'morning'
+            elif 'evening' in text_lower:
+                params['time'] = 'evening'
+            elif 'night' in text_lower:
+                params['time'] = 'night'
+            else:
+                params['time'] = '6pm'  # Default
+            
+            # Extract message/subject
+            message = self._extract_reminder_message(text)
+            params['message'] = message
+            
+            # Extract subject if mentioned
+            subjects = ['physics', 'chemistry', 'maths', 'math', 'biology', 'english']
+            for subj in subjects:
+                if subj in text_lower:
+                    params['subject'] = subj.capitalize()
+                    break
+            
+            return params
+        
+        elif intent_type == IntentType.STUDY_PLAN:
+            # Extract exam type
+            if 'jee' in text_lower:
+                params['exam'] = 'JEE'
+            elif 'neet' in text_lower:
+                params['exam'] = 'NEET'
+            elif 'board' in text_lower:
+                params['exam'] = 'Boards'
+            else:
+                params['exam'] = 'General'
+            
+            # Extract timeframe
+            match = re.search(r'in\s+(\d+)\s*(days?|months?|weeks?)', text_lower)
+            if match:
+                params['duration'] = int(match.group(1))
+                params['duration_unit'] = match.group(2).rstrip('s')
+            
+            return params
+        
+        elif intent_type == IntentType.PROGRESS_CHECK:
+            # Extract subject if mentioned
+            subjects = ['physics', 'chemistry', 'maths', 'math', 'biology', 'english']
+            for subj in subjects:
+                if subj in text_lower:
+                    params['subject'] = subj.capitalize()
+                    break
+            return params
+        
+        elif intent_type == IntentType.WEAK_TOPICS:
+            # Extract subject if mentioned
+            subjects = ['physics', 'chemistry', 'maths', 'math', 'biology', 'english']
+            for subj in subjects:
+                if subj in text_lower:
+                    params['subject'] = subj.capitalize()
+                    break
+            return params
+        
+        elif intent_type == IntentType.BREAK_REQUEST:
+            # Extract break duration if mentioned
+            match = re.search(r'(\d+)\s*(?:min|minute|hour|hr)', text_lower)
+            if match:
+                params['duration'] = int(match.group(1))
+            else:
+                params['duration'] = 10  # Default 10 minutes
+            return params
+        
+        elif intent_type == IntentType.REMINDER:
             # Extract time first
             time_str = self._extract_time(text)
             if time_str:
@@ -337,14 +486,52 @@ class ActionIntentDetector:
         
         return None
     
+    def _extract_reminder_message(self, text: str) -> str:
+        """Extract what to remind about from text"""
+        text_lower = text.lower()
+        message = None
+        
+        # Pattern 1: "for <message>" - most common for study reminders
+        for_match = re.search(r'\bfor\s+(.+?)(?:\bat\b|\?|$)', text, re.IGNORECASE)
+        if for_match:
+            message = for_match.group(1).strip().rstrip('?')
+        
+        # Pattern 2: "to <message>" - for action reminders
+        if not message:
+            to_match = re.search(r'\bto\s+(?:study\s+)?(.+?)(?:\bat\b|\?|$)', text, re.IGNORECASE)
+            if to_match and 'remind' not in to_match.group(1).lower():
+                message = to_match.group(1).strip().rstrip('?')
+        
+        # Pattern 3: "about <message>"
+        if not message:
+            about_match = re.search(r'\babout\s+(.+?)(?:\bat\b|\?|$)', text, re.IGNORECASE)
+            if about_match:
+                message = about_match.group(1).strip().rstrip('?')
+        
+        # Check for subject as message
+        if not message:
+            subjects = ['physics', 'chemistry', 'maths', 'math', 'biology', 'english']
+            for subj in subjects:
+                if subj in text_lower:
+                    message = f"{subj.capitalize()} study"
+                    break
+        
+        return message or "Study reminder"
+    
     def get_tool_for_intent(self, intent: DetectedIntent) -> Optional[str]:
         """Get the tool name to use for an intent"""
         intent_to_tool = {
             IntentType.REMINDER: 'schedule_reminder',
+            IntentType.RECURRING_REMINDER: 'schedule_recurring_reminder',
             IntentType.NOTIFICATION: 'send_notification',
             IntentType.SUMMARY: 'send_study_summary',
             IntentType.GOAL: 'set_study_goal',
             IntentType.SCHEDULE: 'create_study_schedule',
+            IntentType.STUDY_PLAN: 'create_study_plan',
+            IntentType.PROGRESS_CHECK: 'check_progress',
+            IntentType.WEAK_TOPICS: 'analyze_weak_topics',
+            IntentType.BREAK_REQUEST: 'start_break',
+            IntentType.MOTIVATION: 'send_motivation',
         }
         
         return intent_to_tool.get(intent.intent_type)

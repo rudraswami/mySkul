@@ -1303,7 +1303,8 @@ You MUST reference specific content from the image in your response."""
             # 🌟 DYNAMIC PERSONALIZED GREETING - Globally Impressive
             # ============================================================
             import random
-            from datetime import datetime
+            # NOTE: datetime is already imported at module level (line 12)
+            # Do NOT re-import here - it causes UnboundLocalError in agentic routing
             
             # Get comprehensive user context
             user_doc = await db.users.find_one({"user_id": user.user_id})

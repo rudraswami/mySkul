@@ -13,18 +13,27 @@ TRUE AGENTIC BEHAVIOR:
 - User receives push/in-app notification
 
 NOT just saying "I'll remind you" and doing nothing!
+
+TIMEZONE HANDLING:
+- All times stored in UTC for consistency
+- User-facing times displayed in IST (Indian Standard Time) for Indian students
+- Supports natural language like "5pm" which is interpreted as local time
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 import re
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
+import pytz
 
 from .base_tool import BaseTool, ToolResult
 
 logger = logging.getLogger(__name__)
+
+# Indian Standard Time (UTC+5:30) - default for Druv AI students
+IST = pytz.timezone('Asia/Kolkata')
 
 
 class ReminderTool(BaseTool):
@@ -138,10 +147,15 @@ class ReminderTool(BaseTool):
                 }
             )
             
-            # Format friendly confirmation
+            # Format friendly confirmation (in IST for Indian students)
             time_str = self._format_time(reminder_time)
             
-            logger.info(f"✅ Reminder scheduled: {reminder_id} for user {user_id} at {reminder_time}")
+            # Log both UTC and IST for debugging
+            ist_offset = timedelta(hours=5, minutes=30)
+            reminder_time_ist = reminder_time + ist_offset
+            logger.info(f"✅ Reminder scheduled: {reminder_id} for user {user_id}")
+            logger.info(f"   📅 UTC: {reminder_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"   🇮🇳 IST: {reminder_time_ist.strftime('%Y-%m-%d %H:%M:%S')}")
             
             return ToolResult(
                 success=True,
@@ -335,23 +349,34 @@ class ReminderTool(BaseTool):
             return None
     
     def _format_time(self, dt: datetime) -> str:
-        """Format datetime for friendly display"""
-        now = datetime.utcnow()
+        """
+        Format datetime for friendly display in IST (Indian Standard Time).
         
-        # Today
-        if dt.date() == now.date():
-            return f"today at {dt.strftime('%I:%M %p').lstrip('0')}"
+        The datetime is stored in UTC but we display in IST for Indian students.
+        IST = UTC + 5:30
+        """
+        now_utc = datetime.utcnow()
         
-        # Tomorrow
-        if dt.date() == (now + timedelta(days=1)).date():
-            return f"tomorrow at {dt.strftime('%I:%M %p').lstrip('0')}"
+        # Convert UTC to IST for display
+        # IST is UTC + 5 hours 30 minutes
+        ist_offset = timedelta(hours=5, minutes=30)
+        dt_ist = dt + ist_offset
+        now_ist = now_utc + ist_offset
+        
+        # Today (in IST)
+        if dt_ist.date() == now_ist.date():
+            return f"today at {dt_ist.strftime('%I:%M %p').lstrip('0')} IST"
+        
+        # Tomorrow (in IST)
+        if dt_ist.date() == (now_ist + timedelta(days=1)).date():
+            return f"tomorrow at {dt_ist.strftime('%I:%M %p').lstrip('0')} IST"
         
         # This week
-        if (dt - now).days < 7:
-            return f"{dt.strftime('%A')} at {dt.strftime('%I:%M %p').lstrip('0')}"
+        if (dt_ist - now_ist).days < 7:
+            return f"{dt_ist.strftime('%A')} at {dt_ist.strftime('%I:%M %p').lstrip('0')} IST"
         
         # Further out
-        return dt.strftime('%B %d at %I:%M %p').lstrip('0')
+        return f"{dt_ist.strftime('%B %d')} at {dt_ist.strftime('%I:%M %p').lstrip('0')} IST"
 
 
 

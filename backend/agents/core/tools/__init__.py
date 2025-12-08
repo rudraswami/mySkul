@@ -12,7 +12,8 @@ INFORMATION TOOLS (for answering questions):
 - FormulaLookup: Find relevant formulas
 
 ACTION TOOLS (for taking real actions - TRUE AGENTIC BEHAVIOR):
-- ReminderTool: Schedule reminders that actually trigger notifications
+- ReminderTool: Schedule one-time reminders
+- RecurringReminderTool: Schedule daily/weekly recurring reminders
 - NotificationTool: Send real notifications to users
 - StudySummaryTool: Generate and send study summaries
 """
@@ -25,6 +26,7 @@ from .formula_lookup import FormulaLookupTool
 
 # Action tools for true agentic behavior
 from .reminder_tool import ReminderTool
+from .recurring_reminder_tool import RecurringReminderTool
 from .notification_tool import NotificationTool, StudySummaryTool
 from .base_tool import BaseTool, ToolResult
 
@@ -40,6 +42,7 @@ __all__ = [
     'FormulaLookupTool',
     # Action tools
     'ReminderTool',
+    'RecurringReminderTool',
     'NotificationTool',
     'StudySummaryTool',
 ]

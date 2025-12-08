@@ -381,11 +381,21 @@ const SmartResponse = ({
 /**
  * Greeting - Simple, friendly, minimal, globally impressive
  * No subject lists, no robotic tone - just warm & welcoming
+ * 
+ * FIX: No hardcoded fallback - if no real content exists, return null
+ * to prevent showing placeholder messages during streaming
  */
 const GreetingResponse = ({ content }) => {
   // Get the greeting text - prioritize greeting field
-  const greetingText = content.greeting || content.mainContent || "Hey! Great to see you. What would you like to explore? 👋";
+  // FIX: NO hardcoded fallback - don't render anything if no real content
+  const greetingText = content.greeting || content.mainContent;
   const tagline = content.mainContent && content.greeting ? content.mainContent : null;
+  
+  // FIX: If there's no actual content, don't render anything
+  // This prevents showing placeholder text during streaming
+  if (!greetingText || greetingText.trim().length === 0) {
+    return null;
+  }
   
   return (
     <motion.div
@@ -416,17 +426,25 @@ const GreetingResponse = ({ content }) => {
 
 /**
  * Acknowledgment - Very short response
+ * FIX: No hardcoded fallback - if no content, return null
  */
-const AcknowledgmentResponse = ({ content }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="text-gray-800 dark:text-gray-200 leading-relaxed"
-    style={{ fontSize: '16px', lineHeight: '1.75' }}
-  >
-    <AdaptiveMarkdown content={content.mainContent || "Got it! Let me know if you have any other questions. 😊"} />
-  </motion.div>
-);
+const AcknowledgmentResponse = ({ content }) => {
+  // FIX: Don't show hardcoded fallback during streaming
+  if (!content.mainContent || content.mainContent.trim().length === 0) {
+    return null;
+  }
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="text-gray-800 dark:text-gray-200 leading-relaxed"
+      style={{ fontSize: '16px', lineHeight: '1.75' }}
+    >
+      <AdaptiveMarkdown content={content.mainContent} />
+    </motion.div>
+  );
+};
 
 /**
  * Calculation - Focus on step-by-step solution
