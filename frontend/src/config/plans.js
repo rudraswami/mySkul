@@ -7,12 +7,11 @@
  * Last synced with backend: January 17, 2025
  */
 
+// V1 Plan Tiers - Must match backend planConfig_ai_tutor.json
 export const PLAN_TIERS = {
   FREE: 'FREE',
-  STARTER: 'STARTER',
-  SCHOLAR: 'SCHOLAR',
-  ACHIEVER: 'ACHIEVER',
-  LEGEND: 'LEGEND'
+  STUDENT: 'STUDENT',
+  PRO: 'PRO'
 };
 
 // V1 SIMPLIFIED PRICING - 3 Tiers Only

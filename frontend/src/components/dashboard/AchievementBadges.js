@@ -1,279 +1,297 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Star, Flame, Zap, Target, Award, Crown, Heart, Book, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Trophy, Star, Flame, Zap, Target, Award, Crown, Heart, Book, CheckCircle, Lock } from 'lucide-react';
 
 /**
- * Achievement Badges System
- * Displays earned and locked badges with XP progress
+ * Achievement Badges - PROFESSIONAL REDESIGN
+ * ==========================================
+ * 
+ * Clean design with:
+ * - Larger, more readable badges
+ * - Clear progress indicators
+ * - No truncated text
+ * - Distinct locked/unlocked states
  */
 const AchievementBadges = ({ userXP = 0, userLevel = 1 }) => {
-  const [badges, setBadges] = useState([]);
-  const [showDetails, setShowDetails] = useState(null);
-
-  useEffect(() => {
-    initializeBadges();
-  }, [userXP]);
+  const [selectedBadge, setSelectedBadge] = useState(null);
 
   const badgeDefinitions = [
     {
       id: 'first-session',
       name: 'First Steps',
-      description: 'Complete your first AI Tutor session',
+      description: 'Complete your first AI session',
       icon: Star,
-      color: 'from-blue-400 to-blue-600',
+      gradient: 'from-blue-500 to-cyan-500',
       xpRequired: 0,
-      unlocked: true
     },
     {
       id: 'streak-3',
       name: '3-Day Streak',
       description: 'Study for 3 consecutive days',
       icon: Flame,
-      color: 'from-orange-400 to-red-600',
+      gradient: 'from-orange-500 to-red-500',
       xpRequired: 50,
-      unlocked: userXP >= 50
     },
     {
       id: 'streak-7',
       name: 'Week Warrior',
-      description: 'Maintain a 7-day study streak',
+      description: 'Maintain a 7-day streak',
       icon: Flame,
-      color: 'from-red-500 to-pink-600',
+      gradient: 'from-red-500 to-pink-500',
       xpRequired: 150,
-      unlocked: userXP >= 150
     },
     {
       id: 'fast-learner',
       name: 'Fast Learner',
-      description: 'Complete 10 sessions in one day',
+      description: 'Complete 10 sessions in a day',
       icon: Zap,
-      color: 'from-yellow-400 to-orange-500',
+      gradient: 'from-amber-500 to-orange-500',
       xpRequired: 100,
-      unlocked: userXP >= 100
     },
     {
-      id: 'consistency-champ',
-      name: 'Consistency Champion',
+      id: 'consistency',
+      name: 'Consistent',
       description: 'Study every day for a month',
       icon: Target,
-      color: 'from-green-400 to-emerald-600',
+      gradient: 'from-emerald-500 to-teal-500',
       xpRequired: 500,
-      unlocked: userXP >= 500
     },
     {
-      id: 'ai-scholar',
+      id: 'scholar',
       name: 'AI Scholar',
-      description: 'Ask 100 questions to AI Tutor',
+      description: 'Ask 100 questions',
       icon: Book,
-      color: 'from-purple-400 to-indigo-600',
+      gradient: 'from-violet-500 to-purple-500',
       xpRequired: 200,
-      unlocked: userXP >= 200
     },
     {
       id: 'mock-master',
-      name: 'Mock Test Master',
+      name: 'Mock Master',
       description: 'Complete 10 mock tests',
       icon: CheckCircle,
-      color: 'from-teal-400 to-cyan-600',
+      gradient: 'from-teal-500 to-cyan-500',
       xpRequired: 300,
-      unlocked: userXP >= 300
     },
     {
       id: 'perfectionist',
       name: 'Perfectionist',
-      description: 'Score 100% on a mock test',
+      description: 'Score 100% on a test',
       icon: Crown,
-      color: 'from-yellow-500 to-amber-600',
+      gradient: 'from-yellow-500 to-amber-500',
       xpRequired: 250,
-      unlocked: userXP >= 250
     },
     {
-      id: 'dedication',
-      name: 'Dedicated Learner',
-      description: 'Study for 100 total hours',
+      id: 'dedicated',
+      name: 'Dedicated',
+      description: 'Study for 100 hours total',
       icon: Heart,
-      color: 'from-pink-400 to-rose-600',
+      gradient: 'from-pink-500 to-rose-500',
       xpRequired: 1000,
-      unlocked: userXP >= 1000
     },
     {
       id: 'legend',
       name: 'Legend',
       description: 'Reach Level 10',
       icon: Award,
-      color: 'from-indigo-500 to-purple-700',
+      gradient: 'from-indigo-500 to-purple-600',
       xpRequired: 2000,
-      unlocked: userXP >= 2000
     }
   ];
 
-  const initializeBadges = () => {
-    setBadges(badgeDefinitions);
-  };
+  const badges = badgeDefinitions.map(b => ({
+    ...b,
+    unlocked: userXP >= b.xpRequired,
+    progress: b.xpRequired > 0 ? Math.min(100, (userXP / b.xpRequired) * 100) : 100
+  }));
 
   const unlockedBadges = badges.filter(b => b.unlocked);
   const lockedBadges = badges.filter(b => !b.unlocked);
-
-  const xpToNextLevel = (userLevel + 1) * 100;
-  const xpProgress = (userXP % 100) / 100 * 100;
+  
+  const xpForNextLevel = (userLevel + 1) * 100;
+  const xpInCurrentLevel = userXP % 100;
+  const levelProgress = (xpInCurrentLevel / 100) * 100;
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-premium glass-card">
-      {/* Header with XP Progress */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl animate-pulse-glow">
-              <Trophy className="h-5 w-5 text-white" />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      {/* Header */}
+      <div className="p-5 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+              <Trophy className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Achievements</h3>
-              <p className="text-sm text-gray-500">{unlockedBadges.length}/{badges.length} unlocked</p>
+              <h3 className="font-bold text-slate-900 dark:text-white">Achievements</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{unlockedBadges.length}/{badges.length} unlocked</p>
             </div>
           </div>
           
           <div className="text-right">
-            <div className="text-2xl font-bold gradient-text">Level {userLevel}</div>
-            <div className="text-xs text-gray-500">{userXP} XP</div>
+            <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Level {userLevel}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{userXP} XP</div>
           </div>
         </div>
 
         {/* XP Progress Bar */}
-        <div className="relative">
-          <div className="xp-bar">
-            <div 
-              className="xp-fill" 
-              style={{ width: `${xpProgress}%` }}
-            ></div>
+        <div className="mt-4">
+          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${levelProgress}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+            />
           </div>
-          <div className="flex justify-between mt-1 text-xs text-gray-500">
-            <span>{userXP % 100} XP</span>
-            <span>{xpToNextLevel} XP to Level {userLevel + 1}</span>
+          <div className="flex justify-between mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span>{xpInCurrentLevel} XP</span>
+            <span>{xpForNextLevel} XP to Level {userLevel + 1}</span>
           </div>
         </div>
       </div>
 
-      {/* Unlocked Badges */}
-      <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Earned Badges</h4>
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+      <div className="p-5 space-y-5">
+        {/* Earned Badges */}
+        <div>
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Earned Badges</h4>
           {unlockedBadges.length > 0 ? (
-            unlockedBadges.map((badge) => {
-              const Icon = badge.icon;
-              return (
-                <div
-                  key={badge.id}
-                  className="badge-container cursor-pointer animate-scale-in"
-                  onClick={() => setShowDetails(badge)}
-                  onMouseEnter={() => setShowDetails(badge)}
-                  onMouseLeave={() => setShowDetails(null)}
-                >
-                  <div className="badge-glow"></div>
-                  <div className={`relative p-4 bg-gradient-to-br ${badge.color} rounded-xl shadow-lg hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="h-8 w-8 text-white mx-auto" />
-                    <div className="badge-shine"></div>
-                  </div>
-                  <div className="text-center mt-2">
-                    <p className="text-xs font-medium text-gray-900 truncate">{badge.name}</p>
-                  </div>
-                </div>
-              );
-            })
+            <div className="grid grid-cols-4 gap-3">
+              {unlockedBadges.map((badge) => {
+                const Icon = badge.icon;
+                return (
+                  <motion.button
+                    key={badge.id}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedBadge(selectedBadge?.id === badge.id ? null : badge)}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${badge.gradient} flex items-center justify-center shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300 text-center leading-tight">
+                      {badge.name}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
           ) : (
-            <div className="col-span-3 md:col-span-5 text-center py-8 text-gray-400">
-              <Trophy className="h-12 w-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Start earning badges!</p>
+            <div className="text-center py-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+              <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">Complete tasks to earn badges!</p>
             </div>
           )}
         </div>
+
+        {/* Locked Badges */}
+        {lockedBadges.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Locked Badges</h4>
+            <div className="grid grid-cols-4 gap-3">
+              {lockedBadges.slice(0, 8).map((badge) => {
+                const Icon = badge.icon;
+                const questionsAway = Math.ceil((badge.xpRequired - userXP) / 10);
+                
+                return (
+                  <motion.button
+                    key={badge.id}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => setSelectedBadge(selectedBadge?.id === badge.id ? null : badge)}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                        <Icon className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+                      </div>
+                      {/* Progress ring */}
+                      <svg className="absolute inset-0 w-12 h-12 -rotate-90">
+                        <circle
+                          cx="24"
+                          cy="24"
+                          r="22"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          className="text-slate-300 dark:text-slate-600"
+                        />
+                        <circle
+                          cx="24"
+                          cy="24"
+                          r="22"
+                          fill="none"
+                          stroke="url(#lockGradient)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray={`${badge.progress * 1.38} 138`}
+                        />
+                        <defs>
+                          <linearGradient id="lockGradient">
+                            <stop offset="0%" stopColor="#6366f1" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      {/* Lock icon */}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                        <Lock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight">
+                        {badge.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {questionsAway}q away
+                      </span>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Locked Badges */}
-      {lockedBadges.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Locked Badges</h4>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-            {lockedBadges.map((badge) => {
-              const Icon = badge.icon;
-              return (
-                <div
-                  key={badge.id}
-                  className="cursor-pointer"
-                  onClick={() => setShowDetails(badge)}
-                  onMouseEnter={() => setShowDetails(badge)}
-                  onMouseLeave={() => setShowDetails(null)}
-                >
-                  <div className="relative p-4 bg-gray-200 rounded-xl opacity-60 hover:opacity-80 transition-opacity duration-300">
-                    <Icon className="h-8 w-8 text-gray-400 mx-auto" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-gray-400 rounded-full"></div>
-                    </div>
-                    {/* Progress overlay */}
-                    {userXP < badge.xpRequired && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-300 rounded-b-xl overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 transition-all duration-500"
-                          style={{ width: `${Math.min(100, (userXP / badge.xpRequired * 100))}%` }}
-                        ></div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-center mt-2">
-                    <p className="text-xs font-medium text-gray-500 truncate">{badge.name}</p>
-                    {userXP < badge.xpRequired && (
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {Math.ceil((badge.xpRequired - userXP) / 10)} questions away
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Badge Details Tooltip */}
-      {showDetails && (
-        <div className="fixed z-50 bottom-20 left-1/2 transform -translate-x-1/2 max-w-xs animate-scale-in">
-          <div className="bg-gray-900 text-white rounded-xl p-4 shadow-2xl">
-            <div className="flex items-center space-x-3 mb-2">
-              <div className={`p-2 bg-gradient-to-br ${showDetails.color} rounded-lg`}>
-                {React.createElement(showDetails.icon, { className: "h-5 w-5 text-white" })}
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-sm">{showDetails.name}</h4>
-                {!showDetails.unlocked && (
-                  <p className="text-xs text-gray-400">{showDetails.xpRequired} XP required</p>
-                )}
-              </div>
+      {/* Badge Detail Popup */}
+      {selectedBadge && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-t border-slate-100 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50"
+        >
+          <div className="flex items-start gap-3">
+            <div className={`w-10 h-10 rounded-lg ${selectedBadge.unlocked ? `bg-gradient-to-br ${selectedBadge.gradient}` : 'bg-slate-300 dark:bg-slate-600'} flex items-center justify-center flex-shrink-0`}>
+              {React.createElement(selectedBadge.icon, { className: "w-5 h-5 text-white" })}
             </div>
-            <p className="text-xs text-gray-300">{showDetails.description}</p>
-            {!showDetails.unlocked && (
-              <div className="mt-2 pt-2 border-t border-gray-700 space-y-2">
-                <div className="text-xs text-gray-400">
-                  Progress: {Math.min(100, (userXP / showDetails.xpRequired * 100)).toFixed(0)}%
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-slate-900 dark:text-white">{selectedBadge.name}</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{selectedBadge.description}</p>
+              {!selectedBadge.unlocked && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    <span>Progress</span>
+                    <span>{Math.round(selectedBadge.progress)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                      style={{ width: `${selectedBadge.progress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {Math.ceil((selectedBadge.xpRequired - userXP) / 10)} questions to unlock
+                  </p>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-1.5">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, (userXP / showDetails.xpRequired * 100))}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-400">
-                  {(() => {
-                    const xpNeeded = showDetails.xpRequired - userXP;
-                    const questionsNeeded = Math.ceil(xpNeeded / 10); // ~10 XP per question
-                    const daysNeeded = Math.ceil(questionsNeeded / 3); // ~3 questions per day
-                    return xpNeeded > 0 
-                      ? `Unlock in ~${questionsNeeded} questions (${daysNeeded} day${daysNeeded !== 1 ? 's' : ''} at 3/day)`
-                      : 'Almost there!';
-                  })()}
-                </div>
-              </div>
-            )}
+              )}
+              {selectedBadge.unlocked && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Unlocked!
+                </p>
+              )}
+            </div>
           </div>
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-900"></div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

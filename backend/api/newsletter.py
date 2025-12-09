@@ -180,3 +180,8 @@ async def check_subscription_status(
         logger.error(f"❌ Newsletter status check error: {e}")
         raise HTTPException(status_code=500, detail="Failed to check status.")
 
+
+
+
+
+

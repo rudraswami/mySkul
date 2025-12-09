@@ -70,7 +70,7 @@ const RazorpayPayment = ({
       const orderResponse = await axios.post(
         `${backendUrl}/api/subscription/razorpay/create-order`,
         {
-          plan_name: planName.toUpperCase(),  // "FREE", "PREMIUM", "PRO"
+          plan_name: planName.toUpperCase(),  // "FREE", "STUDENT", "PRO" - must match backend
           billing_cycle: billingCycle,        // "monthly", "yearly"
           user_id: userDetails?.user_id || 'unknown'  // For logging only
         },

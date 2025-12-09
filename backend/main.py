@@ -130,28 +130,8 @@ def create_app() -> FastAPI:
     logger.info(f"   - domain: {cookie_domain or 'auto (no restriction)'}")
     logger.info(f"   - BACKEND_URL: {settings.BACKEND_URL}")
 
-    # CORS Middleware
-    logger.info("Configuring CORS...")
-    cors_origins = settings.CORS_ORIGINS
-    logger.info(f"   - Allowed origins: {cors_origins}")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        allow_headers=[
-            "Content-Type",
-            "Authorization",
-            "X-Requested-With",
-            "X-CSRF-Token",
-            "Cache-Control",
-            "Cookie",
-        ],
-        expose_headers=["X-CSRF-Token", "Set-Cookie"],
-    )
-
-    # CSRF Middleware - ENABLED for production security
+    # CSRF Middleware - Add FIRST so it's processed AFTER CORS (inner middleware)
+    # In Starlette, last-added middleware is outermost (processes first)
     logger.info("Configuring CSRF Protection...")
     app.add_middleware(
         CSRFMiddleware,
@@ -180,9 +160,42 @@ def create_app() -> FastAPI:
             "/api/agentic/doubt",
             "/api/agentic/tools",
             "/api/agentic/health",
+            # Study Planner API (authenticated via JWT)
+            "/api/study-planner/today",
+            "/api/study-planner/generate",
+            "/api/study-planner/complete-block",
+            "/api/study-planner/history",
+            "/api/study-planner/recommendations",
+            # Notifications API
+            "/api/notifications",
+            "/api/notifications/unread-count",
+            "/api/notifications/mark-read",
+            "/api/notifications/mark-all-read",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
+
+    # CORS Middleware - Add LAST so it's outermost (processes first)
+    # This ensures CORS headers are always added, even on errors
+    logger.info("Configuring CORS...")
+    cors_origins = settings.CORS_ORIGINS
+    logger.info(f"   - Allowed origins: {cors_origins}")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "X-CSRF-Token",
+            "Cache-Control",
+            "Cookie",
+        ],
+        expose_headers=["X-CSRF-Token", "Set-Cookie"],
+    )
 
     # =============================================================================
     # STARTUP EVENT
@@ -360,11 +373,27 @@ def create_app() -> FastAPI:
     @app.get("/api/health", tags=["System"])
     async def health_check():
         """Health check endpoint for monitoring and load balancers"""
+        from dependencies import get_database
+        from datetime import datetime, timezone
+        
+        # Check database connectivity
+        db_status = "healthy"
+        try:
+            db = await get_database()
+            await db.command("ping")
+        except Exception as e:
+            db_status = f"unhealthy: {str(e)[:50]}"
+        
         return {
-            "status": "healthy",
+            "status": "healthy" if db_status == "healthy" else "degraded",
             "service": settings.APP_NAME,
             "version": settings.VERSION,
             "environment": settings.ENVIRONMENT,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "checks": {
+                "database": db_status,
+                "api": "healthy"
+            }
         }
 
     @app.get("/", tags=["System"])

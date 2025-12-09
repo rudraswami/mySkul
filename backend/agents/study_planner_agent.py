@@ -397,7 +397,7 @@ class StudyPlannerAgent:
     
     async def _get_due_reviews(self, user_id: str) -> List[Dict]:
         """Get concepts due for spaced repetition review"""
-        if not self.db:
+        if self.db is None:
             return []
         
         try:
@@ -416,7 +416,7 @@ class StudyPlannerAgent:
     
     async def _get_weak_areas(self, user_id: str) -> List[Dict]:
         """Get student's weak areas from knowledge tracker"""
-        if not self.db:
+        if self.db is None:
             return [{"topic": "Physics - Mechanics", "subject": "Physics", "mastery": 0.35}]
         
         try:
@@ -446,7 +446,7 @@ class StudyPlannerAgent:
     
     async def _get_recent_topics(self, user_id: str) -> List[str]:
         """Get recently studied topics to avoid repetition"""
-        if not self.db:
+        if self.db is None:
             return []
         
         try:
@@ -463,7 +463,7 @@ class StudyPlannerAgent:
     
     async def _get_user_preferences(self, user_id: str) -> Dict:
         """Get user's study preferences"""
-        if not self.db:
+        if self.db is None:
             return {"daily_study_hours": 4, "preferred_time": "morning"}
         
         try:
@@ -498,7 +498,7 @@ class StudyPlannerAgent:
     
     async def _save_plan(self, user_id: str, plan: DailyStudyPlan) -> None:
         """Save the generated plan to database"""
-        if not self.db:
+        if self.db is None:
             return
         
         try:
@@ -520,7 +520,7 @@ class StudyPlannerAgent:
     
     async def get_today_plan(self, user_id: str) -> Optional[DailyStudyPlan]:
         """Get today's existing plan if available"""
-        if not self.db:
+        if self.db is None:
             return None
         
         try:
@@ -540,7 +540,7 @@ class StudyPlannerAgent:
     
     async def mark_block_complete(self, user_id: str, block_index: int) -> Dict:
         """Mark a study block as completed and award XP"""
-        if not self.db:
+        if self.db is None:
             return {"success": False, "error": "Database not available"}
         
         try:

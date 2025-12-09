@@ -7,7 +7,7 @@ Generates personalized daily study plans based on student data.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
@@ -364,5 +364,5 @@ async def get_study_recommendations(
         raise HTTPException(status_code=500, detail=f"Failed to get recommendations: {str(e)}")
 
 
-# Import timedelta for history endpoint
-from datetime import timedelta
+
+

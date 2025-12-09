@@ -45,7 +45,7 @@ export const useSubscriptionCheck = () => {
 
       // Handle upgrade hint
       if (accessData.upgrade_hint) {
-        const targetPlan = getPlanByTier(accessData.upgrade_hint.target_plan || 'STARTER');
+        const targetPlan = getPlanByTier(accessData.upgrade_hint.target_plan || 'STUDENT');
         
         setUpgradeHint({
           type: accessData.upgrade_hint.type || 'limit_reached',

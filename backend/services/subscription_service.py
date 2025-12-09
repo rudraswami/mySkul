@@ -570,11 +570,12 @@ class SubscriptionService:
     
     def _get_next_tier(self, current_tier: str) -> str:
         """Get the next subscription tier for upgrade suggestions"""
-        tier_hierarchy = ["FREE", "STARTER", "SCHOLAR", "ACHIEVER", "LEGEND"]
+        # V1 tier hierarchy - must match planConfig_ai_tutor.json
+        tier_hierarchy = ["FREE", "STUDENT", "PRO"]
         try:
             current_index = tier_hierarchy.index(current_tier.upper())
             if current_index < len(tier_hierarchy) - 1:
                 return tier_hierarchy[current_index + 1]
             return current_tier  # Already at max tier
         except ValueError:
-            return "STARTER"  # Default next tier
+            return "STUDENT"  # Default next tier

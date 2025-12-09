@@ -14,34 +14,63 @@ import { useTheme } from '../../contexts/ThemeContext';
 import {
   LayoutDashboard,
   User,
-  Settings,
   Crown,
   LogOut,
   Moon,
   Sun,
   ChevronDown,
   Grid3X3,
-  Sparkles,
-  BookOpen,
-  FileText,
-  HelpCircle,
-  Menu
+  Sparkles
+  // V2: BookOpen, FileText - hidden for V1
 } from 'lucide-react';
 
 const SathiNavMenu = ({ compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
 
-  // Toggle menu with explicit state management
+  // Calculate position when opening - ensure within viewport
+  const calculatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownHeight = 480; // Approximate max height
+      const dropdownWidth = 288; // w-72 = 18rem = 288px
+      
+      let top = rect.bottom + 8;
+      let left = rect.left;
+      
+      // Ensure dropdown doesn't go below viewport
+      if (top + dropdownHeight > window.innerHeight) {
+        top = Math.max(10, window.innerHeight - dropdownHeight - 10);
+      }
+      
+      // Ensure dropdown doesn't go off right edge
+      if (left + dropdownWidth > window.innerWidth) {
+        left = window.innerWidth - dropdownWidth - 10;
+      }
+      
+      // Ensure minimum top position
+      top = Math.max(10, top);
+      
+      setDropdownPosition({ top, left });
+    }
+  }, []);
+
+  // Toggle menu
   const toggleMenu = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!isOpen) {
+      calculatePosition();
+    }
+    
     setIsOpen(prev => !prev);
-  }, []);
+  }, [isOpen, calculatePosition]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -89,6 +118,8 @@ const SathiNavMenu = ({ compact = false }) => {
     return user.name.substring(0, 2).toUpperCase();
   };
 
+  // V1 Release: Only Dashboard available
+  // Mock Tests and Smart Notes hidden for V1 - will be enabled in V2
   const primaryNavItems = [
     { 
       icon: LayoutDashboard, 
@@ -97,20 +128,22 @@ const SathiNavMenu = ({ compact = false }) => {
       description: 'Track your learning journey',
       color: 'text-blue-600'
     },
-    { 
-      icon: FileText, 
-      label: 'Mock Tests', 
-      path: '/mock-tests',
-      description: 'Practice & ace your exams',
-      color: 'text-green-600'
-    },
-    { 
-      icon: BookOpen, 
-      label: 'Smart Notes', 
-      path: '/notes',
-      description: 'AI notes from any topic',
-      color: 'text-purple-600'
-    },
+    // V2: Mock Tests - hidden for V1
+    // { 
+    //   icon: FileText, 
+    //   label: 'Mock Tests', 
+    //   path: '/mock-tests',
+    //   description: 'Practice & ace your exams',
+    //   color: 'text-green-600'
+    // },
+    // V2: Smart Notes - hidden for V1
+    // { 
+    //   icon: BookOpen, 
+    //   label: 'Smart Notes', 
+    //   path: '/notes',
+    //   description: 'AI notes from any topic',
+    //   color: 'text-purple-600'
+    // },
   ];
 
   const userActions = [
@@ -130,45 +163,73 @@ const SathiNavMenu = ({ compact = false }) => {
   ];
 
   return (
-    <div className="relative z-50" ref={menuRef}>
-      {/* Menu Trigger Button - Student-friendly label */}
-      <motion.button
-        ref={buttonRef}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={toggleMenu}
-        type="button"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-        className={`
-          flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none
-          ${isOpen 
-            ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 shadow-md' 
-            : 'bg-gray-100 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-violet-600'
-          }
-        `}
-        title="Open menu to explore features"
-      >
-        <Grid3X3 className="w-4 h-4" />
-        {!compact && (
-          <>
-            <span className="text-sm font-semibold hidden sm:inline">Explore</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-          </>
-        )}
-      </motion.button>
-
-      {/* Dropdown Menu - High z-index to appear above everything */}
+    <>
+      {/* Backdrop - Very high z-index to capture clicks */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-            style={{ zIndex: 9999 }}
-          >
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.1)',
+              zIndex: 99998
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="relative" ref={menuRef}>
+        {/* Menu Trigger Button - Student-friendly label */}
+        <motion.button
+          ref={buttonRef}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={toggleMenu}
+          type="button"
+          aria-expanded={isOpen}
+          aria-haspopup="true"
+          className={`
+            flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none
+            ${isOpen 
+              ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 shadow-md' 
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-violet-600'
+            }
+          `}
+          title="Open menu to explore features"
+        >
+          <Grid3X3 className="w-4 h-4" />
+          {!compact && (
+            <>
+              <span className="text-sm font-semibold hidden sm:inline">Explore</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </>
+          )}
+        </motion.button>
+
+        {/* Dropdown Menu - FIXED positioning with viewport bounds check */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
+              style={{ 
+                position: 'fixed',
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: '288px',
+                maxHeight: 'calc(100vh - 40px)',
+                overflowY: 'auto',
+                zIndex: 99999
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* User Profile Section */}
             <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
@@ -302,7 +363,8 @@ const SathiNavMenu = ({ compact = false }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -65,7 +65,7 @@ export function SubscriptionProvider({ children }) {
     const upsellInfo = detailLike.upsell_info || detailLike;
     
     // Get target plan and pricing from upsell_info
-    const targetPlan = upsellInfo?.target_plan || 'STARTER';
+    const targetPlan = upsellInfo?.target_plan || 'STUDENT';
     const pricing = getPlanPricing(targetPlan);
     
     const modalData = {
@@ -156,13 +156,13 @@ export function SubscriptionProvider({ children }) {
 
   // Helper function to get plan pricing
   const getPlanPricing = (planTier) => {
+    // V1 Pricing - Must match backend planConfig_ai_tutor.json
     const pricingMap = {
-      'STARTER': { monthly: 99, quarterly: 249, yearly: 899 },
-      'SCHOLAR': { monthly: 299, quarterly: 799, yearly: 2799 },
-      'ACHIEVER': { monthly: 799, quarterly: 2199, yearly: 7999 },
-      'LEGEND': { monthly: 1599, quarterly: 3599, yearly: 10799 }
+      'FREE': { monthly: 0, quarterly: 0, yearly: 0 },
+      'STUDENT': { monthly: 199, quarterly: 499, yearly: 1799 },
+      'PRO': { monthly: 299, quarterly: 799, yearly: 2999 }
     };
-    return pricingMap[planTier] || pricingMap['STARTER'];
+    return pricingMap[planTier] || pricingMap['STUDENT'];
   };
 
   // Helper functions for market-standard messaging (updated for planConfig_ai_tutor.json)
