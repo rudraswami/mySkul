@@ -170,11 +170,22 @@ class SpacedRepetitionEngine:
             
             reviews = []
             for memory in due_memories:
+                # Handle timezone-naive datetimes from database
+                next_review = memory.get("next_review_at")
+                due_since_hours = 0
+                if next_review:
+                    # Convert naive datetime to UTC-aware if needed
+                    if next_review.tzinfo is None:
+                        next_review = next_review.replace(tzinfo=timezone.utc)
+                    due_since_hours = (now - next_review).total_seconds() / 3600
+                
                 reviews.append({
-                    "fact_id": memory["fact_id"],
-                    "topic": memory["topic"],
-                    "content": memory["content"],
-                    "due_since_hours": (now - memory["next_review_at"]).total_seconds() / 3600,
+                    "fact_id": memory.get("fact_id", ""),
+                    "topic": memory.get("topic", ""),
+                    "subject": memory.get("subject", "General"),
+                    "concept": memory.get("topic", memory.get("content", "")[:50]),
+                    "content": memory.get("content", ""),
+                    "due_since_hours": max(0, due_since_hours),
                     "review_count": memory.get("reinforcement_count", 0),
                     "current_interval": memory.get("review_interval_days", 1)
                 })

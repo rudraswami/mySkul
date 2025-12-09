@@ -37,6 +37,14 @@ from .whiteboard_engine import whiteboard_engine, generate_whiteboard_visual
 from .human_intelligence_layer import HumanIntelligenceLayer, get_human_context
 from .proactive_mentor import generate_follow_ups, ProactiveMentor
 
+# 🆕 Knowledge Tracking - Update student cognitive model after interactions
+try:
+    from .cognitive_model import get_adaptive_engine
+    COGNITIVE_MODEL_AVAILABLE = True
+except ImportError:
+    COGNITIVE_MODEL_AVAILABLE = False
+    logging.warning("Cognitive Model not available for knowledge tracking")
+
 logger = logging.getLogger(__name__)
 
 
@@ -348,7 +356,144 @@ class ResponseComposer:
         if generation_time < 30:  # Only cache fast responses
             self._cache_response(cache_key, result)
         
+        # 🆕 Step 11: Track learning interaction (update student cognitive model)
+        # This runs in background, non-blocking
+        asyncio.create_task(self._track_learning_interaction(
+            user_id=user_id,
+            subject=subject,
+            topic=result["response"].get("conversation_topic", "General"),
+            intent=intent,
+            question=question
+        ))
+        
         return result
+    
+    async def _track_learning_interaction(
+        self,
+        user_id: str,
+        subject: str,
+        topic: str,
+        intent: str,
+        question: str
+    ) -> None:
+        """
+        🆕 Track learning interaction to update student cognitive model.
+        
+        This runs in background (non-blocking) to:
+        - Update topic exposure counts
+        - Track concepts covered
+        - Feed spaced repetition system
+        - Build learning profile
+        
+        Args:
+            user_id: Student user ID
+            subject: Subject area
+            topic: Topic being discussed
+            intent: Question intent type
+            question: Original question
+        """
+        if not COGNITIVE_MODEL_AVAILABLE:
+            return
+            
+        # Skip tracking for non-educational intents
+        if intent in ['greeting', 'acknowledgment', 'off_topic']:
+            return
+        
+        try:
+            engine = get_adaptive_engine(self.db)
+            
+            # Extract concepts from the question
+            concepts = self._extract_concepts_from_question(question, subject)
+            
+            if not concepts:
+                concepts = [topic]  # Use topic as fallback
+            
+            # Record the interaction
+            await engine.knowledge_tracker.record_interaction(
+                user_id=user_id,
+                subject=subject or "General",
+                topic=topic or "General",
+                concepts=concepts,
+                performance={}  # No performance data for question-answer (only for quizzes)
+            )
+            
+            logger.info(f"📝 Tracked learning interaction: {user_id} | {subject}/{topic} | {len(concepts)} concepts")
+            
+        except Exception as e:
+            # Non-critical - don't fail the main request
+            logger.warning(f"⚠️ Knowledge tracking failed (non-critical): {e}")
+    
+    def _extract_concepts_from_question(self, question: str, subject: str) -> List[str]:
+        """Extract concepts from a question for tracking."""
+        concepts = []
+        q_lower = question.lower()
+        
+        # Physics concepts
+        physics_concepts = {
+            'force': 'Newton Laws', 'motion': 'Kinematics', 'velocity': 'Kinematics',
+            'acceleration': 'Kinematics', 'momentum': 'Momentum', 'energy': 'Energy',
+            'gravity': 'Gravitation', 'friction': 'Friction', 'wave': 'Waves',
+            'sound': 'Sound', 'light': 'Optics', 'lens': 'Optics', 'mirror': 'Optics',
+            'current': 'Current Electricity', 'voltage': 'Current Electricity',
+            'resistance': 'Current Electricity', 'magnet': 'Magnetism', 'circuit': 'Circuits',
+            'capacitor': 'Capacitors', 'inductor': 'Inductance', 'thermodynamics': 'Thermodynamics',
+            'heat': 'Heat Transfer', 'temperature': 'Heat Transfer'
+        }
+        
+        # Chemistry concepts
+        chemistry_concepts = {
+            'atom': 'Atomic Structure', 'electron': 'Atomic Structure', 'proton': 'Atomic Structure',
+            'bond': 'Chemical Bonding', 'ionic': 'Chemical Bonding', 'covalent': 'Chemical Bonding',
+            'reaction': 'Chemical Reactions', 'oxidation': 'Redox Reactions',
+            'acid': 'Acids and Bases', 'base': 'Acids and Bases', 'ph': 'Acids and Bases',
+            'organic': 'Organic Chemistry', 'carbon': 'Organic Chemistry',
+            'mole': 'Stoichiometry', 'equilibrium': 'Chemical Equilibrium'
+        }
+        
+        # Math concepts
+        math_concepts = {
+            'derivative': 'Derivatives', 'differentiation': 'Derivatives',
+            'integral': 'Integration', 'integration': 'Integration',
+            'limit': 'Limits', 'continuity': 'Continuity', 'function': 'Functions',
+            'equation': 'Equations', 'quadratic': 'Quadratic Equations',
+            'matrix': 'Matrices', 'determinant': 'Determinants',
+            'vector': 'Vectors', 'probability': 'Probability', 'statistics': 'Statistics',
+            'trigonometry': 'Trigonometry', 'sin': 'Trigonometry', 'cos': 'Trigonometry'
+        }
+        
+        # Biology concepts
+        biology_concepts = {
+            'cell': 'Cell Biology', 'nucleus': 'Cell Biology', 'mitochondria': 'Cell Biology',
+            'dna': 'Genetics', 'rna': 'Genetics', 'gene': 'Genetics', 'chromosome': 'Genetics',
+            'photosynthesis': 'Photosynthesis', 'respiration': 'Respiration',
+            'digestion': 'Digestive System', 'circulation': 'Circulatory System',
+            'evolution': 'Evolution', 'ecology': 'Ecology', 'ecosystem': 'Ecology'
+        }
+        
+        # Choose concept map based on subject
+        concept_maps = {
+            'physics': physics_concepts,
+            'chemistry': chemistry_concepts,
+            'mathematics': math_concepts,
+            'math': math_concepts,
+            'biology': biology_concepts
+        }
+        
+        subject_lower = (subject or '').lower()
+        
+        # If subject is known, use that concept map
+        if subject_lower in concept_maps:
+            for keyword, concept in concept_maps[subject_lower].items():
+                if keyword in q_lower and concept not in concepts:
+                    concepts.append(concept)
+        else:
+            # Check all concept maps
+            for concept_map in concept_maps.values():
+                for keyword, concept in concept_map.items():
+                    if keyword in q_lower and concept not in concepts:
+                        concepts.append(concept)
+        
+        return concepts[:5]  # Limit to 5 concepts per question
     
     def _build_adaptive_prompt(
         self,

@@ -58,6 +58,9 @@ import MemoryContextBanner from './MemoryContextBanner';
 // Sathi Navigation Menu - Integrated nav for full-screen chat experience
 import SathiNavMenu from './chat/SathiNavMenu';
 
+// 🔔 Notification Bell - CRITICAL for reminders to work!
+import NotificationBell from './NotificationBell';
+
 // Gamification Components
 import MicroReward, { LevelUpCelebration, StreakCelebration } from './gamification/MicroReward';
 import { useGamification } from '../hooks/useGamification';
@@ -141,6 +144,10 @@ export default function AITutorNeuroSymbolic() {
   // 📡 OFFLINE DETECTION - Network status monitoring
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
+  // Visual polling abort controller ref
+  const visualPollingAbortRef = useRef(null);
+  const [isGeneratingVisual, setIsGeneratingVisual] = useState(false);
+  
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -151,7 +158,20 @@ export default function AITutorNeuroSymbolic() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      // Cleanup any pending visual polling on unmount
+      if (visualPollingAbortRef.current) {
+        visualPollingAbortRef.current.abort();
+      }
     };
+  }, []);
+  
+  // Cancel visual generation
+  const cancelVisualGeneration = useCallback(() => {
+    if (visualPollingAbortRef.current) {
+      visualPollingAbortRef.current.abort();
+      visualPollingAbortRef.current = null;
+    }
+    setIsGeneratingVisual(false);
   }, []);
 
   // Core state
@@ -160,12 +180,27 @@ export default function AITutorNeuroSymbolic() {
   // Follow-up suggestions (shown near input, not in response)
   const [floatingFollowUps, setFloatingFollowUps] = useState([]);
   
-  // Poll for async visual generation
+  // Poll for async visual generation with abort support
   const pollForVisual = async (taskId, messageId, retries = 0) => {
     const maxRetries = 30; // 30 seconds max (1s intervals)
+    
+    // Check if aborted
+    if (visualPollingAbortRef.current?.signal?.aborted) {
+      console.log('Visual polling cancelled by user');
+      setIsGeneratingVisual(false);
+      return;
+    }
+    
     if (retries >= maxRetries) {
       console.log('Visual generation timeout');
+      setIsGeneratingVisual(false);
       return;
+    }
+    
+    // Set generating state on first call
+    if (retries === 0) {
+      setIsGeneratingVisual(true);
+      visualPollingAbortRef.current = new AbortController();
     }
     
     try {
@@ -174,7 +209,8 @@ export default function AITutorNeuroSymbolic() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        signal: visualPollingAbortRef.current?.signal
       });
       
       if (response.ok) {
@@ -217,18 +253,27 @@ export default function AITutorNeuroSymbolic() {
             return msg;
           }));
           console.log('✅ Visual loaded successfully');
+          setIsGeneratingVisual(false);
         } else if (data.status === 'generating') {
           // Continue polling
           setTimeout(() => pollForVisual(taskId, messageId, retries + 1), 1000);
         } else if (data.status === 'failed') {
           console.log('Visual generation failed:', data.error);
+          setIsGeneratingVisual(false);
         }
       }
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Visual polling aborted');
+        setIsGeneratingVisual(false);
+        return;
+      }
       console.error('Error polling for visual:', error);
       // Retry on error
       if (retries < maxRetries) {
         setTimeout(() => pollForVisual(taskId, messageId, retries + 1), 1000);
+      } else {
+        setIsGeneratingVisual(false);
       }
     }
   };
@@ -237,22 +282,31 @@ export default function AITutorNeuroSymbolic() {
   
   // CRITICAL FIX: Persist currentSession to localStorage for ChatGPT-style persistence
   const [currentSession, setCurrentSessionState] = useState(() => {
-    // Initialize from localStorage on mount
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('dhruv_ai_current_session') || null;
+    // Initialize from localStorage on mount with try-catch for quota errors
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('dhruv_ai_current_session') || null;
+      }
+    } catch (error) {
+      console.warn('Failed to read from localStorage:', error);
     }
     return null;
   });
   
-  // Wrapper to persist session changes to localStorage
+  // Wrapper to persist session changes to localStorage with error handling
   const setCurrentSession = useCallback((sessionId) => {
     setCurrentSessionState(sessionId);
-    if (typeof window !== 'undefined') {
-      if (sessionId) {
-        localStorage.setItem('dhruv_ai_current_session', sessionId);
-      } else {
-        localStorage.removeItem('dhruv_ai_current_session');
+    try {
+      if (typeof window !== 'undefined') {
+        if (sessionId) {
+          localStorage.setItem('dhruv_ai_current_session', sessionId);
+        } else {
+          localStorage.removeItem('dhruv_ai_current_session');
+        }
       }
+    } catch (error) {
+      // Handle localStorage quota exceeded or other errors gracefully
+      console.warn('Failed to persist session to localStorage:', error);
     }
   }, []);
   
@@ -1381,7 +1435,50 @@ export default function AITutorNeuroSymbolic() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden relative">
+      {/* 📡 OFFLINE INDICATOR - Shows when no internet connection */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 flex items-center justify-center gap-3 shadow-lg"
+          >
+            <span className="text-xl">📡</span>
+            <span className="font-medium">You're offline. Some features may not work.</span>
+            <button 
+              onClick={() => window.location.reload()}
+              className="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* 🎨 VISUAL GENERATION INDICATOR - Shows when generating visual */}
+      <AnimatePresence>
+        {isGeneratingVisual && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: !isOnline ? 48 : 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[9998] bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg"
+          >
+            <Loader className="w-4 h-4 animate-spin" />
+            <span className="font-medium text-sm">Generating visual explanation...</span>
+            <button 
+              onClick={cancelVisualGeneration}
+              className="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+            >
+              <X className="w-3 h-3" />
+              Cancel
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* 🎮 GAMIFICATION: Micro-Reward Popup */}
       <MicroReward 
         reward={currentReward} 
@@ -1933,6 +2030,20 @@ export default function AITutorNeuroSymbolic() {
                   <Zap className="w-4 h-4 text-violet-500" />
                   <span className="text-sm font-semibold text-violet-700">{currentXP || 0}</span>
                 </div>
+                
+                {/* 🔔 Notification Bell - Shows reminder notifications */}
+                <NotificationBell 
+                  onStartStudy={(topic) => {
+                    // Pre-fill input and optionally auto-send
+                    const studyMessage = `Let's study ${topic}! Help me understand this topic.`;
+                    setInputMessage(studyMessage);
+                    // Focus the input
+                    setTimeout(() => {
+                      const inputEl = document.querySelector('textarea');
+                      if (inputEl) inputEl.focus();
+                    }, 100);
+                  }}
+                />
               </div>
 
               <motion.button

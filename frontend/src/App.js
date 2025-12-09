@@ -29,6 +29,7 @@ import ToastRenderer from './components/ToastRenderer';
 // Lazy loaded components (code splitting for better initial load)
 const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
 const AITutor = lazy(() => import('./components/AITutorNeuroSymbolic')); // Neuro-Symbolic v3.0 - lazy load
+const StudyPlanner = lazy(() => import('./components/StudyPlanner')); // AI Study Planner
 const MockTests = lazy(() => import('./components/MockTests'));
 const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
 const Subscription = lazy(() => import('./components/Subscription'));
@@ -242,6 +243,11 @@ function AppContent() {
                   <Route path="/dashboard" element={
                     <Suspense fallback={<PageLoader message="Loading dashboard..." />}>
                       <PremiumDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="/study-planner" element={
+                    <Suspense fallback={<PageLoader message="Loading study planner..." />}>
+                      <StudyPlanner />
                     </Suspense>
                   } />
                   <Route path="/tutor" element={

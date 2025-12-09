@@ -287,4 +287,29 @@ export const mockTestsAPI = {
     apiClient.get('/mock-tests/resume'),
 };
 
+// ==================== STUDY PLANNER ====================
+export const studyPlannerAPI = {
+  getTodayPlan: () =>
+    apiClient.get('/study-planner/today'),
+  
+  generatePlan: (date, availableHours) =>
+    apiClient.post('/study-planner/generate', { date, available_hours: availableHours }),
+  
+  updateProgress: (blockIndex, completed, actualDuration) =>
+    apiClient.post('/study-planner/progress', { 
+      block_index: blockIndex, 
+      completed, 
+      actual_duration_minutes: actualDuration 
+    }),
+  
+  getHistory: (days = 7) =>
+    apiClient.get(`/study-planner/history?days=${days}`),
+  
+  updatePreferences: (dailyHours, energyPattern) =>
+    apiClient.post('/study-planner/preferences', {
+      daily_study_hours: dailyHours,
+      energy_pattern: energyPattern
+    }),
+};
+
 export default apiClient;

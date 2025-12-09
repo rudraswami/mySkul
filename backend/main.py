@@ -326,6 +326,30 @@ def create_app() -> FastAPI:
         logger.info("🧠 Cognitive Model router registered")
     except Exception as e:
         logger.warning(f"Could not load cognitive router: {e}")
+    
+    # 🔔 Notifications API (CRITICAL for reminders to work!)
+    try:
+        from api import notifications
+        app.include_router(notifications.router, prefix="/api", tags=["Notifications"])
+        logger.info("🔔 Notifications router registered")
+    except Exception as e:
+        logger.warning(f"Could not load notifications router: {e}")
+
+    # 📧 Newsletter API (Landing page subscription)
+    try:
+        from api import newsletter
+        app.include_router(newsletter.router, prefix="/api", tags=["Newsletter"])
+        logger.info("📧 Newsletter router registered")
+    except Exception as e:
+        logger.warning(f"Could not load newsletter router: {e}")
+
+    # 📚 Study Planner API (AI-powered daily planning)
+    try:
+        from api import study_planner
+        app.include_router(study_planner.router, prefix="/api", tags=["Study Planner"])
+        logger.info("📚 Study Planner router registered")
+    except Exception as e:
+        logger.warning(f"Could not load study planner router: {e}")
 
     logger.info("All routers registered")
 

@@ -9,6 +9,7 @@ Level 2 - Proactive Learning Companion:
 - Smart nudges based on study patterns
 - Exam countdown reminders
 - Daily study summaries
+- 🆕 Spaced repetition reminders
 
 Level 4 - Intelligent Study Assistant:
 - Concept dependency tracking
@@ -26,6 +27,14 @@ from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+# 🆕 Spaced Repetition Integration
+try:
+    from .spaced_repetition import SpacedRepetitionEngine
+    SPACED_REPETITION_AVAILABLE = True
+except ImportError:
+    SPACED_REPETITION_AVAILABLE = False
+    logger.warning("SpacedRepetitionEngine not available for revision nudges")
 
 # IST offset
 IST_OFFSET = timedelta(hours=5, minutes=30)
@@ -574,6 +583,77 @@ class IntelligentProactiveMentor:
             return None
     
     # ========================================
+    # SPACED REPETITION - Revision Due Nudges
+    # ========================================
+    
+    async def get_revision_due_nudge(self, user_id: str) -> Optional[ProactiveNudge]:
+        """
+        🆕 Check for concepts due for revision using SM-2 spaced repetition.
+        
+        This is scientifically proven to optimize long-term retention!
+        """
+        if not SPACED_REPETITION_AVAILABLE:
+            return None
+            
+        try:
+            sr_engine = SpacedRepetitionEngine(self.db)
+            due_reviews = await sr_engine.get_due_reviews(user_id, limit=5)
+            
+            if not due_reviews:
+                return None
+            
+            # Get the most urgent review
+            most_urgent = due_reviews[0]
+            total_due = len(due_reviews)
+            
+            # Build message based on urgency
+            hours_overdue = most_urgent.get('due_since_hours', 0)
+            
+            if hours_overdue > 48:
+                priority = "high"
+                emoji = "🚨"
+                urgency = "You're at risk of forgetting"
+            elif hours_overdue > 24:
+                priority = "medium"
+                emoji = "⏰"
+                urgency = "Time for a quick review of"
+            else:
+                priority = "low"
+                emoji = "📚"
+                urgency = "Your brain says it's time to revisit"
+            
+            concept = most_urgent.get('concept', most_urgent.get('topic', 'this concept'))
+            subject = most_urgent.get('subject', 'your subject')
+            
+            message = f"{urgency} **{concept}** ({subject})."
+            if total_due > 1:
+                message += f"\n\n{total_due - 1} more concept{'s' if total_due > 2 else ''} also due for review."
+            
+            message += "\n\n*Quick 5-min revision now = months of memory retention!*"
+            
+            return ProactiveNudge(
+                nudge_type=NudgeType.REVISION_DUE,
+                title=f"{emoji} Spaced Repetition Reminder",
+                message=message,
+                priority=priority,
+                actions=[
+                    {'label': '📖 Review Now', 'action': 'start_quick_review', 'data': {'concept': concept}},
+                    {'label': '⏰ In 30 mins', 'action': 'snooze_30m'},
+                    {'label': '🌙 Tomorrow', 'action': 'snooze_tomorrow'}
+                ],
+                data={
+                    'due_reviews': due_reviews[:3],  # Top 3
+                    'total_due': total_due,
+                    'most_urgent_concept': concept,
+                    'hours_overdue': hours_overdue
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Revision due nudge error: {e}")
+            return None
+    
+    # ========================================
     # Main Entry Point
     # ========================================
     
@@ -584,12 +664,13 @@ class IntelligentProactiveMentor:
         """
         nudges = []
         
-        # Check each nudge type
+        # Check each nudge type (including spaced repetition!)
         checks = [
             self.check_streak_protection(user_id),
             self.get_continue_learning_nudge(user_id),
             self.get_exam_countdown_nudge(user_id),
             self.get_weak_topic_nudge(user_id),
+            self.get_revision_due_nudge(user_id),  # 🆕 Spaced repetition
             self.detect_study_fatigue(user_id),
             self.get_motivation_nudge(user_id),
         ]

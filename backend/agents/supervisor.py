@@ -163,16 +163,51 @@ class SupervisorAgent(BaseAgent):
             intent = self._detect_intent(query)
             logger.info(f"🎯 Detected intent: {intent}")
             
-            # Step 2: Determine which agents to activate
-            agents_to_run = self._select_agents(intent, context)
-            logger.info(f"👥 Activating agents: {', '.join(agents_to_run)}")
+            # 🆕 Step 1.5: Use Agent Negotiation for complex queries
+            # Agent negotiation enables multi-agent collaboration with dynamic role assignment
+            use_negotiation = context.get('use_agent_negotiation', False)
+            if use_negotiation and self.agent_negotiator and intent in ['comparison', 'derivation', 'application']:
+                logger.info("🤝 Using Agent Negotiation for complex query")
+                try:
+                    negotiation_result = await self.agent_negotiator.negotiate(query, context)
+                    logger.info(f"   Strategy: {negotiation_result.strategy}, Lead: {negotiation_result.lead_agent}")
+                    
+                    collaborative_response = await self.agent_negotiator.collaborate(
+                        query, context, negotiation_result
+                    )
+                    
+                    # Build response from collaboration
+                    agent_responses = {
+                        'mentor': collaborative_response.primary_response,
+                        'collaboration_insights': collaborative_response.supporting_insights,
+                        'verification': collaborative_response.verification_results
+                    }
+                    
+                    # Add negotiation metadata
+                    context['negotiation_result'] = {
+                        'strategy': negotiation_result.strategy,
+                        'lead_agent': negotiation_result.lead_agent,
+                        'supporting': negotiation_result.supporting_agents,
+                        'confidence': collaborative_response.final_confidence
+                    }
+                    
+                    logger.info(f"✅ Agent collaboration complete: {collaborative_response.collaboration_summary}")
+                    
+                except Exception as neg_error:
+                    logger.warning(f"⚠️ Agent negotiation failed, falling back to parallel: {neg_error}")
+                    use_negotiation = False  # Fall back to normal flow
             
-            # Step 3: Run agents in parallel (non-blocking)
-            agent_responses = await self._run_agents_parallel(
-                query=query,
-                context=context,
-                agents=agents_to_run
-            )
+            # Step 2: Determine which agents to activate (if not using negotiation)
+            if not use_negotiation or 'mentor' not in locals().get('agent_responses', {}):
+                agents_to_run = self._select_agents(intent, context)
+                logger.info(f"👥 Activating agents: {', '.join(agents_to_run)}")
+                
+                # Step 3: Run agents in parallel (non-blocking)
+                agent_responses = await self._run_agents_parallel(
+                    query=query,
+                    context=context,
+                    agents=agents_to_run
+                )
             
             # Step 4: Validate responses
             validated_responses = self._validate_responses(agent_responses)

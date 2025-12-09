@@ -51,8 +51,12 @@ class BackgroundScheduler:
         logger.info("✅ Background scheduler started")
     
     async def stop(self):
-        """Stop the background scheduler"""
+        """Stop the background scheduler gracefully"""
         self._running = False
+        
+        # Give ongoing tasks a moment to complete
+        await asyncio.sleep(0.5)
+        
         if self._task:
             self._task.cancel()
             try:
@@ -100,22 +104,49 @@ class BackgroundScheduler:
             # Get reminders due in the next 5 minutes
             due_reminders = await scheduler.get_due_reminders(lookahead_minutes=5)
             
+            # Always log - even if 0 reminders (for debugging)
+            logger.info(f"⏰ Checking reminders: {len(due_reminders)} due")
+            
             if due_reminders:
                 logger.info(f"📬 Processing {len(due_reminders)} due reminders")
             
             for reminder in due_reminders:
                 try:
+                    # Build meaningful notification content
+                    topic = reminder.get('topic', '')
+                    custom_msg = reminder.get('custom_message', '')
+                    reminder_type = reminder.get('reminder_type', 'study')
+                    
+                    # Create better title based on type
+                    if reminder_type == 'spaced_rep':
+                        title = "🧠 Time to Review!"
+                    elif reminder_type == 'quiz':
+                        title = "📝 Quiz Time!"
+                    elif reminder_type == 'revision':
+                        title = "📖 Revision Reminder"
+                    else:
+                        title = "⏰ Study Reminder"
+                    
+                    # Create meaningful message
+                    if custom_msg and len(custom_msg) > 10:
+                        message = custom_msg
+                    elif topic and topic.lower() not in ['study', 'reminder', '']:
+                        message = f"Time to study: {topic}! You set this reminder earlier. Let's make progress! 📚"
+                    else:
+                        message = "Hey! It's study time. You've got this! Let's learn something amazing today. 💪"
+                    
                     # Send notification
                     result = await notification_service.send_notification(
                         user_id=reminder['user_id'],
-                        title="⏰ Reminder",
-                        message=reminder.get('custom_message') or reminder.get('topic', 'Study reminder'),
+                        title=title,
+                        message=message,
                         notification_type="reminder",
                         priority="high",
                         data={
                             'reminder_id': reminder['reminder_id'],
-                            'topic': reminder.get('topic'),
-                            'reminder_type': reminder.get('reminder_type')
+                            'topic': topic,
+                            'reminder_type': reminder_type,
+                            'custom_message': custom_msg
                         }
                     )
                     

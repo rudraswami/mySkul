@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Heart, Menu, X } from 'lucide-react';
+import { Brain, Heart, Menu, X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 import { HeroSection } from "./figma/HeroSection";
 import { DualLayerSystem } from "./figma/DualLayerSystem";
@@ -10,6 +11,8 @@ import { StudentTestimonials } from "./figma/StudentTestimonials";
 import { VisualLearning } from "./figma/VisualLearning";
 import { CTASection } from "./figma/CTASection";
 import { FloatingOrbs } from "./figma/FloatingOrbs";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -181,154 +184,225 @@ const Navbar = () => {
   );
 };
 
-const Footer = () => (
-  <footer className="relative bg-gradient-to-b from-[#000005] to-[#000010] py-16 border-t border-white/10 overflow-hidden">
-    {/* Background Effects */}
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
-    </div>
+const Footer = () => {
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState({ loading: false, message: '', type: '' });
 
-    <div className="max-w-7xl mx-auto px-6 relative z-10">
-      {/* Top Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
-        {/* Brand Column */}
-        <div className="lg:col-span-2">
-          <Link to="/" className="flex items-center gap-2 mb-4 group">
-            <div className="relative w-10 h-10">
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-600 rounded-xl blur-md opacity-70"
-                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
-              <div className="relative w-full h-full bg-gradient-to-br from-[#000010] to-[#000020] rounded-xl border border-white/20 flex items-center justify-center">
-                <Brain className="h-5 w-5 text-cyan-400" />
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      setNewsletterStatus({ loading: false, message: 'Please enter a valid email', type: 'error' });
+      return;
+    }
+
+    setNewsletterStatus({ loading: true, message: '', type: '' });
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/newsletter/subscribe`, {
+        email: newsletterEmail,
+        source: 'landing_footer'
+      });
+
+      if (response.data.success) {
+        setNewsletterStatus({ 
+          loading: false, 
+          message: response.data.message, 
+          type: 'success' 
+        });
+        setNewsletterEmail('');
+      }
+    } catch (error) {
+      setNewsletterStatus({ 
+        loading: false, 
+        message: error.response?.data?.detail || 'Failed to subscribe. Please try again.', 
+        type: 'error' 
+      });
+    }
+  };
+
+  // Social links with actual URLs (or placeholder)
+  const socialLinks = [
+    { icon: '𝕏', label: 'Twitter', href: 'https://twitter.com/druvai' },
+    { icon: '📘', label: 'Facebook', href: 'https://facebook.com/druvai' },
+    { icon: '💼', label: 'LinkedIn', href: 'https://linkedin.com/company/druvai' },
+    { icon: '📸', label: 'Instagram', href: 'https://instagram.com/druvai' }
+  ];
+
+  return (
+    <footer className="relative bg-gradient-to-b from-[#000005] to-[#000010] py-16 border-t border-white/10 overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Top Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+          {/* Brand Column */}
+          <div className="lg:col-span-2">
+            <Link to="/" className="flex items-center gap-2 mb-4 group">
+              <div className="relative w-10 h-10">
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-600 rounded-xl blur-md opacity-70"
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+                <div className="relative w-full h-full bg-gradient-to-br from-[#000010] to-[#000020] rounded-xl border border-white/20 flex items-center justify-center">
+                  <Brain className="h-5 w-5 text-cyan-400" />
+                </div>
               </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                Druv<span className="text-cyan-400">.AI</span>
+              </span>
+            </Link>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              India's first Cognitive OS for JEE, NEET & UPSC. Powered by dual-layer AI combining emotional intelligence and symbolic reasoning.
+            </p>
+            {/* Social Links */}
+            <div className="flex gap-3">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all group"
+                  aria-label={social.label}
+                  title={`Follow us on ${social.label}`}
+                >
+                  <span className="text-lg group-hover:scale-110 transition-transform">{social.icon}</span>
+                </a>
+              ))}
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-              Druv<span className="text-cyan-400">.AI</span>
-            </span>
-          </Link>
-          <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-            India's first Cognitive OS for JEE, NEET & UPSC. Powered by dual-layer AI combining emotional intelligence and symbolic reasoning.
-          </p>
-          {/* Social Links */}
-          <div className="flex gap-3">
-            {[
-              { icon: '𝕏', label: 'Twitter', href: '#' },
-              { icon: '📘', label: 'Facebook', href: '#' },
-              { icon: '💼', label: 'LinkedIn', href: '#' },
-              { icon: '📸', label: 'Instagram', href: '#' }
-            ].map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all group"
-                aria-label={social.label}
+          </div>
+
+          {/* Product Links */}
+          <div>
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Product</h3>
+            <ul className="space-y-3">
+              {[
+                { name: 'AI Tutor', href: '#features' },
+                { name: 'Mock Tests', href: '#features' },
+                { name: 'Error Genome', href: '#features' },
+                { name: 'Visual Professor', href: '#features' },
+                { name: 'Pricing', href: '#pricing' }
+              ].map((link) => (
+                <li key={link.name}>
+                  <a href={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                    {link.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Company</h3>
+            <ul className="space-y-3">
+              {[
+                { name: 'About Us', href: '/policies/contact' },
+                { name: 'Careers', href: '/policies/contact' },
+                { name: 'Blog', href: '/policies/contact' },
+                { name: 'Press Kit', href: '/policies/contact' },
+                { name: 'Contact', href: '/policies/contact' }
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link to={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Legal</h3>
+            <ul className="space-y-3">
+              {[
+                { name: 'Privacy Policy', href: '/policies/privacy' },
+                { name: 'Terms of Service', href: '/policies/terms' },
+                { name: 'Cookie Policy', href: '/policies/privacy' },
+                { name: 'Refund Policy', href: '/policies/refund' },
+                { name: 'Shipping Policy', href: '/policies/shipping' }
+              ].map((link) => (
+                <li key={link.name}>
+                  <Link to={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Newsletter Section */}
+        <div className="border-t border-white/10 pt-8 mb-8">
+          <div className="max-w-md mx-auto text-center">
+            <h3 className="text-white font-bold text-lg mb-2">Stay Updated</h3>
+            <p className="text-gray-400 text-sm mb-4">Get the latest updates on AI-powered learning</p>
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+              <input
+                type="email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition-colors text-sm"
+                disabled={newsletterStatus.loading}
+                required
+              />
+              <button 
+                type="submit"
+                disabled={newsletterStatus.loading}
+                className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(6,214,160,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <span className="text-lg group-hover:scale-110 transition-transform">{social.icon}</span>
-              </a>
-            ))}
+                {newsletterStatus.loading ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>Subscribing...</span>
+                  </>
+                ) : (
+                  'Subscribe'
+                )}
+              </button>
+            </form>
+            {/* Status Message */}
+            {newsletterStatus.message && (
+              <motion.p 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-3 text-sm ${
+                  newsletterStatus.type === 'success' ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
+                {newsletterStatus.message}
+              </motion.p>
+            )}
           </div>
         </div>
 
-        {/* Product Links */}
-        <div>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Product</h3>
-          <ul className="space-y-3">
-            {[
-              { name: 'AI Tutor', href: '#features' },
-              { name: 'Mock Tests', href: '#features' },
-              { name: 'Error Genome', href: '#features' },
-              { name: 'Visual Professor', href: '#features' },
-              { name: 'Pricing', href: '#pricing' }
-            ].map((link) => (
-              <li key={link.name}>
-                <a href={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
-                  {link.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Company Links */}
-        <div>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Company</h3>
-          <ul className="space-y-3">
-            {[
-              { name: 'About Us', href: '#' },
-              { name: 'Careers', href: '#' },
-              { name: 'Blog', href: '#' },
-              { name: 'Press Kit', href: '#' },
-              { name: 'Contact', href: '#' }
-            ].map((link) => (
-              <li key={link.name}>
-                <a href={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
-                  {link.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Legal Links */}
-        <div>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Legal</h3>
-          <ul className="space-y-3">
-            {[
-              { name: 'Privacy Policy', href: '#' },
-              { name: 'Terms of Service', href: '#' },
-              { name: 'Cookie Policy', href: '#' },
-              { name: 'Refund Policy', href: '#' },
-              { name: 'Disclaimer', href: '#' }
-            ].map((link) => (
-              <li key={link.name}>
-                <a href={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
-                  {link.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Newsletter Section */}
-      <div className="border-t border-white/10 pt-8 mb-8">
-        <div className="max-w-md mx-auto text-center">
-          <h3 className="text-white font-bold text-lg mb-2">Stay Updated</h3>
-          <p className="text-gray-400 text-sm mb-4">Get the latest updates on AI-powered learning</p>
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition-colors text-sm"
-            />
-            <button className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(6,214,160,0.5)] transition-all">
-              Subscribe
-            </button>
+        {/* Bottom Section */}
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>© 2025 Druv.AI</span>
+            <span className="hidden md:inline">•</span>
+            <span className="flex items-center gap-1.5">
+              Made with <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" /> for India
+            </span>
+          </div>
+          <div className="flex items-center gap-6 text-xs text-gray-500">
+            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Status</Link>
+            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Changelog</Link>
+            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Support</Link>
           </div>
         </div>
       </div>
-
-      {/* Bottom Section */}
-      <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>© 2025 Druv.AI</span>
-          <span className="hidden md:inline">•</span>
-          <span className="flex items-center gap-1.5">
-            Made with <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" /> for India
-          </span>
-        </div>
-        <div className="flex items-center gap-6 text-xs text-gray-500">
-          <a href="#" className="hover:text-cyan-400 transition-colors">Status</a>
-          <a href="#" className="hover:text-cyan-400 transition-colors">Changelog</a>
-          <a href="#" className="hover:text-cyan-400 transition-colors">Support</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 const LandingPage = () => {
   return (
@@ -338,11 +412,17 @@ const LandingPage = () => {
 
       <main>
         <HeroSection />
-        <DualLayerSystem />
-        <InnovativeFeaturesGrid />
+        <section id="how-it-works">
+          <DualLayerSystem />
+        </section>
+        <section id="features">
+          <InnovativeFeaturesGrid />
+        </section>
         <VisualLearning />
         <StudentTestimonials />
-        <CTASection />
+        <section id="pricing">
+          <CTASection />
+        </section>
       </main>
 
       <Footer />

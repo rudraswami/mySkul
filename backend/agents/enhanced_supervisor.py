@@ -6,6 +6,7 @@ Extends the existing SupervisorAgent with:
 - RAG-enhanced prompts (curriculum grounding)
 - Symbolic verification (math, facts, logic)
 - Verified response badges
+- 🆕 HYBRID REASONING: Neural + Symbolic + Graph integration
 
 This is the TRUE Layer 3 (Supervisor Verification) that makes
 Druv AI hallucination-free.
@@ -21,6 +22,14 @@ from typing import Dict, Any, Optional
 from agents.supervisor import SupervisorAgent
 from services.verification import VerificationOrchestrator, get_verification_orchestrator
 from services.knowledge_base import RAGEnhancer, get_rag_enhancer
+
+# 🆕 Hybrid Reasoning Engine (Neural + Symbolic + Graph)
+try:
+    from services.hybrid_reasoning_engine import get_hybrid_reasoning_engine, HybridReasoningEngine, ReasoningMode
+    HYBRID_REASONING_AVAILABLE = True
+except ImportError as e:
+    HYBRID_REASONING_AVAILABLE = False
+    logging.warning(f"HybridReasoningEngine not available: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +57,17 @@ class EnhancedSupervisor(SupervisorAgent):
         self.verification = get_verification_orchestrator()
         self.rag = get_rag_enhancer()
         
+        # 🆕 Initialize Hybrid Reasoning Engine
+        self.hybrid_engine = None
+        self.enable_hybrid_reasoning = False
+        if HYBRID_REASONING_AVAILABLE:
+            try:
+                self.hybrid_engine = get_hybrid_reasoning_engine()
+                self.enable_hybrid_reasoning = True
+                logger.info("   ├── Hybrid Reasoning: ✅ Active (Neural + Symbolic + Graph)")
+            except Exception as e:
+                logger.warning(f"   ├── Hybrid Reasoning: ⚠️ Failed to initialize: {e}")
+        
         # Configuration
         self.enable_rag = True
         self.enable_verification = True
@@ -67,17 +87,23 @@ class EnhancedSupervisor(SupervisorAgent):
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Run enhanced orchestration with RAG and verification.
+        Run enhanced orchestration with RAG, Hybrid Reasoning, and verification.
         
         This is the main entry point for the enhanced supervisor.
         It wraps the base run() method with additional capabilities.
+        
+        Flow:
+        1. RAG enhancement (curriculum grounding)
+        2. 🆕 Hybrid Reasoning (symbolic math/graph context)
+        3. Base supervisor (multi-agent orchestration)
+        4. Verification (math, facts, logic)
         
         Args:
             query: Student's question
             context: Context dict with subject, user_id, session_id, etc.
             
         Returns:
-            Enhanced response with verification results
+            Enhanced response with verification results and hybrid reasoning
         """
         try:
             logger.info(f"🧠 EnhancedSupervisor processing: {query[:100]}")
@@ -98,6 +124,36 @@ class EnhancedSupervisor(SupervisorAgent):
                 # Update context with curriculum info
                 context['curriculum_context'] = enhanced_prompt.curriculum_context
                 context['available_formulas'] = enhanced_prompt.formulas_available
+            
+            # 🆕 Step 1.5: Hybrid Reasoning (Neural + Symbolic + Graph)
+            hybrid_result = None
+            if self.enable_hybrid_reasoning and self.hybrid_engine:
+                try:
+                    hybrid_result = await self.hybrid_engine.reason(query, context)
+                    logger.info(f"🧠 Hybrid Reasoning: mode={hybrid_result.reasoning_mode.value}, confidence={hybrid_result.confidence:.2f}")
+                    
+                    # If we have a symbolic proof, inject it into context for agents
+                    if hybrid_result.symbolic_proof:
+                        context['symbolic_solution'] = hybrid_result.symbolic_proof
+                        logger.info("   ├── Symbolic proof available (deterministic)")
+                    
+                    # Inject knowledge graph context
+                    if hybrid_result.graph_context:
+                        gc = hybrid_result.graph_context
+                        context['knowledge_graph'] = {
+                            'concepts': [c.name for c in gc.concepts[:3]],
+                            'prerequisites': [p.name for p in gc.prerequisites[:3]],
+                            'applications': [a.name for a in gc.applications[:3]],
+                            'formulas': gc.related_formulas[:5]
+                        }
+                        logger.info(f"   ├── Knowledge Graph: {len(gc.concepts)} concepts found")
+                    
+                    # Add recommendations for learning path
+                    if hybrid_result.recommendations:
+                        context['learning_recommendations'] = hybrid_result.recommendations
+                        
+                except Exception as e:
+                    logger.warning(f"⚠️ Hybrid reasoning failed (non-critical): {e}")
             
             # Step 2: Run base supervisor orchestration
             base_result = await self.run(query, context)
@@ -154,14 +210,29 @@ class EnhancedSupervisor(SupervisorAgent):
                     'curriculum_aligned': rag_validation.is_consistent if rag_validation else True,
                     'alignment_score': rag_validation.alignment_score if rag_validation else 0.5
                 },
+                # 🆕 Hybrid Reasoning results
+                'hybrid_reasoning': {
+                    'enabled': self.enable_hybrid_reasoning,
+                    'mode': hybrid_result.reasoning_mode.value if hybrid_result else None,
+                    'confidence': hybrid_result.confidence if hybrid_result else 0.0,
+                    'symbolic_proof': hybrid_result.symbolic_proof if hybrid_result else None,
+                    'verification_passed': hybrid_result.verification_passed if hybrid_result else False,
+                    'graph_context': context.get('knowledge_graph'),
+                    'recommendations': hybrid_result.recommendations if hybrid_result else []
+                } if hybrid_result else None,
                 'badge': badge,
                 'metadata': {
                     **base_result.get('metadata', {}),
-                    'enhanced_supervisor_version': '1.0',
+                    'enhanced_supervisor_version': '2.0',  # Version bump
                     'rag_enabled': self.enable_rag,
-                    'verification_enabled': self.enable_verification
+                    'verification_enabled': self.enable_verification,
+                    'hybrid_reasoning_enabled': self.enable_hybrid_reasoning
                 }
             }
+            
+            # 🆕 Add learning path recommendations from knowledge graph
+            if hybrid_result and hybrid_result.recommendations:
+                enhanced_result['learning_path'] = hybrid_result.recommendations
             
             # Add corrections to response if needed
             if verification_result and verification_result.corrections_suggested:
@@ -217,7 +288,8 @@ class EnhancedSupervisor(SupervisorAgent):
         enable_verification: Optional[bool] = None,
         verify_math: Optional[bool] = None,
         verify_facts: Optional[bool] = None,
-        verify_logic: Optional[bool] = None
+        verify_logic: Optional[bool] = None,
+        enable_hybrid_reasoning: Optional[bool] = None
     ) -> None:
         """
         Configure the enhanced supervisor capabilities.
@@ -228,6 +300,7 @@ class EnhancedSupervisor(SupervisorAgent):
             verify_math: Enable/disable math verification
             verify_facts: Enable/disable fact checking
             verify_logic: Enable/disable logic validation
+            enable_hybrid_reasoning: Enable/disable hybrid reasoning (Neural + Symbolic + Graph)
         """
         if enable_rag is not None:
             self.enable_rag = enable_rag
@@ -239,8 +312,10 @@ class EnhancedSupervisor(SupervisorAgent):
             self.verify_facts = verify_facts
         if verify_logic is not None:
             self.verify_logic = verify_logic
+        if enable_hybrid_reasoning is not None:
+            self.enable_hybrid_reasoning = enable_hybrid_reasoning and HYBRID_REASONING_AVAILABLE
         
-        logger.info(f"🔧 EnhancedSupervisor reconfigured: RAG={self.enable_rag}, Verify={self.enable_verification}")
+        logger.info(f"🔧 EnhancedSupervisor reconfigured: RAG={self.enable_rag}, Verify={self.enable_verification}, Hybrid={self.enable_hybrid_reasoning}")
 
 
 # Factory function for easy access

@@ -26,6 +26,7 @@ import StreakHeatmap from './StreakHeatmap';
 import AchievementBadges from './AchievementBadges';
 import RadialProgress from './RadialProgress';
 import SmartRecommendations from './SmartRecommendations';
+import StudyPlanner from './StudyPlanner';
 // V1: Leaderboard hidden - will enable in V2 with Mock Tests
 // import LiveLeaderboard from './LiveLeaderboard';
 import UsageMeter from '../UsageMeter';
@@ -76,9 +77,23 @@ const PremiumDashboard = () => {
   const [legacyStreak, setLegacyStreak] = useState(0);
 
   useEffect(() => {
-    loadDashboardData();
-    loadUserProgress();
-    loadUsageData();
+    // Batch all API calls with Promise.allSettled to avoid race conditions
+    const loadAllData = async () => {
+      const results = await Promise.allSettled([
+        loadDashboardData(),
+        loadUserProgress(),
+        loadUsageData()
+      ]);
+      
+      // Log any failures for debugging
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.warn(`Dashboard API call ${index} failed:`, result.reason);
+        }
+      });
+    };
+    
+    loadAllData();
   }, []);
 
   useEffect(() => {
@@ -92,8 +107,12 @@ const PremiumDashboard = () => {
 
   /**
    * Load dashboard analytics from backend
+   * Uses AbortController for 10s timeout to prevent hanging
    */
   const loadDashboardData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
     try {
       setLoading(true);
       const token = localStorage.getItem('dhruv_ai_token');
@@ -102,8 +121,11 @@ const PremiumDashboard = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -124,8 +146,15 @@ const PremiumDashboard = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-      setError('Unable to connect to server. Please check your internet connection.');
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        console.error('Dashboard data request timed out');
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        console.error('Failed to load dashboard data:', error);
+        setError('Unable to connect to server. Please check your internet connection.');
+      }
       // Set safe defaults
       setDashboardData({
         study_time_today: "0h 0m",
@@ -141,15 +170,22 @@ const PremiumDashboard = () => {
 
   /**
    * Load user XP and level from backend
+   * Uses AbortController for 10s timeout
    */
   const loadUserProgress = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       const response = await fetch(`${BACKEND_URL}/api/user/progress`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -161,6 +197,7 @@ const PremiumDashboard = () => {
         setUserLevel(1);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Failed to load user progress:', error);
       // Default to 0 for new users
       setUserXP(0);
@@ -170,20 +207,27 @@ const PremiumDashboard = () => {
 
   /**
    * Load usage data for subscription meters
+   * Uses AbortController for 10s timeout
    */
   const loadUsageData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
     try {
       const token = localStorage.getItem('dhruv_ai_token');
       const response = await fetch(`${BACKEND_URL}/api/subscription/usage`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        // Map API response to expected format
-        // API returns: { subscription_tier, usage: { feature_name: { used, limit, remaining } } }
+        // Normalize API response to expected format
+        // Handle both { usage: { ai_mentor: {...} } } and { usage: { 'ai_mentor': {...} } }
         setUsageData(data);
       } else {
         // Default usage data for new users (free tier)
@@ -195,6 +239,7 @@ const PremiumDashboard = () => {
         });
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Failed to load usage data:', error);
       // Default usage data on error
       setUsageData({
@@ -672,6 +717,14 @@ const PremiumDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* 📚 AI Study Planner - Daily personalized study plan */}
+            <StudyPlanner 
+              onStartStudy={(topic) => {
+                // Navigate to Sathi with the topic
+                window.location.href = `/sathi?topic=${encodeURIComponent(topic)}`;
+              }}
+            />
 
             {/* Streak Heatmap */}
             <StreakHeatmap userId={user?.id} />

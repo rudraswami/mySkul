@@ -97,7 +97,7 @@ def get_appropriate_supervisor(query: str, config: dict) -> SupervisorAgent:
     Routing Strategy:
     - simple → SupervisorAgent (fast mode, <500ms)
     - standard → EnhancedSupervisor (RAG + math verify)
-    - complex → EnhancedSupervisor (full verify + knowledge graph)
+    - complex → EnhancedSupervisor (full verify + knowledge graph + hybrid reasoning)
     """
     complexity = analyze_query_complexity(query)
     logger.info(f"🎯 Query complexity: {complexity}")
@@ -113,21 +113,23 @@ def get_appropriate_supervisor(query: str, config: dict) -> SupervisorAgent:
             enable_rag=True,
             verify_math=True,
             verify_facts=False,  # Skip for speed
-            verify_logic=False
+            verify_logic=False,
+            enable_hybrid_reasoning=False  # Skip for speed
         )
         logger.info("🔧 Using EnhancedSupervisor (standard mode)")
         return supervisor
     
     elif complexity == "complex" and ENHANCED_SUPERVISOR_AVAILABLE:
-        # Full mode - complete verification + knowledge graph
+        # Full mode - complete verification + knowledge graph + hybrid reasoning
         supervisor = EnhancedSupervisor(config=config)
         supervisor.configure(
             enable_rag=True,
             verify_math=True,
             verify_facts=True,
-            verify_logic=True
+            verify_logic=True,
+            enable_hybrid_reasoning=True  # 🆕 Enable Neural + Symbolic + Graph for complex queries
         )
-        logger.info("🔧 Using EnhancedSupervisor (full verification mode)")
+        logger.info("🔧 Using EnhancedSupervisor (full verification + hybrid reasoning mode)")
         return supervisor
     
     # Fallback to standard SupervisorAgent
@@ -1791,6 +1793,9 @@ You MUST reference specific content from the image in your response."""
                             "response_style": learning_profile.get("preferences", {}).get("response_style")
                         }
                 
+                # Determine query complexity for advanced features
+                query_complexity = analyze_query_complexity(contextual_message)
+                
                 # Prepare enhanced context for agentic system
                 agentic_context = {
                     "subject": detected_subject,
@@ -1798,6 +1803,9 @@ You MUST reference specific content from the image in your response."""
                     "user_id": user.user_id,
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
                     "request_visual": True,  # Always request visual for neuro-symbolic
+                    # 🆕 Enable agent negotiation for complex queries
+                    "use_agent_negotiation": query_complexity == "complex",
+                    "query_complexity": query_complexity,
                     "student_profile": {
                         "name": user_name,  # Personalized!
                         "level": "class_12",
