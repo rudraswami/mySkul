@@ -205,32 +205,81 @@ Remember:
         mastery_level: int,
         context: Dict[str, Any]
     ) -> str:
-        """Generate formal professor response"""
+        """
+        Generate formal professor response.
+        
+        Model Priority:
+        1. Gemini Pro (fast, intelligent, deep reasoning)
+        2. DeepSeek (rigorous mathematical reasoning)
+        3. GPT-4o (fallback)
+        """
         
         # Build prompt
-        prompt = self._build_professor_prompt(
+        system_prompt = self._build_professor_prompt(
             query=query,
             subject=subject,
             rigor_level=rigor_level,
             mastery_level=mastery_level
         )
         
-        # Use LLM to generate response
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        import os
-        
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or self.config.get('emergent_llm_key')
-        
-        llm_chat = LlmChat(
-            api_key=emergent_llm_key,
-            session_id=f"professor_{context.get('user_id', 'unknown')}",
-            system_message=prompt
-        )
-        
-        user_message = UserMessage(text=query)
-        response = await llm_chat.send_message(user_message)
-        
-        return response if isinstance(response, str) else str(response)
+        try:
+            from core.config import settings
+            
+            # === PRIORITY 1: Gemini Pro (primary) ===
+            if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+                logger.info("⚡ ProfessorAgent using Gemini Pro for intelligent reasoning...")
+                from services.llm_service import call_gemini
+                
+                # Use Pro model for rigorous explanations
+                response = await call_gemini(
+                    prompt=query,
+                    api_key=settings.GEMINI_API_KEY,
+                    temperature=0.3,  # Lower for precision
+                    max_tokens=2000,
+                    model="gemini-1.5-pro",  # Pro for deep reasoning
+                    system_message=system_prompt,
+                    use_pro=True
+                )
+                return response if isinstance(response, str) else str(response)
+            
+            # === PRIORITY 2: DeepSeek (fallback for rigorous math) ===
+            if settings.USE_DEEPSEEK_REASONING and settings.DEEPSEEK_API_KEY:
+                logger.info("🧮 ProfessorAgent using DeepSeek for rigorous reasoning...")
+                from services.llm_service import call_deepseek
+                
+                response = await call_deepseek(
+                    prompt=query,
+                    api_key=settings.DEEPSEEK_API_KEY,
+                    temperature=0.3,
+                    max_tokens=1500,
+                    system_message=system_prompt
+                )
+                return response if isinstance(response, str) else str(response)
+            
+            # === PRIORITY 3: OpenAI GPT-4o (final fallback) ===
+            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            import os
+            
+            emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or self.config.get('emergent_llm_key')
+            
+            llm_chat = LlmChat(
+                api_key=emergent_llm_key,
+                session_id=f"professor_{context.get('user_id', 'unknown')}",
+                system_message=system_prompt
+            ).with_model("openai", "gpt-4o").with_params(
+                temperature=0.3,
+                max_tokens=1500
+            )
+            
+            user_message = UserMessage(text=query)
+            response = await llm_chat.send_message(user_message)
+            
+            return response if isinstance(response, str) else str(response)
+            
+        except Exception as e:
+            logger.error(f"❌ Professor LLM call failed: {e}")
+            # Return a basic response instead of failing
+            return f"Let me explain {subject} concept step by step. The key principle here involves understanding the fundamentals first, then building up to more complex applications."
     
     def _build_professor_prompt(
         self,

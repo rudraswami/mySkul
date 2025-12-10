@@ -48,6 +48,201 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# 🎨 DYNAMIC SECTION ENGINE - No More Templates!
+# =============================================================================
+class DynamicSectionEngine:
+    """
+    Generates response structure dynamically based on query analysis.
+    
+    NO static templates - every response is handcrafted based on:
+    - Query intent (concept / derivation / comparison / problem / doubt)
+    - Difficulty level (beginner / intermediate / advanced)
+    - Subject area (Physics / Chemistry / Math / Biology)
+    - Student emotional state (confused / exploring / confident)
+    - Visual relevance
+    - Exam relevance
+    """
+    
+    # Available sections with descriptions
+    AVAILABLE_SECTIONS = {
+        'title': '🏷️ Engaging title for the concept',
+        'simple_explanation': '🧠 Simple, intuitive explanation',
+        'deep_explanation': '🔬 Rigorous, detailed explanation',
+        'examples': '🧪 Practical examples and applications',
+        'visual_concept': '📘 Mental diagram or visualization',
+        'exam_tip': '🎯 Topic-specific exam insight',
+        'analogy': '💡 Relatable analogy or insight',
+        'formula_box': '📐 Key formulas with explanations',
+        'common_mistakes': '⚠️ Common pitfalls to avoid',
+        'follow_up': '❓ Engagement prompt for deeper learning',
+        'memory_hook': '🧲 Memory trick or mnemonic',
+        'quick_answer': '⚡ Direct answer for quick reference',
+        'steps': '📝 Step-by-step solution',
+        'comparison': '⚖️ Comparison table or analysis',
+        'historical_context': '📜 History and discovery story',
+    }
+    
+    @classmethod
+    def analyze_and_select(cls, query: str, subject: str, context: dict = None) -> dict:
+        """
+        Analyze query and select appropriate sections dynamically.
+        
+        Returns:
+            {
+                'sections': ['section1', 'section2', ...],
+                'tone': 'warm' | 'formal' | 'encouraging',
+                'depth': 'surface' | 'moderate' | 'deep',
+                'visual_needed': bool,
+                'exam_relevant': bool,
+                'structure_hint': str  # For LLM guidance
+            }
+        """
+        query_lower = query.lower()
+        context = context or {}
+        
+        # Default structure
+        result = {
+            'sections': [],
+            'tone': 'warm',
+            'depth': 'moderate',
+            'visual_needed': False,
+            'exam_relevant': False,
+            'structure_hint': ''
+        }
+        
+        # ======================
+        # 1. DETECT QUERY TYPE
+        # ======================
+        
+        # Derivation/Proof queries
+        if any(w in query_lower for w in ['derive', 'proof', 'prove', 'show that']):
+            result['sections'] = ['title', 'simple_explanation', 'steps', 'formula_box', 'exam_tip']
+            result['depth'] = 'deep'
+            result['structure_hint'] = 'Start with intuition, then rigorous derivation with each step justified'
+        
+        # Comparison queries
+        elif any(w in query_lower for w in ['difference', 'compare', 'versus', 'vs', 'distinguish']):
+            result['sections'] = ['title', 'simple_explanation', 'comparison', 'examples', 'exam_tip']
+            result['structure_hint'] = 'Use clear comparison with specific differences highlighted'
+        
+        # Problem-solving queries
+        elif any(w in query_lower for w in ['solve', 'calculate', 'find', 'determine', 'compute']):
+            result['sections'] = ['quick_answer', 'steps', 'formula_box', 'common_mistakes', 'exam_tip']
+            result['depth'] = 'deep'
+            result['structure_hint'] = 'Show clear step-by-step solution with formula usage'
+        
+        # Definition/Concept queries
+        elif any(w in query_lower for w in ['what is', 'what are', 'define', 'meaning of']):
+            result['sections'] = ['title', 'simple_explanation', 'examples', 'visual_concept', 'follow_up']
+            result['depth'] = 'moderate'
+            result['structure_hint'] = 'Start with simple definition, build to deeper understanding'
+        
+        # Explanation queries
+        elif any(w in query_lower for w in ['why', 'how does', 'explain', 'reason']):
+            result['sections'] = ['title', 'simple_explanation', 'deep_explanation', 'analogy', 'examples']
+            result['depth'] = 'moderate'
+            result['structure_hint'] = 'Build intuition first, then explain mechanism'
+        
+        # Doubt/Confusion queries
+        elif any(w in query_lower for w in ['confused', "don't understand", 'stuck', 'help']):
+            result['sections'] = ['simple_explanation', 'analogy', 'visual_concept', 'examples', 'follow_up']
+            result['tone'] = 'encouraging'
+            result['structure_hint'] = 'Start with reassurance, use simple analogies, check understanding'
+        
+        # Default: balanced explanation
+        else:
+            result['sections'] = ['title', 'simple_explanation', 'examples', 'follow_up']
+            result['structure_hint'] = 'Provide clear, engaging explanation with practical examples'
+        
+        # ======================
+        # 2. ADJUST FOR SUBJECT
+        # ======================
+        subject_lower = (subject or '').lower()
+        
+        if 'physics' in subject_lower:
+            if 'visual_concept' not in result['sections']:
+                result['sections'].insert(2, 'visual_concept')
+            result['visual_needed'] = True
+            
+        elif 'math' in subject_lower:
+            if 'formula_box' not in result['sections']:
+                result['sections'].append('formula_box')
+            if 'steps' not in result['sections'] and 'solve' in query_lower:
+                result['sections'].insert(1, 'steps')
+                
+        elif 'chemistry' in subject_lower:
+            if 'visual_concept' not in result['sections']:
+                result['sections'].insert(2, 'visual_concept')
+            result['visual_needed'] = True
+            
+        elif 'biology' in subject_lower:
+            if 'examples' not in result['sections']:
+                result['sections'].append('examples')
+        
+        # ======================
+        # 3. EXAM RELEVANCE
+        # ======================
+        exam_indicators = ['jee', 'neet', 'cbse', 'board', 'exam', 'important', 'pyq']
+        if any(ind in query_lower for ind in exam_indicators):
+            result['exam_relevant'] = True
+            if 'exam_tip' not in result['sections']:
+                result['sections'].append('exam_tip')
+        
+        # ======================
+        # 4. STUDENT CONTEXT ADJUSTMENT
+        # ======================
+        if context.get('emotion') == 'frustrated':
+            result['tone'] = 'encouraging'
+            if 'analogy' not in result['sections']:
+                result['sections'].insert(1, 'analogy')
+        
+        if context.get('mastery_level', 50) < 30:
+            result['depth'] = 'surface'
+            result['sections'] = [s for s in result['sections'] if s != 'deep_explanation']
+            
+        elif context.get('mastery_level', 50) > 80:
+            result['depth'] = 'deep'
+            if 'deep_explanation' not in result['sections']:
+                result['sections'].insert(2, 'deep_explanation')
+        
+        # Limit to max 6 sections for readability
+        result['sections'] = result['sections'][:6]
+        
+        return result
+    
+    @classmethod
+    def build_structure_prompt(cls, analysis: dict) -> str:
+        """Build LLM prompt guidance based on analysis"""
+        sections = analysis['sections']
+        tone = analysis['tone']
+        depth = analysis['depth']
+        hint = analysis['structure_hint']
+        
+        section_guides = []
+        for section in sections:
+            desc = cls.AVAILABLE_SECTIONS.get(section, section)
+            section_guides.append(f"- {desc}")
+        
+        prompt = f"""RESPONSE STRUCTURE:
+{chr(10).join(section_guides)}
+
+TONE: {tone.upper()} - {'Be warm, friendly, encouraging' if tone == 'warm' else 'Be supportive, patient, reassuring' if tone == 'encouraging' else 'Be clear, precise, professional'}
+
+DEPTH: {depth.upper()} - {'Keep it simple, use basic language' if depth == 'surface' else 'Balance accessibility with completeness' if depth == 'moderate' else 'Be thorough, rigorous, comprehensive'}
+
+GUIDANCE: {hint}
+
+IMPORTANT:
+- Make the response feel handcrafted, not templated
+- Use engaging headings (not generic ones)
+- Flow naturally between sections
+- Add personality and warmth
+- Use emojis sparingly but effectively"""
+        
+        return prompt
+
+
 class ResponseComposer:
     """
     Unified response generation engine.
@@ -231,33 +426,43 @@ class ResponseComposer:
             cached_copy["generation_time"] = 0.01
             return cached_copy
         
-        # Step 6: Single LLM call with optimized parameters + TIMEOUT
-        model = self._select_model(intent, question)
+        # Step 6: Intelligent model selection and call
+        provider, model_name = self._select_model(intent, question)
         max_tokens = self._get_max_tokens(intent)
         timeout = self._get_timeout(intent)
         
-        logger.info(f"🤖 Using model: {model}, max_tokens: {max_tokens}, timeout: {timeout}s")
+        logger.info(f"🤖 Using {provider}/{model_name}, max_tokens: {max_tokens}, timeout: {timeout}s")
         
         try:
-            llm_chat = LlmChat(
-                api_key=self.llm_api_key,
-                session_id=f"tutor_{user_id}_{session_id}",
-                system_message=prompt
-            ).with_model("openai", model).with_params(
-                temperature=0.8,        # Slightly higher for more natural responses
-                top_p=0.92,
-                max_tokens=max_tokens,
-                presence_penalty=0.4,   # Reduce repetition
-                frequency_penalty=0.3   # More varied vocabulary
-            )
-            
-            user_message = UserMessage(text=question)
-            
-            # CRITICAL: Add timeout to prevent infinite waits
-            raw_response = await asyncio.wait_for(
-                llm_chat.send_message(user_message),
-                timeout=timeout
-            )
+            # === GEMINI - Primary (fast + intelligent) ===
+            if provider == "gemini":
+                raw_response = await self._call_gemini(
+                    prompt=prompt,
+                    question=question,
+                    model=model_name,
+                    max_tokens=max_tokens,
+                    timeout=timeout
+                )
+            # === OpenAI - Fallback ===
+            else:
+                llm_chat = LlmChat(
+                    api_key=self.llm_api_key,
+                    session_id=f"tutor_{user_id}_{session_id}",
+                    system_message=prompt
+                ).with_model("openai", model_name).with_params(
+                    temperature=0.8,
+                    top_p=0.92,
+                    max_tokens=max_tokens,
+                    presence_penalty=0.4,
+                    frequency_penalty=0.3
+                )
+                
+                user_message = UserMessage(text=question)
+                
+                raw_response = await asyncio.wait_for(
+                    llm_chat.send_message(user_message),
+                    timeout=timeout
+                )
             
         except asyncio.TimeoutError:
             logger.warning(f"⏰ LLM call timeout after {timeout}s - using fallback")
@@ -563,7 +768,18 @@ If the student asks about "what we discussed" or "earlier", refer to the topics 
         # Subject context
         subject_block = f"\nSUBJECT: {subject}" if subject else ""
         
-        # Combine (total should be <100 lines)
+        # 🎨 DYNAMIC SECTION ENGINE - No more templates!
+        dynamic_analysis = DynamicSectionEngine.analyze_and_select(
+            query=question,
+            subject=subject or 'General',
+            context={
+                'emotion': state.get('emotion'),
+                'mastery_level': state.get('mastery_level', 50)
+            }
+        )
+        dynamic_structure = DynamicSectionEngine.build_structure_prompt(dynamic_analysis)
+        
+        # Combine with dynamic structure
         prompt = f"""{base}
 {context_block}
 {state_block}
@@ -571,7 +787,9 @@ If the student asks about "what we discussed" or "earlier", refer to the topics 
 
 {intent_instructions}
 
-Answer naturally. Be helpful and direct."""
+{dynamic_structure}
+
+Answer naturally. Make it feel premium and handcrafted."""
         
         return prompt
     
@@ -636,17 +854,29 @@ Then summarize key differences in 2-3 bullets.""",
         
         return instructions.get(intent, instructions["explanation"])
     
-    def _select_model(self, intent: str, question: str) -> str:
+    def _select_model(self, intent: str, question: str) -> tuple:
         """
-        Select the appropriate model based on complexity.
+        Select the best model based on complexity and intent.
         
-        OPTIMIZED: Use gpt-4o-mini for ~70% of questions (much faster)
-        Only use gpt-4o for truly complex derivations/proofs.
+        PRIORITY:
+        1. Gemini 2.0 Flash - Primary (fast + intelligent)
+        2. Gemini 1.5 Pro - Deep reasoning (proofs, derivations)
+        3. GPT-4o - Fallback for specific cases
+        
+        Returns:
+            tuple: (provider, model_name)
+            - provider: "gemini" | "openai"
+            - model_name: specific model identifier
         """
+        from core.config import settings
+        
         q_lower = question.lower()
         word_count = len(question.split())
         
-        # ALWAYS use fast model for these intents (no exceptions)
+        # Check if Gemini is available
+        use_gemini = getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', '')
+        
+        # Fast intents - use Gemini Flash (lightning fast)
         fast_intents = {
             "greeting", "conversational", "simple_fact", 
             "verification", "definition", "example",
@@ -654,13 +884,17 @@ Then summarize key differences in 2-3 bullets.""",
         }
         
         if intent in fast_intents:
-            return "gpt-4o-mini"
+            if use_gemini:
+                return ("gemini", "gemini-2.0-flash")
+            return ("openai", "gpt-4o-mini")
         
-        # Short questions always use fast model
+        # Short questions - fast model
         if word_count < 12:
-            return "gpt-4o-mini"
+            if use_gemini:
+                return ("gemini", "gemini-2.0-flash")
+            return ("openai", "gpt-4o-mini")
         
-        # Casual/reminder/chit-chat questions use fast model
+        # Casual patterns - fast model
         casual_patterns = [
             "remind", "hello", "hi ", "hey", "thanks", "thank you",
             "good morning", "good night", "how are", "bye", "ok",
@@ -668,20 +902,27 @@ Then summarize key differences in 2-3 bullets.""",
             "preparation", "study", "schedule", "plan", "tomorrow"
         ]
         if any(pat in q_lower for pat in casual_patterns):
-            return "gpt-4o-mini"
+            if use_gemini:
+                return ("gemini", "gemini-2.0-flash")
+            return ("openai", "gpt-4o-mini")
         
-        # Only use gpt-4o for complex academic work
+        # Complex academic work - use Gemini Pro for deep reasoning
         complex_patterns = [
             "derive", "prove", "derivation", "proof",
             "step by step", "detailed explanation",
-            "compare and contrast", "analyze", "evaluate"
+            "compare and contrast", "analyze", "evaluate",
+            "explain why", "how does", "mechanism"
         ]
         
         if any(pat in q_lower for pat in complex_patterns) and word_count > 15:
-            return "gpt-4o"
+            if use_gemini:
+                return ("gemini", "gemini-1.5-pro")  # Deep reasoning
+            return ("openai", "gpt-4o")
         
-        # Default to fast model (most questions don't need gpt-4o)
-        return "gpt-4o-mini"
+        # Default - Gemini Flash (best balance of speed + intelligence)
+        if use_gemini:
+            return ("gemini", "gemini-2.0-flash")
+        return ("openai", "gpt-4o-mini")
     
     def _get_timeout(self, intent: str) -> int:
         """Get appropriate timeout based on intent complexity."""
@@ -698,6 +939,112 @@ Then summarize key differences in 2-3 bullets.""",
         
         # Complex responses
         return self.TIMEOUT_COMPLEX  # 45s
+    
+    async def _call_gemini(
+        self,
+        prompt: str,
+        question: str,
+        model: str = "gemini-2.0-flash",
+        max_tokens: int = 1000,
+        timeout: int = 30
+    ) -> str:
+        """
+        Call Gemini API for intelligent, fast responses.
+        
+        Gemini advantages:
+        - Lightning-fast responses (especially Flash model)
+        - Deep conceptual understanding
+        - Better at educational content
+        - Long context window
+        
+        Args:
+            prompt: System prompt with personality and context
+            question: Student's question
+            model: Gemini model to use
+            max_tokens: Maximum response tokens
+            timeout: Request timeout in seconds
+        
+        Returns:
+            Response text from Gemini
+        """
+        try:
+            import google.generativeai as genai
+            from core.config import settings
+            
+            # Configure Gemini
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            
+            logger.info(f"⚡ Calling Gemini ({model}) for response...")
+            
+            # Create the model with configuration
+            generation_config = genai.GenerationConfig(
+                temperature=0.8,
+                max_output_tokens=max_tokens,
+                top_p=0.95,
+                top_k=40
+            )
+            
+            model_instance = genai.GenerativeModel(
+                model_name=model,
+                generation_config=generation_config,
+                system_instruction=prompt
+            )
+            
+            # Generate response with timeout
+            response = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: model_instance.generate_content(question)
+                ),
+                timeout=timeout
+            )
+            
+            result = response.text
+            logger.info(f"✅ Gemini response received ({len(result)} chars)")
+            
+            return result
+            
+        except ImportError:
+            logger.error("❌ google-generativeai not installed")
+            # Fallback to OpenAI
+            return await self._call_openai_fallback(prompt, question, max_tokens, timeout)
+            
+        except asyncio.TimeoutError:
+            logger.warning(f"⏱️ Gemini timeout after {timeout}s")
+            raise
+            
+        except Exception as e:
+            logger.error(f"❌ Gemini call failed: {e}")
+            # Fallback to OpenAI
+            return await self._call_openai_fallback(prompt, question, max_tokens, timeout)
+    
+    async def _call_openai_fallback(
+        self,
+        prompt: str,
+        question: str,
+        max_tokens: int,
+        timeout: int
+    ) -> str:
+        """Fallback to OpenAI if Gemini fails"""
+        logger.info("↩️ Falling back to OpenAI...")
+        
+        llm_chat = LlmChat(
+            api_key=self.llm_api_key,
+            session_id=f"fallback_{time.time()}",
+            system_message=prompt
+        ).with_model("openai", "gpt-4o-mini").with_params(
+            temperature=0.8,
+            max_tokens=max_tokens
+        )
+        
+        user_message = UserMessage(text=question)
+        
+        response = await asyncio.wait_for(
+            llm_chat.send_message(user_message),
+            timeout=timeout
+        )
+        
+        return response if isinstance(response, str) else str(response)
     
     def _get_max_tokens(self, intent: str) -> int:
         """Get appropriate token limit based on intent."""

@@ -144,20 +144,82 @@ class ReActAgent(ABC):
     """
     
     # Default timeout in seconds for the entire ReAct loop
-    DEFAULT_GLOBAL_TIMEOUT = 25.0
+    DEFAULT_GLOBAL_TIMEOUT = 45.0  # Increased from 25s for deeper reasoning
+    
+    # Adaptive iteration limits based on complexity
+    ITERATION_LIMITS = {
+        'trivial': 3,
+        'simple': 5,
+        'moderate': 8,
+        'complex': 12,
+        'deep': 15,  # For proofs, derivations, multi-step problems
+    }
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.llm_key = self.config.get('emergent_llm_key') or os.environ.get('EMERGENT_LLM_KEY')
         self.tool_registry = None  # Set by subclass or injected
         self.memory = None  # Set by subclass or injected
-        self.max_iterations = self.config.get('max_iterations', 10)
+        self.base_max_iterations = self.config.get('max_iterations', 10)
+        self.max_iterations = self.base_max_iterations  # Will be adjusted dynamically
         self.verbose = self.config.get('verbose', True)
         
         # Global timeout for entire ReAct loop (configurable)
         self.global_timeout = self.config.get('global_timeout', self.DEFAULT_GLOBAL_TIMEOUT)
         
         logger.info(f"🤖 {self.get_agent_name()} initialized (ReAct mode, timeout={self.global_timeout}s)")
+    
+    def _get_adaptive_iterations(self, query: str, context: Dict[str, Any]) -> int:
+        """
+        Dynamically determine max iterations based on query complexity.
+        
+        Deep reasoning queries get more iterations.
+        Simple queries get fewer to save time.
+        """
+        import re
+        query_lower = query.lower()
+        word_count = len(query.split())
+        
+        # DEEP complexity indicators
+        deep_indicators = [
+            'prove', 'proof', 'derive', 'derivation', 'show that',
+            'step by step completely', 'rigorous', 'comprehensive',
+        ]
+        if any(ind in query_lower for ind in deep_indicators):
+            logger.info("📊 Query complexity: DEEP (15 iterations)")
+            return self.ITERATION_LIMITS['deep']
+        
+        # COMPLEX indicators
+        complex_indicators = [
+            'solve', 'calculate', 'compare and contrast', 'analyze',
+            'detailed', 'explain mechanism', 'why does', 'how does',
+        ]
+        if any(ind in query_lower for ind in complex_indicators):
+            logger.info("📊 Query complexity: COMPLEX (12 iterations)")
+            return self.ITERATION_LIMITS['complex']
+        
+        # Mathematical content
+        if re.search(r'\d+\s*[+\-*/^=]\s*\d+|f\(x\)|d[xy]/d[xy]', query_lower):
+            logger.info("📊 Query complexity: COMPLEX (mathematical)")
+            return self.ITERATION_LIMITS['complex']
+        
+        # MODERATE indicators
+        moderate_indicators = ['explain', 'what is', 'difference between', 'describe']
+        if any(ind in query_lower for ind in moderate_indicators):
+            if word_count > 10:
+                logger.info("📊 Query complexity: MODERATE (8 iterations)")
+                return self.ITERATION_LIMITS['moderate']
+            logger.info("📊 Query complexity: SIMPLE (5 iterations)")
+            return self.ITERATION_LIMITS['simple']
+        
+        # Long queries need more iterations
+        if word_count > 20:
+            logger.info("📊 Query complexity: MODERATE (long query)")
+            return self.ITERATION_LIMITS['moderate']
+        
+        # Default to moderate
+        logger.info("📊 Query complexity: DEFAULT/MODERATE")
+        return self.ITERATION_LIMITS['moderate']
     
     @abstractmethod
     def get_agent_name(self) -> str:
@@ -281,12 +343,20 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
     ) -> Dict[str, Any]:
         """
         Internal ReAct loop - separated for timeout wrapping.
+        
+        Uses ADAPTIVE iteration limits based on query complexity:
+        - Simple queries: fewer iterations (faster response)
+        - Complex queries: more iterations (deeper reasoning)
         """
+        # Get adaptive iteration limit based on query complexity
+        adaptive_max = self._get_adaptive_iterations(query, context)
+        self.max_iterations = adaptive_max
+        
         # Initialize state
         state = AgentState(
             query=query,
             context=context,
-            max_iterations=self.max_iterations
+            max_iterations=adaptive_max
         )
         
         try:
@@ -545,10 +615,19 @@ I hope this helps! Let me know if you'd like me to explore further."""
     
     def _format_response(self, state: AgentState) -> Dict[str, Any]:
         """Format the final response"""
+        # Fix escaped newlines in final answer (LLM returns \n as literal string)
+        content = state.final_answer or ""
+        if content:
+            # Replace literal \n with actual newlines
+            content = content.replace('\\n', '\n')
+            # Also handle other common escape sequences
+            content = content.replace('\\t', '\t')
+            content = content.replace('\\"', '"')
+        
         return {
             "success": True,
             "agent": self.get_agent_name(),
-            "content": state.final_answer,
+            "content": content,
             "confidence": state.confidence,
             "reasoning_chain": [ta.to_dict() for ta in state.reasoning_chain],
             "tools_used": state.tools_used,

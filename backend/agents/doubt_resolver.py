@@ -21,113 +21,190 @@ logger = logging.getLogger(__name__)
 
 def is_doubt_query(query: str) -> bool:
     """
-    Detect if this is a TRUE doubt/confusion query that needs special handling.
+    UPGRADED: Intelligent doubt detection with multi-signal analysis.
     
-    IMPORTANT: This is now RESTRICTIVE by design.
-    - Normal tutor questions ("what is X", "explain Y") → go to ResponseComposer
-    - TRUE confusion/frustration ("I don't understand", "still confused") → doubt resolver
+    Now uses SMART ROUTING instead of restrictive pattern matching:
+    - Analyzes conceptual depth needed
+    - Detects implicit confusion (not just explicit phrases)
+    - Routes complex educational queries to multi-agent system
     
     Returns:
-        True ONLY for genuine confusion/doubt expressions, not general questions
+        True for queries that benefit from multi-agent reasoning
     """
     query_lower = query.lower().strip()
+    word_count = len(query.split())
     
     # ==========================================================================
-    # TIER 1: EXPLICIT CONFUSION/FRUSTRATION (High confidence - route to doubt)
+    # TIER 1: EXPLICIT CONFUSION (High confidence - always route)
     # ==========================================================================
     explicit_confusion = [
-        # Direct confusion statements
         "don't understand", "dont understand", "do not understand",
-        "not understanding", "can't understand", "cannot understand",
         "confused about", "i'm confused", "i am confused", "so confused",
-        "still confused", "very confused", "really confused",
-        "makes no sense", "doesn't make sense", "does not make sense",
-        "not making sense", "can't make sense",
-        
-        # Stuck/blocked expressions
-        "i'm stuck", "i am stuck", "getting stuck", "got stuck",
-        "can't figure", "cannot figure", "can't get", "cannot get",
-        "struggling with", "struggling to understand",
-        
-        # Frustration indicators
-        "still don't get", "still dont get", "still not getting",
-        "not getting it", "don't get it", "dont get it",
-        "what am i missing", "what am i doing wrong",
-        "where am i going wrong", "help me understand",
-        
-        # Request for re-explanation
-        "explain again", "explain it again", "one more time",
-        "say that again", "repeat that", "clarify this",
-        "i need clarification", "need more clarification",
-        
-        # Hindi/Hinglish confusion expressions
-        "samajh nahi aa raha", "samajh nahi aaya", "समझ नहीं आ रहा",
-        "samajh me nahi", "clear nahi hai", "confuse ho gaya",
+        "makes no sense", "doesn't make sense", "not making sense",
+        "i'm stuck", "i am stuck", "can't figure", "cannot figure",
+        "struggling with", "not getting it", "don't get it",
+        "help me understand", "explain again", "clarify this",
+        "samajh nahi aa raha", "clear nahi hai", "confuse ho gaya",
     ]
     
     if any(phrase in query_lower for phrase in explicit_confusion):
-        logger.info(f"🤔 TRUE DOUBT detected (explicit confusion): '{query[:50]}...'")
+        logger.info(f"🤔 Routing to multi-agent (explicit confusion): '{query[:50]}...'")
         return True
     
     # ==========================================================================
-    # TIER 2: CONTEXTUAL DOUBT PATTERNS (needs additional signals)
+    # TIER 2: DEEP CONCEPTUAL QUERIES (benefit from multi-agent reasoning)
     # ==========================================================================
-    # These patterns ONLY trigger if combined with emotional/struggle indicators
-    contextual_patterns = [
-        "why does", "why is", "why do", "why are",
-        "how does", "how is", "how do", "how can",
+    deep_concept_indicators = [
+        # Derivations and proofs
+        "derive", "derivation", "prove", "proof", "show that",
+        # Conceptual understanding
+        "why does", "why is", "why do", "how does", "how is",
+        "what is the reason", "what causes", "what happens when",
+        # Comparisons and analysis
+        "difference between", "compare", "contrast", "versus", "vs",
+        "relation between", "relationship between", "connection between",
+        # Explanations
+        "explain the mechanism", "explain how", "explain why",
+        "intuition behind", "physical significance", "conceptual meaning",
+        # Problem solving
+        "solve step by step", "step by step", "show steps",
+        "calculate", "find the value", "determine",
     ]
     
-    struggle_indicators = [
-        "but", "though", "however", "still", "yet",
-        "?", "not sure", "doubt", "unclear", "confusing",
-        "tricky", "hard to", "difficult to"
-    ]
-    
-    # Only route to doubt if pattern + struggle indicator present
-    has_contextual = any(p in query_lower for p in contextual_patterns)
-    has_struggle = any(s in query_lower for s in struggle_indicators) and len(query_lower) > 50
-    
-    if has_contextual and has_struggle:
-        logger.info(f"🤔 TRUE DOUBT detected (contextual + struggle): '{query[:50]}...'")
+    if any(ind in query_lower for ind in deep_concept_indicators):
+        logger.info(f"🤔 Routing to multi-agent (deep conceptual): '{query[:50]}...'")
         return True
     
     # ==========================================================================
-    # DEFAULT: NOT A DOUBT - Let ResponseComposer handle it
+    # TIER 3: COMPLEXITY-BASED ROUTING
     # ==========================================================================
-    # Normal questions like "what is Newton's first law" should NOT come here
+    # Long queries usually need multi-agent reasoning
+    if word_count > 15:
+        # Check for educational content indicators
+        edu_indicators = [
+            "physics", "chemistry", "math", "biology", "formula",
+            "equation", "theorem", "law", "principle", "concept",
+            "jee", "neet", "cbse", "board", "exam",
+        ]
+        if any(ind in query_lower for ind in edu_indicators):
+            logger.info(f"🤔 Routing to multi-agent (complex educational): '{query[:50]}...'")
+            return True
+    
+    # ==========================================================================
+    # TIER 4: IMPLICIT DEPTH INDICATORS
+    # ==========================================================================
+    # Questions that seem simple but need deep understanding
+    implicit_depth = [
+        "but why", "but how", "what if", "what about",
+        "is it true that", "i thought", "i heard",
+        "can you explain", "please explain", "tell me more",
+        "in detail", "in depth", "thoroughly",
+    ]
+    
+    if any(phrase in query_lower for phrase in implicit_depth):
+        logger.info(f"🤔 Routing to multi-agent (implicit depth): '{query[:50]}...'")
+        return True
+    
+    # ==========================================================================
+    # DEFAULT: Simple queries go to fast path
+    # ==========================================================================
     return False
 
 
 def is_deep_reasoning_query(query: str) -> bool:
     """
-    Detect if query needs deep multi-step reasoning (ReAct with tools).
+    UPGRADED: Smart detection for queries needing ReAct loop with tools.
     
-    This is for complex problems that benefit from tool usage and verification,
-    NOT for simple conceptual questions.
+    Routes to full agentic system for:
+    - Multi-step mathematical problems
+    - Proofs and derivations
+    - Problems requiring verification
+    - Complex analysis tasks
     """
     query_lower = query.lower().strip()
+    word_count = len(query.split())
     
-    deep_reasoning_triggers = [
-        # Multi-step problem solving
-        "solve this step by step", "show all steps", "step by step solution",
-        "derive and prove", "prove that", "prove this",
-        "calculate and explain", "solve and verify",
-        
-        # Complex comparisons needing research
-        "compare and contrast in detail", "detailed comparison",
-        "analyze the differences", "comprehensive analysis",
-        
-        # Verification requests
-        "verify my solution", "check my answer", "is this correct",
-        "check if this is right", "verify this calculation",
-        
-        # Research-heavy queries
-        "find all the formulas", "list all methods",
-        "what are all the ways", "explain with examples from",
+    # ==========================================================================
+    # TIER 1: EXPLICIT DEEP REASONING NEEDS
+    # ==========================================================================
+    explicit_deep = [
+        # Proofs and derivations
+        "prove", "proof", "derive", "derivation", "show that",
+        "demonstrate that", "establish that",
+        # Multi-step solutions
+        "step by step", "show steps", "show all steps",
+        "solve completely", "full solution",
+        # Verification
+        "verify", "check my", "is this correct", "am i right",
+        "validate", "confirm",
+        # Analysis
+        "analyze", "analyse", "comprehensive", "detailed explanation",
+        "in depth", "thorough explanation",
     ]
     
-    return any(trigger in query_lower for trigger in deep_reasoning_triggers)
+    if any(trigger in query_lower for trigger in explicit_deep):
+        return True
+    
+    # ==========================================================================
+    # TIER 2: MATHEMATICAL/SCIENTIFIC COMPLEXITY
+    # ==========================================================================
+    # Problems with numbers, equations, or scientific notation
+    import re
+    
+    math_patterns = [
+        r'\d+\s*[+\-*/^=]\s*\d+',  # Arithmetic
+        r'x\s*[+\-*/^=]',  # Algebra
+        r'd[xy]/d[xy]',  # Derivatives
+        r'∫|integral|integrate',  # Integrals
+        r'sin|cos|tan|log|ln',  # Functions
+        r'matrix|vector|determinant',  # Linear algebra
+        r'probability|permutation|combination',  # Probability
+        r'mole|concentration|molarity',  # Chemistry
+        r'force|velocity|acceleration|momentum',  # Physics
+    ]
+    
+    for pattern in math_patterns:
+        if re.search(pattern, query_lower):
+            # If math + word count > 10, likely needs deep reasoning
+            if word_count > 10:
+                return True
+    
+    # ==========================================================================
+    # TIER 3: SUBJECT-SPECIFIC COMPLEXITY
+    # ==========================================================================
+    jee_neet_topics = [
+        # Physics JEE/NEET
+        "mechanics", "thermodynamics", "electromagnetism", "optics",
+        "semiconductor", "modern physics", "wave motion",
+        # Chemistry JEE/NEET
+        "organic chemistry", "inorganic chemistry", "physical chemistry",
+        "electrochemistry", "chemical kinetics", "equilibrium",
+        # Math JEE
+        "calculus", "coordinate geometry", "trigonometry",
+        "differential equation", "complex number", "probability",
+        # Biology NEET
+        "genetics", "evolution", "ecology", "human physiology",
+    ]
+    
+    if any(topic in query_lower for topic in jee_neet_topics):
+        # These topics usually need multi-step reasoning
+        return True
+    
+    # ==========================================================================
+    # TIER 4: COMPLEXITY BY LENGTH AND STRUCTURE
+    # ==========================================================================
+    # Long queries with multiple parts usually need deep reasoning
+    if word_count > 25:
+        return True
+    
+    # Questions with multiple parts
+    if query_lower.count('?') > 1:
+        return True
+    
+    if any(phrase in query_lower for phrase in ['and also', 'additionally', 'furthermore', 'as well as']):
+        return True
+    
+    return False
 
 
 # ==========================================================================

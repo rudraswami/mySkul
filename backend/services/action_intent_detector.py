@@ -158,13 +158,26 @@ class ActionIntentDetector:
             r'book\s+(?:a\s+)?(?:study\s+)?(?:time|session)',
             r'when\s+should\s+i\s+study',
         ],
+    }
+    
+    # NON-ACTION patterns - conversational, just acknowledge nicely, don't try to execute an action
+    NON_ACTION_PATTERNS = {
         IntentType.FEEDBACK: [
             r'(?:this|that)\s+(?:was|is)\s+(?:helpful|good|bad|wrong)',
             r'👍|👎|❤️',
-            r'thanks?|thank\s+you',
             r'(?:not\s+)?helpful',
         ],
     }
+    
+    # GRATITUDE patterns - special handling for warm response (not action, not information)
+    GRATITUDE_PATTERNS = [
+        r'^thanks?(?:\s*(?:you|so\s+much|a\s+lot|buddy|bro|man|dude|yaar)?)?[!\.\s]*$',
+        r'^thank\s+you(?:\s*(?:so\s+much|very\s+much|a\s+lot)?)?[!\.\s]*$',
+        r'^(?:tysm|ty|thx|thnx|thnks?)[!\.\s]*$',
+        r'^(?:धन्यवाद|शुक्रिया|thanks\s+yaar)[!\.\s]*$',
+        r'^(?:appreciate\s+(?:it|that)|much\s+appreciated)[!\.\s]*$',
+        r'^(?:great|awesome|perfect|nice|cool|ok(?:ay)?|got\s+it|understood)[!\.\s]*$',
+    ]
     
     # Patterns for INFORMATION intents (just need LLM response)
     INFO_PATTERNS = [
@@ -217,6 +230,16 @@ class ActionIntentDetector:
                 original_text=text
             )
         
+        # Check for gratitude/acknowledgment (needs warm response, not action)
+        if self._is_gratitude(text_lower):
+            return DetectedIntent(
+                intent_type=IntentType.FEEDBACK,
+                confidence=0.95,
+                requires_action=False,  # NOT an action - just conversational
+                extracted_params={'sentiment': 'positive', 'type': 'gratitude'},
+                original_text=text
+            )
+        
         # Check for ACTION intents
         for intent_type, patterns in self.ACTION_PATTERNS.items():
             for pattern in patterns:
@@ -255,6 +278,13 @@ class ActionIntentDetector:
     def _is_greeting(self, text: str) -> bool:
         """Check if text is just a greeting"""
         for pattern in self.GREETING_PATTERNS:
+            if re.match(pattern, text, re.IGNORECASE):
+                return True
+        return False
+    
+    def _is_gratitude(self, text: str) -> bool:
+        """Check if text is expressing gratitude or acknowledgment"""
+        for pattern in self.GRATITUDE_PATTERNS:
             if re.match(pattern, text, re.IGNORECASE):
                 return True
         return False

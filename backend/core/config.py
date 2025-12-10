@@ -150,6 +150,37 @@ class Settings:
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "4000"))
     
     # =============================================================================
+    # GEMINI PRO - PRIMARY REASONING MODEL (Lightning fast, deeply intelligent)
+    # =============================================================================
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyDsaHaCP3Xyctp7ndgwuX2NcY0wy8K-xUg")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # Fast + intelligent
+    GEMINI_PRO_MODEL: str = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro")  # Deep reasoning
+    USE_GEMINI_PRIMARY: bool = os.getenv("USE_GEMINI_PRIMARY", "true").lower() == "true"
+    
+    # =============================================================================
+    # DEEPSEEK & VISION MODEL SETTINGS
+    # =============================================================================
+    # DeepSeek - Fallback reasoning model (70B for deep thinking)
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "sk-288b009e0be14411a1c11b4649c360be")
+    DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-reasoner")
+    DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    
+    # Kimi-VL - PRIMARY Vision model (OCR, diagrams, formulas, textbook pages)
+    KIMI_VISION_API_KEY: str = os.getenv("KIMI_VISION_API_KEY", "sk-aEzUhSMy0Izz6bUnbJiwtpBxDADeI94vByaUTqOvOV6y2EP9")
+    KIMI_VISION_MODEL: str = os.getenv("KIMI_VISION_MODEL", "moonshot-v1-8k-vision-preview")
+    KIMI_VISION_BASE_URL: str = os.getenv("KIMI_VISION_BASE_URL", "https://api.moonshot.ai/v1")
+    
+    # Qwen-VL - SECONDARY Vision model (fallback)
+    QWEN_VL_API_KEY: str = os.getenv("QWEN_VL_API_KEY", "")
+    QWEN_VL_MODEL: str = os.getenv("QWEN_VL_MODEL", "qwen-vl-max")
+    QWEN_VL_BASE_URL: str = os.getenv("QWEN_VL_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+    
+    # Model routing flags
+    USE_DEEPSEEK_REASONING: bool = os.getenv("USE_DEEPSEEK_REASONING", "true").lower() == "true"
+    USE_KIMI_VISION: bool = os.getenv("USE_KIMI_VISION", "true").lower() == "true"
+    USE_QWEN_VISION: bool = os.getenv("USE_QWEN_VISION", "false").lower() == "true"  # Fallback only
+    
+    # =============================================================================
     # 🤖 AGENTIC SYSTEM SETTINGS - TRUE AGENT BEHAVIOR
     # =============================================================================
     # Enable the full agentic system (ReAct loop, tools, planning)

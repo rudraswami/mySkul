@@ -1,18 +1,26 @@
 """
 LLM Service - Unified interface for LLM API calls
 Uses emergentintegrations library for consistent API access
+Supports: OpenAI, DeepSeek, Qwen-VL
 """
 import logging
 import uuid
 import asyncio
+import os
 from typing import Optional
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 logger = logging.getLogger(__name__)
 
 # Timeout constants
-DEFAULT_LLM_TIMEOUT = 30.0  # 30 seconds
-STREAMING_LLM_TIMEOUT = 120.0  # 2 minutes for streaming
+DEFAULT_LLM_TIMEOUT = 60.0  # 60 seconds (DeepSeek reasoning can take longer)
+STREAMING_LLM_TIMEOUT = 180.0  # 3 minutes for streaming
+DEEPSEEK_TIMEOUT = 90.0  # DeepSeek needs more time for deep reasoning
+
+# Model configuration
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-reasoner")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 
 
 async def call_llm(
@@ -154,4 +162,301 @@ async def call_llm_streaming(
     except Exception as e:
         logger.error(f"❌ LLM streaming call failed: {e}")
         raise Exception(f"LLM streaming failed: {str(e)}")
+
+
+async def call_deepseek(
+    prompt: str,
+    api_key: str = None,
+    temperature: float = 0.7,
+    max_tokens: int = 2000,
+    model: str = None,
+    session_id: Optional[str] = None,
+    system_message: Optional[str] = None
+) -> str:
+    """
+    Call DeepSeek API for deep reasoning tasks
+    
+    DeepSeek-R1 specializes in:
+    - Complex multi-step reasoning
+    - Mathematical proofs and derivations
+    - Scientific explanations
+    - Chain-of-thought problem solving
+    
+    Args:
+        prompt: The prompt to send
+        api_key: DeepSeek API key (falls back to env var)
+        temperature: Creativity level (0.0-1.0)
+        max_tokens: Maximum response length
+        model: Model to use (default: deepseek-reasoner)
+        session_id: Session ID for tracking
+        system_message: System prompt
+    
+    Returns:
+        DeepSeek response text
+    """
+    try:
+        import litellm
+        
+        # Use provided key or fall back to env var
+        actual_key = api_key or DEEPSEEK_API_KEY
+        if not actual_key:
+            logger.warning("⚠️ No DeepSeek API key - falling back to OpenAI")
+            return await call_llm(prompt, os.environ.get('EMERGENT_LLM_KEY', ''), 
+                                  temperature, max_tokens, "gpt-4o", session_id, system_message)
+        
+        actual_model = model or DEEPSEEK_MODEL
+        
+        # Generate session ID if not provided
+        if not session_id:
+            session_id = f"deepseek_{str(uuid.uuid4())[:8]}"
+        
+        # Default system message for reasoning
+        if not system_message:
+            system_message = """You are DeepSeek, an advanced AI reasoning model specialized in:
+- Multi-step mathematical and scientific reasoning
+- Deep conceptual understanding
+- Chain-of-thought problem solving
+- Clear, structured explanations
+
+Think step-by-step and show your reasoning process."""
+        
+        logger.info(f"🧠 Calling DeepSeek ({actual_model}) for deep reasoning...")
+        
+        # Use LiteLLM with DeepSeek configuration
+        response = await asyncio.wait_for(
+            litellm.acompletion(
+                model=f"deepseek/{actual_model}",
+                api_key=actual_key,
+                api_base=DEEPSEEK_BASE_URL,
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ),
+            timeout=DEEPSEEK_TIMEOUT
+        )
+        
+        result = response.choices[0].message.content
+        logger.info(f"✅ DeepSeek response received ({len(result)} chars)")
+        return result
+        
+    except asyncio.TimeoutError:
+        logger.error(f"⏱️ DeepSeek call exceeded {DEEPSEEK_TIMEOUT}s timeout")
+        raise Exception(f"DeepSeek timeout after {DEEPSEEK_TIMEOUT}s")
+    except Exception as e:
+        logger.error(f"❌ DeepSeek API call failed: {e}")
+        # Fallback to standard LLM
+        logger.info("↩️ Falling back to standard LLM...")
+        return await call_llm(prompt, os.environ.get('EMERGENT_LLM_KEY', ''),
+                              temperature, max_tokens, "gpt-4o", session_id, system_message)
+
+
+# =============================================================================
+# GEMINI PRO - Primary reasoning model for AI Sathi
+# =============================================================================
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDsaHaCP3Xyctp7ndgwuX2NcY0wy8K-xUg")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_PRO_MODEL = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro")
+GEMINI_TIMEOUT = 45.0  # Gemini is fast, but allow time for complex reasoning
+
+
+async def call_gemini(
+    prompt: str,
+    api_key: str = None,
+    temperature: float = 0.7,
+    max_tokens: int = 4000,
+    model: str = None,
+    session_id: Optional[str] = None,
+    system_message: Optional[str] = None,
+    use_pro: bool = False
+) -> str:
+    """
+    Call Gemini API for intelligent reasoning tasks.
+    
+    Gemini Pro specializes in:
+    - Lightning-fast responses
+    - Deep conceptual understanding
+    - Multi-modal reasoning (text + images)
+    - Long context windows (1M+ tokens)
+    - Educational content generation
+    
+    Args:
+        prompt: The prompt to send
+        api_key: Gemini API key (falls back to env var)
+        temperature: Creativity level (0.0-1.0)
+        max_tokens: Maximum response length
+        model: Model to use (default: gemini-2.0-flash)
+        session_id: Session ID for tracking
+        system_message: System prompt
+        use_pro: Use Gemini Pro for deeper reasoning (slower but more thorough)
+    
+    Returns:
+        Gemini response text
+    """
+    try:
+        import google.generativeai as genai
+        
+        # Use provided key or fall back to env var
+        actual_key = api_key or GEMINI_API_KEY
+        if not actual_key:
+            logger.warning("⚠️ No Gemini API key - falling back to DeepSeek")
+            return await call_deepseek(prompt, None, temperature, max_tokens, None, session_id, system_message)
+        
+        # Configure Gemini
+        genai.configure(api_key=actual_key)
+        
+        # Select model
+        actual_model = model or (GEMINI_PRO_MODEL if use_pro else GEMINI_MODEL)
+        
+        logger.info(f"⚡ Calling Gemini ({actual_model}) for intelligent response...")
+        
+        # Create the model
+        generation_config = genai.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+            top_p=0.95,
+            top_k=40
+        )
+        
+        model_instance = genai.GenerativeModel(
+            model_name=actual_model,
+            generation_config=generation_config,
+            system_instruction=system_message or _get_default_gemini_system_message()
+        )
+        
+        # Generate response with timeout
+        response = await asyncio.wait_for(
+            asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: model_instance.generate_content(prompt)
+            ),
+            timeout=GEMINI_TIMEOUT
+        )
+        
+        result = response.text
+        logger.info(f"✅ Gemini response received ({len(result)} chars)")
+        return result
+        
+    except asyncio.TimeoutError:
+        logger.error(f"⏱️ Gemini call exceeded {GEMINI_TIMEOUT}s timeout")
+        raise Exception(f"Gemini timeout after {GEMINI_TIMEOUT}s")
+    except ImportError:
+        logger.error("❌ google-generativeai not installed. Run: pip install google-generativeai")
+        # Fallback to DeepSeek
+        return await call_deepseek(prompt, None, temperature, max_tokens, None, session_id, system_message)
+    except Exception as e:
+        logger.error(f"❌ Gemini API call failed: {e}")
+        # Fallback to DeepSeek
+        logger.info("↩️ Falling back to DeepSeek...")
+        return await call_deepseek(prompt, None, temperature, max_tokens, None, session_id, system_message)
+
+
+def _get_default_gemini_system_message() -> str:
+    """Default system message optimized for AI Sathi educational context"""
+    return """You are AI Sathi, an elite AI tutor for Indian students preparing for JEE, NEET, and CBSE exams.
+
+Your personality:
+- Explain like a brilliant senior friend who genuinely cares
+- Use relatable Indian examples (cricket, Bollywood, daily life)
+- Mix Hindi phrases naturally for connection (yaar, dekho, samjho)
+- Be warm, encouraging, and patient
+
+Your capabilities:
+- Lightning-fast conceptual explanations
+- Deep mathematical and scientific reasoning
+- Step-by-step problem solving
+- Exam-focused tips and tricks
+- Visual thinking and diagram descriptions
+
+Response style:
+- Start with intuition, then go deeper
+- Use analogies and real-world connections
+- Highlight exam-important points
+- Always verify mathematical steps
+- Never hallucinate or make up facts
+
+Remember: A student's career depends on understanding this correctly. Be accurate, be clear, be helpful."""
+
+
+def get_reasoning_model_config() -> dict:
+    """
+    Get the best available reasoning model configuration.
+    
+    Priority:
+    1. Gemini Pro (fastest, most intelligent)
+    2. DeepSeek (deep reasoning fallback)
+    3. GPT-4o (final fallback)
+    
+    Returns:
+        dict with model, api_key, and provider info
+    """
+    from core.config import settings
+    
+    # Priority 1: Gemini Pro (primary)
+    if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+        return {
+            "provider": "gemini",
+            "model": settings.GEMINI_MODEL,
+            "api_key": settings.GEMINI_API_KEY,
+            "base_url": None,
+            "call_function": call_gemini,
+            "capabilities": ["fast", "conceptual", "visual", "long_context"]
+        }
+    
+    # Priority 2: DeepSeek (deep reasoning)
+    if settings.USE_DEEPSEEK_REASONING and settings.DEEPSEEK_API_KEY:
+        return {
+            "provider": "deepseek",
+            "model": settings.DEEPSEEK_MODEL,
+            "api_key": settings.DEEPSEEK_API_KEY,
+            "base_url": settings.DEEPSEEK_BASE_URL,
+            "call_function": call_deepseek,
+            "capabilities": ["deep_reasoning", "math", "proofs"]
+        }
+    
+    # Priority 3: GPT-4o (fallback)
+    return {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "api_key": settings.EMERGENT_LLM_KEY,
+        "base_url": None,
+        "call_function": call_llm,
+        "capabilities": ["general", "creative"]
+    }
+
+
+async def call_best_model(
+    prompt: str,
+    context: dict = None,
+    temperature: float = 0.7,
+    max_tokens: int = 4000,
+    system_message: str = None
+) -> str:
+    """
+    Automatically call the best available model based on configuration.
+    
+    Args:
+        prompt: The prompt to send
+        context: Optional context with query_type, complexity, etc.
+        temperature: Creativity level
+        max_tokens: Maximum response length
+        system_message: System prompt
+    
+    Returns:
+        Model response text
+    """
+    config = get_reasoning_model_config()
+    call_fn = config["call_function"]
+    
+    logger.info(f"🧠 Using {config['provider']} ({config['model']}) for reasoning")
+    
+    return await call_fn(
+        prompt=prompt,
+        api_key=config["api_key"],
+        temperature=temperature,
+        max_tokens=max_tokens,
+        system_message=system_message
+    )
 

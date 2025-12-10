@@ -808,10 +808,19 @@ I hope this helps! Let me know if you'd like me to explore further."""
     
     def _format_response(self, state: AgentState) -> Dict[str, Any]:
         """Format final response"""
+        # Fix escaped newlines in final answer (LLM returns \n as literal string)
+        content = state.final_answer or ""
+        if content:
+            # Replace literal \n with actual newlines
+            content = content.replace('\\n', '\n')
+            # Also handle other common escape sequences
+            content = content.replace('\\t', '\t')
+            content = content.replace('\\"', '"')
+        
         return {
             "success": True,
             "agent": self.get_agent_name(),
-            "content": state.final_answer,
+            "content": content,
             "confidence": state.confidence,
             "reasoning_chain": [ta.to_dict() for ta in state.reasoning_chain],
             "tools_used": state.tools_used,

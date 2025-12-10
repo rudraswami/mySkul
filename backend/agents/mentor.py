@@ -203,27 +203,72 @@ Mentor's Explanation:"""
             return "Advanced"
     
     async def _generate_mentor_response(self, prompt: str) -> str:
-        """Call LLM to generate mentor response"""
+        """
+        Generate mentor response with intelligent model selection.
+        
+        Model Priority:
+        1. Gemini Flash (fast, intelligent, warm personality)
+        2. DeepSeek (deep reasoning fallback)
+        3. GPT-4o-mini (final fallback)
+        """
         try:
-            # Use LlmChat with proper chaining (same as AIService)
+            from core.config import settings
+            
+            # Mentor system message - warm, supportive, Indian context
+            mentor_system = """You are a caring AI Mentor helping Indian students prepare for competitive exams (JEE/NEET/CBSE).
+
+Your style:
+- Use metaphors from cricket, cooking, or daily life
+- Be encouraging and explain concepts intuitively
+- Keep responses conversational and concise (150-200 words)
+- Use simple language that builds confidence
+- Connect abstract concepts to real-world examples
+- Mix Hindi phrases naturally (yaar, dekho, samjho) when appropriate"""
+            
+            # === PRIORITY 1: Gemini Flash (primary) ===
+            if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+                logger.info("⚡ MentorAgent using Gemini Flash for fast, warm response...")
+                from services.llm_service import call_gemini
+                
+                response = await call_gemini(
+                    prompt=prompt,
+                    api_key=settings.GEMINI_API_KEY,
+                    temperature=0.85,  # Slightly higher for warmth
+                    max_tokens=600,
+                    model="gemini-2.0-flash",  # Fast model for mentor
+                    system_message=mentor_system
+                )
+                return response.strip() if response else ""
+            
+            # === PRIORITY 2: DeepSeek (fallback) ===
+            if settings.USE_DEEPSEEK_REASONING and settings.DEEPSEEK_API_KEY:
+                logger.info("🧠 MentorAgent using DeepSeek for response...")
+                from services.llm_service import call_deepseek
+                
+                response = await call_deepseek(
+                    prompt=prompt,
+                    api_key=settings.DEEPSEEK_API_KEY,
+                    temperature=0.8,
+                    max_tokens=500,
+                    system_message=mentor_system
+                )
+                return response.strip() if response else ""
+            
+            # === PRIORITY 3: GPT-4o-mini (final fallback) ===
             from emergentintegrations.llm.chat import LlmChat, UserMessage
             import uuid
-            
-            # Initialize with system message for mentor context
-            mentor_system = "You are a caring AI Mentor helping Indian students prepare for competitive exams. Use metaphors from cricket, cooking, or daily life. Be encouraging and explain concepts intuitively. Keep responses conversational and concise (150-200 words)."
             
             llm_client = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"mentor_{str(uuid.uuid4())[:8]}",
                 system_message=mentor_system
             ).with_model("openai", "gpt-4o-mini").with_params(
-                temperature=0.8,  # Higher for creativity
+                temperature=0.8,
                 top_p=0.9,
                 max_tokens=400
             )
             
-            # Send prompt (use send_message, not send_message_async)
-            user_msg = UserMessage(text=prompt)  # text, not content
+            user_msg = UserMessage(text=prompt)
             response = await llm_client.send_message(user_msg)
             
             if not response:

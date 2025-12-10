@@ -208,14 +208,28 @@ class UnifiedAIOrchestrator:
         context: Dict[str, Any],
         routing_decision: Any
     ) -> Dict[str, Any]:
-        """Fast response for trivial queries (greetings, etc.)"""
+        """Fast response for trivial queries (greetings, gratitude, etc.)"""
+        
+        msg_lower = message.lower().strip().rstrip('!?.')
         
         # Check for simple greetings
-        msg_lower = message.lower().strip()
         greetings = ['hi', 'hello', 'hey', 'namaste', 'yo', 'sup']
-        
-        if msg_lower.strip('!?.') in greetings:
+        if msg_lower in greetings:
             return self._generate_greeting(context)
+        
+        # Check for gratitude/acknowledgment - respond warmly!
+        gratitude_words = [
+            'thanks', 'thank you', 'thank you so much', 'thanks a lot',
+            'ty', 'tysm', 'thx', 'thnx', 'thnks', 'dhanyawad', 'shukriya',
+            'appreciate it', 'much appreciated', 'thanks buddy', 'thanks yaar'
+        ]
+        acknowledgments = ['ok', 'okay', 'got it', 'understood', 'great', 'nice', 'cool', 'awesome', 'perfect']
+        
+        if msg_lower in gratitude_words or any(msg_lower.startswith(g) for g in gratitude_words):
+            return self._generate_gratitude_response(context)
+        
+        if msg_lower in acknowledgments:
+            return self._generate_acknowledgment_response(context)
         
         # Use enhanced composer with minimal refinement
         result = await self.enhanced_composer.generate_response(
@@ -452,6 +466,65 @@ class UnifiedAIOrchestrator:
             "detected_subject": "General",
             "generation_time": 0.01,
             "pipeline": "fast_greeting"
+        }
+    
+    def _generate_gratitude_response(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate warm response for gratitude/thank you messages"""
+        import random
+        
+        # Get student name if available
+        name = context.get('student_profile', {}).get('name', '')
+        name_suffix = f", {name}" if name else ""
+        
+        responses = [
+            f"You're welcome{name_suffix}! 😊 Happy to help! Is there anything else you'd like to learn?",
+            f"Anytime{name_suffix}! 🌟 That's what I'm here for. Feel free to ask more questions!",
+            f"Glad I could help{name_suffix}! 💪 Keep up the great learning spirit! What's next?",
+            f"My pleasure{name_suffix}! 📚 Learning together is awesome. Ask away anytime!",
+            f"Happy to help{name_suffix}! 🚀 Your curiosity is inspiring. What else can I explain?",
+            f"No problem at all{name_suffix}! 🎯 Helping you understand is my favorite thing to do!",
+        ]
+        
+        return {
+            "response": {
+                "default_view": {
+                    "main_content": {
+                        "content": random.choice(responses),
+                        "type": "markdown"
+                    }
+                },
+                "intent": "gratitude"
+            },
+            "detected_subject": "General",
+            "generation_time": 0.01,
+            "pipeline": "fast_gratitude"
+        }
+    
+    def _generate_acknowledgment_response(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate response for acknowledgments (ok, got it, cool, etc.)"""
+        import random
+        
+        responses = [
+            "Great! 👍 Let me know if you have any more questions!",
+            "Perfect! 🎯 Feel free to ask anything else!",
+            "Awesome! 💡 I'm here whenever you need me!",
+            "Cool! 🌟 Ready to help with your next question!",
+            "Got it! 📚 What would you like to explore next?",
+        ]
+        
+        return {
+            "response": {
+                "default_view": {
+                    "main_content": {
+                        "content": random.choice(responses),
+                        "type": "markdown"
+                    }
+                },
+                "intent": "acknowledgment"
+            },
+            "detected_subject": "General",
+            "generation_time": 0.01,
+            "pipeline": "fast_acknowledgment"
         }
     
     def _format_supervisor_result(
