@@ -24,6 +24,10 @@ from .code_executor import CodeExecutorTool
 from .fact_checker import FactCheckerTool
 from .formula_lookup import FormulaLookupTool
 
+# Specialist capability tools (replaces separate agents)
+from .exam_strategy import ExamStrategyTool
+from .planner import StudyPlannerTool
+
 # Action tools for true agentic behavior
 from .reminder_tool import ReminderTool
 from .recurring_reminder_tool import RecurringReminderTool
@@ -40,6 +44,9 @@ __all__ = [
     'CodeExecutorTool',
     'FactCheckerTool',
     'FormulaLookupTool',
+    # Specialist capability tools
+    'ExamStrategyTool',
+    'StudyPlannerTool',
     # Action tools
     'ReminderTool',
     'RecurringReminderTool',

@@ -4,8 +4,9 @@ Handles intuitive explanations with metaphors and relatable examples
 """
 import logging
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 from agents.base_agent import BaseAgent
+from agents.core.tool_registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,20 @@ class MentorAgent(BaseAgent):
     - Friendly, confidence-building tone
     - Indian context and cultural relevance
     - Adaptive to student's emotional state
+    - Can generate study plans using StudyPlannerTool
     """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
+        
+        # Initialize tool registry with Study Planner Tool
+        self.tool_registry = ToolRegistry()
+        
+        # Register Study Planner Tool (replaces Study Planner Agent)
+        from agents.core.tools.planner import StudyPlannerTool
+        self.tool_registry.register(StudyPlannerTool())
+        
+        logger.info("👨‍🏫 MentorAgent initialized with study planner tool")
     
     def get_agent_type(self) -> str:
         return "Mentor"
@@ -64,6 +78,54 @@ class MentorAgent(BaseAgent):
             subject = context.get('subject', 'General')
             student_profile = context.get('student_profile', {})
             memory_context = context.get('memory_context')
+            
+            # Check if this is a planning request
+            planning_keywords = [
+                'plan', 'schedule', 'timetable', 'how do i finish', 
+                'overwhelmed', 'no time', 'too much', 'can\'t finish',
+                'study plan', 'what to study', 'where to start'
+            ]
+            
+            is_planning_request = any(keyword in query_lower for keyword in planning_keywords)
+            
+            if is_planning_request and self.tool_registry:
+                # Use Study Planner Tool
+                logger.info("📅 MentorAgent detected planning request - using StudyPlannerTool")
+                
+                # Extract weak topics from context or student profile
+                weak_topics = student_profile.get('weak_areas', [])
+                if not weak_topics:
+                    # Try to extract from query or context
+                    weak_topics = self._extract_topics_from_query(query)
+                
+                # Get available hours and days until exam
+                hours_available = context.get('hours_available', 6)  # Default 6 hours
+                days_until_exam = context.get('days_until_exam', 60)  # Default 60 days
+                
+                # Call Study Planner Tool
+                planner_tool = self.tool_registry.get_tool('study_planner')
+                if planner_tool:
+                    plan_result = await planner_tool.execute(
+                        weak_topics=weak_topics,
+                        hours_available=hours_available,
+                        days_until_exam=days_until_exam,
+                        context=context
+                    )
+                    
+                    if plan_result.success:
+                        # Combine planning response with mentor's warm introduction
+                        mentor_intro = "Hey! I can see you're feeling overwhelmed. No worries, yaar - let's turn this into a concrete plan! Here's your personalized study schedule:\n\n"
+                        full_response = mentor_intro + plan_result.output
+                        
+                        return self._format_response(
+                            content=full_response,
+                            metadata={
+                                'tone': 'supportive',
+                                'approach': 'planning',
+                                'tool_used': 'study_planner',
+                                'weak_topics': weak_topics
+                            }
+                        )
             
             # Build dynamic mentor prompt (varied, conversational)
             from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
@@ -215,15 +277,35 @@ Mentor's Explanation:"""
             from core.config import settings
             
             # Mentor system message - warm, supportive, Indian context
-            mentor_system = """You are a caring AI Mentor helping Indian students prepare for competitive exams (JEE/NEET/CBSE).
+            mentor_system = """You are "Druv Bhaiya/Didi," a caring senior mentor for Indian students.
 
-Your style:
-- Use metaphors from cricket, cooking, or daily life
-- Be encouraging and explain concepts intuitively
-- Keep responses conversational and concise (150-200 words)
-- Use simple language that builds confidence
-- Connect abstract concepts to real-world examples
-- Mix Hindi phrases naturally (yaar, dekho, samjho) when appropriate"""
+**Your Directive:**
+
+1. **Empathy First:** Your job is to reduce stress, not teach physics. Always acknowledge their feelings before offering a solution.
+
+2. **Tone:** Warm, relatable, uses Hinglish (Hindi+English mix) naturally. 
+   - Example: "Bas relax kar," "You got this!", "Chinta mat kar."
+
+3. **Planning:** If the student is overwhelmed, feels lost, or asks "How do I finish this?", offer to build a schedule using the `study_planner` tool. DO NOT create schedules manually - always use the tool.
+
+4. **Validation:** Always acknowledge their feelings before offering a solution.
+
+**Scenario Examples:**
+
+- User: "I am scared of exams."
+- Response: "It's normal to feel scared, yaar. Fear means you care about the result. Let's channel that fear into a plan."
+
+- User: "I have no time, I'm failing everything."
+- Response: "Okay, let's stop panicking and start planning. I'll make a schedule for you." -> Use `study_planner` tool with their weak topics.
+
+**Tool Usage Protocol:**
+
+- User: "I'm overwhelmed, I don't know what to study"
+- Thought: "Student needs planning help. I should use study_planner tool." -> Call `study_planner` tool.
+- Observation: Tool returns markdown timetable.
+- Response: "Here's your personalized plan! [Include the timetable]. Remember, consistency beats intensity. You got this!"
+
+**Tone:** Non-judgmental, Supportive, "Senior Best Friend"."""
             
             # === PRIORITY 1: Gemini Flash (primary) ===
             if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
@@ -280,6 +362,30 @@ Your style:
             logger.error(f"❌ LLM call failed: {e}")
             # Fallback response
             return """I understand you're working on this concept. While I'm having trouble generating a detailed explanation right now, remember that every complex topic becomes clearer with practice. Think of learning like building muscle memory - each attempt makes the next one easier. Let's break this down step by step together."""
+    
+    def _extract_topics_from_query(self, query: str) -> List[str]:
+        """Extract topic names from query (simple keyword matching)"""
+        # Simple topic extraction - can be enhanced with NLP
+        topic_keywords = {
+            'rotational motion': 'Rotational Motion',
+            'thermodynamics': 'Thermodynamics',
+            'organic chemistry': 'Organic Chemistry',
+            'calculus': 'Calculus',
+            'mechanics': 'Mechanics',
+            'electricity': 'Electricity',
+            'optics': 'Optics',
+            'genetics': 'Genetics',
+            'human physiology': 'Human Physiology'
+        }
+        
+        query_lower = query.lower()
+        detected = []
+        
+        for keyword, topic in topic_keywords.items():
+            if keyword in query_lower:
+                detected.append(topic)
+        
+        return detected
     
     def _generate_greeting(self, student_profile: Dict[str, Any]) -> str:
         """Generate a friendly greeting response"""

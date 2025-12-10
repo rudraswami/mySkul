@@ -1,23 +1,34 @@
 /**
- * 🎨 DRUV AI VISUAL ENGINE V4.0
- * =============================
+ * 🎨 DRUV AI VISUAL ENGINE V5.0 (SketchSense Universal)
+ * =====================================================
  * 
- * Enterprise-grade visual explanation engine.
+ * Enterprise-grade UNIVERSAL visual explanation engine.
  * Built to compete with industry leaders.
  * 
- * Features:
- * - 8 template types for ANY STEM concept
- * - 15+ reusable primitives
- * - Config-driven rendering from backend
- * - 170+ concept support
- * - Indian context & memory hooks
- * - Progressive animations
- * - Scalable architecture
+ * V5.0 EVOLUTION:
+ * - Multi-mode rendering (auto-detected from artifact)
+ * - Dynamic layout engine (radial, vertical, horizontal)
+ * - Math plot support (inline expression parsing)
+ * - Physics trajectory rendering
+ * - Concept map visualization
+ * - Balance/scale comparisons
+ * - Professor output integration
+ * - Intelligent styling
+ * 
+ * RENDERING MODES:
+ * - classic       : Original 8-template system
+ * - concept_map   : Radial node layout with relationships
+ * - process_flow  : Linear step sequences
+ * - math_plot     : Function graphs with expression parsing
+ * - trajectory    : Physics projectile motion
+ * - balance_scale : Comparison visualizations
+ * - timeline      : Chronological events
+ * - structure     : Anatomy/component diagrams
  * 
  * Architecture:
  * ├── components/
  * │   ├── RevolutionarySketch.jsx  (Legacy - still works)
- * │   └── ConfigDrivenSketch.jsx   (New - recommended)
+ * │   └── ConfigDrivenSketch.jsx   (V5.0 Universal - recommended)
  * ├── templates/                    (8 template types)
  * │   ├── RaceTemplate.jsx
  * │   ├── ProcessTemplate.jsx
@@ -33,11 +44,24 @@
  *     ├── Track, Wave, Atom, Cell
  *     └── Graph, Cycle, Container...
  * 
- * Usage:
+ * Usage (V5.0):
  * import { ConfigDrivenSketch } from './visual-engine';
+ * 
+ * // Auto-detect mode from blueprint
  * <ConfigDrivenSketch blueprint={backendConfig} />
  * 
+ * // With professor output integration
+ * <ConfigDrivenSketch 
+ *   professorOutput={professorResponse}
+ *   renderDirectives={directives}
+ * />
+ * 
+ * // Force specific mode
+ * <ConfigDrivenSketch blueprint={{ mode: 'concept_map', config: {...} }} />
+ * 
  * Supports: Physics, Chemistry, Biology, Mathematics
+ * 
+ * BACKWARDS COMPATIBLE: All V4.0 configurations still work!
  */
 
 // ============ MAIN COMPONENTS ============

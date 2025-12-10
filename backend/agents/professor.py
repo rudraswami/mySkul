@@ -41,38 +41,54 @@ class ProfessorAgent(ReActAgent):
         self.tool_registry = ToolRegistry()
         self.tool_registry.register(CodeExecutorTool())
         
+        # Register Exam Strategy Tool (replaces Exam Coach Agent)
+        from agents.core.tools.exam_strategy import ExamStrategyTool
+        self.tool_registry.register(ExamStrategyTool())
+        
+        # Register Calculator Tool for math verification
+        from agents.core.tools.calculator import CalculatorTool
+        self.tool_registry.register(CalculatorTool())
+        
         # Initialize memory for tracking mastery (will be set per user)
         self.memory = None  # Set during process() with actual user_id
         
-        logger.info("🧮 ProfessorAgent initialized as TRUE AGENT with verification")
+        logger.info("🧮 ProfessorAgent initialized as TRUE AGENT with verification + exam strategy")
     
     def get_agent_name(self) -> str:
         return "ProfessorAgent"
     
     def get_available_tools(self) -> list:
         """Return list of tools this agent can use"""
-        return ['execute_code']
+        return ['execute_code', 'exam_strategy', 'calculator']
     
     def get_agent_persona(self) -> str:
-        return """You are a rigorous professor who teaches with precision and verification.
+        return """You are "Dr. Druv," India's leading JEE/NEET Professor.
 
-Your role:
-- Provide formal, step-by-step explanations
-- VERIFY solutions using code execution when possible
-- Adapt rigor based on student's mastery level
-- Use proper mathematical/scientific notation
-- Prove correctness, don't just claim it
+**Your Directive:**
 
-Your style:
-- Structured: Definition → Steps → Verification
-- Precise: No hand-waving, every step justified
-- Adaptive: Simpler for beginners, rigorous for advanced
-- Evidence-based: Show, don't just tell
+1. **Accuracy First:** NEVER guess math. If you see an equation, use your `calculator` tool to solve it. NEVER do mental math - always verify with tools.
 
-Remember:
-- A solution is not complete without verification
-- Code execution proves correctness
-- Adapt depth to student's level"""
+2. **Socratic Style:** Do not dump the answer. Guide the student step-by-step. Ask "What do you think the first step is?" if the question is vague.
+
+3. **Exam Context:** Mention "JEE Main" or "NEET" relevance whenever possible. If a student asks for tips, tricks, or weightage, DO NOT hallucinate. Use the `exam_strategy` tool to get facts.
+
+4. **Formatting:** Use LaTeX for all math (wrapped in $). Use Bullet points for steps.
+
+**Tool Usage Protocol:**
+
+- User: "Derivative of sin(x)"
+- Thought: "I need to verify this." -> Call `calculator` tool.
+- Observation: "cos(x)"
+- Response: "The derivative is $\\cos(x)$. Here is why..."
+
+- User: "What's the weightage of Rotational Motion in JEE?"
+- Thought: "Student wants exam-specific data. I must use exam_strategy tool." -> Call `exam_strategy` tool.
+- Observation: Tool returns weightage, traps, shortcuts.
+- Response: "Rotational Motion has 4.2% weightage in JEE. Here are common traps..."
+
+**Tone:** Academic, Encouraging, Strict about concepts.
+
+**Error Handling:** If a tool fails (e.g., database error), degrade gracefully: "I can't access the database right now, but generally speaking, this topic is important for JEE..." """
     
     async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -1,21 +1,42 @@
 /**
- * useSketchSense Hook
- * ===================
- * React hook for integrating SketchSense V2 visual enhancements.
+ * useSketchSense Hook V5.0
+ * ========================
+ * React hook for integrating SketchSense Universal visual engine.
+ * 
+ * V5.0 FEATURES:
+ * - Multi-mode rendering support
+ * - Professor output integration
+ * - Auto mode detection
+ * - Dynamic layout support
+ * - Math plot parsing
+ * - Trajectory rendering
  * 
  * This hook provides an ENHANCEMENT layer on top of existing visuals.
  * It does NOT replace existing visual functionality.
  * 
  * Usage:
- * const { blueprint, isReady, renderSketchSense } = useSketchSense({
+ * const { blueprint, isReady, renderMode } = useSketchSense({
  *   concept: 'force',
  *   subject: 'physics',
- *   enabled: true
+ *   enabled: true,
+ *   professorOutput: response, // V5.0 NEW
  * });
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import apiClient from '../api/client';
+
+// Rendering modes (V5.0)
+const RENDER_MODES = {
+  CLASSIC: 'classic',
+  CONCEPT_MAP: 'concept_map',
+  PROCESS_FLOW: 'process_flow',
+  MATH_PLOT: 'math_plot',
+  TRAJECTORY: 'trajectory',
+  BALANCE_SCALE: 'balance_scale',
+  TIMELINE: 'timeline',
+  STRUCTURE: 'structure',
+};
 
 // Default configuration
 const DEFAULT_CONFIG = {
@@ -27,14 +48,84 @@ const DEFAULT_CONFIG = {
 };
 
 /**
- * Hook to fetch and manage SketchSense V2 blueprints
+ * Detect rendering mode from artifact structure
+ */
+function detectModeFromArtifact(artifact) {
+  if (!artifact) return RENDER_MODES.CLASSIC;
+  
+  // Explicit mode
+  if (artifact.mode) return artifact.mode;
+  if (artifact.render_directives?.mode) return artifact.render_directives.mode;
+  
+  const config = artifact.config || artifact;
+  
+  // Math plot
+  if (artifact.expression || config.function || config.math_expression) {
+    return RENDER_MODES.MATH_PLOT;
+  }
+  
+  // Trajectory
+  if (config.motion || config.vx !== undefined || config.trajectory_points) {
+    return RENDER_MODES.TRAJECTORY;
+  }
+  
+  // Concept map
+  if (config.nodes && config.relationships) {
+    return RENDER_MODES.CONCEPT_MAP;
+  }
+  
+  // Balance scale
+  if (config.left_items && config.right_items) {
+    return RENDER_MODES.BALANCE_SCALE;
+  }
+  
+  return RENDER_MODES.CLASSIC;
+}
+
+/**
+ * Extract visual config from professor output
+ */
+function extractFromProfessorOutput(professorOutput) {
+  if (!professorOutput) return null;
+  
+  // Check various locations where visual config might be
+  if (professorOutput.visual_config) {
+    return professorOutput.visual_config;
+  }
+  
+  if (professorOutput.diagram) {
+    return { mode: 'structure', config: professorOutput.diagram };
+  }
+  
+  if (professorOutput.steps && professorOutput.steps.length > 0) {
+    return {
+      mode: 'process_flow',
+      config: { steps: professorOutput.steps }
+    };
+  }
+  
+  if (professorOutput.formula_plot || professorOutput.graph) {
+    return {
+      mode: 'math_plot',
+      config: professorOutput.formula_plot || professorOutput.graph
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Hook to fetch and manage SketchSense V5.0 blueprints
  */
 export function useSketchSense({
   concept,
   subject,
   question,
   enabled = true,
-  config = {}
+  config = {},
+  // V5.0 NEW: Professor output integration
+  professorOutput = null,
+  renderDirectives = null,
 }) {
   const [blueprint, setBlueprint] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +133,24 @@ export function useSketchSense({
   const [isReady, setIsReady] = useState(false);
   
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
+  
+  // V5.0: Merge professor output with blueprint
+  const effectiveBlueprint = useMemo(() => {
+    const fromProfessor = extractFromProfessorOutput(professorOutput);
+    if (fromProfessor) {
+      return {
+        ...blueprint,
+        ...fromProfessor,
+        render_directives: renderDirectives,
+      };
+    }
+    return blueprint;
+  }, [blueprint, professorOutput, renderDirectives]);
+  
+  // V5.0: Detect rendering mode
+  const renderMode = useMemo(() => {
+    return detectModeFromArtifact(effectiveBlueprint);
+  }, [effectiveBlueprint]);
   
   // Fetch blueprint from backend
   const fetchBlueprint = useCallback(async () => {
@@ -91,24 +200,41 @@ export function useSketchSense({
   
   // Enhance existing visual with SketchSense data
   const enhanceVisual = useCallback((existingVisual) => {
-    if (!blueprint || !existingVisual) return existingVisual;
+    if (!effectiveBlueprint || !existingVisual) return existingVisual;
     
     return {
       ...existingVisual,
-      sketchsense_v2: blueprint,
+      sketchsense_v2: effectiveBlueprint,
       enhanced: true,
-      enhancementVersion: '2.0'
+      enhancementVersion: '5.0',
+      renderMode,
     };
-  }, [blueprint]);
+  }, [effectiveBlueprint, renderMode]);
+  
+  // V5.0: Get props for ConfigDrivenSketch
+  const getSketchProps = useCallback(() => ({
+    blueprint: effectiveBlueprint,
+    concept,
+    subject,
+    question,
+    professorOutput,
+    renderDirectives,
+  }), [effectiveBlueprint, concept, subject, question, professorOutput, renderDirectives]);
   
   return {
-    blueprint,
+    // Original API (preserved)
+    blueprint: effectiveBlueprint,
     isLoading,
     isReady,
     error,
     config: mergedConfig,
     refresh,
-    enhanceVisual
+    enhanceVisual,
+    
+    // V5.0 NEW
+    renderMode,
+    getSketchProps,
+    RENDER_MODES,
   };
 }
 
