@@ -24,10 +24,8 @@ export function ProtectedRoute({ children, requireSubscription = false, minTier 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Redirect to profile setup if profile not completed
-  if (!user.profile_completed) {
-    return <Navigate to="/profile-setup" replace />;
-  }
+  // V1: Profile setup removed - no longer required
+  // Users can update profile from settings if needed
 
   // Check subscription tier if required
   if (requireSubscription && subscriptionInfo) {
@@ -68,7 +66,7 @@ export function PublicRoute({ children }) {
   }
 
   // Redirect authenticated users to dashboard
-  if (user && user.profile_completed) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 

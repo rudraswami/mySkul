@@ -62,22 +62,9 @@ export default function OAuthCallback() {
         // Clean URL query parameters
         window.history.replaceState({}, document.title, window.location.pathname);
 
-        // Redirect based on profile completion
-        if (!result.user.profile_completed) {
-          console.log('→ Redirecting to profile setup...');
-          
-          // Store user info for profile setup screen
-          sessionStorage.setItem('temp_user_info', JSON.stringify({
-            name: result.user.full_name,
-            email: result.user.email,
-            photo_url: result.user.photo_url
-          }));
-          
-          navigate('/profile-setup', { replace: true });
-        } else {
-          console.log('→ Redirecting to dashboard...');
-          navigate('/dashboard', { replace: true });
-        }
+        // V1: Always redirect to dashboard - profile setup removed
+        console.log('→ Redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
         console.error('Error details:', {

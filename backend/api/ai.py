@@ -1636,81 +1636,75 @@ You MUST reference specific content from the image in your response."""
         result = specialized_agent_result
         
         # ====================================================================
-        # UNIFIED INTELLIGENT PIPELINE (DEFAULT - Always On)
+        # 🧠 AI SATHI v2.0 - INTELLIGENT MULTI-AGENT ORCHESTRATOR
         # ====================================================================
-        # CRITICAL: Use unified pipeline FIRST, it's cleaner and more intelligent
-        # Only fall back to agentic/legacy if explicitly requested
+        # UPGRADED: Now uses smart routing with multi-agent by default
+        # - Simple queries → Fast enhanced composer
+        # - Educational queries → Multi-agent collaboration
+        # - Complex queries → Full ReAct with verification
         
-        USE_UNIFIED_FIRST = os.getenv("USE_UNIFIED_FIRST", "true").lower() == "true"
+        USE_V2_ORCHESTRATOR = os.getenv("USE_V2_ORCHESTRATOR", "true").lower() == "true"
         
         # Initialize memory_context variable (used in both paths)
         memory_context = {}
         
-        if USE_UNIFIED_FIRST and result is None:
-            logger.info("🚀 Using UNIFIED intelligent pipeline (clean, adaptive)")
+        if USE_V2_ORCHESTRATOR and result is None:
+            logger.info("🧠 Using AI Sathi v2.0 - Intelligent Multi-Agent Orchestrator")
             try:
-                from services.response_composer import ResponseComposer
-                from services.intelligent_response_engine import detect_intent, QuestionIntent
+                from services.unified_ai_orchestrator import get_unified_orchestrator
                 
                 emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
-                composer = ResponseComposer(db, emergent_llm_key)
+                orchestrator = get_unified_orchestrator(db, emergent_llm_key)
                 
-                # PERFORMANCE: Quick intent detection for fast-path optimization
-                quick_intent = detect_intent(contextual_message)
-                is_simple_question = quick_intent in {
-                    QuestionIntent.GREETING, 
-                    QuestionIntent.CONVERSATIONAL,
-                    QuestionIntent.SIMPLE_FACT,
-                    QuestionIntent.VERIFICATION
-                }
-                
-                # PERFORMANCE: Only load history for complex questions
+                # Get message history
                 extended_history = []
-                if request.session_id and not is_simple_question:
+                if request.session_id:
                     history = await ai_service.get_session_messages(request.session_id, user.user_id)
                     extended_history = history[-10:] if history else []
-                elif request.session_id and is_simple_question:
-                    # For simple questions, just get last 3 messages (faster)
-                    history = await ai_service.get_session_messages(request.session_id, user.user_id)
-                    extended_history = history[-3:] if history else []
                 
-                logger.info(f"⚡ Quick intent: {quick_intent.value}, simple={is_simple_question}, history_size={len(extended_history)}")
-                
-                # Single unified response generation
-                result = await composer.generate_response(
+                # Process through intelligent orchestrator
+                result = await orchestrator.process(
                     user_id=user.user_id,
                     session_id=request.session_id or f"temp_{user.user_id}",
-                    question=contextual_message,
+                    message=contextual_message,
                     subject=detected_subject,
                     exam_mode=await resolve_exam_mode(
                         request_exam_mode=getattr(request, 'exam_mode', None),
                         user_id=user.user_id,
                         db_client=db
                     ),
-                    message_history=extended_history
+                    message_history=extended_history,
+                    context={
+                        "request_visual": True,
+                        "enable_cot": True
+                    }
                 )
                 
-                logger.info(f"✅ Unified response generated in {result.get('generation_time', 0):.2f}s")
-                logger.info(f"🎯 Intent: {result.get('intent_detected')}, Context used: {result.get('context_used')}")
+                # Log orchestration details
+                orch_info = result.get('orchestration', {})
+                logger.info(f"✅ v2.0 Response: pipeline={orch_info.get('pipeline')}, "
+                           f"complexity={orch_info.get('complexity')}, "
+                           f"time={orch_info.get('generation_time', 0):.2f}s")
+                logger.info(f"🎯 Agents: {orch_info.get('agents_activated', [])}")
                 
-                # CRITICAL: Skip ALL other pipelines - unified succeeded
+                # CRITICAL: Skip ALL other pipelines - v2 orchestrator succeeded
                 # Jump directly to post-processing
                 
-            except Exception as unified_error:
-                logger.error(f"❌ Unified pipeline failed: {unified_error}")
+            except Exception as v2_error:
+                logger.error(f"❌ v2.0 Orchestrator failed: {v2_error}")
                 import traceback
                 logger.error(traceback.format_exc())
-                # Fall through to agentic system as backup
-                USE_UNIFIED_FIRST = False
-                result = None  # Ensure result is defined
+                # Orchestrator should return proper error response format
+                # If it doesn't, result will be None and we'll continue to agentic system
+                result = None
         
         # ====================================================================
-        # AGENTIC SYSTEM (Backup - Only if unified fails)
+        # AGENTIC SYSTEM (Backup - Only if v2 orchestrator fails)
         # ====================================================================
         USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
         
-        # Only use agentic if unified failed AND agentic is enabled
-        if not USE_UNIFIED_FIRST and USE_AGENTIC_SYSTEM and result is None:
+        # Only use agentic if v2 orchestrator failed AND agentic is enabled
+        if not USE_V2_ORCHESTRATOR and USE_AGENTIC_SYSTEM and result is None:
             # Use new agentic system with MEMORY
             logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:

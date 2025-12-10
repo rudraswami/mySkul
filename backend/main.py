@@ -282,6 +282,14 @@ def create_app() -> FastAPI:
     except Exception as e:
         logger.warning(f"Could not load unified AI router: {e}")
     
+    # 🧠 AI Sathi v2.0 - Intelligent Multi-Agent Pipeline (RECOMMENDED)
+    try:
+        from api import ai_v2
+        app.include_router(ai_v2.router, prefix="/api", tags=["AI Sathi v2"])
+        logger.info("🧠 AI Sathi v2.0 router registered - Intelligent routing active")
+    except Exception as e:
+        logger.warning(f"Could not load AI v2 router: {e}")
+    
     # 🧠 Agentic AI System (True Agents with ReAct Loop)
     try:
         from api import agentic

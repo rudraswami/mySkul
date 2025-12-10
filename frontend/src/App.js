@@ -149,16 +149,10 @@ function AppContent() {
           element={<OAuthCallback />} 
         />
         
-        {/* Profile Setup - Required after first Gmail login */}
+        {/* V1: Profile Setup removed - redirect to dashboard */}
         <Route 
           path="/profile-setup" 
-          element={
-            user ? (
-              !user.profile_completed ? <ProfileSetup /> : <Navigate to="/dashboard" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          } 
+          element={<Navigate to="/dashboard" replace />} 
         />
         
         {/* Legacy routes - redirect to new login */}

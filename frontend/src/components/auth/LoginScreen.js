@@ -56,13 +56,9 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Allow React state to propagate before navigation
+      // V1: Always redirect to dashboard - profile setup removed
       setTimeout(() => {
-        if (result.user && result.user.profile_completed === false) {
-          navigate('/profile-setup', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        navigate('/dashboard', { replace: true });
       }, 0);
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');

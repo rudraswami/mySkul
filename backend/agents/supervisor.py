@@ -216,7 +216,8 @@ class SupervisorAgent(BaseAgent):
             combined_response = self._merge_responses(
                 query=query,
                 intent=intent,
-                agent_responses=validated_responses
+                agent_responses=validated_responses,
+                context=context
             )
             
             # Step 6: 💪 MOTIVATION MIDDLEWARE - Add emotional support if needed
@@ -476,10 +477,17 @@ class SupervisorAgent(BaseAgent):
         self,
         query: str,
         intent: str,
-        agent_responses: Dict[str, Any]
+        agent_responses: Dict[str, Any],
+        context: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
         Merge agent responses into unified structure
+        
+        Args:
+            query: Original user query
+            intent: Detected intent
+            agent_responses: Responses from all agents
+            context: Request context with complexity, subject, etc.
         
         Returns:
             Combined response ready for ResponseAdapter
@@ -552,7 +560,7 @@ class SupervisorAgent(BaseAgent):
                 'agents_used': list(agent_responses.keys()),
                 'supervisor_version': '4.0',  # Cognito OS v4.0
                 'cognito_os_enabled': True,  # Enable transparency panels in UI
-                'complexity': context.get('complexity', 'standard'),
+                'complexity': (context or {}).get('complexity', 'standard'),
                 'tools_used': ['rag', 'knowledge_search', 'fact_checker'],  # Default tools
                 'used_doubt_resolver': 'doubt_resolver' in agent_responses,
                 'used_exam_coach': 'exam_coach' in agent_responses,
