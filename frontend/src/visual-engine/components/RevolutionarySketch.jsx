@@ -528,13 +528,13 @@ const VelocityScene = ({ step, onStepChange }) => {
   
   return (
     <g>
-      {/* Dramatic Title */}
-      <HandText x={250} y={28} size={22} color={COLORS.navy} weight="bold">
+      {/* Dramatic Title - Positioned below header area */}
+      <HandText x={250} y={25} size={20} color={COLORS.navy} weight="bold">
         🏁 Mumbai Auto Race Challenge!
       </HandText>
       <motion.text
-        x={250} y={50}
-        fontSize={13}
+        x={250} y={45}
+        fontSize={12}
         textAnchor="middle"
         fill={COLORS.chalkLight}
         initial={{ opacity: 0 }}
@@ -543,10 +543,10 @@ const VelocityScene = ({ step, onStepChange }) => {
       >
         Two autos, same time... which one has MORE VELOCITY?
       </motion.text>
-      
+
       {/* SCOREBOARD - Top Right */}
       <motion.g initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}>
-        <rect x={400} y={65} width={90} height={80} rx={10} fill="#1F2937" stroke={COLORS.saffron} strokeWidth={2} />
+        <rect x={400} y={55} width={90} height={75} rx={10} fill="#1F2937" stroke={COLORS.saffron} strokeWidth={2} />
         <text x={445} y={85} fontSize={11} textAnchor="middle" fill={COLORS.saffron} fontWeight="bold">⏱️ TIME</text>
         <text x={445} y={115} fontSize={28} textAnchor="middle" fill="white" fontWeight="bold" fontFamily="monospace">
           {time.toFixed(1)}s

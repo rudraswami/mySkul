@@ -53,7 +53,7 @@ async def resolve_exam_mode(
         return request_exam_mode.strip()
     
     # Priority 2: User profile
-    if user_id and db_client:
+    if user_id and db_client is not None:
         try:
             user_doc = await db_client.users.find_one({"user_id": user_id})
             if user_doc:

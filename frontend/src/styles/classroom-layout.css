@@ -1,0 +1,182 @@
+/**
+ * Digital Classroom Layout Styles
+ * ================================
+ * 
+ * Styles for the split-screen classroom layout.
+ * Uses Tailwind utility classes where possible,
+ * this file is for edge cases and safe area handling.
+ */
+
+/* Safe area padding for mobile devices (notch, home indicator) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* SmartBoard background pattern animation */
+@keyframes patternPulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.smartboard-pattern {
+  animation: patternPulse 4s ease-in-out infinite;
+}
+
+/* Chat scroll behavior */
+.classroom-chat-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent SmartBoard from scrolling */
+.smartboard-fixed {
+  overflow: hidden;
+  position: relative;
+}
+
+/* Glassmorphic sidebar effect */
+.glassmorphic-sidebar {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Tab bar shadow effect */
+.mobile-tab-bar {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Visual card hover effect */
+.visual-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.visual-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Academic serif font for SmartBoard headers */
+.smartboard-title {
+  font-family: 'Merriweather', 'Georgia', serif;
+}
+
+/* Chat bubbles font */
+.chat-text {
+  font-family: 'Inter', 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Responsive layout breakpoints */
+@media (min-width: 768px) {
+  .desktop-split-left {
+    flex: 0 0 35%;
+    min-width: 350px;
+    max-width: 500px;
+  }
+  
+  .desktop-split-right {
+    flex: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-tab-content {
+    height: calc(100vh - 56px - 64px); /* header + tab bar */
+    height: calc(100dvh - 56px - 64px); /* dynamic viewport height */
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth transitions for tab switching */
+.tab-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.tab-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.tab-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.tab-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
+/* New visual notification pulse */
+@keyframes newVisualPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.new-visual-indicator {
+  animation: newVisualPulse 2s ease-in-out infinite;
+}
+
+/* History sidebar item hover */
+.history-item-hover {
+  transition: all 0.2s ease;
+}
+
+.history-item-hover:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(249, 115, 22, 0.03) 100%);
+}
+
+/* Loading skeleton for chat history */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+
+
+
+

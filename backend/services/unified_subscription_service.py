@@ -593,7 +593,7 @@ def require_feature_access(feature: str, amount: int = 1):
             user = kwargs.get('user') or kwargs.get('current_user')
             db = kwargs.get('db')
             
-            if not user or not db:
+            if not user or db is None:
                 from fastapi import HTTPException
                 raise HTTPException(status_code=500, detail="Missing user or database context")
             

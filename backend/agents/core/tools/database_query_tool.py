@@ -55,7 +55,7 @@ class DatabaseQueryTool(BaseTool):
     async def execute(self, **kwargs) -> ToolResult:
         """Execute database query"""
         try:
-            if not self.db:
+            if self.db is None:
                 return ToolResult(
                     success=False,
                     output="Database not available",

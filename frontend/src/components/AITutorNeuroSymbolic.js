@@ -47,6 +47,7 @@ import '../styles/ai-tutor-redesign.css'; // Shared scroll stability styles
 import '../styles/sathi-premium.css'; // Premium Sathi UI redesign
 import '../styles/sathi-ux-audit-fixes.css'; // UI/UX Audit Permanent Fixes
 import '../styles/ui-comprehensive-fixes.css'; // Comprehensive UI/UX Fixes - ALL ISSUES
+import '../styles/classroom-layout.css'; // Digital Classroom Layout
 
 // V1 Enhancement Components
 import VisualSketchViewer from './visual/VisualSketchViewer';
@@ -60,6 +61,10 @@ import SathiNavMenu from './chat/SathiNavMenu';
 
 // 🔔 Notification Bell - CRITICAL for reminders to work!
 import NotificationBell from './NotificationBell';
+
+// 🏫 Digital Classroom Layout - NEW UI (uses HistorySidebar internally)
+import ClassroomLayout from './layout/ClassroomLayout';
+import SmartBoard from './visuals/SmartBoard';
 
 // Gamification Components
 import MicroReward, { LevelUpCelebration, StreakCelebration } from './gamification/MicroReward';
@@ -75,6 +80,19 @@ import useKeyboardShortcuts, { ShortcutsHelpPanel } from '../hooks/useKeyboardSh
 import MasteryIndicator from './ui/MasteryIndicator';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper: Format sessions for ClassroomLayout's HistorySidebar
+const formatSessionsForSidebar = (sessions) => {
+  return sessions.map(session => ({
+    id: session.session_id,
+    title: session.title || 'New Chat',
+    subject: session.subject || 'General',
+    date: session.last_updated || session.created_at,
+    updatedAt: session.last_updated,
+    createdAt: session.created_at,
+    isPinned: session.pinned || false
+  }));
+};
 
 // Helper: Format relative time consistently
 const formatRelativeTime = (dateString) => {
@@ -341,6 +359,25 @@ export default function AITutorNeuroSymbolic() {
   
   // Search in chat history
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // 🏫 Digital Classroom Layout state
+  const [visualArtifact, setVisualArtifact] = useState(null);
+  const [useClassroomLayout] = useState(true); // Use new ClassroomLayout UI
+  
+  // Format sessions for ClassroomLayout's HistorySidebar
+  const formattedChatHistory = formatSessionsForSidebar(sessions);
+  
+  // Header actions for ClassroomLayout
+  const headerRightActions = (
+    <>
+      <NotificationBell 
+        onStartStudy={(topic) => {
+          setInputMessage(`Let's study ${topic}!`);
+          inputRef.current?.focus();
+        }}
+      />
+    </>
+  );
   
   // Message editing state
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -1050,6 +1087,15 @@ export default function AITutorNeuroSymbolic() {
 
         setMessages(prev => [...prev, aiMsg]);
         
+        // 🏫 Extract visual artifact for SmartBoard (Digital Classroom)
+        if (aiMsg.visual_sketch || aiMsg.content?.visual_sketch) {
+          setVisualArtifact({
+            ...(aiMsg.visual_sketch || aiMsg.content?.visual_sketch),
+            concept: data.detected_subject || messageToSend.split(' ').slice(0, 3).join(' '),
+            subject: data.detected_subject || 'General'
+          });
+        }
+        
         // If visual is being generated async, poll for it
         if (aiMsg.visual_task_id) {
           pollForVisual(aiMsg.visual_task_id, aiMsg.message_id);
@@ -1201,6 +1247,7 @@ export default function AITutorNeuroSymbolic() {
     setCurrentSession(null);
     setShowWelcome(true);
     setHeaderCollapsed(false);
+    setVisualArtifact(null); // Clear SmartBoard
     inputRef.current?.focus();
     // Refresh sessions list to ensure it's up-to-date
     loadSessions();
@@ -1538,8 +1585,218 @@ export default function AITutorNeuroSymbolic() {
         // Refresh user progress after onboarding
         loadUserProgress();
       }} />
-      
-      {/* Persistent Sidebar on large screens - PREMIUM DESIGN */}
+
+      {/* 🏫 NEW: ClassroomLayout UI (SathiClassroom style) */}
+      {useClassroomLayout ? (
+        <ClassroomLayout
+          chatHistory={formattedChatHistory}
+          activeSessionId={currentSession}
+          onChatSelect={(chat) => loadSession(chat.id)}
+          onNewChat={startNewChat}
+          onRenameChat={(id, title) => {
+            const session = sessions.find(s => s.session_id === id);
+            if (session) renameSession(session, title);
+          }}
+          onDeleteChat={(id) => {
+            const session = sessions.find(s => s.session_id === id);
+            if (session) requestDeleteSession(session);
+          }}
+          onPinChat={(id) => {
+            const session = sessions.find(s => s.session_id === id);
+            if (session) togglePinSession(session);
+          }}
+          isLoadingHistory={sessionsLoading}
+          visualArtifact={visualArtifact}
+          headerTitle="AI Sathi"
+          headerRightActions={headerRightActions}
+          hasStartedChat={messages.length > 0}
+        >
+          {/* Chat Content - Messages + Input (ChatGPT/Gemini style) */}
+          <div className="flex flex-col h-full relative">
+            {/* Scrollable Content Area */}
+            <div 
+              ref={chatContainerRef}
+              className="flex-1 overflow-y-auto"
+            >
+              {/* Welcome Screen - Vertically centered in full height */}
+              {showWelcome && messages.length === 0 ? (
+                <div className="min-h-full flex items-center justify-center p-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center text-center w-full max-w-2xl"
+                  >
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-orange-400 rounded-3xl flex items-center justify-center mb-6 shadow-lg">
+                    <Sparkles className="w-10 h-10 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Hey! Ready to Learn? 💪</h2>
+                  <p className="text-gray-500 mb-6 max-w-sm">Your AI friend who explains things in the coolest way!</p>
+                  
+                  {/* Feature tags */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-8">
+                    {['🏏 Cricket analogies', '🎯 Real examples', '📝 Exam tips', '🗣️ Hinglish!'].map((tag, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-white rounded-full text-sm text-gray-600 border border-gray-200">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  {/* Quick prompts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+                    {defaultPrompts.slice(0, 4).map((prompt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleQuickSend(typeof prompt === 'string' ? prompt : prompt.text)}
+                        className="p-4 bg-white hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl text-left transition-all"
+                      >
+                        <p className="text-sm text-gray-700">{typeof prompt === 'string' ? prompt : prompt.text}</p>
+                      </button>
+                    ))}
+                  </div>
+                  </motion.div>
+                </div>
+              ) : (
+                /* Messages Container - Centered content like ChatGPT */
+                <div className="max-w-4xl mx-auto px-4 py-4 w-full">
+                {/* Memory Context Banner */}
+                {messages.length > 0 && messages[messages.length - 1]?.content?.memory_context && (
+                  <MemoryContextBanner memoryContext={messages[messages.length - 1].content.memory_context} />
+                )}
+                <div className="space-y-4">
+                  <AnimatePresence>
+                    {messages.map((message, index) => (
+                      <motion.div
+                        key={message.id || message.message_id || index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        {message.type === 'user' && (
+                          <div className="flex justify-end mb-4">
+                            <div className="max-w-[85%] px-4 py-3 bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm">
+                              <p className="text-sm leading-relaxed">
+                                {typeof message.content === 'string' ? message.content : message.content?.message || message.content?.text || 'Question'}
+                              </p>
+                              {message.image_preview && (
+                                <img src={message.image_preview} alt="Attached" className="mt-2 rounded-lg max-h-32 object-contain" />
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {message.type === 'ai' && (
+                          <div className="flex justify-start mb-4">
+                            <div className="max-w-[90%]">
+                              <SmartResponse
+                                response={message.content}
+                                visualSketch={message.visual_sketch || message.content?.visual_sketch}
+                                question={message.user_question || ''}
+                                onFollowUp={(q) => { setInputMessage(q); inputRef.current?.focus(); }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {message.type === 'error' && (
+                          <div className="flex justify-center mb-4">
+                            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 max-w-md">
+                              <p className="text-sm">{message.content}</p>
+                              {message.canRetry && (
+                                <button onClick={() => handleRetry(message)} className="mt-2 text-sm text-red-600 hover:underline">
+                                  Retry
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              
+                {/* Loading Indicator */}
+                {loading && (
+                  <div className="flex justify-start mb-4">
+                    <NeuralThinkingIndicator isLoading={loading} />
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
+            
+            {/* Input Area - Fixed at bottom like ChatGPT */}
+            <div className="flex-shrink-0 border-t border-gray-100 bg-white/95 backdrop-blur-sm">
+              <div className="max-w-4xl mx-auto px-4 py-3">
+              {/* Follow-up suggestions */}
+              {floatingFollowUps.length > 0 && !loading && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {floatingFollowUps.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setInputMessage(typeof suggestion === 'string' ? suggestion : suggestion.text);
+                        setFloatingFollowUps([]);
+                        setTimeout(() => handleSend(), 100);
+                      }}
+                      className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full text-sm font-medium transition-colors"
+                    >
+                      {typeof suggestion === 'string' ? suggestion : suggestion.text}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="mb-3 relative inline-block">
+                  <img src={imagePreview} alt="Upload preview" className="max-h-32 rounded-lg border-2 border-purple-300" />
+                  <button onClick={handleRemoveImage} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full">
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              
+              {/* Input Form */}
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                <div className="flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 p-2 transition-all">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-white transition-all disabled:opacity-50">
+                    <ImageIcon className="w-5 h-5" />
+                  </button>
+                  <textarea
+                    ref={inputRef}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                    placeholder="Ask anything... I'll explain like a friend 💪"
+                    className="flex-1 px-3 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm"
+                    rows={1}
+                    disabled={loading}
+                    style={{ minHeight: '40px', maxHeight: '100px' }}
+                  />
+                  <motion.button
+                    type="submit"
+                    disabled={(!inputMessage.trim() && !selectedImage) || loading}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      inputMessage.trim() || selectedImage
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </motion.button>
+                </div>
+              </form>
+              </div>
+            </div>
+          </div>
+        </ClassroomLayout>
+      ) : (
+      <>
+      {/* OLD UI: Persistent Sidebar on large screens - PREMIUM DESIGN */}
       <div className="hidden lg:flex lg:flex-col lg:w-72 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/80">
         {/* Header with gradient accent */}
         <div className="p-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
@@ -2774,6 +3031,9 @@ export default function AITutorNeuroSymbolic() {
           <Plus className="h-6 w-6" />
         </button>
       </div>
+      </>
+      )}
+      {/* End of ClassroomLayout conditional */}
 
       {/* Upgrade Modal */}
       {showUpgradeModal && upgradeModalData && (

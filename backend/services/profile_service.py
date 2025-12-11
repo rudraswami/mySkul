@@ -53,7 +53,7 @@ class ProfileService:
             Dict with detected weak areas and update status
         """
         try:
-            if not self.db:
+            if self.db is None:
                 logger.warning("⚠️ No database client - skipping weak area detection")
                 return {"success": False, "reason": "no_database"}
             
@@ -150,7 +150,7 @@ class ProfileService:
             topics: List of topics to add to weak areas
         """
         try:
-            if not self.db:
+            if self.db is None:
                 return
             
             # Get current user profile
