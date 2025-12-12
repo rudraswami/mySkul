@@ -1,10 +1,18 @@
 /**
- * 🚀 CONFIG-DRIVEN SKETCH ENGINE V5.0 (SketchSense Universal)
- * =============================================================
+ * 🚀 CONFIG-DRIVEN SKETCH ENGINE V5.1 (SketchSense Intelligence)
+ * ===============================================================
  * 
- * THE ULTIMATE UNIVERSAL VISUAL ENGINE
+ * THE ULTIMATE UNIVERSAL VISUAL ENGINE + INTELLIGENCE LAYER
  * 
- * EVOLUTION from V4.0:
+ * V5.1 EVOLUTION (Intelligence Layer):
+ * - Quiz Mode: Hide labels, enable drag-and-drop
+ * - Bloom's Taxonomy: recall → understand → apply
+ * - Physics Validation: Real-time constraint checking
+ * - Cultural Theming: Indian context asset swapping
+ * - Misconception Detection: Catches impossible states
+ * - Progressive Disclosure: Step-by-step scaffolding
+ * 
+ * PREVIOUS V5.0 FEATURES:
  * - Multi-mode rendering (auto-detected from artifact)
  * - Dynamic layout engine (vertical, radial, horizontal)
  * - Math plot support (inline parsing)
@@ -22,17 +30,21 @@
  * - balance_scale: Comparison visualizations
  * - classic: Original template-based rendering (default)
  * 
- * BACKWARDS COMPATIBLE:
- * - All V4.0 configurations still work
- * - Template system intact
- * - Falls back gracefully if mode unknown
+ * INTERACTION MODES:
+ * - learn: Full visual with all labels (default)
+ * - quiz: Labels hidden, drag-and-drop targets visible
+ * 
+ * DIFFICULTY LEVELS (Bloom's Taxonomy):
+ * - recall: Empty structure, student fills labels
+ * - understand: Auto-fill after response, explanations
+ * - apply: Full interactive simulation controls
  * 
  * Architecture:
- * Backend sends blueprint → detectModeFromArtifact → Route to renderer
+ * Question → AssetFactory → Blueprint → PhysicsValidator → Renderer
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import all templates
 import {
@@ -50,6 +62,32 @@ import {
 // Import primitives
 import { COLORS, SUBJECT_THEMES } from '../primitives';
 
+// Import Intelligence Layer
+import { 
+  validateParameter, 
+  crossValidateParameters,
+  VALIDATION_STATUS 
+} from '../logic/PhysicsValidator';
+
+// Import Asset Factory for cultural theming
+import assetFactory, { 
+  detectCulturalContext, 
+  transformToThemedConfig 
+} from '../../utils/AssetFactory';
+
+// ============ INTERACTION MODES ============
+export const INTERACTION_MODES = {
+  LEARN: 'learn',   // Full visual with labels (default)
+  QUIZ: 'quiz',     // Labels hidden, drag targets visible
+};
+
+// ============ DIFFICULTY LEVELS (Bloom's Taxonomy) ============
+export const DIFFICULTY_LEVELS = {
+  RECALL: 'recall',       // Level 1: Empty structure, fill labels
+  UNDERSTAND: 'understand', // Level 2: Auto-fill, explanations
+  APPLY: 'apply',         // Level 3: Full interactive simulation
+};
+
 // ============ RENDERING MODES ============
 const RENDER_MODES = {
   CLASSIC: 'classic',           // Original template-based (default)
@@ -60,6 +98,9 @@ const RENDER_MODES = {
   BALANCE_SCALE: 'balance_scale', // Comparison scales
   TIMELINE: 'timeline',         // Chronological events
   STRUCTURE: 'structure',       // Anatomy/component diagrams
+  // V5.2 SketchSense modes
+  FORCE_COMPARISON: 'force_comparison', // Split-panel force comparison
+  SPLIT_COMPARISON: 'split_comparison', // Generic split-panel comparison
 };
 
 // ============ MODE DETECTION ============
@@ -119,6 +160,17 @@ function detectModeFromArtifact(artifact) {
   // Structure: has components with positions
   if (config.components && config.components.some(c => c.x !== undefined || c.y !== undefined)) {
     return RENDER_MODES.STRUCTURE;
+  }
+  
+  // V5.2 SketchSense: Force comparison (concept contains "force" and comparison mode)
+  const conceptLower = (artifact.concept || '').toLowerCase();
+  if (conceptLower.includes('force') && (config.comparison || artifact.comparison || artifact.split_panel)) {
+    return RENDER_MODES.FORCE_COMPARISON;
+  }
+  
+  // V5.2 SketchSense: Generic split comparison
+  if (config.left_panel && config.right_panel) {
+    return RENDER_MODES.SPLIT_COMPARISON;
   }
   
   // Default: use classic template-based
@@ -1164,13 +1216,35 @@ const ConfigDrivenSketch = ({
   subject = 'physics',
   question = '',
   onComplete,
-  // V5.0 NEW: Professor output integration
+  // V5.0: Professor output integration
   professorOutput = null,
   renderDirectives = null,
+  // V5.1 NEW: Intelligence Layer Props
+  mode = INTERACTION_MODES.LEARN, // 'learn' | 'quiz'
+  difficultyLevel = DIFFICULTY_LEVELS.APPLY, // 'recall' | 'understand' | 'apply'
+  onValidationFeedback = null, // Callback for physics validation feedback
+  onQuizAnswer = null, // Callback when quiz answer is submitted
+  showHinglish = true, // Show Hindi translations
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const totalSteps = 5;
+
+  // V5.1: Interactive values state (for sliders, toggles)
+  const [interactiveValues, setInteractiveValues] = useState({});
+  
+  // V5.1: Validation feedback state
+  const [validationFeedback, setValidationFeedback] = useState(null);
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
+  
+  // V5.1: Quiz mode state
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [revealedLabels, setRevealedLabels] = useState(new Set());
+  const [quizScore, setQuizScore] = useState(0);
+  
+  // V5.1: Drag and drop state for quiz mode
+  const [draggedLabel, setDraggedLabel] = useState(null);
+  const [dropTargets, setDropTargets] = useState([]);
 
   // V5.0: Merge blueprint with professor output
   const effectiveBlueprint = useMemo(() => {
@@ -1211,9 +1285,14 @@ const ConfigDrivenSketch = ({
   const TemplateComponent = TEMPLATE_MAP[templateType] || RaceTemplate;
   const theme = SUBJECT_THEMES[config.subject || subject] || SUBJECT_THEMES.physics;
 
-  // Auto-advance steps
+  // Auto-advance steps (respects difficulty level)
   useEffect(() => {
     if (!isPlaying || currentStep >= totalSteps) return;
+    
+    // In quiz/recall mode, don't auto-advance - wait for user input
+    if (mode === INTERACTION_MODES.QUIZ || difficultyLevel === DIFFICULTY_LEVELS.RECALL) {
+      return;
+    }
     
     const durations = [1500, 2500, 3000, 2500, 2000];
     const timer = setTimeout(() => {
@@ -1221,35 +1300,228 @@ const ConfigDrivenSketch = ({
     }, durations[currentStep] || 2000);
     
     return () => clearTimeout(timer);
-  }, [currentStep, isPlaying, totalSteps]);
+  }, [currentStep, isPlaying, totalSteps, mode, difficultyLevel]);
+
+  // V5.1: Handle interactive value changes with physics validation
+  const handleInteractiveChange = useCallback((parameterId, value) => {
+    // Update the value
+    setInteractiveValues(prev => ({
+      ...prev,
+      [parameterId]: value,
+    }));
+
+    // Validate the change
+    const templateType = config.template || 'race_comparison';
+    const feedback = validateParameter(templateType, parameterId, value, interactiveValues);
+    
+    if (feedback) {
+      setValidationFeedback(feedback);
+      setShowFeedbackToast(true);
+      
+      // Auto-hide toast after duration
+      setTimeout(() => setShowFeedbackToast(false), feedback.toast?.duration || 4000);
+      
+      // Call external callback if provided
+      if (onValidationFeedback) {
+        onValidationFeedback(feedback);
+      }
+    }
+
+    // Cross-validate related parameters
+    const crossFeedback = crossValidateParameters(templateType, {
+      ...interactiveValues,
+      [parameterId]: value,
+    });
+    
+    if (crossFeedback && !feedback) {
+      setValidationFeedback(crossFeedback);
+      setShowFeedbackToast(true);
+      setTimeout(() => setShowFeedbackToast(false), crossFeedback.toast?.duration || 4000);
+    }
+  }, [config, interactiveValues, onValidationFeedback]);
+
+  // V5.1: Quiz mode - handle label drop
+  const handleLabelDrop = useCallback((targetId, droppedLabelId) => {
+    const correctLabel = dropTargets.find(t => t.id === targetId)?.correctLabel;
+    const isCorrect = correctLabel === droppedLabelId;
+    
+    setQuizAnswers(prev => ({
+      ...prev,
+      [targetId]: {
+        answer: droppedLabelId,
+        correct: isCorrect,
+        timestamp: Date.now(),
+      },
+    }));
+
+    if (isCorrect) {
+      setRevealedLabels(prev => new Set([...prev, targetId]));
+      setQuizScore(prev => prev + 1);
+    }
+
+    // Callback for quiz answer
+    if (onQuizAnswer) {
+      onQuizAnswer({
+        targetId,
+        answer: droppedLabelId,
+        correct: isCorrect,
+        totalCorrect: quizScore + (isCorrect ? 1 : 0),
+        totalTargets: dropTargets.length,
+      });
+    }
+
+    setDraggedLabel(null);
+  }, [dropTargets, quizScore, onQuizAnswer]);
+
+  // V5.1: Advance to next step (for quiz/recall mode)
+  const handleAdvanceStep = useCallback(() => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(prev => prev + 1);
+    }
+  }, [currentStep, totalSteps]);
+
+  // V5.1: Calculate visible step based on difficulty level
+  const effectiveStep = useMemo(() => {
+    switch (difficultyLevel) {
+      case DIFFICULTY_LEVELS.RECALL:
+        // Only show structure, no labels (step 1)
+        return Math.min(currentStep, 1);
+      case DIFFICULTY_LEVELS.UNDERSTAND:
+        // Show up to labels (step 3)
+        return Math.min(currentStep, 3);
+      case DIFFICULTY_LEVELS.APPLY:
+      default:
+        // Full visual with controls
+        return currentStep;
+    }
+  }, [currentStep, difficultyLevel]);
+
+  // V5.1: Should show labels?
+  const showLabels = useMemo(() => {
+    if (mode === INTERACTION_MODES.QUIZ) return false;
+    if (difficultyLevel === DIFFICULTY_LEVELS.RECALL) return false;
+    return effectiveStep >= 2;
+  }, [mode, difficultyLevel, effectiveStep]);
+
+  // V5.1: Should show interactive controls?
+  const showControls = useMemo(() => {
+    return difficultyLevel === DIFFICULTY_LEVELS.APPLY && effectiveStep >= 4;
+  }, [difficultyLevel, effectiveStep]);
 
   // Handle replay
   const handleReplay = useCallback(() => {
     setCurrentStep(0);
     setIsPlaying(true);
+    setQuizAnswers({});
+    setRevealedLabels(new Set());
+    setQuizScore(0);
+    setValidationFeedback(null);
   }, []);
 
   // Get title with Hindi
   const title = config.title || concept;
   const titleHindi = config.title_hindi || '';
 
+  // V5.1: Detect cultural context for theming
+  const culturalContext = useMemo(() => detectCulturalContext(question), [question]);
+  
+  // V5.1: Get mode display info
+  const getModeIcon = () => {
+    if (mode === INTERACTION_MODES.QUIZ) return '🎯';
+    switch (difficultyLevel) {
+      case DIFFICULTY_LEVELS.RECALL: return '🧠';
+      case DIFFICULTY_LEVELS.UNDERSTAND: return '💡';
+      case DIFFICULTY_LEVELS.APPLY: return '🎬';
+      default: return '🎬';
+    }
+  };
+
+  const getModeLabel = () => {
+    if (mode === INTERACTION_MODES.QUIZ) return 'Quiz Mode';
+    switch (difficultyLevel) {
+      case DIFFICULTY_LEVELS.RECALL: return 'Recall';
+      case DIFFICULTY_LEVELS.UNDERSTAND: return 'Understand';
+      case DIFFICULTY_LEVELS.APPLY: return 'Apply';
+      default: return 'Watch & Learn';
+    }
+  };
+
   return (
-    <div className="config-driven-sketch rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: theme.primary }}>
+    <div className="config-driven-sketch rounded-2xl overflow-hidden shadow-2xl border-2 relative" style={{ borderColor: theme.primary }}>
+      
+      {/* V5.1: Validation Feedback Toast */}
+      <AnimatePresence>
+        {showFeedbackToast && validationFeedback && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-16 left-1/2 z-50 max-w-sm"
+          >
+            <div 
+              className={`px-4 py-3 rounded-xl shadow-xl border-2 backdrop-blur-sm ${
+                validationFeedback.status === VALIDATION_STATUS.ERROR 
+                  ? 'bg-red-50 border-red-300 text-red-800' 
+                  : validationFeedback.status === VALIDATION_STATUS.WARNING
+                  ? 'bg-amber-50 border-amber-300 text-amber-800'
+                  : 'bg-blue-50 border-blue-300 text-blue-800'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{validationFeedback.toast?.icon || '💡'}</span>
+                <div>
+                  <p className="font-medium text-sm">{validationFeedback.message}</p>
+                  {showHinglish && validationFeedback.hindiMessage && (
+                    <p className="text-xs mt-1 opacity-80">{validationFeedback.hindiMessage}</p>
+                  )}
+                  {validationFeedback.mentorMessage && (
+                    <p className="text-xs mt-2 italic opacity-70">
+                      👨‍🏫 {validationFeedback.mentorMessage}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* V5.1: Quiz Mode Score Badge */}
+      {mode === INTERACTION_MODES.QUIZ && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute top-4 right-4 z-40"
+        >
+          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border-2 border-purple-200">
+            <span className="font-bold text-purple-700">
+              🎯 {quizScore}/{dropTargets.length}
+            </span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div 
         className="px-5 py-3 flex items-center justify-between"
         style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🎬</span>
+          <span className="text-2xl">{getModeIcon()}</span>
           <div>
-            <span className="font-bold text-white text-lg">Watch & Learn</span>
-            {titleHindi && (
+            <span className="font-bold text-white text-lg">{getModeLabel()}</span>
+            {showHinglish && titleHindi && (
               <span className="ml-2 text-white/80 text-sm">({titleHindi})</span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Cultural context badge */}
+          {culturalContext !== 'default' && (
+            <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-medium">
+              🇮🇳 {culturalContext}
+            </span>
+          )}
           <span className="bg-white/30 backdrop-blur-sm px-4 py-1.5 rounded-full text-white text-sm font-bold capitalize">
             {config.subject || subject}
           </span>
@@ -1334,7 +1606,17 @@ const ConfigDrivenSketch = ({
         }}
       >
         <div className="flex items-center gap-3">
-          {currentStep >= totalSteps ? (
+          {/* Status indicator */}
+          {mode === INTERACTION_MODES.QUIZ ? (
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎯</span>
+              <span className="font-medium text-sm text-purple-700">
+                {quizScore === dropTargets.length && dropTargets.length > 0 
+                  ? '🎉 Perfect!' 
+                  : 'Drag labels to targets'}
+              </span>
+            </div>
+          ) : currentStep >= totalSteps ? (
             <motion.div 
               initial={{ scale: 0 }} 
               animate={{ scale: 1 }} 
@@ -1344,12 +1626,33 @@ const ConfigDrivenSketch = ({
               <span className="text-lg">✅</span>
               <span className="font-medium text-sm">Complete!</span>
             </motion.div>
+          ) : difficultyLevel === DIFFICULTY_LEVELS.RECALL ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg">🧠</span>
+              <span className="text-sm text-gray-600">Can you recall the labels?</span>
+            </div>
           ) : (
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.primary }} />
               <span className="text-sm" style={{ color: theme.primary }}>Playing...</span>
             </div>
           )}
+          
+          {/* V5.1: Difficulty level badge */}
+          <span 
+            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+              difficultyLevel === DIFFICULTY_LEVELS.RECALL 
+                ? 'bg-amber-100 text-amber-700' 
+                : difficultyLevel === DIFFICULTY_LEVELS.UNDERSTAND 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-green-100 text-green-700'
+            }`}
+            title={`Bloom's Level: ${difficultyLevel}`}
+          >
+            {difficultyLevel === DIFFICULTY_LEVELS.RECALL ? '🧠 Recall' : 
+             difficultyLevel === DIFFICULTY_LEVELS.UNDERSTAND ? '💡 Understand' : 
+             '🔬 Apply'}
+          </span>
           
           {/* V5.0: Mode indicator badge */}
           <span 
@@ -1368,6 +1671,21 @@ const ConfigDrivenSketch = ({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* V5.1: Quiz mode - Next button for recall/understand */}
+          {(mode === INTERACTION_MODES.QUIZ || difficultyLevel === DIFFICULTY_LEVELS.RECALL) && currentStep < totalSteps && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAdvanceStep}
+              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-full transition-all flex items-center gap-1.5 shadow-md"
+            >
+              <span>Next</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </motion.button>
+          )}
+          
           {/* Step indicator */}
           <div className="flex items-center gap-1">
             {Array.from({ length: totalSteps }).map((_, i) => (
@@ -1375,8 +1693,8 @@ const ConfigDrivenSketch = ({
                 key={i}
                 className="w-1.5 h-1.5 rounded-full transition-all"
                 style={{
-                  backgroundColor: i <= currentStep ? theme.primary : '#D1D5DB',
-                  transform: i === currentStep ? 'scale(1.3)' : 'scale(1)',
+                  backgroundColor: i <= effectiveStep ? theme.primary : '#D1D5DB',
+                  transform: i === effectiveStep ? 'scale(1.3)' : 'scale(1)',
                 }}
               />
             ))}

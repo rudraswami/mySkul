@@ -34,6 +34,9 @@ export const TEMPLATE_TYPES = {
   CAUSE_EFFECT: 'cause_effect',
   SCALE: 'scale_spectrum',
   TIMELINE: 'sequence_timeline',
+  // V5.2 SketchSense Templates
+  FORCE_COMPARISON: 'force_comparison',
+  SPLIT_COMPARISON: 'split_comparison',
 };
 
 // Template selector function
@@ -47,6 +50,9 @@ export const getTemplate = (templateType) => {
     [TEMPLATE_TYPES.CAUSE_EFFECT]: require('./CauseEffectTemplate').default,
     [TEMPLATE_TYPES.SCALE]: require('./ScaleTemplate').default,
     [TEMPLATE_TYPES.TIMELINE]: require('./TimelineTemplate').default,
+    // V5.2 SketchSense Templates (loaded from components/visuals)
+    [TEMPLATE_TYPES.FORCE_COMPARISON]: require('../../components/visuals/templates/ForceComparisonTemplate').default,
+    [TEMPLATE_TYPES.SPLIT_COMPARISON]: require('../../components/visuals/templates/SplitComparisonTemplate').default,
   };
   
   return templateMap[templateType] || templateMap[TEMPLATE_TYPES.RACE];

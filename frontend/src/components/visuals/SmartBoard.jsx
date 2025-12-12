@@ -1,16 +1,19 @@
 /**
- * SmartBoard - Interactive Visual Learning Panel
- * ==============================================
+ * SmartBoard - Interactive Visual Learning Panel ("Magic Notebook")
+ * ==================================================================
  * 
  * The right-side panel in the Digital Classroom layout.
- * Renders visual artifacts from the AI tutor.
+ * Renders visual artifacts from the AI tutor with a SKETCH aesthetic.
  * 
  * Features:
+ * - 🎨 Magic Notebook theme (hand-drawn, sketchy, warm)
+ * - 📐 Dot-grid paper background
+ * - ✏️ Handwriting font (Patrick Hand)
+ * - 📝 Live Formula Sticky Notes
  * - Animated visual transitions (Spring physics)
  * - Beautiful empty state with guidance
- * - Non-scrollable fixed panel
- * - Dot pattern background ("The Druv Vibe")
- * - Academic serif typography for titles
+ * 
+ * SketchSense V5.0 Compatible
  */
 
 import React, { useState, useEffect } from 'react';
@@ -24,19 +27,130 @@ import {
   Play,
   Maximize2,
   Minimize2,
-  Eye
+  Eye,
+  PenTool
 } from 'lucide-react';
 
-// Import the Visual Engine - with safe fallback
-let ConfigDrivenSketch;
+// ============================================
+// SKETCHSENSE THEME CONSTANTS
+// ============================================
+const SKETCH_THEME = {
+  // Notebook paper background
+  notebookBg: '#fdfcf8',
+  gridColor: '#cbd5e1',
+  gridSize: '20px',
+  
+  // Highlighter colors (warm, playful)
+  highlightYellow: '#fde047',
+  highlightBlue: '#3b82f6',
+  highlightRed: '#ef4444',
+  highlightGreen: '#22c55e',
+  highlightOrange: '#f97316',
+  
+  // Sticky note colors
+  stickyYellow: '#fef3c7',
+  stickyBorder: '#fcd34d',
+};
+
+// Inline style for handwriting font (Patrick Hand)
+const fontSketchStyle = {
+  fontFamily: "'Patrick Hand', 'Comic Sans MS', 'Segoe Print', cursive",
+  letterSpacing: '0.02em',
+};
+
+// ============================================
+// SKETCHSENSE V6 - MAGIC NOTEBOOK ENGINE
+// ============================================
+// Import the NEW V6 UniversalSketchCanvas (RoughJS + Live Drawing)
+import UniversalSketchCanvas, { 
+  NOTEBOOK_THEME,
+  GhostMentor,
+} from '../../visual-engine/sketch/UniversalSketchCanvasV6';
+
+// Import Sketch Primitives for direct use
+import {
+  SketchFilters,
+} from '../../visual-engine/sketch/SketchPrimitives';
+
+// Import SketchyFilterDefs for SVG filter definitions
+import { SketchyFilterDefs } from './templates/SketchyFilters';
+
+// Legacy fallback - only used if V6 fails
+let ConfigDrivenSketch = null;
 try {
   ConfigDrivenSketch = require('../../visual-engine').ConfigDrivenSketch;
 } catch (e) {
-  ConfigDrivenSketch = null;
+  console.warn('ConfigDrivenSketch fallback not available');
 }
 
-// Import VisualSketchViewer
+// Import VisualSketchViewer for legacy SVG-only visuals
 import VisualSketchViewer from '../visual/VisualSketchViewer';
+
+// Import SketchSense Theme
+import './styles/SketchTheme.css';
+
+// ============================================
+// LIVE FORMULA STICKY NOTE (Magic Notebook Feature)
+// ============================================
+const FormulaStickyNote = ({ formula, concept }) => {
+  if (!formula) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10, rotate: 0 }}
+      animate={{ opacity: 1, y: 0, rotate: -1 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="absolute top-4 left-4 z-20"
+      style={{
+        transform: 'rotate(-1deg)',
+      }}
+    >
+      <div 
+        className="px-4 py-3 rounded-lg shadow-md border"
+        style={{
+          backgroundColor: SKETCH_THEME.stickyYellow,
+          borderColor: SKETCH_THEME.stickyBorder,
+          maxWidth: '220px',
+        }}
+      >
+        {/* Sticky note "pin" */}
+        <div 
+          className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full shadow-sm"
+          style={{ backgroundColor: SKETCH_THEME.highlightRed }}
+        />
+        
+        {/* Label */}
+        <p 
+          className="text-xs text-amber-700 uppercase tracking-wide mb-1"
+          style={fontSketchStyle}
+        >
+          📐 Key Formula
+        </p>
+        
+        {/* Formula */}
+        <p 
+          className="text-lg text-gray-800 font-medium"
+          style={{
+            ...fontSketchStyle,
+            fontSize: '1.1rem',
+          }}
+        >
+          {formula}
+        </p>
+        
+        {/* Concept label if available */}
+        {concept && (
+          <p 
+            className="text-xs text-amber-600 mt-1 italic"
+            style={fontSketchStyle}
+          >
+            — {concept}
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 // Empty State Component - Premium Design
 const EmptyBoardState = () => {
@@ -120,25 +234,28 @@ const EmptyBoardState = () => {
         />
       </motion.div>
 
-      {/* Title - Academic Serif */}
+      {/* Title - Sketch Style */}
       <h3 
         className="text-2xl font-bold text-gray-800 mb-3"
-        style={{ fontFamily: "'Merriweather', 'Georgia', serif" }}
+        style={fontSketchStyle}
       >
-        Your Visual SmartBoard
+        📓 Your Magic Notebook
       </h3>
       
       {/* Subtitle */}
-      <p className="text-gray-500 text-sm max-w-sm mb-8 leading-relaxed">
-        Ask me anything! I'll draw concepts, diagrams, and visualizations right here to help you understand better.
+      <p 
+        className="text-gray-500 text-sm max-w-sm mb-8 leading-relaxed"
+        style={fontSketchStyle}
+      >
+        Ask me anything! I'll sketch concepts, diagrams, and visualizations right here to help you understand better.
       </p>
 
       {/* Animated Tips Carousel */}
-      <div className="w-full max-w-sm">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+      <div className="w-full max-w-md px-4">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
           Try asking...
         </p>
-        <div className="relative h-16 overflow-hidden">
+        <div className="relative min-h-[72px]">
           <AnimatePresence mode="wait">
             {tips.map((tip, index) => {
               if (index !== currentTipIndex) return null;
@@ -150,12 +267,12 @@ const EmptyBoardState = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className={`absolute inset-x-0 flex items-center gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border ${colors.border} shadow-sm`}
+                  className={`flex items-center gap-4 p-4 bg-white/90 backdrop-blur-sm rounded-2xl border ${colors.border} shadow-lg`}
                 >
-                  <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                    <tip.icon className={`w-5 h-5 ${colors.text}`} />
+                  <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <tip.icon className={`w-6 h-6 ${colors.text}`} />
                   </div>
-                  <p className="text-sm text-gray-700 text-left font-medium">
+                  <p className="text-base text-gray-700 text-left font-medium flex-1">
                     "{tip.text}"
                   </p>
                 </motion.div>
@@ -165,18 +282,394 @@ const EmptyBoardState = () => {
         </div>
         
         {/* Tip Indicators */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center items-center gap-3 mt-6">
           {tips.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentTipIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentTipIndex 
-                  ? 'bg-purple-500 w-6' 
-                  : 'bg-gray-300 hover:bg-gray-400'
+                  ? 'bg-purple-500 w-8' 
+                  : 'bg-gray-300 hover:bg-gray-400 w-2'
               }`}
             />
           ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// LOADING SKELETON - "Dr. Druv is Sketching..." Animation
+// ============================================
+const SketchingLoadingState = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col items-center justify-center h-full text-center px-8 py-12"
+    >
+      {/* Pulsing Grid Animation */}
+      <div className="relative w-64 h-48 mb-8">
+        {/* Animated grid dots */}
+        <div 
+          className="absolute inset-0 rounded-2xl overflow-hidden"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            border: `2px solid ${SKETCH_THEME.gridColor}`,
+          }}
+        >
+          {/* Animated pulsing grid pattern */}
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(${SKETCH_THEME.highlightBlue}40 2px, transparent 2px)`,
+              backgroundSize: '16px 16px',
+            }}
+            animate={{
+              opacity: [0.3, 0.7, 0.3],
+              scale: [1, 1.02, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+          
+          {/* Animated "sketch" lines being drawn */}
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 256 192">
+            {/* Animated line 1 */}
+            <motion.path
+              d="M 30 50 Q 80 30 130 60 T 220 50"
+              fill="none"
+              stroke={SKETCH_THEME.highlightBlue}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="200"
+              initial={{ strokeDashoffset: 200 }}
+              animate={{ strokeDashoffset: [200, 0, 200] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {/* Animated line 2 */}
+            <motion.path
+              d="M 40 100 L 100 100 L 100 150 L 160 150"
+              fill="none"
+              stroke={SKETCH_THEME.highlightOrange}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="180"
+              initial={{ strokeDashoffset: 180 }}
+              animate={{ strokeDashoffset: [180, 0, 180] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+            />
+            {/* Animated circle */}
+            <motion.circle
+              cx="200"
+              cy="120"
+              r="25"
+              fill="none"
+              stroke={SKETCH_THEME.highlightGreen}
+              strokeWidth="3"
+              strokeDasharray="160"
+              initial={{ strokeDashoffset: 160 }}
+              animate={{ strokeDashoffset: [160, 0, 160] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            />
+          </svg>
+        </div>
+        
+        {/* Floating pencil animation */}
+        <motion.div
+          className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+          animate={{
+            y: [0, -8, 0],
+            rotate: [0, 10, 0, -10, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        >
+          <PenTool className="w-6 h-6 text-white" />
+        </motion.div>
+        
+        {/* Floating sparkle */}
+        <motion.div
+          className="absolute -bottom-2 -left-2"
+          animate={{
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0.5, 1, 0.5],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+          }}
+        >
+          <Sparkles className="w-8 h-8 text-orange-400" />
+        </motion.div>
+      </div>
+      
+      {/* Text */}
+      <h3 
+        className="text-xl font-bold text-gray-800 mb-2"
+        style={fontSketchStyle}
+      >
+        ✏️ Dr. Druv is sketching...
+      </h3>
+      <p 
+        className="text-gray-500 text-sm max-w-xs"
+        style={fontSketchStyle}
+      >
+        Creating a visual explanation just for you!
+      </p>
+      
+      {/* Progress dots */}
+      <div className="flex gap-2 mt-6">
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-2.5 h-2.5 rounded-full bg-purple-400"
+            animate={{
+              scale: [1, 1.4, 1],
+              opacity: [0.4, 1, 0.4],
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// FALLBACK CONCEPT CARD - Generated locally when no visual arrives
+// ============================================
+const FallbackConceptCard = ({ topic, subject }) => {
+  // Generate a local fallback when timeout occurs
+  const getSubjectEmoji = () => {
+    const lower = (subject || '').toLowerCase();
+    if (lower.includes('physics')) return '⚛️';
+    if (lower.includes('chemistry')) return '🧪';
+    if (lower.includes('biology')) return '🧬';
+    if (lower.includes('math')) return '📐';
+    return '📚';
+  };
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full max-w-md mx-auto"
+    >
+      <div 
+        className="rounded-2xl shadow-lg overflow-hidden"
+        style={{
+          backgroundColor: 'white',
+          border: `2px solid ${SKETCH_THEME.gridColor}`,
+          transform: 'rotate(-1deg)',
+        }}
+      >
+        {/* Header */}
+        <div 
+          className="px-6 py-5"
+          style={{
+            background: `linear-gradient(135deg, ${SKETCH_THEME.highlightBlue}20 0%, ${SKETCH_THEME.highlightBlue}10 100%)`,
+            borderBottom: `2px dashed ${SKETCH_THEME.gridColor}`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+              style={{ backgroundColor: `${SKETCH_THEME.highlightBlue}20` }}
+            >
+              {getSubjectEmoji()}
+            </div>
+            <div>
+              <h3 
+                className="text-lg font-bold text-gray-800"
+                style={fontSketchStyle}
+              >
+                {topic || 'Concept Overview'}
+              </h3>
+              {subject && (
+                <span 
+                  className="text-sm text-gray-500"
+                  style={fontSketchStyle}
+                >
+                  {subject}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-6 text-center">
+          <motion.div
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="text-5xl mb-4"
+          >
+            💡
+          </motion.div>
+          <p 
+            className="text-gray-600 mb-4"
+            style={fontSketchStyle}
+          >
+            I'm thinking about the best way to visualize this concept...
+          </p>
+          <p 
+            className="text-sm text-gray-400"
+            style={fontSketchStyle}
+          >
+            Check the explanation on the left for detailed information!
+          </p>
+        </div>
+        
+        {/* Footer */}
+        <div 
+          className="px-6 py-3"
+          style={{
+            backgroundColor: SKETCH_THEME.notebookBg,
+            borderTop: `1px dashed ${SKETCH_THEME.gridColor}`,
+          }}
+        >
+          <p 
+            className="text-xs text-center text-gray-400"
+            style={fontSketchStyle}
+          >
+            ✨ Complex visuals coming soon...
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Live Concept Card - Shows when chatting but no visual (Sketch Style)
+const ConceptCard = ({ topic, formula, subject }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, rotate: 0 }}
+      animate={{ opacity: 1, scale: 1, rotate: -0.5 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="w-full max-w-lg mx-auto"
+    >
+      <div 
+        className="rounded-2xl shadow-lg overflow-hidden"
+        style={{
+          backgroundColor: 'white',
+          border: `2px solid ${SKETCH_THEME.gridColor}`,
+        }}
+      >
+        {/* Header - Sketch Style */}
+        <div 
+          className="px-6 py-4"
+          style={{
+            background: `linear-gradient(135deg, ${SKETCH_THEME.highlightYellow} 0%, ${SKETCH_THEME.stickyYellow} 100%)`,
+            borderBottom: `2px dashed ${SKETCH_THEME.stickyBorder}`,
+          }}
+        >
+          <div 
+            className="flex items-center gap-2 text-amber-700 text-sm mb-1"
+            style={fontSketchStyle}
+          >
+            <PenTool className="w-4 h-4" />
+            <span>Live Notes</span>
+          </div>
+          <h3 
+            className="text-xl font-bold text-gray-800"
+            style={fontSketchStyle}
+          >
+            📝 {topic || 'Current Topic'}
+          </h3>
+          {subject && (
+            <span 
+              className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                color: '#92400e',
+                ...fontSketchStyle,
+              }}
+            >
+              📚 {subject}
+            </span>
+          )}
+        </div>
+        
+        {/* Content */}
+        <div className="p-6">
+          {formula ? (
+            <div className="space-y-4">
+              <div 
+                className="text-sm font-medium uppercase tracking-wider"
+                style={{
+                  ...fontSketchStyle,
+                  color: SKETCH_THEME.highlightBlue,
+                }}
+              >
+                📐 Key Formula
+              </div>
+              <div 
+                className="p-4 rounded-xl"
+                style={{
+                  backgroundColor: SKETCH_THEME.stickyYellow,
+                  border: `2px solid ${SKETCH_THEME.stickyBorder}`,
+                  transform: 'rotate(-0.5deg)',
+                }}
+              >
+                <p 
+                  className="text-xl text-gray-800 text-center"
+                  style={{
+                    ...fontSketchStyle,
+                    fontWeight: '600',
+                  }}
+                >
+                  {formula}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-4xl mb-4"
+              >
+                ✏️
+              </motion.div>
+              <p 
+                className="text-gray-500 text-sm"
+                style={fontSketchStyle}
+              >
+                Ask about a specific concept to see formulas and key points here!
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer - Sketch Style */}
+        <div 
+          className="px-6 py-3"
+          style={{
+            backgroundColor: SKETCH_THEME.notebookBg,
+            borderTop: `1px dashed ${SKETCH_THEME.gridColor}`,
+          }}
+        >
+          <p 
+            className="text-xs text-center text-gray-400"
+            style={fontSketchStyle}
+          >
+            ✨ Notes update as we discuss concepts...
+          </p>
         </div>
       </div>
     </motion.div>
@@ -188,8 +681,19 @@ export default function SmartBoard({
   artifact = null,
   onFullscreen,
   className = '',
-  isFullscreen = false
+  isFullscreen = false,
+  currentTopic = null,
+  keyFormula = null,
+  subject = null,
+  isConversationActive = false,
+  isActive = true, // SmartBoard panel is visible/open
+  isLoading = false, // NEW: Loading state from parent
+  userQuestion = null, // NEW: Current question for fallback
 }) {
+  // Timeout state for fallback
+  const [showFallback, setShowFallback] = useState(false);
+  const timeoutRef = React.useRef(null);
+  
   // Determine what type of visual to render
   const hasVisual = artifact && (
     artifact.svg || 
@@ -198,33 +702,109 @@ export default function SmartBoard({
     artifact.template ||
     artifact.mode
   );
+  
+  // Handle loading timeout - show fallback after 5 seconds
+  useEffect(() => {
+    if (isLoading && !hasVisual) {
+      // Start timeout when loading begins
+      setShowFallback(false);
+      timeoutRef.current = setTimeout(() => {
+        setShowFallback(true);
+      }, 5000); // 5 second timeout
+    } else {
+      // Clear timeout when visual arrives or loading stops
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (hasVisual) {
+        setShowFallback(false);
+      }
+    }
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoading, hasVisual]);
+  
+  // Show concept card if conversation is active but no visual
+  const showConceptCard = isConversationActive && !hasVisual && !isLoading && (currentTopic || keyFormula);
+  
+  // Show loading skeleton
+  const showLoadingSkeleton = isLoading && !hasVisual && !showFallback;
+  
+  // Show fallback when timeout occurs
+  const showFallbackCard = isLoading && !hasVisual && showFallback;
+  
+  // Status indicator - green when active OR has visual OR loading
+  const isStatusActive = isActive || hasVisual || isLoading;
 
   return (
     <div 
-      className={`flex flex-col h-full bg-slate-50 relative overflow-hidden ${className}`}
+      className={`flex flex-col h-full relative overflow-hidden ${className}`}
       style={{
-        backgroundImage: 'radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0)',
-        backgroundSize: '24px 24px'
+        // Magic Notebook paper background
+        backgroundColor: SKETCH_THEME.notebookBg,
+        // Dot grid pattern (sketchy notebook feel)
+        backgroundImage: `radial-gradient(${SKETCH_THEME.gridColor} 1px, transparent 1px)`,
+        backgroundSize: `${SKETCH_THEME.gridSize} ${SKETCH_THEME.gridSize}`,
       }}
     >
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-orange-50/20 pointer-events-none" />
+      {/* Subtle warm gradient overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/20 via-transparent to-purple-50/15 pointer-events-none" />
       
-      {/* Header Bar - Glassmorphic */}
-      <div className="relative z-10 flex-shrink-0 px-4 py-3 bg-white/70 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between">
+      {/* SVG Filter Definitions for Sketchy Effects */}
+      <SketchyFilterDefs />
+      
+      {/* Live Formula Sticky Note */}
+      <AnimatePresence>
+        {keyFormula && (
+          <FormulaStickyNote formula={keyFormula} concept={currentTopic} />
+        )}
+      </AnimatePresence>
+      
+      {/* Header Bar - Magic Notebook Style */}
+      <div 
+        className="relative z-10 flex-shrink-0 px-4 py-3 border-b-2 flex items-center justify-between"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(8px)',
+          borderColor: SKETCH_THEME.gridColor,
+        }}
+      >
         <div className="flex items-center gap-3">
+          {/* Live indicator */}
           <div className="relative">
-            <div className={`w-2.5 h-2.5 rounded-full ${hasVisual ? 'bg-green-500' : 'bg-gray-400'}`} />
-            {hasVisual && (
-              <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-green-500 animate-ping opacity-50" />
+            <div 
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: isStatusActive ? SKETCH_THEME.highlightGreen : '#9CA3AF' }}
+            />
+            {isStatusActive && (
+              <div 
+                className="absolute inset-0 w-2.5 h-2.5 rounded-full animate-ping opacity-50"
+                style={{ backgroundColor: SKETCH_THEME.highlightGreen }}
+              />
             )}
           </div>
+          
+          {/* Title with sketch font */}
           <span 
-            className="text-sm font-semibold text-gray-700"
-            style={{ fontFamily: "'Merriweather', 'Georgia', serif" }}
+            className="text-base font-semibold text-gray-700"
+            style={fontSketchStyle}
           >
-            {hasVisual ? '🎨 Visual Ready' : '📺 SmartBoard'}
+            {isLoading && !hasVisual 
+              ? '✏️ Sketching...' 
+              : hasVisual 
+                ? '✏️ Visual Ready' 
+                : '📓 Magic Notebook'}
           </span>
+          
+          {/* Sketch indicator */}
+          {hasVisual && (
+            <PenTool className="w-4 h-4 text-purple-500" />
+          )}
         </div>
         
         {hasVisual && onFullscreen && (
@@ -248,9 +828,28 @@ export default function SmartBoard({
       {/* Main Content Area */}
       <div className="relative z-0 flex-1 flex items-center justify-center p-4 overflow-auto">
         <AnimatePresence mode="wait">
-          {!hasVisual ? (
+          {/* Priority 1: Loading Skeleton */}
+          {showLoadingSkeleton ? (
+            <SketchingLoadingState key="loading" />
+          ) : /* Priority 2: Fallback Card (after timeout) */
+          showFallbackCard ? (
+            <FallbackConceptCard 
+              key="fallback"
+              topic={currentTopic || userQuestion?.split(' ').slice(0, 4).join(' ')}
+              subject={subject}
+            />
+          ) : /* Priority 3: Concept Card */
+          !hasVisual && showConceptCard ? (
+            <ConceptCard 
+              key="concept"
+              topic={currentTopic}
+              formula={keyFormula}
+              subject={subject}
+            />
+          ) : /* Priority 4: Empty State */
+          !hasVisual ? (
             <EmptyBoardState key="empty" />
-          ) : (
+          ) : /* Priority 5: Actual Visual */ (
             <motion.div
               key="visual"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -264,62 +863,88 @@ export default function SmartBoard({
               }}
               className="w-full max-w-2xl"
             >
-              {/* Visual Card Container - Premium Design */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden ring-1 ring-black/5">
-                {/* Visual Title Bar */}
+              {/* Visual Card Container - Sketch Notebook Style */}
+              <div 
+                className="rounded-2xl shadow-lg overflow-hidden"
+                style={{
+                  backgroundColor: 'white',
+                  border: `2px solid ${SKETCH_THEME.gridColor}`,
+                  // Subtle paper texture effect
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)',
+                }}
+              >
+                {/* Visual Title Bar - Sketch Style */}
                 {artifact.concept && (
-                  <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-orange-50 border-b border-gray-100">
+                  <div 
+                    className="px-4 py-3 border-b-2"
+                    style={{
+                      background: `linear-gradient(135deg, ${SKETCH_THEME.stickyYellow}40 0%, rgba(255,255,255,0.9) 100%)`,
+                      borderColor: SKETCH_THEME.gridColor,
+                    }}
+                  >
                     <h4 
-                      className="text-base font-semibold text-gray-800"
-                      style={{ fontFamily: "'Merriweather', 'Georgia', serif" }}
+                      className="text-lg text-gray-800"
+                      style={{
+                        ...fontSketchStyle,
+                        fontWeight: '600',
+                      }}
                     >
-                      {artifact.concept}
+                      ✏️ {artifact.concept}
                     </h4>
                     {artifact.subject && (
-                      <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-white/80 rounded-full text-xs font-medium text-purple-600">
-                        {artifact.subject}
+                      <span 
+                        className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: SKETCH_THEME.highlightYellow,
+                          color: '#92400e',
+                          ...fontSketchStyle,
+                        }}
+                      >
+                        📚 {artifact.subject}
                       </span>
                     )}
                   </div>
                 )}
                 
-                {/* Visual Content */}
-                <div className="p-2">
-                  {ConfigDrivenSketch && (artifact.blueprint || artifact.template || artifact.mode) ? (
-                    // Use ConfigDrivenSketch for blueprint-based visuals
-                    <ConfigDrivenSketch
-                      blueprint={artifact.blueprint || artifact}
-                      concept={artifact.concept}
-                      subject={artifact.subject}
-                      professorOutput={artifact.professorOutput}
-                      renderDirectives={artifact.render_directives}
-                    />
-                  ) : artifact.svg || artifact.visual_sketch?.svg ? (
-                    // Use VisualSketchViewer for SVG-based visuals
-                    <VisualSketchViewer
-                      visualData={artifact.visual_sketch || artifact}
-                      concept={artifact.concept}
-                      subject={artifact.subject}
-                    />
-                  ) : (
-                    // Fallback empty state
-                    <div className="p-8 text-center text-gray-400">
-                      <Palette className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>Visual data format not recognized</p>
-                    </div>
-                  )}
+                {/* Visual Content - SketchSense V6 Magic Notebook Engine */}
+                <div className="p-2 h-full min-h-[400px]">
+                  {/* 🎨 V6: UniversalSketchCanvas - Hand-drawn, Animated, ALIVE! */}
+                  <UniversalSketchCanvas
+                    blueprint={artifact.blueprint || artifact}
+                    question={artifact.originalQuestion || artifact.concept || ''}
+                    concept={artifact.concept}
+                    subject={artifact.subject || 'physics'}
+                    difficultyLevel={artifact.difficultyLevel || 'apply'}
+                    mode={artifact.mode || 'learn'}
+                    enableValidation={true}
+                    enableFeedback={true}
+                    culturalContext={artifact.culturalContext}
+                    onValidationFeedback={(feedback) => {
+                      console.log('🛡️ Ghost Mentor:', feedback);
+                    }}
+                    onComplete={() => {
+                      console.log('✨ Visual sketch complete!');
+                    }}
+                    height={380}
+                    style={{ borderRadius: '8px' }}
+                  />
                 </div>
               </div>
 
-              {/* Visual Caption */}
+              {/* Visual Caption - Sketch Style */}
               {artifact.caption && (
                 <motion.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-center text-sm text-gray-500 mt-4 italic"
+                  className="text-center text-sm mt-4"
+                  style={{
+                    ...fontSketchStyle,
+                    color: '#6B7280',
+                    fontStyle: 'italic',
+                  }}
                 >
-                  {artifact.caption}
+                  💡 {artifact.caption}
                 </motion.p>
               )}
             </motion.div>
@@ -327,16 +952,23 @@ export default function SmartBoard({
         </AnimatePresence>
       </div>
 
-      {/* Footer Hint - Only when empty */}
+      {/* Footer Hint - Sketch Notebook Style */}
       {!hasVisual && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="relative z-10 flex-shrink-0 px-4 py-3 bg-gradient-to-t from-white/80 to-transparent border-t border-gray-100/50"
+          className="relative z-10 flex-shrink-0 px-4 py-3"
+          style={{
+            background: 'linear-gradient(to top, rgba(255,255,255,0.9), transparent)',
+            borderTop: `1px dashed ${SKETCH_THEME.gridColor}`,
+          }}
         >
-          <p className="text-xs text-center text-gray-400 font-medium">
-            ✨ Visuals appear here automatically when I explain concepts
+          <p 
+            className="text-xs text-center text-gray-500"
+            style={fontSketchStyle}
+          >
+            ✏️ Sketches appear here when I explain concepts...
           </p>
         </motion.div>
       )}

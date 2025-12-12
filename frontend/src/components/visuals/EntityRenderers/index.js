@@ -1,36 +1,71 @@
 /**
- * Entity Renderers - Domain-Specific SVG Components
- * Complete SVG components for Physics, Chemistry, Biology, Math entities
- * Used by AnimatedScene component for rendering animated elements
+ * Entity Renderers - Domain-Specific SVG Components (SketchSense V5.0)
+ * =====================================================================
+ * 
+ * Complete SVG components for Physics, Chemistry, Biology, Math entities.
+ * Used by AnimatedScene component for rendering animated elements.
+ * 
+ * SKETCH THEME APPLIED:
+ * - stroke-linecap: round (hand-drawn feel)
+ * - No harsh gradients (flat, warm colors)
+ * - Highlighter color palette
+ * - Playful, warm aesthetic
  */
 
 import React from 'react';
 import { motion } from 'framer-motion';
 
+// ============================================
+// SKETCHSENSE HIGHLIGHTER PALETTE
+// ============================================
+const SKETCH_PALETTE = {
+  yellow: '#fde047',      // Highlighter yellow
+  blue: '#3b82f6',        // Highlighter blue  
+  red: '#ef4444',         // Highlighter red
+  green: '#22c55e',       // Highlighter green
+  orange: '#f97316',      // Highlighter orange
+  purple: '#7c3aed',      // Primary purple
+  pink: '#ec4899',        // Accent pink
+  // Soft variants
+  softYellow: '#fef3c7',
+  softBlue: '#dbeafe',
+  softRed: '#fee2e2',
+  softGreen: '#dcfce7',
+  // Neutrals
+  dark: '#1f2937',
+  medium: '#6b7280',
+  light: '#e5e7eb',
+  paper: '#fdfcf8',
+};
+
+// Common sketch stroke style
+const SKETCH_STROKE = {
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+};
+
 // ============================================================================
-// PHYSICS ENTITIES
+// PHYSICS ENTITIES (Sketch Theme)
 // ============================================================================
 
 export const PhysicsEntities = {
-  MetroTrainSVG: ({ size, color = '#7c3aed', ...props }) => {
+  MetroTrainSVG: ({ size, color = SKETCH_PALETTE.purple, ...props }) => {
     const width = size?.width || 120;
     const height = size?.height || 60;
     
     return (
       <svg width={width} height={height} viewBox="0 0 120 60" {...props}>
-        {/* Metro train body */}
-        <rect x="0" y="20" width="120" height="40" rx="8" fill={color} stroke="#5b21b6" strokeWidth="2"/>
-        {/* Windows */}
-        <rect x="10" y="28" width="25" height="18" rx="3" fill="#a5b4fc" opacity="0.8"/>
-        <rect x="45" y="28" width="25" height="18" rx="3" fill="#a5b4fc" opacity="0.8"/>
-        <rect x="85" y="28" width="25" height="18" rx="3" fill="#a5b4fc" opacity="0.8"/>
+        {/* Metro train body - flat color, no gradient */}
+        <rect x="0" y="20" width="120" height="40" rx="10" fill={color} stroke={SKETCH_PALETTE.dark} strokeWidth="3" {...SKETCH_STROKE}/>
+        {/* Windows - soft blue */}
+        <rect x="10" y="28" width="25" height="18" rx="4" fill={SKETCH_PALETTE.softBlue} stroke={SKETCH_PALETTE.blue} strokeWidth="1.5" {...SKETCH_STROKE}/>
+        <rect x="45" y="28" width="25" height="18" rx="4" fill={SKETCH_PALETTE.softBlue} stroke={SKETCH_PALETTE.blue} strokeWidth="1.5" {...SKETCH_STROKE}/>
+        <rect x="85" y="28" width="25" height="18" rx="4" fill={SKETCH_PALETTE.softBlue} stroke={SKETCH_PALETTE.blue} strokeWidth="1.5" {...SKETCH_STROKE}/>
         {/* Wheels */}
-        <circle cx="30" cy="62" r="6" fill="#1e293b"/>
-        <circle cx="90" cy="62" r="6" fill="#1e293b"/>
-        {/* Front nose */}
-        <path d="M 0 30 L -10 40 L -10 50 L 0 60" fill="#5b21b6"/>
-        {/* Label */}
-        <text x="60" y="42" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">METRO</text>
+        <circle cx="30" cy="62" r="7" fill={SKETCH_PALETTE.dark} stroke={SKETCH_PALETTE.medium} strokeWidth="2"/>
+        <circle cx="90" cy="62" r="7" fill={SKETCH_PALETTE.dark} stroke={SKETCH_PALETTE.medium} strokeWidth="2"/>
+        {/* Label - handwriting style */}
+        <text x="60" y="44" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold" fontFamily="'Patrick Hand', cursive">METRO</text>
       </svg>
     );
   },
@@ -42,118 +77,112 @@ export const PhysicsEntities = {
     return (
       <svg width={width} height={height} viewBox="0 0 80 80" style={{ transform: `rotate(${direction}deg)`, transformOrigin: 'center' }} {...props}>
         <defs>
-          <marker id="arrowhead-dir" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-            <polygon points="0 0, 10 3, 0 6" fill="#dc2626"/>
+          <marker id="arrowhead-dir-sketch" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill={SKETCH_PALETTE.red}/>
           </marker>
         </defs>
-        {/* Arrow shaft */}
-        <line x1="10" y1="40" x2="70" y2="40" stroke="#dc2626" strokeWidth="4" markerEnd="url(#arrowhead-dir)"/>
-        {/* Label */}
-        <text x="40" y="25" textAnchor="middle" fill="#dc2626" fontSize="10" fontWeight="bold">DIRECTION</text>
-        {/* Circular guide */}
-        <circle cx="40" cy="40" r="35" fill="none" stroke="#dc2626" strokeWidth="2" strokeDasharray="5,5" opacity="0.5"/>
+        {/* Arrow shaft - thick, rounded */}
+        <line x1="10" y1="40" x2="65" y2="40" stroke={SKETCH_PALETTE.red} strokeWidth="5" markerEnd="url(#arrowhead-dir-sketch)" {...SKETCH_STROKE}/>
+        {/* Label - sketch font */}
+        <text x="40" y="22" textAnchor="middle" fill={SKETCH_PALETTE.red} fontSize="11" fontWeight="bold" fontFamily="'Patrick Hand', cursive">Direction →</text>
+        {/* Circular guide - dashed */}
+        <circle cx="40" cy="40" r="35" fill="none" stroke={SKETCH_PALETTE.red} strokeWidth="2" strokeDasharray="6,4" opacity="0.4" {...SKETCH_STROKE}/>
       </svg>
     );
   },
 
   SpeedometerSVG: ({ speed = 60, size = { width: 100, height: 100 }, ...props }) => {
-    const needleAngle = (speed / 120) * 180 - 90; // Map 0-120 to -90 to 90 degrees
+    const needleAngle = (speed / 120) * 180 - 90;
     
     return (
       <svg width={size.width} height={size.height} viewBox="0 0 100 100" {...props}>
-        {/* Outer circle */}
-        <circle cx="50" cy="60" r="45" fill="white" stroke="#1e293b" strokeWidth="3"/>
-        <circle cx="50" cy="60" r="38" fill="none" stroke="#e2e8f0" strokeWidth="2"/>
+        {/* Outer circle - paper colored */}
+        <circle cx="50" cy="60" r="45" fill={SKETCH_PALETTE.paper} stroke={SKETCH_PALETTE.dark} strokeWidth="3" {...SKETCH_STROKE}/>
+        <circle cx="50" cy="60" r="38" fill="none" stroke={SKETCH_PALETTE.light} strokeWidth="2" {...SKETCH_STROKE}/>
         
-        {/* Speed marks */}
-        <line x1="50" y1="25" x2="50" y2="30" stroke="#475569" strokeWidth="2"/>
-        <line x1="78" y1="32" x2="74" y2="36" stroke="#475569" strokeWidth="2"/>
-        <line x1="88" y1="60" x2="83" y2="60" stroke="#475569" strokeWidth="2"/>
-        <line x1="22" y1="32" x2="26" y2="36" stroke="#475569" strokeWidth="2"/>
-        <line x1="12" y1="60" x2="17" y2="60" stroke="#475569" strokeWidth="2"/>
+        {/* Speed marks - rounded */}
+        <line x1="50" y1="25" x2="50" y2="32" stroke={SKETCH_PALETTE.medium} strokeWidth="3" {...SKETCH_STROKE}/>
+        <line x1="78" y1="32" x2="73" y2="38" stroke={SKETCH_PALETTE.medium} strokeWidth="3" {...SKETCH_STROKE}/>
+        <line x1="88" y1="60" x2="82" y2="60" stroke={SKETCH_PALETTE.medium} strokeWidth="3" {...SKETCH_STROKE}/>
+        <line x1="22" y1="32" x2="27" y2="38" stroke={SKETCH_PALETTE.medium} strokeWidth="3" {...SKETCH_STROKE}/>
+        <line x1="12" y1="60" x2="18" y2="60" stroke={SKETCH_PALETTE.medium} strokeWidth="3" {...SKETCH_STROKE}/>
         
-        {/* Needle */}
+        {/* Needle - orange highlight */}
         <motion.line
           x1="50"
           y1="60"
           x2="70"
           y2="45"
-          stroke="#dc2626"
-          strokeWidth="3"
-          strokeLinecap="round"
-          style={{ transformOrigin: '50px 60px' }}
+          stroke={SKETCH_PALETTE.orange}
+          strokeWidth="4"
+          style={{ transformOrigin: '50px 60px', ...SKETCH_STROKE }}
           animate={{ rotate: needleAngle }}
           transition={{ duration: 0.5 }}
         />
-        <circle cx="50" cy="60" r="5" fill="#dc2626"/>
+        <circle cx="50" cy="60" r="6" fill={SKETCH_PALETTE.orange}/>
         
-        {/* Speed value */}
-        <text x="50" y="80" textAnchor="middle" fill="#1e293b" fontSize="14" fontWeight="bold">{speed}</text>
-        <text x="50" y="92" textAnchor="middle" fill="#64748b" fontSize="10">km/h</text>
+        {/* Speed value - sketch font */}
+        <text x="50" y="82" textAnchor="middle" fill={SKETCH_PALETTE.dark} fontSize="16" fontWeight="bold" fontFamily="'Patrick Hand', cursive">{speed}</text>
+        <text x="50" y="94" textAnchor="middle" fill={SKETCH_PALETTE.medium} fontSize="11" fontFamily="'Patrick Hand', cursive">km/h</text>
       </svg>
     );
   },
 
   CricketBallSVG: ({ size = { width: 30, height: 30 }, ...props }) => (
     <svg width={size.width} height={size.height} viewBox="0 0 30 30" {...props}>
-      <circle cx="15" cy="15" r="14" fill="#dc2626" stroke="#991b1b" strokeWidth="2"/>
-      {/* Seam stitches */}
-      <path d="M 5 8 Q 15 12 25 8" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round"/>
-      <path d="M 5 22 Q 15 18 25 22" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round"/>
-      <circle cx="15" cy="15" r="14" fill="none" stroke="#991b1b" strokeWidth="1" opacity="0.3"/>
+      {/* Ball - flat red, no gradient */}
+      <circle cx="15" cy="15" r="14" fill={SKETCH_PALETTE.red} stroke={SKETCH_PALETTE.dark} strokeWidth="2" {...SKETCH_STROKE}/>
+      {/* Seam stitches - thick, rounded */}
+      <path d="M 5 8 Q 15 12 25 8" stroke="white" strokeWidth="2.5" fill="none" {...SKETCH_STROKE}/>
+      <path d="M 5 22 Q 15 18 25 22" stroke="white" strokeWidth="2.5" fill="none" {...SKETCH_STROKE}/>
     </svg>
   ),
 
-  CarSVG: ({ size = { width: 100, height: 50 }, color = '#3b82f6', ...props }) => (
+  CarSVG: ({ size = { width: 100, height: 50 }, color = SKETCH_PALETTE.blue, ...props }) => (
     <svg width={size.width} height={size.height} viewBox="0 0 100 50" {...props}>
-      {/* Car body */}
-      <rect x="10" y="20" width="80" height="20" rx="4" fill={color} stroke="#1e40af" strokeWidth="2"/>
-      {/* Windows */}
-      <rect x="20" y="10" width="25" height="12" rx="3" fill="#60a5fa" opacity="0.7"/>
-      <rect x="50" y="10" width="30" height="12" rx="3" fill="#60a5fa" opacity="0.7"/>
-      {/* Wheels */}
-      <circle cx="25" cy="42" r="6" fill="#1e293b"/>
-      <circle cx="25" cy="42" r="3" fill="#64748b"/>
-      <circle cx="75" cy="42" r="6" fill="#1e293b"/>
-      <circle cx="75" cy="42" r="3" fill="#64748b"/>
-      {/* Headlight */}
-      <circle cx="88" cy="25" r="4" fill="#fef08a" opacity="0.9"/>
+      {/* Car body - flat color */}
+      <rect x="10" y="20" width="80" height="20" rx="6" fill={color} stroke={SKETCH_PALETTE.dark} strokeWidth="2.5" {...SKETCH_STROKE}/>
+      {/* Windows - soft blue */}
+      <rect x="20" y="10" width="25" height="12" rx="4" fill={SKETCH_PALETTE.softBlue} stroke={SKETCH_PALETTE.blue} strokeWidth="1.5" {...SKETCH_STROKE}/>
+      <rect x="50" y="10" width="30" height="12" rx="4" fill={SKETCH_PALETTE.softBlue} stroke={SKETCH_PALETTE.blue} strokeWidth="1.5" {...SKETCH_STROKE}/>
+      {/* Wheels - clean circles */}
+      <circle cx="25" cy="42" r="7" fill={SKETCH_PALETTE.dark}/>
+      <circle cx="25" cy="42" r="3" fill={SKETCH_PALETTE.medium}/>
+      <circle cx="75" cy="42" r="7" fill={SKETCH_PALETTE.dark}/>
+      <circle cx="75" cy="42" r="3" fill={SKETCH_PALETTE.medium}/>
+      {/* Headlight - yellow highlight */}
+      <circle cx="88" cy="25" r="4" fill={SKETCH_PALETTE.yellow}/>
     </svg>
   )
 };
 
 // ============================================================================
-// CHEMISTRY ENTITIES
+// CHEMISTRY ENTITIES (Sketch Theme - No gradients)
 // ============================================================================
 
 export const ChemistryEntities = {
   AtomNucleusSVG: ({ element = 'C', size = { width: 60, height: 60 }, ...props }) => (
     <svg width={size.width} height={size.height} viewBox="0 0 60 60" {...props}>
-      <defs>
-        <radialGradient id="nucleus-gradient">
-          <stop offset="0%" stopColor="#34d399"/>
-          <stop offset="100%" stopColor="#059669"/>
-        </radialGradient>
-      </defs>
-      {/* Nucleus core */}
-      <circle cx="30" cy="30" r="25" fill="url(#nucleus-gradient)" stroke="#059669" strokeWidth="3"/>
-      {/* Protons/neutrons */}
-      <circle cx="22" cy="24" r="8" fill="#10b981" opacity="0.7"/>
-      <circle cx="38" cy="28" r="8" fill="#10b981" opacity="0.7"/>
-      <circle cx="30" cy="36" r="8" fill="#10b981" opacity="0.7"/>
-      {/* Element label */}
-      <text x="30" y="35" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">{element}</text>
-      {/* Glow effect */}
+      {/* Nucleus core - flat green, no gradient */}
+      <circle cx="30" cy="30" r="25" fill={SKETCH_PALETTE.green} stroke={SKETCH_PALETTE.dark} strokeWidth="3" {...SKETCH_STROKE}/>
+      {/* Protons/neutrons - simple circles */}
+      <circle cx="22" cy="24" r="8" fill={SKETCH_PALETTE.softGreen} stroke={SKETCH_PALETTE.green} strokeWidth="1.5" {...SKETCH_STROKE}/>
+      <circle cx="38" cy="28" r="8" fill={SKETCH_PALETTE.softGreen} stroke={SKETCH_PALETTE.green} strokeWidth="1.5" {...SKETCH_STROKE}/>
+      <circle cx="30" cy="36" r="8" fill={SKETCH_PALETTE.softGreen} stroke={SKETCH_PALETTE.green} strokeWidth="1.5" {...SKETCH_STROKE}/>
+      {/* Element label - sketch font */}
+      <text x="30" y="35" textAnchor="middle" fill="white" fontSize="15" fontWeight="bold" fontFamily="'Patrick Hand', cursive">{element}</text>
+      {/* Glow effect - simplified */}
       <motion.circle
         cx="30"
         cy="30"
         r="28"
         fill="none"
-        stroke="#6ee7b7"
-        strokeWidth="1"
-        opacity="0.4"
-        animate={{ scale: [1, 1.1, 1] }}
+        stroke={SKETCH_PALETTE.green}
+        strokeWidth="2"
+        opacity="0.3"
+        animate={{ scale: [1, 1.08, 1] }}
         transition={{ duration: 2, repeat: Infinity }}
+        {...SKETCH_STROKE}
       />
     </svg>
   ),

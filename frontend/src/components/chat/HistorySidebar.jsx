@@ -1,17 +1,14 @@
 /**
- * History Sidebar - Glassmorphic Learning Path Drawer
- * ====================================================
+ * History Sidebar - Premium Learning Library
+ * ==========================================
+ * Modern, vibrant design with color-coded topics and intelligent displays
  * 
- * A slide-out drawer for navigating past chat topics.
- * Premium glassmorphic design with "Druv Vibe" aesthetics.
- * 
- * Features:
- * - Glassmorphic design with backdrop blur
- * - Grouped by date (Today, Yesterday, This Week)
- * - Subject-based icons with emoji
- * - Active state highlighting (purple accent)
- * - Search functionality
- * - Smooth animations
+ * FIXES APPLIED:
+ * - Solid gradient New Chat button (not text-only)
+ * - Borderless search input with proper resets
+ * - Emoji icons with fallbacks
+ * - Better active states with elevation
+ * - All sections open by default
  */
 
 import React, { useState, useMemo } from 'react';
@@ -25,276 +22,452 @@ import {
   Trash2,
   Pin,
   Clock,
-  BookOpen,
   Plus,
   Sparkles,
   History,
   ChevronDown,
   ChevronUp,
-  Atom, // Physics
-  FlaskConical, // Chemistry  
-  Dna, // Biology
-  Calculator, // Math
-  GraduationCap // General
+  BookOpen
 } from 'lucide-react';
 
-// Subject icon mapping
-const getSubjectIcon = (subject) => {
-  const subjectLower = (subject || '').toLowerCase();
-  if (subjectLower.includes('physics')) return <Atom className="w-4 h-4" />;
-  if (subjectLower.includes('chem')) return <FlaskConical className="w-4 h-4" />;
-  if (subjectLower.includes('bio')) return <Dna className="w-4 h-4" />;
-  if (subjectLower.includes('math')) return <Calculator className="w-4 h-4" />;
-  return <GraduationCap className="w-4 h-4" />;
+// ============================================
+// COLOR-CODED TOPIC STYLING
+// ============================================
+const getTopicStyle = (title, subject) => {
+  const text = (title || subject || '').toLowerCase();
+  
+  // Physics - Blue
+  if (text.includes('physics') || text.includes('motion') || text.includes('force') || 
+      text.includes('velocity') || text.includes('newton') || text.includes('energy') ||
+      text.includes('momentum') || text.includes('gravity') || text.includes('wave')) {
+    return { 
+      emoji: '⚛️',
+      bg: '#DBEAFE',      // blue-100
+      color: '#2563EB',   // blue-600
+      label: 'Physics'
+    };
+  }
+  
+  // Biology - Green
+  if (text.includes('bio') || text.includes('cell') || text.includes('dna') || 
+      text.includes('plant') || text.includes('animal') || text.includes('photosynthesis') ||
+      text.includes('organ') || text.includes('evolution') || text.includes('genetic')) {
+    return { 
+      emoji: '🧬',
+      bg: '#D1FAE5',      // green-100
+      color: '#059669',   // green-600
+      label: 'Biology'
+    };
+  }
+  
+  // Math - Red/Rose
+  if (text.includes('math') || text.includes('calcul') || text.includes('algebra') || 
+      text.includes('equation') || text.includes('quadratic') || text.includes('theorem') ||
+      text.includes('fundamental') || text.includes('solve') || text.includes('integral') ||
+      text.includes('derivative') || text.includes('trigonometr') || text.includes('geometry')) {
+    return { 
+      emoji: '📐',
+      bg: '#FEE2E2',      // red-100
+      color: '#DC2626',   // red-600
+      label: 'Math'
+    };
+  }
+  
+  // Chemistry - Orange
+  if (text.includes('chem') || text.includes('reaction') || text.includes('molecule') || 
+      text.includes('bonding') || text.includes('element') || text.includes('compound') ||
+      text.includes('acid') || text.includes('periodic') || text.includes('atom')) {
+    return { 
+      emoji: '🧪',
+      bg: '#FFEDD5',      // orange-100
+      color: '#EA580C',   // orange-600
+      label: 'Chemistry'
+    };
+  }
+  
+  // Default - Purple/Gray
+  return { 
+    emoji: '📚',
+    bg: '#F3E8FF',        // purple-100
+    color: '#7C3AED',     // purple-600
+    label: 'General'
+  };
 };
 
-// Subject emoji mapping
-const getSubjectEmoji = (subject) => {
-  const subjectLower = (subject || '').toLowerCase();
-  if (subjectLower.includes('physics')) return '⚛️';
-  if (subjectLower.includes('chem')) return '🧪';
-  if (subjectLower.includes('bio')) return '🧬';
-  if (subjectLower.includes('math')) return '📐';
-  return '📚';
+// Smart title formatter - Fixes the "Hi" problem
+const formatTitle = (title) => {
+  if (!title) return { text: 'New Session', isPlaceholder: true };
+  const cleaned = title.trim().toLowerCase();
+  
+  // Generic greetings and short messages show "New Session"
+  const genericTitles = ['hi', 'hello', 'hey', 'hii', 'hiii', 'yo', 'good', 'ok', 'okay', 'test', 'yes', 'no', 'sure', 'thanks', 'new chat', 'untitled'];
+  if (genericTitles.includes(cleaned) || cleaned.length < 3) {
+    return { text: 'New Session', isPlaceholder: true };
+  }
+  
+  // Capitalize first letter and truncate
+  const formatted = title.charAt(0).toUpperCase() + title.slice(1);
+  return { 
+    text: formatted.length > 28 ? formatted.substring(0, 28) + '...' : formatted, 
+    isPlaceholder: false 
+  };
 };
 
-// Subject color mapping
-const getSubjectColor = (subject) => {
-  const subjectLower = (subject || '').toLowerCase();
-  if (subjectLower.includes('physics')) return { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-200' };
-  if (subjectLower.includes('chem')) return { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-200' };
-  if (subjectLower.includes('bio')) return { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-200' };
-  if (subjectLower.includes('math')) return { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200' };
-  return { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' };
+// Format time for display
+const formatTime = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
 };
 
 // Group chats by date
 const groupChatsByDate = (chats) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  
-  const thisWeekStart = new Date(today);
-  thisWeekStart.setDate(thisWeekStart.getDate() - 7);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const groups = {
-    today: [],
-    yesterday: [],
-    thisWeek: [],
-    older: []
-  };
-
+  const groups = { today: [], yesterday: [], thisWeek: [], older: [] };
   chats.forEach(chat => {
-    const chatDate = new Date(chat.updatedAt || chat.createdAt || Date.now());
-    chatDate.setHours(0, 0, 0, 0);
-
-    if (chatDate.getTime() === today.getTime()) {
-      groups.today.push(chat);
-    } else if (chatDate.getTime() === yesterday.getTime()) {
-      groups.yesterday.push(chat);
-    } else if (chatDate >= thisWeekStart) {
-      groups.thisWeek.push(chat);
-    } else {
-      groups.older.push(chat);
-    }
+    const d = new Date(chat.updatedAt || chat.createdAt || Date.now());
+    d.setHours(0, 0, 0, 0);
+    if (d.getTime() === today.getTime()) groups.today.push(chat);
+    else if (d.getTime() === yesterday.getTime()) groups.yesterday.push(chat);
+    else if (d >= weekAgo) groups.thisWeek.push(chat);
+    else groups.older.push(chat);
   });
-
   return groups;
 };
 
-// Single Chat Item - Premium Design
-const ChatItem = ({ 
-  chat, 
-  isActive, 
-  onClick, 
-  onRename, 
-  onDelete, 
-  onPin 
-}) => {
+// ============================================
+// CHAT ITEM COMPONENT
+// ============================================
+const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
-  const subjectColors = getSubjectColor(chat.subject);
+  
+  const topicStyle = getTopicStyle(chat.title, chat.subject);
+  const { text: displayTitle, isPlaceholder } = formatTitle(chat.title);
 
-  const handleRename = () => {
+  const handleSaveEdit = () => {
     if (editTitle.trim() && editTitle !== chat.title) {
       onRename?.(chat.id, editTitle);
     }
     setIsEditing(false);
   };
 
+  // Inline styles for reliability
+  const iconBoxStyle = {
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: topicStyle.bg,
+    flexShrink: 0,
+    fontSize: '18px',
+    transition: 'transform 0.2s ease'
+  };
+
+  const itemStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px 12px',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+    borderLeft: isActive ? '4px solid #7C3AED' : '4px solid transparent',
+    boxShadow: isActive ? '0 2px 8px rgba(124, 58, 237, 0.15)' : 'none',
+    marginLeft: '8px',
+    marginRight: '8px',
+    marginBottom: '4px'
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ x: 4 }}
-      transition={{ duration: 0.2 }}
-      className={`group relative mx-2 mb-1 rounded-xl cursor-pointer transition-all duration-200 ${
-        isActive 
-          ? 'bg-gradient-to-r from-purple-50 to-purple-100/50 border-l-4 border-purple-500 shadow-sm' 
-          : 'hover:bg-gray-50/80 border-l-4 border-transparent hover:border-purple-200'
-      }`}
-      onClick={() => !isEditing && onClick?.(chat)}
-    >
-      <div className="flex items-start gap-3 px-3 py-3">
-        {/* Subject Emoji Icon */}
-        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
-          isActive 
-            ? 'bg-purple-500 text-white shadow-purple-200' 
-            : `${subjectColors.bg} ${subjectColors.text}`
-        }`}>
-          <span className="text-lg">{getSubjectEmoji(chat.subject)}</span>
+    <div style={{ position: 'relative' }}>
+      <div
+        onClick={() => !isEditing && onClick?.(chat)}
+        style={itemStyle}
+        className="group hover:bg-white/80"
+        onMouseEnter={(e) => {
+          if (!isActive) e.currentTarget.style.backgroundColor = '#F9FAFB';
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+      >
+        {/* Color-coded Icon Box */}
+        <div style={iconBoxStyle}>
+          <span role="img" aria-label={topicStyle.label}>
+            {topicStyle.emoji}
+          </span>
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 py-0.5">
+        <div style={{ flex: 1, minWidth: 0 }}>
           {isEditing ? (
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={handleRename}
-              onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-              className="w-full px-2 py-1 text-sm bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              onBlur={handleSaveEdit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveEdit();
+                if (e.key === 'Escape') setIsEditing(false);
+              }}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: '14px',
+                border: '2px solid #7C3AED',
+                borderRadius: '8px',
+                outline: 'none',
+                backgroundColor: 'white'
+              }}
               autoFocus
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <>
-              <div className="flex items-center gap-2 mb-1">
-                <p 
-                  className={`text-sm font-semibold truncate ${
-                    isActive ? 'text-purple-800' : 'text-gray-800'
-                  }`}
-                  title={chat.title || 'New Chat'}
-                >
-                  {chat.title || 'New Chat'}
-                </p>
+              <p style={{
+                fontSize: '14px',
+                lineHeight: '1.3',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontWeight: isActive ? '600' : isPlaceholder ? '400' : '500',
+                fontStyle: isPlaceholder ? 'italic' : 'normal',
+                color: isActive ? '#581C87' : isPlaceholder ? '#9CA3AF' : '#1F2937'
+              }}>
+                {displayTitle}
                 {chat.isPinned && (
-                  <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                  <Pin 
+                    style={{ 
+                      display: 'inline', 
+                      width: '12px', 
+                      height: '12px', 
+                      marginLeft: '6px',
+                      color: '#F59E0B',
+                      fill: '#F59E0B'
+                    }} 
+                  />
                 )}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <span className={`px-1.5 py-0.5 rounded-md ${subjectColors.bg} ${subjectColors.text} font-medium`}>
-                  {chat.subject || 'General'}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {chat.date || formatTime(chat.updatedAt || chat.createdAt)}
-                </span>
-              </div>
+              </p>
+              <p style={{
+                fontSize: '12px',
+                color: '#9CA3AF',
+                margin: '2px 0 0 0'
+              }}>
+                {formatTime(chat.date || chat.updatedAt || chat.createdAt)}
+              </p>
             </>
           )}
         </div>
 
         {/* Menu Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-          className={`flex-shrink-0 p-1.5 rounded-lg transition-all ${
-            showMenu 
-              ? 'bg-gray-200 text-gray-700' 
-              : 'opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+        {!isEditing && (
+          <button
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              setShowMenu(!showMenu); 
+            }}
+            style={{
+              padding: '6px',
+              borderRadius: '8px',
+              border: 'none',
+              background: showMenu ? '#F3F4F6' : 'transparent',
+              cursor: 'pointer',
+              opacity: showMenu ? 1 : 0,
+              transition: 'opacity 0.15s, background 0.15s'
+            }}
+            className="group-hover:!opacity-100 hover:!bg-gray-100"
+            aria-label="Chat options"
+          >
+            <MoreHorizontal style={{ width: '16px', height: '16px', color: '#6B7280' }} />
+          </button>
+        )}
       </div>
 
       {/* Dropdown Menu */}
       <AnimatePresence>
         {showMenu && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -5 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -5 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-3 top-full mt-1 w-40 bg-white rounded-xl shadow-xl border border-gray-200/80 py-1.5 z-30 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => { setIsEditing(true); setShowMenu(false); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          <>
+            <div 
+              style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+              onClick={() => setShowMenu(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -5 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '100%',
+                marginTop: '4px',
+                zIndex: 50,
+                width: '140px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                border: '1px solid #E5E7EB',
+                padding: '4px 0',
+                overflow: 'hidden'
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-              Rename
-            </button>
-            <button
-              onClick={() => { onPin?.(chat.id); setShowMenu(false); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <Pin className="w-3.5 h-3.5 text-gray-400" />
-              {chat.isPinned ? 'Unpin' : 'Pin to Top'}
-            </button>
-            <div className="my-1 h-px bg-gray-100" />
-            <button
-              onClick={() => { onDelete?.(chat.id); setShowMenu(false); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
-            </button>
-          </motion.div>
+              <button 
+                onClick={() => { setIsEditing(true); setShowMenu(false); }} 
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  color: '#374151',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+                className="hover:bg-gray-50"
+              >
+                <Edit2 style={{ width: '15px', height: '15px', color: '#9CA3AF' }} /> 
+                Rename
+              </button>
+              <button 
+                onClick={() => { onPin?.(chat.id); setShowMenu(false); }} 
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  color: '#374151',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+                className="hover:bg-gray-50"
+              >
+                <Pin style={{ width: '15px', height: '15px', color: '#9CA3AF' }} /> 
+                {chat.isPinned ? 'Unpin' : 'Pin'}
+              </button>
+              <div style={{ height: '1px', backgroundColor: '#E5E7EB', margin: '4px 0' }} />
+              <button 
+                onClick={() => { onDelete?.(chat.id); setShowMenu(false); }} 
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  color: '#DC2626',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+                className="hover:bg-red-50"
+              >
+                <Trash2 style={{ width: '15px', height: '15px' }} /> 
+                Delete
+              </button>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 
-// Format time helper
-const formatTime = (dateString) => {
-  if (!dateString) return 'Just now';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  } catch {
-    return 'Just now';
-  }
-};
-
-// Collapsible Section Component
-const CollapsibleSection = ({ title, icon, count, children, defaultOpen = true }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+// ============================================
+// SECTION COMPONENT (Always open by default now)
+// ============================================
+const Section = ({ title, icon, count, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   if (count === 0) return null;
   
   return (
-    <div className="mb-3">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
+    <div style={{ marginBottom: '8px' }}>
+      <button 
+        onClick={() => setOpen(!open)} 
+        style={{
+          width: 'calc(100% - 16px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 12px',
+          margin: '0 8px',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          borderRadius: '8px',
+          transition: 'background 0.15s'
+        }}
+        className="hover:bg-gray-100/60"
       >
-        <div className="flex items-center gap-2">
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {icon}
-          <span>{title}</span>
-          <span className="px-1.5 py-0.5 bg-gray-100 rounded-full text-[10px] font-semibold text-gray-500">
+          <span style={{
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#9CA3AF'
+          }}>
+            {title}
+          </span>
+          <span style={{
+            padding: '2px 8px',
+            backgroundColor: '#F3F4F6',
+            borderRadius: '10px',
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#6B7280'
+          }}>
             {count}
           </span>
-        </div>
-        {isOpen ? (
-          <ChevronUp className="w-3.5 h-3.5" />
-        ) : (
-          <ChevronDown className="w-3.5 h-3.5" />
-        )}
+        </span>
+        {open 
+          ? <ChevronUp style={{ width: '16px', height: '16px', color: '#9CA3AF' }} /> 
+          : <ChevronDown style={{ width: '16px', height: '16px', color: '#9CA3AF' }} />
+        }
       </button>
-      <AnimatePresence>
-        {isOpen && (
+      <AnimatePresence initial={false}>
+        {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{ overflow: 'hidden' }}
           >
-            {children}
+            <div style={{ marginTop: '4px', paddingBottom: '4px' }}>{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -302,7 +475,9 @@ const CollapsibleSection = ({ title, icon, count, children, defaultOpen = true }
   );
 };
 
-// Main History Sidebar Component
+// ============================================
+// MAIN SIDEBAR COMPONENT
+// ============================================
 export default function HistorySidebar({
   isOpen,
   onClose,
@@ -315,38 +490,68 @@ export default function HistorySidebar({
   onPinChat,
   isLoading = false
 }) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
 
-  // Filter chats by search
-  const filteredChats = useMemo(() => {
-    return chats.filter(chat => 
-      chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.subject?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [chats, searchQuery]);
+  const filtered = useMemo(() => 
+    chats.filter(c => 
+      c.title?.toLowerCase().includes(search.toLowerCase()) ||
+      c.subject?.toLowerCase().includes(search.toLowerCase())
+    ), 
+    [chats, search]
+  );
 
-  // Group filtered chats by date
-  const groupedChats = useMemo(() => {
-    const pinned = filteredChats.filter(c => c.isPinned);
-    const unpinned = filteredChats.filter(c => !c.isPinned);
-    return {
-      pinned,
-      ...groupChatsByDate(unpinned)
-    };
-  }, [filteredChats]);
+  const grouped = useMemo(() => {
+    const pinned = filtered.filter(c => c.isPinned);
+    const unpinned = filtered.filter(c => !c.isPinned);
+    return { pinned, ...groupChatsByDate(unpinned) };
+  }, [filtered]);
 
-  const renderChatList = (chatList) => {
-    return chatList.map((chat) => (
-      <ChatItem
-        key={chat.id}
-        chat={chat}
-        isActive={chat.id === activeSessionId}
-        onClick={onChatSelect}
-        onRename={onRenameChat}
-        onDelete={onDeleteChat}
-        onPin={onPinChat}
-      />
-    ));
+  const renderItems = (list) => list.map(c => (
+    <ChatItem 
+      key={c.id} 
+      chat={c} 
+      isActive={c.id === activeSessionId} 
+      onClick={onChatSelect} 
+      onRename={onRenameChat} 
+      onDelete={onDeleteChat} 
+      onPin={onPinChat} 
+    />
+  ));
+
+  // Button gradient style (inline for reliability)
+  const newChatButtonStyle = {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '14px 20px',
+    background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+    color: 'white',
+    fontWeight: '600',
+    fontSize: '15px',
+    border: 'none',
+    borderRadius: '14px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 20px rgba(124, 58, 237, 0.35)',
+    transition: 'all 0.2s ease',
+    transform: 'translateY(0)'
+  };
+
+  // Search input style (inline for reliability)
+  const searchInputStyle = {
+    width: '100%',
+    paddingLeft: '40px',
+    paddingRight: '16px',
+    paddingTop: '12px',
+    paddingBottom: '12px',
+    backgroundColor: '#F3F4F6',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '14px',
+    outline: 'none',
+    color: '#1F2937',
+    transition: 'all 0.2s ease'
   };
 
   return (
@@ -359,167 +564,272 @@ export default function HistorySidebar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 40
+            }}
             onClick={onClose}
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar Drawer - Premium Glassmorphic Design */}
+      {/* Sidebar Drawer */}
       <motion.div
         initial={false}
         animate={{ x: isOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-        className="fixed inset-y-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-xl shadow-2xl"
         style={{
-          boxShadow: isOpen ? '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 50px rgba(139, 92, 246, 0.1)' : 'none'
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: '320px',
+          backgroundColor: '#FAFAFA',
+          boxShadow: '4px 0 30px rgba(0,0,0,0.1)',
+          zIndex: 50,
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <div className="h-full flex flex-col">
-          {/* Header - Premium Design */}
-          <div className="flex-shrink-0 px-5 py-5 border-b border-gray-200/50 bg-gradient-to-r from-purple-50/50 to-orange-50/30">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 
-                    className="text-lg font-bold text-gray-900"
-                    style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}
-                  >
-                    My Learning Path
-                  </h2>
-                  <p className="text-xs text-gray-400 font-medium">
-                    {chats.length} conversation{chats.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05, rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </motion.button>
-            </div>
-
-            {/* New Chat Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => { onNewChat?.(); onClose?.(); }}
-              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
+        {/* === HEADER === */}
+        <div style={{
+          padding: '20px',
+          backgroundColor: 'white',
+          borderBottom: '1px solid #E5E7EB'
+        }}>
+          {/* Title Row */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px'
+          }}>
+            <h2 style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '22px',
+              fontWeight: '700',
+              color: '#111827',
+              margin: 0
+            }}>
+              <BookOpen style={{ width: '24px', height: '24px', color: '#7C3AED' }} />
+              Library
+            </h2>
+            <button 
+              onClick={onClose}
+              style={{
+                padding: '10px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                borderRadius: '12px',
+                transition: 'background 0.15s'
+              }}
+              className="hover:bg-gray-100"
+              aria-label="Close"
             >
-              <Plus className="w-5 h-5" />
-              New Conversation
-            </motion.button>
-
-            {/* Search */}
-            <div className="relative mt-4">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search your learning path..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-300 transition-all shadow-sm"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+              <X style={{ width: '20px', height: '20px', color: '#6B7280' }} />
+            </button>
           </div>
-
-          {/* Chat List */}
-          <div className="flex-1 overflow-y-auto py-3 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <div className="w-10 h-10 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-sm font-medium">Loading your journey...</p>
-              </div>
-            ) : filteredChats.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400 px-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-                  <MessageCircle className="w-10 h-10 text-gray-300" />
-                </div>
-                <p className="text-base font-semibold text-gray-500 mb-1">No conversations yet</p>
-                <p className="text-sm text-gray-400 text-center">
-                  Start your learning journey by asking a question!
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Pinned Section */}
-                {groupedChats.pinned.length > 0 && (
-                  <CollapsibleSection 
-                    title="Pinned" 
-                    icon={<Pin className="w-3 h-3 text-amber-500" />}
-                    count={groupedChats.pinned.length}
-                    defaultOpen={true}
-                  >
-                    {renderChatList(groupedChats.pinned)}
-                  </CollapsibleSection>
-                )}
-
-                {/* Today */}
-                <CollapsibleSection 
-                  title="Today" 
-                  icon={<Sparkles className="w-3 h-3" />}
-                  count={groupedChats.today.length}
-                  defaultOpen={true}
-                >
-                  {renderChatList(groupedChats.today)}
-                </CollapsibleSection>
-
-                {/* Yesterday */}
-                <CollapsibleSection 
-                  title="Yesterday" 
-                  icon={<Clock className="w-3 h-3" />}
-                  count={groupedChats.yesterday.length}
-                  defaultOpen={true}
-                >
-                  {renderChatList(groupedChats.yesterday)}
-                </CollapsibleSection>
-
-                {/* This Week */}
-                <CollapsibleSection 
-                  title="This Week" 
-                  icon={<History className="w-3 h-3" />}
-                  count={groupedChats.thisWeek.length}
-                  defaultOpen={false}
-                >
-                  {renderChatList(groupedChats.thisWeek)}
-                </CollapsibleSection>
-
-                {/* Older */}
-                <CollapsibleSection 
-                  title="Earlier" 
-                  icon={<BookOpen className="w-3 h-3" />}
-                  count={groupedChats.older.length}
-                  defaultOpen={false}
-                >
-                  {renderChatList(groupedChats.older)}
-                </CollapsibleSection>
-              </>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="flex-shrink-0 px-5 py-4 border-t border-gray-200/50 bg-gradient-to-t from-gray-50/50 to-transparent">
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Your learning journey is saved automatically</span>
-            </div>
+          
+          {/* Search Bar - Clean, borderless */}
+          <div style={{ position: 'relative' }}>
+            <Search style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '16px',
+              height: '16px',
+              color: '#9CA3AF'
+            }} />
+            <input
+              placeholder="Search sessions..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={searchInputStyle}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = 'white';
+                e.target.style.boxShadow = '0 0 0 2px rgba(124, 58, 237, 0.3)';
+              }}
+              onBlur={(e) => {
+                e.target.style.backgroundColor = '#F3F4F6';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
           </div>
         </div>
+
+        {/* === CHAT LIST === */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          paddingTop: '12px',
+          paddingBottom: '12px'
+        }}>
+          {isLoading ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '80px 0'
+            }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                border: '3px solid #E5E7EB',
+                borderTopColor: '#7C3AED',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '80px 24px'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 16px',
+                backgroundColor: '#F3F4F6',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <MessageCircle style={{ width: '32px', height: '32px', color: '#D1D5DB' }} />
+              </div>
+              <p style={{ fontWeight: '500', color: '#6B7280', margin: '0 0 4px 0' }}>No sessions yet</p>
+              <p style={{ fontSize: '14px', color: '#9CA3AF', margin: 0 }}>Start a conversation to begin</p>
+            </div>
+          ) : (
+            <>
+              {/* Pinned */}
+              {grouped.pinned.length > 0 && (
+                <Section 
+                  title="Pinned" 
+                  icon={<Pin style={{ width: '14px', height: '14px', color: '#F59E0B' }} />} 
+                  count={grouped.pinned.length}
+                  defaultOpen={true}
+                >
+                  {renderItems(grouped.pinned)}
+                </Section>
+              )}
+              
+              {/* Today */}
+              <Section 
+                title="Today" 
+                icon={<Sparkles style={{ width: '14px', height: '14px', color: '#7C3AED' }} />} 
+                count={grouped.today.length}
+                defaultOpen={true}
+              >
+                {renderItems(grouped.today)}
+              </Section>
+              
+              {/* This Week */}
+              <Section 
+                title="This Week" 
+                icon={<Clock style={{ width: '14px', height: '14px', color: '#3B82F6' }} />} 
+                count={grouped.thisWeek.length} 
+                defaultOpen={true}
+              >
+                {renderItems(grouped.thisWeek)}
+              </Section>
+              
+              {/* Earlier */}
+              <Section 
+                title="Earlier" 
+                icon={<History style={{ width: '14px', height: '14px', color: '#9CA3AF' }} />} 
+                count={grouped.older.length} 
+                defaultOpen={true}
+              >
+                {renderItems(grouped.older)}
+              </Section>
+            </>
+          )}
+        </div>
+
+        {/* === NEW CHAT BUTTON - SOLID GRADIENT === */}
+        <div style={{
+          padding: '16px 20px',
+          backgroundColor: 'white',
+          borderTop: '1px solid #E5E7EB'
+        }}>
+          <button
+            onClick={() => { 
+              onNewChat?.(); 
+              onClose?.(); 
+            }}
+            style={newChatButtonStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 30px rgba(124, 58, 237, 0.45)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(124, 58, 237, 0.35)';
+            }}
+          >
+            <Plus style={{ width: '20px', height: '20px', strokeWidth: 2.5 }} />
+            New Conversation
+          </button>
+        </div>
       </motion.div>
+
+      {/* Spinner Animation Keyframe */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
+
+// ============================================
+// VISUAL TOAST (Mobile notification)
+// ============================================
+export const VisualToast = ({ show, onClose }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        style={{
+          position: 'fixed',
+          bottom: '96px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 50
+        }}
+        className="md:hidden"
+      >
+        <button 
+          onClick={onClose}
+          style={{
+            padding: '12px 20px',
+            background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+            color: 'white',
+            borderRadius: '9999px',
+            border: 'none',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          <Sparkles style={{ width: '16px', height: '16px' }} />
+          New visual ready!
+        </button>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);

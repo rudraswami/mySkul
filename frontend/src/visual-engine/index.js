@@ -1,11 +1,31 @@
 /**
- * 🎨 DRUV AI VISUAL ENGINE V5.0 (SketchSense Universal)
- * =====================================================
+ * 🎨 DRUV AI VISUAL ENGINE V6.0 (SketchSense Magic Notebook)
+ * ===========================================================
  * 
- * Enterprise-grade UNIVERSAL visual explanation engine.
- * Built to compete with industry leaders.
+ * "A personal AI tutor sketching explanations for you in a magical notebook."
  * 
- * V5.0 EVOLUTION:
+ * THE WORLD'S FIRST "GENERATIVE MAGIC NOTEBOOK" FOR EDUCATION.
+ * 
+ * V6.0 - MAGIC NOTEBOOK ENGINE (RoughJS + Live Drawing):
+ * - Hand-drawn visuals with RoughJS
+ * - Live-drawing animations (pathLength)
+ * - Stick figures + playful motion
+ * - Highlighter marks + doodles
+ * - Cinematic reveal sequences
+ * - Ghost Mentor feedback
+ * - Cultural asset swapping (India-first)
+ * 
+ * NO boxes. NO corporate UI. Just magic! ✨
+ * 
+ * V5.1 EVOLUTION (Intelligence Layer):
+ * - Quiz Mode: Hide labels, drag-and-drop assessment
+ * - Bloom's Taxonomy: recall → understand → apply
+ * - Physics Validation: Real-time constraint checking
+ * - Cultural Theming: Indian context asset swapping
+ * - Misconception Detection: Catches impossible states
+ * - Progressive Disclosure: Step-by-step scaffolding
+ * 
+ * V5.0 FEATURES:
  * - Multi-mode rendering (auto-detected from artifact)
  * - Dynamic layout engine (radial, vertical, horizontal)
  * - Math plot support (inline expression parsing)
@@ -25,10 +45,21 @@
  * - timeline      : Chronological events
  * - structure     : Anatomy/component diagrams
  * 
+ * INTERACTION MODES:
+ * - learn         : Full visual with all labels
+ * - quiz          : Labels hidden, drag-and-drop targets
+ * 
+ * DIFFICULTY LEVELS (Bloom's Taxonomy):
+ * - recall        : Empty structure, fill labels
+ * - understand    : Auto-fill after response
+ * - apply         : Full interactive simulation
+ * 
  * Architecture:
  * ├── components/
  * │   ├── RevolutionarySketch.jsx  (Legacy - still works)
- * │   └── ConfigDrivenSketch.jsx   (V5.0 Universal - recommended)
+ * │   └── ConfigDrivenSketch.jsx   (V5.1 Universal + Intelligence)
+ * ├── logic/                        (V5.1 Intelligence Layer)
+ * │   └── PhysicsValidator.js       (Constraint validation)
  * ├── templates/                    (8 template types)
  * │   ├── RaceTemplate.jsx
  * │   ├── ProcessTemplate.jsx
@@ -44,31 +75,89 @@
  *     ├── Track, Wave, Atom, Cell
  *     └── Graph, Cycle, Container...
  * 
- * Usage (V5.0):
- * import { ConfigDrivenSketch } from './visual-engine';
+ * Usage (V5.1 with Intelligence):
+ * import { ConfigDrivenSketch, INTERACTION_MODES, DIFFICULTY_LEVELS } from './visual-engine';
  * 
- * // Auto-detect mode from blueprint
- * <ConfigDrivenSketch blueprint={backendConfig} />
- * 
- * // With professor output integration
+ * // Quiz mode with recall difficulty
  * <ConfigDrivenSketch 
- *   professorOutput={professorResponse}
- *   renderDirectives={directives}
+ *   blueprint={config}
+ *   mode={INTERACTION_MODES.QUIZ}
+ *   difficultyLevel={DIFFICULTY_LEVELS.RECALL}
+ *   onQuizAnswer={(result) => console.log(result)}
  * />
  * 
- * // Force specific mode
- * <ConfigDrivenSketch blueprint={{ mode: 'concept_map', config: {...} }} />
+ * // Learn mode with physics validation
+ * <ConfigDrivenSketch 
+ *   blueprint={config}
+ *   onValidationFeedback={(feedback) => showToast(feedback)}
+ * />
  * 
  * Supports: Physics, Chemistry, Biology, Mathematics
  * 
- * BACKWARDS COMPATIBLE: All V4.0 configurations still work!
+ * BACKWARDS COMPATIBLE: All V4.0/V5.0 configurations still work!
  */
 
-// ============ MAIN COMPONENTS ============
-// ConfigDrivenSketch - New dynamic renderer (recommended)
-// RevolutionarySketch - Legacy renderer (still works)
+// ============ SKETCHSENSE V6 - MAGIC NOTEBOOK ENGINE ============
+// The NEW default renderer - hand-drawn, animated, ALIVE!
+export { 
+  default as UniversalSketchCanvas,
+  NotebookPaper,
+  GhostMentor,
+  SketchSlider,
+  BlueprintRenderer,
+  NOTEBOOK_THEME,
+} from './sketch/UniversalSketchCanvasV6';
+
+// Sketch Primitives - RoughJS-powered components
+export {
+  SketchCircle,
+  SketchRect,
+  SketchArrow,
+  SketchLabel,
+  SketchHighlight,
+  SketchStickFigure,
+  SketchDoodle,
+  SketchLine,
+  SketchFilters,
+  drawVariants,
+  fadeInVariants,
+  popVariants,
+} from './sketch/SketchPrimitives';
+
+// Reveal Sequence Engine - Cinematic animation flow
+export {
+  default as RevealSequenceEngine,
+  SequenceBuilder,
+  TIMING,
+  ELEMENT_TYPES,
+  PRESET_SEQUENCES,
+  createSequence,
+  buildSequence,
+} from './sketch/RevealSequenceEngine';
+
+// ============ LEGACY COMPONENTS (V5.x - Still work) ============
+// ConfigDrivenSketch - V5.1 Universal + Intelligence
+// RevolutionarySketch - V4 renderer
 export { default as RevolutionarySketch } from './components/RevolutionarySketch';
-export { default as ConfigDrivenSketch } from './components/ConfigDrivenSketch';
+export { 
+  default as ConfigDrivenSketch,
+  INTERACTION_MODES,
+  DIFFICULTY_LEVELS,
+} from './components/ConfigDrivenSketch';
+
+// ============ INTELLIGENCE LAYER (V5.1 - Legacy Logic) ============
+// Physics validation from logic folder (backwards compatibility)
+export {
+  physicsValidator as legacyPhysicsValidator,
+  PhysicsValidator,
+  PHYSICS_CONSTRAINTS,
+  VALIDATION_STATUS as LEGACY_VALIDATION_STATUS,
+  FEEDBACK_TYPE,
+  validateParameter as legacyValidateParameter,
+  validateAllParameters,
+  crossValidateParameters,
+  getParameterExplanation,
+} from './logic';
 
 // ============ TEMPLATES ============
 // 8 template types for any STEM concept
@@ -84,6 +173,56 @@ export {
   TEMPLATE_TYPES,
   getTemplate,
 } from './templates';
+
+// ============ SKETCHSENSE TEMPLATES (V5.2 - Split Panel) ============
+// Legacy hand-drawn sketch templates with comparison layouts
+export { 
+  default as SplitComparisonTemplate,
+  SketchPad,
+  VSConnector,
+  SketchSlider as LegacySketchSlider, // Renamed to avoid conflict with V6
+  DrawInSVG,
+  AnimatedPath as SketchAnimatedPath,
+  AnimatedLabel,
+} from '../components/visuals/templates/SplitComparisonTemplate';
+
+export { default as ForceComparisonTemplate } from '../components/visuals/templates/ForceComparisonTemplate';
+export { SketchyFilterDefs, getSketchyFilter } from '../components/visuals/templates/SketchyFilters';
+
+// ============ UNIVERSAL SKETCH CANVAS (V5.0 Mode Router - Legacy) ============
+// Legacy mode router (V6 UniversalSketchCanvas is now the default)
+export { 
+  default as LegacyUniversalSketchCanvas, // Renamed to avoid conflict with V6
+  MASTER_MODES,
+  SKETCH_THEME,
+  detectModeFromBlueprint,
+  detectSubject,
+} from './UniversalSketchCanvas';
+
+// ============ VALIDATOR ENGINE (V5.0 Intelligence) ============
+// Universal validation with subject-specific plugins
+export {
+  default as validatorEngine,
+  ValidatorEngine,
+  physicsValidator,
+  chemistryValidator,
+  biologyValidator,
+  mathematicsValidator,
+  getValidatorForSubject,
+  validateParameter,
+  VALIDATION_STATUS,
+  VISUAL_EFFECTS,
+} from './validators/ValidatorEngine';
+
+// ============ FEEDBACK CONTROLLER (V5.0 Teaching Layer) ============
+// Feedback loop for micro-feedback, scaffold upgrades, hints
+export {
+  default as FeedbackController,
+  getFeedbackController,
+  resetFeedbackController,
+  FEEDBACK_TYPES,
+  MENTOR_PERSONAS,
+} from './feedback/FeedbackController';
 
 // ============ PRIMITIVES ============
 // Reusable building blocks

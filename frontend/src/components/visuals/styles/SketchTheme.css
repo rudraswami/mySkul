@@ -1,0 +1,446 @@
+/**
+ * SketchSense Theme - "Living Ink" Aesthetic
+ * ==========================================
+ * 
+ * Global styles for hand-drawn, sketchy visual appearance.
+ * Makes diagrams feel like they're drawn on paper with a pen.
+ */
+
+/* ============================================
+   GOOGLE FONTS IMPORT - Patrick Hand for handwriting
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;600&display=swap');
+
+/* ============================================
+   CSS CUSTOM PROPERTIES - Sketch Theme
+   ============================================ */
+:root {
+  /* Paper colors */
+  --sketch-paper-bg: #fdfcf8;
+  --sketch-paper-warm: #faf8f3;
+  --sketch-grid-color: #e2e8f0;
+  --sketch-grid-size: 20px;
+  
+  /* Ink colors - "Highlighter" palette */
+  --sketch-ink-black: #1e293b;
+  --sketch-ink-blue: #3b82f6;
+  --sketch-ink-red: #ef4444;
+  --sketch-ink-green: #22c55e;
+  --sketch-ink-yellow: #fde047;
+  --sketch-ink-orange: #f97316;
+  --sketch-ink-purple: #8b5cf6;
+  
+  /* Sticky note colors */
+  --sketch-sticky-yellow: #fef3c7;
+  --sketch-sticky-border: #fcd34d;
+  --sketch-sticky-pink: #fce7f3;
+  --sketch-sticky-blue: #dbeafe;
+  --sketch-sticky-green: #dcfce7;
+  
+  /* Typography */
+  --font-sketch: 'Patrick Hand', 'Comic Sans MS', 'Segoe Print', cursive;
+  --font-sketch-title: 'Caveat', cursive;
+  
+  /* Animation timing */
+  --sketch-draw-duration: 1.5s;
+  --sketch-wobble-amount: 2px;
+}
+
+/* ============================================
+   PAPER BACKGROUND CLASSES
+   ============================================ */
+
+/* Main sketch paper background */
+.bg-sketch-paper {
+  background-color: var(--sketch-paper-bg);
+  background-image: 
+    /* Dot grid pattern */
+    radial-gradient(var(--sketch-grid-color) 1px, transparent 1px),
+    /* Subtle paper texture noise */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 
+    var(--sketch-grid-size) var(--sketch-grid-size),
+    200px 200px;
+  background-blend-mode: normal, soft-light;
+}
+
+/* Lined paper variant */
+.bg-sketch-lined {
+  background-color: var(--sketch-paper-bg);
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      #d4e4f7 27px,
+      #d4e4f7 28px
+    );
+  background-size: 100% 28px;
+}
+
+/* Graph paper variant */
+.bg-sketch-graph {
+  background-color: var(--sketch-paper-bg);
+  background-image: 
+    linear-gradient(var(--sketch-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sketch-grid-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ============================================
+   TYPOGRAPHY - Handwriting Styles
+   ============================================ */
+
+.font-sketch {
+  font-family: var(--font-sketch);
+  letter-spacing: 0.02em;
+}
+
+.font-sketch-title {
+  font-family: var(--font-sketch-title);
+  letter-spacing: 0.01em;
+}
+
+/* Apply to SmartBoard container */
+.smartboard-container {
+  font-family: var(--font-sketch);
+}
+
+.smartboard-container h1,
+.smartboard-container h2,
+.smartboard-container h3,
+.smartboard-container h4 {
+  font-family: var(--font-sketch-title);
+}
+
+/* ============================================
+   SKETCH PAD - Paper-like panels
+   ============================================ */
+
+.sketch-pad {
+  background-color: white;
+  border: 2px solid var(--sketch-grid-color);
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    /* Paper edge effect */
+    inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Slightly rotated pads for organic feel */
+.sketch-pad-left {
+  transform: rotate(-0.5deg);
+}
+
+.sketch-pad-right {
+  transform: rotate(0.5deg);
+}
+
+/* Paper corner fold effect */
+.sketch-pad::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    var(--sketch-grid-color) 50%,
+    var(--sketch-paper-bg) 60%
+  );
+  border-radius: 0 8px 0 0;
+}
+
+/* ============================================
+   STICKY NOTE STYLES
+   ============================================ */
+
+.sticky-note {
+  background-color: var(--sketch-sticky-yellow);
+  border: 1px solid var(--sketch-sticky-border);
+  border-radius: 4px;
+  box-shadow: 
+    2px 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  font-family: var(--font-sketch);
+  padding: 12px 16px;
+  transform: rotate(-1deg);
+}
+
+.sticky-note-pink {
+  background-color: var(--sketch-sticky-pink);
+  border-color: #f9a8d4;
+}
+
+.sticky-note-blue {
+  background-color: var(--sketch-sticky-blue);
+  border-color: #93c5fd;
+}
+
+.sticky-note-green {
+  background-color: var(--sketch-sticky-green);
+  border-color: #86efac;
+}
+
+/* ============================================
+   SKETCHY BORDER EFFECT
+   ============================================ */
+
+.sketchy-border {
+  border: 2px solid var(--sketch-ink-black);
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  /* Creates organic, hand-drawn border */
+}
+
+.sketchy-border-blue {
+  border-color: var(--sketch-ink-blue);
+}
+
+.sketchy-border-red {
+  border-color: var(--sketch-ink-red);
+}
+
+/* ============================================
+   DRAW-IN ANIMATION - Stroke Animation
+   ============================================ */
+
+/* Base class for animated SVG paths */
+.sketch-draw-in {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: sketch-draw var(--sketch-draw-duration) ease-out forwards;
+}
+
+@keyframes sketch-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Staggered draw-in for multiple elements */
+.sketch-draw-in-1 { animation-delay: 0s; }
+.sketch-draw-in-2 { animation-delay: 0.2s; }
+.sketch-draw-in-3 { animation-delay: 0.4s; }
+.sketch-draw-in-4 { animation-delay: 0.6s; }
+.sketch-draw-in-5 { animation-delay: 0.8s; }
+
+/* Fill animation (appears after stroke) */
+.sketch-fill-in {
+  opacity: 0;
+  animation: sketch-fill 0.5s ease-out forwards;
+  animation-delay: calc(var(--sketch-draw-duration) - 0.3s);
+}
+
+@keyframes sketch-fill {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   WOBBLE/JITTER ANIMATION - Living Ink Effect
+   ============================================ */
+
+.sketch-wobble {
+  animation: wobble-subtle 3s ease-in-out infinite;
+}
+
+@keyframes wobble-subtle {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(0.5px, 0.3px) rotate(0.2deg);
+  }
+  50% {
+    transform: translate(-0.3px, 0.5px) rotate(-0.1deg);
+  }
+  75% {
+    transform: translate(0.3px, -0.3px) rotate(0.15deg);
+  }
+}
+
+/* ============================================
+   ARROW STYLES - Hand-drawn arrows
+   ============================================ */
+
+.sketch-arrow {
+  stroke: var(--sketch-ink-black);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.sketch-arrow-small {
+  stroke-width: 2;
+}
+
+.sketch-arrow-large {
+  stroke-width: 5;
+}
+
+.sketch-arrow-blue { stroke: var(--sketch-ink-blue); }
+.sketch-arrow-red { stroke: var(--sketch-ink-red); }
+.sketch-arrow-green { stroke: var(--sketch-ink-green); }
+.sketch-arrow-orange { stroke: var(--sketch-ink-orange); }
+
+/* Pulsing arrow for emphasis */
+.sketch-arrow-pulse {
+  animation: arrow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrow-pulse {
+  0%, 100% {
+    stroke-width: 5;
+    opacity: 1;
+  }
+  50% {
+    stroke-width: 7;
+    opacity: 0.8;
+  }
+}
+
+/* ============================================
+   LABEL STYLES - Handwritten labels
+   ============================================ */
+
+.sketch-label {
+  font-family: var(--font-sketch);
+  font-size: 14px;
+  fill: var(--sketch-ink-black);
+  text-anchor: middle;
+}
+
+.sketch-label-large {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sketch-label-small {
+  font-size: 12px;
+}
+
+/* Highlighted label (like highlighter marker) */
+.sketch-label-highlight {
+  background-color: var(--sketch-ink-yellow);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   COMPARISON PANEL STYLES
+   ============================================ */
+
+.comparison-container {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  align-items: stretch;
+}
+
+.comparison-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-family: var(--font-sketch-title);
+  font-size: 24px;
+  color: var(--sketch-ink-purple);
+}
+
+/* VS badge in center */
+.vs-badge {
+  background: linear-gradient(135deg, var(--sketch-ink-purple), var(--sketch-ink-blue));
+  color: white;
+  font-family: var(--font-sketch-title);
+  font-size: 20px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================
+   CONTROL DECK STYLES
+   ============================================ */
+
+.sketch-control-deck {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-top: 2px solid var(--sketch-grid-color);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.sketch-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 200px;
+  height: 8px;
+  background: linear-gradient(to right, var(--sketch-ink-blue), var(--sketch-ink-purple));
+  border-radius: 4px;
+  outline: none;
+}
+
+.sketch-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--sketch-ink-orange);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.sketch-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.sketch-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--sketch-ink-orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  .comparison-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .comparison-connector {
+    padding: 8px 0;
+  }
+  
+  .sketch-pad-left,
+  .sketch-pad-right {
+    transform: none;
+  }
+}
+
+

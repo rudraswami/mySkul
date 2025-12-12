@@ -1,12 +1,12 @@
 /**
  * ClassroomLayout - Digital Classroom Split-Screen Layout
- * ========================================================
+ * =======================================================
  * 
- * The main layout orchestrator for the learning workspace.
+ * The main layout orchestrator for the AI Sathi learning workspace.
  * 
  * Features:
  * - Collapsible SmartBoard (Dynamic Layout)
- * - Split-screen on desktop (30-35% chat, 65-70% board)
+ * - Split-screen on desktop (30% chat, 70% board)
  * - Tab-based navigation on mobile
  * - Collapsible history sidebar
  * - Sticky SmartBoard (non-scrollable)
@@ -19,25 +19,15 @@
  * 3. Overlay (History Drawer) - Slide-out sidebar
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
-  MessageCircle,
+  MessageSquare,
   Palette,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  PanelRightClose,
-  PanelRightOpen,
-  Settings,
-  Bell,
-  User,
-  Sparkles,
-  Maximize2,
-  Minimize2,
+  Eye,
   Columns,
-  Eye
+  Sparkles
 } from 'lucide-react';
 
 // Import layout components
@@ -46,81 +36,52 @@ import SmartBoard, { VisualToast } from '../visuals/SmartBoard';
 
 // Active tab enum for mobile
 const ACTIVE_TAB = {
-  CHAT: 'CHAT',
-  BOARD: 'BOARD'
+  CHAT: 'chat',
+  BOARD: 'board'
 };
 
-// Header Component with Board Toggle - Premium Glassmorphic Design
+// ============================================
+// ClassroomHeader Component
+// ============================================
 const ClassroomHeader = ({ 
   onMenuClick, 
   title = 'AI Sathi',
-  showBackButton = false,
-  onBack,
   rightActions,
   isBoardOpen,
   onToggleBoard,
   hasVisual = false
 }) => {
   return (
-    <header className="flex-shrink-0 h-16 px-4 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-20">
       {/* Left Section */}
       <div className="flex items-center gap-3">
-        {showBackButton ? (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onBack}
-            className="p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </motion.button>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onMenuClick}
-            className="p-2.5 -ml-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5" />
-          </motion.button>
-        )}
+        <button
+          onClick={onMenuClick}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5 text-gray-600" />
+        </button>
         
-        {/* Logo & Title */}
-        <div className="flex items-center gap-3">
-          <motion.div 
-            whileHover={{ rotate: [0, -10, 10, 0] }}
-            transition={{ duration: 0.5 }}
-            className="w-10 h-10 bg-gradient-to-br from-purple-500 via-purple-600 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20"
-          >
-            <Sparkles className="w-5 h-5 text-white" />
-          </motion.div>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-orange-400 rounded-xl flex items-center justify-center shadow-sm">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
           <div>
-            <h1 
-              className="font-bold text-gray-800 text-lg leading-tight"
-              style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}
-            >
-              {title}
-            </h1>
-            <p className="text-[10px] text-gray-400 font-medium tracking-wide uppercase">
-              Learning Workspace
-            </p>
+            <h1 className="text-base font-semibold text-gray-800">{title}</h1>
+            <p className="text-xs text-gray-500 hidden sm:block">LEARNING WORKSPACE</p>
           </div>
         </div>
       </div>
-
+      
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        {rightActions}
-        
-        {/* Board Toggle Button - Desktop Only */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+        {/* SmartBoard Toggle Button - Desktop only */}
+        <button
           onClick={onToggleBoard}
-          className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             isBoardOpen 
-              ? 'text-gray-600 bg-gray-100 hover:bg-gray-200' 
+              ? 'bg-purple-600 text-white hover:bg-purple-700'
               : 'text-purple-700 bg-purple-100 hover:bg-purple-200 shadow-sm'
           }`}
           title={isBoardOpen ? 'Focus Mode (Hide Board)' : 'Show SmartBoard'}
@@ -142,88 +103,53 @@ const ClassroomHeader = ({
               )}
             </>
           )}
-        </motion.button>
+        </button>
+        
+        {rightActions}
       </div>
     </header>
   );
 };
 
-// Mobile Bottom Tab Bar - Premium Design
-const MobileTabBar = ({ activeTab, onTabChange, hasNewVisual = false }) => {
+// ============================================
+// MobileTabBar Component
+// ============================================
+const MobileTabBar = ({ activeTab, onTabChange, hasNewVisual }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200/50 z-30 safe-area-pb shadow-lg shadow-gray-200/50">
-      <div className="flex items-stretch h-16">
-        {/* Chat Tab */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onTabChange(ACTIVE_TAB.CHAT)}
-          className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-            activeTab === ACTIVE_TAB.CHAT 
-              ? 'text-purple-600' 
-              : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          {activeTab === ACTIVE_TAB.CHAT && (
-            <motion.div
-              layoutId="activeTabIndicator"
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"
-            />
-          )}
-          <div className={`p-2 rounded-xl transition-all ${
-            activeTab === ACTIVE_TAB.CHAT ? 'bg-purple-100' : ''
-          }`}>
-            <MessageCircle className={`w-5 h-5 ${activeTab === ACTIVE_TAB.CHAT ? 'fill-purple-200' : ''}`} />
-          </div>
-          <span className={`text-xs font-semibold ${
-            activeTab === ACTIVE_TAB.CHAT ? 'text-purple-600' : 'text-gray-500'
-          }`}>
-            Chat
-          </span>
-        </motion.button>
-
-        {/* Center Divider */}
-        <div className="w-px bg-gray-200 my-3" />
-
-        {/* Board Tab */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onTabChange(ACTIVE_TAB.BOARD)}
-          className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-            activeTab === ACTIVE_TAB.BOARD 
-              ? 'text-purple-600' 
-              : 'text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          {activeTab === ACTIVE_TAB.BOARD && (
-            <motion.div
-              layoutId="activeTabIndicator"
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"
-            />
-          )}
-          <div className={`relative p-2 rounded-xl transition-all ${
-            activeTab === ACTIVE_TAB.BOARD ? 'bg-purple-100' : ''
-          }`}>
-            <Palette className={`w-5 h-5 ${activeTab === ACTIVE_TAB.BOARD ? 'fill-purple-200' : ''}`} />
-            {/* New Visual Indicator - Red Dot */}
-            {hasNewVisual && activeTab !== ACTIVE_TAB.BOARD && (
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
-              </span>
-            )}
-          </div>
-          <span className={`text-xs font-semibold ${
-            activeTab === ACTIVE_TAB.BOARD ? 'text-purple-600' : 'text-gray-500'
-          }`}>
-            Board
-          </span>
-        </motion.button>
-      </div>
-    </div>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-6 z-30">
+      <button
+        onClick={() => onTabChange(ACTIVE_TAB.CHAT)}
+        className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all ${
+          activeTab === ACTIVE_TAB.CHAT
+            ? 'text-purple-600 bg-purple-50'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        <MessageSquare className="w-5 h-5" />
+        <span className="text-xs font-medium">Chat</span>
+      </button>
+      
+      <button
+        onClick={() => onTabChange(ACTIVE_TAB.BOARD)}
+        className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all relative ${
+          activeTab === ACTIVE_TAB.BOARD
+            ? 'text-purple-600 bg-purple-50'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        <Palette className="w-5 h-5" />
+        <span className="text-xs font-medium">Board</span>
+        {hasNewVisual && activeTab !== ACTIVE_TAB.BOARD && (
+          <span className="absolute top-1 right-4 w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse" />
+        )}
+      </button>
+    </nav>
   );
 };
 
+// ============================================
 // Main ClassroomLayout Component
+// ============================================
 export default function ClassroomLayout({
   children, // The ChatInterface component
   chatHistory = [],
@@ -238,8 +164,15 @@ export default function ClassroomLayout({
   onVisualFullscreen,
   headerTitle = 'AI Sathi',
   headerRightActions,
-  hasStartedChat = true, // NEW: Controls whether to show split layout or full-width welcome
-  welcomeScreen = null, // NEW: Optional custom welcome screen component
+  hasStartedChat = true, // Controls whether to show split layout or full-width welcome
+  welcomeScreen = null, // Optional custom welcome screen component
+  // Concept Card props
+  currentTopic = null,
+  keyFormula = null,
+  currentSubject = null,
+  // NEW: Visual loading state
+  isGeneratingVisual = false, // True when AI is processing/generating visual
+  userQuestion = null, // Current question for fallback
 }) {
   // State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -247,68 +180,85 @@ export default function ClassroomLayout({
   const [showVisualToast, setShowVisualToast] = useState(false);
   const [hasNewVisual, setHasNewVisual] = useState(false);
   
-  // NEW: Collapsible SmartBoard state - Default to closed (Zen Mode)
+  // Collapsible SmartBoard state - Default to closed (Zen Mode)
   const [isBoardOpen, setIsBoardOpen] = useState(false);
   
   // Track previous visual artifact for auto-open logic
   const prevVisualRef = useRef(visualArtifact);
 
-  // AUTO-OPEN: When visual artifact changes from null to something
+  // Track previous loading state for auto-open logic
+  const prevLoadingRef = useRef(isGeneratingVisual);
+
+  // Auto-open board when loading starts or new visual arrives
   useEffect(() => {
-    const prevVisual = prevVisualRef.current;
-    const hasNewArtifact = !prevVisual && visualArtifact;
+    const hasVisual = visualArtifact && (
+      visualArtifact.svg || 
+      visualArtifact.visual_sketch?.svg || 
+      visualArtifact.blueprint ||
+      visualArtifact.template ||
+      visualArtifact.mode
+    );
     
-    if (hasNewArtifact) {
-      // Visual just arrived - auto-open the board
+    const prevHasVisual = prevVisualRef.current && (
+      prevVisualRef.current.svg || 
+      prevVisualRef.current.visual_sketch?.svg || 
+      prevVisualRef.current.blueprint ||
+      prevVisualRef.current.template ||
+      prevVisualRef.current.mode
+    );
+    
+    // NEW: Auto-open board when loading starts (optimistic loading)
+    const loadingJustStarted = isGeneratingVisual && !prevLoadingRef.current;
+    if (loadingJustStarted) {
+      setIsBoardOpen(true);
+    }
+    
+    // New visual arrived - update indicators
+    if (hasVisual && !prevHasVisual) {
       setIsBoardOpen(true);
       setHasNewVisual(true);
+      // Show toast on mobile
+      if (window.innerWidth < 768) {
+        setShowVisualToast(true);
+      }
     }
     
-    // Update ref
     prevVisualRef.current = visualArtifact;
-  }, [visualArtifact]);
+    prevLoadingRef.current = isGeneratingVisual;
+  }, [visualArtifact, isGeneratingVisual]);
 
-  // Track visual changes for mobile notification
+  // Clear "new visual" indicator when board is viewed
   useEffect(() => {
-    if (visualArtifact && activeTab === ACTIVE_TAB.CHAT) {
-      setShowVisualToast(true);
-      setHasNewVisual(true);
-      
-      // Auto-hide toast after 4 seconds
-      const timer = setTimeout(() => {
-        setShowVisualToast(false);
-      }, 4000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [visualArtifact, activeTab]);
-
-  // Clear new visual indicator when switching to board
-  const handleTabChange = useCallback((tab) => {
-    setActiveTab(tab);
-    if (tab === ACTIVE_TAB.BOARD) {
+    if (isBoardOpen || activeTab === ACTIVE_TAB.BOARD) {
       setHasNewVisual(false);
-      setShowVisualToast(false);
     }
-  }, []);
+  }, [isBoardOpen, activeTab]);
+
+  // Sidebar controls
+  const openSidebar = useCallback(() => setIsSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
   // Toggle SmartBoard
   const toggleBoard = useCallback(() => {
     setIsBoardOpen(prev => !prev);
-    if (!isBoardOpen) {
+  }, []);
+
+  // Mobile tab change handler
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    if (tab === ACTIVE_TAB.BOARD) {
       setHasNewVisual(false);
     }
-  }, [isBoardOpen]);
-
-  // Open sidebar
-  const openSidebar = useCallback(() => {
-    setIsSidebarOpen(true);
   }, []);
 
-  // Close sidebar
-  const closeSidebar = useCallback(() => {
-    setIsSidebarOpen(false);
-  }, []);
+  // Check if visual exists for header indicator
+  const hasVisual = visualArtifact && (
+    visualArtifact.svg || 
+    visualArtifact.visual_sketch?.svg || 
+    visualArtifact.blueprint ||
+    visualArtifact.template ||
+    visualArtifact.mode
+  );
 
   return (
     <div className="flex-1 h-full w-full flex flex-col bg-gray-50 overflow-hidden">
@@ -319,7 +269,7 @@ export default function ClassroomLayout({
         rightActions={headerRightActions}
         isBoardOpen={isBoardOpen}
         onToggleBoard={toggleBoard}
-        hasVisual={!!visualArtifact && !isBoardOpen}
+        hasVisual={hasVisual && !isBoardOpen}
       />
 
       {/* Main Content Area */}
@@ -337,11 +287,13 @@ export default function ClassroomLayout({
           <>
             {/* === DESKTOP LAYOUT === */}
             <div className="hidden md:flex flex-1 overflow-hidden">
-              {/* Left Panel - Chat (Full Width OR Split Mode) */}
+              {/* Left Panel - Chat */}
+              {/* ZEN MODE: Full width, content centered inside (like ChatGPT) */}
+              {/* LAB MODE: 40% left panel when visual active */}
               <div 
                 className={`flex flex-col overflow-hidden transition-all duration-500 ease-in-out bg-white ${
                   isBoardOpen 
-                    ? 'w-[35%] lg:w-[32%] min-w-[380px] border-r border-gray-200' 
+                    ? 'w-[40%] min-w-[400px] border-r border-gray-200' 
                     : 'flex-1'
                 }`}
               >
@@ -350,10 +302,11 @@ export default function ClassroomLayout({
               </div>
 
               {/* Right Panel - SmartBoard */}
+              {/* LAB MODE: 60% right panel with visual/concept card */}
               <div 
                 className={`overflow-hidden transition-all duration-500 ease-in-out bg-slate-50 ${
                   isBoardOpen 
-                    ? 'flex flex-1' 
+                    ? 'flex w-[60%]' 
                     : 'hidden w-0'
                 }`}
               >
@@ -361,6 +314,12 @@ export default function ClassroomLayout({
                   artifact={visualArtifact}
                   onFullscreen={onVisualFullscreen}
                   className="h-full w-full"
+                  currentTopic={currentTopic}
+                  keyFormula={keyFormula}
+                  subject={currentSubject}
+                  isConversationActive={hasStartedChat}
+                  isLoading={isGeneratingVisual}
+                  userQuestion={userQuestion}
                 />
               </div>
             </div>
@@ -391,6 +350,12 @@ export default function ClassroomLayout({
                     <SmartBoard
                       artifact={visualArtifact}
                       onFullscreen={onVisualFullscreen}
+                      currentTopic={currentTopic}
+                      keyFormula={keyFormula}
+                      subject={currentSubject}
+                      isConversationActive={hasStartedChat}
+                      isLoading={isGeneratingVisual}
+                      userQuestion={userQuestion}
                     />
                   </motion.div>
                 )}
@@ -438,6 +403,3 @@ export default function ClassroomLayout({
     </div>
   );
 }
-
-// Export the active tab enum for external use
-export { ACTIVE_TAB };

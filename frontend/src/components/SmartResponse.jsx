@@ -12,7 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, Calculator, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
-import RevolutionarySketch from '../visual-engine/components/RevolutionarySketch';
+
+// SketchSense V6 - Magic Notebook Engine
+import UniversalSketchCanvas from '../visual-engine/sketch/UniversalSketchCanvasV6';
+
+// Legacy fallback (deprecated)
+// import RevolutionarySketch from '../visual-engine/components/RevolutionarySketch';
 
 // COGNITO-OS v4.0 - Teach Me Back (modal-based)
 import TeachMeBackModal from './ui/TeachMeBackModal';
@@ -335,6 +340,7 @@ const SmartResponse = ({
           whiteboardVisual={whiteboardVisual}
           isVisualExpanded={isVisualExpanded}
           setIsVisualExpanded={setIsVisualExpanded}
+          isStreaming={isStreaming}
         />
       );
     }
@@ -555,13 +561,24 @@ const ExplanationResponse = ({
   onFollowUp,
   whiteboardVisual,
   isVisualExpanded,
-  setIsVisualExpanded
+  setIsVisualExpanded,
+  isStreaming = false
 }) => {
   const hasContent = content.mainContent && content.mainContent.length > 10;
   
   // Whiteboard visual is the ONLY visual system
   const hasWhiteboardVisual = whiteboardVisual && whiteboardVisual.concept;
   const hasAnyVisual = hasWhiteboardVisual;
+  
+  // Check if visual is being generated (from SmartBoard)
+  const hasVisualData = whiteboardVisual || visualSketch || response?.visual_sketch || response?.blueprint;
+  
+  // Only show "Generating explanation" if:
+  // 1. No content AND
+  // 2. Not streaming AND
+  // 3. No visual is being generated
+  // (If NeuralThinkingIndicator is showing, don't duplicate the loading message)
+  const shouldShowGeneratingMessage = !hasContent && !isStreaming && !hasVisualData;
 
   return (
     <motion.div 
@@ -572,15 +589,15 @@ const ExplanationResponse = ({
       {/* Main Content - Rendered as clean markdown */}
       {hasContent ? (
         <AdaptiveMarkdown content={content.mainContent} />
-      ) : (
+      ) : shouldShowGeneratingMessage ? (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
           <p className="text-yellow-800 dark:text-yellow-300">
             ⚠️ Generating explanation... Please wait.
           </p>
         </div>
-      )}
+      ) : null}
 
-      {/* 🚀 Revolutionary Visual - Progressive, Animated, Next-Level */}
+      {/* 🚀 SketchSense V5.0 - Universal Visual Engine */}
       {hasAnyVisual && (
         <div className="visual-section mt-6">
           <AnimatePresence>
@@ -591,11 +608,14 @@ const ExplanationResponse = ({
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4 }}
               >
-                {/* Revolutionary Sketch - NO extra header needed, it has its own */}
-                <RevolutionarySketch
-                  concept={whiteboardVisual?.concept || 'force'}
-                  subject={whiteboardVisual?.subject || 'physics'}
+                {/* UniversalSketchCanvas - SketchSense V5.0 Engine */}
+                <UniversalSketchCanvas
+                  blueprint={whiteboardVisual}
                   question={question}
+                  subject={whiteboardVisual?.subject || 'physics'}
+                  enableValidation={true}
+                  enableFeedback={true}
+                  style={{ minHeight: '400px', borderRadius: '12px' }}
                 />
                 
                 {/* Collapse button */}

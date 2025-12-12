@@ -1,13 +1,13 @@
 /**
- * Visual Sketch Viewer Component (V3.0)
- * Displays interactive animated visual explanations using RevolutionarySketch
+ * Visual Sketch Viewer Component (V5.0)
+ * Displays interactive animated visual explanations using SketchSense V5.0
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, Sparkles, BookOpen, Trophy, Share2 } from 'lucide-react';
 
-// Import RevolutionarySketch - the new visual engine
-import { RevolutionarySketch } from '../../visual-engine';
+// Import SketchSense V6 Magic Notebook Engine
+import UniversalSketchCanvas from '../../visual-engine/sketch/UniversalSketchCanvasV6';
 
 // Check if concept has interactive template
 const hasInteractiveTemplate = (question) => {
@@ -95,15 +95,17 @@ const VisualSketchViewer = ({
     }
   };
 
-  // If we have an interactive template - use RevolutionarySketch!
+  // If we have an interactive template - use UniversalSketchCanvas (SketchSense V5.0)!
   if (shouldUseInteractive) {
     return (
       <div className="my-4">
-        <RevolutionarySketch
-          concept={concept}
-          subject={subject}
+        <UniversalSketchCanvas
+          blueprint={{ concept, subject }}
           question={question}
-          onComplete={() => console.log('Visual completed')}
+          subject={subject}
+          enableValidation={true}
+          enableFeedback={true}
+          style={{ minHeight: '400px', borderRadius: '12px' }}
         />
       </div>
     );

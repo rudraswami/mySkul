@@ -240,37 +240,71 @@ export default function AITutorNeuroSymbolic() {
             hasSvg: !!data.visual_sketch?.svg,
             svgLength: data.visual_sketch?.svg?.length || 0,
             metaphors: data.visual_sketch?.metaphors,
-            structure: Object.keys(data.visual_sketch || {})
+            structure: Object.keys(data.visual_sketch || {}),
+            blueprint: data.visual_sketch?.blueprint,
+            template: data.visual_sketch?.template,
+            mode: data.visual_sketch?.mode
           });
           
+          // Ensure visual_sketch has proper structure
+          const visualSketch = data.visual_sketch?.svg 
+            ? data.visual_sketch  // Already has svg property
+            : { svg: data.visual_sketch?.svg || '', ...data.visual_sketch }; // Ensure svg property exists
+          
           // Update message with visual - CRITICAL: Preserve normalized structure
-          setMessages(prev => prev.map(msg => {
-            if (msg.message_id === messageId) {
-              // Ensure content is normalized before updating
-              let normalizedContent = msg.content;
-              if (typeof normalizedContent === 'string') {
-                normalizedContent = normalizeAIContent(normalizedContent);
-              } else if (!normalizedContent || typeof normalizedContent !== 'object' || Array.isArray(normalizedContent)) {
-                normalizedContent = normalizeAIContent(normalizedContent);
-              }
-              
-              // Ensure visual_sketch has proper structure
-              const visualSketch = data.visual_sketch?.svg 
-                ? data.visual_sketch  // Already has svg property
-                : { svg: data.visual_sketch?.svg || '', ...data.visual_sketch }; // Ensure svg property exists
-              
-              return {
-                ...msg,
-                content: {
-                  ...normalizedContent,
+          // Also extract concept/subject from message for SmartBoard
+          setMessages(prev => {
+            const message = prev.find(m => m.message_id === messageId);
+            
+            // 🏫 CRITICAL: Update visualArtifact for SmartBoard
+            // Extract concept and subject from the message
+            const concept = visualSketch.concept || 
+                           message?.concept ||
+                           message?.user_question?.split(' ').slice(0, 3).join(' ') ||
+                           'Concept';
+            
+            const subject = visualSketch.subject || 
+                           message?.subject ||
+                           data.detected_subject ||
+                           'General';
+            
+            setVisualArtifact({
+              ...visualSketch,
+              concept,
+              subject,
+              // Preserve all visual formats
+              svg: visualSketch.svg,
+              blueprint: visualSketch.blueprint || data.visual_sketch?.blueprint,
+              template: visualSketch.template || data.visual_sketch?.template,
+              mode: visualSketch.mode || data.visual_sketch?.mode,
+              visual_sketch: visualSketch,
+              // Store original question for context-aware theming
+              originalQuestion: message?.user_question || '',
+            });
+            
+            return prev.map(msg => {
+              if (msg.message_id === messageId) {
+                // Ensure content is normalized before updating
+                let normalizedContent = msg.content;
+                if (typeof normalizedContent === 'string') {
+                  normalizedContent = normalizeAIContent(normalizedContent);
+                } else if (!normalizedContent || typeof normalizedContent !== 'object' || Array.isArray(normalizedContent)) {
+                  normalizedContent = normalizeAIContent(normalizedContent);
+                }
+                
+                return {
+                  ...msg,
+                  content: {
+                    ...normalizedContent,
+                    visual_sketch: visualSketch
+                  },
                   visual_sketch: visualSketch
-                },
-                visual_sketch: visualSketch
-              };
-            }
-            return msg;
-          }));
-          console.log('✅ Visual loaded successfully');
+                };
+              }
+              return msg;
+            });
+          });
+          console.log('✅ Visual loaded successfully and SmartBoard updated');
           setIsGeneratingVisual(false);
         } else if (data.status === 'generating') {
           // Continue polling
@@ -363,6 +397,7 @@ export default function AITutorNeuroSymbolic() {
   // 🏫 Digital Classroom Layout state
   const [visualArtifact, setVisualArtifact] = useState(null);
   const [useClassroomLayout] = useState(true); // Use new ClassroomLayout UI
+  const [currentUserQuestion, setCurrentUserQuestion] = useState(null); // Current question for fallback
   
   // Format sessions for ClassroomLayout's HistorySidebar
   const formattedChatHistory = formatSessionsForSidebar(sessions);
@@ -773,6 +808,10 @@ export default function AITutorNeuroSymbolic() {
 
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
+    
+    // 🎨 NEW: Set visual loading state for SmartBoard (optimistic loading)
+    setIsGeneratingVisual(true);
+    setCurrentUserQuestion(messageToSend);
 
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -1088,12 +1127,76 @@ export default function AITutorNeuroSymbolic() {
         setMessages(prev => [...prev, aiMsg]);
         
         // 🏫 Extract visual artifact for SmartBoard (Digital Classroom)
-        if (aiMsg.visual_sketch || aiMsg.content?.visual_sketch) {
-          setVisualArtifact({
-            ...(aiMsg.visual_sketch || aiMsg.content?.visual_sketch),
-            concept: data.detected_subject || messageToSend.split(' ').slice(0, 3).join(' '),
-            subject: data.detected_subject || 'General'
+        // Check ALL possible visual formats from backend
+        const visualData = 
+          aiMsg.visual_sketch || 
+          aiMsg.content?.visual_sketch ||
+          aiMsg.whiteboard_visual ||
+          data.response?.visual_sketch ||
+          data.response?.whiteboard_visual ||
+          data.response?.blueprint ||
+          data.response?.visual_data ||
+          data.response?.teaching_visual ||
+          normalizedResponse?.visual_sketch ||
+          normalizedResponse?.whiteboard_visual ||
+          normalizedResponse?.blueprint;
+        
+        if (visualData) {
+          // Extract concept and subject from various sources
+          const concept = visualData.concept || 
+                         data.detected_subject || 
+                         data.response?.concept ||
+                         messageToSend.split(' ').slice(0, 3).join(' ');
+          
+          const subject = visualData.subject || 
+                         data.detected_subject || 
+                         data.response?.subject ||
+                         'General';
+          
+          // Build visual artifact with all possible formats
+          const artifact = {
+            ...visualData,
+            concept,
+            subject,
+            // Preserve all visual formats (SmartBoard checks for these)
+            svg: visualData.svg || visualData.visual_sketch?.svg || data.response?.visual_sketch?.svg,
+            blueprint: visualData.blueprint || data.response?.blueprint,
+            template: visualData.template || data.response?.template,
+            mode: visualData.mode || data.response?.mode,
+            visual_sketch: visualData.visual_sketch || visualData,
+            // Store original question for context-aware theming
+            originalQuestion: messageToSend,
+          };
+          
+          // Debug logging
+          console.log('🎨 Setting visual artifact for SmartBoard:', {
+            hasSvg: !!artifact.svg,
+            hasBlueprint: !!artifact.blueprint,
+            hasTemplate: !!artifact.template,
+            hasMode: !!artifact.mode,
+            concept,
+            subject,
+            structure: Object.keys(artifact)
           });
+          
+          setVisualArtifact(artifact);
+          setIsGeneratingVisual(false); // Visual arrived, stop loading
+        } else {
+          // Debug: Log when no visual data found
+          console.log('⚠️ No visual data found in response:', {
+            hasVisualSketch: !!aiMsg.visual_sketch,
+            hasWhiteboardVisual: !!aiMsg.whiteboard_visual,
+            hasBlueprint: !!data.response?.blueprint,
+            responseKeys: Object.keys(data.response || {}),
+            normalizedKeys: Object.keys(normalizedResponse || {})
+          });
+          
+          // No visual in response - let SmartBoard timeout handle fallback
+          // Don't stop loading yet - pollForVisual may still return a visual
+          if (!aiMsg.visual_task_id) {
+            // No async visual task either - stop loading immediately
+            setIsGeneratingVisual(false);
+          }
         }
         
         // If visual is being generated async, poll for it
@@ -1171,6 +1274,9 @@ export default function AITutorNeuroSymbolic() {
       
       // Also show toast for immediate feedback
       toastError('Message failed', errorMsg);
+      
+      // 🎨 Stop visual loading on error
+      setIsGeneratingVisual(false);
     } finally {
       setLoading(false);
     }
@@ -1610,6 +1716,8 @@ export default function AITutorNeuroSymbolic() {
           headerTitle="AI Sathi"
           headerRightActions={headerRightActions}
           hasStartedChat={messages.length > 0}
+          isGeneratingVisual={isGeneratingVisual}
+          userQuestion={currentUserQuestion}
         >
           {/* Chat Content - Messages + Input (ChatGPT/Gemini style) */}
           <div className="flex flex-col h-full relative">
@@ -1685,7 +1793,7 @@ export default function AITutorNeuroSymbolic() {
                         
                         {message.type === 'ai' && (
                           <div className="flex justify-start mb-4">
-                            <div className="max-w-[90%]">
+                            <div className="w-full">
                               <SmartResponse
                                 response={message.content}
                                 visualSketch={message.visual_sketch || message.content?.visual_sketch}
