@@ -153,8 +153,8 @@ const SketchSlider = ({
         {label}
       </label>
       <div className="flex items-center gap-3">
-        <input
-          type="range"
+          {/* REPLACED: HTML slider → SketchSlider */}
+          <SketchSlider
           min={min}
           max={max}
           value={value}

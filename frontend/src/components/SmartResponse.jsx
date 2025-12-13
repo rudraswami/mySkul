@@ -608,11 +608,18 @@ const ExplanationResponse = ({
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4 }}
               >
-                {/* UniversalSketchCanvas - SketchSense V5.0 Engine */}
-                <UniversalSketchCanvas
-                  blueprint={whiteboardVisual}
+                {/* Magic Notebook Engine V6 - Complete System */}
+                <MagicNotebookEngine
                   question={question}
-                  subject={whiteboardVisual?.subject || 'physics'}
+                  context={{
+                    subject: whiteboardVisual?.subject || 'physics',
+                    level: 'high_school',
+                  }}
+                  preGeneratedBlueprint={whiteboardVisual}
+                  showControls={true}
+                  showNarrative={true}
+                  height={500}
+                  width={600}
                   enableValidation={true}
                   enableFeedback={true}
                   style={{ minHeight: '400px', borderRadius: '12px' }}

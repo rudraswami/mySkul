@@ -747,6 +747,224 @@ export const SketchLine = ({
 };
 
 // ============================================
+// SKETCH PATH (Custom Curves)
+// ============================================
+export const SketchPath = ({
+  d = '',
+  fill = 'none',
+  stroke = NOTEBOOK_THEME.pencilGray,
+  strokeWidth = 2,
+  roughness = 1.5,
+  dashed = false,
+  delay = 0,
+  animate = true,
+  className = '',
+}) => {
+  const svgRef = useRef(null);
+  const [roughPath, setRoughPath] = useState('');
+  
+  useEffect(() => {
+    if (svgRef.current && d) {
+      const rc = rough.svg(svgRef.current);
+      const path = rc.path(d, {
+        stroke,
+        strokeWidth,
+        roughness,
+        fill: fill !== 'none' ? fill : undefined,
+        fillStyle: fill !== 'none' ? 'hachure' : undefined,
+      });
+      
+      const paths = path.querySelectorAll('path');
+      if (paths.length > 0) {
+        setRoughPath(paths[0].getAttribute('d') || '');
+      }
+    }
+  }, [d, fill, stroke, strokeWidth, roughness]);
+  
+  return (
+    <svg 
+      ref={svgRef} 
+      className={`sketch-path ${className}`}
+      style={{ overflow: 'visible' }}
+    >
+      {roughPath && (
+        <motion.path
+          d={roughPath}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={dashed ? '8 4' : undefined}
+          variants={drawVariants}
+          initial={animate ? "hidden" : "visible"}
+          animate="visible"
+          custom={delay}
+        />
+      )}
+    </svg>
+  );
+};
+
+// ============================================
+// TYPEWRITER LABEL (Character-by-Character)
+// ============================================
+export const TypewriterLabel = ({
+  text = '',
+  x = 0,
+  y = 0,
+  fontSize = 18,
+  color = NOTEBOOK_THEME.penBlack,
+  align = 'middle',
+  delay = 0,
+  speed = 0.05, // seconds per character
+  animate = true,
+  className = '',
+}) => {
+  const [visibleText, setVisibleText] = useState('');
+  
+  useEffect(() => {
+    if (!animate) {
+      setVisibleText(text);
+      return;
+    }
+    
+    let currentIndex = 0;
+    const startTime = Date.now() + delay * 1000;
+    
+    const typeInterval = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const targetIndex = Math.floor(elapsed / speed);
+      
+      if (targetIndex > currentIndex && currentIndex < text.length) {
+        currentIndex = targetIndex;
+        setVisibleText(text.slice(0, currentIndex + 1));
+      }
+      
+      if (currentIndex >= text.length) {
+        clearInterval(typeInterval);
+      }
+    }, speed * 1000);
+    
+    return () => clearInterval(typeInterval);
+  }, [text, delay, speed, animate]);
+  
+  return (
+    <motion.text
+      x={x}
+      y={y}
+      textAnchor={align}
+      fill={color}
+      fontFamily={NOTEBOOK_THEME.handwriting}
+      fontSize={fontSize}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay, duration: 0.3 }}
+      className={`typewriter-label ${className}`}
+    >
+      {visibleText}
+      {animate && visibleText.length < text.length && (
+        <tspan opacity={0.5}>|</tspan>
+      )}
+    </motion.text>
+  );
+};
+
+// ============================================
+// PULSE HIGHLIGHT (Emphasis Animation)
+// ============================================
+export const PulseHighlight = ({
+  x = 0,
+  y = 0,
+  width = 100,
+  height = 30,
+  color = NOTEBOOK_THEME.highlightYellow,
+  delay = 0,
+  pulseCount = 3,
+  className = '',
+}) => {
+  const svgRef = useRef(null);
+  const [pathData, setPathData] = useState('');
+  
+  useEffect(() => {
+    if (svgRef.current) {
+      const rc = rough.svg(svgRef.current);
+      const highlight = rc.rectangle(x, y, width, height, {
+        fill: color,
+        fillStyle: 'solid',
+        roughness: 2,
+        stroke: 'none',
+      });
+      
+      const paths = highlight.querySelectorAll('path');
+      if (paths.length > 0) {
+        setPathData(paths[0].getAttribute('d') || '');
+      }
+    }
+  }, [x, y, width, height, color]);
+  
+  return (
+    <svg 
+      ref={svgRef} 
+      className={`pulse-highlight ${className}`}
+      style={{ overflow: 'visible' }}
+    >
+      {pathData && (
+        <motion.path
+          d={pathData}
+          fill={color}
+          opacity={0.5}
+          animate={{
+            opacity: [0.3, 0.7, 0.3],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            delay,
+            duration: 1,
+            repeat: pulseCount - 1,
+            ease: 'easeInOut',
+          }}
+        />
+      )}
+    </svg>
+  );
+};
+
+// ============================================
+// GLOW EFFECT (Emphasis Glow)
+// ============================================
+export const GlowEffect = ({
+  children,
+  color = NOTEBOOK_THEME.highlightYellow,
+  intensity = 10,
+  delay = 0,
+  duration = 1,
+  className = '',
+}) => {
+  return (
+    <motion.g
+      className={`glow-effect ${className}`}
+      initial={{ filter: 'drop-shadow(0 0 0px transparent)' }}
+      animate={{
+        filter: [
+          `drop-shadow(0 0 0px ${color})`,
+          `drop-shadow(0 0 ${intensity}px ${color})`,
+          `drop-shadow(0 0 0px ${color})`,
+        ],
+      }}
+      transition={{
+        delay,
+        duration,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+    >
+      {children}
+    </motion.g>
+  );
+};
+
+// ============================================
 // SVG FILTER DEFINITIONS
 // ============================================
 export const SketchFilters = () => (
@@ -770,10 +988,31 @@ export const SketchFilters = () => (
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
     
+    {/* Pulse Glow (Animated) */}
+    <filter id="pulse-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
     {/* Marker Effect */}
     <filter id="marker-effect" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise"/>
       <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    
+    {/* Shadow Effect */}
+    <filter id="sketch-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+      <feOffset in="blur" dx="2" dy="2" result="offsetBlur"/>
+      <feMerge>
+        <feMergeNode in="offsetBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
 );
@@ -790,6 +1029,10 @@ export default {
   SketchStickFigure,
   SketchDoodle,
   SketchLine,
+  SketchPath,
+  TypewriterLabel,
+  PulseHighlight,
+  GlowEffect,
   SketchFilters,
   NOTEBOOK_THEME,
   drawVariants,

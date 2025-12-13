@@ -228,6 +228,10 @@ export const aiAPI = {
   
   verifyFact: (statement, subject) =>
     apiClient.post('/ai/guardrails/fact-verification', { statement, subject }),
+  
+  // Visual Engine - Magic Notebook (Phase 6)
+  breakConcept: (question, context) =>
+    apiClient.post('/ai/visual-engine/concept-break', { question, context, model: 'gpt-4o-mini' }),
 };
 
 // ==================== ANALYTICS ====================

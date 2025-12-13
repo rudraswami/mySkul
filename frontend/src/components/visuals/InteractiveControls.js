@@ -141,8 +141,8 @@ export default function InteractiveControls({
                   
                   {/* Custom Slider - Purple Track, Orange Thumb */}
                   <div className="relative">
-                    <input
-                      type="range"
+                    {/* REPLACED: HTML slider → SketchSlider */}
+                    <SketchSlider
                       min={slider.min}
                       max={slider.max}
                       step={slider.step || 1}

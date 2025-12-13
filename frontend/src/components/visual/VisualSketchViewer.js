@@ -6,8 +6,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, Sparkles, BookOpen, Trophy, Share2 } from 'lucide-react';
 
-// Import SketchSense V6 Magic Notebook Engine
-import UniversalSketchCanvas from '../../visual-engine/sketch/UniversalSketchCanvasV6';
+// Import COMPLETE Magic Notebook Engine V6 (All 10 Phases)
+import MagicNotebookEngine from '../../visual-engine/MagicNotebookEngine';
 
 // Check if concept has interactive template
 const hasInteractiveTemplate = (question) => {
@@ -95,17 +95,21 @@ const VisualSketchViewer = ({
     }
   };
 
-  // If we have an interactive template - use UniversalSketchCanvas (SketchSense V5.0)!
+  // Use Magic Notebook Engine V6 (Complete System - All 10 Phases)
   if (shouldUseInteractive) {
     return (
       <div className="my-4">
-        <UniversalSketchCanvas
-          blueprint={{ concept, subject }}
+        <MagicNotebookEngine
           question={question}
-          subject={subject}
-          enableValidation={true}
-          enableFeedback={true}
-          style={{ minHeight: '400px', borderRadius: '12px' }}
+          context={{
+            subject: subject,
+            level: 'high_school',
+          }}
+          preGeneratedBlueprint={whiteboardVisual?.blueprint}
+          showControls={true}
+          showNarrative={true}
+          height={500}
+          width={600}
         />
       </div>
     );

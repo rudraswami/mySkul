@@ -1,8 +1,10 @@
 /**
  * Feedback Index
- * Export all feedback components for the SketchSense V5.0 engine
+ * Export all feedback components for the SketchSense V6 engine
+ * Integrated with Validators (Phase 7)
  */
 
+// Legacy V5 exports
 export {
   default,
   FeedbackController,
@@ -11,6 +13,10 @@ export {
   FEEDBACK_TYPES,
   MENTOR_PERSONAS,
 } from './FeedbackController';
+
+// Phase 7: Validator Integration
+export { ValidationFeedback, ValidationStatusIndicator } from './ValidationFeedback';
+export { useValidationFeedback } from './useValidationFeedback';
 
 
   

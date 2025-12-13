@@ -1,21 +1,11 @@
 /**
- * 🎨 SKETCHSENSE V6 - Magic Notebook Engine
- * ==========================================
+ * 🎨 Sketch Components (SketchSense V6)
+ * ======================================
  * 
- * Export all SketchSense V6 components
+ * Hand-drawn, RoughJS-powered primitives + reveal engine
  */
 
-// Main Canvas
-export { default as UniversalSketchCanvas } from './UniversalSketchCanvasV6';
-export { 
-  NotebookPaper, 
-  GhostMentor, 
-  SketchSlider,
-  BlueprintRenderer,
-  NOTEBOOK_THEME as MAGIC_NOTEBOOK_THEME,
-} from './UniversalSketchCanvasV6';
-
-// Sketch Primitives
+// Export all primitives (Phase 1B - ENHANCED)
 export {
   SketchCircle,
   SketchRect,
@@ -25,6 +15,10 @@ export {
   SketchStickFigure,
   SketchDoodle,
   SketchLine,
+  SketchPath,              // ✨ NEW - Phase 1B
+  TypewriterLabel,         // ✨ NEW - Phase 1B
+  PulseHighlight,          // ✨ NEW - Phase 1B
+  GlowEffect,              // ✨ NEW - Phase 1B
   SketchFilters,
   NOTEBOOK_THEME,
   drawVariants,
@@ -32,15 +26,5 @@ export {
   popVariants,
 } from './SketchPrimitives';
 
-// Reveal Sequence Engine
-export {
-  default as RevealSequenceEngine,
-  SequenceBuilder,
-  TIMING,
-  ELEMENT_TYPES,
-  PRESET_SEQUENCES,
-  createSequence,
-  buildSequence,
-} from './RevealSequenceEngine';
-
-
+// Export reveal engine
+export { default as RevealSequenceEngine } from './RevealSequenceEngine';

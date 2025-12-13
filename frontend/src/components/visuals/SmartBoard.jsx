@@ -61,11 +61,17 @@ const fontSketchStyle = {
 // ============================================
 // SKETCHSENSE V6 - MAGIC NOTEBOOK ENGINE
 // ============================================
-// Import the NEW V6 UniversalSketchCanvas (RoughJS + Live Drawing)
+// Import COMPLETE Magic Notebook Engine (All 10 Phases)
+import MagicNotebookEngine from '../../visual-engine/MagicNotebookEngine';
+
+// Legacy fallback for gradual migration
 import UniversalSketchCanvas, { 
   NOTEBOOK_THEME,
   GhostMentor,
 } from '../../visual-engine/sketch/UniversalSketchCanvasV6';
+
+// V6 is NOW DEFAULT (no feature flag needed)
+const USE_MAGIC_NOTEBOOK_V6 = true;
 
 // Import Sketch Primitives for direct use
 import {
@@ -908,14 +914,38 @@ export default function SmartBoard({
                 
                 {/* Visual Content - SketchSense V6 Magic Notebook Engine */}
                 <div className="p-2 h-full min-h-[400px]">
-                  {/* 🎨 V6: UniversalSketchCanvas - Hand-drawn, Animated, ALIVE! */}
-                  <UniversalSketchCanvas
-                    blueprint={artifact.blueprint || artifact}
-                    question={artifact.originalQuestion || artifact.concept || ''}
-                    concept={artifact.concept}
-                    subject={artifact.subject || 'physics'}
-                    difficultyLevel={artifact.difficultyLevel || 'apply'}
-                    mode={artifact.mode || 'learn'}
+                  {USE_MAGIC_NOTEBOOK_V6 ? (
+                    /* ✨ MAGIC NOTEBOOK ENGINE V6 - Complete System (All 10 Phases) */
+                    <MagicNotebookEngine
+                      question={artifact.originalQuestion || artifact.concept || userQuestion}
+                      context={{
+                        subject: artifact.subject || subject || 'general',
+                        level: 'high_school',
+                      }}
+                      preGeneratedBlueprint={artifact.blueprint}
+                      showControls={true}
+                      showNarrative={true}
+                      height={500}
+                      width={600}
+                      onBlueprintGenerated={(blueprint) => {
+                        console.log('✨ Magic Notebook blueprint generated:', blueprint);
+                      }}
+                      onNarrativeComplete={() => {
+                        console.log('🎬 Narrative teaching complete!');
+                      }}
+                      onError={(error) => {
+                        console.error('❌ Magic Notebook error:', error);
+                      }}
+                    />
+                  ) : (
+                    /* 🔄 Legacy V5 Fallback - UniversalSketchCanvas */
+                    <UniversalSketchCanvas
+                      blueprint={artifact.blueprint || artifact}
+                      question={artifact.originalQuestion || artifact.concept || ''}
+                      concept={artifact.concept}
+                      subject={artifact.subject || 'physics'}
+                      difficultyLevel={artifact.difficultyLevel || 'apply'}
+                      mode={artifact.mode || 'learn'}
                     enableValidation={true}
                     enableFeedback={true}
                     culturalContext={artifact.culturalContext}
