@@ -169,16 +169,30 @@ export class NarrativeEngine {
    * Extract waypoints for hand movement from blueprint
    */
   extractWaypoints() {
-    if (!this.blueprint.items) return [];
+    const items = this.blueprint.items || [];
+    const positionedItems = items.filter(item => item.position);
     
-    return this.blueprint.items
-      .filter(item => item.position)
-      .map((item, index) => ({
-        x: item.position.x,
-        y: item.position.y,
-        delay: index * 0.5,
-        itemId: item.id,
-      }));
+    // If no positioned items, create default center waypoint
+    if (positionedItems.length === 0) {
+      return [{
+        x: 300, // Default center
+        y: 250,
+        delay: 0,
+        itemId: 'default',
+      }];
+    }
+    
+    // Sort items by x position for natural left-to-right hand movement
+    const sortedItems = [...positionedItems].sort((a, b) => 
+      (a.position.x || 0) - (b.position.x || 0)
+    );
+    
+    return sortedItems.map((item, index) => ({
+      x: item.position.x,
+      y: item.position.y - 20, // Slightly above the shape
+      delay: index * 0.8, // More time between waypoints
+      itemId: item.id,
+    }));
   }
   
   /**

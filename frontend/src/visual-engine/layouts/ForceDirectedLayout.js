@@ -121,5 +121,6 @@ export function forceDirectedLayout(items, connections = [], options = {}) {
   return positions;
 }
 
+// Default export (function is already exported as named export on line 18)
 export default forceDirectedLayout;
 

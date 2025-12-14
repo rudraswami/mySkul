@@ -14,15 +14,23 @@
  */
 export function circularLayout(items, options = {}) {
   const {
-    radius = 100,
-    centerX = 200,
-    centerY = 150,
+    canvasWidth = 400,
+    canvasHeight = 300,
+    padding = 80,
     startAngle = -90, // Start at top (12 o'clock)
     clockwise = true,
     equalSpacing = true,
   } = options;
   
   const positions = {};
+  
+  if (!items || items.length === 0) return positions;
+  
+  // CANVAS-AWARE: Auto-calculate center and radius
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+  const radius = Math.min(canvasWidth, canvasHeight) / 2 - padding;
+  
   const angleStep = 360 / items.length;
   
   items.forEach((item, index) => {
@@ -47,12 +55,17 @@ export function circularLayout(items, options = {}) {
  */
 export function hubLayout(items, centerItem, options = {}) {
   const {
-    radius = 100,
-    centerX = 200,
-    centerY = 150,
+    canvasWidth = 400,
+    canvasHeight = 300,
+    padding = 80,
   } = options;
   
   const positions = {};
+  
+  // CANVAS-AWARE: Auto-calculate center and radius
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+  const radius = Math.min(canvasWidth, canvasHeight) / 2 - padding;
   
   // Position center
   if (centerItem) {

@@ -5,15 +5,26 @@
  * Subject-specific validation engines
  */
 
-// Base validator (Phase 7 - COMPLETE)
-export { default as BaseValidator, BaseValidator as BaseValidatorClass } from './BaseValidator';
-export { VALIDATION_STATUS, FEEDBACK_TYPE, createRangeRule, createComparisonRule } from './BaseValidator';
+// IMPORT first (so variables are in scope for use below)
+import { BaseValidator, VALIDATION_STATUS, FEEDBACK_TYPE, createRangeRule, createComparisonRule } from './BaseValidator';
+import { PhysicsValidator, validatePhysics } from './PhysicsValidator';
+import { ChemistryValidator, validateChemistry } from './ChemistryValidator';
+import { MathValidator, validateMath } from './MathValidator';
+import { BiologyValidator, validateBiology } from './BiologyValidator';
 
-// Subject validators (Phase 7 - COMPLETE)
-export { default as PhysicsValidator, PhysicsValidator as PhysicsValidatorClass, validatePhysics } from './PhysicsValidator';
-export { default as ChemistryValidator, ChemistryValidator as ChemistryValidatorClass, validateChemistry } from './ChemistryValidator';
-export { default as MathValidator, MathValidator as MathValidatorClass, validateMath } from './MathValidator';
-export { default as BiologyValidator, BiologyValidator as BiologyValidatorClass, validateBiology } from './BiologyValidator';
+// RE-EXPORT for external consumers
+export { BaseValidator, VALIDATION_STATUS, FEEDBACK_TYPE, createRangeRule, createComparisonRule } from './BaseValidator';
+export { PhysicsValidator, validatePhysics } from './PhysicsValidator';
+export { ChemistryValidator, validateChemistry } from './ChemistryValidator';
+export { MathValidator, validateMath } from './MathValidator';
+export { BiologyValidator, validateBiology } from './BiologyValidator';
+
+// Default class exports
+export { default as BaseValidatorDefault } from './BaseValidator';
+export { default as PhysicsValidatorDefault } from './PhysicsValidator';
+export { default as ChemistryValidatorDefault } from './ChemistryValidator';
+export { default as MathValidatorDefault } from './MathValidator';
+export { default as BiologyValidatorDefault } from './BiologyValidator';
 
 /**
  * Get validator by subject
@@ -47,4 +58,6 @@ export default {
   BiologyValidator,
   getValidator,
   quickValidate,
+  VALIDATION_STATUS,
+  FEEDBACK_TYPE,
 };

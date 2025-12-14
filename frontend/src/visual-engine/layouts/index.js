@@ -5,12 +5,26 @@
  * Automatic positioning algorithms for visual elements
  */
 
-// Layout algorithms (Phase 5 - COMPLETE)
-export { default as ForceDirectedLayout, forceDirectedLayout } from './ForceDirectedLayout';
-export { default as GridLayout, gridLayout, getGridBounds } from './GridLayout';
-export { default as CircularLayout, circularLayout, hubLayout } from './CircularLayout';
-export { default as TreeLayout, treeLayout, balancedTreeLayout } from './TreeLayout';
-export { default as FlowLayout, flowLayout, zigzagLayout } from './FlowLayout';
+// IMPORT first (so variables are in scope for use below)
+import { forceDirectedLayout } from './ForceDirectedLayout';
+import { gridLayout, getGridBounds } from './GridLayout';
+import { circularLayout, hubLayout } from './CircularLayout';
+import { treeLayout, balancedTreeLayout } from './TreeLayout';
+import { flowLayout, zigzagLayout } from './FlowLayout';
+
+// RE-EXPORT for external consumers
+export { forceDirectedLayout } from './ForceDirectedLayout';
+export { gridLayout, getGridBounds } from './GridLayout';
+export { circularLayout, hubLayout } from './CircularLayout';
+export { treeLayout, balancedTreeLayout } from './TreeLayout';
+export { flowLayout, zigzagLayout } from './FlowLayout';
+
+// Default class exports
+export { default as ForceDirectedLayout } from './ForceDirectedLayout';
+export { default as GridLayout } from './GridLayout';
+export { default as CircularLayout } from './CircularLayout';
+export { default as TreeLayout } from './TreeLayout';
+export { default as FlowLayout } from './FlowLayout';
 
 // Layout types enum
 export const LAYOUT_TYPES = {

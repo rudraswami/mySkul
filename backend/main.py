@@ -171,6 +171,9 @@ def create_app() -> FastAPI:
             "/api/notifications/unread-count",
             "/api/notifications/mark-read",
             "/api/notifications/mark-all-read",
+            # 🔮 NETRA Visual Engine API
+            "/api/netra/parse-concept",
+            "/api/netra/health",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
@@ -216,7 +219,7 @@ def create_app() -> FastAPI:
         unified_subscription_service = UnifiedSubscriptionService(db)  # New unified service
         ai_service = AIService(
             db,
-            settings.EMERGENT_LLM_KEY,
+            settings.OPENAI_API_KEY,
             subscription_service=subscription_service,
         )
 
@@ -313,6 +316,22 @@ def create_app() -> FastAPI:
         logger.info("🎨 SketchSense V2 router registered")
     except Exception as e:
         logger.warning(f"Could not load SketchSense V2 router: {e}")
+    
+    # Magic Notebook Engine V6 (Visual Engine)
+    try:
+        from api.routes import ai_visual_engine
+        app.include_router(ai_visual_engine.router, prefix="/api", tags=["Magic Notebook V6"])
+        logger.info("✨ Magic Notebook Engine V6 router registered")
+    except Exception as e:
+        logger.warning(f"Magic Notebook Engine V6 router not available: {e}")
+    
+    # 🔮 NETRA - Intelligent Visual Reasoning Engine (v7.0)
+    try:
+        from api import netra
+        app.include_router(netra.router, tags=["NETRA Visual Engine"])
+        logger.info("🔮 NETRA Visual Reasoning Engine registered")
+    except Exception as e:
+        logger.warning(f"NETRA Visual Engine not available: {e}")
     
     # Memory & Learning Dashboard (NEW)
     try:

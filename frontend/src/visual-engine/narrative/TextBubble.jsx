@@ -270,15 +270,8 @@ export const MemoryHookBubble = (props) => (
 );
 
 // ============================================
-// EXPORTS
+// DEFAULT EXPORT
 // ============================================
-
-export {
-  HintBubble,
-  InsightBubble,
-  EncouragementBubble,
-  MemoryHookBubble,
-};
 
 export default TextBubble;
 

@@ -124,6 +124,9 @@ export const NarrativePlayer = ({
   onComplete,
   showControls = true,
   className = '',
+  // Canvas dimensions for coordinate transformation
+  canvasWidth = 600,
+  canvasHeight = 500,
 }) => {
   const {
     state,
@@ -138,8 +141,17 @@ export const NarrativePlayer = ({
     onComplete,
   });
   
+  // Auto-start narrative when initialized
+  React.useEffect(() => {
+    if (isInitialized && state && !state.isPlaying) {
+      // Auto-start after a small delay for visual polish
+      const timer = setTimeout(() => play(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialized]);
+  
   if (!isInitialized || !state) {
-    return <div>Loading narrative...</div>;
+    return null; // Don't show loading state - let the visual render first
   }
   
   // Select bubble component
@@ -160,30 +172,62 @@ export const NarrativePlayer = ({
   
   const BubbleComponent = getBubbleComponent();
   
+  // Transform SVG coordinates to percentage for proper overlay positioning
+  const handX = (state.hand.x / canvasWidth) * 100;
+  const handY = (state.hand.y / canvasHeight) * 100;
+  
   return (
-    <div className={`narrative-player ${className}`} style={{ position: 'relative' }}>
-      {/* Drawing Hand */}
+    <div 
+      className={`narrative-player ${className}`} 
+      style={{ 
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        pointerEvents: 'none', // Let clicks pass through to canvas
+        overflow: 'visible',
+      }}
+    >
+      {/* Drawing Hand - positioned using percentage of canvas */}
       {state.hand.visible && (
-        <DrawingHand
-          x={state.hand.x}
-          y={state.hand.y}
-          rotation={state.hand.angle}
-          pose={state.hand.pose}
-          visible={state.hand.visible}
-        />
+        <div
+          style={{
+            position: 'absolute',
+            left: `${handX}%`,
+            top: `${handY}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <DrawingHand
+            x={0}
+            y={0}
+            rotation={state.hand.angle}
+            pose={state.hand.pose}
+            visible={state.hand.visible}
+          />
+        </div>
       )}
       
-      {/* Text Bubble */}
+      {/* Text Bubble - positioned near hand */}
       {state.bubble.visible && (
-        <BubbleComponent
-          text={state.bubble.text}
-          x={state.hand.x - 100}
-          y={state.hand.y - 120}
-          anchorX={state.hand.x}
-          anchorY={state.hand.y}
-          visible={state.bubble.visible}
-          typewriter={true}
-        />
+        <div
+          style={{
+            position: 'absolute',
+            left: `${Math.max(10, Math.min(handX - 15, 60))}%`,
+            top: `${Math.max(5, handY - 20)}%`,
+            maxWidth: '250px',
+            pointerEvents: 'auto',
+          }}
+        >
+          <BubbleComponent
+            text={state.bubble.text}
+            x={0}
+            y={0}
+            visible={state.bubble.visible}
+            typewriter={true}
+          />
+        </div>
       )}
       
       {/* Controls */}
@@ -197,9 +241,10 @@ export const NarrativePlayer = ({
             display: 'flex',
             gap: '8px',
             padding: '12px',
-            background: 'rgba(255,255,255,0.9)',
+            background: 'rgba(255,255,255,0.95)',
             borderRadius: '24px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            pointerEvents: 'auto', // Make controls clickable
             zIndex: 1000,
           }}
         >

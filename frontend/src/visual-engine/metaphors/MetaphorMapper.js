@@ -146,22 +146,24 @@ export class MetaphorMapper {
   
   /**
    * Infer item type from label or properties
+   * ONLY substitute if label explicitly matches - don't over-substitute!
    */
   inferItemType(item) {
     const label = item.label?.toLowerCase() || '';
     
-    // Common mappings
+    // EXPLICIT mappings only - label must contain the word
     if (label.includes('ball') || label.includes('sphere')) return 'ball';
+    if (label.includes('bat') || label.includes('batsman')) return 'bat';
     if (label.includes('person') || label.includes('man') || label.includes('figure')) return 'person';
-    if (label.includes('vehicle') || label.includes('car')) return 'vehicle';
-    if (label.includes('container') || label.includes('cup')) return 'container';
+    if (label.includes('vehicle') || label.includes('car') || label.includes('auto')) return 'vehicle';
+    if (label.includes('container') || label.includes('cup') || label.includes('chai')) return 'container';
     if (label.includes('ground') || label.includes('surface')) return 'ground';
+    if (label.includes('train') || label.includes('engine')) return 'train';
     
-    // Default based on shape
-    if (item.type === 'circle') return 'ball';
-    if (item.type === 'rect') return 'object';
-    
-    return 'object';
+    // IMPORTANT: Don't auto-substitute circles/rects to metaphors!
+    // Only substitute when label explicitly mentions something metaphor-able
+    // Return null to skip substitution for generic shapes
+    return null;
   }
   
   /**

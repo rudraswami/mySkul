@@ -10,14 +10,12 @@
  * Uses layout algorithms from layouts/
  */
 
-import {
-  forceDirectedLayout,
-  gridLayout,
-  circularLayout,
-  treeLayout,
-  flowLayout,
-  LAYOUT_TYPES,
-} from '../layouts';
+import { forceDirectedLayout } from '../layouts/ForceDirectedLayout';
+import { gridLayout } from '../layouts/GridLayout';
+import { circularLayout } from '../layouts/CircularLayout';
+import { treeLayout } from '../layouts/TreeLayout';
+import { flowLayout } from '../layouts/FlowLayout';
+import { LAYOUT_TYPES } from '../layouts';
 
 // ============================================
 // SCENE COMPOSER
@@ -51,9 +49,19 @@ export class SceneComposer {
       concept,
     } = conceptData;
     
+    console.log('📐 [SceneComposer] Input:', { 
+      mode, 
+      entitiesCount: entities.length, 
+      entities,
+      relations,
+      beatsCount: beats.length 
+    });
+    
     // Choose layout algorithm based on mode
     const layoutType = this.selectLayout(mode);
     const positions = this.applyLayout(entities, relations, layoutType);
+    
+    console.log('📐 [SceneComposer] Layout:', { layoutType, positions });
     
     // Build complete blueprint
     const blueprint = {
@@ -68,11 +76,11 @@ export class SceneComposer {
         position: positions[entity.id] || { x: 200, y: 150 },
       })),
       
-      // Arrows (connections)
+      // Arrows (connections) - handle both 'from' and 'from_' for backend compatibility
       arrows: relations.map(rel => ({
-        from: rel.from,
+        from: rel.from || rel.from_,  // Handle both Python 'from_' and JSON 'from'
         to: rel.to,
-        label: rel.label,
+        label: rel.label || '',
         style: rel.style || 'default',
         curved: rel.curved || false,
       })),
@@ -95,6 +103,14 @@ export class SceneComposer {
       // Narrative beats
       beats,
     };
+    
+    console.log('📐 [SceneComposer] Output blueprint:', {
+      mode: blueprint.mode,
+      itemsCount: blueprint.items.length,
+      items: blueprint.items.map(i => ({ id: i.id, type: i.type, label: i.label, position: i.position })),
+      arrows: blueprint.arrows,
+      beatsCount: blueprint.beats.length,
+    });
     
     return blueprint;
   }

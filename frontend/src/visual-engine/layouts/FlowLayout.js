@@ -15,8 +15,8 @@
 export function flowLayout(items, options = {}) {
   const {
     direction = 'horizontal', // 'horizontal' | 'vertical'
-    spacing = 80,
-    paddingStart = 60,
+    paddingStart = 80,
+    paddingEnd = 80,
     alignment = 'center', // For cross-axis
     canvasWidth = 400,
     canvasHeight = 300,
@@ -24,32 +24,40 @@ export function flowLayout(items, options = {}) {
   
   const positions = {};
   
+  if (!items || items.length === 0) return positions;
+  
   if (direction === 'horizontal') {
-    // Left to right
-    const totalWidth = (items.length - 1) * spacing;
-    const startX = paddingStart;
+    // CANVAS-AWARE: Spread items across full width
+    const availableWidth = canvasWidth - paddingStart - paddingEnd;
+    const spacing = items.length > 1 ? availableWidth / (items.length - 1) : 0;
+    const startX = items.length === 1 ? canvasWidth / 2 : paddingStart;
+    
+    // Vertical position based on alignment
     const y = alignment === 'center' 
       ? canvasHeight / 2 
-      : (alignment === 'top' ? paddingStart : canvasHeight - paddingStart);
+      : (alignment === 'top' ? paddingStart : canvasHeight - paddingEnd);
     
     items.forEach((item, index) => {
       positions[item.id] = {
-        x: startX + index * spacing,
+        x: items.length === 1 ? startX : paddingStart + index * spacing,
         y,
       };
     });
   } else {
-    // Top to bottom
-    const totalHeight = (items.length - 1) * spacing;
-    const startY = paddingStart;
+    // CANVAS-AWARE: Spread items across full height
+    const availableHeight = canvasHeight - paddingStart - paddingEnd;
+    const spacing = items.length > 1 ? availableHeight / (items.length - 1) : 0;
+    const startY = items.length === 1 ? canvasHeight / 2 : paddingStart;
+    
+    // Horizontal position based on alignment
     const x = alignment === 'center' 
       ? canvasWidth / 2 
-      : (alignment === 'left' ? paddingStart : canvasWidth - paddingStart);
+      : (alignment === 'left' ? paddingStart : canvasWidth - paddingEnd);
     
     items.forEach((item, index) => {
       positions[item.id] = {
         x,
-        y: startY + index * spacing,
+        y: items.length === 1 ? startY : paddingStart + index * spacing,
       };
     });
   }

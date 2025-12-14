@@ -144,8 +144,11 @@ class Settings:
     EMERGENT_LLM_KEY: str = os.getenv("EMERGENT_LLM_KEY", "")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     
+    # BASE MODEL - gpt-4.1-mini for all reasoning (STRICT)
+    BASE_MODEL: str = os.getenv("LLM_MODEL", "gpt-4.1-mini")
+    
     # LLM Configuration
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4.1-mini")  # Unified to gpt-4.1-mini
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "4000"))
     
@@ -155,7 +158,7 @@ class Settings:
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyDsaHaCP3Xyctp7ndgwuX2NcY0wy8K-xUg")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # Fast + intelligent
     GEMINI_PRO_MODEL: str = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro")  # Deep reasoning
-    USE_GEMINI_PRIMARY: bool = os.getenv("USE_GEMINI_PRIMARY", "true").lower() == "true"
+    USE_GEMINI_PRIMARY: bool = os.getenv("USE_GEMINI_PRIMARY", "false").lower() == "true"  # Disabled - using gpt-4.1-mini
     
     # =============================================================================
     # DEEPSEEK & VISION MODEL SETTINGS
@@ -175,10 +178,10 @@ class Settings:
     QWEN_VL_MODEL: str = os.getenv("QWEN_VL_MODEL", "qwen-vl-max")
     QWEN_VL_BASE_URL: str = os.getenv("QWEN_VL_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
     
-    # Model routing flags
-    USE_DEEPSEEK_REASONING: bool = os.getenv("USE_DEEPSEEK_REASONING", "true").lower() == "true"
-    USE_KIMI_VISION: bool = os.getenv("USE_KIMI_VISION", "true").lower() == "true"
-    USE_QWEN_VISION: bool = os.getenv("USE_QWEN_VISION", "false").lower() == "true"  # Fallback only
+    # Model routing flags - All disabled, using gpt-4.1-mini exclusively
+    USE_DEEPSEEK_REASONING: bool = os.getenv("USE_DEEPSEEK_REASONING", "false").lower() == "true"
+    USE_KIMI_VISION: bool = os.getenv("USE_KIMI_VISION", "false").lower() == "true"
+    USE_QWEN_VISION: bool = os.getenv("USE_QWEN_VISION", "false").lower() == "true"
     
     # =============================================================================
     # 🤖 AGENTIC SYSTEM SETTINGS - TRUE AGENT BEHAVIOR

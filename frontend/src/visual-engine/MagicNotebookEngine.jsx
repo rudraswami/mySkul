@@ -23,7 +23,7 @@ import { composeScene } from './intelligence/SceneComposer';
 import { applyMetaphor } from './metaphors/MetaphorMapper';
 import UniversalSketchRenderer from './core/UniversalSketchRenderer';
 import { NarrativePlayer } from './narrative';
-import { ModeRouter } from './modes';
+// ModeRouter removed - UniversalSketchRenderer handles all rendering
 import { useValidationFeedback } from './feedback';
 
 // ============================================
@@ -61,6 +61,7 @@ export const MagicNotebookEngine = ({
   const [blueprint, setBlueprint] = useState(preGeneratedBlueprint || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const hasRequestedRef = React.useRef(false);  // Prevent duplicate requests
   
   // Concept breaking
   const { mutate: breakConcept, isLoading: isBreaking } = useBreakConceptMutation();
@@ -79,6 +80,13 @@ export const MagicNotebookEngine = ({
     
     if (!question) return;
     
+    // Prevent duplicate requests
+    if (hasRequestedRef.current && blueprint) {
+      console.log('🎨 [MagicNotebook] Skipping duplicate request');
+      return;
+    }
+    hasRequestedRef.current = true;
+    
     setLoading(true);
     setError(null);
     
@@ -87,10 +95,20 @@ export const MagicNotebookEngine = ({
       { question, context },
       {
         onSuccess: (conceptBlueprint) => {
+          console.log('🎨 [MagicNotebook] Step 1 - Raw blueprint from API:', conceptBlueprint);
+          
           // Step 2: Compose scene (SceneComposer)
           let positionedBlueprint = composeScene(conceptBlueprint, {
             canvasWidth: width,
             canvasHeight: height,
+          });
+          
+          console.log('🎨 [MagicNotebook] Step 2 - After SceneComposer:', {
+            mode: positionedBlueprint.mode,
+            itemsCount: positionedBlueprint.items?.length,
+            items: positionedBlueprint.items,
+            arrows: positionedBlueprint.arrows,
+            beats: positionedBlueprint.beats?.length,
           });
           
           // Step 3: Apply metaphor (MetaphorMapper)
@@ -99,9 +117,11 @@ export const MagicNotebookEngine = ({
               positionedBlueprint,
               options.preferMetaphor || positionedBlueprint.metaphor
             );
+            console.log('🎨 [MagicNotebook] Step 3 - After MetaphorMapper:', positionedBlueprint.metaphor);
           }
           
           // Step 4: Set blueprint
+          console.log('🎨 [MagicNotebook] Step 4 - Final blueprint to render:', positionedBlueprint);
           setBlueprint(positionedBlueprint);
           setLoading(false);
           onBlueprintGenerated?.(positionedBlueprint);
@@ -113,7 +133,12 @@ export const MagicNotebookEngine = ({
         },
       }
     );
-  }, [question, context, preGeneratedBlueprint, width, height]);
+  }, [question, preGeneratedBlueprint]);
+  
+  // Reset request flag when question changes
+  useEffect(() => {
+    hasRequestedRef.current = false;
+  }, [question]);
   
   /**
    * Render states
@@ -152,21 +177,27 @@ export const MagicNotebookEngine = ({
         position: 'relative',
         width,
         height,
-        background: blueprint.background?.color || '#FFFEF7',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        // TRANSPARENT - Let parent's dotted grid show through!
+        // The sketch itself IS the visual, not a card.
+        background: 'transparent',
+        overflow: 'visible',
+        // No borderRadius, no boxShadow - full bleed
       }}
     >
-      {/* Main Renderer */}
+      {/* 
+        Main Renderer - UniversalSketchRenderer handles ALL visual rendering
+        ModeRouter is NOT used here to avoid double-rendering
+        Instead, UniversalSketchRenderer uses the positioned blueprint directly
+      */}
       <UniversalSketchRenderer
         blueprint={blueprint}
-        width={width}
-        height={height}
+        width="100%"
+        height="100%"
+        viewBox={{ width, height }}
       />
       
       {/* Narrative Overlay (5-beat teaching) */}
-      {showNarrative && blueprint.beats && (
+      {showNarrative && blueprint.beats && blueprint.beats.length > 0 && (
         <NarrativePlayer
           blueprint={blueprint}
           options={{
@@ -176,17 +207,10 @@ export const MagicNotebookEngine = ({
           }}
           showControls={showControls}
           onComplete={onNarrativeComplete}
+          canvasWidth={width}
+          canvasHeight={height}
         />
       )}
-      
-      {/* Mode-specific rendering */}
-      <svg
-        width={width}
-        height={height}
-        style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
-      >
-        <ModeRouter blueprint={blueprint} />
-      </svg>
       
       {/* Metadata Badge */}
       {options.showMetadata !== false && (

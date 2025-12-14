@@ -262,6 +262,7 @@ export const SketchArrow = ({
   delay = 0,
   animate = true,
   curved = false,
+  curveOffset = -30, // Positive = curve down, Negative = curve up
   label = '',
   className = '',
 }) => {
@@ -277,7 +278,7 @@ export const SketchArrow = ({
       let line;
       if (curved) {
         const midX = (x1 + x2) / 2;
-        const midY = (y1 + y2) / 2 - 30;
+        const midY = (y1 + y2) / 2 + curveOffset;
         line = rc.path(`M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}`, {
           stroke,
           strokeWidth,
@@ -318,7 +319,7 @@ export const SketchArrow = ({
       });
       setArrowHeadPaths(headPathList);
     }
-  }, [x1, y1, x2, y2, stroke, strokeWidth, roughness, headSize, curved]);
+  }, [x1, y1, x2, y2, stroke, strokeWidth, roughness, headSize, curved, curveOffset]);
   
   return (
     <g className={`sketch-arrow ${className}`}>

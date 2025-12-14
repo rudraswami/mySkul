@@ -17,15 +17,30 @@
 export function treeLayout(items, options = {}) {
   const {
     orientation = 'vertical', // 'vertical' | 'horizontal'
-    levelSpacing = 80,
-    siblingSpacing = 60,
-    rootX = 200,
-    rootY = 50,
+    canvasWidth = 400,
+    canvasHeight = 300,
+    paddingX = 80,
+    paddingY = 60,
   } = options;
   
   // Build tree structure
   const tree = buildTree(items);
   if (!tree) return {};
+  
+  // CANVAS-AWARE: Calculate spacing based on tree depth and width
+  const treeDepth = getTreeDepth(tree);
+  const availableHeight = canvasHeight - 2 * paddingY;
+  const levelSpacing = treeDepth > 1 ? availableHeight / (treeDepth - 1) : 0;
+  
+  // Root position (center-top for vertical)
+  const rootX = canvasWidth / 2;
+  const rootY = paddingY;
+  
+  // Calculate max width needed at each level
+  const levelWidths = getLevelWidths(tree);
+  const maxWidth = Math.max(...Object.values(levelWidths));
+  const availableWidth = canvasWidth - 2 * paddingX;
+  const siblingSpacing = maxWidth > 1 ? availableWidth / maxWidth : availableWidth;
   
   // Calculate positions
   const positions = {};
@@ -67,6 +82,8 @@ export function treeLayout(items, options = {}) {
  * Assumes items have 'parentId' property
  */
 function buildTree(items) {
+  if (!items || items.length === 0) return null;
+  
   const itemMap = {};
   items.forEach(item => {
     itemMap[item.id] = { ...item, children: [] };
@@ -85,7 +102,39 @@ function buildTree(items) {
     }
   });
   
+  // If no explicit root, use first item
+  if (!root && items.length > 0) {
+    root = itemMap[items[0].id];
+  }
+  
   return root;
+}
+
+/**
+ * Get tree depth (number of levels)
+ */
+function getTreeDepth(node, depth = 1) {
+  if (!node || !node.children || node.children.length === 0) {
+    return depth;
+  }
+  return Math.max(...node.children.map(child => getTreeDepth(child, depth + 1)));
+}
+
+/**
+ * Get width (number of nodes) at each level
+ */
+function getLevelWidths(node, level = 0, widths = {}) {
+  if (!node) return widths;
+  
+  widths[level] = (widths[level] || 0) + 1;
+  
+  if (node.children) {
+    node.children.forEach(child => {
+      getLevelWidths(child, level + 1, widths);
+    });
+  }
+  
+  return widths;
 }
 
 /**

@@ -59,19 +59,34 @@ const fontSketchStyle = {
 };
 
 // ============================================
-// SKETCHSENSE V6 - MAGIC NOTEBOOK ENGINE
+// NETRA - VISUAL REASONING ENGINE (v7.0)
 // ============================================
-// Import COMPLETE Magic Notebook Engine (All 10 Phases)
+// Import NETRA - The new semantic visual reasoning engine
+// Wrapped in try-catch to prevent breaking if NETRA fails to load
+let NetraEngine = null;
+let NETRA_AVAILABLE = false;
+try {
+  const netraModule = require('../../netra');
+  NetraEngine = netraModule.NetraEngine;
+  NETRA_AVAILABLE = !!NetraEngine;
+  console.log('🔮 NETRA Engine loaded successfully');
+} catch (err) {
+  console.warn('⚠️ NETRA Engine failed to load, falling back to V6:', err.message);
+}
+
+// Legacy fallback - MagicNotebookEngine V6
 import MagicNotebookEngine from '../../visual-engine/MagicNotebookEngine';
 
-// Legacy fallback for gradual migration
+// Legacy V5 fallback
 import UniversalSketchCanvas, { 
   NOTEBOOK_THEME,
   GhostMentor,
 } from '../../visual-engine/sketch/UniversalSketchCanvasV6';
 
-// V6 is NOW DEFAULT (no feature flag needed)
-const USE_MAGIC_NOTEBOOK_V6 = true;
+// NETRA is DEFAULT (if available) - Semantic visual reasoning
+// Automatically falls back to V6 if NETRA fails to load
+const USE_NETRA_ENGINE = NETRA_AVAILABLE;
+const USE_MAGIC_NOTEBOOK_V6 = !USE_NETRA_ENGINE;
 
 // Import Sketch Primitives for direct use
 import {
@@ -706,8 +721,48 @@ export default function SmartBoard({
     artifact.visual_sketch?.svg || 
     artifact.blueprint ||
     artifact.template ||
-    artifact.mode
+    artifact.mode ||
+    artifact.concept ||           // Whiteboard engine returns concept
+    artifact.originalQuestion     // Or has original question
   );
+  
+  // NETRA can generate visuals from just a question - no artifact needed!
+  // If conversation is active and we have a question, let NETRA render
+  const canNetraGenerate = USE_NETRA_ENGINE && (
+    userQuestion || 
+    artifact?.originalQuestion || 
+    artifact?.concept ||
+    currentTopic
+  );
+  
+  // Show NETRA if we have a visual artifact OR if NETRA can generate from question
+  const shouldShowNetra = hasVisual || (isConversationActive && canNetraGenerate && !isLoading);
+  
+  // Debug logging for visual flow
+  React.useEffect(() => {
+    // Calculate the actual question that will be passed to NETRA
+    const netraQuestion = 
+      (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+      (artifact?.concept && artifact.concept.trim()) ||
+      (userQuestion && userQuestion.trim()) ||
+      currentTopic ||
+      'explain the concept';
+      
+    console.log('═══════════════════════════════════════════════════');
+    console.log('🎨 [SmartBoard] VISUAL STATE DEBUG');
+    console.log('═══════════════════════════════════════════════════');
+    console.log('🎨 hasVisual:', hasVisual);
+    console.log('🎨 shouldShowNetra:', shouldShowNetra);
+    console.log('🎨 canNetraGenerate:', canNetraGenerate);
+    console.log('🎨 isConversationActive:', isConversationActive);
+    console.log('🎨 isLoading:', isLoading);
+    console.log('🎨 userQuestion:', userQuestion);
+    console.log('🎨 currentTopic:', currentTopic);
+    console.log('🎨 artifact?.originalQuestion:', artifact?.originalQuestion);
+    console.log('🎨 artifact?.concept:', artifact?.concept);
+    console.log('🎨 → NETRA will receive question:', netraQuestion);
+    console.log('═══════════════════════════════════════════════════');
+  }, [hasVisual, shouldShowNetra, canNetraGenerate, isConversationActive, isLoading, userQuestion, currentTopic, artifact]);
   
   // Handle loading timeout - show fallback after 5 seconds
   useEffect(() => {
@@ -844,18 +899,8 @@ export default function SmartBoard({
               topic={currentTopic || userQuestion?.split(' ').slice(0, 4).join(' ')}
               subject={subject}
             />
-          ) : /* Priority 3: Concept Card */
-          !hasVisual && showConceptCard ? (
-            <ConceptCard 
-              key="concept"
-              topic={currentTopic}
-              formula={keyFormula}
-              subject={subject}
-            />
-          ) : /* Priority 4: Empty State */
-          !hasVisual ? (
-            <EmptyBoardState key="empty" />
-          ) : /* Priority 5: Actual Visual */ (
+          ) : /* Priority 3: NETRA Visual (can generate from question alone!) */
+          shouldShowNetra ? (
             <motion.div
               key="visual"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -869,53 +914,71 @@ export default function SmartBoard({
               }}
               className="w-full max-w-2xl"
             >
-              {/* Visual Card Container - Sketch Notebook Style */}
+              {/* Visual Container - FULL BLEED - No Card (V6 draws directly on notebook) */}
               <div 
-                className="rounded-2xl shadow-lg overflow-hidden"
+                className="overflow-visible"
                 style={{
-                  backgroundColor: 'white',
-                  border: `2px solid ${SKETCH_THEME.gridColor}`,
-                  // Subtle paper texture effect
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02)',
+                  // TRANSPARENT - Let dotted grid show through!
+                  backgroundColor: 'transparent',
+                  // No border, no shadow - visual is the art itself
                 }}
               >
-                {/* Visual Title Bar - Sketch Style */}
-                {artifact.concept && (
-                  <div 
-                    className="px-4 py-3 border-b-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${SKETCH_THEME.stickyYellow}40 0%, rgba(255,255,255,0.9) 100%)`,
-                      borderColor: SKETCH_THEME.gridColor,
-                    }}
-                  >
-                    <h4 
-                      className="text-lg text-gray-800"
-                      style={{
-                        ...fontSketchStyle,
-                        fontWeight: '600',
-                      }}
-                    >
-                      ✏️ {artifact.concept}
-                    </h4>
-                    {artifact.subject && (
-                      <span 
-                        className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: SKETCH_THEME.highlightYellow,
-                          color: '#92400e',
-                          ...fontSketchStyle,
-                        }}
-                      >
-                        📚 {artifact.subject}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* 
+                  REMOVED: Visual Title Bar 
+                  V6 Magic Notebook renders concept title directly in SVG canvas
+                  with hand-drawn aesthetic. No HTML title bar needed.
+                */}
                 
-                {/* Visual Content - SketchSense V6 Magic Notebook Engine */}
-                <div className="p-2 h-full min-h-[400px]">
-                  {USE_MAGIC_NOTEBOOK_V6 ? (
-                    /* ✨ MAGIC NOTEBOOK ENGINE V6 - Complete System (All 10 Phases) */
+                {/* Visual Content - NETRA Visual Reasoning Engine */}
+                <div className="h-full min-h-[400px]" style={{ background: 'transparent' }}>
+                  {(() => {
+                    // Calculate question for debugging (matches NetraEngine priority)
+                    const netraQuestion = 
+                      (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+                      (userQuestion && userQuestion.trim()) ||
+                      currentTopic ||
+                      (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
+                      'explain the concept';
+                    console.log('🎯 [SmartBoard] NETRA Question:', netraQuestion);
+                    console.log('🎯 [SmartBoard] USE_NETRA_ENGINE:', USE_NETRA_ENGINE);
+                    console.log('🎯 [SmartBoard] NetraEngine loaded:', !!NetraEngine);
+                    return null;
+                  })()}
+                  {USE_NETRA_ENGINE && NetraEngine ? (
+                    /* 🔮 NETRA ENGINE - Semantic Visual Reasoning (v7.0) */
+                    <NetraEngine
+                      question={
+                        // Priority: originalQuestion > userQuestion > currentTopic > concept
+                        // userQuestion is the actual typed question - prioritize it!
+                        // artifact.concept is often just a keyword like "Concept" or subject name
+                        (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+                        (userQuestion && userQuestion.trim()) ||
+                        currentTopic ||
+                        (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
+                        'explain the concept'  // Fallback
+                      }
+                      context={{
+                        subject: artifact?.subject || subject || 'physics',
+                        level: 'high_school',
+                      }}
+                      width={580}
+                      height={450}
+                      showGrid={false}
+                      showMetadata={process.env.NODE_ENV === 'development'}
+                      useLLM={true} // 🧠 CRITICAL: Enable LLM for intelligent visual reasoning
+                      onGenerated={(result) => {
+                        console.log('🔮 NETRA visual generated:', result.metadata);
+                        console.log('🔮 NETRA nodes:', result.sceneGraph?.nodes?.size || 0);
+                      }}
+                      onError={(error) => {
+                        console.error('❌ NETRA error:', error);
+                      }}
+                      onRenderComplete={() => {
+                        console.log('✨ NETRA render complete!');
+                      }}
+                    />
+                  ) : USE_MAGIC_NOTEBOOK_V6 ? (
+                    /* ✨ MAGIC NOTEBOOK ENGINE V6 - Legacy Fallback */
                     <MagicNotebookEngine
                       question={artifact.originalQuestion || artifact.concept || userQuestion}
                       context={{
@@ -946,23 +1009,24 @@ export default function SmartBoard({
                       subject={artifact.subject || 'physics'}
                       difficultyLevel={artifact.difficultyLevel || 'apply'}
                       mode={artifact.mode || 'learn'}
-                    enableValidation={true}
-                    enableFeedback={true}
-                    culturalContext={artifact.culturalContext}
-                    onValidationFeedback={(feedback) => {
-                      console.log('🛡️ Ghost Mentor:', feedback);
-                    }}
-                    onComplete={() => {
-                      console.log('✨ Visual sketch complete!');
-                    }}
-                    height={380}
-                    style={{ borderRadius: '8px' }}
-                  />
+                      enableValidation={true}
+                      enableFeedback={true}
+                      culturalContext={artifact.culturalContext}
+                      onValidationFeedback={(feedback) => {
+                        console.log('🛡️ Ghost Mentor:', feedback);
+                      }}
+                      onComplete={() => {
+                        console.log('✨ Visual sketch complete!');
+                      }}
+                      height={380}
+                      style={{ borderRadius: '8px' }}
+                    />
+                  )}
                 </div>
               </div>
 
               {/* Visual Caption - Sketch Style */}
-              {artifact.caption && (
+              {artifact?.caption && (
                 <motion.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -978,12 +1042,23 @@ export default function SmartBoard({
                 </motion.p>
               )}
             </motion.div>
+          ) : /* Priority 4: Concept Card (when no visual but have topic) */
+          showConceptCard ? (
+            <ConceptCard 
+              key="concept"
+              topic={currentTopic}
+              formula={keyFormula}
+              subject={subject}
+            />
+          ) : /* Priority 5: Empty State */
+          (
+            <EmptyBoardState key="empty" />
           )}
         </AnimatePresence>
       </div>
 
       {/* Footer Hint - Sketch Notebook Style */}
-      {!hasVisual && (
+      {!shouldShowNetra && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

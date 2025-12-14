@@ -33,6 +33,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             "/openapi.json",  # OpenAPI spec
             "/api/mock-tests/",  # Mock test endpoints (submit, generate, etc.)
             "/api/ai/",  # AI endpoints (chat, neuro-symbolic, etc.)
+            "/api/ai/visual-engine/",  # Visual engine endpoints (concept-break, etc.)
             "/api/ai/teach-me-back",  # Teach Me Back feature
             "/api/subscription/",  # Subscription endpoints
             "/api/gamification/"  # Gamification endpoints
@@ -46,6 +47,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         # ALWAYS exempt teach-me-back (explicit check first)
         if '/teach-me-back' in path:
             logger.info(f"✅ CSRF exempting teach-me-back: {path}")
+            return await call_next(request)
+        
+        # ALWAYS exempt visual-engine (explicit check)
+        if '/visual-engine/' in path:
+            logger.info(f"✅ CSRF exempting visual-engine: {path}")
             return await call_next(request)
         
         # Skip CSRF check for exempt paths

@@ -216,10 +216,25 @@ const ConnectionsLayer = React.memo(({ arrows, items }) => {
         const { x: x1, y: y1 } = fromItem.position;
         const { x: x2, y: y2 } = toItem.position;
         
-        // Offset arrows to not overlap with shapes
-        const offsetX = 45;
-        const adjustedX1 = x1 + (x2 > x1 ? offsetX : -offsetX);
-        const adjustedX2 = x2 + (x2 > x1 ? -offsetX : offsetX);
+        // Calculate direction and offset arrows to not overlap with shapes
+        const fromRadius = fromItem.radius || 40;
+        const toRadius = toItem.radius || 40;
+        
+        // For horizontal arrows, curve them to avoid overlap
+        // Alternate: above/below the centerline
+        const curveOffset = (i % 2 === 0) ? -30 : 30;
+        
+        // Calculate start/end points at edge of shapes
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+        const unitX = dx / distance;
+        const unitY = dy / distance;
+        
+        const adjustedX1 = x1 + unitX * fromRadius;
+        const adjustedY1 = y1 + unitY * fromRadius;
+        const adjustedX2 = x2 - unitX * toRadius;
+        const adjustedY2 = y2 - unitY * toRadius;
         
         const strokeColor = arrow.style === 'energy' 
           ? NOTEBOOK_THEME.highlightOrange 
@@ -229,13 +244,14 @@ const ConnectionsLayer = React.memo(({ arrows, items }) => {
           <SketchArrow
             key={`arrow-${i}`}
             x1={adjustedX1}
-            y1={y1}
+            y1={adjustedY1}
             x2={adjustedX2}
-            y2={y2}
+            y2={adjustedY2}
             stroke={strokeColor}
             label={arrow.label}
-            curved={arrow.curved}
-            delay={TIMING.CONNECTIONS + i * 0.15}
+            curved={true}
+            curveOffset={curveOffset}
+            delay={TIMING.CONNECTIONS + i * 0.2}
           />
         );
       })}
@@ -249,25 +265,32 @@ ConnectionsLayer.displayName = 'ConnectionsLayer';
  * Labels Layer - Text
  */
 const LabelsLayer = React.memo(({ labels, items, useTypewriter }) => {
-  if (!labels || labels.length === 0) return null;
-  
   return (
     <g className="layer-labels">
-      {/* Item labels */}
+      {/* Item labels - with metaphor support */}
       {items.map((item, i) => {
-        if (!item.label || !item.position) return null;
+        if (!item.position) return null;
         
         const { x, y } = item.position;
         const LabelComponent = (useTypewriter && item.typewriter !== false) 
           ? TypewriterLabel 
           : SketchLabel;
         
+        // Use metaphor label if available, otherwise original label
+        const displayLabel = item.metaphorLabel || item.label;
+        const emoji = item.metaphorEmoji;
+        
+        if (!displayLabel) return null;
+        
+        // Render emoji above label if present
+        const labelText = emoji ? `${emoji} ${displayLabel}` : displayLabel;
+        
         return (
           <LabelComponent
             key={`item-label-${i}`}
             x={x}
-            y={y + 5}
-            text={item.label}
+            y={y + (item.radius || 40) + 15}
+            text={labelText}
             delay={TIMING.LABELS + i * 0.1}
           />
         );
@@ -393,6 +416,13 @@ const UniversalSketchRenderer = ({
   const validatedBlueprint = useMemo(() => {
     if (!blueprint) return null;
     
+    console.log('🎨 [UniversalSketchRenderer] Received blueprint:', {
+      mode: blueprint.mode,
+      itemsCount: blueprint.items?.length,
+      items: blueprint.items,
+      arrows: blueprint.arrows,
+    });
+    
     const validation = validateBlueprint(blueprint);
     if (!validation.valid) {
       console.warn('Blueprint validation errors:', validation.errors);
@@ -404,7 +434,9 @@ const UniversalSketchRenderer = ({
   // Auto-layout items without positions
   const processedItems = useMemo(() => {
     if (!validatedBlueprint?.items) return [];
-    return autoLayoutItems(validatedBlueprint.items, viewBox);
+    const items = autoLayoutItems(validatedBlueprint.items, viewBox);
+    console.log('🎨 [UniversalSketchRenderer] After auto-layout:', items);
+    return items;
   }, [validatedBlueprint, viewBox]);
   
   // ============================================
@@ -488,6 +520,23 @@ const UniversalSketchRenderer = ({
       >
         {/* Filter Definitions */}
         <SketchFilters />
+        
+        {/* Title Label - Concept Name */}
+        {validatedBlueprint.concept && (
+          <text
+            x={viewBox.width / 2}
+            y={30}
+            textAnchor="middle"
+            style={{
+              fontFamily: NOTEBOOK_THEME.handwriting,
+              fontSize: '22px',
+              fill: NOTEBOOK_THEME.penBlack,
+              fontWeight: 'bold',
+            }}
+          >
+            {validatedBlueprint.concept}
+          </text>
+        )}
         
         {/* Layered Rendering (Order Matters!) */}
         <BackgroundLayer 
