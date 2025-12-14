@@ -136,7 +136,7 @@ class ChainOfThoughtEngine:
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.llm_key = self.config.get('emergent_llm_key') or os.environ.get('EMERGENT_LLM_KEY')
+        self.llm_key = self.config.get('emergent_llm_key') or os.environ.get('OPENAI_API_KEY')
         
         # Initialize verifiers
         self.math_verifier = None

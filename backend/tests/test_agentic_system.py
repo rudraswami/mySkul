@@ -219,7 +219,7 @@ class TestIntegration:
         import os
         from agents.agentic_doubt_resolver import create_agentic_doubt_resolver
         
-        llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('OPENAI_API_KEY')
+        llm_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_API_KEY')
         if not llm_key:
             pytest.skip("No LLM key available")
         

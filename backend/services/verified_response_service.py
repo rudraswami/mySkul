@@ -279,7 +279,7 @@ def get_verified_response_service(
     global _verified_service_instance
     
     if _verified_service_instance is None:
-        key = llm_api_key or os.environ.get('EMERGENT_LLM_KEY')
+        key = llm_api_key or os.environ.get('OPENAI_API_KEY')
         _verified_service_instance = VerifiedResponseService(
             db=db,
             llm_api_key=key,

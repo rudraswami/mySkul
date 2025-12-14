@@ -22,10 +22,10 @@ class LightweightAudioProcessor:
     
     def __init__(self):
         """Initialize with API credentials"""
-        self.openai_api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY')
+        self.openai_api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('OPENAI_API_KEY')
         
         if not self.openai_api_key:
-            logger.warning("No API key found for transcription. Set OPENAI_API_KEY or EMERGENT_LLM_KEY")
+            logger.warning("No API key found for transcription. Set OPENAI_API_KEY or OPENAI_API_KEY")
             self.client = None
         else:
             try:

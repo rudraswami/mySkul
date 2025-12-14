@@ -147,7 +147,7 @@ _RECENT_TV_BY_SESSION: dict = {}
 # Dependency to get AI service
 async def get_ai_service(db = Depends(get_database)) -> AIService:
     """Get AI service instance"""
-    emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+    emergent_llm_key = os.environ.get('OPENAI_API_KEY')
     return AIService(db, emergent_llm_key)
 
 
@@ -1504,7 +1504,7 @@ You MUST reference specific content from the image in your response."""
                 if specialized_intent:
                     logger.info(f"🤖 Specialized agent detected: {specialized_intent}")
                     
-                    emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                    emergent_llm_key = os.environ.get('OPENAI_API_KEY')
                     
                     # Build context for specialized agent
                     agent_context = {
@@ -1653,7 +1653,7 @@ You MUST reference specific content from the image in your response."""
             try:
                 from services.unified_ai_orchestrator import get_unified_orchestrator
                 
-                emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                emergent_llm_key = os.environ.get('OPENAI_API_KEY')
                 orchestrator = get_unified_orchestrator(db, emergent_llm_key)
                 
                 # Get message history
@@ -1709,7 +1709,7 @@ You MUST reference specific content from the image in your response."""
             logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:
                 # Initialize Supervisor with INTELLIGENT ROUTING (Cognito-OS v4.0)
-                emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                emergent_llm_key = os.environ.get('OPENAI_API_KEY')
                 config = {"emergent_llm_key": emergent_llm_key}
                 
                 # Use intelligent routing based on query complexity
@@ -2616,7 +2616,7 @@ async def evaluate_teach_me_back(
         from datetime import datetime as dt  # Local import to ensure availability
         
         # Get evaluator with config
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        emergent_llm_key = os.environ.get('OPENAI_API_KEY')
         evaluator = get_teach_me_back_evaluator({"emergent_llm_key": emergent_llm_key})
         
         # Evaluate student explanation

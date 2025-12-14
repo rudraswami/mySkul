@@ -314,10 +314,10 @@ async def generate_mock_test(
             from services.test_blueprint_generator import TestBlueprintGenerator
             import os
             
-            emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('EMERGENT_API_KEY')
+            emergent_llm_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_API_KEY')
             if not emergent_llm_key:
                 # NO FALLBACK - Return error for better UX
-                logger.error(f"[{trace_id}] EMERGENT_LLM_KEY missing. Cannot generate test.")
+                logger.error(f"[{trace_id}] OPENAI_API_KEY missing. Cannot generate test.")
                 raise HTTPException(
                     status_code=500,
                     detail={

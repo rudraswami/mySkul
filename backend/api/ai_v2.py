@@ -78,7 +78,7 @@ async def chat_v2(
     
     try:
         # Get LLM key
-        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        llm_key = os.environ.get('OPENAI_API_KEY')
         if not llm_key:
             raise HTTPException(status_code=500, detail="AI service not configured")
         
@@ -154,7 +154,7 @@ async def chat_with_cot(
     logger.info(f"🧠 CoT Chat: {request.message[:60]}...")
     
     try:
-        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        llm_key = os.environ.get('OPENAI_API_KEY')
         
         from services.chain_of_thought_engine import get_chain_of_thought_engine
         
@@ -219,7 +219,7 @@ async def get_agents_status(
         pass
     
     try:
-        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        llm_key = os.environ.get('OPENAI_API_KEY')
         from services.enhanced_response_composer import get_enhanced_composer
         get_enhanced_composer(db, llm_key)
         status["enhanced_composer"] = True

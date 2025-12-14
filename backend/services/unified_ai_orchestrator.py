@@ -54,7 +54,7 @@ class UnifiedAIOrchestrator:
     def __init__(self, db, llm_api_key: str = None):
         """Initialize orchestrator with all components"""
         self.db = db
-        self.llm_api_key = llm_api_key or os.environ.get('EMERGENT_LLM_KEY')
+        self.llm_api_key = llm_api_key or os.environ.get('OPENAI_API_KEY')
         
         # Initialize components lazily
         self._routing_engine = None

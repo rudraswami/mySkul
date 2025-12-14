@@ -200,9 +200,9 @@ async def call_deepseek(
         # Use provided key or fall back to env var
         actual_key = api_key or DEEPSEEK_API_KEY
         if not actual_key:
-            logger.warning("⚠️ No DeepSeek API key - falling back to OpenAI")
-            return await call_llm(prompt, os.environ.get('EMERGENT_LLM_KEY', ''), 
-                                  temperature, max_tokens, "gpt-4o", session_id, system_message)
+            logger.warning("⚠️ No DeepSeek API key - falling back to OpenAI (gpt-4.1-mini)")
+            return await call_llm(prompt, os.environ.get('OPENAI_API_KEY', ''), 
+                                  temperature, max_tokens, "gpt-4.1-mini", session_id, system_message)
         
         actual_model = model or DEEPSEEK_MODEL
         
@@ -247,10 +247,10 @@ Think step-by-step and show your reasoning process."""
         raise Exception(f"DeepSeek timeout after {DEEPSEEK_TIMEOUT}s")
     except Exception as e:
         logger.error(f"❌ DeepSeek API call failed: {e}")
-        # Fallback to standard LLM
-        logger.info("↩️ Falling back to standard LLM...")
-        return await call_llm(prompt, os.environ.get('EMERGENT_LLM_KEY', ''),
-                              temperature, max_tokens, "gpt-4o", session_id, system_message)
+        # Fallback to standard LLM (gpt-4.1-mini)
+        logger.info("↩️ Falling back to OpenAI gpt-4.1-mini...")
+        return await call_llm(prompt, os.environ.get('OPENAI_API_KEY', ''),
+                              temperature, max_tokens, "gpt-4.1-mini", session_id, system_message)
 
 
 # =============================================================================
@@ -416,14 +416,14 @@ def get_reasoning_model_config() -> dict:
             "capabilities": ["deep_reasoning", "math", "proofs"]
         }
     
-    # Priority 3: GPT-4o (fallback)
+    # Priority 3: GPT-4.1-mini (primary base model)
     return {
         "provider": "openai",
-        "model": "gpt-4o",
-        "api_key": settings.EMERGENT_LLM_KEY,
+        "model": settings.BASE_MODEL or "gpt-4.1-mini",
+        "api_key": settings.OPENAI_API_KEY,
         "base_url": None,
         "call_function": call_llm,
-        "capabilities": ["general", "creative"]
+        "capabilities": ["general", "creative", "math", "reasoning"]
     }
 
 

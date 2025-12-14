@@ -157,7 +157,7 @@ class ReActAgent(ABC):
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.llm_key = self.config.get('emergent_llm_key') or os.environ.get('EMERGENT_LLM_KEY')
+        self.llm_key = self.config.get('emergent_llm_key') or os.environ.get('OPENAI_API_KEY')
         self.tool_registry = None  # Set by subclass or injected
         self.memory = None  # Set by subclass or injected
         self.base_max_iterations = self.config.get('max_iterations', 10)

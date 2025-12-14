@@ -144,7 +144,7 @@ class ProactiveScheduler:
         # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
         companion = create_agentic_companion({
             'db_client': self.db,
-            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+            'emergent_llm_key': settings.OPENAI_API_KEY
         })
         
         now = datetime.utcnow()
@@ -242,7 +242,7 @@ class ProactiveScheduler:
         # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
         companion = create_agentic_companion({
             'db_client': self.db,
-            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+            'emergent_llm_key': settings.OPENAI_API_KEY
         })
         
         now = datetime.utcnow()
@@ -320,7 +320,7 @@ class ProactiveScheduler:
         # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
         companion = create_agentic_companion({
             'db_client': self.db,
-            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+            'emergent_llm_key': settings.OPENAI_API_KEY
         })
         
         now = datetime.utcnow()
@@ -444,7 +444,7 @@ class ProactiveScheduler:
         # Use AgenticCompanion (TRUE agent with ReAct loop + tools)
         companion = create_agentic_companion({
             'db_client': self.db,
-            'emergent_llm_key': settings.EMERGENT_LLM_KEY
+            'emergent_llm_key': settings.OPENAI_API_KEY
         })
         
         try:

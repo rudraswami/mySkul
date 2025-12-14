@@ -111,7 +111,7 @@ async def agentic_query(
         from agents.agentic_doubt_resolver import create_agentic_doubt_resolver
         
         # Get LLM key
-        llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('OPENAI_API_KEY')
+        llm_key = os.environ.get('OPENAI_API_KEY')
         
         if not llm_key:
             raise HTTPException(status_code=500, detail="LLM API key not configured")
@@ -328,7 +328,7 @@ async def agentic_health_check():
         health["status"] = "degraded"
     
     # Check LLM key
-    llm_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('OPENAI_API_KEY')
+    llm_key = os.environ.get('OPENAI_API_KEY')
     health["components"]["llm_key"] = {
         "status": "ok" if llm_key else "missing",
         "configured": bool(llm_key)

@@ -206,12 +206,13 @@ async def call_concept_parser_llm(question: str, subject: str = None) -> Dict[st
     Call LLM to parse concept into visual components
     """
     from services.llm_service import call_llm
+    from core.config import settings
     
-    # Get API key
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("EMERGENT_API_KEY")
+    # Get API key - use OPENAI_API_KEY (gpt-4.1-mini is our base model)
+    api_key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
     if not api_key:
-        logger.error("No OpenAI API key found")
-        raise HTTPException(status_code=500, detail="LLM API key not configured")
+        logger.error("No OPENAI_API_KEY found in settings or environment")
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
     
     # Build prompt
     subject_context = f"Subject: {subject}" if subject else "Subject: Auto-detect from question"
@@ -223,12 +224,15 @@ async def call_concept_parser_llm(question: str, subject: str = None) -> Dict[st
     try:
         logger.info(f"🔮 [NETRA] Calling LLM for concept parsing: {question[:50]}...")
         
+        # Use configured model (gpt-4.1-mini by default)
+        model = settings.BASE_MODEL or "gpt-4.1-mini"
+        
         response = await call_llm(
             prompt=prompt,
             api_key=api_key,
             temperature=0.3,  # Low temperature for consistent structured output
             max_tokens=2000,
-            model="gpt-4o",  # Use GPT-4o for best understanding
+            model=model,
             system_message="You are an expert educational visual designer. Respond with valid JSON only."
         )
         

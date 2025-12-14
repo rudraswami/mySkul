@@ -549,10 +549,25 @@ const AnimatedRenderer = ({
       const beat = beats[beatIndex];
       console.log(`🎬 [AnimatedRenderer] Playing beat ${beatIndex + 1}/${beats.length}:`, beat.type);
       
-      // Update visible elements
+      // Update visible elements - handle multiple beat formats
       setVisibleElements(prev => {
         const next = new Set(prev);
-        beat.entities.forEach(id => next.add(id));
+        
+        // v3.0 format: slots/slotName (from AnimationDirector)
+        if (beat.slots && Array.isArray(beat.slots)) {
+          beat.slots.forEach(slotName => next.add(slotName));
+        } else if (beat.slotName) {
+          next.add(beat.slotName);
+        }
+        
+        // v2.0 format: entities (from TeachingBeatEngine)
+        if (beat.entities && Array.isArray(beat.entities)) {
+          beat.entities.forEach(id => next.add(id));
+        }
+        
+        // If beat has type 'pause', don't add any elements (just a delay)
+        // No need for explicit handling - just skip
+        
         return next;
       });
       
@@ -562,18 +577,21 @@ const AnimatedRenderer = ({
       }
       
       // Update emphasis
-      if (beat.emphasis) {
+      if (beat.emphasis && Array.isArray(beat.emphasis)) {
         setEmphasis(new Set(beat.emphasis));
         // Clear emphasis after duration
-        setTimeout(() => setEmphasis(new Set()), beat.duration);
+        const duration = beat.duration || 1000;
+        setTimeout(() => setEmphasis(new Set()), duration);
       }
       
       onBeatChange?.(beatIndex, beat);
       setCurrentBeat(beatIndex);
       
-      // Schedule next beat
+      // Schedule next beat with safe defaults
       beatIndex++;
-      timerRef.current = setTimeout(playBeat, beat.duration + (beat.delay || 200));
+      const beatDuration = beat.duration || 1000;
+      const beatDelay = beat.delay || 200;
+      timerRef.current = setTimeout(playBeat, beatDuration + beatDelay);
     };
     
     // Start playing after initial delay

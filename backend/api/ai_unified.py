@@ -150,7 +150,7 @@ Answer based on the image content above. Be direct and accurate."""
                 logger.warning(f"Failed to get message history: {e}")
         
         # Initialize ResponseComposer
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        emergent_llm_key = os.environ.get('OPENAI_API_KEY')
         
         # Get adaptive context if cognitive model is enabled
         adaptive_context = None
@@ -302,7 +302,7 @@ async def stream_unified_response(
                         pass
                 
                 # Initialize ResponseComposer
-                emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+                emergent_llm_key = os.environ.get('OPENAI_API_KEY')
                 composer = ResponseComposer(db, emergent_llm_key)
                 
                 # Generate response

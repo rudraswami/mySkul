@@ -244,10 +244,9 @@ export class Orchestrator {
       console.log('✅ Intent:', intentResult.primary, '→ Form:', formResult.form, '→ Layout:', layoutResult.layout);
       console.log('═══════════════════════════════════════════════════');
 
-      // Cache result
-      this.cache.set(cacheKey, result);
-
-      console.log('✅ [Orchestrator] Generation complete in', result.metadata.generationTime, 'ms');
+      // Cache result (disabled for variation testing)
+      // const cacheKey = this.getCacheKey(question, context);
+      // this.cache.set(cacheKey, result);
       
       return result;
 

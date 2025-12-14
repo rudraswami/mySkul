@@ -51,7 +51,7 @@ async def generate_streaming_response(
         import os
         
         # Initialize AI service
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        emergent_llm_key = os.environ.get('OPENAI_API_KEY')
         ai_service = AIService(db, emergent_llm_key=emergent_llm_key)
         
         # Send start signal with metadata

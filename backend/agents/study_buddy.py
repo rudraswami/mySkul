@@ -283,7 +283,7 @@ Just tell me what you're in the mood for! 💪"""
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         import os
         
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY') or self.config.get('emergent_llm_key')
+        emergent_llm_key = os.environ.get('OPENAI_API_KEY') or self.config.get('emergent_llm_key')
         
         llm_chat = LlmChat(
             api_key=emergent_llm_key,

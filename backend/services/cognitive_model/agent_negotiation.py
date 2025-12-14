@@ -128,7 +128,7 @@ class AgentNegotiator:
         self.agent_capabilities: Dict[str, List[str]] = {}
         self.agent_weights: Dict[str, float] = {}  # Domain expertise weights
         self.negotiation_history: List[NegotiationResult] = []
-        self.llm_key = llm_key or os.environ.get('EMERGENT_LLM_KEY')
+        self.llm_key = llm_key or os.environ.get('OPENAI_API_KEY')
         
         logger.info("🤝 AgentNegotiator initialized with FULL consensus capability")
     

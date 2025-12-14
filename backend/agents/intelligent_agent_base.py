@@ -43,7 +43,7 @@ class IntelligentAgentBase(BaseAgent):
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.llm_key = config.get('emergent_llm_key') if config else os.environ.get('EMERGENT_LLM_KEY')
+        self.llm_key = config.get('emergent_llm_key') if config else os.environ.get('OPENAI_API_KEY')
     
     @abstractmethod
     def get_agent_persona(self) -> str:
