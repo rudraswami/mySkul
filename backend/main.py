@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 import json as json_lib
 
+
 # Core imports
 from core.config import settings
 from core.database import init_database, close_database
@@ -215,7 +216,8 @@ def create_app() -> FastAPI:
         # Initialize services and inject dependencies
         logger.info("Initializing services...")
         auth_service = AuthService(db, settings.JWT_SECRET)
-        unified_subscription_service = UnifiedSubscriptionService(db)  # New unified service
+        unified_subscription_service = UnifiedSubscriptionService(db)
+        subscription_service = SubscriptionService(db)  # New unified service
         ai_service = AIService(
             db,
             settings.OPENAI_API_KEY,
