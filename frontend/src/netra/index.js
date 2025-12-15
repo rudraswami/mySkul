@@ -265,5 +265,20 @@ export {
   useNetraWithSmartBoard,
 } from './integration/SmartBoardAdapter';
 
+// ============================================
+// NETRA v4.0 - Visual Intelligence Engine
+// ============================================
+
+export {
+  NetraEngineV4,
+  TeachingOverlay,
+  generateVisual as generateVisualV4,
+  analyzeQuestion as analyzeQuestionV4,
+  generateSimple as generateSimpleV4,
+  checkHealth as checkNetraV4Health,
+  getMetrics as getNetraV4Metrics,
+  VERSION as NETRA_V4_VERSION,
+} from './v4';
+
 
 

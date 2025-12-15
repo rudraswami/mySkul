@@ -175,6 +175,12 @@ def create_app() -> FastAPI:
             # 🔮 NETRA Visual Engine API
             "/api/netra/parse-concept",
             "/api/netra/health",
+            # 🔮 NETRA v4.0 Visual Intelligence API
+            "/api/netra/v4/generate",
+            "/api/netra/v4/generate-simple",
+            "/api/netra/v4/analyze",
+            "/api/netra/v4/health",
+            "/api/netra/v4/metrics",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
@@ -326,13 +332,21 @@ def create_app() -> FastAPI:
     except Exception as e:
         logger.warning(f"Magic Notebook Engine V6 router not available: {e}")
     
-    # 🔮 NETRA - Intelligent Visual Reasoning Engine (v7.0)
+    # 🔮 NETRA - Intelligent Visual Reasoning Engine (v7.0) - Legacy
     try:
         from api import netra
         app.include_router(netra.router, tags=["NETRA Visual Engine"])
         logger.info("🔮 NETRA Visual Reasoning Engine registered")
     except Exception as e:
         logger.warning(f"NETRA Visual Engine not available: {e}")
+    
+    # 🔮 NETRA v4.0 - Visual Intelligence Orchestrator (NEW - Game Changer)
+    try:
+        from api import netra_v4
+        app.include_router(netra_v4.router, tags=["NETRA v4 Visual Intelligence"])
+        logger.info("🔮 NETRA v4.0 Visual Intelligence Orchestrator registered")
+    except Exception as e:
+        logger.warning(f"NETRA v4.0 not available: {e}")
     
     # Memory & Learning Dashboard (NEW)
     try:
