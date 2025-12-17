@@ -10,6 +10,10 @@
  * │  IntentClassifier → FormSelector → LayoutVariator       │
  * │  "What visual FORM should I use?"                       │
  * ├─────────────────────────────────────────────────────────┤
+ * │  SCENE PRIMITIVES (Rich Visual Scenes) ← NEW!          │
+ * │  "How should this LOOK as a SCENE?"                     │
+ * │  - Environments, Surfaces, Actors, Effects              │
+ * ├─────────────────────────────────────────────────────────┤
  * │  PRIMITIVES (Subject-Specific Visuals)                  │
  * │  "How should this LOOK?"                                │
  * │  - Physics: Forces, Bodies, Circuits                    │
@@ -23,6 +27,44 @@
  * The reasoning layer is SUBJECT-AGNOSTIC.
  * Primitives provide subject-specific APPEARANCE only.
  */
+
+// ============================================
+// SCENE PRIMITIVES (Rich Visual Scenes) - NEW!
+// ============================================
+
+export {
+  // Environments
+  OutdoorEnvironment,
+  LabEnvironment,
+  RoomEnvironment,
+  
+  // Surfaces
+  GroundSurface,
+  IceSurface,
+  CarpetSurface,
+  MicroscopicSurface,
+  
+  // Actors
+  SlidingBlock,
+  RollingBall,
+  PersonFigure,
+  CarFigure,
+  
+  // Forces
+  ForceArrow,
+  
+  // Effects
+  MotionTrail,
+  ChaosScatter,
+  
+  // UI
+  SceneDivider,
+  SceneLabel,
+  
+  // Registry
+  SCENE_PRIMITIVE_REGISTRY,
+  getScenePrimitive,
+} from './ScenePrimitives';
 
 // ============================================
 // UNIVERSAL PRIMITIVES (Work for ALL subjects)

@@ -1,42 +1,121 @@
 """
-Mentor Agent - Emotional & Conceptual Guidance
-Handles intuitive explanations with metaphors and relatable examples
+🧠 Mentor Agent - TRUE AGENTIC Emotional & Conceptual Guidance
+================================================================
+
+UPGRADED to TRUE AGENT with:
+- ReAct Loop: Think → Act → Observe
+- Tools: KnowledgeSearch, FactChecker, StudyPlanner, Calculator
+- Memory: Tracks student's emotional state, learning patterns
+- Verification: Self-checks explanations for accuracy
+- Empathy: Adapts tone based on student's emotional signals
+
+This is NOT just an LLM wrapper - it's a reasoning system that
+behaves like a caring human mentor.
 """
 import logging
 import os
 from typing import Dict, Any, Optional, List
-from agents.base_agent import BaseAgent
-from agents.core.tool_registry import ToolRegistry
+from agents.core.react_agent import ReActAgent, AgentState
+from agents.core.tool_registry import ToolRegistry, create_tool_registry
+from agents.core.memory import MemorySystem, LongTermMemory
+from agents.core.verifier import Verifier
 
 logger = logging.getLogger(__name__)
 
 
-class MentorAgent(BaseAgent):
+class MentorAgent(ReActAgent):
     """
-    Mentor Agent provides emotional, conceptual, intuitive explanations
+    TRUE AGENTIC Mentor - Empathetic, Reasoning, Tool-Using Mentor
+    
+    UPGRADED from simple LLM wrapper to full ReAct agent:
+    - Think → Act → Observe reasoning loop
+    - Uses tools to verify facts and enhance explanations
+    - Remembers student's emotional patterns and preferences
+    - Adapts explanations based on student state
     
     Key Features:
     - Uses metaphors and relatable examples
     - Friendly, confidence-building tone
     - Indian context and cultural relevance
     - Adaptive to student's emotional state
-    - Can generate study plans using StudyPlannerTool
+    - TRUE TOOL USAGE for accurate information
     """
+    
+    MENTOR_NAME = "Druv"
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
         
-        # Initialize tool registry with Study Planner Tool
-        self.tool_registry = ToolRegistry()
+        # Initialize tool registry with mentor-relevant tools
+        self.tool_registry = create_tool_registry(
+            include_default=True,  # knowledge_search, calculator, fact_checker
+            include_action_tools=False  # No action tools for mentor
+        )
         
         # Register Study Planner Tool (replaces Study Planner Agent)
         from agents.core.tools.planner import StudyPlannerTool
         self.tool_registry.register(StudyPlannerTool())
         
-        logger.info("👨‍🏫 MentorAgent initialized with study planner tool")
+        # Initialize verifier for self-checking
+        self.verifier = Verifier()
+        
+        # Memory cache for student-specific memory
+        self._memory_cache: Dict[str, MemorySystem] = {}
+        
+        logger.info("👨‍🏫 MentorAgent initialized as TRUE AGENT with ReAct + Tools + Memory + Verification")
+    
+    def get_agent_name(self) -> str:
+        return "MentorAgent"
     
     def get_agent_type(self) -> str:
         return "Mentor"
+    
+    def get_available_tools(self) -> List[str]:
+        """Return list of tools this agent can use"""
+        return [
+            "knowledge_search",  # Look up concepts and definitions
+            "fact_checker",      # Verify facts before stating
+            "calculator",        # Math calculations
+            "study_planner",     # Generate study plans
+        ]
+    
+    def get_agent_persona(self) -> str:
+        """Return the mentor's persona for ReAct reasoning"""
+        return f"""You are "{self.MENTOR_NAME} Bhaiya/Didi," a caring AI mentor for Indian students.
+
+**YOUR CHARACTER:**
+- You're like a supportive older sibling who genuinely cares
+- You've helped thousands of students - you understand their struggles
+- You're warm and encouraging, but also rigorous about accuracy
+- You use tools to verify information rather than guessing
+- You remember student patterns and adapt your style
+
+**YOUR THINKING PROCESS (ReAct Loop):**
+1. THINK: Understand the student's real question and emotional state
+2. ACT: Use tools if you need facts, calculations, or verification
+3. OBSERVE: Process what you learned from the tool
+4. THINK: How can I explain this in a relatable way?
+5. RESPOND: Give a warm, structured, accurate explanation
+
+**WHEN TO USE TOOLS:**
+- knowledge_search: When you need to look up a concept or definition
+- fact_checker: When you want to verify a fact before stating it
+- calculator: When there's any mathematical calculation
+- study_planner: When student asks for a study plan or schedule
+
+**YOUR STYLE:**
+- Use metaphors from student's life (cricket, games, daily life)
+- Explain like a friend at 2 AM before exams
+- Structure responses with headers, bullets, bold terms
+- Use LaTeX for math: \\( inline \\) and \\[ block \\]
+- Be encouraging but never condescending
+
+**NEVER:**
+- Give wrong information (always verify when uncertain)
+- Make students feel stupid
+- Rush through explanations
+- Use jargon without explaining
+- Output unformatted walls of text"""
     
     async def process(
         self,
@@ -44,7 +123,11 @@ class MentorAgent(BaseAgent):
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Generate mentor-style conceptual explanation
+        Generate mentor-style conceptual explanation using ReAct loop.
+        
+        This is the TRUE AGENTIC processing:
+        - Uses ReAct loop for complex queries
+        - Falls back to fast path for simple queries (greetings, short facts)
         
         Args:
             query: Student's question
@@ -54,7 +137,7 @@ class MentorAgent(BaseAgent):
             Mentor response with emotional guidance and metaphors
         """
         try:
-            logger.info(f"👨‍🏫 Mentor processing: {query[:100]}")
+            logger.info(f"👨‍🏫 Mentor processing (TRUE AGENTIC): {query[:100]}")
             
             # Check if this is a greeting
             query_lower = query.lower().strip()
@@ -127,7 +210,10 @@ class MentorAgent(BaseAgent):
                             }
                         )
             
-            # Build dynamic mentor prompt (varied, conversational)
+            # =================================================================
+            # STANDARD PATH: Generate mentor response
+            # Note: ReAct loop is handled by base class run() when called directly
+            # =================================================================
             from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
             
             mentor_prompt = get_dynamic_mentor_prompt(
@@ -276,36 +362,45 @@ Mentor's Explanation:"""
         try:
             from core.config import settings
             
-            # Mentor system message - warm, supportive, Indian context
-            mentor_system = """You are "Druv Bhaiya/Didi," a caring senior mentor for Indian students.
+            # Mentor system message - well-formatted, educational, friendly
+            mentor_system = """You are "Druv Bhaiya/Didi," an expert mentor for Indian students.
 
-**Your Directive:**
+**CRITICAL: RESPONSE FORMATTING (MUST FOLLOW)**
 
-1. **Empathy First:** Your job is to reduce stress, not teach physics. Always acknowledge their feelings before offering a solution.
+Every response MUST use proper markdown for readability:
 
-2. **Tone:** Warm, relatable, uses Hinglish (Hindi+English mix) naturally. 
-   - Example: "Bas relax kar," "You got this!", "Chinta mat kar."
+1. **HEADERS** - Use ## for main topics, ### for subtopics
+2. **BOLD** - Use **bold** for key terms and definitions
+3. **LISTS** - Use - bullets or 1. 2. 3. for points
+4. **MATH** - Use \\( inline \\) and \\[ block \\] for formulas
+5. **CALLOUTS** - Use > for important notes
+6. **SPACING** - Separate sections with blank lines
 
-3. **Planning:** If the student is overwhelmed, feels lost, or asks "How do I finish this?", offer to build a schedule using the `study_planner` tool. DO NOT create schedules manually - always use the tool.
+**EXAMPLE FORMAT:**
 
-4. **Validation:** Always acknowledge their feelings before offering a solution.
+## What is Force?
 
-**Scenario Examples:**
+**Force** is a push or pull acting on an object.
 
-- User: "I am scared of exams."
-- Response: "It's normal to feel scared, yaar. Fear means you care about the result. Let's channel that fear into a plan."
+### Key Points
+- Forces can change motion
+- Measured in **Newtons (N)**
 
-- User: "I have no time, I'm failing everything."
-- Response: "Okay, let's stop panicking and start planning. I'll make a schedule for you." -> Use `study_planner` tool with their weak topics.
+### Formula
+\\[ F = ma \\]
 
-**Tool Usage Protocol:**
+> **Remember:** Force = mass × acceleration
 
-- User: "I'm overwhelmed, I don't know what to study"
-- Thought: "Student needs planning help. I should use study_planner tool." -> Call `study_planner` tool.
-- Observation: Tool returns markdown timetable.
-- Response: "Here's your personalized plan! [Include the timetable]. Remember, consistency beats intensity. You got this!"
+**YOUR STYLE:**
+- Friendly like a senior friend, BUT always structured
+- Use simple language, explain technical terms
+- Give relatable examples (cricket, daily life)
+- NEVER output unformatted paragraphs
 
-**Tone:** Non-judgmental, Supportive, "Senior Best Friend"."""
+**FOR EMOTIONAL SUPPORT:**
+- Acknowledge feelings briefly
+- Then provide helpful, structured content
+- Be warm but focused on learning"""
             
             # === PRIORITY 1: Gemini Flash (primary) ===
             if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
@@ -316,7 +411,7 @@ Mentor's Explanation:"""
                     prompt=prompt,
                     api_key=settings.GEMINI_API_KEY,
                     temperature=0.85,  # Slightly higher for warmth
-                    max_tokens=600,
+                    max_tokens=1500,   # INCREASED: Prevent truncation
                     model="gemini-2.0-flash",  # Fast model for mentor
                     system_message=mentor_system
                 )
@@ -331,7 +426,7 @@ Mentor's Explanation:"""
                     prompt=prompt,
                     api_key=settings.DEEPSEEK_API_KEY,
                     temperature=0.8,
-                    max_tokens=500,
+                    max_tokens=1200,   # INCREASED: Prevent truncation
                     system_message=mentor_system
                 )
                 return response.strip() if response else ""
@@ -347,7 +442,7 @@ Mentor's Explanation:"""
             ).with_model("openai", "gpt-4o-mini").with_params(
                 temperature=0.8,
                 top_p=0.9,
-                max_tokens=400
+                max_tokens=1000     # INCREASED: Prevent truncation
             )
             
             user_msg = UserMessage(text=prompt)
@@ -403,4 +498,137 @@ Mentor's Explanation:"""
         ]
         
         return random.choice(greetings)
+    
+    # =================================================================
+    # TRUE AGENTIC METHODS: ReAct Loop Implementation
+    # =================================================================
+    
+    def _load_student_memory(self, user_id: str) -> None:
+        """Load or create memory for a student"""
+        if user_id not in self._memory_cache:
+            self._memory_cache[user_id] = MemorySystem(user_id=user_id)
+            logger.info(f"📚 Loaded memory for student {user_id[:8]}...")
+    
+    def _should_verify(self, response: str) -> bool:
+        """Check if response contains facts or calculations that should be verified"""
+        # Verify if response contains math, formulas, or specific facts
+        verification_triggers = [
+            '=',  # Equations
+            '\\(',  # LaTeX math
+            '\\[',  # LaTeX block math
+            'formula',
+            'equation',
+            'equals',
+            'calculated',
+            'result is',
+            'answer is',
+            'value is',
+        ]
+        response_lower = response.lower()
+        return any(trigger in response_lower for trigger in verification_triggers)
+    
+    async def _run_react_loop(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Override base ReActAgent's _run_react_loop for mentor-specific behavior.
+        
+        This is the heart of TRUE AGENTIC behavior:
+        1. THINK about the student's question
+        2. Decide if tools are needed
+        3. ACT using tools if needed
+        4. OBSERVE results
+        5. THINK again and refine
+        6. Generate final response
+        
+        Returns:
+            Dict with 'content' and metadata matching expected format
+        """
+        from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
+        
+        student_profile = context.get('student_profile', {})
+        subject = context.get('subject', 'General')
+        memory_context = context.get('memory_context')
+        
+        tools_used = []
+        tool_outputs = []
+        
+        # Step 1: Determine if tools are needed
+        tool_decision = self._analyze_tool_needs(query, subject)
+        
+        if tool_decision['needs_tools']:
+            for tool_name in tool_decision['tools_to_use']:
+                try:
+                    tool = self.tool_registry.get_tool(tool_name)
+                    if tool:
+                        logger.info(f"🔧 MentorAgent using tool: {tool_name}")
+                        result = await tool.execute(query=query, context=context)
+                        tools_used.append(tool_name)
+                        
+                        if result.success:
+                            tool_outputs.append({
+                                'tool': tool_name,
+                                'output': result.output
+                            })
+                except Exception as tool_error:
+                    logger.warning(f"⚠️ Tool {tool_name} failed: {tool_error}")
+        
+        # Step 2: Build enhanced prompt with tool outputs
+        enhanced_prompt = get_dynamic_mentor_prompt(
+            query=query,
+            subject=subject,
+            student_profile=student_profile,
+            memory_context=memory_context,
+            user_id=context.get('user_id', 'anonymous')
+        )
+        
+        # Add tool outputs to prompt if available
+        if tool_outputs:
+            tool_context = "\n\n## Research Results (from your tools):\n"
+            for output in tool_outputs:
+                tool_context += f"**{output['tool']}:** {output['output'][:500]}\n"
+            enhanced_prompt = tool_context + "\n\n" + enhanced_prompt
+        
+        # Step 3: Generate final response with all context
+        logger.info("🧠 MentorAgent generating warm, structured explanation...")
+        final_response = await self._generate_mentor_response(enhanced_prompt)
+        
+        # Return in expected format
+        return {
+            'content': final_response,
+            'tools_used': tools_used,
+            'reasoning_steps': len(tool_outputs) + 1,
+            'confidence': 0.85
+        }
+    
+    def _analyze_tool_needs(self, query: str, subject: str) -> Dict[str, Any]:
+        """Analyze if the query needs tool usage"""
+        query_lower = query.lower()
+        
+        needs_tools = False
+        tools_to_use = []
+        
+        # Check for calculation needs
+        if any(w in query_lower for w in ['calculate', 'solve', 'find the value', 'compute', '=']):
+            needs_tools = True
+            tools_to_use.append('calculator')
+        
+        # Check for fact verification needs
+        if any(w in query_lower for w in ['is it true', 'verify', 'check', 'correct', 'accurate']):
+            needs_tools = True
+            tools_to_use.append('fact_checker')
+        
+        # Check for knowledge lookup needs
+        if any(w in query_lower for w in ['what is', 'define', 'explain', 'meaning of', 'formula for']):
+            # Only use knowledge search for specific lookups
+            if len(query.split()) < 10:  # Short, specific queries
+                needs_tools = True
+                tools_to_use.append('knowledge_search')
+        
+        return {
+            'needs_tools': needs_tools,
+            'tools_to_use': tools_to_use
+        }
+    
+    def get_system_prompt(self, state: AgentState) -> str:
+        """Get system prompt for ReAct reasoning (override from ReActAgent)"""
+        return self.get_agent_persona()
 

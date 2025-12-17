@@ -8,9 +8,9 @@ Coordinates all components to produce unique, modern educational visuals.
 Pipeline:
     User Question
         → Visual Need Detector (should we generate a visual?)
-        → Visual Strategy Resolver (what type of visual?)
-        → Imagen Client (generate the image)
-        → Teaching Metadata Generator (add teaching layer)
+        → Visual Strategy Resolver (what type of visual?) [Gemini]
+        → DALL-E 3 Client (generate the image) [OpenAI]
+        → Teaching Metadata Generator (add teaching layer) [Gemini]
         → Visual Normalizer (validate and package)
         → Response
 
@@ -41,38 +41,56 @@ class NetraOrchestrator:
     
     This class coordinates:
     1. Visual need detection (should we generate?)
-    2. Strategy resolution (what type of visual?)
-    3. Image generation (create the visual)
-    4. Teaching metadata (make it educational)
+    2. Strategy resolution (what type of visual?) - Uses Gemini
+    3. Image generation (create the visual) - Uses DALL-E 3
+    4. Teaching metadata (make it educational) - Uses Gemini
     5. Quality control (ensure uniqueness)
     
+    API Keys:
+    - gemini_api_key: For visual strategy and teaching metadata
+    - openai_api_key: For DALL-E 3 image generation
+    
     Usage:
-        orchestrator = create_orchestrator(api_key)
+        orchestrator = create_orchestrator(gemini_key, openai_key)
         response = await orchestrator.generate(request)
     """
     
     def __init__(
         self,
         gemini_api_key: str,
-        gemini_model: str = "gemini-1.5-flash",
-        imagen_model: str = None,
-        use_imagen_fallback: bool = False
+        openai_api_key: str,
+        gemini_model: str = "gemini-2.5-flash",
+        dalle_model: str = "dall-e-3"
     ):
         """
         Initialize the orchestrator with all required components.
         
         Args:
-            gemini_api_key: Google API key for Gemini and Imagen
-            gemini_model: Model for reasoning (default: gemini-1.5-flash)
-            imagen_model: Model for image generation (default: imagen-3.0-generate-002)
-            use_imagen_fallback: Use Gemini 2.0 for images instead of Imagen
+            gemini_api_key: Google API key for Gemini (strategy + teaching)
+            openai_api_key: OpenAI API key for DALL-E 3 (image generation)
+            gemini_model: Model for reasoning (default: gemini-2.5-flash)
+            dalle_model: DALL-E model version (default: dall-e-3)
         """
-        self.api_key = gemini_api_key
+        self.gemini_api_key = gemini_api_key
+        self.openai_api_key = openai_api_key
+        
+        # Validate API keys
+        if not gemini_api_key:
+            raise ValueError("Gemini API key is required for visual strategy")
+        if not openai_api_key:
+            raise ValueError("OpenAI API key is required for DALL-E 3 image generation")
         
         # Initialize components
+        # Strategy resolver uses Gemini for intelligent concept analysis
         self.strategy_resolver = create_strategy_resolver(gemini_api_key, gemini_model)
-        self.imagen_client = create_imagen_client(gemini_api_key, imagen_model, use_imagen_fallback)
+        
+        # Image client uses DALL-E 3 for actual image generation
+        self.imagen_client = create_imagen_client(openai_api_key, dalle_model)
+        
+        # Teaching generator uses Gemini for educational content
         self.teaching_generator = create_teaching_generator(gemini_api_key, gemini_model)
+        
+        # Normalizer and quality controller
         self.normalizer = create_normalizer()
         self.quality_controller = create_quality_controller()
         
@@ -82,6 +100,9 @@ class NetraOrchestrator:
         self._max_retries = 2
         
         logger.info("🔮 NETRA v4.0 Orchestrator initialized")
+        logger.info("  ├── Strategy: Gemini 2.5 Flash")
+        logger.info("  ├── Image Gen: DALL-E 3")
+        logger.info("  └── Teaching: Gemini 2.5 Flash")
     
     async def generate(
         self,
@@ -108,7 +129,6 @@ class NetraOrchestrator:
         
         try:
             # Step 1: Visual Need Detection
-            # (For now, we assume visual is always needed - can add detection later)
             needs_visual = await self._detect_visual_need(request)
             
             if not needs_visual:
@@ -118,22 +138,23 @@ class NetraOrchestrator:
                     "VISUAL_NOT_NEEDED"
                 )
             
-            # Step 2: Resolve Visual Strategy
-            logger.info(f"🧠 [Netra] Step 2: Resolving visual strategy...")
+            # Step 2: Resolve Visual Strategy (Gemini)
+            logger.info(f"🧠 [Netra] Step 2: Resolving visual strategy with Gemini...")
             concept, strategy, imagen_prompt = await self.strategy_resolver.resolve_complete(request)
             
             logger.info(f"✅ [Netra] Strategy: {strategy.intent.value} / {strategy.style.value}")
             logger.info(f"✅ [Netra] Concept: {concept.core_concept}")
+            logger.info(f"✅ [Netra] Metaphor: {strategy.visual_metaphor or 'none'}")
             
-            # Step 3: Generate Image with Imagen
-            logger.info(f"🎨 [Netra] Step 3: Generating image with Imagen...")
+            # Step 3: Generate Image with DALL-E 3 (OpenAI)
+            logger.info(f"🎨 [Netra] Step 3: Generating image with DALL-E 3...")
             visual_data, generation_meta = await self.imagen_client.generate_with_retry(
                 imagen_prompt,
                 request_id,
                 max_retries=self._max_retries
             )
             
-            logger.info(f"✅ [Netra] Image generated in {generation_meta.get('time_ms', 0)}ms")
+            logger.info(f"✅ [Netra] DALL-E 3 image generated in {generation_meta.get('time_ms', 0)}ms")
             
             # Step 4: Quality Check
             if self._enable_quality_checks:
@@ -144,8 +165,7 @@ class NetraOrchestrator:
                 )
                 
                 if not is_unique:
-                    logger.warning(f"⚠️ [Netra] Quality check failed: {reason}")
-                    # In production, could retry with modified prompt
+                    logger.warning(f"⚠️ [Netra] Quality check: {reason}")
                 
                 self.quality_controller.record_generation(
                     concept.core_concept,
@@ -153,8 +173,8 @@ class NetraOrchestrator:
                     f"{strategy.intent.value}_{strategy.style.value}"
                 )
             
-            # Step 5: Generate Teaching Metadata
-            logger.info(f"📚 [Netra] Step 5: Generating teaching metadata...")
+            # Step 5: Generate Teaching Metadata (Gemini)
+            logger.info(f"📚 [Netra] Step 5: Generating teaching metadata with Gemini...")
             teaching = await self.teaching_generator.generate_teaching_flow(
                 request,
                 concept,
@@ -195,7 +215,6 @@ class NetraOrchestrator:
         Some questions are better answered with text only.
         Returns True if visual generation should proceed.
         """
-        # Simple heuristics for now
         question_lower = request.question.lower()
         
         # Questions that typically need visuals
@@ -203,7 +222,8 @@ class NetraOrchestrator:
             "explain", "show", "diagram", "visualize", "illustrate",
             "how does", "what happens", "compare", "difference",
             "structure", "parts of", "process", "cycle", "flow",
-            "draw", "picture", "image", "visual"
+            "draw", "picture", "image", "visual", "what is",
+            "describe", "work", "mechanism", "concept"
         ]
         
         # Questions that typically don't need visuals
@@ -211,7 +231,7 @@ class NetraOrchestrator:
             "define", "what is the definition",
             "who invented", "when was",
             "calculate the value", "solve for x",
-            "list the", "name the",
+            "list the", "name the", "spell",
         ]
         
         # Check for visual need
@@ -223,7 +243,7 @@ class NetraOrchestrator:
             if indicator in question_lower:
                 return False
         
-        # Default: generate visual (can be refined)
+        # Default: generate visual for educational content
         return True
     
     async def generate_simple(self, question: str) -> VisualResponse:
@@ -267,27 +287,27 @@ class NetraOrchestrator:
 
 def create_orchestrator(
     gemini_api_key: str,
-    gemini_model: str = "gemini-1.5-flash",
-    imagen_model: str = None,
-    use_imagen_fallback: bool = False
+    openai_api_key: str,
+    gemini_model: str = "gemini-2.5-flash",
+    dalle_model: str = "dall-e-3"
 ) -> NetraOrchestrator:
     """
     Factory function to create a Netra Orchestrator.
     
     Args:
-        gemini_api_key: Google API key
+        gemini_api_key: Google API key for strategy + teaching
+        openai_api_key: OpenAI API key for DALL-E 3
         gemini_model: Model for reasoning
-        imagen_model: Model for image generation
-        use_imagen_fallback: Use Gemini 2.0 Flash for images
+        dalle_model: DALL-E model version
         
     Returns:
         Configured NetraOrchestrator instance
     """
     return NetraOrchestrator(
         gemini_api_key=gemini_api_key,
+        openai_api_key=openai_api_key,
         gemini_model=gemini_model,
-        imagen_model=imagen_model,
-        use_imagen_fallback=use_imagen_fallback
+        dalle_model=dalle_model
     )
 
 
@@ -295,17 +315,24 @@ def create_orchestrator_from_settings() -> NetraOrchestrator:
     """
     Create orchestrator using settings from core.config.
     
+    Uses:
+    - GEMINI_API_KEY for visual strategy and teaching metadata
+    - OPENAI_API_KEY for DALL-E 3 image generation
+    
     This is the recommended way to create an orchestrator in the app.
     """
     from core.config import settings
     
-    api_key = settings.GEMINI_API_KEY
-    if not api_key:
+    gemini_key = settings.GEMINI_API_KEY
+    openai_key = settings.OPENAI_API_KEY
+    
+    if not gemini_key:
         raise ValueError("GEMINI_API_KEY not configured in settings")
+    if not openai_key:
+        raise ValueError("OPENAI_API_KEY not configured in settings (required for DALL-E 3)")
     
     return create_orchestrator(
-        gemini_api_key=api_key,
-        gemini_model=settings.GEMINI_MODEL,
-        use_imagen_fallback=True  # Use Gemini 2.0 for images by default
+        gemini_api_key=gemini_key,
+        openai_api_key=openai_key,
+        gemini_model=settings.GEMINI_MODEL
     )
-

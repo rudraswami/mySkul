@@ -156,9 +156,9 @@ class Settings:
     # GEMINI PRO - PRIMARY REASONING MODEL (Lightning fast, deeply intelligent)
     # =============================================================================
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyCvZFnJiADdLqvMZ0lAtgRzKtJxJkMKglo")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")  # For NETRA v4 visual reasoning
-    GEMINI_PRO_MODEL: str = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro")  # Deep reasoning
-    GEMINI_VISUAL_MODEL: str = os.getenv("GEMINI_VISUAL_MODEL", "gemini-2.0-flash-exp")  # For image generation
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")  # For NETRA v4 visual reasoning (fastest, cost-effective)
+    GEMINI_PRO_MODEL: str = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro-latest")  # Deep reasoning
+    GEMINI_VISUAL_MODEL: str = os.getenv("GEMINI_VISUAL_MODEL", "gemini-2.0-flash-001")  # For advanced reasoning (not image gen)
     USE_GEMINI_PRIMARY: bool = os.getenv("USE_GEMINI_PRIMARY", "false").lower() == "true"  # Disabled - using gpt-4.1-mini
     
     # =============================================================================

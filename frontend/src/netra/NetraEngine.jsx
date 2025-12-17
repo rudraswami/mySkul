@@ -1,8 +1,13 @@
 /**
- * 🔮 NETRA ENGINE REACT COMPONENT
- * ================================
+ * 🔮 NETRA ENGINE REACT COMPONENT v4.0
+ * =====================================
  * 
- * The main React component for the NETRA Visual Reasoning Engine.
+ * The main React component for the NETRA Visual Teaching Engine.
+ * 
+ * v4.0 CHANGES:
+ * - Uses SceneObjects instead of nodes for rich visual scenes
+ * - SceneRenderer produces environments, actors, surfaces (NOT boxes!)
+ * - Same topic + different intent = DIFFERENT visual scene
  * 
  * Usage:
  * <NetraEngine
@@ -11,8 +16,7 @@
  *   onGenerated={(result) => console.log(result)}
  * />
  * 
- * This is a drop-in replacement for MagicNotebookEngine that produces
- * intelligent, varied, semantic visuals — not repeated patterns.
+ * This produces intelligent, varied, SCENE-BASED visuals — not diagrams.
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -21,9 +25,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Core engine
 import { Orchestrator, createOrchestrator } from './core/Orchestrator';
 
-// Renderers
+// Renderers - OLD (legacy) and NEW (scene-based)
 import SVGRenderer from './rendering/SVGRenderer';
 import AnimatedRenderer from './rendering/AnimatedRenderer';
+import SceneRenderer from './rendering/SceneRenderer';  // NEW: Scene-based renderer!
 
 // ============================================
 // LOADING STATES
@@ -311,18 +316,20 @@ const NetraEngine = ({
 
       try {
         console.log('═══════════════════════════════════════════════════');
-        console.log('🔮 [NetraEngine] GENERATING VISUAL');
-        console.log('🔮 [NetraEngine] Question:', question);
-        console.log('🔮 [NetraEngine] Context:', context);
+        console.log('🔮 [NetraEngine v4.0] GENERATING SCENE-BASED VISUAL');
+        console.log('🔮 Question:', question);
+        console.log('🔮 Context:', context);
         console.log('═══════════════════════════════════════════════════');
         
         const orchestrator = orchestratorRef.current;
         const genResult = await orchestrator.generate(question, context);
         
         if (genResult.success) {
-          console.log('✅ [NetraEngine] Generation successful!');
-          console.log('✅ [NetraEngine] SceneGraph nodes:', genResult.sceneGraph?.nodes?.size || 0);
-          console.log('✅ [NetraEngine] Metadata:', genResult.metadata);
+          console.log('✅ [NetraEngine v4.0] Generation successful!');
+          console.log('✅ Scene Objects:', genResult.sceneObjects?.length || 0, '(NOT boxes!)');
+          console.log('✅ Intent:', genResult.reasoning?.intent?.primary);
+          console.log('✅ Form:', genResult.reasoning?.form?.form);
+          console.log('✅ Metadata:', genResult.metadata);
           setResult(genResult);
           onGenerated?.(genResult);
         } else {
@@ -365,10 +372,14 @@ const NetraEngine = ({
       return <ErrorState error={error} onRetry={handleRetry} />;
     }
 
-    if (!result || !result.sceneGraph) {
+    if (!result || (!result.sceneGraph && !result.sceneObjects)) {
       return <EmptyState />;
     }
 
+    // Check if we should use the NEW SceneRenderer (v4.0)
+    const hasSceneObjects = result.sceneObjects?.length > 0;
+    const useSceneRendering = hasSceneObjects && result.metadata?.useSceneRenderer !== false;
+    
     // Use AnimatedRenderer if we have animation beats (v3.0) or teaching sequence (v2.0)
     const hasV3Animation = result.animationBeats?.length > 0;
     const hasV2Narrative = result.teachingSequence?.beats?.length > 0;
@@ -376,18 +387,30 @@ const NetraEngine = ({
     
     // Log reasoning for debugging
     if (result.reasoning?.intent) {
-      console.log('🧠 [NetraEngine] Reasoning:', {
+      console.log('🧠 [NetraEngine v4.0] Reasoning:', {
         intent: result.reasoning.intent.primary,
         form: result.reasoning.form?.form,
         layout: result.reasoning.layout?.layout,
         animation: result.reasoning.animation?.strategy,
+        sceneObjects: result.sceneObjects?.length || 0,
+        useSceneRendering,
       });
     }
     
     return (
       <>
-        {hasAnimation ? (
-          // 🎬 Animated narrative rendering - intent-driven visual story
+        {useSceneRendering ? (
+          // 🎬 NEW v4.0: Scene-based rendering (NOT boxes!)
+          <SceneRenderer
+            sceneObjects={result.sceneObjects}
+            width={width}
+            height={height}
+            domain={result.metadata?.domain || 'physics'}
+            showLabels={true}
+            onRenderComplete={handleRenderComplete}
+          />
+        ) : hasAnimation ? (
+          // 🎬 Animated narrative rendering - intent-driven visual story (legacy)
           <AnimatedRenderer
             sceneGraph={result.sceneGraph}
             teachingSequence={result.teachingSequence}
@@ -406,7 +429,7 @@ const NetraEngine = ({
             }}
           />
         ) : (
-          // Static fallback
+          // Static fallback (legacy)
           <SVGRenderer
             sceneGraph={result.sceneGraph}
             width={width}

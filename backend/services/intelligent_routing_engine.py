@@ -56,6 +56,8 @@ class RoutingDecision:
     use_knowledge_graph: bool
     use_memory: bool
     priority_factors: Dict[str, float]
+    # NEW: Enable agent negotiation (cross-verification, consensus building)
+    enable_agent_negotiation: bool = False
 
 
 class IntelligentRoutingEngine:
@@ -316,32 +318,34 @@ class IntelligentRoutingEngine:
         subject = context.get('subject', 'General').lower()
         
         # === SIMPLE QUERIES ===
-        # Only factual lookups, definitions - STILL use multi-agent but minimal
+        # Factual lookups, definitions - multi-agent but minimal negotiation
         if complexity == QueryComplexity.SIMPLE:
             return RoutingDecision(
-                pipeline=RecommendedPipeline.MULTI_AGENT,  # NOT fast path!
+                pipeline=RecommendedPipeline.MULTI_AGENT,
                 complexity=complexity,
                 confidence=0.8,
-                reasoning="Simple query but using multi-agent for quality",
+                reasoning="Simple query - multi-agent with light verification",
                 agents_to_activate=['mentor', 'professor'],
                 tools_to_enable=['knowledge_search'],
-                enable_verification=True,  # Always verify!
+                enable_verification=True,
                 enable_visual=student_context.get('visual_learner', False),
                 max_iterations=3,
                 timeout_seconds=15.0,
                 use_knowledge_graph=True,
                 use_memory=True,
-                priority_factors={'speed': 0.6, 'depth': 0.4}
+                priority_factors={'speed': 0.6, 'depth': 0.4},
+                enable_agent_negotiation=False  # Skip for speed on simple
             )
         
         # === MODERATE QUERIES ===
-        # Standard explanations - full multi-agent
+        # Standard explanations - full multi-agent WITH NEGOTIATION
+        # THIS IS THE KEY CHANGE: Enable negotiation for moderate queries
         elif complexity == QueryComplexity.MODERATE:
             return RoutingDecision(
                 pipeline=RecommendedPipeline.MULTI_AGENT,
                 complexity=complexity,
                 confidence=0.85,
-                reasoning="Moderate complexity - full multi-agent orchestration",
+                reasoning="Moderate complexity - multi-agent with negotiation for quality",
                 agents_to_activate=['mentor', 'professor', 'visualise'],
                 tools_to_enable=['knowledge_search', 'formula_lookup', 'fact_checker'],
                 enable_verification=True,
@@ -350,13 +354,13 @@ class IntelligentRoutingEngine:
                 timeout_seconds=25.0,
                 use_knowledge_graph=True,
                 use_memory=True,
-                priority_factors={'speed': 0.4, 'depth': 0.6}
+                priority_factors={'speed': 0.4, 'depth': 0.6},
+                enable_agent_negotiation=True  # NEW: Enable negotiation
             )
         
         # === COMPLEX QUERIES ===
-        # Multi-step problems - hybrid reasoning
+        # Multi-step problems - hybrid reasoning with full negotiation
         elif complexity == QueryComplexity.COMPLEX:
-            # Check if it needs visual sync
             visual_keywords = ['diagram', 'draw', 'visualize', 'show', 'graph', 'plot']
             needs_visual_sync = any(kw in query_lower for kw in visual_keywords)
             
@@ -364,7 +368,7 @@ class IntelligentRoutingEngine:
                 pipeline=RecommendedPipeline.VISUAL_SYNC if needs_visual_sync else RecommendedPipeline.HYBRID_REASONING,
                 complexity=complexity,
                 confidence=0.9,
-                reasoning="Complex query - hybrid reasoning with symbolic verification",
+                reasoning="Complex query - hybrid reasoning with full agent negotiation",
                 agents_to_activate=['mentor', 'professor', 'visualise', 'doubt_resolver'],
                 tools_to_enable=['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'],
                 enable_verification=True,
@@ -373,26 +377,28 @@ class IntelligentRoutingEngine:
                 timeout_seconds=35.0,
                 use_knowledge_graph=True,
                 use_memory=True,
-                priority_factors={'speed': 0.2, 'depth': 0.8}
+                priority_factors={'speed': 0.2, 'depth': 0.8},
+                enable_agent_negotiation=True  # Full negotiation
             )
         
         # === DEEP REASONING ===
-        # Proofs, derivations, analysis - full ReAct
+        # Proofs, derivations, analysis - full ReAct with negotiation
         else:  # DEEP_REASONING
             return RoutingDecision(
                 pipeline=RecommendedPipeline.REACT_AGENTIC,
                 complexity=complexity,
                 confidence=0.95,
-                reasoning="Deep reasoning query - full ReAct with tools and verification",
+                reasoning="Deep reasoning - full ReAct with agent negotiation and verification",
                 agents_to_activate=['mentor', 'professor', 'visualise', 'doubt_resolver', 'exam_coach'],
                 tools_to_enable=['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'],
                 enable_verification=True,
                 enable_visual=True,
-                max_iterations=12,  # More iterations for deep reasoning
+                max_iterations=12,
                 timeout_seconds=45.0,
                 use_knowledge_graph=True,
                 use_memory=True,
-                priority_factors={'speed': 0.1, 'depth': 0.9}
+                priority_factors={'speed': 0.1, 'depth': 0.9},
+                enable_agent_negotiation=True  # Full negotiation
             )
     
     def should_use_agentic(self, decision: RoutingDecision) -> bool:

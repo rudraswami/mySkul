@@ -1,9 +1,16 @@
 """
-📅 Study Planner Tool - Replaces Study Planner Agent
-=====================================================
+📅 Study Planner Tool - In-Chat Quick Planning
+===============================================
 
 Generates personalized study schedules based on weak topics, available time, and exam countdown.
 Used by MentorAgent when students feel overwhelmed or ask for planning help.
+
+ARCHITECTURE NOTE:
+- This TOOL is for quick, in-chat planning (when student says "I'm overwhelmed")
+- StudyPlannerAgent (agents/study_planner_agent.py) is for the full dashboard feature
+- They are NOT duplicates - they serve different purposes:
+  - Tool: Quick response during conversation
+  - Agent: Full feature with XP tracking, completion, persistence
 """
 
 import logging

@@ -8,24 +8,24 @@ modern, edtech-grade visuals for any educational question.
 Architecture:
     User Question
         ↓
-    Netra Orchestrator (decides when/what)
+    Netra Orchestrator (coordinates all components)
         ↓
-    Visual Strategy Resolver (concept + intent based routing)
+    Visual Strategy Resolver (Gemini - concept + intent analysis)
         ↓
-    Imagen (Google's image generation)
+    DALL-E 3 (OpenAI - actual image generation)
         ↓
     Visual Normalizer (stable internal format)
         ↓
-    Teaching Metadata Generator (hotspots, steps, annotations)
+    Teaching Metadata Generator (Gemini - hotspots, steps, annotations)
         ↓
     Frontend Renderer (teaching + interaction layer)
 
 Key Principles:
     - NO subject hardcoding (route by concept + intent)
-    - NO generic circle/box visuals
-    - NO repeated layouts
+    - NO generic circle/box visuals (DALL-E 3 generates rich scenes)
+    - NO PIL fallbacks or placeholders (real AI images only)
     - UNIQUE visual per question
-    - LLM for reasoning only, Imagen for creation
+    - Gemini for reasoning, DALL-E 3 for image creation
 """
 
 from .contracts import (
@@ -39,11 +39,16 @@ from .contracts import (
     GenerationInfo,
     VisualStrategy,
     ConceptAnalysis,
+    UserContext,
+    TeachingIntent,
+    VisualStyle,
+    ComplexityLevel,
 )
 
 from .orchestrator import (
     NetraOrchestrator,
     create_orchestrator,
+    create_orchestrator_from_settings,
 )
 
 from .visual_strategy import (
@@ -78,9 +83,14 @@ __all__ = [
     "GenerationInfo",
     "VisualStrategy",
     "ConceptAnalysis",
+    "UserContext",
+    "TeachingIntent",
+    "VisualStyle",
+    "ComplexityLevel",
     # Orchestrator
     "NetraOrchestrator",
     "create_orchestrator",
+    "create_orchestrator_from_settings",
     # Strategy
     "VisualStrategyResolver",
     "create_strategy_resolver",

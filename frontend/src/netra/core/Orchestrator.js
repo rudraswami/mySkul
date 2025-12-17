@@ -1,20 +1,25 @@
 /**
- * 🎯 NETRA ORCHESTRATOR v3.0
- * ==========================
+ * 🎯 NETRA ORCHESTRATOR v4.0 (Scene-Based)
+ * =========================================
  * 
  * The central brain that coordinates all NETRA subsystems.
  * 
- * INTENT-DRIVEN PIPELINE (v3.0):
+ * SCENE-DRIVEN PIPELINE (v4.0):
  * 1. Question → IntentClassifier → Intent (WHY is student asking?)
  * 2. Intent → FormSelector → Visual Form (WHAT structure?)
  * 3. Question → SemanticParser → ConceptGraph (WHAT content?)
  * 4. Form + Content → ContentMapper → Filled Form
- * 5. Form → LayoutVariator → Layout (HOW to arrange?)
- * 6. Intent → AnimationDirector → Animation Strategy (HOW to reveal?)
- * 7. All → Renderer → Dynamic Visual
+ * 5. [NEW] ConceptGraph → SceneObjectResolver → SceneObjects (WHAT to show?)
+ * 6. Form → LayoutVariator → Layout (HOW to arrange?)
+ * 7. Intent → AnimationDirector → Animation Strategy (HOW to reveal?)
+ * 8. SceneObjects → SceneRenderer → Rich Visual Scene (NOT boxes!)
  * 
- * KEY INSIGHT: Same topic + different intent = different visual.
+ * KEY INSIGHT: Same topic + different intent = DIFFERENT SCENE.
  * This is subject-agnostic, question-driven visual intelligence.
+ * 
+ * CRITICAL CHANGE: We now produce SCENE OBJECTS, not nodes.
+ * Scene objects have: objectType, visualForm, spatialRules
+ * This prevents collapsing to box diagrams.
  */
 
 import { SemanticParser } from '../understanding/SemanticParser';
@@ -26,13 +31,14 @@ import { getVisualSpec, findVisualSpec } from '../semantics/VisualOntology';
 import { TeachingBeatEngine } from '../narrative/TeachingBeatEngine';
 import { SemanticPositioner } from '../composition/SemanticPositioner';
 
-// NEW: Visual Reasoning Layer (v3.0)
+// Visual Reasoning Layer (v3.0 + v4.0 SceneObjectResolver)
 import {
   IntentClassifier,
   FormSelector,
   ContentMapper,
   LayoutVariator,
   AnimationDirector,
+  SceneObjectResolver,  // NEW: Critical scene conversion layer
 } from '../reasoning';
 
 // ============================================
@@ -78,7 +84,7 @@ export class Orchestrator {
     });
 
     // ============================================
-    // NEW: VISUAL REASONING LAYER (v3.0)
+    // VISUAL REASONING LAYER (v3.0 + v4.0)
     // ============================================
     
     // Intent Classifier - analyzes WHY the student is asking
@@ -95,6 +101,18 @@ export class Orchestrator {
     
     // Animation Director - decides HOW to reveal
     this.animationDirector = new AnimationDirector();
+    
+    // ============================================
+    // NEW: SCENE OBJECT RESOLVER (v4.0) - CRITICAL!
+    // ============================================
+    // This converts abstract entities into rich SCENE OBJECTS
+    // with objectType, visualForm, and spatialRules.
+    // This is what PREVENTS collapsing to box diagrams!
+    this.sceneObjectResolver = new SceneObjectResolver({
+      preferMetaphors: true,
+      indianContext: true,
+      showEnvironments: true,
+    });
 
     // Cache for repeated questions
     this.cache = new Map();
@@ -163,7 +181,7 @@ export class Orchestrator {
       console.log('📦 [Step 4] Filled slots:', Object.keys(filledForm.slots).length);
 
       // ============================================
-      // STEP 5: LAYOUT SELECTION (NEW!)
+      // STEP 5: LAYOUT SELECTION
       // HOW to arrange spatially?
       // ============================================
       console.log('🎲 [Step 5] Choosing layout variant...');
@@ -171,43 +189,64 @@ export class Orchestrator {
       console.log('🎲 [Step 5] Layout:', layoutResult.name);
 
       // ============================================
-      // STEP 6: SCENE COMPOSITION
-      // Build the actual scene graph
+      // STEP 6: SCENE OBJECT RESOLUTION (NEW v4.0!)
+      // Convert abstract entities → RICH SCENE OBJECTS
+      // This is the CRITICAL step that prevents box diagrams!
       // ============================================
-      console.log('🏗️ [Step 6] Composing scene...');
+      console.log('🎬 [Step 6] Resolving scene objects (NEW!)...');
+      const sceneObjects = this.sceneObjectResolver.resolve(
+        conceptGraph,
+        intentResult,
+        formResult,
+        { domain, topic: conceptGraph.metadata.topic }
+      );
+      console.log('🎬 [Step 6] Scene Objects:', {
+        count: sceneObjects.length,
+        types: [...new Set(sceneObjects.map(o => o.objectType))],
+        forms: [...new Set(sceneObjects.map(o => o.visualForm))],
+      });
+
+      // ============================================
+      // STEP 7: LEGACY SCENE COMPOSITION (for backwards compat)
+      // Build the actual scene graph (old method)
+      // ============================================
+      console.log('🏗️ [Step 7] Composing scene graph (legacy)...');
       const sceneGraph = this.composer.compose(conceptGraph, domain);
       
       // Apply semantic positioning
       this.positioner.positionElements(conceptGraph, sceneGraph);
-      console.log('🏗️ [Step 6] Scene:', {
+      console.log('🏗️ [Step 7] Legacy Scene:', {
         nodes: sceneGraph.nodes.size,
         arrows: sceneGraph.arrows.length,
       });
 
       // ============================================
-      // STEP 7: ANIMATION DIRECTION (NEW!)
+      // STEP 8: ANIMATION DIRECTION
       // HOW to reveal over time?
       // ============================================
-      console.log('🎬 [Step 7] Directing animation...');
+      console.log('🎬 [Step 8] Directing animation...');
       const animationResult = this.animationDirector.direct(intentResult, formResult, layoutResult);
       const animationBeats = animationResult.generateBeats(filledForm);
-      console.log('🎬 [Step 7] Animation:', {
+      console.log('🎬 [Step 8] Animation:', {
         strategy: animationResult.name,
         beats: animationBeats.length,
       });
 
       // ============================================
-      // STEP 8: BUILD FINAL OUTPUT
+      // STEP 9: BUILD FINAL OUTPUT
       // ============================================
       const result = {
         success: true,
         question,
         context,
         
-        // Visual output
+        // NEW: Scene Objects (use this for scene-based rendering!)
+        sceneObjects,
+        
+        // LEGACY: Scene Graph (for backwards compatibility)
         sceneGraph,
         
-        // Reasoning results (NEW!)
+        // Reasoning results
         reasoning: {
           intent: intentResult,
           form: formResult,
@@ -229,6 +268,8 @@ export class Orchestrator {
           layout: layoutResult.layout,
           animationStrategy: animationResult.strategy,
           generationTime: Date.now() - startTime,
+          // NEW: Scene rendering hint
+          useSceneRenderer: true,  // Flag to use new SceneRenderer
         },
         
         // Debug
@@ -236,12 +277,14 @@ export class Orchestrator {
           conceptGraph: conceptGraph.toJSON(),
           entityCount: conceptGraph.entities.size,
           relationshipCount: conceptGraph.relationships.length,
+          sceneObjectCount: sceneObjects.length,
         },
       };
       
       console.log('═══════════════════════════════════════════════════');
-      console.log('✅ [Orchestrator] Generation complete in', Date.now() - startTime, 'ms');
+      console.log('✅ [Orchestrator v4.0] SCENE-BASED Generation complete in', Date.now() - startTime, 'ms');
       console.log('✅ Intent:', intentResult.primary, '→ Form:', formResult.form, '→ Layout:', layoutResult.layout);
+      console.log('✅ Scene Objects:', sceneObjects.length, '(NOT boxes!)');
       console.log('═══════════════════════════════════════════════════');
 
       // Cache result (disabled for variation testing)

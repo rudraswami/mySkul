@@ -35,14 +35,8 @@ class SectionTitleVariety:
             },
             
             "calm_walkthrough": {
-                "main_title": random.choice([
-                    "📖 Let's Break It Down",
-                    "🧭 Step by Step",
-                    "🌊 Taking It Slow",
-                    "🎯 The Walkthrough"
-                ]),
+                "main_title": None,  # Don't force a title - let content speak
                 "expandable_title": random.choice([
-                    "📊 Additional Details",
                     "🔍 Looking Closer",
                     "⚙️ How It Works",
                     "📐 The Mechanics"

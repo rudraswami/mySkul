@@ -79,19 +79,28 @@ const parseMarkdown = (text, blockMathMap) => {
   
   const flushList = () => {
     if (currentList.length > 0) {
-      const ListTag = listType === 'ol' ? 'ol' : 'ul';
+      const isOrdered = listType === 'ol';
       elements.push(
-        <ListTag 
-          key={`list-${elements.length}`} 
-          className={`${listType === 'ol' ? 'list-decimal' : 'list-disc'} space-y-2`} 
-          style={{ marginLeft: '1.5rem', marginBottom: '1rem', marginTop: '0.5rem' }}
-        >
+        <div key={`list-${elements.length}`} className="my-4 space-y-2">
           {currentList.map((item, i) => (
-            <li key={i} className="text-[15px] text-gray-700 dark:text-gray-200 leading-[1.7] pl-1">
-              {renderInline(item)}
-            </li>
+            <div 
+              key={i} 
+              className="flex items-start gap-3 group"
+            >
+              {/* Custom bullet/number styling */}
+              <span className={`flex-shrink-0 ${
+                isOrdered 
+                  ? 'w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm'
+                  : 'w-2 h-2 mt-2 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500'
+              }`}>
+                {isOrdered ? i + 1 : ''}
+              </span>
+              <span className="text-[15px] text-gray-700 dark:text-gray-200 leading-[1.7] flex-1">
+                {renderInline(item)}
+              </span>
+            </div>
           ))}
-        </ListTag>
+        </div>
       );
       currentList = [];
       listType = null;
@@ -211,11 +220,12 @@ const parseMarkdown = (text, blockMathMap) => {
       flushTable();
     }
     
-    // Headers - IMPROVED: Better sizing and spacing for readability
+    // Headers - ENHANCED: Beautiful, visually appealing headers
     if (trimmed.startsWith('#### ')) {
       flushList();
       elements.push(
-        <h4 key={`h4-${index}`} className="text-[15px] font-semibold text-gray-800 dark:text-white mt-4 mb-2">
+        <h4 key={`h4-${index}`} className="text-[15px] font-semibold text-gray-700 dark:text-gray-200 mt-5 mb-2 flex items-center gap-2">
+          <span className="w-1 h-4 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></span>
           {renderInline(trimmed.slice(5))}
         </h4>
       );
@@ -225,7 +235,8 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={`h3-${index}`} className="text-[16px] font-semibold text-gray-800 dark:text-white mt-5 mb-2.5">
+        <h3 key={`h3-${index}`} className="text-[16px] font-semibold text-gray-800 dark:text-white mt-6 mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-5 bg-gradient-to-b from-indigo-400 to-indigo-600 rounded-full"></span>
           {renderInline(trimmed.slice(4))}
         </h3>
       );
@@ -235,7 +246,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={`h2-${index}`} className="text-[17px] font-bold text-gray-900 dark:text-white mt-5 mb-3">
+        <h2 key={`h2-${index}`} className="text-[18px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 mt-6 mb-3 pb-2 border-b border-purple-100 dark:border-purple-900/30">
           {renderInline(trimmed.slice(3))}
         </h2>
       );
@@ -245,7 +256,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={`h1-${index}`} className="text-[18px] font-bold text-gray-900 dark:text-white mt-6 mb-3">
+        <h1 key={`h1-${index}`} className="text-[20px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-700 dark:from-purple-300 dark:to-indigo-300 mt-6 mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-800">
           {renderInline(trimmed.slice(2))}
         </h1>
       );
@@ -272,13 +283,38 @@ const parseMarkdown = (text, blockMathMap) => {
       return;
     }
     
-    // Blockquote
+    // Blockquote - ENHANCED: Better visual callout style
     if (trimmed.startsWith('>')) {
       flushList();
+      // Check if it's a special callout type
+      const calloutContent = trimmed.slice(1).trim();
+      const isRemember = calloutContent.toLowerCase().includes('remember') || calloutContent.toLowerCase().includes('key');
+      const isTip = calloutContent.toLowerCase().includes('tip') || calloutContent.toLowerCase().includes('exam');
+      const isWarning = calloutContent.toLowerCase().includes('warning') || calloutContent.toLowerCase().includes('avoid') || calloutContent.toLowerCase().includes('don\'t');
+      
+      let borderColor = 'border-purple-400 dark:border-purple-500';
+      let bgColor = 'bg-purple-50 dark:bg-purple-900/20';
+      let icon = '💡';
+      
+      if (isRemember) {
+        borderColor = 'border-amber-400 dark:border-amber-500';
+        bgColor = 'bg-amber-50 dark:bg-amber-900/20';
+        icon = '🔑';
+      } else if (isTip) {
+        borderColor = 'border-emerald-400 dark:border-emerald-500';
+        bgColor = 'bg-emerald-50 dark:bg-emerald-900/20';
+        icon = '✨';
+      } else if (isWarning) {
+        borderColor = 'border-red-400 dark:border-red-500';
+        bgColor = 'bg-red-50 dark:bg-red-900/20';
+        icon = '⚠️';
+      }
+      
       elements.push(
-        <blockquote key={`quote-${index}`} className="border-l-4 border-purple-400 pl-4 py-2 my-3 bg-purple-50 dark:bg-purple-900/20 rounded-r-lg">
-          <p className="text-gray-700 dark:text-gray-300 italic">
-            {renderInline(trimmed.slice(1).trim())}
+        <blockquote key={`quote-${index}`} className={`border-l-4 ${borderColor} pl-4 py-3 my-4 ${bgColor} rounded-r-xl shadow-sm`}>
+          <p className="text-gray-700 dark:text-gray-200 font-medium flex items-start gap-2">
+            <span className="text-lg flex-shrink-0">{icon}</span>
+            <span>{renderInline(calloutContent)}</span>
           </p>
         </blockquote>
       );
@@ -445,10 +481,30 @@ const renderInline = (text) => {
  * Main AdaptiveMarkdown component
  */
 const AdaptiveMarkdown = ({ content, className = '', animate = true }) => {
+  // CRITICAL: Ensure content is a string, never an object
   if (!content) return null;
   
+  // If content is an object, try to extract string from it
+  let contentString = content;
+  if (typeof content === 'object' && !Array.isArray(content)) {
+    // Try common fields
+    contentString = content.text || content.content || content.message || content.mainContent || null;
+    if (!contentString || typeof contentString !== 'string') {
+      console.warn('⚠️ AdaptiveMarkdown: Received object instead of string, cannot render:', content);
+      return null;
+    }
+  } else if (typeof content !== 'string') {
+    // Convert to string if possible
+    if (typeof content === 'number' || Array.isArray(content)) {
+      contentString = String(content);
+    } else {
+      console.warn('⚠️ AdaptiveMarkdown: Invalid content type:', typeof content);
+      return null;
+    }
+  }
+  
   // Pre-process to extract block math
-  const { processedText, blockMathMap } = extractBlockMath(content);
+  const { processedText, blockMathMap } = extractBlockMath(contentString);
   
   const Container = animate ? motion.div : 'div';
   const animationProps = animate ? {

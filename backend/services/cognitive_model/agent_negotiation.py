@@ -662,7 +662,7 @@ class AgentNegotiator:
     ) -> CollaborativeResponse:
         """Create result for single agent response"""
         return CollaborativeResponse(
-            primary_response={'content': response.content, 'agent': response.agent_name},
+            primary_response={'content': response.content, 'agent': response.agent_name, 'success': True},
             supporting_insights=[],
             verification_results=[],
             consensus_reached=True,
@@ -693,7 +693,7 @@ class AgentNegotiator:
         synthesized_content = await self._llm_synthesize(synthesis_prompt)
         
         return CollaborativeResponse(
-            primary_response={'content': synthesized_content, 'agent': 'consensus'},
+            primary_response={'content': synthesized_content, 'agent': 'consensus', 'success': True},
             supporting_insights=[{'agent': r.agent_name, 'content': r.content[:500]} for r in responses],
             verification_results=[{'verified_facts': verification.verified_facts}],
             consensus_reached=len(conflicts) == 0,
@@ -735,7 +735,7 @@ Keep the best parts of both. Remove redundancy. Output only the final integrated
                 combined_content = await self._llm_synthesize(integration_prompt)
         
         return CollaborativeResponse(
-            primary_response={'content': combined_content, 'agent': 'sequential'},
+            primary_response={'content': combined_content, 'agent': 'sequential', 'success': True},
             supporting_insights=[{'agent': r.agent_name, 'contributed': True} for r in responses],
             verification_results=[],
             consensus_reached=True,
@@ -778,7 +778,7 @@ Keep the best parts of both. Remove redundancy. Output only the final integrated
         final_content = synthesized_content + conflict_note
         
         return CollaborativeResponse(
-            primary_response={'content': final_content, 'agent': 'consensus'},
+            primary_response={'content': final_content, 'agent': 'consensus', 'success': True},
             supporting_insights=[{
                 'agent': r.agent_name,
                 'content': r.content[:300],
@@ -874,7 +874,7 @@ Output ONLY the final synthesized response for the student. Do not mention that 
     def _empty_response(self, negotiation: NegotiationResult) -> CollaborativeResponse:
         """Return empty response on failure"""
         return CollaborativeResponse(
-            primary_response={'content': "I'll help you with that.", 'agent': 'fallback'},
+            primary_response={'content': "I'll help you with that.", 'agent': 'fallback', 'success': True},
             supporting_insights=[],
             verification_results=[],
             consensus_reached=False,

@@ -59,7 +59,22 @@ const fontSketchStyle = {
 };
 
 // ============================================
-// NETRA - VISUAL REASONING ENGINE (v7.0)
+// NETRA v4.0 - VISUAL INTELLIGENCE ENGINE
+// ============================================
+// Import NETRA v4 - AI-powered image generation
+let NetraEngineV4 = null;
+let NETRA_V4_AVAILABLE = false;
+try {
+  const netraV4Module = require('../../netra/v4');
+  NetraEngineV4 = netraV4Module.NetraEngineV4;
+  NETRA_V4_AVAILABLE = !!NetraEngineV4;
+  console.log('🔮 NETRA v4.0 Engine loaded successfully');
+} catch (err) {
+  console.warn('⚠️ NETRA v4.0 failed to load:', err.message);
+}
+
+// ============================================
+// NETRA - VISUAL REASONING ENGINE (v7.0) - Legacy
 // ============================================
 // Import NETRA - The new semantic visual reasoning engine
 // Wrapped in try-catch to prevent breaking if NETRA fails to load
@@ -69,7 +84,7 @@ try {
   const netraModule = require('../../netra');
   NetraEngine = netraModule.NetraEngine;
   NETRA_AVAILABLE = !!NetraEngine;
-  console.log('🔮 NETRA Engine loaded successfully');
+  console.log('🔮 NETRA Engine (legacy) loaded successfully');
 } catch (err) {
   console.warn('⚠️ NETRA Engine failed to load, falling back to V6:', err.message);
 }
@@ -109,6 +124,162 @@ import VisualSketchViewer from '../visual/VisualSketchViewer';
 
 // Import SketchSense Theme
 import './styles/SketchTheme.css';
+
+// ============================================
+// NETRA v4 IMAGE RENDERER
+// ============================================
+const NetraV4ImageRenderer = ({ visual, teaching, onTeachingStart }) => {
+  const [showTeaching, setShowTeaching] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  if (!visual?.image_base64) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        <p>Visual loading...</p>
+      </div>
+    );
+  }
+  
+  const imageUrl = `data:image/${visual.image_format || 'png'};base64,${visual.image_base64}`;
+  const steps = teaching?.steps || [];
+  const hotspots = teaching?.hotspots || [];
+  
+  return (
+    <div className="relative w-full h-full">
+      {/* Generated Image */}
+      <motion.img
+        src={imageUrl}
+        alt={teaching?.title || "Educational visual"}
+        className="w-full h-full object-contain"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      />
+      
+      {/* Teaching Overlay */}
+      {showTeaching && steps.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 bg-black/40"
+        >
+          {/* Hotspots */}
+          {hotspots.map((hotspot, idx) => (
+            <div
+              key={hotspot.id || idx}
+              className="absolute border-2 border-blue-400 bg-blue-500/20 rounded-lg cursor-pointer hover:bg-blue-500/40 transition-colors"
+              style={{
+                left: `${hotspot.x_percent}%`,
+                top: `${hotspot.y_percent}%`,
+                width: `${hotspot.width_percent || 10}%`,
+                height: `${hotspot.height_percent || 10}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              title={hotspot.description}
+            >
+              <span className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gray-800 text-white text-xs rounded-full whitespace-nowrap">
+                {hotspot.label}
+              </span>
+            </div>
+          ))}
+          
+          {/* Narration Bar */}
+          {steps[currentStep] && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="absolute bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-sm text-white p-4"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {steps.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full ${i <= currentStep ? 'bg-blue-500' : 'bg-gray-600'}`}
+                  />
+                ))}
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center font-bold text-sm">
+                  {currentStep + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-300 mb-1">Step {currentStep + 1} of {steps.length}</p>
+                  <p className="text-base">{steps[currentStep].narration}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                    disabled={currentStep === 0}
+                    className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+                    disabled={currentStep === steps.length - 1}
+                    className="p-2 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-50"
+                  >
+                    →
+                  </button>
+                  <button
+                    onClick={() => setShowTeaching(false)}
+                    className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 ml-2"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
+      
+      {/* Title & Teaching Button */}
+      <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+        {teaching?.title && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm"
+          >
+            <h3 className="text-sm font-semibold text-gray-800">{teaching.title}</h3>
+          </motion.div>
+        )}
+        
+        {steps.length > 0 && !showTeaching && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            onClick={() => setShowTeaching(true)}
+            className="px-3 py-1.5 bg-blue-500 text-white rounded-lg shadow-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-2"
+          >
+            <Play size={14} />
+            Learn Step-by-Step
+          </motion.button>
+        )}
+      </div>
+      
+      {/* Key Takeaways */}
+      {teaching?.key_takeaways?.length > 0 && !showTeaching && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="absolute bottom-3 left-3 right-3 px-3 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm"
+        >
+          <p className="text-xs text-gray-500 mb-1">💡 Key Takeaways</p>
+          <ul className="text-xs text-gray-700 space-y-0.5">
+            {teaching.key_takeaways.slice(0, 2).map((takeaway, i) => (
+              <li key={i}>• {takeaway}</li>
+            ))}
+          </ul>
+        </motion.div>
+      )}
+    </div>
+  );
+};
 
 // ============================================
 // LIVE FORMULA STICKY NOTE (Magic Notebook Feature)
@@ -929,7 +1100,7 @@ export default function SmartBoard({
                   with hand-drawn aesthetic. No HTML title bar needed.
                 */}
                 
-                {/* Visual Content - NETRA Visual Reasoning Engine */}
+                {/* Visual Content - NETRA Visual Engines */}
                 <div className="h-full min-h-[400px]" style={{ background: 'transparent' }}>
                   {(() => {
                     // Calculate question for debugging (matches NetraEngine priority)
@@ -940,12 +1111,52 @@ export default function SmartBoard({
                       (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
                       'explain the concept';
                     console.log('🎯 [SmartBoard] NETRA Question:', netraQuestion);
-                    console.log('🎯 [SmartBoard] USE_NETRA_ENGINE:', USE_NETRA_ENGINE);
-                    console.log('🎯 [SmartBoard] NetraEngine loaded:', !!NetraEngine);
+                    console.log('🎯 [SmartBoard] NETRA v4 Visual:', !!artifact?.netra_v4);
+                    console.log('🎯 [SmartBoard] Has image_base64:', !!artifact?.image_base64);
                     return null;
                   })()}
-                  {USE_NETRA_ENGINE && NetraEngine ? (
-                    /* 🔮 NETRA ENGINE - Semantic Visual Reasoning (v7.0) */
+                  {/* 🎬 NETRA v5.0 - Scene-Based Rendering (Priority 0) */}
+                  {artifact?.use_scene_renderer && artifact?.scene_data ? (
+                    (() => {
+                      console.log('🎬 [SmartBoard] Using NETRA v5 Scene Renderer');
+                      console.log('🎬 Scene Data:', artifact.scene_data);
+                      return (
+                        <NetraEngine
+                          question={artifact.scene_data.question || userQuestion || 'explain the concept'}
+                          context={{
+                            subject: artifact.scene_data.domain || artifact?.subject || subject || 'physics',
+                            level: 'high_school',
+                            intent: artifact.scene_data.intent,
+                            topic: artifact.scene_data.topic,
+                          }}
+                          width={580}
+                          height={450}
+                          showGrid={false}
+                          showMetadata={process.env.NODE_ENV === 'development'}
+                          useLLM={false}  // Scene-based, no LLM needed
+                          onGenerated={(result) => {
+                            console.log('🎬 NETRA v5 Scene rendered:', result.metadata);
+                            console.log('🎬 Scene Objects:', result.sceneObjects?.length || 0);
+                          }}
+                          onError={(error) => {
+                            console.error('❌ NETRA v5 Scene error:', error);
+                          }}
+                        />
+                      );
+                    })()
+                  ) : artifact?.netra_v4 && artifact?.image_base64 ? (
+                    /* 🔮 NETRA v4.0 - AI-Generated Image (Legacy - DISABLED) */
+                    <NetraV4ImageRenderer
+                      visual={{
+                        image_base64: artifact.image_base64,
+                        image_format: artifact.image_format || 'png',
+                        width: artifact.width,
+                        height: artifact.height,
+                      }}
+                      teaching={artifact.teaching}
+                    />
+                  ) : USE_NETRA_ENGINE && NetraEngine ? (
+                    /* 🔮 NETRA ENGINE - Semantic Visual Reasoning (v7.0) - Fallback */
                     <NetraEngine
                       question={
                         // Priority: originalQuestion > userQuestion > currentTopic > concept

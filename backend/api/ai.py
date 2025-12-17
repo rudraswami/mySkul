@@ -1797,8 +1797,10 @@ You MUST reference specific content from the image in your response."""
                     "user_id": user.user_id,
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
                     "request_visual": True,  # Always request visual for neuro-symbolic
-                    # 🆕 Enable agent negotiation for complex queries
-                    "use_agent_negotiation": query_complexity == "complex",
+                    # 🆕 Enable agent negotiation for standard+ complexity (not just complex)
+                    # This is what makes us different from chatbots - agents actually collaborate
+                    "use_agent_negotiation": query_complexity in ["standard", "complex"],
+                    "enable_agent_negotiation": query_complexity in ["standard", "complex"],
                     "query_complexity": query_complexity,
                     "student_profile": {
                         "name": user_name,  # Personalized!
@@ -2126,13 +2128,83 @@ You MUST reference specific content from the image in your response."""
 
             if allow_visual:
                 # ====================================================================
-                # FEATURE FLAG: Visual Generator (DISABLED FOR V1.0 MARKET RELEASE)
+                # FEATURE FLAG: Visual Generator
                 # ====================================================================
-                # Set to True to re-enable visual generation
-                VISUAL_GENERATOR_ENABLED = False
+                # NETRA v5.0 - Scene-Based Visual Engine (NO AI Images)
+                # Frontend renders SVG scenes using SceneRenderer
+                # ====================================================================
+                VISUAL_GENERATOR_ENABLED = True
+                USE_NETRA_V4 = False  # DISABLED: Old DALL-E image generation
+                USE_SCENE_RENDERER = True  # NEW: Frontend scene-based rendering
                 
                 if not VISUAL_GENERATOR_ENABLED:
-                    logger.info("🚫 Visual generator DISABLED (V1.0 market release - visuals disabled)")
+                    logger.info("🚫 Visual generator DISABLED")
+                    tv = None
+                elif USE_SCENE_RENDERER:
+                    # 🎬 NETRA v5.0 - Scene-Based Visual Engine
+                    # Returns scene data for frontend SceneRenderer (NO AI images!)
+                    logger.info("🎬 Using NETRA v5.0 Scene-Based Rendering (frontend)")
+                    try:
+                        # Classify intent from question
+                        q_lower = request.message.lower()
+                        
+                        # Detect intent (simple rule-based, matches frontend IntentClassifier)
+                        intent = "conceptual"  # default
+                        if "why" in q_lower or "how come" in q_lower or "what causes" in q_lower:
+                            intent = "causal_inquiry"
+                        elif "what if" in q_lower or "without" in q_lower or "no " in q_lower:
+                            intent = "counterfactual"
+                        elif "compare" in q_lower or " vs " in q_lower or "difference" in q_lower:
+                            intent = "comparative"
+                        elif "intuitively" in q_lower or "simply" in q_lower or "like" in q_lower:
+                            intent = "intuitive"
+                        elif "how does" in q_lower or "mechanism" in q_lower:
+                            intent = "mechanistic"
+                        
+                        # Detect domain
+                        domain = request.subject.lower() if request.subject else "physics"
+                        if domain not in ["physics", "chemistry", "biology", "math", "mathematics"]:
+                            domain = "physics"  # default
+                        
+                        # Extract topic from question
+                        topic = request.message.split("?")[0].strip()
+                        if len(topic) > 50:
+                            topic = topic[:50]
+                        
+                        # Return scene data for frontend SceneRenderer
+                        tv = {
+                            "visual_id": f"netra_scene_{hash(request.message) % 1000000}",
+                            "type": "scene_based",  # Frontend will use SceneRenderer
+                            "use_scene_renderer": True,  # Flag for frontend
+                            "scene_data": {
+                                "question": request.message,
+                                "intent": intent,
+                                "domain": domain,
+                                "topic": topic,
+                                # Frontend will generate sceneObjects using SceneObjectResolver
+                            },
+                            "metadata": {
+                                "concept": topic,
+                                "intent": intent,
+                                "domain": domain,
+                                "render_mode": "scene",  # NOT "image"
+                            },
+                            "teaching": {
+                                "title": f"Understanding {topic}",
+                                "summary": f"Visual explanation of {topic}",
+                                "steps": [],
+                                "key_takeaways": [],
+                            }
+                        }
+                        logger.info(f"✅ NETRA v5 scene data: intent={intent}, domain={domain}, topic={topic[:30]}")
+                        
+                    except Exception as e:
+                        logger.error(f"❌ NETRA v5 scene error: {e}", exc_info=True)
+                        tv = None
+                elif USE_NETRA_V4:
+                    # 🔮 OLD NETRA v4.0 - DISABLED (uses DALL-E 3)
+                    # This code path is now disabled to avoid AI image generation
+                    logger.warning("⚠️ NETRA v4 (DALL-E) is DISABLED - use scene renderer instead")
                     tv = None
                 else:
                     # PRIORITY 1: Visual Professor Generator (dynamic, multi-step, professor-style)
@@ -2251,47 +2323,55 @@ You MUST reference specific content from the image in your response."""
                                 pass
                     except Exception:
                         pass
-                # OLD VISUAL SYSTEM DISABLED - SketchSense V2 is now the primary visual system
-                # if tv:
-                #     result['response']['teaching_visual'] = tv
-                #     logger.info(f"✅ Added teaching_visual to response: {tv.get('visual_id')} with {len(tv.get('stages', []))} stages")
-                
-                # 🎨 WHITEBOARD SKETCH ENGINE - Next-Gen Visual System
-                # Progressive, animated, Indian context, NO boring MCQs!
-                try:
-                    from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
-                    
-                    # Extract concept from question
-                    msg_lower = (request.message or '').lower()
-                    concept = whiteboard_engine.extract_concept(request.message)
-                    
-                    # Also check for explicit visual requests
-                    if not concept and any(kw in msg_lower for kw in ['visual', 'diagram', 'draw', 'show', 'picture', 'sketch', 'explain']):
-                        # Default based on subject
-                        subject_defaults = {
-                            'physics': 'force',
-                            'chemistry': 'acids',
-                            'biology': 'cell',
-                            'math': 'geometry',
-                            'mathematics': 'geometry'
-                        }
-                        concept = subject_defaults.get((request.subject or 'physics').lower(), 'force')
-                    
-                    if concept:
-                        subject = request.subject or 'physics'
-                        whiteboard_scene = generate_whiteboard_visual(
-                            concept=concept,
-                            subject=subject,
-                            question=request.message
-                        )
-                        result['response']['whiteboard_visual'] = whiteboard_scene
-                        logger.info(f"🎨 Whiteboard visual generated for concept: {concept}")
+                # Add NETRA v4 visual to response
+                netra_v4_success = False
+                if tv:
+                    result['response']['teaching_visual'] = tv
+                    if tv.get('netra_v4'):
+                        netra_v4_success = True
+                        logger.info(f"✅ Added NETRA v4 visual to response: {tv.get('metadata', {}).get('concept', 'unknown')}")
                     else:
-                        logger.info(f"ℹ️ No visual concept detected, skipping whiteboard visual")
-                except Exception as wb_err:
-                    logger.warning(f"⚠️ Whiteboard visual generation failed (non-blocking): {wb_err}")
-                    import traceback
-                    logger.warning(f"⚠️ Whiteboard traceback: {traceback.format_exc()}")
+                        logger.info(f"✅ Added teaching_visual to response: {tv.get('visual_id')} with {len(tv.get('stages', []))} stages")
+                
+                # 🎨 WHITEBOARD SKETCH ENGINE - Fallback only if NETRA v4 failed
+                # Only generate whiteboard visual if NETRA v4 didn't succeed
+                if not netra_v4_success:
+                    try:
+                        from services.whiteboard_engine import generate_whiteboard_visual, whiteboard_engine
+                        
+                        # Extract concept from question
+                        msg_lower = (request.message or '').lower()
+                        concept = whiteboard_engine.extract_concept(request.message)
+                        
+                        # Also check for explicit visual requests
+                        if not concept and any(kw in msg_lower for kw in ['visual', 'diagram', 'draw', 'show', 'picture', 'sketch', 'explain']):
+                            # Default based on subject
+                            subject_defaults = {
+                                'physics': 'force',
+                                'chemistry': 'acids',
+                                'biology': 'cell',
+                                'math': 'geometry',
+                                'mathematics': 'geometry'
+                            }
+                            concept = subject_defaults.get((request.subject or 'physics').lower(), 'force')
+                        
+                        if concept:
+                            subject = request.subject or 'physics'
+                            whiteboard_scene = generate_whiteboard_visual(
+                                concept=concept,
+                                subject=subject,
+                                question=request.message
+                            )
+                            result['response']['whiteboard_visual'] = whiteboard_scene
+                            logger.info(f"🎨 Whiteboard visual generated for concept: {concept} (NETRA v4 not available)")
+                        else:
+                            logger.info(f"ℹ️ No visual concept detected, skipping whiteboard visual")
+                    except Exception as wb_err:
+                        logger.warning(f"⚠️ Whiteboard visual generation failed (non-blocking): {wb_err}")
+                        import traceback
+                        logger.warning(f"⚠️ Whiteboard traceback: {traceback.format_exc()}")
+                else:
+                    logger.info(f"ℹ️ Skipping whiteboard visual (NETRA v4 visual already provided)")
             else:
                 logger.info(f"ℹ️ Visual generation skipped: allow_visual={allow_visual}")
         except Exception as e:
@@ -2626,9 +2706,11 @@ async def evaluate_teach_me_back(
             student_explanation=request.student_explanation
         )
         
-        logger.info(f"✅ Teach Me Back feedback generated: {len(feedback.get('understood', []))} points understood")
+        score = feedback.get("score", 50)
+        understanding_level = feedback.get("understanding_level", "partial")
+        logger.info(f"✅ Teach Me Back: score={score}, level={understanding_level}, understood={len(feedback.get('understood', []))}")
         
-        # Track usage for gamification
+        # Track usage for gamification (enhanced with score)
         try:
             await db.teach_me_back_attempts.insert_one({
                 "user_id": user.user_id,
@@ -2636,10 +2718,43 @@ async def evaluate_teach_me_back(
                 "word_count": len(request.student_explanation.split()),
                 "understood_count": len(feedback.get("understood", [])),
                 "gaps_count": len(feedback.get("gaps", [])),
+                "score": score,
+                "understanding_level": understanding_level,
                 "timestamp": dt.now()
             })
         except Exception as track_error:
             logger.warning(f"Failed to track Teach Me Back attempt: {track_error}")
+        
+        # Update mastery based on teach-back performance (NEW: Cognitive OS v2.0)
+        try:
+            mastery_delta = evaluator.get_mastery_delta(understanding_level)
+            if mastery_delta != 0:
+                import re as regex
+                topic_key = regex.sub(r'[^a-z0-9]+', '_', request.concept.lower())
+                
+                await db.user_learning_profile.update_one(
+                    {"user_id": user.user_id},
+                    {
+                        "$inc": {f"mastery_levels.{topic_key}": mastery_delta},
+                        "$set": {"updated_at": dt.now()},
+                        "$push": {
+                            "teach_back_history": {
+                                "$each": [{
+                                    "concept": request.concept,
+                                    "score": score,
+                                    "level": understanding_level,
+                                    "mastery_delta": mastery_delta,
+                                    "timestamp": dt.now()
+                                }],
+                                "$slice": -50  # Keep last 50 entries
+                            }
+                        }
+                    },
+                    upsert=True
+                )
+                logger.info(f"📈 Mastery updated for '{request.concept}': delta={mastery_delta}")
+        except Exception as mastery_error:
+            logger.warning(f"Failed to update mastery: {mastery_error}")
         
         return {
             "success": True,
@@ -2655,6 +2770,8 @@ async def evaluate_teach_me_back(
                 "understood": ["You've thought about the concept"],
                 "gaps": [],
                 "tip": "Try adding more specific details next time",
-                "encouragement": "Good effort! Keep practicing explanations."
+                "encouragement": "Good effort! Keep practicing explanations.",
+                "score": 50,
+                "understanding_level": "partial"
             }
         }

@@ -1128,7 +1128,13 @@ export default function AITutorNeuroSymbolic() {
         
         // 🏫 Extract visual artifact for SmartBoard (Digital Classroom)
         // Check ALL possible visual formats from backend
+        // PRIORITY: NETRA v4 (teaching_visual) FIRST, then others
         const visualData = 
+          // 🔮 NETRA v4.0 - Highest priority (AI-generated images)
+          aiMsg.teaching_visual ||
+          data.response?.teaching_visual ||
+          normalizedResponse?.teaching_visual ||
+          // Legacy/fallback visuals (lower priority)
           aiMsg.visual_sketch || 
           aiMsg.content?.visual_sketch ||
           aiMsg.whiteboard_visual ||
@@ -1136,7 +1142,6 @@ export default function AITutorNeuroSymbolic() {
           data.response?.whiteboard_visual ||
           data.response?.blueprint ||
           data.response?.visual_data ||
-          data.response?.teaching_visual ||
           normalizedResponse?.visual_sketch ||
           normalizedResponse?.whiteboard_visual ||
           normalizedResponse?.blueprint;
@@ -1166,6 +1171,13 @@ export default function AITutorNeuroSymbolic() {
             visual_sketch: visualData.visual_sketch || visualData,
             // Store original question for context-aware theming
             originalQuestion: messageToSend,
+            // 🔮 NETRA v4.0 - AI-Generated Image Data
+            netra_v4: visualData.netra_v4 || false,
+            image_base64: visualData.image_base64 || null,
+            image_format: visualData.image_format || null,
+            width: visualData.width || null,
+            height: visualData.height || null,
+            teaching: visualData.teaching || null,
           };
           
           // Debug logging
@@ -1174,6 +1186,8 @@ export default function AITutorNeuroSymbolic() {
             hasBlueprint: !!artifact.blueprint,
             hasTemplate: !!artifact.template,
             hasMode: !!artifact.mode,
+            hasNetraV4: !!artifact.netra_v4,
+            hasImageBase64: !!artifact.image_base64,
             concept,
             subject,
             structure: Object.keys(artifact)
@@ -2732,17 +2746,28 @@ export default function AITutorNeuroSymbolic() {
                           
                           <p className="text-sm leading-relaxed">
                             {(() => {
-                              if (typeof message.content === 'string') return message.content;
+                              // Priority 1: Direct string content
+                              if (typeof message.content === 'string' && message.content.trim()) {
+                                return message.content;
+                              }
+                              // Priority 2: user_question field (set when sending message)
+                              if (message.user_question && typeof message.user_question === 'string' && message.user_question.trim()) {
+                                return message.user_question;
+                              }
+                              // Priority 3: Extract from object content
                               if (typeof message.content === 'object' && message.content !== null) {
                                 const question = message.content.message || 
                                                  message.content.text || 
                                                  message.content.query ||
                                                  message.content.question ||
                                                  message.content.user_message;
-                                if (question && typeof question === 'string') return question;
-                                if (message.content.default_view?.greeting) return message.content.default_view.greeting;
+                                if (question && typeof question === 'string' && question.trim()) {
+                                  return question;
+                                }
                               }
-                              return message.user_question || 'Question';
+                              // NEVER show generic "Question" - show nothing instead
+                              // This prevents confusing UX
+                              return '';
                             })()}
                           </p>
                         </motion.div>

@@ -8,7 +8,7 @@
  * not a template-based diagram generator.
  * 
  * Pipeline:
- * Question → Intent → Form → Content → Layout → Animation → Visual
+ * Question → Intent → Form → Content → SceneObjects → Layout → Animation → Visual
  * 
  * Each layer is subject-agnostic and question-driven.
  */
@@ -48,6 +48,16 @@ export {
   ANIMATION_STRATEGIES,
 } from './AnimationDirector';
 
+// Scene Object Resolution (CRITICAL NEW LAYER)
+export {
+  SceneObjectResolver,
+  createSceneObjectResolver,
+  SceneObject,
+  OBJECT_TYPES,
+  VISUAL_FORMS,
+  SPATIAL_RULES,
+} from './SceneObjectResolver';
+
 /**
  * Create the complete reasoning pipeline
  */
@@ -58,6 +68,7 @@ export function createReasoningPipeline(options = {}) {
     contentMapper: createContentMapper(options.content || {}),
     layoutVariator: createLayoutVariator(options.layout || {}),
     animationDirector: createAnimationDirector(options.animation || {}),
+    sceneObjectResolver: createSceneObjectResolver(options.scene || {}),
   };
 }
 

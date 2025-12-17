@@ -7,11 +7,24 @@
  * FIXED: Uses AdaptiveMarkdown EVERYWHERE for proper LaTeX, tables, and formatting.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, Calculator, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  Lightbulb, 
+  Calculator, 
+  Sparkles, 
+  ChevronDown, 
+  ChevronUp,
+  Copy,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  Share2,
+  Bookmark
+} from 'lucide-react';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
+import apiClient from '../api/client';
 
 // SketchSense V6 - Magic Notebook Engine
 import UniversalSketchCanvas from '../visual-engine/sketch/UniversalSketchCanvasV6';
@@ -195,63 +208,127 @@ const SmartResponse = ({
   const content = useMemo(() => {
     if (!response) return null;
     
+    // CRITICAL: If response itself is a string, wrap it properly
+    if (typeof response === 'string') {
+      return {
+        mainContent: response,
+        greeting: null,
+        metaphor: null,
+        example: null,
+        keyTakeaways: null,
+        practiceProblems: null,
+        steps: null,
+        formula: null,
+        explanation: null,
+        quickFollowUps: []
+      };
+    }
+    
+    // CRITICAL: If response is not an object, return null
+    if (typeof response !== 'object' || Array.isArray(response)) {
+      console.warn('⚠️ SmartResponse: Invalid response type', typeof response);
+      return null;
+    }
+    
     // Handle different response structures - be VERY robust
     const defaultView = response.default_view || {};
     const progressive = response.progressive_sections || {};
     const dualResponse = response.dual_response || {};
     
+    // Helper function to safely extract string content
+    const safeString = (value) => {
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number') return String(value);
+      if (Array.isArray(value)) return value.map(String).join('\n\n');
+      if (value && typeof value === 'object') {
+        // If it's an object, try to extract text/content field
+        return value.text || value.content || value.message || JSON.stringify(value);
+      }
+      return null;
+    };
+    
     // Try multiple sources for main content (prioritize actual explanation)
     let mainContent = null;
     
     // Priority 1: Progressive sections explanation
-    if (progressive.explanation && progressive.explanation.length > 50) {
-      mainContent = progressive.explanation;
+    const progExplanation = safeString(progressive.explanation);
+    if (progExplanation && progExplanation.length > 50) {
+      mainContent = progExplanation;
     }
     // Priority 2: Main content
-    else if (defaultView.main_content?.content && defaultView.main_content.content.length > 50) {
-      mainContent = defaultView.main_content.content;
+    else if (defaultView.main_content) {
+      const mainContentValue = typeof defaultView.main_content === 'object' 
+        ? defaultView.main_content.content || defaultView.main_content.text
+        : defaultView.main_content;
+      const safeMain = safeString(mainContentValue);
+      if (safeMain && safeMain.length > 50) {
+        mainContent = safeMain;
+      }
     }
     // Priority 3: Dual response mentor content
-    else if (dualResponse.mentor?.content && dualResponse.mentor.content.length > 50) {
-      mainContent = dualResponse.mentor.content;
+    else if (dualResponse.mentor) {
+      const mentorContent = safeString(dualResponse.mentor.content || dualResponse.mentor.text);
+      if (mentorContent && mentorContent.length > 50) {
+        mainContent = mentorContent;
+      }
     }
     // Priority 4: Direct main_content string
     else if (typeof defaultView.main_content === 'string' && defaultView.main_content.length > 50) {
       mainContent = defaultView.main_content;
     }
     // Priority 5: Metaphor text as fallback
-    else if (defaultView.metaphor?.text && defaultView.metaphor.text.length > 50) {
-      mainContent = defaultView.metaphor.text;
+    else if (defaultView.metaphor) {
+      const metaphorText = safeString(defaultView.metaphor.text || defaultView.metaphor);
+      if (metaphorText && metaphorText.length > 50) {
+        mainContent = metaphorText;
+      }
     }
     // Priority 6: Key takeaways joined
-    else if (progressive.key_takeaways?.length > 0) {
-      mainContent = Array.isArray(progressive.key_takeaways) 
-        ? progressive.key_takeaways.join('\n\n') 
-        : progressive.key_takeaways;
+    else if (progressive.key_takeaways) {
+      const takeaways = safeString(progressive.key_takeaways);
+      if (takeaways && takeaways.length > 10) {
+        mainContent = takeaways;
+      }
     }
     // Priority 7: Greeting as last resort
-    else if (defaultView.greeting && defaultView.greeting.length > 20) {
-      mainContent = defaultView.greeting;
+    else if (defaultView.greeting) {
+      const greetingText = safeString(defaultView.greeting);
+      if (greetingText && greetingText.length > 20) {
+        mainContent = greetingText;
+      }
+    }
+    
+    // CRITICAL: Ensure mainContent is always a string or null, never an object
+    if (mainContent && typeof mainContent !== 'string') {
+      console.warn('⚠️ SmartResponse: mainContent is not a string, converting:', typeof mainContent);
+      mainContent = safeString(mainContent) || null;
     }
     
     console.log('📝 SmartResponse content extraction:', {
       hasMainContent: !!mainContent,
+      mainContentType: typeof mainContent,
       mainContentLength: mainContent?.length || 0,
       defaultView: Object.keys(defaultView),
       progressive: Object.keys(progressive)
     });
     
     return {
-      greeting: defaultView.greeting,
-      mainContent: mainContent,
-      metaphor: defaultView.metaphor?.text,
-      example: defaultView.indian_example,
-      keyTakeaways: progressive.key_takeaways,
-      practiceProblems: progressive.practice_problem,
-      steps: progressive.strategy?.steps || progressive.steps,
-      formula: progressive.formula,
-      explanation: progressive.explanation,
-      quickFollowUps: defaultView.interactive_options?.map(o => o.button_text) || []
+      greeting: safeString(defaultView.greeting),
+      mainContent: mainContent, // Always string or null
+      metaphor: safeString(defaultView.metaphor?.text || defaultView.metaphor),
+      example: safeString(defaultView.indian_example),
+      keyTakeaways: Array.isArray(progressive.key_takeaways) 
+        ? progressive.key_takeaways.map(String)
+        : safeString(progressive.key_takeaways),
+      practiceProblems: safeString(progressive.practice_problem),
+      steps: Array.isArray(progressive.strategy?.steps || progressive.steps)
+        ? (progressive.strategy?.steps || progressive.steps).map(String)
+        : safeString(progressive.strategy?.steps || progressive.steps),
+      formula: safeString(progressive.formula),
+      explanation: safeString(progressive.explanation),
+      quickFollowUps: Array.isArray(defaultView.interactive_options)
+        ? defaultView.interactive_options.map(o => String(o.button_text || o.text || o))
+        : []
     };
   }, [response]);
 
@@ -298,6 +375,9 @@ const SmartResponse = ({
     case 'adaptive':
       // For follow-ups and adaptive responses, use clean markdown
       // The AI decides structure, not the frontend
+      if (!content.mainContent || typeof content.mainContent !== 'string') {
+        return null;
+      }
       return (
         <motion.div 
           className="space-y-4"
@@ -317,6 +397,9 @@ const SmartResponse = ({
     
     case 'fact':
       // Short factual answer - minimal formatting
+      if (!content.mainContent || typeof content.mainContent !== 'string') {
+        return null;
+      }
       return (
         <motion.div
           initial={{ opacity: 0 }}
@@ -353,10 +436,139 @@ const SmartResponse = ({
   const [showTeachMeBackModal, setShowTeachMeBackModal] = useState(false);
   const showTeachMeBackOption = responseType === 'explanation' && content?.mainContent?.length > 200;
   
+  // Interaction states
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState(null); // 'helpful' | 'not_helpful'
+  const [bookmarked, setBookmarked] = useState(false);
+  
+  // Copy to clipboard
+  const handleCopy = useCallback(() => {
+    const textToCopy = content?.mainContent || '';
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [content?.mainContent]);
+  
+  // Handle feedback - sends to backend for quality improvement
+  const handleFeedback = useCallback(async (type) => {
+    setFeedback(type);
+    
+    // Send to backend for tracking
+    try {
+      await apiClient.post('/api/analytics/feedback', {
+        feedback_type: type,
+        question: question,
+        response_preview: content?.mainContent?.substring(0, 300)
+      });
+    } catch (error) {
+      console.log('Feedback tracking failed (non-critical):', error);
+    }
+    
+    // Notify parent component
+    if (onInteraction) {
+      onInteraction(type === 'helpful' ? 'feedback_positive' : 'feedback_negative');
+    }
+  }, [onInteraction, question, content?.mainContent]);
+  
+  // Show interaction bar for non-greeting responses with content
+  const showInteractionBar = !isSimpleResponse && content?.mainContent?.length > 50;
+  
   return (
     <div className="smart-response-container">
       {/* CLEAN FINAL ANSWER - No panels, no badges, no chips, just content */}
       {renderMainContent()}
+      
+      {/* INTERACTION BAR - Copy, Feedback, Bookmark */}
+      {showInteractionBar && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800"
+        >
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            {/* Left side - Feedback */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Was this helpful?</span>
+              <button
+                onClick={() => handleFeedback('helpful')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  feedback === 'helpful'
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600'
+                }`}
+                title="Yes, helpful!"
+              >
+                <ThumbsUp className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleFeedback('not_helpful')}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  feedback === 'not_helpful'
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600'
+                }`}
+                title="Not helpful"
+              >
+                <ThumbsDown className="w-4 h-4" />
+              </button>
+              {feedback && (
+                <motion.span 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`text-xs font-medium ${
+                    feedback === 'helpful' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'
+                  }`}
+                >
+                  {feedback === 'helpful' ? 'Thanks! 🙌' : 'We\'ll improve'}
+                </motion.span>
+              )}
+            </div>
+            
+            {/* Right side - Actions */}
+            <div className="flex items-center gap-2">
+              {/* Copy button */}
+              <button
+                onClick={handleCopy}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  copied
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400'
+                }`}
+                title="Copy response"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Bookmark button */}
+              <button
+                onClick={() => setBookmarked(!bookmarked)}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  bookmarked
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600'
+                }`}
+                title={bookmarked ? 'Saved!' : 'Save for later'}
+              >
+                <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
       
       {/* TEACH ME BACK - Subtle invitation for complex explanations */}
       {showTeachMeBackOption && (
@@ -435,8 +647,13 @@ const GreetingResponse = ({ content }) => {
  * FIX: No hardcoded fallback - if no content, return null
  */
 const AcknowledgmentResponse = ({ content }) => {
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object') {
+    return null;
+  }
+  
   // FIX: Don't show hardcoded fallback during streaming
-  if (!content.mainContent || content.mainContent.trim().length === 0) {
+  if (!content.mainContent || typeof content.mainContent !== 'string' || content.mainContent.trim().length === 0) {
     return null;
   }
   
@@ -456,39 +673,51 @@ const AcknowledgmentResponse = ({ content }) => {
  * Calculation - Focus on step-by-step solution
  * FIXED: Uses AdaptiveMarkdown for proper LaTeX rendering
  */
-const CalculationResponse = ({ content, showVisual, visualSketch, question, response }) => (
-  <motion.div 
-    className="space-y-4"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-  >
-    {/* Main content with full markdown/LaTeX support */}
-    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-100 dark:border-blue-800">
-      <div className="flex items-center space-x-2 mb-4">
-        <Calculator className="w-5 h-5 text-blue-600" />
-        <h4 className="font-semibold text-blue-800 dark:text-blue-300">Solution</h4>
-      </div>
-      
-      {/* Use AdaptiveMarkdown for full LaTeX/table support */}
-      <AdaptiveMarkdown content={content.mainContent} />
+const CalculationResponse = ({ content, showVisual, visualSketch, question, response }) => {
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object' || !content.mainContent || typeof content.mainContent !== 'string') {
+    return null;
+  }
+  
+  return (
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* Main content with full markdown/LaTeX support */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-100 dark:border-blue-800">
+        <div className="flex items-center space-x-2 mb-4">
+          <Calculator className="w-5 h-5 text-blue-600" />
+          <h4 className="font-semibold text-blue-800 dark:text-blue-300">Solution</h4>
+        </div>
+        
+        {/* Use AdaptiveMarkdown for full LaTeX/table support */}
+        <AdaptiveMarkdown content={content.mainContent} />
     </div>
 
-    {/* Visual if needed */}
-    {showVisual && (
-      <VisualSketchViewer
-        svg={visualSketch?.svg || response?.visual_sketch?.svg}
-        question={question}
-        embedded={true}
-      />
-    )}
-  </motion.div>
-);
+      {/* Visual if needed */}
+      {showVisual && (
+        <VisualSketchViewer
+          svg={visualSketch?.svg || response?.visual_sketch?.svg}
+          question={question}
+          embedded={true}
+        />
+      )}
+    </motion.div>
+  );
+};
 
 /**
  * Definition - Short answer
  * REFACTORED: Uses AdaptiveMarkdown instead of forced template
  */
 const DefinitionResponse = ({ content, showVisual, visualSketch, question, response }) => {
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object' || !content.mainContent || typeof content.mainContent !== 'string') {
+    return null;
+  }
+  
   return (
     <motion.div 
       className="space-y-4"
@@ -514,22 +743,42 @@ const DefinitionResponse = ({ content, showVisual, visualSketch, question, respo
  * Comparison - Table/side-by-side format
  * FIXED: Uses AdaptiveMarkdown for proper table and LaTeX rendering
  */
-const ComparisonResponse = ({ content }) => (
-  <motion.div 
-    className="space-y-4"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-  >
-    {/* Main comparison content - AdaptiveMarkdown handles tables properly */}
-    <AdaptiveMarkdown content={content.mainContent} />
-  </motion.div>
-);
+const ComparisonResponse = ({ content }) => {
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object' || !content.mainContent || typeof content.mainContent !== 'string') {
+    return null;
+  }
+  
+  return (
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* Main comparison content - AdaptiveMarkdown handles tables properly */}
+      <AdaptiveMarkdown content={content.mainContent} />
+    </motion.div>
+  );
+};
 
 /**
  * Example - Focus on practical examples
  * FIXED: Uses AdaptiveMarkdown for proper formatting
  */
-const ExampleResponse = ({ content }) => (
+const ExampleResponse = ({ content }) => {
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object') {
+    return null;
+  }
+  
+  const exampleContent = typeof content.example === 'string' ? content.example : 
+                         (typeof content.mainContent === 'string' ? content.mainContent : null);
+  
+  if (!exampleContent) {
+    return null;
+  }
+  
+  return (
   <motion.div 
     className="space-y-4"
     initial={{ opacity: 0 }}
@@ -541,10 +790,11 @@ const ExampleResponse = ({ content }) => (
         <Lightbulb className="w-5 h-5 text-green-600" />
         <h4 className="font-semibold text-green-800 dark:text-green-300">Example</h4>
       </div>
-      <AdaptiveMarkdown content={content.example || content.mainContent} />
+      <AdaptiveMarkdown content={exampleContent} />
     </div>
   </motion.div>
-);
+  );
+};
 
 /**
  * Explanation - Full explanation with whiteboard visual
@@ -564,21 +814,16 @@ const ExplanationResponse = ({
   setIsVisualExpanded,
   isStreaming = false
 }) => {
-  const hasContent = content.mainContent && content.mainContent.length > 10;
+  // CRITICAL: Ensure content is valid
+  if (!content || typeof content !== 'object') {
+    return null;
+  }
+  
+  const hasContent = content.mainContent && typeof content.mainContent === 'string' && content.mainContent.length > 10;
   
   // Whiteboard visual is the ONLY visual system
   const hasWhiteboardVisual = whiteboardVisual && whiteboardVisual.concept;
   const hasAnyVisual = hasWhiteboardVisual;
-  
-  // Check if visual is being generated (from SmartBoard)
-  const hasVisualData = whiteboardVisual || visualSketch || response?.visual_sketch || response?.blueprint;
-  
-  // Only show "Generating explanation" if:
-  // 1. No content AND
-  // 2. Not streaming AND
-  // 3. No visual is being generated
-  // (If NeuralThinkingIndicator is showing, don't duplicate the loading message)
-  const shouldShowGeneratingMessage = !hasContent && !isStreaming && !hasVisualData;
 
   return (
     <motion.div 
@@ -587,15 +832,11 @@ const ExplanationResponse = ({
       animate={{ opacity: 1 }}
     >
       {/* Main Content - Rendered as clean markdown */}
-      {hasContent ? (
+      {/* REMOVED: "Generating explanation" warning - it was showing incorrectly */}
+      {/* The thinking indicator in AITutorNeuroSymbolic handles loading state */}
+      {hasContent && (
         <AdaptiveMarkdown content={content.mainContent} />
-      ) : shouldShowGeneratingMessage ? (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
-          <p className="text-yellow-800 dark:text-yellow-300">
-            ⚠️ Generating explanation... Please wait.
-          </p>
-        </div>
-      ) : null}
+      )}
 
       {/* 🚀 SketchSense V5.0 - Universal Visual Engine */}
       {hasAnyVisual && (

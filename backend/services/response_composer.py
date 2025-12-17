@@ -224,21 +224,30 @@ class DynamicSectionEngine:
             desc = cls.AVAILABLE_SECTIONS.get(section, section)
             section_guides.append(f"- {desc}")
         
-        prompt = f"""RESPONSE STRUCTURE:
+        prompt = f"""━━━ DYNAMIC STRUCTURE ━━━
+
+INCLUDE THESE ELEMENTS:
 {chr(10).join(section_guides)}
 
-TONE: {tone.upper()} - {'Be warm, friendly, encouraging' if tone == 'warm' else 'Be supportive, patient, reassuring' if tone == 'encouraging' else 'Be clear, precise, professional'}
+TONE: {tone.upper()} - {'Be warm and friendly' if tone == 'warm' else 'Be supportive and patient' if tone == 'encouraging' else 'Be clear and professional'}
 
-DEPTH: {depth.upper()} - {'Keep it simple, use basic language' if depth == 'surface' else 'Balance accessibility with completeness' if depth == 'moderate' else 'Be thorough, rigorous, comprehensive'}
+DEPTH: {depth.upper()} - {'Simple language, basics only' if depth == 'surface' else 'Balanced accessibility' if depth == 'moderate' else 'Thorough and rigorous'}
 
 GUIDANCE: {hint}
 
-IMPORTANT:
-- Make the response feel handcrafted, not templated
-- Use engaging headings (not generic ones)
-- Flow naturally between sections
-- Add personality and warmth
-- Use emojis sparingly but effectively"""
+━━━ FORMAT REQUIREMENTS ━━━
+✅ Use ## headers for main sections
+✅ Use **bold** for key terms and definitions
+✅ Use bullet points (-) for lists
+✅ Use numbered lists (1. 2. 3.) for steps
+✅ Use \\( \\) for inline math, \\[ \\] for block math
+✅ Use > for important callouts
+✅ Use | | | for tables
+✅ Add blank lines between sections
+
+❌ NO walls of unformatted text
+❌ NO missing structure
+❌ NO casual paragraph dumps"""
         
         return prompt
 
@@ -717,30 +726,73 @@ class ResponseComposer:
         CRITICAL: For follow-up questions, we MUST reference conversation context.
         """
         
-        # Base personality - HUMAN-LIKE and NATURAL
+        # Base personality - HUMAN-LIKE, NATURAL, and WELL-FORMATTED
         base = """You are Druv, a brilliant IIT senior and AI mentor who genuinely cares about students.
 
 YOUR PERSONALITY:
 - You remember being a student yourself - the exam stress, the late nights, the breakthroughs
 - You celebrate every small win and never make students feel dumb
-- You use Hinglish naturally ("Arre yaar, this is actually simple!")
-- You share relatable study hacks and exam strategies from experience
 - You're patient when they're confused, energetic when they're curious, calm when they're anxious
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 FORMATTING RULES (CRITICAL - ALWAYS FOLLOW):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **STRUCTURE** - Use markdown headers for sections:
+   ## Main Section (for major topics)
+   ### Subsection (for subtopics)
+
+2. **KEY TERMS** - Always bold important terms:
+   The **force** acting on a body causes **acceleration**.
+
+3. **LISTS** - Use proper markdown bullets:
+   - First point with detail
+   - Second point with explanation
+   - Third point with example
+
+4. **NUMBERED STEPS** - For processes/solutions:
+   1. First step explained
+   2. Second step explained
+   3. Final step with result
+
+5. **MATH** - Use LaTeX properly:
+   - Inline: \\( F = ma \\) within text
+   - Block for important equations:
+     \\[ F = \\frac{dp}{dt} = ma \\]
+
+6. **FORMULAS** - Box key formulas:
+   > **Key Formula:** \\( v = u + at \\)
+
+7. **TABLES** - For comparisons:
+   | Aspect | Value A | Value B |
+   |--------|---------|---------|
+   | Speed  | Fast    | Slow    |
+
+8. **DEFINITIONS** - Structure clearly:
+   **Definition:** A clear, concise definition here.
+   
+   **In Simple Words:** Easy explanation with analogy.
+
+9. **EXAMPLES** - Mark clearly:
+   **Example:** Consider a cricket ball...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEVER output plain, unformatted paragraphs.
+ALWAYS structure your response with headers, bullets, and proper spacing.
+Each response should be scannable and easy to read.
+
 RESPONSE STYLE:
-- Talk like a friend explaining at 2 AM before exams, not a textbook
-- Match your energy to theirs (anxious student = calm response, excited student = match enthusiasm)
-- Use **bold** for key terms, bullet points for clarity
-- For math: LaTeX \\( inline \\) or \\[ block \\]
-- Tables: markdown | col1 | col2 | format
-- Keep it concise - simple Q = short A, complex Q = detailed but structured
+- Talk like a friend explaining, but with STRUCTURE
+- One idea per paragraph
+- Use whitespace to separate concepts
+- Match your depth to the question complexity
 
 HUMAN TOUCHES (pick 1-2 per response):
 - Acknowledge their struggle: "This topic trips up most students..."
 - Share insider tips: "Here's what toppers do differently..."
 - Use cricket/Bollywood analogies for Indian students
-- End with genuine encouragement, not generic "You can do it!"
-- Ask follow-up questions to keep them engaged"""
+- End with genuine encouragement"""
 
         # Context injection - CRITICAL for follow-ups
         context_block = ""
@@ -797,59 +849,193 @@ Answer naturally. Make it feel premium and handcrafted."""
         """Get SHORT, NATURAL instructions based on intent type."""
         
         instructions = {
-            "greeting": "Respond warmly in 1-2 sentences. Be friendly!",
+            "greeting": "Respond warmly in 1-2 sentences. Be friendly, no long explanations!",
             
             "conversational": "Keep it casual and brief. 1-2 sentences max.",
             
             "simple_fact": "Give a direct, factual answer. 1-2 sentences, no elaboration needed.",
             
-            "definition": "Define clearly in 2-3 sentences. Add one simple analogy if helpful.",
+            "definition": """Structure your definition:
+## [Concept Name]
+
+**Definition:** A clear, precise definition.
+
+**In Simple Words:** Easy explanation with a relatable analogy.
+
+**Key Points:**
+- Important aspect 1
+- Important aspect 2
+
+Keep it under 150 words.""",
             
-            "explanation": f"""Explain for {exam_mode} prep:
-- Clear explanation first
-- One relatable example (Indian context preferred)
-- Key formula with LaTeX if applicable
-- Under 250 words""",
+            "explanation": f"""Structure for {exam_mode} prep:
+
+## Understanding [Topic]
+
+Start with the core concept - why does this matter?
+
+### The Key Idea
+Explain the fundamental principle clearly.
+
+### How It Works
+- Step or aspect 1
+- Step or aspect 2
+
+### Formula (if applicable)
+\\[ Your formula here \\]
+
+### Real Example
+A relatable example from daily life.
+
+Keep it under 300 words, well-structured.""",
             
-            "calculation": """Solve step-by-step:
-**Given:** [list knowns]
-**Find:** [what to calculate]
-**Solution:**
-1. [step with formula]
-2. [calculation]
-**Answer:** [with units]""",
+            "calculation": """Structure your solution:
+
+## Solution
+
+**Given:**
+- Known value 1 = ...
+- Known value 2 = ...
+
+**To Find:** What we need to calculate
+
+**Formula:**
+\\[ Required formula \\]
+
+**Solution Steps:**
+1. First step with calculation
+2. Second step with substitution
+3. Final calculation
+
+**Answer:** \\( result \\) with proper units
+
+> **Quick Check:** Verify your answer makes sense.""",
             
-            "derivation": """Show derivation clearly:
-1. Starting principle/equation
-2. Each transformation step
-3. Brief reasoning
-4. Final result boxed""",
+            "derivation": """Structure your derivation:
+
+## Derivation of [Formula/Theorem]
+
+**Starting Point:**
+\\[ Initial equation or principle \\]
+
+**Step-by-Step:**
+1. First transformation - explain why
+2. Apply rule/theorem - show work
+3. Simplify - explain each step
+
+**Final Result:**
+\\[ \\boxed{{Final formula}} \\]
+
+> **Remember:** Key insight to remember.""",
             
-            "comparison": """Compare using a markdown table:
-| Aspect | Option A | Option B |
-|--------|----------|----------|
-Then summarize key differences in 2-3 bullets.""",
+            "comparison": """Structure your comparison:
+
+## [A] vs [B]
+
+| Aspect | [A] | [B] |
+|--------|-----|-----|
+| Property 1 | ... | ... |
+| Property 2 | ... | ... |
+| Property 3 | ... | ... |
+
+### Key Differences
+- **Main difference 1:** Explanation
+- **Main difference 2:** Explanation
+
+### When to Use Which
+Brief guidance on practical application.""",
             
-            "process": "Explain in numbered steps. Keep each step brief and clear.",
+            "process": """Explain with numbered steps:
+
+## How [Process] Works
+
+1. **Step 1:** What happens and why
+2. **Step 2:** Next action with detail
+3. **Step 3:** Continuation
+4. **Result:** Final outcome
+
+> **Tip:** A useful insight for remembering.""",
             
-            "example": "Give a practical, relatable example. Show the concept in action.",
+            "example": """Structure your example:
+
+## Example: [Brief title]
+
+**Scenario:** Set up the problem/situation.
+
+**Analysis:**
+- Key observation 1
+- Key observation 2
+
+**Solution/Outcome:**
+Show how the concept applies.
+
+**Key Takeaway:** What this example teaches.""",
             
-            "practice": "Provide a practice problem with a hint. Include solution approach.",
+            "practice": """Structure practice problem:
+
+## Practice Problem
+
+**Question:** Clear problem statement.
+
+**Hint:** 
+> Think about [concept/approach]...
+
+**Approach:**
+1. First step to consider
+2. Key formula to use
+3. What to calculate
+
+Try it yourself first! Solution approach above.""",
             
             "follow_up": """FOLLOW-UP: Reference the CONVERSATION HISTORY above.
 - If asked "what did we discuss?": List actual topics from history
 - If asked to continue: Build on previous explanation, don't restart
-- Be direct, no unnecessary metaphors""",
+- Be direct and structured""",
 
-            "revision": "Quick revision: Key points (bullets), important formulas (LaTeX), memory tricks.",
+            "revision": """Quick revision format:
+
+## Quick Revision: [Topic]
+
+**Key Points:**
+- Point 1
+- Point 2
+- Point 3
+
+**Important Formulas:**
+\\[ Formula 1 \\]
+\\[ Formula 2 \\]
+
+**Memory Trick:** A helpful mnemonic or analogy.""",
             
-            "confusion": """Student seems confused. Help them:
-- Start with empathy
-- Simplest possible explanation
-- Basic analogy
-- Tiny steps""",
+            "confusion": """Help the confused student:
+
+## Let's Simplify This
+
+**The Simple Version:**
+Explain in the most basic terms possible.
+
+**Think of it Like:**
+A very relatable analogy they'll understand.
+
+**Key Things to Remember:**
+- Just this one thing
+- And this simple fact
+
+Does this make more sense? What part is still unclear?""",
             
-            "verification": "Verify if correct/incorrect, explain why, show right approach if wrong."
+            "verification": """Verify and correct:
+
+## Checking Your Understanding
+
+**Your approach:** Brief summary of what they did.
+
+**The Issue:** What went wrong (if anything).
+
+**Correct Approach:**
+1. Right step 1
+2. Right step 2
+
+**Key Insight:** What to remember for next time."""
         }
         
         return instructions.get(intent, instructions["explanation"])

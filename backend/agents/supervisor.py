@@ -163,10 +163,18 @@ class SupervisorAgent(BaseAgent):
             intent = self._detect_intent(query)
             logger.info(f"🎯 Detected intent: {intent}")
             
-            # 🆕 Step 1.5: Use Agent Negotiation for complex queries
-            # Agent negotiation enables multi-agent collaboration with dynamic role assignment
-            use_negotiation = context.get('use_agent_negotiation', False)
-            if use_negotiation and self.agent_negotiator and intent in ['comparison', 'derivation', 'application']:
+            # 🆕 Step 1.5: Use Agent Negotiation for TRUE multi-agent collaboration
+            # EXPANDED: Now enabled for most educational intents, not just complex queries
+            # This is what makes us different from chatbots - agents actually collaborate
+            use_negotiation = context.get('use_agent_negotiation', False) or context.get('enable_agent_negotiation', False)
+            
+            # Expanded intent list - negotiation for most educational queries
+            negotiation_intents = [
+                'concept', 'comparison', 'derivation', 'application', 
+                'explanation', 'problem', 'analysis', 'doubt'
+            ]
+            
+            if use_negotiation and self.agent_negotiator and intent in negotiation_intents:
                 logger.info("🤝 Using Agent Negotiation for complex query")
                 try:
                     negotiation_result = await self.agent_negotiator.negotiate(query, context)
@@ -177,9 +185,13 @@ class SupervisorAgent(BaseAgent):
                     )
                     
                     # Build response from collaboration
+                    # Note: Only mentor goes to _validate_responses, insights/verification are metadata
                     agent_responses = {
-                        'mentor': collaborative_response.primary_response,
-                        'collaboration_insights': collaborative_response.supporting_insights,
+                        'mentor': collaborative_response.primary_response
+                    }
+                    # Store collaboration metadata separately (not for validation)
+                    context['collaboration_metadata'] = {
+                        'insights': collaborative_response.supporting_insights,
                         'verification': collaborative_response.verification_results
                     }
                     
@@ -453,6 +465,59 @@ class SupervisorAgent(BaseAgent):
         validated = {}
         
         for agent_name, response in agent_responses.items():
+            # Handle unexpected response types (list, str, None)
+            if response is None:
+                logger.warning(f"⚠️ {agent_name} returned None response")
+                validated[agent_name] = {
+                    'agent': agent_name,
+                    'success': False,
+                    'error': 'No response from agent',
+                    'content': ''
+                }
+                continue
+            
+            # If response is a list, wrap it in a dict
+            if isinstance(response, list):
+                logger.warning(f"⚠️ {agent_name} returned list instead of dict, wrapping...")
+                # Try to extract content from the list
+                if len(response) > 0:
+                    first_item = response[0]
+                    if isinstance(first_item, dict):
+                        response = first_item  # Use first dict item
+                    else:
+                        response = {
+                            'agent': agent_name,
+                            'success': True,
+                            'content': str(first_item) if first_item else ''
+                        }
+                else:
+                    response = {
+                        'agent': agent_name,
+                        'success': False,
+                        'error': 'Empty list response',
+                        'content': ''
+                    }
+            
+            # If response is a string, wrap it in a dict
+            if isinstance(response, str):
+                logger.warning(f"⚠️ {agent_name} returned string instead of dict, wrapping...")
+                response = {
+                    'agent': agent_name,
+                    'success': True,
+                    'content': response
+                }
+            
+            # Now response should be a dict - validate it
+            if not isinstance(response, dict):
+                logger.error(f"❌ {agent_name} response has unexpected type: {type(response)}")
+                validated[agent_name] = {
+                    'agent': agent_name,
+                    'success': False,
+                    'error': f'Unexpected response type: {type(response).__name__}',
+                    'content': ''
+                }
+                continue
+            
             # Check if response is successful
             if not response.get('success', False):
                 logger.warning(f"⚠️ {agent_name} response validation failed")

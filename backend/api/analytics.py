@@ -182,3 +182,66 @@ async def get_learning_analytics(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get learning analytics: {str(e)}")
+
+
+# =============================================================================
+# FEEDBACK TRACKING - Track user feedback on AI responses
+# =============================================================================
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime, timezone
+
+
+class FeedbackRequest(BaseModel):
+    """Request model for feedback submission"""
+    feedback_type: str  # 'helpful' or 'not_helpful'
+    message_id: Optional[str] = None
+    question: Optional[str] = None
+    response_preview: Optional[str] = None
+    session_id: Optional[str] = None
+
+
+@router.post("/feedback")
+async def submit_feedback(
+    request: FeedbackRequest,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Track user feedback on AI responses.
+    Used to improve response quality and understand student needs.
+    """
+    try:
+        feedback_doc = {
+            "user_id": user.user_id,
+            "feedback_type": request.feedback_type,
+            "message_id": request.message_id,
+            "question": request.question,
+            "response_preview": request.response_preview[:500] if request.response_preview else None,
+            "session_id": request.session_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "is_positive": request.feedback_type == "helpful"
+        }
+        
+        # Store feedback
+        await db.ai_feedback.insert_one(feedback_doc)
+        
+        # Update user's feedback stats
+        await db.user_analytics.update_one(
+            {"user_id": user.user_id},
+            {
+                "$inc": {
+                    "total_feedback_given": 1,
+                    f"feedback_{request.feedback_type}": 1
+                },
+                "$set": {"last_feedback_at": datetime.now(timezone.utc).isoformat()}
+            },
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "message": "Feedback recorded. Thank you for helping us improve!"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to record feedback: {str(e)}")

@@ -221,7 +221,7 @@ class VisualMetadata(BaseModel):
     style: VisualStyle
     complexity: ComplexityLevel
     visual_strategy: str = Field(..., description="Human-readable strategy description")
-    generation_model: str = Field(default="imagen-3.0-generate-002")
+    generation_model: str = Field(default="dall-e-3")
 
 
 class GenerationInfo(BaseModel):

@@ -106,14 +106,17 @@ NEVER:
     @staticmethod
     def is_doubt_query(query: str) -> bool:
         """
-        Detect if this is a TRUE doubt/confusion query needing agentic handling.
+        Detect if this is a doubt/confusion query needing empathetic agentic handling.
         
-        IMPORTANT: This is RESTRICTIVE by design!
-        - Normal tutor questions ("what is X", "explain Y") → ResponseComposer
-        - TRUE confusion/frustration ("I don't understand", "stuck") → here
+        PHILOSOPHY: Capture student confusion more generously.
+        Students often express confusion in subtle ways. A real teacher would
+        pick up on these signals. We should too.
         
-        The goal is to route ONLY genuine confusion to the agentic system,
-        not every academic question.
+        The AgenticDoubtResolver provides:
+        - Empathetic, patient explanations
+        - Step-by-step reasoning with tools
+        - Memory of what confused the student before
+        - Verification to ensure accuracy
         """
         query_lower = query.lower().strip()
         
@@ -151,10 +154,59 @@ NEVER:
             return True
         
         # ==========================================================================
-        # DEFAULT: NOT A DOUBT - Normal questions go to ResponseComposer
+        # TIER 2: SUBTLE CONFUSION (Nuanced signals that real teachers catch)
         # ==========================================================================
-        # "what is", "how does", "why is", "explain" are NORMAL tutor questions
-        # They should NOT trigger agentic doubt resolution
+        subtle_confusion = [
+            # Questioning understanding
+            "but why", "but how", "but what",  # "But" often signals lingering doubt
+            "wait, so", "wait so", "so basically",  # Re-processing signals
+            "i thought", "i think i",  # Uncertainty hedging
+            
+            # Requesting different angles
+            "can you explain", "could you explain",  # Polite re-request
+            "what does it mean", "what do you mean",
+            "in simple terms", "in simple words", "simply explain",
+            "eli5", "explain like i'm 5", "dumb it down",
+            
+            # Partial understanding signals
+            "i get that but", "i understand but", "okay but",
+            "that part is clear but", "this part confuses",
+            "lost after", "lost at", "lost me at",
+            
+            # Seeking confirmation (often means doubt)
+            "am i right", "is that right", "is this right",
+            "did i get", "have i got",
+            
+            # Asking "why" in specific ways (conceptual doubt)
+            "why exactly", "why specifically", "why does this happen",
+            "how come", "how is that possible",
+            
+            # Common student doubt phrases
+            "not sure", "not clear", "a bit confused",
+            "little confused", "kind of confused",
+            "having trouble", "having difficulty", "trouble understanding",
+            
+            # Help requests
+            "please help", "can you help", "need help with",
+            "help with this", "help me with",
+        ]
+        
+        if any(phrase in query_lower for phrase in subtle_confusion):
+            logger.info(f"🤔 SUBTLE DOUBT detected: '{query[:50]}...'")
+            return True
+        
+        # ==========================================================================
+        # TIER 3: FOLLOW-UP PATTERNS (Often indicate previous doubt)
+        # ==========================================================================
+        # Short follow-ups after explanations often mean the student didn't fully get it
+        short_followups = ["why?", "how?", "why is that?", "how so?", "really?", "huh?"]
+        if query_lower.strip('?!. ') in [f.strip('?!. ') for f in short_followups]:
+            logger.info(f"🤔 SHORT FOLLOW-UP detected (likely confusion): '{query}'")
+            return True
+        
+        # ==========================================================================
+        # DEFAULT: Not a doubt - route to standard explanation flow
+        # ==========================================================================
         return False
     
     @staticmethod

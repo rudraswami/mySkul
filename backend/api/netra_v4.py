@@ -1,20 +1,23 @@
 """
-🔮 NETRA v4.0 API - Visual Intelligence Endpoints
-=================================================
+🎬 NETRA v5.0 API - Scene-Based Visual Intelligence
+====================================================
 
-Production-grade API for the Visual Intelligence Orchestrator.
-Generates unique, modern, edtech-grade visuals for any educational question.
+Scene-based visual rendering API. NO AI image generation (DALL-E disabled).
+Returns scene data for frontend SceneRenderer to render.
+
+The frontend uses:
+- SceneObjectResolver: Converts entities → scene objects
+- ScenePrimitives: Rich visual components (environments, actors, surfaces)
+- SceneRenderer: Renders SVG scenes (NOT boxes!)
 
 Endpoints:
-    POST /api/netra/v4/generate - Generate visual for a question
-    POST /api/netra/v4/analyze - Analyze question without generation
+    POST /api/netra/v4/generate - Returns scene data for frontend rendering
+    POST /api/netra/v4/analyze - Analyze question (lightweight)
     GET  /api/netra/v4/health - Health check
-    GET  /api/netra/v4/metrics - Quality metrics
+    GET  /api/netra/v4/metrics - Metrics
 
-Security:
-    - API key stored in backend ENV only
-    - Never exposed to frontend
-    - Rate limited per user
+NOTE: DALL-E 3 image generation is DISABLED.
+      Frontend renders scenes using SceneRenderer.
 """
 
 import logging
@@ -24,65 +27,31 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from services.netra_v4 import (
-    VisualRequest,
-    VisualResponse,
-    UserContext,
-    create_orchestrator_from_settings,
-    NetraOrchestrator,
-)
-
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/netra/v4", tags=["NETRA v4 Visual Intelligence"])
+router = APIRouter(prefix="/api/netra/v4", tags=["NETRA v5 Scene-Based Visual"])
 
 # ============================================
-# SINGLETON ORCHESTRATOR
+# NOTE: OLD DALL-E 3 ORCHESTRATOR IS DISABLED
+# Frontend now renders scenes using SceneRenderer
 # ============================================
-
-_orchestrator: Optional[NetraOrchestrator] = None
-
-
-def get_orchestrator() -> NetraOrchestrator:
-    """
-    Get or create the Netra orchestrator singleton.
-    Uses settings from core.config.
-    """
-    global _orchestrator
-    
-    if _orchestrator is None:
-        try:
-            _orchestrator = create_orchestrator_from_settings()
-            logger.info("🔮 NETRA v4 Orchestrator initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize NETRA orchestrator: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail="Visual engine not configured. Check GEMINI_API_KEY."
-            )
-    
-    return _orchestrator
 
 
 # ============================================
-# REQUEST/RESPONSE MODELS (API Layer)
+# REQUEST/RESPONSE MODELS (Scene-Based API)
 # ============================================
 
 class GenerateRequest(BaseModel):
-    """API request for visual generation"""
+    """Request for scene-based visual generation"""
     question: str = Field(..., min_length=3, max_length=1000, description="Student's question")
     user_level: str = Field(default="intermediate", description="beginner/intermediate/advanced")
     language: str = Field(default="en", description="Language preference")
-    previous_questions: list[str] = Field(default_factory=list, description="Previous questions in session")
-    
-    # Optional overrides
-    force_style: Optional[str] = Field(None, description="Force specific visual style")
-    force_intent: Optional[str] = Field(None, description="Force specific teaching intent")
+    previous_questions: list = Field(default_factory=list, description="Previous questions")
     
     class Config:
         json_schema_extra = {
             "example": {
-                "question": "Explain how photosynthesis works in plants",
+                "question": "Explain friction",
                 "user_level": "intermediate",
                 "language": "en"
             }
@@ -90,241 +59,221 @@ class GenerateRequest(BaseModel):
 
 
 class AnalyzeRequest(BaseModel):
-    """API request for question analysis without generation"""
+    """Request for question analysis"""
     question: str = Field(..., min_length=3, max_length=1000)
     user_level: str = Field(default="intermediate")
-
-
-class AnalyzeResponse(BaseModel):
-    """Response from question analysis"""
-    success: bool
-    concept: str
-    sub_concepts: list[str]
-    key_entities: list[str]
-    relationships: list[str]
-    suggested_intent: str
-    suggested_style: str
-    complexity: str
-    detected_domain: Optional[str]
-
-
-class HealthResponse(BaseModel):
-    """Health check response"""
-    status: str
-    service: str
-    version: str
-    timestamp: str
-    components: dict
-
-
-class MetricsResponse(BaseModel):
-    """Quality metrics response"""
-    total_generations: int
-    unique_count: int
-    unique_ratio: float
-    recent_concepts: list[str]
 
 
 # ============================================
 # API ENDPOINTS
 # ============================================
 
-@router.post("/generate", response_model=VisualResponse)
+@router.post("/generate")
 async def generate_visual(
     request: GenerateRequest,
     background_tasks: BackgroundTasks
-) -> VisualResponse:
+):
     """
-    🔮 Generate a unique educational visual for a question.
+    🎬 Generate scene data for frontend SceneRenderer.
     
     This endpoint:
-    1. Analyzes the question to understand the concept
-    2. Determines the optimal visual strategy
-    3. Generates a unique image using Imagen
-    4. Adds teaching metadata (hotspots, steps, annotations)
-    5. Returns a complete visual package
+    1. Analyzes the question to determine intent
+    2. Returns scene data for frontend rendering
+    3. Does NOT generate AI images (DALL-E disabled)
     
-    The visual is guaranteed to be:
-    - Unique to this specific question
-    - Modern, edtech-grade quality
-    - Not a generic template or repeated pattern
+    The frontend will:
+    - Use SceneObjectResolver to create scene objects
+    - Use SceneRenderer to render SVG scenes
+    - Create rich visual environments, actors, surfaces
     """
-    logger.info(f"🔮 [API] Generate request: {request.question[:50]}...")
+    logger.info(f"🎬 [API] Scene request: {request.question[:50]}...")
     
     try:
-        orchestrator = get_orchestrator()
+        q_lower = request.question.lower()
         
-        # Convert API request to internal contract
-        visual_request = VisualRequest(
-            question=request.question,
-            context=UserContext(
-                previous_questions=request.previous_questions,
-                user_level=request.user_level,
-                language=request.language
-            ),
-            force_style=request.force_style,
-            force_intent=request.force_intent
-        )
+        # Detect intent (matches frontend IntentClassifier)
+        intent = "conceptual"
+        if "why" in q_lower or "how come" in q_lower or "what causes" in q_lower:
+            intent = "causal_inquiry"
+        elif "what if" in q_lower or "without" in q_lower or "imagine no" in q_lower:
+            intent = "counterfactual"
+        elif "compare" in q_lower or " vs " in q_lower or "difference" in q_lower:
+            intent = "comparative"
+        elif "intuitively" in q_lower or "simply" in q_lower:
+            intent = "intuitive"
+        elif "how does" in q_lower or "mechanism" in q_lower:
+            intent = "mechanistic"
+        elif "types of" in q_lower or "kinds of" in q_lower:
+            intent = "classificatory"
+        elif "calculate" in q_lower or "formula" in q_lower:
+            intent = "quantitative"
         
-        # Generate visual
-        response = await orchestrator.generate(visual_request)
+        # Extract topic
+        topic = request.question.replace("?", "").strip()
+        if len(topic) > 60:
+            topic = topic[:60] + "..."
         
-        if response.success:
-            logger.info(f"✅ [API] Visual generated successfully")
-        else:
-            logger.warning(f"⚠️ [API] Generation failed: {response.error}")
+        # Detect domain from question
+        domain = "physics"  # default
+        domain_keywords = {
+            "physics": ["force", "motion", "friction", "gravity", "energy", "momentum", "wave", "light"],
+            "chemistry": ["atom", "molecule", "bond", "reaction", "element", "compound", "acid", "base"],
+            "biology": ["cell", "dna", "gene", "organism", "photosynthesis", "respiration", "protein"],
+            "math": ["equation", "graph", "function", "theorem", "formula", "angle", "geometry"],
+        }
+        for d, keywords in domain_keywords.items():
+            if any(kw in q_lower for kw in keywords):
+                domain = d
+                break
         
-        return response
+        # Return scene data for frontend SceneRenderer
+        response = {
+            "success": True,
+            "type": "scene_based",
+            "use_scene_renderer": True,
+            "scene_data": {
+                "question": request.question,
+                "intent": intent,
+                "domain": domain,
+                "topic": topic,
+                "user_level": request.user_level,
+            },
+            "metadata": {
+                "concept": topic,
+                "intent": intent,
+                "domain": domain,
+                "style": "scene",
+                "render_mode": "scene_renderer",
+            },
+            "teaching": {
+                "title": f"Understanding: {topic[:40]}",
+                "summary": f"Visual explanation of {topic}",
+                "steps": [],
+                "key_takeaways": [],
+            },
+            "visual": None,  # No AI image - frontend renders scene
+        }
         
-    except HTTPException:
-        raise
+        logger.info(f"✅ [API] Scene data: intent={intent}, domain={domain}")
+        return JSONResponse(content=response)
+        
     except Exception as e:
-        logger.error(f"❌ [API] Error: {e}", exc_info=True)
+        logger.error(f"❌ [API] Scene error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_question(request: AnalyzeRequest) -> AnalyzeResponse:
+@router.post("/analyze")
+async def analyze_question(request: AnalyzeRequest):
     """
-    🧠 Analyze a question without generating a visual.
+    🧠 Analyze a question for scene-based rendering.
     
-    Useful for:
-    - Understanding what visual would be generated
-    - Debugging the strategy selection
-    - Pre-flight checks before generation
+    Returns:
+    - Detected intent
+    - Domain classification
+    - Suggested visual form
     """
     logger.info(f"🧠 [API] Analyze request: {request.question[:50]}...")
     
     try:
-        orchestrator = get_orchestrator()
+        q_lower = request.question.lower()
         
-        # Create minimal request
-        visual_request = VisualRequest(
-            question=request.question,
-            context=UserContext(user_level=request.user_level)
-        )
+        # Detect intent
+        intent = "conceptual"
+        if "why" in q_lower or "what causes" in q_lower:
+            intent = "causal_inquiry"
+        elif "what if" in q_lower or "without" in q_lower:
+            intent = "counterfactual"
+        elif "compare" in q_lower or " vs " in q_lower:
+            intent = "comparative"
+        elif "intuitively" in q_lower or "simply" in q_lower:
+            intent = "intuitive"
+        elif "how does" in q_lower:
+            intent = "mechanistic"
         
-        # Run analysis only (no image generation)
-        concept, strategy, _ = await orchestrator.strategy_resolver.resolve_complete(visual_request)
+        # Detect domain
+        domain = "physics"
+        domain_keywords = {
+            "physics": ["force", "motion", "friction", "gravity", "energy"],
+            "chemistry": ["atom", "molecule", "bond", "reaction"],
+            "biology": ["cell", "dna", "photosynthesis", "organism"],
+            "math": ["equation", "graph", "function", "theorem"],
+        }
+        for d, keywords in domain_keywords.items():
+            if any(kw in q_lower for kw in keywords):
+                domain = d
+                break
         
-        return AnalyzeResponse(
-            success=True,
-            concept=concept.core_concept,
-            sub_concepts=concept.sub_concepts,
-            key_entities=concept.key_entities,
-            relationships=concept.relationships,
-            suggested_intent=strategy.intent.value,
-            suggested_style=strategy.style.value,
-            complexity=concept.complexity.value,
-            detected_domain=concept.detected_domain
-        )
+        # Extract key entities (simple extraction)
+        topic = request.question.replace("?", "").strip()
+        
+        response = {
+            "success": True,
+            "concept": topic[:50],
+            "sub_concepts": [],
+            "key_entities": [],
+            "relationships": [],
+            "suggested_intent": intent,
+            "suggested_style": "scene",
+            "complexity": "medium",
+            "detected_domain": domain,
+            "render_mode": "scene_renderer",
+        }
+        
+        return JSONResponse(content=response)
         
     except Exception as e:
         logger.error(f"❌ [API] Analysis error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/health", response_model=HealthResponse)
-async def health_check() -> HealthResponse:
+@router.get("/health")
+async def health_check():
     """
-    🏥 Health check for NETRA v4 service.
+    🏥 Health check for NETRA v5 Scene-Based service.
     
-    Checks:
-    - Orchestrator initialization
-    - Gemini API connectivity
-    - Imagen availability
+    NOTE: DALL-E 3 is DISABLED. Frontend renders scenes.
     """
-    components = {
-        "orchestrator": "unknown",
-        "gemini": "unknown",
-        "imagen": "unknown"
-    }
-    
-    overall_status = "healthy"
-    
-    try:
-        orchestrator = get_orchestrator()
-        components["orchestrator"] = "healthy"
-        
-        # Test Gemini connectivity
-        try:
-            client = await orchestrator.strategy_resolver._get_client()
-            components["gemini"] = "healthy"
-        except Exception as e:
-            components["gemini"] = f"unhealthy: {str(e)[:50]}"
-            overall_status = "degraded"
-        
-        # Test Imagen connectivity
-        try:
-            await orchestrator.imagen_client._get_client()
-            components["imagen"] = "healthy"
-        except Exception as e:
-            components["imagen"] = f"unhealthy: {str(e)[:50]}"
-            overall_status = "degraded"
-            
-    except Exception as e:
-        components["orchestrator"] = f"unhealthy: {str(e)[:50]}"
-        overall_status = "unhealthy"
-    
-    return HealthResponse(
-        status=overall_status,
-        service="NETRA v4 Visual Intelligence",
-        version="4.0.0",
-        timestamp=datetime.utcnow().isoformat(),
-        components=components
-    )
+    return JSONResponse(content={
+        "status": "healthy",
+        "service": "NETRA v5 Scene-Based Visual",
+        "version": "5.0.0",
+        "timestamp": datetime.utcnow().isoformat(),
+        "components": {
+            "scene_resolver": "healthy",
+            "intent_classifier": "healthy",
+            "dall_e_3": "disabled",  # DALL-E is disabled!
+        },
+        "render_mode": "frontend_scene_renderer",
+        "note": "AI image generation disabled. Frontend renders SVG scenes."
+    })
 
 
-@router.get("/metrics", response_model=MetricsResponse)
-async def get_metrics() -> MetricsResponse:
+@router.get("/metrics")
+async def get_metrics():
     """
-    📊 Get quality metrics for NETRA v4.
-    
-    Returns:
-    - Total generations
-    - Unique visual count
-    - Uniqueness ratio
-    - Recent concepts
+    📊 Metrics for NETRA v5 Scene-Based service.
     """
-    try:
-        orchestrator = get_orchestrator()
-        metrics = orchestrator.get_quality_metrics()
-        
-        return MetricsResponse(
-            total_generations=metrics.get("total", 0),
-            unique_count=metrics.get("unique_count", 0),
-            unique_ratio=metrics.get("unique_ratio", 1.0),
-            recent_concepts=metrics.get("recent_concepts", [])
-        )
-        
-    except Exception as e:
-        logger.error(f"❌ [API] Metrics error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return JSONResponse(content={
+        "total_generations": 0,
+        "unique_count": 0,
+        "unique_ratio": 1.0,
+        "recent_concepts": [],
+        "render_mode": "scene_renderer",
+        "dall_e_disabled": True,
+    })
 
 
 @router.post("/generate-simple")
-async def generate_simple(question: str) -> VisualResponse:
+async def generate_simple(question: str):
     """
-    🚀 Simplified generation endpoint - just pass a question.
-    
-    Useful for quick testing and simple integrations.
+    🚀 Simplified generation - returns scene data.
     """
     request = GenerateRequest(question=question)
     return await generate_visual(request, BackgroundTasks())
 
 
 # ============================================
-# ERROR HANDLERS
+# NOTE: Exception handlers are registered at app level in main.py
+# This router relies on the global HTTPException handling
 # ============================================
-
-@router.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "error": exc.detail,
-            "error_code": "HTTP_ERROR"
-        }
-    )
 

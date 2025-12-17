@@ -41,6 +41,14 @@ const ACTIVE_TAB = {
 };
 
 // ============================================
+// FEATURE FLAG: SmartBoard Visibility
+// ============================================
+// Due to technical limitations, SmartBoard is temporarily disabled for v1 release.
+// Set to true to re-enable SmartBoard functionality.
+// All SmartBoard code remains intact for future enablement.
+const SMARTBOARD_ENABLED = false;
+
+// ============================================
 // ClassroomHeader Component
 // ============================================
 const ClassroomHeader = ({ 
@@ -77,33 +85,36 @@ const ClassroomHeader = ({
       {/* Right Section */}
       <div className="flex items-center gap-2">
         {/* SmartBoard Toggle Button - Desktop only */}
-        <button
-          onClick={onToggleBoard}
-          className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-            isBoardOpen 
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
-              : 'text-purple-700 bg-purple-100 hover:bg-purple-200 shadow-sm'
-          }`}
-          title={isBoardOpen ? 'Focus Mode (Hide Board)' : 'Show SmartBoard'}
-        >
-          {isBoardOpen ? (
-            <>
-              <Eye className="w-4 h-4" />
-              <span className="hidden lg:inline">Focus</span>
-            </>
-          ) : (
-            <>
-              <Columns className="w-4 h-4" />
-              <span className="hidden lg:inline">SmartBoard</span>
-              {hasVisual && (
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
-                </span>
-              )}
-            </>
-          )}
-        </button>
+        {/* TEMPORARILY HIDDEN: SmartBoard disabled for v1 release */}
+        {SMARTBOARD_ENABLED && (
+          <button
+            onClick={onToggleBoard}
+            className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              isBoardOpen 
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'text-purple-700 bg-purple-100 hover:bg-purple-200 shadow-sm'
+            }`}
+            title={isBoardOpen ? 'Focus Mode (Hide Board)' : 'Show SmartBoard'}
+          >
+            {isBoardOpen ? (
+              <>
+                <Eye className="w-4 h-4" />
+                <span className="hidden lg:inline">Focus</span>
+              </>
+            ) : (
+              <>
+                <Columns className="w-4 h-4" />
+                <span className="hidden lg:inline">SmartBoard</span>
+                {hasVisual && (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
+                  </span>
+                )}
+              </>
+            )}
+          </button>
+        )}
         
         {rightActions}
       </div>
@@ -115,6 +126,13 @@ const ClassroomHeader = ({
 // MobileTabBar Component
 // ============================================
 const MobileTabBar = ({ activeTab, onTabChange, hasNewVisual }) => {
+  // TEMPORARILY HIDDEN: SmartBoard disabled for v1 release
+  // When SMARTBOARD_ENABLED is false, don't show the mobile tab bar at all
+  // (since it's only useful for switching between Chat and Board)
+  if (!SMARTBOARD_ENABLED) {
+    return null;
+  }
+  
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-6 z-30">
       <button
@@ -181,6 +199,7 @@ export default function ClassroomLayout({
   const [hasNewVisual, setHasNewVisual] = useState(false);
   
   // Collapsible SmartBoard state - Default to closed (Zen Mode)
+  // When SMARTBOARD_ENABLED is false, board is always closed
   const [isBoardOpen, setIsBoardOpen] = useState(false);
   
   // Track previous visual artifact for auto-open logic
@@ -190,7 +209,13 @@ export default function ClassroomLayout({
   const prevLoadingRef = useRef(isGeneratingVisual);
 
   // Auto-open board when loading starts or new visual arrives
+  // DISABLED when SMARTBOARD_ENABLED is false
   useEffect(() => {
+    // Skip auto-open logic when SmartBoard is disabled
+    if (!SMARTBOARD_ENABLED) {
+      return;
+    }
+    
     const hasVisual = visualArtifact && (
       visualArtifact.svg || 
       visualArtifact.visual_sketch?.svg || 
@@ -290,9 +315,10 @@ export default function ClassroomLayout({
               {/* Left Panel - Chat */}
               {/* ZEN MODE: Full width, content centered inside (like ChatGPT) */}
               {/* LAB MODE: 40% left panel when visual active */}
+              {/* SMARTBOARD DISABLED: Always full width */}
               <div 
                 className={`flex flex-col overflow-hidden transition-all duration-500 ease-in-out bg-white ${
-                  isBoardOpen 
+                  SMARTBOARD_ENABLED && isBoardOpen 
                     ? 'w-[40%] min-w-[400px] border-r border-gray-200' 
                     : 'flex-1'
                 }`}
@@ -303,31 +329,36 @@ export default function ClassroomLayout({
 
               {/* Right Panel - SmartBoard */}
               {/* LAB MODE: 60% right panel with visual/concept card */}
-              <div 
-                className={`overflow-hidden transition-all duration-500 ease-in-out bg-slate-50 ${
-                  isBoardOpen 
-                    ? 'flex w-[60%]' 
-                    : 'hidden w-0'
-                }`}
-              >
-                <SmartBoard
-                  artifact={visualArtifact}
-                  onFullscreen={onVisualFullscreen}
-                  className="h-full w-full"
-                  currentTopic={currentTopic}
-                  keyFormula={keyFormula}
-                  subject={currentSubject}
-                  isConversationActive={hasStartedChat}
-                  isLoading={isGeneratingVisual}
-                  userQuestion={userQuestion}
-                />
-              </div>
+              {/* TEMPORARILY HIDDEN: SmartBoard disabled for v1 release */}
+              {SMARTBOARD_ENABLED && (
+                <div 
+                  className={`overflow-hidden transition-all duration-500 ease-in-out bg-slate-50 ${
+                    isBoardOpen 
+                      ? 'flex w-[60%]' 
+                      : 'hidden w-0'
+                  }`}
+                >
+                  <SmartBoard
+                    artifact={visualArtifact}
+                    onFullscreen={onVisualFullscreen}
+                    className="h-full w-full"
+                    currentTopic={currentTopic}
+                    keyFormula={keyFormula}
+                    subject={currentSubject}
+                    isConversationActive={hasStartedChat}
+                    isLoading={isGeneratingVisual}
+                    userQuestion={userQuestion}
+                  />
+                </div>
+              )}
             </div>
 
             {/* === MOBILE LAYOUT === */}
-            <div className="md:hidden flex-1 flex flex-col overflow-hidden pb-16">
+            {/* When SMARTBOARD_ENABLED is false, no bottom padding needed (no tab bar) */}
+            <div className={`md:hidden flex-1 flex flex-col overflow-hidden ${SMARTBOARD_ENABLED ? 'pb-16' : ''}`}>
               <AnimatePresence mode="wait">
-                {activeTab === ACTIVE_TAB.CHAT ? (
+                {/* When SmartBoard disabled, always show chat */}
+                {(!SMARTBOARD_ENABLED || activeTab === ACTIVE_TAB.CHAT) ? (
                   <motion.div
                     key="chat"
                     initial={{ opacity: 0, x: -20 }}
@@ -392,14 +423,16 @@ export default function ClassroomLayout({
         isLoading={isLoadingHistory}
       />
 
-      {/* Visual Toast (Mobile Only) */}
-      <VisualToast
-        show={showVisualToast}
-        onClose={() => {
-          setShowVisualToast(false);
-          handleTabChange(ACTIVE_TAB.BOARD);
-        }}
-      />
+      {/* Visual Toast (Mobile Only) - Hidden when SmartBoard disabled */}
+      {SMARTBOARD_ENABLED && (
+        <VisualToast
+          show={showVisualToast}
+          onClose={() => {
+            setShowVisualToast(false);
+            handleTabChange(ACTIVE_TAB.BOARD);
+          }}
+        />
+      )}
     </div>
   );
 }

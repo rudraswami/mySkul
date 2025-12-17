@@ -62,6 +62,7 @@ class UnifiedAIOrchestrator:
         self._supervisor = None
         self._hybrid_engine = None
         self._negotiator = None
+        self._cognitive_orchestrator = None  # NEW: Cognitive OS v2.0
         
         logger.info("🧠 UnifiedAIOrchestrator initialized - Intelligent routing active")
     
@@ -108,6 +109,19 @@ class UnifiedAIOrchestrator:
             from services.cognitive_model.agent_negotiation import get_agent_negotiator
             self._negotiator = get_agent_negotiator(self.llm_api_key)
         return self._negotiator
+    
+    @property
+    def cognitive_orchestrator(self):
+        """Lazy load cognitive orchestrator - The brain of Cognitive OS v2.0"""
+        if self._cognitive_orchestrator is None:
+            try:
+                from services.cognitive_model.cognitive_orchestrator import get_cognitive_orchestrator
+                self._cognitive_orchestrator = get_cognitive_orchestrator(self.db, self.llm_api_key)
+                logger.info("🧠 CognitiveOrchestrator loaded - Teach-back, depth adaptation, consistency active")
+            except ImportError as e:
+                logger.warning(f"CognitiveOrchestrator not available: {e}")
+                self._cognitive_orchestrator = None
+        return self._cognitive_orchestrator
     
     async def process(
         self,
@@ -159,6 +173,30 @@ class UnifiedAIOrchestrator:
             logger.info(f"   Complexity: {routing_decision.complexity.value}")
             logger.info(f"   Agents: {routing_decision.agents_to_activate}")
             
+            # === STEP 1.5: Cognitive Context Preparation (NEW - Cognitive OS v2.0) ===
+            cognitive_context = None
+            concept_name = self._extract_concept_name(message)
+            
+            if self.cognitive_orchestrator and routing_decision.pipeline.value != "fast":
+                try:
+                    cognitive_context = await self.cognitive_orchestrator.prepare_response_context(
+                        user_id=user_id,
+                        session_id=session_id,
+                        question=message,
+                        concept_name=concept_name,
+                        subject=subject or "General"
+                    )
+                    
+                    # Add depth prompt to context for LLM guidance
+                    full_context["cognitive_depth_prompt"] = cognitive_context.depth_prompt
+                    full_context["student_level"] = cognitive_context.student_state.student_level.value
+                    full_context["recommended_depth"] = cognitive_context.depth_recommendation.depth
+                    
+                    logger.info(f"🧠 Cognitive: level={cognitive_context.student_state.student_level.value}, "
+                               f"depth={cognitive_context.depth_recommendation.depth}")
+                except Exception as cog_err:
+                    logger.warning(f"⚠️ Cognitive context prep failed (non-blocking): {cog_err}")
+            
             # === STEP 2: Execute Appropriate Pipeline ===
             from services.intelligent_routing_engine import RecommendedPipeline
             
@@ -181,7 +219,40 @@ class UnifiedAIOrchestrator:
                 # Default to multi-agent
                 result = await self._multi_agent_response(message, full_context, routing_decision)
             
-            # === STEP 3: Post-Processing ===
+            # === STEP 3: Cognitive Enhancement (Cognitive OS v2.0) ===
+            # Handles: Student state tracking, depth adaptation, consistency checking
+            # NOTE: TeachMeBack is handled separately via TeachMeBackModal → /api/ai/teach-me-back
+            if cognitive_context and self.cognitive_orchestrator:
+                try:
+                    # Extract the main response content
+                    main_content = self._extract_main_content(result)
+                    
+                    if main_content:
+                        # Enhance response with consistency check
+                        cognitive_response = await self.cognitive_orchestrator.enhance_response(
+                            user_id=user_id,
+                            session_id=session_id,
+                            original_response=main_content,
+                            cognitive_context=cognitive_context,
+                            subject=subject or "General"
+                        )
+                        
+                        # Update result with enhanced response
+                        self._apply_cognitive_enhancement(result, cognitive_response)
+                        
+                        # Add cognitive metadata
+                        result["cognitive"] = {
+                            "student_level": cognitive_context.student_state.student_level.value,
+                            "mastery": cognitive_context.student_state.mastery_level,
+                            "depth_used": cognitive_context.depth_recommendation.depth,
+                            "consistency_status": cognitive_context.consistency_check.status.value if cognitive_context.consistency_check else "no_check"
+                        }
+                        
+                        logger.info(f"🧠 Cognitive enhancement applied: level={cognitive_context.student_state.student_level.value}")
+                except Exception as cog_err:
+                    logger.warning(f"⚠️ Cognitive enhancement failed (non-blocking): {cog_err}")
+            
+            # === STEP 4: Post-Processing ===
             generation_time = time.time() - start_time
             
             # Add orchestration metadata
@@ -192,7 +263,8 @@ class UnifiedAIOrchestrator:
                 "agents_activated": routing_decision.agents_to_activate,
                 "tools_enabled": routing_decision.tools_to_enable,
                 "generation_time": generation_time,
-                "routing_reasoning": routing_decision.reasoning
+                "routing_reasoning": routing_decision.reasoning,
+                "cognitive_os_active": cognitive_context is not None
             }
             
             logger.info(f"✅ Orchestration complete in {generation_time:.2f}s")
@@ -255,13 +327,16 @@ class UnifiedAIOrchestrator:
         """Multi-agent response using Supervisor"""
         
         # Prepare context for supervisor
+        # Use routing decision's enable_agent_negotiation flag
         supervisor_context = {
             "subject": context.get("subject", "General"),
             "session_id": context.get("session_id"),
             "user_id": context.get("user_id"),
             "exam_mode": context.get("exam_mode", "General"),
             "request_visual": routing_decision.enable_visual,
-            "use_agent_negotiation": True,  # Enable negotiation
+            # Use routing decision flag - enables true multi-agent collaboration
+            "enable_agent_negotiation": getattr(routing_decision, 'enable_agent_negotiation', True),
+            "use_agent_negotiation": getattr(routing_decision, 'enable_agent_negotiation', True),
             "student_profile": await self._get_student_profile(context),
             "memory_context": await self._get_memory_context(context)
         }
@@ -545,10 +620,16 @@ class UnifiedAIOrchestrator:
         if result.get("professor", {}).get("content"):
             professor_content = result["professor"]["content"]
         
-        # Combine for main content
+        # Combine for main content - NO STATIC HEADERS
+        # The AI should naturally structure content, not us adding template headers
         main_content = mentor_content
+        # Only add professor content if it's substantially different and adds value
+        # Don't add static "Additional Details" header - let the response flow naturally
         if professor_content and professor_content != mentor_content:
-            main_content += f"\n\n**Additional Details:**\n{professor_content[:500]}"
+            # Check if professor adds truly new info (not just overlap)
+            if len(professor_content) > 100 and professor_content[:50] not in mentor_content:
+                # Append seamlessly without static header
+                main_content += f"\n\n{professor_content[:800]}"
         
         return {
             "response": {
@@ -664,6 +745,110 @@ I'm here to help! 🤝""",
                 "routing_reasoning": f"Error occurred: {error}"
             }
         }
+    
+    # =========================================================================
+    # Cognitive OS v2.0 Helper Methods
+    # =========================================================================
+    
+    def _extract_concept_name(self, message: str) -> str:
+        """Extract the main concept/topic from a question."""
+        import re
+        
+        # Remove question words and common prefixes
+        prefixes = [
+            r'^(what is|what are|explain|describe|define|tell me about|help me understand)\s+',
+            r'^(how does|how do|why does|why do|when does)\s+',
+            r'^(can you explain|please explain|i want to know about)\s+',
+        ]
+        
+        concept = message.lower().strip()
+        for pattern in prefixes:
+            concept = re.sub(pattern, '', concept, flags=re.IGNORECASE)
+        
+        # Remove trailing punctuation
+        concept = concept.rstrip('?!.,')
+        
+        # Truncate if too long
+        words = concept.split()
+        if len(words) > 5:
+            concept = ' '.join(words[:5])
+        
+        return concept.strip() or "general concept"
+    
+    def _extract_main_content(self, result: Dict[str, Any]) -> Optional[str]:
+        """Extract the main response content from result."""
+        try:
+            # Try different paths where content might be
+            if "response" in result:
+                response = result["response"]
+                
+                # Path 1: default_view.main_content.content
+                if "default_view" in response:
+                    main_content = response["default_view"].get("main_content", {})
+                    if isinstance(main_content, dict):
+                        content = main_content.get("content", "")
+                        if content:
+                            return content
+                    elif isinstance(main_content, str):
+                        return main_content
+                
+                # Path 2: progressive_sections.explanation
+                if "progressive_sections" in response:
+                    explanation = response["progressive_sections"].get("explanation", "")
+                    if explanation:
+                        return explanation
+            
+            # Path 3: Direct content field
+            if "content" in result:
+                return result["content"]
+            
+            return None
+        except Exception:
+            return None
+    
+    def _apply_cognitive_enhancement(
+        self,
+        result: Dict[str, Any],
+        cognitive_response: Any
+    ):
+        """
+        Apply cognitive enhancement to the result.
+        
+        Handles:
+        - Consistency acknowledgments (if we explained differently before)
+        - Updated response content
+        
+        NOTE: TeachMeBack link is added by frontend, not here.
+        """
+        try:
+            enhanced_content = cognitive_response.enhanced_response
+            
+            # Update the main content with enhanced version
+            if "response" in result:
+                response = result["response"]
+                
+                # Update default_view.main_content.content
+                if "default_view" in response:
+                    if "main_content" in response["default_view"]:
+                        if isinstance(response["default_view"]["main_content"], dict):
+                            response["default_view"]["main_content"]["content"] = enhanced_content
+                        else:
+                            response["default_view"]["main_content"] = {
+                                "content": enhanced_content,
+                                "type": "markdown"
+                            }
+                    else:
+                        response["default_view"]["main_content"] = {
+                            "content": enhanced_content,
+                            "type": "markdown"
+                        }
+                
+                # Update progressive_sections if exists
+                if "progressive_sections" in response:
+                    response["progressive_sections"]["explanation"] = enhanced_content
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Could not apply cognitive enhancement: {e}")
 
 
 # Factory function

@@ -46,7 +46,7 @@ class TeachingMetadataGenerator:
     - Takeaways: Summary points for retention
     """
     
-    def __init__(self, gemini_api_key: str, model: str = "gemini-1.5-flash"):
+    def __init__(self, gemini_api_key: str, model: str = "gemini-2.5-flash"):
         self.api_key = gemini_api_key
         self.model = model
         self._client = None
@@ -319,7 +319,7 @@ Respond with ONLY valid JSON:
             return teaching_flow
 
 
-def create_teaching_generator(gemini_api_key: str, model: str = "gemini-1.5-flash") -> TeachingMetadataGenerator:
+def create_teaching_generator(gemini_api_key: str, model: str = "gemini-2.5-flash") -> TeachingMetadataGenerator:
     """Factory function to create a teaching metadata generator"""
     return TeachingMetadataGenerator(gemini_api_key, model)
 

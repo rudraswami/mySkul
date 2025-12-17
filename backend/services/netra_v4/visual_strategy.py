@@ -12,7 +12,8 @@ This is the brain that decides:
     - What LAYOUT will communicate best
     - What ELEMENTS should be emphasized
 
-Uses Gemini 1.5 Flash for intelligent reasoning about visual strategy.
+Uses Gemini 2.5 Flash for intelligent reasoning about visual strategy.
+Outputs optimized prompts for DALL-E 3 image generation.
 """
 
 import logging
@@ -34,8 +35,31 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================
-# STRATEGY RESOLVER
+# DALL-E 3 PROMPT TEMPLATES
 # ============================================
+
+DALLE3_STYLE_DESCRIPTORS = {
+    VisualStyle.MODERN_CLEAN: "sleek modern design, clean lines, professional educational illustration, subtle gradients, premium quality, like a high-end textbook cover",
+    VisualStyle.ILLUSTRATED: "richly illustrated, vibrant detailed artwork, dynamic composition, engaging colorful scene, like a premium animated educational video frame",
+    VisualStyle.INFOGRAPHIC: "elegant infographic design, clear visual hierarchy, beautiful data visualization, modern icons and typography, magazine quality",
+    VisualStyle.WHITEBOARD: "artistic whiteboard illustration, hand-drawn aesthetic with character, warm educational feel, like an animated explainer video",
+    VisualStyle.SCIENTIFIC: "scientific illustration, precise technical detail, elegant diagram, like Nature or Science journal quality",
+    VisualStyle.CONCEPTUAL: "artistic concept visualization, abstract but meaningful, creative visual metaphor, thought-provoking design"
+}
+
+DALLE3_INTENT_FRAMING = {
+    TeachingIntent.EXPLAIN: "an illuminating visual that explains {concept} in a way that creates an 'aha' moment. Show the concept in action, not as abstract symbols",
+    TeachingIntent.COMPARE: "a striking visual comparison that clearly shows the differences and similarities in {concept}. Use visual contrast and side-by-side elements",
+    TeachingIntent.SHOW_PROCESS: "a dynamic visual showing the process of {concept} step by step. Show movement, flow, and transformation with visual cues",
+    TeachingIntent.SHOW_STRUCTURE: "an elegant exploded or cross-section view revealing the structure of {concept}. Show parts, layers, and relationships clearly",
+    TeachingIntent.DERIVE: "a visual journey through the derivation of {concept}, showing each logical step building on the previous",
+    TeachingIntent.CALCULATE: "a visual worked example of {concept}, showing the problem-solving process in an intuitive way",
+    TeachingIntent.VISUALIZE: "a vivid, immersive visualization of {concept} that makes the abstract tangible and memorable",
+    TeachingIntent.CAUSE_EFFECT: "a dramatic visual showing cause and effect in {concept}. Make the causation clear through visual storytelling",
+    TeachingIntent.TIMELINE: "a beautifully designed timeline of {concept} that tells a visual story through time",
+    TeachingIntent.RELATIONSHIP: "an elegant visual map showing how elements of {concept} connect and relate to each other"
+}
+
 
 class VisualStrategyResolver:
     """
@@ -44,7 +68,7 @@ class VisualStrategyResolver:
     maps to visual strategy without subject hardcoding.
     """
     
-    def __init__(self, gemini_api_key: str, model: str = "gemini-1.5-flash"):
+    def __init__(self, gemini_api_key: str, model: str = "gemini-2.5-flash"):
         self.api_key = gemini_api_key
         self.model = model
         self._client = None
@@ -74,18 +98,19 @@ Respond with ONLY valid JSON (no markdown):
 {{
     "core_concept": "The main concept being asked about (e.g., 'photosynthesis', 'Newton third law', 'quadratic equation')",
     "sub_concepts": ["Related concept 1", "Related concept 2"],
-    "key_entities": ["Entity 1", "Entity 2"],
-    "relationships": ["Entity1 causes Entity2", "Entity3 contains Entity4"],
+    "key_entities": ["Physical objects, forces, particles, or elements that should be SHOWN in the visual"],
+    "relationships": ["How Entity1 affects Entity2", "What causes what"],
     "constraints": ["Physical law or rule that applies"],
     "detected_domain": "physics/chemistry/biology/math/history/geography/general",
-    "complexity": "simple/moderate/complex"
+    "complexity": "simple/moderate/complex",
+    "real_world_scenario": "A concrete real-world situation where this concept is visible (e.g., 'a car braking suddenly' for Newton's laws)"
 }}
 
 Rules:
 - Extract the CONCEPT, not the subject
 - Focus on what needs to be VISUALIZED
-- Identify relationships that should be SHOWN
-- Keep it focused on visual representation needs"""
+- Identify real objects that can represent this concept
+- Think about what a student could SEE in the real world"""
 
         try:
             response = await client.generate_content_async(prompt)
@@ -127,7 +152,8 @@ Rules:
         """
         client = await self._get_client()
         
-        prompt = f"""You are a visual education expert. Determine the best visual strategy for teaching this concept.
+        prompt = f"""You are a visual education expert designing visuals for a premium edtech platform.
+Determine the best visual strategy for teaching this concept to create an "aha moment".
 
 CONCEPT: {concept.core_concept}
 SUB-CONCEPTS: {', '.join(concept.sub_concepts)}
@@ -142,19 +168,20 @@ Respond with ONLY valid JSON:
 {{
     "intent": "explain|compare|show_process|show_structure|derive|calculate|visualize|cause_effect|timeline|relationship",
     "style": "modern_clean|illustrated|infographic|whiteboard|scientific|conceptual",
-    "layout_type": "central_focus|left_to_right|top_to_bottom|circular|hierarchical|split_comparison|radial|timeline_horizontal",
+    "layout_type": "central_scene|action_sequence|comparison_split|exploded_view|timeline_flow|relationship_web|dramatic_moment",
     "color_scheme": "educational_blue|nature_green|science_purple|warm_orange|neutral_gray|vibrant_multi",
-    "emphasis_elements": ["What should stand out visually"],
-    "visual_metaphor": "A real-world metaphor that helps understanding (or null)",
-    "avoid_elements": ["generic_shapes", "clip_art", "text_heavy"]
+    "emphasis_elements": ["The ONE thing that should be the visual focus"],
+    "visual_metaphor": "A specific real-world scene or analogy that makes this concept click (e.g., 'tug of war' for Newton's third law, 'factory assembly line' for metabolism)",
+    "scene_description": "Describe a SPECIFIC visual scene in 1-2 sentences. What would we SEE? Not abstract shapes, but real objects and actions.",
+    "avoid_elements": ["generic_diagrams", "abstract_shapes", "text_heavy", "flowchart_boxes"]
 }}
 
-RULES:
-- Choose intent based on WHAT the student wants to understand
-- Choose style based on WHAT the concept is, not which subject
-- Layout should match the concept's natural structure
-- NEVER default to generic diagrams
-- Metaphor should make the concept relatable"""
+CRITICAL RULES:
+- The visual_metaphor MUST be a concrete, relatable scenario
+- scene_description should describe what a photographer would capture
+- NEVER suggest circles, boxes, or arrows as main elements
+- Think like a Pixar animator: what scene would make this concept memorable?
+- The visual should tell a story, not display information"""
 
         try:
             response = await client.generate_content_async(prompt)
@@ -174,21 +201,21 @@ RULES:
                 intent=intent,
                 style=style,
                 complexity=concept.complexity,
-                layout_type=data.get("layout_type", "central_focus"),
+                layout_type=data.get("layout_type", "central_scene"),
                 color_scheme=data.get("color_scheme", "educational_blue"),
                 emphasis_elements=data.get("emphasis_elements", []),
                 visual_metaphor=data.get("visual_metaphor"),
-                avoid_elements=data.get("avoid_elements", ["generic_shapes", "clip_art"])
+                avoid_elements=data.get("avoid_elements", ["generic_diagrams", "abstract_shapes"])
             )
             
         except Exception as e:
             logger.error(f"Strategy resolution failed: {e}")
             return VisualStrategy(
                 intent=request.force_intent or TeachingIntent.EXPLAIN,
-                style=request.force_style or VisualStyle.MODERN_CLEAN,
+                style=request.force_style or VisualStyle.ILLUSTRATED,
                 complexity=concept.complexity,
-                layout_type="central_focus",
-                avoid_elements=["generic_shapes", "clip_art"]
+                layout_type="central_scene",
+                avoid_elements=["generic_diagrams", "abstract_shapes", "flowcharts"]
             )
     
     async def compose_imagen_prompt(
@@ -198,67 +225,50 @@ RULES:
         strategy: VisualStrategy
     ) -> ImagenPrompt:
         """
-        Compose an optimized prompt for Imagen image generation.
+        Compose an optimized prompt for DALL-E 3 image generation.
         This is critical for producing unique, high-quality visuals.
         """
         client = await self._get_client()
         
-        # Style descriptors based on strategy
-        style_map = {
-            VisualStyle.MODERN_CLEAN: "clean minimalist design, modern flat illustration, professional educational diagram",
-            VisualStyle.ILLUSTRATED: "rich detailed illustration, educational artwork, vibrant colors, engaging visual",
-            VisualStyle.INFOGRAPHIC: "infographic style, data visualization, clear labels, organized layout",
-            VisualStyle.WHITEBOARD: "hand-drawn whiteboard style, sketch aesthetic, casual educational",
-            VisualStyle.SCIENTIFIC: "scientific diagram, technical illustration, precise, academic style",
-            VisualStyle.CONCEPTUAL: "abstract concept art, metaphorical visualization, creative interpretation"
-        }
+        # Get style and intent descriptors
+        style_desc = DALLE3_STYLE_DESCRIPTORS.get(strategy.style, DALLE3_STYLE_DESCRIPTORS[VisualStyle.ILLUSTRATED])
+        intent_frame = DALLE3_INTENT_FRAMING.get(strategy.intent, DALLE3_INTENT_FRAMING[TeachingIntent.EXPLAIN])
+        intent_frame = intent_frame.format(concept=concept.core_concept)
         
-        style_desc = style_map.get(strategy.style, style_map[VisualStyle.MODERN_CLEAN])
-        
-        # Intent-based framing
-        intent_framing = {
-            TeachingIntent.EXPLAIN: f"educational diagram explaining {concept.core_concept}",
-            TeachingIntent.COMPARE: f"comparison visual showing differences between aspects of {concept.core_concept}",
-            TeachingIntent.SHOW_PROCESS: f"process flow diagram showing how {concept.core_concept} works step by step",
-            TeachingIntent.SHOW_STRUCTURE: f"structural diagram showing parts and components of {concept.core_concept}",
-            TeachingIntent.DERIVE: f"step-by-step derivation visual for {concept.core_concept}",
-            TeachingIntent.CALCULATE: f"worked example showing calculation of {concept.core_concept}",
-            TeachingIntent.VISUALIZE: f"visualization of {concept.core_concept}",
-            TeachingIntent.CAUSE_EFFECT: f"cause and effect diagram showing why {concept.core_concept} happens",
-            TeachingIntent.TIMELINE: f"timeline showing progression of {concept.core_concept}",
-            TeachingIntent.RELATIONSHIP: f"relationship map showing connections in {concept.core_concept}"
-        }
-        
-        base_framing = intent_framing.get(strategy.intent, intent_framing[TeachingIntent.EXPLAIN])
-        
-        prompt = f"""Create the perfect Imagen prompt for this educational visual.
+        prompt = f"""You are a prompt engineer for DALL-E 3, creating prompts for premium educational visuals.
+Your prompts must generate STUNNING, MEMORABLE images that make students understand concepts instantly.
 
 CONCEPT: {concept.core_concept}
-INTENT: {base_framing}
-STYLE: {style_desc}
-LAYOUT: {strategy.layout_type}
-KEY ENTITIES TO SHOW: {', '.join(concept.key_entities[:5])}
+INTENT: {intent_frame}
+STYLE GUIDE: {style_desc}
+VISUAL METAPHOR: {strategy.visual_metaphor or 'find a creative real-world analogy'}
+KEY ELEMENTS TO SHOW: {', '.join(concept.key_entities[:5])}
 RELATIONSHIPS TO VISUALIZE: {', '.join(concept.relationships[:3])}
-METAPHOR (if helpful): {strategy.visual_metaphor or 'none'}
-EMPHASIZE: {', '.join(strategy.emphasis_elements[:3])}
 
-Generate a detailed, specific image generation prompt.
+Create a DALL-E 3 prompt that will generate an educational masterpiece.
 
 Respond with ONLY valid JSON:
 {{
-    "main_prompt": "A detailed, specific prompt that will generate a unique educational visual. Include specific visual elements, composition, style details. Be SPECIFIC not generic.",
-    "negative_prompt": "Things to avoid: blurry, text-heavy, generic clip art, low quality, stock photo feel",
-    "style_modifiers": ["modifier1", "modifier2", "modifier3"],
-    "aspect_ratio": "16:9"
+    "main_prompt": "A detailed, vivid description of the scene. Start with the overall composition, then describe specific elements, colors, lighting, and mood. Be SPECIFIC - describe what we SEE, not what we learn. Max 400 words.",
+    "negative_prompt": "Things to avoid",
+    "style_modifiers": ["modifier1", "modifier2", "modifier3"]
 }}
 
-CRITICAL RULES:
-- The prompt must be SPECIFIC to this exact concept
-- NO generic descriptions like "educational diagram" alone
-- Include SPECIFIC visual elements that represent the concept
-- Describe COMPOSITION (what's where in the image)
-- Describe VISUAL STYLE in detail
-- The result must look like premium edtech content, not a textbook diagram"""
+PROMPT ENGINEERING RULES FOR DALL-E 3:
+1. Start with the subject and composition: "A [style] illustration showing..."
+2. Describe the SCENE, not the concept: What would a camera capture?
+3. Include specific visual details: lighting, colors, perspective, mood
+4. Use cinematic language: "dramatic angle", "warm lighting", "depth of field"
+5. Add quality modifiers: "highly detailed", "professional", "award-winning"
+6. NEVER describe abstract concepts - only visible things
+7. NEVER request text, labels, or annotations in the image
+8. NEVER use generic terms like "educational diagram" or "infographic"
+
+EXAMPLE OF A GOOD PROMPT:
+"A stunning illustrated scene showing Newton's third law in action: two ice skaters in mid-push, one moving left and one moving right, their hands just separating. Dynamic motion lines and a slight motion blur suggest the equal and opposite forces. The scene is set on a pristine frozen lake at golden hour, with warm sunlight casting long shadows. Highly detailed, Pixar-quality 3D render style, soft ambient occlusion, professional educational illustration."
+
+EXAMPLE OF A BAD PROMPT:
+"An educational diagram explaining Newton's third law with arrows showing action and reaction forces, labeled boxes, and explanatory text." <- TOO ABSTRACT, GENERIC"""
 
         try:
             response = await client.generate_content_async(prompt)
@@ -270,22 +280,43 @@ CRITICAL RULES:
             
             data = json.loads(json_str)
             
+            main_prompt = data.get("main_prompt", "")
+            
+            # Ensure the prompt has quality modifiers
+            quality_suffix = " Highly detailed, professional quality, suitable for premium educational platform, no text or labels in image."
+            if len(main_prompt) + len(quality_suffix) < 4000:
+                main_prompt = main_prompt + quality_suffix
+            
             return ImagenPrompt(
-                main_prompt=data.get("main_prompt", f"{base_framing}, {style_desc}"),
-                negative_prompt=data.get("negative_prompt", "blurry, low quality, text-heavy, generic, clip art"),
-                style_modifiers=data.get("style_modifiers", []),
-                aspect_ratio=data.get("aspect_ratio", "16:9")
+                main_prompt=main_prompt,
+                negative_prompt=data.get("negative_prompt", "text, labels, annotations, diagram arrows, flowchart, generic shapes, low quality, blurry"),
+                style_modifiers=data.get("style_modifiers", ["professional", "educational", "vivid"]),
+                aspect_ratio="16:9"
             )
             
         except Exception as e:
             logger.error(f"Prompt composition failed: {e}")
-            # Fallback prompt
-            return ImagenPrompt(
-                main_prompt=f"{base_framing}, {style_desc}, high quality educational illustration, clear and engaging",
-                negative_prompt="blurry, low quality, text-heavy, generic, clip art, stock photo",
-                style_modifiers=["educational", "modern", "clear"],
-                aspect_ratio="16:9"
-            )
+            # Fallback to a well-crafted default prompt
+            return self._create_fallback_prompt(concept, strategy)
+    
+    def _create_fallback_prompt(self, concept: ConceptAnalysis, strategy: VisualStrategy) -> ImagenPrompt:
+        """Create a high-quality fallback prompt if LLM fails"""
+        style_desc = DALLE3_STYLE_DESCRIPTORS.get(strategy.style, DALLE3_STYLE_DESCRIPTORS[VisualStyle.ILLUSTRATED])
+        
+        main_prompt = f"""A stunning educational illustration showing {concept.core_concept} in action. 
+The scene depicts a real-world scenario that demonstrates this concept clearly and memorably. 
+{style_desc}. 
+Dynamic composition with clear visual hierarchy, engaging colors, and professional lighting. 
+The image tells a visual story that creates an 'aha moment' for students.
+Highly detailed, award-winning educational illustration quality.
+No text, labels, or annotations - purely visual storytelling."""
+        
+        return ImagenPrompt(
+            main_prompt=main_prompt,
+            negative_prompt="text, labels, annotations, arrows, flowcharts, generic diagrams, abstract shapes, clip art, low quality, blurry",
+            style_modifiers=["professional", "educational", "memorable", "vivid"],
+            aspect_ratio="16:9"
+        )
     
     async def resolve_complete(self, request: VisualRequest) -> tuple[ConceptAnalysis, VisualStrategy, ImagenPrompt]:
         """
@@ -297,14 +328,14 @@ CRITICAL RULES:
         
         strategy = await self.resolve_strategy(request, concept)
         logger.info(f"📐 Strategy resolved: {strategy.intent.value} / {strategy.style.value}")
+        logger.info(f"🎭 Metaphor: {strategy.visual_metaphor or 'none'}")
         
         prompt = await self.compose_imagen_prompt(request, concept, strategy)
-        logger.info(f"✍️ Imagen prompt composed: {len(prompt.main_prompt)} chars")
+        logger.info(f"✍️ DALL-E 3 prompt composed: {len(prompt.main_prompt)} chars")
         
         return concept, strategy, prompt
 
 
-def create_strategy_resolver(gemini_api_key: str, model: str = "gemini-1.5-flash") -> VisualStrategyResolver:
+def create_strategy_resolver(gemini_api_key: str, model: str = "gemini-2.5-flash") -> VisualStrategyResolver:
     """Factory function to create a strategy resolver"""
     return VisualStrategyResolver(gemini_api_key, model)
-
