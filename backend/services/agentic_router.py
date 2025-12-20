@@ -106,6 +106,18 @@ class AgenticRouter:
             logger.info(f"🤖 Handling action intent: {intent.intent_type.value}")
             result = await self._handle_action(intent, user_id, context or {})
             logger.info(f"🤖 Action result: {result}")
+            
+            # =====================================================================
+            # CHECK IF ACTION WAS ACTUALLY HANDLED
+            # =====================================================================
+            # If _handle_action returns pass_to_orchestrator=True or success=False,
+            # the intent was NOT a true action and should flow to the intelligent
+            # orchestrator for proper handling with semantic understanding.
+            # =====================================================================
+            if result.get('pass_to_orchestrator') or not result.get('success', True):
+                logger.info(f"📤 Action not handled, passing to intelligent orchestrator")
+                return (False, None)
+            
             return (True, result)
         except Exception as e:
             logger.error(f"Action handling error: {e}", exc_info=True)
@@ -118,7 +130,20 @@ class AgenticRouter:
         user_id: str,
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Handle an action intent by executing the appropriate tool"""
+        """
+        Handle TRUE action intents by executing the appropriate tool.
+        
+        =========================================================================
+        🎯 IMPORTANT: This handler is ONLY for true tool-based actions:
+        - REMINDER: Schedule an actual reminder in the database
+        - RECURRING_REMINDER: Schedule recurring reminders
+        - NOTIFICATION: Send actual push notification
+        
+        Everything else (study plans, motivation, breaks, progress, etc.) should
+        NOT reach this handler. They should flow to UnifiedAIOrchestrator which
+        uses semantic understanding and dynamic agent routing.
+        =========================================================================
+        """
         
         # Build context for tool execution
         tool_context = {
@@ -126,6 +151,9 @@ class AgenticRouter:
             **context
         }
         
+        # =====================================================================
+        # TRUE ACTIONS ONLY - These require actual tool execution
+        # =====================================================================
         if intent.intent_type == IntentType.REMINDER:
             return await self._handle_reminder(intent, tool_context)
         
@@ -135,32 +163,17 @@ class AgenticRouter:
         elif intent.intent_type == IntentType.NOTIFICATION:
             return await self._handle_notification(intent, tool_context)
         
-        elif intent.intent_type == IntentType.SUMMARY:
-            return await self._handle_summary(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.STUDY_PLAN:
-            return await self._handle_study_plan(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.PROGRESS_CHECK:
-            return await self._handle_progress_check(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.WEAK_TOPICS:
-            return await self._handle_weak_topics(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.BREAK_REQUEST:
-            return await self._handle_break_request(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.MOTIVATION:
-            return await self._handle_motivation(intent, tool_context)
-        
-        elif intent.intent_type == IntentType.GREETING:
-            return self._handle_greeting(intent)
-        
         else:
-            # Unknown action type - return info about what was detected
+            # =====================================================================
+            # 🚫 NOT A TRUE ACTION - Return failure so it flows to orchestrator
+            # =====================================================================
+            # If we reach here, the intent was incorrectly classified as an action.
+            # Return success=False so the calling code passes it to the intelligent
+            # orchestrator which can handle it with proper semantic understanding.
+            logger.info(f"📤 Intent '{intent.intent_type.value}' is not a true action, passing to orchestrator")
             return {
                 'success': False,
-                'response': f"I detected that you want to: {intent.intent_type.value}, but I can't do that yet. Let me help you another way!",
+                'pass_to_orchestrator': True,
                 'intent': intent.to_dict()
             }
     
@@ -223,39 +236,30 @@ class AgenticRouter:
             'response': "I can send you notifications about your study progress! Would you like me to set up daily reminders or streak alerts?"
         }
     
-    async def _handle_summary(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle study summary request"""
-        params = intent.extracted_params
-        period = params.get('period', 'week')
-        
-        # Execute summary tool
-        result = await self.tool_registry.execute_tool(
-            'send_study_summary',
-            context=context,
-            period=period,
-            channel='notification'
-        )
-        
-        if result.success:
-            # Handle both ToolResult variants: base_tool uses 'data', registry uses 'metadata'
-            result_data = getattr(result, 'data', None) or getattr(result, 'metadata', None)
-            return {
-                'success': True,
-                'action_taken': 'summary_sent',
-                'response': result.output,
-                'data': result_data
-            }
-        else:
-            return {
-                'success': False,
-                'action_taken': 'summary_failed',
-                'response': "I couldn't generate your summary right now. Let me tell you about your progress instead!",
-                'error': result.error
-            }
+    # =========================================================================
+    # 🚫 DEPRECATED HANDLERS REMOVED
+    # =========================================================================
+    # The following handlers have been REMOVED as they bypass intelligent routing:
+    # - _handle_summary: Now handled by LLM with memory context
+    # - _handle_progress_check: Now handled by agents with analytics
+    # - _handle_weak_topics: Now handled by agents with analytics
+    # - _handle_break_request: Now handled by empathetic LLM response
+    # - _handle_motivation: Now handled by empathetic LLM response
+    # - _handle_greeting: Now handled by personalized LLM response
+    # - _handle_study_plan: Now handled by MentorAgent + StudyPlannerTool
+    #
+    # All of these intents now flow to UnifiedAIOrchestrator which uses:
+    # 1. SemanticIntentClassifier - True LLM-based understanding
+    # 2. Dynamic agent routing - Right agent for the task
+    # 3. Memory integration - Personalized context
+    # 4. Tool invocation when needed - Real tool execution
+    #
+    # This ensures:
+    # - INTELLIGENT responses (not hardcoded templates)
+    # - EMPATHETIC handling (emotional understanding)
+    # - ADAPTIVE behavior (context-aware)
+    # - AGENTIC processing (reasoning + tools)
+    # =========================================================================
     
     async def _handle_recurring_reminder(
         self,
@@ -294,247 +298,6 @@ class AgenticRouter:
                 'error': result.error
             }
     
-    async def _handle_study_plan(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle study plan creation request"""
-        params = intent.extracted_params
-        exam = params.get('exam', 'JEE')
-        duration = params.get('duration', 30)
-        duration_unit = params.get('duration_unit', 'day')
-        
-        # For now, return a helpful response
-        # TODO: Implement full study plan generator
-        response = f"""🎯 **Study Plan for {exam}**
-
-I'll help you prepare! Here's what we'll do:
-
-1. **Assessment** - Let's identify your current level
-2. **Weak Areas** - Focus on topics that need work
-3. **Daily Schedule** - Consistent study routine
-4. **Weekly Tests** - Track your progress
-5. **Revision** - Spaced repetition for retention
-
-Would you like me to:
-• Start with a quick assessment?
-• Show your weak topics first?
-• Create a daily reminder schedule?
-
-Just let me know! 💪"""
-        
-        return {
-            'success': True,
-            'action_taken': 'study_plan_offered',
-            'response': response,
-            'data': {'exam': exam, 'duration': duration, 'unit': duration_unit}
-        }
-    
-    async def _handle_progress_check(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle progress check request"""
-        try:
-            from services.intelligent_proactive_mentor import get_proactive_mentor
-            
-            db = context.get('db')
-            if db:
-                mentor = await get_proactive_mentor(db)
-                user_id = context.get('user_id')
-                
-                # Get user stats
-                user = await db.users.find_one({'user_id': user_id})
-                streak = user.get('streak', 0) if user else 0
-                xp = user.get('xp', 0) if user else 0
-                
-                # Get weak topics
-                weak_topics = await mentor.analyze_weak_topics(user_id)
-                
-                response = f"""📊 **Your Progress Report**
-
-🔥 **Streak:** {streak} days
-⭐ **XP:** {xp} points
-
-"""
-                if weak_topics:
-                    response += "📈 **Areas to improve:**\n"
-                    for topic in weak_topics[:3]:
-                        response += f"• {topic['topic']} ({topic['average_score']}%)\n"
-                else:
-                    response += "✨ Great job! No weak areas detected.\n"
-                
-                response += "\nKeep going! Every question makes you stronger! 💪"
-                
-                return {
-                    'success': True,
-                    'action_taken': 'progress_checked',
-                    'response': response,
-                    'data': {'streak': streak, 'xp': xp, 'weak_topics': weak_topics}
-                }
-        except Exception as e:
-            logger.error(f"Progress check error: {e}")
-        
-        return {
-            'success': True,
-            'action_taken': 'progress_checked',
-            'response': "Let me check your progress... Keep studying and I'll track your improvement! 📈"
-        }
-    
-    async def _handle_weak_topics(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle weak topics analysis request"""
-        try:
-            from services.intelligent_proactive_mentor import get_proactive_mentor
-            
-            db = context.get('db')
-            if db:
-                mentor = await get_proactive_mentor(db)
-                user_id = context.get('user_id')
-                
-                weak_topics = await mentor.analyze_weak_topics(user_id)
-                
-                if weak_topics:
-                    response = "🎯 **Your Weak Areas (Focus Here!)**\n\n"
-                    for i, topic in enumerate(weak_topics, 1):
-                        trend_emoji = "📈" if topic.get('trend') == 'improving' else "⚠️"
-                        response += f"{i}. **{topic['topic']}** - {topic['average_score']}% avg {trend_emoji}\n"
-                    response += "\nWant me to help you practice these? Just say the topic name!"
-                else:
-                    response = "🌟 **Great news!** I haven't found any significant weak areas. Keep up the excellent work!\n\nWant me to give you some challenging problems to test yourself?"
-                
-                return {
-                    'success': True,
-                    'action_taken': 'weak_topics_analyzed',
-                    'response': response,
-                    'data': {'weak_topics': weak_topics}
-                }
-        except Exception as e:
-            logger.error(f"Weak topics error: {e}")
-        
-        return {
-            'success': True,
-            'action_taken': 'weak_topics_analyzed',
-            'response': "I need more quiz/test data to analyze your weak areas. Try taking a few practice tests first! 📝"
-        }
-    
-    async def _handle_break_request(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle break request"""
-        duration = intent.extracted_params.get('duration', 10)
-        
-        response = f"""☕ **Break Time!** ({duration} minutes)
-
-Taking breaks is smart studying! Here's what to do:
-
-• 🚶 Stretch or walk around
-• 💧 Drink some water
-• 👀 Look at something far away (rest your eyes)
-• 🧘 Take 5 deep breaths
-
-I'll remind you when your break is over. Relax! 😊"""
-        
-        # Schedule break end reminder
-        try:
-            result = await self.tool_registry.execute_tool(
-                'schedule_reminder',
-                context=context,
-                message="Break over! Time to get back to studying 📚",
-                remind_at=f"in {duration} minutes",
-                reminder_type='break'
-            )
-        except Exception as e:
-            logger.error(f"Break reminder error: {e}")
-        
-        return {
-            'success': True,
-            'action_taken': 'break_started',
-            'response': response,
-            'data': {'duration': duration}
-        }
-    
-    async def _handle_motivation(
-        self,
-        intent: DetectedIntent,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle motivation request - be empathetic and encouraging"""
-        import random
-        
-        motivational_messages = [
-            """💪 **I believe in you!**
-
-Every JEE topper felt exactly like this at some point. The difference? They kept going.
-
-Remember:
-• You don't have to be perfect, just persistent
-• One topic at a time, one day at a time
-• Progress > Perfection
-
-What's ONE small thing you can do right now? Even 5 minutes counts! 🌟""",
-
-            """🌟 **Feeling low is normal**
-
-Top performers have bad days too. What matters is what you do next.
-
-Quick wins to get momentum:
-• Solve just 1 easy problem
-• Watch a 5-minute concept video
-• Review notes you already made
-
-Small steps → Big results. I'm here with you! 💪""",
-
-            """🎯 **You've got this!**
-
-Think about why you started. Your dreams are valid and achievable.
-
-Today's challenge:
-• Just open your book for 5 minutes
-• That's it. No pressure.
-
-Often, starting is the hardest part. Once you begin, momentum takes over. 
-
-Ready when you are! 🚀""",
-
-            """❤️ **It's okay to struggle**
-
-Struggling means you're pushing your limits - that's exactly how growth happens!
-
-Fun fact: The brain literally grows new connections when you work through hard problems.
-
-What's bothering you the most right now? Let's tackle it together, one step at a time. 🤝"""
-        ]
-        
-        return {
-            'success': True,
-            'action_taken': 'motivation_sent',
-            'response': random.choice(motivational_messages)
-        }
-    
-    def _handle_greeting(self, intent: DetectedIntent) -> Dict[str, Any]:
-        """Handle greeting - quick response"""
-        greetings = [
-            "Hey! Ready to learn something awesome? 📚",
-            "Hi there! What can I help you with today? 🎯",
-            "Hello! Let's make today productive! 💪",
-            "Hey! Ask me anything - I'm here to help! 🤝",
-        ]
-        
-        import random
-        return {
-            'success': True,
-            'action_taken': 'greeting',
-            'response': random.choice(greetings),
-            'is_greeting': True
-        }
 
 
 # ==============================================

@@ -184,7 +184,13 @@ class IntelligentProactiveMentor:
             if last_update:
                 if isinstance(last_update, str):
                     last_update = datetime.fromisoformat(last_update.replace('Z', '+00:00'))
-                hours_ago = (datetime.utcnow() - last_update).total_seconds() / 3600
+                # Ensure timezone-aware comparison
+                if last_update.tzinfo is not None:
+                    from datetime import timezone
+                    now = datetime.now(timezone.utc)
+                else:
+                    now = datetime.utcnow()
+                hours_ago = (now - last_update).total_seconds() / 3600
                 
                 if 2 <= hours_ago <= 48:  # Between 2 hours and 2 days
                     return ProactiveNudge(

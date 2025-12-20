@@ -310,3 +310,204 @@ async def check_continuity(
         logger.error(f"❌ Continuity check failed: {e}")
         return {"has_continuation": False}
 
+
+# =============================================================================
+# EXAM JOURNEY ENDPOINTS (Extended from StudentIntelligenceHub)
+# =============================================================================
+
+@router.get("/exam-journey")
+async def get_exam_journey(
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Get exam journey state - countdown, priorities, daily goals.
+    """
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        hub = get_student_intelligence_hub(db)
+        
+        journey = await hub.get_exam_journey(user.user_id)
+        
+        if journey:
+            return {"success": True, "data": journey.to_dict()}
+        else:
+            return {"success": True, "data": {"message": "No exam target set"}}
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting exam journey: {e}")
+        return {"success": False, "data": {}, "error": str(e)}
+
+
+@router.post("/exam-target")
+async def set_exam_target(
+    exam_name: str,
+    exam_date: str,
+    daily_hours: int = 4,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Set or update exam target."""
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        from dateutil import parser
+        
+        hub = get_student_intelligence_hub(db)
+        parsed_date = parser.parse(exam_date)
+        
+        journey = await hub.update_exam_target(
+            user_id=user.user_id,
+            exam_name=exam_name,
+            exam_date=parsed_date,
+            daily_hours=daily_hours
+        )
+        
+        return {"success": True, "data": journey.to_dict()}
+        
+    except Exception as e:
+        logger.error(f"❌ Error setting exam target: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# =============================================================================
+# PROACTIVE NUDGES ENDPOINT
+# =============================================================================
+
+@router.get("/proactive-nudges")
+async def get_proactive_nudges(
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Get proactive nudges - review reminders, streak alerts, exam countdown.
+    """
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        hub = get_student_intelligence_hub(db)
+        
+        nudges = await hub.get_proactive_nudges(user.user_id)
+        
+        return {"success": True, "nudges": nudges}
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting nudges: {e}")
+        return {"success": True, "nudges": []}  # Non-blocking: return empty on failure
+
+
+# =============================================================================
+# STUDY SESSION ENDPOINTS
+# =============================================================================
+
+@router.post("/study-session/start")
+async def start_study_session(
+    session_type: str,  # quiz, review, learn, practice
+    topic: str = None,
+    duration_minutes: int = 25,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Start a structured study session."""
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        hub = get_student_intelligence_hub(db)
+        
+        session = await hub.start_study_session(
+            user_id=user.user_id,
+            session_type=session_type,
+            topic=topic,
+            duration_minutes=duration_minutes
+        )
+        
+        return {"success": True, "session": session}
+        
+    except Exception as e:
+        logger.error(f"❌ Error starting study session: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/study-session/complete")
+async def complete_study_session(
+    session_id: str,
+    results: Dict[str, Any] = None,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Complete a study session and get results."""
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        hub = get_student_intelligence_hub(db)
+        
+        result = await hub.complete_study_session(
+            session_id=session_id,
+            results=results
+        )
+        
+        return {"success": True, "result": result}
+        
+    except Exception as e:
+        logger.error(f"❌ Error completing session: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# =============================================================================
+# EMOTIONAL INTELLIGENCE ENDPOINTS
+# =============================================================================
+
+@router.post("/emotional/check-in")
+async def emotional_check_in(
+    emotion: str,
+    trigger: str = None,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Record emotional check-in for pattern tracking."""
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub, EmotionalState
+        hub = get_student_intelligence_hub(db)
+        
+        # Parse emotion
+        emotion_map = {
+            "stressed": EmotionalState.STRESSED,
+            "anxious": EmotionalState.ANXIOUS,
+            "frustrated": EmotionalState.FRUSTRATED,
+            "confused": EmotionalState.CONFUSED,
+            "motivated": EmotionalState.MOTIVATED,
+            "confident": EmotionalState.CONFIDENT,
+            "neutral": EmotionalState.NEUTRAL,
+            "happy": EmotionalState.HAPPY,
+            "tired": EmotionalState.TIRED
+        }
+        
+        parsed_emotion = emotion_map.get(emotion.lower(), EmotionalState.NEUTRAL)
+        
+        await hub.track_emotional_signal(
+            user_id=user.user_id,
+            emotion=parsed_emotion,
+            trigger=trigger
+        )
+        
+        return {"success": True, "message": "Emotion tracked"}
+        
+    except Exception as e:
+        logger.error(f"❌ Error tracking emotion: {e}")
+        return {"success": True, "message": "Tracked"}  # Non-blocking
+
+
+@router.get("/emotional/profile")
+async def get_emotional_profile(
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Get emotional profile - patterns like stress by day."""
+    try:
+        from services.student_intelligence_hub import get_student_intelligence_hub
+        hub = get_student_intelligence_hub(db)
+        
+        profile = await hub.get_emotional_profile(user.user_id)
+        
+        return {"success": True, "profile": profile}
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting emotional profile: {e}")
+        return {"success": True, "profile": {}}
+

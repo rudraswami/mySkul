@@ -342,7 +342,13 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Internal ReAct loop - separated for timeout wrapping.
+        Internal ReAct loop - the core reasoning engine.
+        
+        FAULT-TOLERANT DESIGN:
+        - Retries on transient failures (handled in _think)
+        - Isolates tool failures (handled in _act)
+        - Tracks failure types for observability
+        - Always produces a reasoned response
         
         Uses ADAPTIVE iteration limits based on query complexity:
         - Simple queries: fewer iterations (faster response)
@@ -359,54 +365,90 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
             max_iterations=adaptive_max
         )
         
+        # Track failures for observability
+        failure_log = []
+        
         try:
+            logger.info(f"[ReAct] Starting loop for {self.get_agent_name()}: max_iter={adaptive_max}")
+            
             # Run the ReAct loop
             while state.iterations < state.max_iterations:
                 state.iterations += 1
+                step_start = datetime.now()
                 
                 # THINK: Generate next thought/action
                 state.status = AgentStatus.THINKING
+                logger.info(f"[ReAct] Step {state.iterations}/{adaptive_max}: THINKING...")
+                
                 thought_action = await self._think(state)
                 
+                # _think now always returns a ThoughtAction (with FINISH on failure)
                 if not thought_action:
-                    state.error = "Failed to generate thought"
-                    break
+                    # This should not happen with the new _think, but handle defensively
+                    failure_log.append(f"Step {state.iterations}: THINK returned None")
+                    logger.error(f"[ReAct] Critical: _think returned None at step {state.iterations}")
+                    # Create emergency FINISH
+                    thought_action = state.add_thought("I'll provide my best answer.")
+                    thought_action.action = "FINISH"
+                    thought_action.action_input = {"answer": await self._generate_direct_answer(state)}
                 
                 # Check if we should finish
                 if thought_action.action == "FINISH":
                     state.status = AgentStatus.COMPLETE
                     state.final_answer = thought_action.action_input.get("answer", thought_action.thought)
                     state.confidence = thought_action.action_input.get("confidence", 0.8)
+                    logger.info(f"[ReAct] Completed at step {state.iterations} with FINISH action")
                     break
                 
                 # ACT: Execute the chosen tool
                 state.status = AgentStatus.ACTING
+                logger.info(f"[ReAct] Step {state.iterations}: ACTING with {thought_action.action}")
+                
                 observation = await self._act(thought_action, state)
                 thought_action.observation = observation
+                
+                # Track if this was a failure observation
+                if "failed" in observation.lower() or "error" in observation.lower():
+                    failure_log.append(f"Step {state.iterations}: {thought_action.action} - {observation[:100]}")
                 
                 # OBSERVE: Process the result (handled implicitly in next iteration)
                 state.status = AgentStatus.OBSERVING
                 
+                step_time = (datetime.now() - step_start).total_seconds()
                 if self.verbose:
-                    logger.info(f"  Step {state.iterations}: {thought_action.action} → {observation[:100]}...")
+                    logger.info(f"[ReAct] Step {state.iterations} complete: {thought_action.action} ({step_time:.2f}s)")
             
             # Check if we hit max iterations
             if state.iterations >= state.max_iterations and state.status != AgentStatus.COMPLETE:
-                logger.warning(f"⚠️ {self.get_agent_name()} hit max iterations")
+                logger.warning(f"[ReAct] {self.get_agent_name()} hit max iterations ({adaptive_max})")
                 state.status = AgentStatus.COMPLETE
                 state.final_answer = await self._generate_fallback_answer(state)
                 state.confidence = 0.5
             
             state.end_time = datetime.now()
             
-            return self._format_response(state)
+            # Add failure log to metadata for observability
+            response = self._format_response(state)
+            if failure_log:
+                response['metadata'] = response.get('metadata', {})
+                response['metadata']['failure_log'] = failure_log
+                response['metadata']['had_failures'] = True
+            
+            return response
             
         except Exception as e:
-            logger.error(f"❌ {self.get_agent_name()} loop error: {e}", exc_info=True)
+            logger.error(f"[ReAct] {self.get_agent_name()} critical loop error: {e}", exc_info=True)
             state.status = AgentStatus.ERROR
             state.error = str(e)
             state.end_time = datetime.now()
-            return self._format_error_response(state)
+            
+            # Even on critical error, try to provide a response
+            error_response = self._format_error_response(state)
+            error_response['metadata'] = error_response.get('metadata', {})
+            error_response['metadata']['failure_type'] = 'CRITICAL_ERROR'
+            error_response['metadata']['failure_log'] = failure_log + [f"Critical: {str(e)}"]
+            
+            return error_response
     
     def _generate_timeout_fallback(
         self,
@@ -419,24 +461,14 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         Never leave the student with no response!
         """
         subject = context.get('subject', 'your question')
+        short_query = query[:80] + "..." if len(query) > 80 else query
         
-        fallback_content = f"""I'm working on a thorough answer to your question about {subject}, but it's taking longer than expected! 🤔
+        # CRITICAL: Natural continuation, NO capability menus, NO numbered options
+        fallback_content = f"""That's a thoughtful question about {subject}! 🤔
 
-Let me give you a quick response while I process:
+I want to give you a really good answer to "{short_query}"
 
-**Your question:** {query[:100]}{'...' if len(query) > 100 else ''}
-
-For now, here's what I can tell you:
-- This is a great question that deserves a detailed answer
-- Try breaking it down into smaller parts if it's complex
-- Feel free to ask a simpler version, and I'll build from there!
-
-Would you like me to:
-1. **Try again** with a simpler explanation?
-2. **Focus on one specific part** of your question?
-3. **Give you a quick summary** instead?
-
-Just let me know! 📚"""
+Let me think about the clearest way to explain this. What's the specific part that's confusing you most? That way I can focus on exactly what you need."""
         
         logger.info(f"⏰ Generated timeout fallback for: {query[:50]}...")
         
@@ -497,77 +529,187 @@ I'm here to help you understand! 📚"""
         }
     
     async def _think(self, state: AgentState) -> Optional[ThoughtAction]:
-        """Generate the next thought and action using LLM"""
-        try:
-            system_prompt = self.get_system_prompt(state)
-            user_message = f"What should you do next to answer: {state.query}"
-            
-            # If we have previous observations, include them
-            if state.reasoning_chain and state.reasoning_chain[-1].observation:
-                last = state.reasoning_chain[-1]
-                user_message = f"""Based on the observation from {last.action}:
+        """
+        Generate the next thought and action using LLM.
+        
+        FAULT-TOLERANT: Retries on transient failures, distinguishes failure types.
+        """
+        MAX_RETRIES = 2
+        last_error = None
+        
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                system_prompt = self.get_system_prompt(state)
+                user_message = f"What should you do next to answer: {state.query}"
+                
+                # If we have previous observations, include them
+                if state.reasoning_chain and state.reasoning_chain[-1].observation:
+                    last = state.reasoning_chain[-1]
+                    user_message = f"""Based on the observation from {last.action}:
 {last.observation}
 
 What should you do next?"""
+                
+                # Call LLM with retry awareness
+                response = await self._call_llm(system_prompt, user_message)
+                
+                if not response:
+                    # MODEL_FAILURE: LLM returned nothing
+                    last_error = "MODEL_FAILURE: LLM returned empty response"
+                    if attempt < MAX_RETRIES:
+                        logger.warning(f"[ReAct] LLM empty response, retry {attempt + 1}/{MAX_RETRIES}")
+                        await asyncio.sleep(0.5 * (attempt + 1))  # Exponential backoff
+                        continue
+                    else:
+                        # After retries, generate a FINISH action to complete gracefully
+                        logger.warning("[ReAct] LLM failed after retries, generating direct answer")
+                        ta = state.add_thought("I'll provide a direct answer based on my knowledge.")
+                        ta.action = "FINISH"
+                        ta.action_input = {"answer": await self._generate_direct_answer(state)}
+                        return ta
+                
+                # Parse response
+                parsed = self._parse_llm_response(response)
+                
+                # Create thought action
+                ta = state.add_thought(parsed.get("thought", "Thinking..."))
+                ta.action = parsed.get("action", "FINISH")
+                ta.action_input = parsed.get("action_input", {})
+                
+                return ta
+                
+            except Exception as e:
+                last_error = f"REASONING_FAILURE: {str(e)}"
+                logger.error(f"[ReAct] Think error (attempt {attempt + 1}): {e}")
+                if attempt < MAX_RETRIES:
+                    await asyncio.sleep(0.5 * (attempt + 1))
+                    continue
+        
+        # All retries exhausted - generate graceful FINISH
+        logger.error(f"[ReAct] Think failed after all retries: {last_error}")
+        ta = state.add_thought("Let me provide you with a helpful response.")
+        ta.action = "FINISH"
+        ta.action_input = {"answer": await self._generate_direct_answer(state)}
+        return ta
+    
+    async def _generate_direct_answer(self, state: AgentState) -> str:
+        """
+        Generate a direct answer when ReAct reasoning fails.
+        This is NOT a fallback to skip reasoning - it's error recovery
+        that still uses LLM intelligence.
+        """
+        try:
+            from services.llm_service import call_llm
             
-            # Call LLM
-            response = await self._call_llm(system_prompt, user_message)
+            # Build context from any observations we've gathered
+            observations = [ta.observation for ta in state.reasoning_chain if ta.observation]
+            context_str = "\n".join(observations[-3:]) if observations else "No prior context."
             
-            if not response:
-                return None
+            prompt = f"""You are a knowledgeable mentor. Answer this question directly:
+
+Question: {state.query}
+
+Context from analysis: {context_str}
+
+Provide a clear, helpful, well-structured answer."""
             
-            # Parse response
-            parsed = self._parse_llm_response(response)
-            
-            # Create thought action
-            ta = state.add_thought(parsed.get("thought", "Thinking..."))
-            ta.action = parsed.get("action", "FINISH")
-            ta.action_input = parsed.get("action_input", {})
-            
-            return ta
-            
+            response = await call_llm(
+                prompt=prompt,
+                api_key=self.llm_key,
+                temperature=0.7,
+                max_tokens=1000,
+                model="gpt-4o-mini",
+                system_message=self.get_agent_persona()
+            )
+            return response if response else "I understand your question. Could you provide more details so I can give you a thorough explanation?"
         except Exception as e:
-            logger.error(f"Think error: {e}")
-            return None
+            logger.error(f"[ReAct] Direct answer generation failed: {e}")
+            return f"I'm analyzing your question about {state.context.get('subject', 'this topic')}. Could you tell me more about what specific aspect you'd like me to explain?"
     
     async def _act(self, thought_action: ThoughtAction, state: AgentState) -> str:
-        """Execute the chosen action/tool"""
+        """
+        Execute the chosen action/tool with error isolation.
+        
+        FAULT-TOLERANT: Tool failures don't crash the loop.
+        Returns observations that help reasoning continue.
+        """
         action = thought_action.action
         action_input = thought_action.action_input or {}
         
         if action == "FINISH":
             return "Task complete"
         
-        # Execute tool
-        if self.tool_registry:
-            tool = self.tool_registry.get_tool(action)
-            if tool:
-                state.tools_used.append(action)
-                result = await tool.execute(**action_input, context=state.context)
-                return result.output if result.success else f"Error: {result.error}"
-        
-        return f"Unknown action: {action}"
+        try:
+            # Execute tool
+            if self.tool_registry:
+                tool = self.tool_registry.get_tool(action)
+                if tool:
+                    state.tools_used.append(action)
+                    try:
+                        # Wrap tool execution with timeout
+                        result = await asyncio.wait_for(
+                            tool.execute(**action_input, context=state.context),
+                            timeout=10.0  # 10 second timeout per tool
+                        )
+                        if result.success:
+                            logger.info(f"[ReAct] Tool {action} succeeded")
+                            return result.output
+                        else:
+                            # TOOL_FAILURE: Tool executed but returned error
+                            logger.warning(f"[ReAct] TOOL_FAILURE: {action} - {result.error}")
+                            return f"Tool '{action}' encountered an issue: {result.error}. I'll proceed with available information."
+                    except asyncio.TimeoutError:
+                        # TOOL_TIMEOUT: Tool took too long
+                        logger.warning(f"[ReAct] TOOL_TIMEOUT: {action} exceeded 10s")
+                        return f"Tool '{action}' is taking too long. I'll continue with my reasoning."
+                    except Exception as tool_error:
+                        # TOOL_ERROR: Unexpected tool failure
+                        logger.error(f"[ReAct] TOOL_ERROR: {action} - {tool_error}")
+                        return f"Tool '{action}' failed unexpectedly. Continuing without it."
+                else:
+                    # Unknown tool - suggest alternatives
+                    available_tools = self.get_available_tools()
+                    logger.warning(f"[ReAct] Unknown tool: {action}. Available: {available_tools}")
+                    return f"Tool '{action}' not found. Available tools: {', '.join(available_tools)}. I'll use my knowledge instead."
+            else:
+                # No tool registry - proceed with reasoning
+                logger.info(f"[ReAct] No tool registry, using direct reasoning for: {action}")
+                return f"Proceeding with direct reasoning for: {action}"
+                
+        except Exception as e:
+            # Catch-all for any unexpected errors
+            logger.error(f"[ReAct] ACT_ERROR: {e}", exc_info=True)
+            return f"Action execution encountered an issue. Continuing with available information."
     
     async def _call_llm(self, system_prompt: str, user_message: str) -> Optional[str]:
-        """Call the LLM with the given prompts"""
+        """Call the LLM with the given prompts using services.llm_service"""
         try:
             if not self.llm_key:
                 logger.warning("No LLM key available")
                 return None
             
-            from services.llm_service import LlmChat, UserMessage
+            from services.llm_service import call_llm
             
-            chat = LlmChat(
+            # Build JSON-formatted prompt for ReAct reasoning
+            json_instruction = """
+Respond in valid JSON format with these fields:
+{
+  "thought": "Your reasoning about what to do next",
+  "action": "TOOL_NAME or FINISH",
+  "action_input": {"param": "value"} or {"answer": "your final answer"}
+}"""
+            
+            full_prompt = f"{user_message}\n\n{json_instruction}"
+            
+            response = await call_llm(
+                prompt=full_prompt,
                 api_key=self.llm_key,
-                session_id=f"react_{self.get_agent_name()}_{datetime.now().timestamp()}",
-                system_message=system_prompt
-            ).with_model("openai", "gpt-4o-mini").with_params(
                 temperature=0.3,  # Lower for more consistent reasoning
                 max_tokens=800,
-                response_format={"type": "json_object"}
+                model="gpt-4o-mini",
+                system_message=system_prompt
             )
             
-            response = await chat.send_message(UserMessage(text=user_message))
             return response
             
         except Exception as e:

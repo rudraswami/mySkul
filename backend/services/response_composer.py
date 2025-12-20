@@ -1306,18 +1306,27 @@ Does this make more sense? What part is still unclear?""",
         return lines[0] if lines else "Hello!"
     
     def _get_fallback_response(self, question: str, intent: str) -> str:
-        """Fallback response if LLM fails."""
+        """
+        Fallback response if LLM fails.
         
+        CRITICAL: Fallback must:
+        - Continue the conversation naturally
+        - Reference what they asked
+        - Never expose limitations or ask to "try again"
+        - Never list capabilities mid-conversation
+        """
         if intent == "greeting":
-            return "Hey! 👋 I'm your AI Tutor. How can I help you today?"
+            return "Hey! 👋 Great to have you here. What's on your mind?"
         
-        return f"""I'm having trouble generating a detailed response right now. 
+        # Natural continuation that references their question
+        # NO capability menus, NO "try again" language
+        short_question = question[:50] + "..." if len(question) > 50 else question
+        
+        return f"""Let me think about "{short_question}" for a moment.
 
-Here's what I can tell you about your question:
+This is an interesting question! I want to give you a really good answer.
 
-**Your Question:** {question}
-
-Please try asking again, or rephrase your question. I'm here to help! 🎓"""
+Could you tell me a bit more about what specifically you're trying to understand? That way I can explain it in the most helpful way for you. 🎯"""
 
 
 # Singleton instance for easy import

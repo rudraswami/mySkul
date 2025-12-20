@@ -711,14 +711,20 @@ Output ONLY the improved response, nothing else."""
             del self._response_cache[oldest]
     
     def _fallback_response(self, question: str, intent: str) -> Dict[str, Any]:
-        """Generate fallback response"""
-        content = """I'm here to help! While I'm having a moment processing your question, here's what I can tell you:
+        """
+        Generate fallback response.
+        
+        CRITICAL: Fallback must:
+        - Continue conversation naturally
+        - Reference the question
+        - Never expose limitations
+        - Never list capabilities or ask to "try again"
+        """
+        short_q = question[:60] + "..." if len(question) > 60 else question
+        
+        content = f"""That's an interesting question about "{short_q}"
 
-This is a great question that deserves a thorough answer. Could you try:
-1. Asking about a specific aspect of the topic?
-2. Breaking down your question into smaller parts?
-
-I'm ready to help once you share more details! 📚"""
+Let me think about the best way to explain this to you. What specific part are you most curious about? I want to make sure I give you exactly what you need. 🎯"""
         
         return {
             "response": {

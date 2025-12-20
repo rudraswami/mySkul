@@ -1,189 +1,221 @@
-# ==========================================================
-# DRUV AI – PROJECT-WIDE RULES FOR CURSOR
-# Neuro-Symbolic Tutor | Mentor + Professor + Supervisor
-# Visual Learning Architecture | Error Genome | Mock Test Engine
-# ==========================================================
+✅ DRUV AI — PREFLIGHT CHECKLIST (MANDATORY BEFORE ANY CHANGE)
 
-# ----------------------------------------------------------
-# 🔒 0. GENERAL SAFETY & GUARANTEES
-# ----------------------------------------------------------
-- Never modify working code unless explicitly told.
-- Always generate diff patches (never rewrite entire files).
-- Ask for clarification if instructions are ambiguous.
-- Never fabricate functions, files, imports, or API contracts.
-- Always check if a referenced file already exists before creating one.
-- Respect existing folder structures and naming conventions.
-- Never break backend routes, schemas, state, or agent flow.
-- Maintain consistency with FastAPI, Python, React/Next.js, and project style.
+Cursor MUST run this checklist mentally and explicitly before touching code.
+If any item fails → STOP.
 
-# ----------------------------------------------------------
-# 🧠 1. DRUV AI ARCHITECTURE AWARENESS
-# ----------------------------------------------------------
-You must understand and respect Druv AI's core pillars:
+🧠 1. CONTEXT & INTENT CHECK
 
-- Dual Layer Architecture:
-  - Mentor Layer → emotional + conceptual guidance.
-  - Professor Layer → symbolic, analytical, step-by-step reasoning.
-  - Supervisor Layer → orchestrates routing + validation + merging.
+Before writing code, answer all:
 
-- Visual Learning Architecture:
-  - Visualizer generates contextual visuals (not random).
-  - Visual-first, culturally relevant, Indian student-friendly.
-  - Metaphor system is mandatory.
+ What exact problem am I solving?
 
-- Mock Test Engine:
-  - Deterministic test generation.
-  - No hallucination or random questions.
+ Which existing file/module already handles this?
 
-- Error Genome:
-  - Detect mistakes + classify weaknesses + pattern mining.
+ Is this a bug fix, behavior change, or activation of existing intelligence?
 
-- Agent System (5 total):
-  - Supervisor
-  - Mentor
-  - Professor
-  - Visualise
-  - Error-Dom
+ Am I modifying behavior or just improving quality?
 
-Cursor must preserve these invariants at all times.
+🚫 If intent is unclear → STOP and ask.
 
-# ----------------------------------------------------------
-# 🎯 2. CODE CHANGE RULES
-# ----------------------------------------------------------
-- Never touch unrelated files.
-- Only modify the minimal units required to achieve the task.
-- Preserve all existing logic unless asked otherwise.
-- Do not remove defensive checks, validation, or guardrails.
-- Use type hints for Python.
-- Maintain proper formatting (Black/Prettier).
-- Follow existing naming patterns.
+🔍 2. SEARCH BEFORE WRITE (ZERO DUPLICATION)
 
-When writing new code:
-- Keep functions small and testable.
-- Use clear, readable variable names.
-- Maintain async conventions (FastAPI + frontend).
-- Avoid global state unless project already uses it.
+Cursor must confirm:
 
-# ----------------------------------------------------------
-# 🧩 3. AGENT SYSTEM RULES
-# ----------------------------------------------------------
+ I searched the codebase for similar logic
 
-## 🧠 Supervisor Agent
-- Routes queries between Mentor / Professor / Visualise / Error-Dom.
-- Performs secondary validation.
-- Never guesses.
-- Must enforce:
-  - factual correctness  
-  - logic consistency  
-  - output format structure  
-- Combines multi-agent responses into final answer.
+ I identified the single source of truth
 
-## 👨🏽‍🏫 Mentor Agent
-- Handles conceptual, emotional, intuitive explanations.
-- Uses metaphors + relatable examples.
-- Tone: friendly, confidence-building, Indian context.
+ I am NOT creating:
 
-## 🧮 Professor Agent
-- Formal logic, derivations, proofs, math steps.
-- Strict format:
-  - Definitions
-  - Step-by-step reasoning
-  - Verification pass
-- No metaphors (unless explicitly requested).
+new agent
 
-## 🎨 Visualise Agent
-- Generates visual descriptors or animation metadata.
-- Must use the Visual Learning Architecture.
-- No random Lottie/SVG; visuals must match concept.
-- If no meaningful visual exists → gracefully decline.
+new orchestrator
 
-## ❌ Error-Dom Agent
-- Identifies user mistakes.
-- Gives actionable corrections.
-- No shaming, no negativity.
+new router
 
-# ----------------------------------------------------------
-# 🎨 4. VISUAL ENGINE RULES
-# ----------------------------------------------------------
-- All visuals follow:
-  - culturally contextual metaphors
-  - high clarity
-  - minimal cognitive load
-  - diagram/animation-first
-- Must connect concept → visual → explanation.
-- Do NOT create static or repetitive visuals.
-- Everything must be **dynamic** & **concept aware**.
+new memory layer
 
-Output structure from visual agent must follow:
-{
-  "visual_type": "animation | scene | comparison",
-  "asset": "lottie | svg | description",
-  "caption": "",
-  "explain": ""
-}
+new “v2 / enhanced / alternate” file
 
-# ----------------------------------------------------------
-# 🔍 5. TEST ENGINE RULES
-# ----------------------------------------------------------
-- Test generation must ALWAYS use:
-  - selected subject
-  - selected topic
-  - difficulty
-  - question count
-- NO RANDOM QUESTIONS.
-- Must validate with Professor layer before final output.
-- Ensure rapid generation (< 2 seconds where possible).
+✅ Allowed: modify existing logic in-place
 
-# ----------------------------------------------------------
-# 🧪 6. NO HALLUCINATION POLICY
-# ----------------------------------------------------------
-- If unknown → respond: “Context insufficient, need clarification.”
-- Never invent formulas, definitions, exams, difficulty levels, or datasets.
-- Check facts twice using two reasoning passes.
-- Always return verified answers only.
+🚫 If similar logic already exists → reuse it.
 
-# ----------------------------------------------------------
-# 📦 7. FILE & STRUCTURE RULES
-# ----------------------------------------------------------
-- Follow folder structure strictly (backend/frontend/agent folders).
-- New files must go into correct module directories.
-- Do not rename or move existing files unless asked.
+🧱 3. WORKING FLOW PROTECTION
 
-# ----------------------------------------------------------
-# 🌐 8. API & BACKEND RULES
-# ----------------------------------------------------------
-- Respect all existing route signatures.
-- Never change:
-  - request/response schemas
-  - model fields
-  - enums
-  - database collections
-- Add new API endpoints ONLY when explicitly asked.
-- Perform validation at:
-  - request layer
-  - logic layer
+Cursor must verify:
 
-# ----------------------------------------------------------
-# ⚡ 9. PERFORMANCE RULES
-# ----------------------------------------------------------
-- Avoid heavy operations in request cycles.
-- Prefer cached computation where logical.
-- Ensure minimal latency for visual generation & mock test tasks.
+ Existing APIs will still work
 
-# ----------------------------------------------------------
-# 🛠️ 10. PROMPTING RULES INSIDE CURSOR
-# ----------------------------------------------------------
-- Use KERNEL framework always:
-  - Keep it simple
-  - Easy to verify
-  - Reproducible
-  - Narrow scope
-  - Explicit constraints
-  - Logical structure
+ Existing routes/endpoints are untouched
 
-- Always restate your understanding before large changes.
-- Always confirm if unsure.
+ Existing UI behavior is not broken
 
-# ==========================================================
-# 🚀 END OF DRUV AI RULES
-# ==========================================================
+ No public interface is renamed
+
+ No working logic is removed
+
+Rule:
+
+If it works today, it must work tomorrow.
+
+🧠 4. AGENTIC INTEGRITY CHECK
+
+If touching anything called an agent:
+
+ Does it have reasoning (loop or planning)?
+
+ Does it use tools OR consciously avoid them?
+
+ Does it use memory/state where applicable?
+
+ Is it triggered dynamically (not hardcoded)?
+
+🚫 If NO → treat it as a response layer, not an agent
+🚫 Do NOT fake agent behavior with prompts
+
+🚫 5. NO HARDCODED INTELLIGENCE
+
+Strictly confirm:
+
+ No keyword-based responses added
+
+ No string-specific hacks (“need support”, “great”, etc.)
+
+ No fixed templates pretending to be reasoning
+
+✅ Allowed:
+
+Semantic classifier
+
+LLM-based decision
+
+Confidence-based routing
+
+🔁 6. NO PARTIAL CHANGES
+
+Cursor must confirm:
+
+ The change is complete end-to-end
+
+ Routing → Agent → Response → Fallback are all handled
+
+ No TODOs left behind
+
+ No “we’ll handle later”
+
+🚫 Partial work is NOT allowed in this system.
+
+👁️ 7. OBSERVABILITY CHECK
+
+For any behavioral change:
+
+ request_id is preserved
+
+ routing decision is logged
+
+ agent activation is logged
+
+ tool usage is logged (if any)
+
+ failures have explicit logs
+
+If you can’t observe it → it doesn’t exist.
+
+🛑 PREFLIGHT FAIL RULE
+
+If any single checkbox fails:
+
+❌ DO NOT WRITE CODE
+📣 Explain findings + ask for direction
+
+🔐 DRUV AI — AI SAFETY GATE (PR / CHANGE APPROVAL)
+
+This gate decides whether a change is ALLOWED, BLOCKED, or REQUIRES REVIEW
+
+🟢 GATE 1: DUPLICATION SAFETY
+
+BLOCK if ANY are true:
+
+New file added when similar file exists
+
+New agent created instead of activating existing one
+
+Parallel orchestrator / router introduced
+
+Same logic implemented in multiple places
+
+➡️ Result: ❌ BLOCK
+
+🟡 GATE 2: AGENTIC TRUTH CHECK
+
+Ask:
+
+Is this change making the system actually think more?
+
+Or just sound smarter?
+
+BLOCK if:
+
+Prompt-only intelligence added
+
+Persona expanded without reasoning
+
+Tools mentioned but not invoked
+
+Memory claimed but not used
+
+➡️ Result: ❌ BLOCK
+
+🟢 GATE 3: ROUTING & FREEDOM CHECK
+
+Ensure:
+
+ No student input category is blocked
+
+ Casual / emotional / vague queries still respond
+
+ Off-topic queries are redirected, not rejected
+
+ No over-restrictive patterns added
+
+If any input becomes unreachable → BLOCK
+
+🟡 GATE 4: REGRESSION SAFETY
+
+Verify:
+
+Existing tests still pass (if present)
+
+No duplicate responses introduced
+
+No silent behavior changes
+
+No UI regressions
+
+If uncertain → ⚠️ REQUIRE REVIEW
+
+🔴 GATE 5: CONFIDENCE RULE
+
+Cursor must explicitly state:
+
+“I am confident this change does not duplicate logic, break flows, or fake intelligence.”
+
+If Cursor cannot confidently say this:
+
+➡️ ❌ BLOCK
+
+🧠 FINAL SAFETY PRINCIPLE (THIS IS LAW)
+
+Druv AI must never get smarter by hacks.
+It must get smarter by thinking more often.
+
+Default to ReAct
+
+Default to reasoning
+
+Default to reuse
+
+Default to safety
+
+Default to restraint

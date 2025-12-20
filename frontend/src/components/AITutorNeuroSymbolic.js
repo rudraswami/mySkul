@@ -1796,7 +1796,19 @@ export default function AITutorNeuroSymbolic() {
                           <div className="flex justify-end mb-4">
                             <div className="max-w-[85%] px-4 py-3 bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm">
                               <p className="text-sm leading-relaxed">
-                                {typeof message.content === 'string' ? message.content : message.content?.message || message.content?.text || 'Question'}
+                                {/* FIXED: Extract actual user message, NEVER show "Question" fallback */}
+                                {(() => {
+                                  if (typeof message.content === 'string' && message.content.trim()) {
+                                    return message.content;
+                                  }
+                                  if (message.user_question && typeof message.user_question === 'string') {
+                                    return message.user_question;
+                                  }
+                                  if (typeof message.content === 'object' && message.content) {
+                                    return message.content.message || message.content.text || message.content.query || '';
+                                  }
+                                  return ''; // Never show "Question" - empty is better than misleading
+                                })()}
                               </p>
                               {message.image_preview && (
                                 <img src={message.image_preview} alt="Attached" className="mt-2 rounded-lg max-h-32 object-contain" />

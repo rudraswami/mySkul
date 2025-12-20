@@ -50,12 +50,27 @@ def analyze_query_complexity(query: str) -> str:
     import re
     query_lower = query.lower().strip()
     
-    # SIMPLE: Greetings, acknowledgments only
+    # SIMPLE: Greetings, acknowledgments, and affirmations
+    # CRITICAL: Include ALL natural human responses - these must never go unanswered
     simple_patterns = [
-        'hi', 'hello', 'hey', 'namaste', 'thanks', 'thank you', 'ok', 'okay',
-        'got it', 'cool', 'nice', 'good morning', 'good evening', 'bye', 'goodbye'
+        # Greetings
+        'hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good night',
+        # Farewells
+        'bye', 'goodbye', 'see you', 'later',
+        # Thanks
+        'thanks', 'thank you', 'thx', 'ty',
+        # Acknowledgments
+        'ok', 'okay', 'k', 'got it', 'understood', 'i see', 'alright', 'right',
+        # Affirmations - CRITICAL: These must trigger a response
+        'great', 'awesome', 'amazing', 'perfect', 'nice', 'cool', 'good', 'wow',
+        'excellent', 'brilliant', 'fantastic', 'wonderful', 'superb', 'love it',
+        'that helps', 'makes sense', 'clear now', 'i understand', 'helpful',
+        # Short reactions
+        'yes', 'yeah', 'yep', 'yup', 'no', 'nope', 'hmm', 'ah', 'oh', 'ooh',
+        # Emojis as text
+        '👍', '👏', '🙏', '❤️', '🔥', '💯', '✅', '😊', '🎉'
     ]
-    if any(query_lower.startswith(p) or query_lower == p for p in simple_patterns):
+    if any(query_lower.strip('!.? ') == p or query_lower.startswith(p + ' ') or query_lower.startswith(p + '!') for p in simple_patterns):
         return "simple"
     
     # COMPLEX: Derivations, proofs, multi-step problems
@@ -1444,17 +1459,28 @@ You MUST reference specific content from the image in your response."""
             logger.info(f"📷 Preserving image context in message (has {len(image_analysis.get('extracted_text', ''))} chars of extracted content)")
 
         # ====================================================================
-        # 🤖 SPECIALIZED AGENT ROUTING (Cognito OS v2.0 - RESTRICTIVE)
-        # =============================================================
-        # IMPORTANT DESIGN PRINCIPLE:
-        # - ResponseComposer is the DEFAULT for all normal tutor questions
-        # - Specialized agents ONLY for specific, clearly-identified intents
-        # - "what is / explain / why" → ResponseComposer (fast, simple)
-        # - TRUE doubt/confusion → AgenticDoubtResolver (only when stuck)
-        # - Exam strategy requests → ExamCoachAgent
+        # 🚫 SPECIALIZED AGENT ROUTING - DISABLED (Pattern Matching Removed)
+        # ====================================================================
+        # 
+        # WHY DISABLED:
+        # The old pattern-matching routing (is_doubt_query, is_exam_strategy_query, etc.)
+        # was KILLING intelligence. It used keyword matching to decide which agent to use,
+        # which meant:
+        # - "study plan" was never reaching the right agent
+        # - Emotional queries were being misclassified
+        # - Generic questions were being blocked or mishandled
+        #
+        # THE FIX:
+        # All routing now flows to UnifiedAIOrchestrator (line ~1660) which uses:
+        # - SemanticIntentClassifier: LLM-based semantic understanding
+        # - Dynamic agent activation based on TRUE understanding
+        # - No brittle pattern matching
+        #
+        # This transforms us from a "rule-based chatbot" to a "TRUE intelligent AI"
         # ====================================================================
         specialized_agent_result = None
-        USE_SPECIALIZED_AGENTS = os.getenv("USE_SPECIALIZED_AGENTS", "true").lower() == "true"
+        # 🔴 DISABLED: Pattern-based routing bypassed in favor of semantic routing
+        USE_SPECIALIZED_AGENTS = os.getenv("USE_SPECIALIZED_AGENTS", "false").lower() == "true"
         
         if USE_SPECIALIZED_AGENTS:
             try:
@@ -1676,7 +1702,9 @@ You MUST reference specific content from the image in your response."""
                     message_history=extended_history,
                     context={
                         "request_visual": True,
-                        "enable_cot": True
+                        "enable_cot": True,
+                        # 🆕 Pass session duration for proactive break suggestions
+                        "session_minutes": getattr(request, 'session_minutes', 0)
                     }
                 )
                 
@@ -1686,6 +1714,34 @@ You MUST reference specific content from the image in your response."""
                            f"complexity={orch_info.get('complexity')}, "
                            f"time={orch_info.get('generation_time', 0):.2f}s")
                 logger.info(f"🎯 Agents: {orch_info.get('agents_activated', [])}")
+                
+                # ================================================================
+                # CRITICAL FIX: Normalize response format
+                # ================================================================
+                # Different pipelines return different formats:
+                # - Some return {"response": {...}} 
+                # - Some return {"main_response": "..."}
+                # The downstream code expects {"response": {...}}
+                # ================================================================
+                if result and 'response' not in result:
+                    # Convert main_response format to response format
+                    main_content = result.get('main_response', '')
+                    if not main_content:
+                        # Try other possible content keys
+                        main_content = result.get('content', '')
+                    
+                    result['response'] = {
+                        'default_view': {
+                            'main_content': {
+                                'content': main_content,
+                                'type': 'markdown'
+                            }
+                        },
+                        'progressive_sections': {},
+                        'intent': result.get('intent', 'general'),
+                        'visual_metaphor': {}
+                    }
+                    logger.info(f"✅ Normalized response format from pipeline: {result.get('pipeline', 'unknown')}")
                 
                 # CRITICAL: Skip ALL other pipelines - v2 orchestrator succeeded
                 # Jump directly to post-processing
@@ -1699,12 +1755,13 @@ You MUST reference specific content from the image in your response."""
                 result = None
         
         # ====================================================================
-        # AGENTIC SYSTEM (Backup - Only if v2 orchestrator fails)
+        # AGENTIC SYSTEM (Backup - runs if v2 orchestrator fails/returns None)
         # ====================================================================
         USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
         
-        # Only use agentic if v2 orchestrator failed AND agentic is enabled
-        if not USE_V2_ORCHESTRATOR and USE_AGENTIC_SYSTEM and result is None:
+        # FIXED: Agentic system runs as backup when v2 orchestrator fails
+        # Previous bug: `not USE_V2_ORCHESTRATOR` prevented fallback when v2 was enabled but failed
+        if USE_AGENTIC_SYSTEM and result is None:
             # Use new agentic system with MEMORY
             logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
             try:
@@ -2081,12 +2138,45 @@ You MUST reference specific content from the image in your response."""
             # Don't fail the request if visual task creation fails
         
         # [JULES VISUAL ENHANCEMENT START]
-        visual_metaphor = result['response'].pop('visual_metaphor', {})
-        result['response']['hero_visual'] = visual_metaphor.get('hero_visual')
-        result['response']['step_visuals'] = result['response'].get('progressive_sections', {}).get('strategy', {}).get('steps', [])
-        result['response']['symbolic_structures'] = visual_metaphor.get('symbolic_structure')
-        result['response']['metaphor'] = visual_metaphor.get('metaphor')
-        result['response']['student_persona'] = f"{getattr(request, 'exam_mode', 'JEE')} | {result['response'].get('student_profile', {}).get('region', 'Delhi')} | {result['response'].get('student_profile', {}).get('emotional_state', 'Confident')}"
+        # Ensure result has proper structure before visual enhancement
+        if result and 'response' not in result:
+            # Emergency normalization - create response structure
+            logger.warning("⚠️ Result missing 'response' key - creating default structure")
+            main_content = result.get('main_response', result.get('content', 'I am processing your request...'))
+            result['response'] = {
+                'default_view': {
+                    'main_content': {
+                        'content': main_content if isinstance(main_content, str) else str(main_content),
+                        'type': 'markdown'
+                    }
+                },
+                'progressive_sections': {},
+                'visual_metaphor': {}
+            }
+        
+        # Safe access to response with fallback
+        if result and 'response' in result:
+            visual_metaphor = result['response'].pop('visual_metaphor', {})
+            result['response']['hero_visual'] = visual_metaphor.get('hero_visual')
+            result['response']['step_visuals'] = result['response'].get('progressive_sections', {}).get('strategy', {}).get('steps', [])
+            result['response']['symbolic_structures'] = visual_metaphor.get('symbolic_structure')
+            result['response']['metaphor'] = visual_metaphor.get('metaphor')
+            result['response']['student_persona'] = f"{getattr(request, 'exam_mode', 'JEE')} | {result['response'].get('student_profile', {}).get('region', 'Delhi')} | {result['response'].get('student_profile', {}).get('emotional_state', 'Confident')}"
+        else:
+            logger.error("❌ Result is None or missing response structure - this should not happen")
+            # Create minimal valid response
+            result = {
+                'success': False,
+                'response': {
+                    'default_view': {
+                        'main_content': {
+                            'content': "I'm processing your question. Please try again in a moment.",
+                            'type': 'markdown'
+                        }
+                    }
+                },
+                'error': 'Response structure missing'
+            }
 
         # Attach teaching visual for Tutor rendering
         # Priority: Visual Professor Generator (dynamic, multi-step, professor-style)

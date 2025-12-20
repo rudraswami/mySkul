@@ -51,10 +51,18 @@ class ResponseAdapter:
             from services.response_section_variety import SectionTitleVariety
             from services.intelligent_formatter import IntelligentFormatter
             
-            # Extract agent responses
+            # Extract agent responses (with type safety - can be dict or str)
             mentor_response = agentic_response.get('mentor', {})
+            if not isinstance(mentor_response, dict):
+                mentor_response = {'content': str(mentor_response) if mentor_response else ''}
+            
             professor_response = agentic_response.get('professor', {})
+            if not isinstance(professor_response, dict):
+                professor_response = {'content': str(professor_response) if professor_response else ''}
+            
             visual_response = agentic_response.get('visual', {})
+            if not isinstance(visual_response, dict):
+                visual_response = {}  # Visual must be dict or ignore
             
             # Detect if this is a greeting response
             # Extract intent from agentic response if not provided
@@ -117,10 +125,16 @@ class ResponseAdapter:
                 concept_name=concept_name
             )
             
-            # Extract structure components
-            default_view = dynamic_structure.get('default_view', {})
-            progressive_sections = dynamic_structure.get('progressive_sections', {})
-            template_directives = dynamic_structure.get('render_directives', {})
+            # Extract structure components (with None safety)
+            default_view = dynamic_structure.get('default_view') if dynamic_structure else None
+            if default_view is None:
+                default_view = {}
+            progressive_sections = dynamic_structure.get('progressive_sections') if dynamic_structure else None
+            if progressive_sections is None:
+                progressive_sections = {}
+            template_directives = dynamic_structure.get('render_directives') if dynamic_structure else None
+            if template_directives is None:
+                template_directives = {}
             
             # For greetings, ensure proper structure
             if is_greeting:
@@ -147,28 +161,31 @@ class ResponseAdapter:
                 varied_greeting = SectionTitleVariety.get_greeting_variation(template_style, student_name)
                 
                 # Override greeting if not already set by template
-                if not default_view.get('greeting') or 'Hey! Let me help' in default_view.get('greeting', ''):
+                current_greeting = default_view.get('greeting', '') if default_view else ''
+                if not current_greeting or 'Hey! Let me help' in current_greeting:
                     default_view['greeting'] = varied_greeting
                 
                 # Update section titles if progressive_sections exist
-                if progressive_sections:
+                if progressive_sections and default_view:
                     # Update main content title
-                    if default_view.get('main_content') and section_config.get('main_title'):
-                        default_view['main_content']['title'] = section_config['main_title']
+                    main_content = default_view.get('main_content')
+                    if main_content and isinstance(main_content, dict) and section_config.get('main_title'):
+                        main_content['title'] = section_config['main_title']
                     
                     # Update expandable section titles
                     if section_config.get('expandable_title'):
                         # Find first expandable section and update its title
                         for key in ['intuition', 'formal_explanation', 'strategy']:
-                            if key in progressive_sections:
+                            if key in progressive_sections and isinstance(progressive_sections.get(key), dict):
                                 progressive_sections[key]['title'] = section_config['expandable_title']
                                 break
                     
                     # Determine if key insight should be separate or integrated
                     if not SectionTitleVariety.should_show_key_insight_separately(template_style):
                         # Integrate key insight into main content instead of separate yellow box
-                        if default_view.get('main_content', {}).get('key_insight'):
-                            default_view['main_content']['key_insight'] = None  # Suppress separate box
+                        main_content = default_view.get('main_content')
+                        if main_content and isinstance(main_content, dict) and main_content.get('key_insight'):
+                            main_content['key_insight'] = None  # Suppress separate box
                     
                     # Hide metaphor box if configured
                     if not section_config.get('show_metaphor_separately', True):
@@ -181,9 +198,10 @@ class ResponseAdapter:
             
             # Build visual_metaphor (if visual was generated)
             visual_metaphor = {}
-            if visual_response and visual_response.get('content'):
+            # Type safety: visual_response can be dict or str - handle both
+            if visual_response and isinstance(visual_response, dict) and visual_response.get('content'):
                 visual_spec = visual_response['content']
-                if visual_spec:  # Not None
+                if visual_spec and isinstance(visual_spec, dict):  # Not None and is dict
                     visual_metaphor = {
                         'hero_visual': {
                             'type': visual_spec.get('type', 'animated_lesson'),
@@ -191,7 +209,7 @@ class ResponseAdapter:
                             'url': 'generated_visual',  # Placeholder
                             'alt_text': f'Visual explanation of {query[:50]}'
                         },
-                        'metaphor': visual_spec.get('metadata', {}).get('metaphor', 'cricket'),
+                        'metaphor': visual_spec.get('metadata', {}).get('metaphor', 'cricket') if isinstance(visual_spec.get('metadata'), dict) else 'cricket',
                         'visual_tier': 1
                     }
             

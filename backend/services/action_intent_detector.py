@@ -70,9 +70,29 @@ class ActionIntentDetector:
     the agent needs to take a real action vs just respond.
     """
     
-    # Patterns for ACTION intents (require tool usage)
+    # =========================================================================
+    # 🎯 ACTION_PATTERNS - TRUE TOOL-BASED ACTIONS ONLY
+    # =========================================================================
+    # CRITICAL PRINCIPLE: Only patterns that require REAL TOOL EXECUTION belong here.
+    # 
+    # TRUE ACTIONS (keep here):
+    # - REMINDER: Schedules an actual reminder in the database
+    # - RECURRING_REMINDER: Schedules recurring reminders
+    # - NOTIFICATION: Sends actual push notification
+    #
+    # NOT ACTIONS (moved to intelligent orchestrator):
+    # - Study plans, motivation, breaks, goals → Content generation via LLM
+    # - Progress checks, weak topics → Handled by agents with analytics context
+    # - These need REASONING, not just tool execution
+    #
+    # Everything not listed here flows to UnifiedAIOrchestrator which uses:
+    # - SemanticIntentClassifier (LLM-based understanding)
+    # - Dynamic agent routing
+    # - Memory integration
+    # - Proper tool invocation when needed
+    # =========================================================================
     ACTION_PATTERNS = {
-        # RECURRING REMINDERS - Check this BEFORE regular reminders
+        # RECURRING REMINDERS - TRUE ACTION: schedules actual reminders
         IntentType.RECURRING_REMINDER: [
             r'remind\s+(?:me\s+)?(?:every\s*)?(?:daily|everyday|each\s+day)',
             r'remind\s+(?:me\s+)?(?:every\s+)?(?:week|weekly)',
@@ -84,81 +104,44 @@ class ActionIntentDetector:
             r'रोज़\s+याद',  # Hindi: daily remind
             r'हर\s+दिन',   # Hindi: every day
         ],
+        # ONE-TIME REMINDERS - TRUE ACTION: schedules actual reminder
         IntentType.REMINDER: [
-            r'remind\s+(me|us)',
-            r'set\s+(?:a\s+)?reminder',
+            r'remind\s+(me|us)\s+(?:at|in|tomorrow|today|tonight)',
+            r'set\s+(?:a\s+)?reminder\s+(?:for|at|in)',
             r'don\'t\s+let\s+me\s+forget',
-            r'alert\s+me',
-            r'notify\s+me\s+(?:at|when|in)',
-            r'ping\s+me',
-            r'remember\s+to\s+tell\s+me',
-            r'याद\s+दिला',  # Hindi: remind
-            r'reminder\s+set\s+kar',  # Hinglish
+            r'alert\s+me\s+(?:at|when|in)\s+\d',
+            r'notify\s+me\s+(?:at|when|in)\s+\d',
+            r'ping\s+me\s+(?:at|in)',
+            r'याद\s+दिला.*(?:बजे|कल|आज)',  # Hindi: remind at time
+            r'reminder\s+set\s+kar.*(?:baje|kal|aaj)',  # Hinglish with time
         ],
+        # NOTIFICATIONS - TRUE ACTION: sends actual notification
         IntentType.NOTIFICATION: [
-            r'send\s+(?:me\s+)?(?:a\s+)?notification',
-            r'notify\s+me\s+about',
-            r'alert\s+me\s+when',
+            r'send\s+(?:me\s+)?(?:a\s+)?notification\s+(?:when|at|about)',
             r'push\s+notification',
         ],
-        IntentType.SUMMARY: [
-            r'send\s+(?:me\s+)?(?:a\s+)?summary',
-            r'(?:give|show)\s+me\s+(?:a\s+)?(?:study\s+)?summary',
-            r'what\s+have\s+i\s+(?:learned|studied)',
-            r'my\s+(?:study\s+)?progress',
-            r'how\s+(?:much|many)\s+have\s+i\s+(?:done|studied)',
-            r'email\s+me\s+(?:a\s+)?summary',
-        ],
-        IntentType.STUDY_PLAN: [
-            r'help\s+(?:me\s+)?(?:prepare|plan)\s+(?:for\s+)?(?:jee|neet|boards?|exam)',
-            r'(?:create|make)\s+(?:a\s+)?(?:study\s+)?plan',
-            r'(?:i\s+have|my)\s+(?:jee|neet|exam)\s+in\s+\d+\s+(?:days?|months?|weeks?)',
-            r'plan\s+(?:for|my)\s+(?:jee|neet|exam)',
-            r'how\s+(?:should|do)\s+i\s+(?:prepare|study)\s+for',
-            r'preparation\s+strategy',
-        ],
-        IntentType.PROGRESS_CHECK: [
-            r'how\s+am\s+i\s+doing',
-            r'(?:show|check)\s+(?:my\s+)?progress',
-            r'am\s+i\s+(?:improving|getting\s+better)',
-            r'(?:my|show)\s+(?:weak|strong)\s+(?:areas?|topics?|points?)',
-            r'where\s+(?:am\s+i|do\s+i)\s+(?:weak|struggling)',
-            r'analytics|statistics|stats',
-        ],
-        IntentType.WEAK_TOPICS: [
-            r'(?:what|which)\s+(?:are\s+)?(?:my\s+)?weak\s+(?:topics?|areas?|points?)',
-            r'where\s+(?:am\s+i|do\s+i)\s+(?:need|have)\s+(?:to\s+)?(?:improve|work)',
-            r'(?:show|tell)\s+(?:me\s+)?(?:my\s+)?weak',
-            r'(?:i\'?m?|am)\s+(?:weak|struggling)\s+(?:in|at|with)',
-        ],
-        IntentType.BREAK_REQUEST: [
-            r'(?:i\s+)?need\s+(?:a\s+)?break',
-            r'(?:i\'?m?|feeling)\s+(?:tired|exhausted|burnt?\s*out)',
-            r'take\s+(?:a\s+)?(?:break|rest)',
-            r'pause\s+(?:for|study)',
-            r'थक\s+गया',  # Hindi: tired
-        ],
-        IntentType.MOTIVATION: [
-            r'(?:i\'?m?|feeling)\s+(?:demotivated|unmotivated|low|sad|down)',
-            r'(?:i\s+)?(?:can\'?t|cannot)\s+(?:focus|concentrate|study)',
-            r'(?:i\s+)?(?:don\'?t|do\s+not)\s+(?:feel|want)\s+(?:like\s+)?study',
-            r'motivate\s+me',
-            r'(?:i\s+)?(?:give|need)\s+(?:up|motivation)',
-            r'हिम्मत\s+नहीं',  # Hindi: no courage
-            r'मन\s+नहीं',     # Hindi: don't feel like
-        ],
-        IntentType.GOAL: [
-            r'set\s+(?:a\s+)?(?:study\s+)?goal',
-            r'i\s+want\s+to\s+(?:study|learn|complete)',
-            r'my\s+goal\s+is',
-            r'target\s+(?:is|set)',
-        ],
-        IntentType.SCHEDULE: [
-            r'schedule\s+(?:my\s+)?(?:study|learning)',
-            r'book\s+(?:a\s+)?(?:study\s+)?(?:time|session)',
-            r'when\s+should\s+i\s+study',
-        ],
     }
+    
+    # =========================================================================
+    # 🚫 REMOVED FROM ACTION_PATTERNS - Now handled by intelligent orchestrator
+    # =========================================================================
+    # The following were INCORRECTLY classified as "actions" requiring tool execution.
+    # They are actually CONTENT GENERATION requests that need LLM reasoning:
+    #
+    # - STUDY_PLAN: "create a study plan" → MentorAgent + StudyPlannerTool
+    # - SUMMARY: "give me a summary" → LLM generates summary
+    # - PROGRESS_CHECK: "how am I doing" → Agents with analytics context
+    # - WEAK_TOPICS: "what are my weak areas" → Agents with analytics context
+    # - BREAK_REQUEST: "I need a break" → Empathetic LLM response
+    # - MOTIVATION: "I'm feeling low" → Empathetic LLM response
+    # - GOAL: "set a goal" → Conversational goal-setting
+    # - SCHEDULE: "when should I study" → Personalized advice
+    #
+    # These now flow to UnifiedAIOrchestrator.process() which uses:
+    # 1. SemanticIntentClassifier - LLM understands intent
+    # 2. IntelligentRoutingEngine - Routes to appropriate pipeline
+    # 3. MentorAgent/Supervisor - Generates response with tools if needed
+    # =========================================================================
     
     # NON-ACTION patterns - conversational, just acknowledge nicely, don't try to execute an action
     NON_ACTION_PATTERNS = {
@@ -343,24 +326,14 @@ class ActionIntentDetector:
             
             return params
         
-        elif intent_type == IntentType.STUDY_PLAN:
-            # Extract exam type
-            if 'jee' in text_lower:
-                params['exam'] = 'JEE'
-            elif 'neet' in text_lower:
-                params['exam'] = 'NEET'
-            elif 'board' in text_lower:
-                params['exam'] = 'Boards'
-            else:
-                params['exam'] = 'General'
-            
-            # Extract timeframe
-            match = re.search(r'in\s+(\d+)\s*(days?|months?|weeks?)', text_lower)
-            if match:
-                params['duration'] = int(match.group(1))
-                params['duration_unit'] = match.group(2).rstrip('s')
-            
-            return params
+        # =====================================================================
+        # 🚫 REMOVED: STUDY_PLAN, PROGRESS_CHECK, WEAK_TOPICS, BREAK_REQUEST,
+        #    MOTIVATION, GOAL, SCHEDULE param extraction
+        # =====================================================================
+        # These intent types are no longer in ACTION_PATTERNS, so their param
+        # extraction code is dead. They now flow to UnifiedAIOrchestrator which
+        # handles them with proper semantic understanding.
+        # =====================================================================
         
         elif intent_type == IntentType.PROGRESS_CHECK:
             # Extract subject if mentioned
@@ -549,20 +522,30 @@ class ActionIntentDetector:
         return message or "Study reminder"
     
     def get_tool_for_intent(self, intent: DetectedIntent) -> Optional[str]:
-        """Get the tool name to use for an intent"""
+        """
+        Get the tool name to use for an intent.
+        
+        NOTE: Only TRUE ACTION intents have tool mappings.
+        Other intents flow to UnifiedAIOrchestrator for intelligent handling.
+        """
+        # =====================================================================
+        # TRUE ACTIONS ONLY - Require actual tool execution
+        # =====================================================================
         intent_to_tool = {
             IntentType.REMINDER: 'schedule_reminder',
             IntentType.RECURRING_REMINDER: 'schedule_recurring_reminder',
             IntentType.NOTIFICATION: 'send_notification',
-            IntentType.SUMMARY: 'send_study_summary',
-            IntentType.GOAL: 'set_study_goal',
-            IntentType.SCHEDULE: 'create_study_schedule',
-            IntentType.STUDY_PLAN: 'create_study_plan',
-            IntentType.PROGRESS_CHECK: 'check_progress',
-            IntentType.WEAK_TOPICS: 'analyze_weak_topics',
-            IntentType.BREAK_REQUEST: 'start_break',
-            IntentType.MOTIVATION: 'send_motivation',
         }
+        
+        # NOTE: The following were REMOVED - they're handled by intelligent orchestrator:
+        # - STUDY_PLAN → MentorAgent + StudyPlannerTool
+        # - SUMMARY → LLM with memory context
+        # - PROGRESS_CHECK → Agents with analytics
+        # - WEAK_TOPICS → Agents with analytics
+        # - BREAK_REQUEST → Empathetic LLM
+        # - MOTIVATION → Empathetic LLM
+        # - GOAL → Conversational goal-setting
+        # - SCHEDULE → Personalized advice
         
         return intent_to_tool.get(intent.intent_type)
 

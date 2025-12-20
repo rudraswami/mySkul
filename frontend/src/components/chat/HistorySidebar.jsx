@@ -11,8 +11,11 @@
  * - All sections open by default
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
   X,
   Search,
@@ -27,7 +30,13 @@ import {
   History,
   ChevronDown,
   ChevronUp,
-  BookOpen
+  BookOpen,
+  LayoutDashboard,
+  User,
+  Crown,
+  LogOut,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 // ============================================
@@ -476,6 +485,387 @@ const Section = ({ title, icon, count, children, defaultOpen = true }) => {
 };
 
 // ============================================
+// USER PROFILE DROPDOWN COMPONENT
+// ============================================
+const UserProfileDropdown = ({ onClose }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Get user initials
+  const getInitials = () => {
+    if (!user?.name && !user?.full_name) return '?';
+    const name = user?.full_name || user?.name || '';
+    const names = name.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Handle navigation
+  const handleNavigate = (path) => {
+    setIsExpanded(false);
+    onClose?.();
+    navigate(path);
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    setIsExpanded(false);
+    onClose?.();
+    await logout();
+    navigate('/');
+  };
+
+  // Get subscription tier
+  const subscriptionTier = user?.subscription_type || 'FREE';
+  const isPro = subscriptionTier === 'PRO';
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative' }}>
+      {/* User Profile Button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '12px 16px',
+          backgroundColor: isExpanded ? '#F3F4F6' : '#FAFAFA',
+          border: 'none',
+          borderRadius: '14px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+        className="hover:bg-gray-100"
+      >
+        {/* Avatar */}
+        <div style={{
+          width: '42px',
+          height: '42px',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: '700',
+          fontSize: '15px',
+          flexShrink: 0,
+          boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)'
+        }}>
+          {getInitials()}
+        </div>
+        
+        {/* User Info */}
+        <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+          <p style={{
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#111827',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {user?.full_name || user?.name || 'Student'}
+          </p>
+          <p style={{
+            margin: '2px 0 0 0',
+            fontSize: '12px',
+            color: isPro ? '#7C3AED' : '#6B7280',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            {isPro && <Crown style={{ width: '12px', height: '12px' }} />}
+            {subscriptionTier === 'FREE' ? 'Free Plan' : `${subscriptionTier} Plan`}
+          </p>
+        </div>
+
+        {/* Chevron */}
+        <ChevronUp 
+          style={{ 
+            width: '18px', 
+            height: '18px', 
+            color: '#9CA3AF',
+            transition: 'transform 0.2s ease',
+            transform: isExpanded ? 'rotate(0deg)' : 'rotate(180deg)'
+          }} 
+        />
+      </button>
+
+      {/* Dropdown Menu */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: 0,
+              right: 0,
+              marginBottom: '8px',
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+              border: '1px solid #E5E7EB',
+              overflow: 'hidden',
+              zIndex: 60
+            }}
+          >
+            {/* Navigation Items */}
+            <div style={{ padding: '8px' }}>
+              {/* Home / Dashboard */}
+              <button
+                onClick={() => handleNavigate('/dashboard')}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s'
+                }}
+                className="hover:bg-gray-50"
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#DBEAFE',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <LayoutDashboard style={{ width: '18px', height: '18px', color: '#2563EB' }} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                    Home
+                  </p>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
+                    Go to dashboard
+                  </p>
+                </div>
+              </button>
+
+              {/* Profile */}
+              <button
+                onClick={() => handleNavigate('/profile')}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s'
+                }}
+                className="hover:bg-gray-50"
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#F3E8FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <User style={{ width: '18px', height: '18px', color: '#7C3AED' }} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                    Profile
+                  </p>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
+                    Edit your details
+                  </p>
+                </div>
+              </button>
+
+              {/* Upgrade Plan - Only show if not PRO */}
+              {!isPro && (
+                <button
+                  onClick={() => handleNavigate('/subscription')}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 14px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s'
+                  }}
+                  className="hover:opacity-90"
+                >
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Crown style={{ width: '18px', height: '18px', color: 'white' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#7C3AED' }}>
+                      Go Premium
+                    </p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#9333EA' }}>
+                      Unlock all features
+                    </p>
+                  </div>
+                  <Sparkles style={{ width: '16px', height: '16px', color: '#EC4899' }} />
+                </button>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: '1px', backgroundColor: '#E5E7EB' }} />
+
+            {/* Theme Toggle */}
+            <div style={{ padding: '8px' }}>
+              <button
+                onClick={toggleDarkMode}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s'
+                }}
+                className="hover:bg-gray-50"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    backgroundColor: isDarkMode ? '#FEF3C7' : '#1F2937',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    {isDarkMode 
+                      ? <Sun style={{ width: '18px', height: '18px', color: '#D97706' }} />
+                      : <Moon style={{ width: '18px', height: '18px', color: '#E5E7EB' }} />
+                    }
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </p>
+                </div>
+                {/* Toggle Switch */}
+                <div style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  backgroundColor: isDarkMode ? '#7C3AED' : '#D1D5DB',
+                  position: 'relative',
+                  transition: 'background-color 0.2s ease'
+                }}>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '10px',
+                    backgroundColor: 'white',
+                    position: 'absolute',
+                    top: '2px',
+                    left: isDarkMode ? '22px' : '2px',
+                    transition: 'left 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                  }} />
+                </div>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: '1px', backgroundColor: '#E5E7EB' }} />
+
+            {/* Logout */}
+            <div style={{ padding: '8px' }}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s'
+                }}
+                className="hover:bg-red-50"
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#FEE2E2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <LogOut style={{ width: '18px', height: '18px', color: '#DC2626' }} />
+                </div>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#DC2626' }}>
+                  Sign Out
+                </p>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ============================================
 // MAIN SIDEBAR COMPONENT
 // ============================================
 export default function HistorySidebar({
@@ -754,30 +1144,40 @@ export default function HistorySidebar({
           )}
         </div>
 
-        {/* === NEW CHAT BUTTON - SOLID GRADIENT === */}
+        {/* === FOOTER: NEW CHAT + USER PROFILE === */}
         <div style={{
-          padding: '16px 20px',
           backgroundColor: 'white',
           borderTop: '1px solid #E5E7EB'
         }}>
-          <button
-            onClick={() => { 
-              onNewChat?.(); 
-              onClose?.(); 
-            }}
-            style={newChatButtonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 30px rgba(124, 58, 237, 0.45)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(124, 58, 237, 0.35)';
-            }}
-          >
-            <Plus style={{ width: '20px', height: '20px', strokeWidth: 2.5 }} />
-            New Conversation
-          </button>
+          {/* New Chat Button */}
+          <div style={{ padding: '12px 16px 8px 16px' }}>
+            <button
+              onClick={() => { 
+                onNewChat?.(); 
+                onClose?.(); 
+              }}
+              style={newChatButtonStyle}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 30px rgba(124, 58, 237, 0.45)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(124, 58, 237, 0.35)';
+              }}
+            >
+              <Plus style={{ width: '20px', height: '20px', strokeWidth: 2.5 }} />
+              New Conversation
+            </button>
+          </div>
+          
+          {/* Divider */}
+          <div style={{ height: '1px', backgroundColor: '#E5E7EB', margin: '0 16px' }} />
+          
+          {/* User Profile Dropdown */}
+          <div style={{ padding: '12px 16px 16px 16px' }}>
+            <UserProfileDropdown onClose={onClose} />
+          </div>
         </div>
       </motion.div>
 

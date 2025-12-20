@@ -1,44 +1,78 @@
 """
-ConversationStateManager - Unified Context Tracking
-====================================================
-Maintains conversation state across messages.
-Replaces: fragmented context handling, truncated history.
+ConversationStateManager - BEHAVIORAL Conversation Intelligence
+================================================================
 
-Tracks:
-- Current topic and concept
-- Difficulty level
-- Confusion signals
-- Topics covered in session
-- Question patterns
+This is NOT passive data storage. This is the DECISION-MAKING context
+that drives how agents behave, what actions they take, and how they
+maintain conversational continuity.
+
+BEHAVIORAL STATE FIELDS:
+- conversation_phase: Controls what kind of response is appropriate
+- intent_confidence: Increases on clarification, affects action decisions
+- pending_action: What action we're waiting to complete after clarification
+- emotional_signal: Drives tone and empathy level
+- response_mode: friend/mentor/listener/guide - how agent should behave
+
+CORE PRINCIPLE:
+State influences routing, tone, and action.
+State can OVERRIDE intent classifier.
+If pending_action exists and user clarifies → ACT, don't re-classify.
 """
 
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
+class ConversationPhase(Enum):
+    """Conversation phases that control response behavior"""
+    FIRST_TURN = "first_turn"           # Only time capability menus are allowed
+    ACTIVE = "active"                   # Normal conversation flow
+    CLARIFYING = "clarifying"           # AI asked clarifying question, awaiting answer
+    ACTION_PENDING = "action_pending"   # User expressed intent, action in progress
+    EMOTIONAL_SUPPORT = "emotional"     # User needs empathy, not academics
+
+
+class ResponseMode(Enum):
+    """How the agent should behave in responses"""
+    MENTOR = "mentor"       # Teaching, explaining
+    FRIEND = "friend"       # Casual, warm, supportive
+    LISTENER = "listener"   # Empathetic, acknowledging
+    GUIDE = "guide"         # Directing, planning
+
+
 class ConversationStateManager:
     """
-    Manages conversation state for intelligent context-aware responses.
+    BEHAVIORAL Conversation State Manager.
+    
+    This is NOT just data storage. This drives:
+    - Routing decisions (state can override classifier)
+    - Response tone and style
+    - Whether to ask or act
+    - Conversational continuity
+    
+    CORE RULE: If pending_action exists and user clarifies → 
+               Execute action immediately, don't re-route.
     """
     
     def __init__(self, db):
         self.db = db
-        self._cache: Dict[str, Dict] = {}  # In-memory cache for fast access
+        self._cache: Dict[str, Dict] = {}  # In-memory cache for speed
     
     async def get_state(self, user_id: str, session_id: str) -> Dict[str, Any]:
         """
-        Get current conversation state.
+        Get current conversation state with all behavioral fields.
         """
         cache_key = f"{user_id}_{session_id}"
         
-        # Check cache first
+        # Check cache first (memory for speed)
         if cache_key in self._cache:
             return self._cache[cache_key]
         
-        # Load from database
+        # Load from database (DB for persistence)
         try:
             state_doc = await self.db.conversation_states.find_one({
                 "user_id": user_id,
@@ -46,24 +80,55 @@ class ConversationStateManager:
             })
             
             if state_doc:
-                state = {
-                    "current_topic": state_doc.get("current_topic"),
-                    "current_concept": state_doc.get("current_concept"),
-                    "current_subject": state_doc.get("current_subject"),
-                    "difficulty_level": state_doc.get("difficulty_level", 0.5),
-                    "confusion_level": state_doc.get("confusion_level", 0),
-                    "topics_covered": state_doc.get("topics_covered", []),
-                    "question_count": state_doc.get("question_count", 0),
-                    "last_intent": state_doc.get("last_intent"),
-                    "session_start": state_doc.get("session_start")
-                }
+                state = self._doc_to_state(state_doc)
                 self._cache[cache_key] = state
                 return state
         except Exception as e:
             logger.warning(f"Failed to load state: {e}")
         
-        # Return default state
-        default_state = {
+        # Return default state - FIRST_TURN phase
+        default_state = self._create_default_state()
+        self._cache[cache_key] = default_state
+        return default_state
+    
+    def _doc_to_state(self, doc: Dict) -> Dict[str, Any]:
+        """Convert database document to state dict with all fields."""
+        return {
+            # ========== BEHAVIORAL STATE (NEW) ==========
+            "conversation_phase": doc.get("conversation_phase", ConversationPhase.FIRST_TURN.value),
+            "intent_confidence": doc.get("intent_confidence", 0.0),
+            "pending_action": doc.get("pending_action"),  # {type, params, clarification_asked}
+            "emotional_signal": doc.get("emotional_signal", "neutral"),
+            "response_mode": doc.get("response_mode", ResponseMode.MENTOR.value),
+            "last_user_intent": doc.get("last_user_intent"),  # Structured intent
+            "clarification_count": doc.get("clarification_count", 0),  # Track re-asks
+            
+            # ========== CONTEXT STATE (EXISTING) ==========
+            "current_topic": doc.get("current_topic"),
+            "current_concept": doc.get("current_concept"),
+            "current_subject": doc.get("current_subject"),
+            "difficulty_level": doc.get("difficulty_level", 0.5),
+            "confusion_level": doc.get("confusion_level", 0),
+            "topics_covered": doc.get("topics_covered", []),
+            "question_count": doc.get("question_count", 0),
+            "session_start": doc.get("session_start"),
+            "last_message_time": doc.get("last_message_time"),
+        }
+    
+    def _create_default_state(self) -> Dict[str, Any]:
+        """Create default state for new session."""
+        now = datetime.now(timezone.utc).isoformat()
+        return {
+            # ========== BEHAVIORAL STATE ==========
+            "conversation_phase": ConversationPhase.FIRST_TURN.value,
+            "intent_confidence": 0.0,
+            "pending_action": None,
+            "emotional_signal": "neutral",
+            "response_mode": ResponseMode.MENTOR.value,
+            "last_user_intent": None,
+            "clarification_count": 0,
+            
+            # ========== CONTEXT STATE ==========
             "current_topic": None,
             "current_concept": None,
             "current_subject": None,
@@ -71,11 +136,153 @@ class ConversationStateManager:
             "confusion_level": 0,
             "topics_covered": [],
             "question_count": 0,
-            "last_intent": None,
-            "session_start": datetime.now(timezone.utc).isoformat()
+            "session_start": now,
+            "last_message_time": now,
         }
-        self._cache[cache_key] = default_state
-        return default_state
+    
+    # ================================================================
+    # BEHAVIORAL STATE METHODS
+    # ================================================================
+    
+    async def set_pending_action(
+        self,
+        user_id: str,
+        session_id: str,
+        action_type: str,
+        params: Dict[str, Any],
+        clarification_question: str
+    ) -> None:
+        """
+        Set a pending action when we need clarification.
+        
+        When user responds, we should COMPLETE this action, not re-classify.
+        """
+        state = await self.get_state(user_id, session_id)
+        
+        state["pending_action"] = {
+            "type": action_type,
+            "params": params,
+            "clarification_asked": clarification_question,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        state["conversation_phase"] = ConversationPhase.ACTION_PENDING.value
+        state["clarification_count"] = 0  # Reset on new action
+        
+        await self._save_state(user_id, session_id, state)
+        logger.info(f"[State] Set pending_action: {action_type}")
+    
+    async def complete_pending_action(
+        self,
+        user_id: str,
+        session_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get and clear the pending action.
+        
+        Returns the pending action so caller can execute it.
+        """
+        state = await self.get_state(user_id, session_id)
+        pending = state.get("pending_action")
+        
+        if pending:
+            # Clear the pending action
+            state["pending_action"] = None
+            state["conversation_phase"] = ConversationPhase.ACTIVE.value
+            state["intent_confidence"] = min(1.0, state.get("intent_confidence", 0.5) + 0.3)
+            
+            await self._save_state(user_id, session_id, state)
+            logger.info(f"[State] Completed pending_action: {pending.get('type')}")
+            
+        return pending
+    
+    async def escalate_intent_confidence(
+        self,
+        user_id: str,
+        session_id: str,
+        boost: float = 0.2
+    ) -> float:
+        """
+        Increase intent confidence when user clarifies.
+        
+        Clarification = higher confidence = take action.
+        """
+        state = await self.get_state(user_id, session_id)
+        
+        new_confidence = min(1.0, state.get("intent_confidence", 0.5) + boost)
+        state["intent_confidence"] = new_confidence
+        
+        await self._save_state(user_id, session_id, state)
+        logger.info(f"[State] Intent confidence escalated to {new_confidence:.2f}")
+        
+        return new_confidence
+    
+    async def set_emotional_signal(
+        self,
+        user_id: str,
+        session_id: str,
+        signal: str,
+        response_mode: str = None
+    ) -> None:
+        """
+        Set emotional signal and optionally response mode.
+        """
+        state = await self.get_state(user_id, session_id)
+        
+        state["emotional_signal"] = signal
+        if response_mode:
+            state["response_mode"] = response_mode
+        
+        # If emotional, switch to emotional support phase
+        if signal in ["sad", "anxious", "frustrated", "lonely", "stressed"]:
+            state["conversation_phase"] = ConversationPhase.EMOTIONAL_SUPPORT.value
+            state["response_mode"] = ResponseMode.LISTENER.value
+        
+        await self._save_state(user_id, session_id, state)
+    
+    async def transition_phase(
+        self,
+        user_id: str,
+        session_id: str,
+        new_phase: str
+    ) -> None:
+        """
+        Transition conversation phase.
+        """
+        state = await self.get_state(user_id, session_id)
+        old_phase = state.get("conversation_phase")
+        state["conversation_phase"] = new_phase
+        
+        await self._save_state(user_id, session_id, state)
+        logger.info(f"[State] Phase transition: {old_phase} -> {new_phase}")
+    
+    def is_first_turn(self, state: Dict[str, Any]) -> bool:
+        """Check if this is the first turn (capability menus allowed)."""
+        return state.get("conversation_phase") == ConversationPhase.FIRST_TURN.value
+    
+    def has_pending_action(self, state: Dict[str, Any]) -> bool:
+        """Check if there's a pending action waiting for clarification."""
+        return state.get("pending_action") is not None
+    
+    def should_act_immediately(self, state: Dict[str, Any]) -> bool:
+        """
+        Determine if we should act immediately vs ask clarification.
+        
+        ACT if:
+        - Intent confidence >= 0.7
+        - OR pending_action exists (user clarified)
+        - OR conversation_phase is ACTION_PENDING
+        """
+        if state.get("pending_action"):
+            return True
+        if state.get("conversation_phase") == ConversationPhase.ACTION_PENDING.value:
+            return True
+        if state.get("intent_confidence", 0) >= 0.7:
+            return True
+        return False
+    
+    # ================================================================
+    # EXISTING METHODS (ENHANCED)
+    # ================================================================
     
     async def update_state(
         self,
@@ -84,26 +291,63 @@ class ConversationStateManager:
         question: str,
         response: str,
         subject: str = None,
-        intent: str = None
+        intent: str = None,
+        intent_confidence: float = None,
+        emotional_signal: str = None
     ) -> None:
         """
         Update conversation state after an exchange.
+        
+        This method handles:
+        - Phase transitions (first_turn -> active)
+        - Intent tracking and confidence
+        - Topic/concept extraction
+        - Emotional signal updates
         """
-        cache_key = f"{user_id}_{session_id}"
         state = await self.get_state(user_id, session_id)
         
-        # Extract topic from question
+        # ================================================================
+        # PHASE TRANSITION: First turn -> Active
+        # ================================================================
+        if state.get("conversation_phase") == ConversationPhase.FIRST_TURN.value:
+            state["conversation_phase"] = ConversationPhase.ACTIVE.value
+            logger.info("[State] Transitioned from FIRST_TURN to ACTIVE")
+        
+        # ================================================================
+        # INTENT AND CONFIDENCE TRACKING
+        # ================================================================
+        if intent:
+            state["last_user_intent"] = intent
+        
+        if intent_confidence is not None:
+            state["intent_confidence"] = intent_confidence
+        
+        # ================================================================
+        # EMOTIONAL SIGNAL
+        # ================================================================
+        if emotional_signal:
+            state["emotional_signal"] = emotional_signal
+            # Auto-set response mode based on emotion
+            if emotional_signal in ["sad", "anxious", "frustrated", "lonely", "stressed"]:
+                state["response_mode"] = ResponseMode.LISTENER.value
+            elif emotional_signal in ["excited", "curious", "positive"]:
+                state["response_mode"] = ResponseMode.FRIEND.value
+            else:
+                state["response_mode"] = ResponseMode.MENTOR.value
+        
+        # ================================================================
+        # TOPIC AND CONCEPT EXTRACTION
+        # ================================================================
         topic = self._extract_topic(question, subject)
         concept = self._extract_concept(question)
         
-        # Update state
-        state["question_count"] += 1
-        state["last_intent"] = intent
+        state["question_count"] = state.get("question_count", 0) + 1
+        state["last_message_time"] = datetime.now(timezone.utc).isoformat()
         
         if topic:
             state["current_topic"] = topic
-            if topic not in state["topics_covered"]:
-                state["topics_covered"].append(topic)
+            if topic not in state.get("topics_covered", []):
+                state["topics_covered"] = state.get("topics_covered", []) + [topic]
         
         if concept:
             state["current_concept"] = concept
@@ -111,22 +355,54 @@ class ConversationStateManager:
         if subject:
             state["current_subject"] = subject
         
-        # Detect confusion signals
-        confusion_indicators = ['confused', 'don\'t understand', 'help', 'stuck', 'what do you mean', 'explain again', 'still not clear']
-        if any(ind in question.lower() for ind in confusion_indicators):
-            state["confusion_level"] = min(1.0, state["confusion_level"] + 0.3)
-        else:
-            state["confusion_level"] = max(0, state["confusion_level"] - 0.1)
+        # ================================================================
+        # CONFUSION DETECTION
+        # ================================================================
+        confusion_indicators = [
+            'confused', "don't understand", 'help', 'stuck', 
+            'what do you mean', 'explain again', 'still not clear',
+            'no i mean', 'not that', 'i meant'
+        ]
+        q_lower = question.lower()
         
-        # Update cache
+        if any(ind in q_lower for ind in confusion_indicators):
+            state["confusion_level"] = min(1.0, state.get("confusion_level", 0) + 0.3)
+            
+            # CRITICAL: "no i mean" is a CLARIFICATION, not confusion
+            # This should INCREASE confidence and trigger action
+            if any(x in q_lower for x in ['no i mean', 'not that', 'i meant', 'actually']):
+                state["intent_confidence"] = min(1.0, state.get("intent_confidence", 0.5) + 0.3)
+                logger.info("[State] Clarification detected - confidence increased")
+        else:
+            state["confusion_level"] = max(0, state.get("confusion_level", 0) - 0.1)
+        
+        # ================================================================
+        # PERSIST STATE
+        # ================================================================
+        await self._save_state(user_id, session_id, state)
+    
+    async def _save_state(
+        self,
+        user_id: str,
+        session_id: str,
+        state: Dict[str, Any]
+    ) -> None:
+        """
+        Save state to both cache and database.
+        """
+        cache_key = f"{user_id}_{session_id}"
+        
+        # Update cache (memory)
         self._cache[cache_key] = state
         
-        # Persist to database (async, non-blocking)
+        # Persist to database
         try:
             await self.db.conversation_states.update_one(
                 {"user_id": user_id, "session_id": session_id},
                 {"$set": {
                     **state,
+                    "user_id": user_id,
+                    "session_id": session_id,
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }},
                 upsert=True
@@ -289,6 +565,34 @@ class ConversationStateManager:
                 return concept
         
         return None
+    
+    async def is_truly_first_turn(
+        self,
+        user_id: str,
+        session_id: str
+    ) -> bool:
+        """
+        Check if this is truly the first turn based on DB message count.
+        
+        This is the ONLY reliable way to detect first turn.
+        Message history can be trimmed, frontend flags are fragile.
+        DB is the source of truth.
+        """
+        try:
+            # Check if any messages exist in this session
+            message_count = await self.db.session_messages.count_documents({
+                "session_id": session_id
+            })
+            
+            is_first = message_count == 0
+            logger.info(f"[State] is_truly_first_turn: {is_first} (messages: {message_count})")
+            return is_first
+            
+        except Exception as e:
+            logger.warning(f"Failed to check first turn: {e}")
+            # Fallback to state-based check
+            state = await self.get_state(user_id, session_id)
+            return state.get("question_count", 0) == 0
     
     async def clear_state(self, user_id: str, session_id: str) -> None:
         """Clear conversation state (for new session)."""

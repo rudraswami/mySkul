@@ -848,17 +848,19 @@ I hope this helps! Let me know if you'd like me to explore further."""
         }
     
     def _generate_timeout_response(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Response on timeout"""
+        """
+        Response on timeout.
+        
+        CRITICAL: Natural continuation, NO capability menus.
+        """
+        short_query = query[:60] + "..." if len(query) > 60 else query
+        
         return {
             "success": True,
             "agent": self.get_agent_name(),
-            "content": f"""I'm working on a thorough answer to your question, but it's taking longer than expected.
+            "content": f"""That's a great question about "{short_query}"
 
-Here's what I can tell you based on partial analysis:
-- This is a thoughtful question that deserves a detailed answer
-- Let me provide a simpler explanation, or feel free to ask about a specific part
-
-Would you like me to focus on any particular aspect?""",
+I'm thinking through the best way to explain this to you. What specific part are you most curious about? That'll help me give you exactly what you need. 🎯""",
             "confidence": 0.4,
             "metadata": {"agent_type": "verified_react", "timeout": True}
         }

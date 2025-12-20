@@ -89,3 +89,13 @@ After fix:
 - Related concepts with connections
 - Teaching overlays (hotspots, steps)
 - Footer branding
+
+
+
+
+
+
+
+
+
+

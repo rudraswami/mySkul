@@ -120,7 +120,7 @@ class LearningPatternAnalyzer:
             return self._profiles[user_id]
         
         # Try to load from database
-        if self.db:
+        if self.db is not None:
             try:
                 record = await self.db.learning_profiles.find_one({"user_id": user_id})
                 if record:
@@ -388,7 +388,7 @@ class LearningPatternAnalyzer:
     
     async def _save_profile(self, profile: LearningProfile) -> None:
         """Save profile to database"""
-        if not self.db:
+        if self.db is None:
             return
         
         try:

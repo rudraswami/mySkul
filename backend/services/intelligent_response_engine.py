@@ -69,17 +69,25 @@ def detect_intent(question: str, context: Dict[str, Any] = None) -> QuestionInte
     if q.strip('!?.') in greeting_words or any(q.startswith(g) for g in greeting_words):
         return QuestionIntent.GREETING
     
-    # Conversational/casual (CHECK EARLY - before academic patterns)
+    # =========================================================================
+    # CONVERSATIONAL - Only TRUE casual chit-chat
+    # =========================================================================
+    # CRITICAL: Do NOT include substantive requests here!
+    # - "study plan", "exam prep" → Require intelligent planning (NOT casual)
+    # - "remind me" → Could be action or conversational (let orchestrator decide)
+    # - "can you help" → Substantive help request (NOT casual)
+    # 
+    # Only include patterns that are truly casual acknowledgments/greetings.
+    # Everything else should flow to the intelligent orchestrator.
+    # =========================================================================
     casual_patterns = [
         'how are you', 'what\'s up', 'thank', 'thanks', 'okay', 'ok', 'got it', 'understood',
-        'remind me', 'reminder', 'schedule', 'tomorrow', 'today', 'later',
-        'can you help', 'will you', 'please help',
         'bye', 'goodbye', 'see you', 'take care', 'ttyl',
         'cool', 'nice', 'great', 'awesome', 'perfect', 'super',
         'yes', 'no', 'sure', 'right', 'correct', 'wrong',
-        'start preparation', 'study plan', 'exam prep'
     ]
-    if any(p in q for p in casual_patterns):
+    # Only match if the ENTIRE message is casual (not just contains casual words)
+    if q.strip('!?.') in casual_patterns or (any(q.startswith(p) for p in casual_patterns) and len(q) < 30):
         return QuestionIntent.CONVERSATIONAL
     
     # CRITICAL: Follow-up questions - must detect BEFORE other patterns

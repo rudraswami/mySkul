@@ -20,6 +20,8 @@ class DualAIRequest(BaseModel):
     image_url: Optional[str] = None  # Base64 image or URL for vision analysis  
     image_context: Optional[str] = None  # Additional context about the image
     exam_mode: Optional[str] = None  # Dynamic exam mode: JEE, NEET, CBSE, etc. - fetched from user profile if not provided
+    # 🆕 Session duration for proactive break suggestions
+    session_minutes: Optional[int] = Field(default=0, description="Minutes since session started, for proactive break suggestions")
 
 
 class MathValidationRequest(BaseModel):

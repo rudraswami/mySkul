@@ -268,6 +268,17 @@ NEVER:
         
         return base_prompt + memory_context + planning_context
     
+    async def process(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Alias for run() to match standard agent interface.
+        Supervisor expects process(), ReActAgent provides run().
+        """
+        return await self.run(query, context)
+    
     async def run(
         self,
         query: str,

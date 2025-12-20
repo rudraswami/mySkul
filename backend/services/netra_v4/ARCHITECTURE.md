@@ -172,3 +172,13 @@ Every generated visual must:
 - ❌ NOT be generic diagrams with circles/arrows
 - ❌ NOT contain text labels or annotations
 - ❌ NOT look like a flowchart or org chart
+
+
+
+
+
+
+
+
+
+

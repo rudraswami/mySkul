@@ -800,7 +800,7 @@ class GamificationService:
     
     async def _get_student_progress(self, user_id: str) -> StudentProgress:
         """Get student progress from DB or create new"""
-        if self.db:
+        if self.db is not None:
             data = await self.db.gamification.find_one({"user_id": user_id})
             if data:
                 return StudentProgress(
@@ -823,7 +823,7 @@ class GamificationService:
     
     async def _update_student_progress(self, user_id: str, updates: Dict):
         """Update student progress in DB"""
-        if self.db:
+        if self.db is not None:
             # Convert enums to values
             db_updates = {}
             for key, value in updates.items():

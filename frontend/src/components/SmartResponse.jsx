@@ -61,9 +61,10 @@ const detectResponseType = (response, question) => {
   // CRITICAL: Follow-up questions should use adaptive markdown, NOT templates
   if (isFollowUpQuestion(question)) return 'follow_up';
   
-  // Simple acknowledgments
+  // Simple acknowledgments and greetings
   if (q.match(/^(hi|hello|hey|namaste|good morning|good evening)/)) return 'greeting';
-  if (q.match(/(thank|thanks|ok|got it|okay|cool|nice)/)) return 'acknowledgment';
+  // CRITICAL: Include ALL affirmations - students naturally say these
+  if (q.match(/^(thank|thanks|ok|got it|okay|cool|nice|great|awesome|perfect|amazing|excellent|brilliant|fantastic|wonderful|superb|love it|good|understood|i see|makes sense|clear|helpful|wow)[\s!?.]*$/i)) return 'acknowledgment';
   
   // Calculation - needs step-by-step
   if (q.match(/(solve|calculate|find|evaluate|compute|integrate|differentiate)/)) return 'calculation';

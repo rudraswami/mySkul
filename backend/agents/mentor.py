@@ -1,9 +1,9 @@
 """
-🧠 Mentor Agent - TRUE AGENTIC Emotional & Conceptual Guidance
+Mentor Agent - TRUE AGENTIC Emotional & Conceptual Guidance
 ================================================================
 
 UPGRADED to TRUE AGENT with:
-- ReAct Loop: Think → Act → Observe
+- ReAct Loop: Think -> Act -> Observe
 - Tools: KnowledgeSearch, FactChecker, StudyPlanner, Calculator
 - Memory: Tracks student's emotional state, learning patterns
 - Verification: Self-checks explanations for accuracy
@@ -28,7 +28,7 @@ class MentorAgent(ReActAgent):
     TRUE AGENTIC Mentor - Empathetic, Reasoning, Tool-Using Mentor
     
     UPGRADED from simple LLM wrapper to full ReAct agent:
-    - Think → Act → Observe reasoning loop
+    - Think -> Act -> Observe reasoning loop
     - Uses tools to verify facts and enhance explanations
     - Remembers student's emotional patterns and preferences
     - Adapts explanations based on student state
@@ -62,7 +62,7 @@ class MentorAgent(ReActAgent):
         # Memory cache for student-specific memory
         self._memory_cache: Dict[str, MemorySystem] = {}
         
-        logger.info("👨‍🏫 MentorAgent initialized as TRUE AGENT with ReAct + Tools + Memory + Verification")
+        logger.info("[MentorAgent] Initialized as TRUE AGENT with ReAct + Tools + Memory + Verification")
     
     def get_agent_name(self) -> str:
         return "MentorAgent"
@@ -81,41 +81,54 @@ class MentorAgent(ReActAgent):
     
     def get_agent_persona(self) -> str:
         """Return the mentor's persona for ReAct reasoning"""
-        return f"""You are "{self.MENTOR_NAME} Bhaiya/Didi," a caring AI mentor for Indian students.
+        return f"""You are "{self.MENTOR_NAME}" - a caring AI companion for Indian students.
 
-**YOUR CHARACTER:**
-- You're like a supportive older sibling who genuinely cares
-- You've helped thousands of students - you understand their struggles
-- You're warm and encouraging, but also rigorous about accuracy
-- You use tools to verify information rather than guessing
-- You remember student patterns and adapt your style
+**YOUR IDENTITY:**
+You are NOT just a tutor. You are:
+- A supportive friend who genuinely cares about the student's wellbeing
+- A trusted mentor they can talk to about ANYTHING
+- A safe space for emotions, struggles, and random thoughts
+- Like that brilliant older sibling who always has time for them
+
+**YOUR CORE VALUES:**
+- Students can ask you ANYTHING - academic or not
+- Emotional wellbeing comes before academics
+- You never dismiss, reject, or redirect away from non-study topics
+- You're human-like - you can discuss life, stress, relationships, fun stuff
+- You adapt to what the student needs in the moment
 
 **YOUR THINKING PROCESS (ReAct Loop):**
-1. THINK: Understand the student's real question and emotional state
-2. ACT: Use tools if you need facts, calculations, or verification
-3. OBSERVE: Process what you learned from the tool
-4. THINK: How can I explain this in a relatable way?
-5. RESPOND: Give a warm, structured, accurate explanation
+1. THINK: What does this student really need right now? (maybe not just facts)
+2. ACT: Use tools for academic queries, use empathy for emotional ones
+3. OBSERVE: Read between the lines - are they stressed? lonely? bored?
+4. THINK: How can I be genuinely helpful here?
+5. RESPOND: Give what they need - could be education, could be support
 
 **WHEN TO USE TOOLS:**
-- knowledge_search: When you need to look up a concept or definition
-- fact_checker: When you want to verify a fact before stating it
-- calculator: When there's any mathematical calculation
-- study_planner: When student asks for a study plan or schedule
+- knowledge_search: For academic concepts/definitions
+- fact_checker: To verify facts before stating
+- calculator: For math calculations
+- study_planner: For study schedules (when asked)
+
+**FOR NON-ACADEMIC QUERIES:**
+- Life questions: Answer thoughtfully, share perspective
+- Emotions: Acknowledge, validate, support
+- Random chat: Be fun, engaging, human
+- Just listening: Sometimes that's what they need
 
 **YOUR STYLE:**
-- Use metaphors from student's life (cricket, games, daily life)
-- Explain like a friend at 2 AM before exams
-- Structure responses with headers, bullets, bold terms
-- Use LaTeX for math: \\( inline \\) and \\[ block \\]
-- Be encouraging but never condescending
+- Warm, natural language (Indian English)
+- Metaphors from their world (cricket, games, Bollywood)
+- Honest and authentic, never robotic
+- Use their name (feels personal)
+- One emoji per response max
 
 **NEVER:**
-- Give wrong information (always verify when uncertain)
-- Make students feel stupid
-- Rush through explanations
-- Use jargon without explaining
-- Output unformatted walls of text"""
+- Say "I can only help with studies"
+- Dismiss non-academic questions
+- Rush to redirect to academics
+- Be preachy about studying
+- Make them feel judged"""
     
     async def process(
         self,
@@ -123,39 +136,150 @@ class MentorAgent(ReActAgent):
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Generate mentor-style conceptual explanation using ReAct loop.
+        MentorAgent as DECISION-MAKER, not just text generator.
         
-        This is the TRUE AGENTIC processing:
-        - Uses ReAct loop for complex queries
-        - Falls back to fast path for simple queries (greetings, short facts)
+        CORE PHILOSOPHY:
+        1. Read conversation state FIRST - it drives behavior
+        2. Agent DECIDES what to do based on state, not just intent
+        3. If pending action exists → complete it immediately
+        4. Choose response mode (friend/mentor/listener/guide)
+        5. LLM is a tool for reasoning, not the decision-maker
         
         Args:
             query: Student's question
-            context: Dict with subject, student_profile, etc.
+            context: Dict with subject, student_profile, conversation_state, etc.
         
         Returns:
             Mentor response with emotional guidance and metaphors
         """
         try:
-            logger.info(f"👨‍🏫 Mentor processing (TRUE AGENTIC): {query[:100]}")
+            logger.info(f"[MentorAgent] Processing (DECISION-MAKER): {query[:100]}")
             
-            # Check if this is a greeting
+            # ================================================================
+            # COGNITIVE OS: USE CONTEXT PACK (Single Source of Truth)
+            # ================================================================
+            # ContextPack contains ALL intelligence - no need to re-query hub
+            context_pack = context.get('context_pack')
+            request_id = context_pack.request_id if context_pack else 'unknown'
+            
+            if context_pack:
+                # Use ContextPack - already assembled with all intelligence
+                logger.info(f"[MentorAgent] Using ContextPack | request_id={request_id}")
+                
+                # Extract from ContextPack
+                response_mode = context_pack.response_mode
+                emotional_signal = context_pack.emotional_signal
+                pending_action = context_pack.pending_action
+                is_first_turn = context_pack.is_first_turn
+                current_topic = context_pack.current_topic
+                mastery_level = context_pack.current_topic_mastery
+                magic_prompts = context_pack.magic_prompts
+                
+                # Build hub_intelligence equivalent from ContextPack
+                hub_intelligence = {
+                    'response_mode': response_mode,
+                    'mastery_level': mastery_level,
+                    'topic': current_topic,
+                    'magic_prompts': magic_prompts,
+                    'needs_encouragement': context_pack.needs_encouragement,
+                    'weak_areas': context_pack.weak_areas,
+                    'recommended_depth': context_pack.recommended_depth,
+                    'include_basics': context_pack.include_basics,
+                    'include_advanced': context_pack.include_advanced
+                }
+                
+                logger.info(f"[MentorAgent] ContextPack: mode={response_mode}, mastery={mastery_level}%, "
+                           f"emotion={emotional_signal}")
+            else:
+                # FALLBACK: Consult hub directly if no ContextPack
+                hub_intelligence = {}
+                try:
+                    import asyncio
+                    from services.student_intelligence_hub import get_student_intelligence_hub
+                    db = context.get('db')
+                    if db:
+                        hub = get_student_intelligence_hub(db)
+                        try:
+                            hub_intelligence = await asyncio.wait_for(
+                                hub.consult_for_response(
+                                    user_id=context.get('user_id', 'unknown'),
+                                    query=query,
+                                    agent_type="mentor"
+                                ),
+                                timeout=2.0
+                            )
+                            logger.info(f"[MentorAgent] Hub (fallback): mode={hub_intelligence.get('response_mode')}")
+                        except asyncio.TimeoutError:
+                            logger.warning("[MentorAgent] Hub timeout - using defaults")
+                except Exception as hub_err:
+                    logger.warning(f"[MentorAgent] Hub failed: {hub_err}")
+                
+                # Extract from context
+                conversation_state = context.get('conversation_state', {})
+                response_mode = hub_intelligence.get('response_mode', conversation_state.get('response_mode', 'mentor'))
+                emotional_signal = conversation_state.get('emotional_signal', 'neutral')
+                pending_action = context.get('pending_action')
+                is_first_turn = context.get('is_first_turn', False)
+                magic_prompts = hub_intelligence.get('magic_prompts', [])
+            
+            # Store for later use
+            context['hub_intelligence'] = hub_intelligence
+            context['magic_prompts'] = magic_prompts
+            
+            logger.info(f"[MentorAgent] State: mode={response_mode}, emotion={emotional_signal}, "
+                       f"pending={pending_action is not None} | request_id={request_id}")
+            
+            # ================================================================
+            # STEP 2: DECIDE RESPONSE MODE BASED ON SIGNALS
+            # ================================================================
+            # Agent autonomously decides how to respond
+            response_mode = self._decide_response_mode(
+                query=query,
+                emotional_signal=emotional_signal,
+                context=context
+            )
+            
+            # ================================================================
+            # STEP 3: CHECK FOR PENDING ACTION (ACT IMMEDIATELY)
+            # ================================================================
+            if pending_action:
+                logger.info(f"[MentorAgent] COMPLETING PENDING ACTION: {pending_action.get('type')}")
+                return await self._complete_pending_action(query, pending_action, context)
+            
+            # ================================================================
+            # STEP 4: HANDLE BASED ON RESPONSE MODE
+            # ================================================================
+            if response_mode == 'listener':
+                # Student needs emotional support - don't redirect to academics
+                return await self._emotional_support_response(query, context)
+            
+            elif response_mode == 'friend':
+                # Casual interaction - be warm and fun
+                return await self._friendly_response(query, context)
+            
+            # For 'mentor' and 'guide' modes, continue with normal processing
+            
+            # ================================================================
+            # ORIGINAL LOGIC (with first_turn check for greetings)
+            # ================================================================
             query_lower = query.lower().strip()
             greeting_words = ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo']
             is_greeting = query_lower.strip('!?.,:;') in greeting_words
             
             if is_greeting:
-                # Generate friendly greeting response
                 student_profile = context.get('student_profile', {})
-                greeting_response = self._generate_greeting(student_profile)
-                return self._format_response(
-                    content=greeting_response,
-                    metadata={
+                greeting_response = self._generate_greeting(student_profile, is_first_turn)
+                return {
+                    'success': True,
+                    'content': greeting_response,
+                    'agent': self.get_agent_name(),
+                    'metadata': {
                         'tone': 'friendly',
                         'approach': 'greeting',
-                        'is_greeting': True
+                        'is_greeting': True,
+                        'response_mode': response_mode
                     }
-                )
+                }
             
             # Extract context
             subject = context.get('subject', 'General')
@@ -165,7 +289,7 @@ class MentorAgent(ReActAgent):
             # Check if this is a planning request
             planning_keywords = [
                 'plan', 'schedule', 'timetable', 'how do i finish', 
-                'overwhelmed', 'no time', 'too much', 'can\'t finish',
+                'overwhelmed', 'no time', 'too much', "can't finish",
                 'study plan', 'what to study', 'where to start'
             ]
             
@@ -173,7 +297,7 @@ class MentorAgent(ReActAgent):
             
             if is_planning_request and self.tool_registry:
                 # Use Study Planner Tool
-                logger.info("📅 MentorAgent detected planning request - using StudyPlannerTool")
+                logger.info("[MentorAgent] Detected planning request - using StudyPlannerTool")
                 
                 # Extract weak topics from context or student profile
                 weak_topics = student_profile.get('weak_areas', [])
@@ -200,21 +324,358 @@ class MentorAgent(ReActAgent):
                         mentor_intro = "Hey! I can see you're feeling overwhelmed. No worries, yaar - let's turn this into a concrete plan! Here's your personalized study schedule:\n\n"
                         full_response = mentor_intro + plan_result.output
                         
-                        return self._format_response(
-                            content=full_response,
-                            metadata={
+                        return {
+                            'success': True,
+                            'content': full_response,
+                            'agent': self.get_agent_name(),
+                            'metadata': {
                                 'tone': 'supportive',
                                 'approach': 'planning',
                                 'tool_used': 'study_planner',
                                 'weak_topics': weak_topics
                             }
-                        )
+                        }
             
             # =================================================================
-            # STANDARD PATH: Generate mentor response
-            # Note: ReAct loop is handled by base class run() when called directly
+            # TRUE AGENTIC PATH: ReAct Loop with Fault Tolerance
             # =================================================================
+            # MentorAgent uses the ReAct loop for REAL reasoning:
+            # - THINK: Analyze student question and emotional state
+            # - ACT: Use tools when beneficial (calculator, knowledge_search)
+            # - OBSERVE: Learn from tool outputs
+            # - RESPOND: Give reasoned, personalized explanation
+            #
+            # The ReAct loop is now fault-tolerant:
+            # - Retries on transient LLM failures
+            # - Isolates tool failures
+            # - Tracks failure types for observability
+            # - Always produces a reasoned response
+            # =================================================================
+            
+            logger.info("[MentorAgent] Initiating TRUE ReAct reasoning loop...")
+            
+            # =================================================================
+            # COGNITIVE OS: Enrich context with ContextPack
+            # =================================================================
+            if context_pack:
+                # Use ContextPack for structured, complete context
+                enriched_context = {
+                    **context,
+                    'subject': subject,
+                    'student_profile': student_profile,
+                    'memory_context': memory_context,
+                    'agent_mode': 'mentor',
+                    'interests': student_profile.get('interests', ['cricket']),
+                    # ContextPack fields for ReAct reasoning
+                    'current_topic': context_pack.current_topic,
+                    'current_topic_mastery': context_pack.current_topic_mastery,
+                    'mastery_bucket': context_pack.mastery_bucket,
+                    'weak_areas': context_pack.weak_areas,
+                    'recommended_depth': context_pack.recommended_depth,
+                    'include_basics': context_pack.include_basics,
+                    'include_advanced': context_pack.include_advanced,
+                    'conversation_summary': context_pack.get_conversation_summary(),
+                    'agent_context_prompt': context_pack.get_agent_context_prompt(),
+                    'magic_prompts': context_pack.magic_prompts,
+                    'due_reviews': context_pack.due_reviews,
+                    'request_id': context_pack.request_id
+                }
+            else:
+                enriched_context = {
+                    **context,
+                    'subject': subject,
+                    'student_profile': student_profile,
+                    'memory_context': memory_context,
+                    'agent_mode': 'mentor',
+                    'interests': student_profile.get('interests', ['cricket']),
+                }
+            
+            # =================================================================
+            # RUN THE REACT LOOP (fault-tolerant)
+            # =================================================================
+            result = await self.run(query, enriched_context)
+            
+            # The ReAct loop now always returns a valid response
+            # Add mentor-specific metadata
+            result['metadata'] = result.get('metadata', {})
+            result['metadata'].update({
+                'tone': 'emotional',
+                'approach': 'agentic_reasoning',
+                'is_true_agent': True,
+                'agent_name': self.get_agent_name()
+            })
+            
+            # Log reasoning quality
+            iterations = result.get('iterations', 0)
+            tools_used = result.get('tools_used', [])
+            had_failures = result.get('metadata', {}).get('had_failures', False)
+            
+            if had_failures:
+                logger.warning(f"[MentorAgent] Completed with failures: iter={iterations}, tools={tools_used}")
+            else:
+                logger.info(f"[MentorAgent] Completed successfully: iter={iterations}, tools={tools_used}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"[MentorAgent] Error: {e}", exc_info=True)
+            return {
+                'success': False,
+                'content': f"Mentor processing failed: {str(e)}",
+                'agent': self.get_agent_name(),
+                'error': str(e)
+            }
+    
+    def _extract_topics_from_query(self, query: str) -> List[str]:
+        """Extract topic names from query (simple keyword matching)"""
+        # Simple topic extraction - can be enhanced with NLP
+        topic_keywords = {
+            'rotational motion': 'Rotational Motion',
+            'thermodynamics': 'Thermodynamics',
+            'organic chemistry': 'Organic Chemistry',
+            'calculus': 'Calculus',
+            'mechanics': 'Mechanics',
+            'electricity': 'Electricity',
+            'optics': 'Optics',
+            'genetics': 'Genetics',
+            'human physiology': 'Human Physiology'
+        }
+        
+        query_lower = query.lower()
+        detected = []
+        
+        for keyword, topic in topic_keywords.items():
+            if keyword in query_lower:
+                detected.append(topic)
+        
+        return detected
+    
+    def _decide_response_mode(
+        self,
+        query: str,
+        emotional_signal: str,
+        context: Dict[str, Any]
+    ) -> str:
+        """
+        Agent DECIDES response mode based on signals.
+        
+        This is the agent being a DECISION-MAKER, not just following rules.
+        """
+        query_lower = query.lower()
+        
+        # Emotional signals drive mode selection
+        if emotional_signal in ['sad', 'anxious', 'frustrated', 'lonely', 'stressed', 'overwhelmed']:
+            return 'listener'  # Be empathetic, don't redirect to studies
+        
+        # Query content signals
+        emotional_words = ['feeling', 'sad', 'happy', 'stressed', 'worried', 'scared', 'tired', 
+                          'frustrated', 'bored', 'lonely', 'help me', 'need support']
+        if any(word in query_lower for word in emotional_words):
+            return 'listener'
+        
+        casual_words = ['joke', 'funny', 'random', 'chat', 'talk', "what's up", 'how are you']
+        if any(word in query_lower for word in casual_words):
+            return 'friend'
+        
+        planning_words = ['plan', 'schedule', 'how do i', 'what should', 'where to start']
+        if any(word in query_lower for word in planning_words):
+            return 'guide'
+        
+        # Default: mentor mode for academic questions
+        return 'mentor'
+    
+    async def _complete_pending_action(
+        self,
+        query: str,
+        pending_action: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Complete a pending action after user clarification.
+        
+        This is called when user has clarified what they want.
+        ACT IMMEDIATELY - no more questions.
+        """
+        action_type = pending_action.get('type', 'general')
+        params = pending_action.get('params', {})
+        
+        logger.info(f"[MentorAgent] Completing action: {action_type}")
+        
+        # For study plans, use the planner tool
+        if action_type == 'study_plan' and self.tool_registry:
+            planner_tool = self.tool_registry.get_tool('study_planner')
+            if planner_tool:
+                # Extract info from clarification
+                result = await planner_tool.execute(
+                    weak_topics=params.get('weak_topics', []),
+                    hours_available=params.get('hours', 6),
+                    days_until_exam=params.get('days', 60),
+                    user_clarification=query,
+                    context=context
+                )
+                
+                if result.success:
+                    return {
+                        'success': True,
+                        'content': f"Here's your study plan based on what you said! 📚\n\n{result.output}",
+                        'agent': self.get_agent_name(),
+                        'metadata': {'action': 'study_plan', 'completed': True}
+                    }
+        
+        # Default: process normally with the clarification as context
+        enriched_context = {**context, 'user_clarification': query, 'action_context': params}
+        result = await self.run(query, enriched_context)
+        result['metadata'] = result.get('metadata', {})
+        result['metadata']['action_completed'] = True
+        return result
+    
+    async def _emotional_support_response(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Handle emotional queries with empathy.
+        
+        DO NOT redirect to studies. Just be there for them.
+        """
+        try:
+            from services.llm_service import call_llm
+            
+            student_profile = context.get('student_profile', {})
+            name = student_profile.get('name', '')
+            name_prefix = f"{name}, " if name else ""
+            
+            prompt = f"""You are Druv - a caring friend and mentor. The student shared something emotional.
+
+Student said: "{query}"
+Student name: {name if name else "Unknown"}
+
+Respond as a caring friend who GENUINELY listens:
+1. Acknowledge their feeling FIRST
+2. Validate that it's okay to feel this way
+3. Don't immediately redirect to studying
+4. Just be there for them
+
+Keep it short (3-4 sentences), warm, and authentic. One emoji max."""
+
+            response = await call_llm(
+                prompt=prompt,
+                model="gpt-4o-mini",
+                temperature=0.8,
+                max_tokens=200
+            )
+            
+            return {
+                'success': True,
+                'content': response,
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'response_mode': 'listener',
+                    'emotional_support': True
+                }
+            }
+        except Exception as e:
+            logger.error(f"[MentorAgent] Emotional response failed: {e}")
+            return {
+                'success': True,
+                'content': f"Hey, I hear you. 💙 Whatever you're going through, I'm here. Want to talk about it?",
+                'agent': self.get_agent_name(),
+                'metadata': {'response_mode': 'listener', 'fallback': True}
+            }
+    
+    async def _friendly_response(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Handle casual/friendly interactions.
+        
+        Be fun, warm, human - not just a tutor.
+        """
+        try:
+            from services.llm_service import call_llm
+            
+            student_profile = context.get('student_profile', {})
+            name = student_profile.get('name', '')
+            
+            prompt = f"""You are Druv - a fun, friendly AI companion. This is casual chat.
+
+Student said: "{query}"
+Student name: {name if name else "Unknown"}
+
+Respond like a friend would:
+- Be natural, fun, and engaging
+- Match their energy
+- You can joke, share interesting facts, or just chat
+- Don't force academic content
+
+Keep it short and genuine. One emoji max."""
+
+            response = await call_llm(
+                prompt=prompt,
+                model="gpt-4o-mini",
+                temperature=0.9,
+                max_tokens=200
+            )
+            
+            return {
+                'success': True,
+                'content': response,
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'response_mode': 'friend',
+                    'casual': True
+                }
+            }
+        except Exception as e:
+            logger.error(f"[MentorAgent] Friendly response failed: {e}")
+            return {
+                'success': True,
+                'content': f"Haha, I like that energy! 😄 What's on your mind?",
+                'agent': self.get_agent_name(),
+                'metadata': {'response_mode': 'friend', 'fallback': True}
+            }
+    
+    def _generate_greeting(self, student_profile: Dict[str, Any], is_first_turn: bool = False) -> str:
+        """
+        Generate a friendly greeting response.
+        
+        CRITICAL: Capability language ONLY on first turn.
+        """
+        import random
+
+        name = student_profile.get('name', '')
+        name_suffix = f", {name}" if name else ""
+        exam = student_profile.get('exam', 'JEE')
+
+        if is_first_turn:
+            # First turn - can include what we can do
+            greetings = [
+                f"Hey{name_suffix}! 👋 I'm Druv, your study buddy. I can help with any subject, explain tough concepts, or just chat. What's on your mind?",
+                f"Hello{name_suffix}! Great to meet you! I'm here to make {exam} prep feel less overwhelming. Ask me anything!",
+                f"Namaste{name_suffix}! Ready to learn together? Whether it's a quick doubt or deep concept, I've got you!"
+            ]
+        else:
+            # Not first turn - NO capability listing
+            greetings = [
+                f"Hey{name_suffix}! 👋 Good to see you again! What are we working on today?",
+                f"Hello{name_suffix}! Back for more? I'm ready when you are!",
+                f"Hey{name_suffix}! What's up? Ready to dive in?",
+                f"Hi{name_suffix}! 😊 What's on your mind?"
+            ]
+
+        return random.choice(greetings)
+    
+    async def _fallback_llm_response(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback to simple LLM response if ReAct loop fails"""
+        try:
             from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
+            
+            subject = context.get('subject', 'General')
+            student_profile = context.get('student_profile', {})
+            memory_context = context.get('memory_context')
             
             mentor_prompt = get_dynamic_mentor_prompt(
                 query=query,
@@ -227,128 +688,24 @@ class MentorAgent(ReActAgent):
             # Call LLM for mentor response
             mentor_response = await self._generate_mentor_response(mentor_prompt)
             
-            return self._format_response(
-                content=mentor_response,
-                metadata={
+            return {
+                'success': True,
+                'content': mentor_response,
+                'agent': self.get_agent_name(),
+                'metadata': {
                     'tone': 'emotional',
-                    'approach': 'conceptual',
-                    'metaphor_used': student_profile.get('interests', ['cricket'])[0] if student_profile.get('interests') else 'cricket'
+                    'approach': 'fallback_llm',
+                    'is_true_agent': False
                 }
-            )
-            
-        except Exception as e:
-            logger.error(f"❌ Mentor agent error: {e}", exc_info=True)
-            return self._format_error(f"Mentor processing failed: {str(e)}")
-    
-    def _build_mentor_prompt(
-        self,
-        query: str,
-        subject: str,
-        student_profile: Dict[str, Any],
-        memory_context: Dict[str, Any] = None
-    ) -> str:
-        """Build mentor-specific prompt with memory context"""
-        
-        # Student details
-        name = student_profile.get('name', '')
-        region = student_profile.get('region', 'India')
-        interests = student_profile.get('interests', ['cricket', 'gaming'])
-        board = student_profile.get('board', 'CBSE')
-        exam = student_profile.get('exam', 'JEE')
-        mastery_level = student_profile.get('mastery_level', 50)
-        
-        # LANGUAGE PREFERENCE - Only use Hinglish if student prefers it
-        language = student_profile.get('language', 'en')  # Default: English
-        use_hinglish = language in ['hi', 'hinglish', 'hindi']
-        
-        # Memory context
-        memory_str = ""
-        if memory_context:
-            # Continuity check
-            continuity = memory_context.get('continuity', {})
-            if continuity.get('is_continuation'):
-                memory_str += f"\n\nIMPORTANT - Conversation Continuity:\n"
-                memory_str += f"Last time, you covered: {', '.join(continuity.get('concepts_covered_before', [])[:3])}\n"
-                memory_str += f"{continuity.get('suggestion', '')}\n"
-            
-            # Relevant past memories
-            relevant_memories = memory_context.get('relevant_memories', [])
-            if relevant_memories:
-                memory_str += f"\n\nStudent's Learning History:\n"
-                for mem in relevant_memories[:3]:
-                    memory_str += f"- {mem['content']}\n"
-        
-        # Adaptive instructions based on mastery
-        depth_instruction = self._get_depth_instruction(mastery_level)
-        
-        # Personalized greeting
-        greeting = f"Hey {name}!" if name else "Hey there!"
-        
-        # Language instruction - CONDITIONAL
-        if use_hinglish:
-            language_instruction = """9. HINGLISH SUPPORT: Student prefers Hindi-English mix. Naturally use:
-   - "matlab" (means), "yaar" (friend), "bhai" (bro), "arre" (hey)
-   - "samjho" (understand), "dekho" (see), "basically" "actually"
-   - Example: "Dekho, basically force matlab push ya pull hai, samjhe?"
-   - Use 2-3 Hinglish words per response naturally, not forced"""
-        else:
-            language_instruction = """9. LANGUAGE: Respond in clear, simple ENGLISH only.
-   - Use easy-to-understand vocabulary
-   - NO Hindi/Hinglish words (student prefers English)
-   - Keep sentences short and crisp
-   - Use relatable Indian examples but in English"""
-        
-        return f"""You are a caring AI Mentor helping {name if name else 'an Indian student'} prepare for {exam} ({board} board).
-
-Student Context:
-- Name: {name if name else 'Student'}
-- Region: {region}
-- Language Preference: {'Hindi/Hinglish' if use_hinglish else 'English only'}
-- Interests: {', '.join(interests)}
-- Subject: {subject}
-- Current Mastery: {mastery_level}/100 ({self._get_mastery_label(mastery_level)})
-
-{memory_str}
-
-Question: {query}
-
-Your role as MENTOR:
-1. {greeting} Be PERSONAL - use their name and reference their learning history
-2. {depth_instruction}
-3. **SPECIAL RULE FOR IMAGES**: If the question mentions "[Student uploaded an image" or contains "IMAGE CONTAINS:", this is an image-based question:
-   - Focus ONLY on the extracted content from the image
-   - NO metaphors or creative stories - be DIRECT and FACTUAL
-   - If it's an MCQ, identify the question and explain options
-   - If it's a problem, solve it step-by-step
-   - Be precise and educational, not creative
-4. For TEXT-only questions: Use METAPHORS from student's interests ({interests[0]} preferred)
-5. Give INTUITIVE explanations, not formal derivations
-6. Be friendly, encouraging, and culturally relevant
-7. If continuing a topic, acknowledge what was covered before
-8. Adapt your explanation depth to their mastery level
-{language_instruction}
-
-Keep response concise (150-200 words) and warm in tone.
-
-Mentor's Explanation:"""
-    
-    def _get_depth_instruction(self, mastery_level: int) -> str:
-        """Get instruction for explanation depth based on mastery"""
-        if mastery_level < 30:
-            return "Use VERY SIMPLE language, more visuals, basic examples (beginner level)"
-        elif mastery_level < 70:
-            return "Use balanced approach with examples and moderate theory (intermediate level)"
-        else:
-            return "Student is advanced - use deeper insights, proofs, exam tricks (advanced level)"
-    
-    def _get_mastery_label(self, mastery_level: int) -> str:
-        """Convert mastery number to label"""
-        if mastery_level < 30:
-            return "Beginner"
-        elif mastery_level < 70:
-            return "Intermediate"
-        else:
-            return "Advanced"
+            }
+        except Exception as fallback_error:
+            logger.error(f"[MentorAgent] Fallback LLM also failed: {fallback_error}", exc_info=True)
+            return {
+                'success': False,
+                'content': "I'm here to help! Could you tell me more about what you'd like to learn?",
+                'agent': self.get_agent_name(),
+                'error': str(fallback_error)
+            }
     
     async def _generate_mentor_response(self, prompt: str) -> str:
         """
@@ -376,21 +733,6 @@ Every response MUST use proper markdown for readability:
 5. **CALLOUTS** - Use > for important notes
 6. **SPACING** - Separate sections with blank lines
 
-**EXAMPLE FORMAT:**
-
-## What is Force?
-
-**Force** is a push or pull acting on an object.
-
-### Key Points
-- Forces can change motion
-- Measured in **Newtons (N)**
-
-### Formula
-\\[ F = ma \\]
-
-> **Remember:** Force = mass × acceleration
-
 **YOUR STYLE:**
 - Friendly like a senior friend, BUT always structured
 - Use simple language, explain technical terms
@@ -404,7 +746,7 @@ Every response MUST use proper markdown for readability:
             
             # === PRIORITY 1: Gemini Flash (primary) ===
             if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
-                logger.info("⚡ MentorAgent using Gemini Flash for fast, warm response...")
+                logger.info("[MentorAgent] Using Gemini Flash for fast, warm response...")
                 from services.llm_service import call_gemini
                 
                 response = await call_gemini(
@@ -419,7 +761,7 @@ Every response MUST use proper markdown for readability:
             
             # === PRIORITY 2: DeepSeek (fallback) ===
             if settings.USE_DEEPSEEK_REASONING and settings.DEEPSEEK_API_KEY:
-                logger.info("🧠 MentorAgent using DeepSeek for response...")
+                logger.info("[MentorAgent] Using DeepSeek for response...")
                 from services.llm_service import call_deepseek
                 
                 response = await call_deepseek(
@@ -432,21 +774,16 @@ Every response MUST use proper markdown for readability:
                 return response.strip() if response else ""
             
             # === PRIORITY 3: GPT-4o-mini (final fallback) ===
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
-            import uuid
+            from services.llm_service import call_llm
             
-            llm_client = LlmChat(
-                api_key=self.emergent_llm_key,
-                session_id=f"mentor_{str(uuid.uuid4())[:8]}",
-                system_message=mentor_system
-            ).with_model("openai", "gpt-4o-mini").with_params(
+            response = await call_llm(
+                prompt=prompt,
+                api_key=self.llm_key or os.environ.get('OPENAI_API_KEY', ''),
                 temperature=0.8,
-                top_p=0.9,
-                max_tokens=1000     # INCREASED: Prevent truncation
+                max_tokens=1000,
+                model="gpt-4o-mini",
+                system_message=mentor_system
             )
-            
-            user_msg = UserMessage(text=prompt)
-            response = await llm_client.send_message(user_msg)
             
             if not response:
                 raise Exception("Empty response from LLM")
@@ -454,181 +791,6 @@ Every response MUST use proper markdown for readability:
             return response.strip()
             
         except Exception as e:
-            logger.error(f"❌ LLM call failed: {e}")
+            logger.error(f"[MentorAgent] LLM call failed: {e}")
             # Fallback response
             return """I understand you're working on this concept. While I'm having trouble generating a detailed explanation right now, remember that every complex topic becomes clearer with practice. Think of learning like building muscle memory - each attempt makes the next one easier. Let's break this down step by step together."""
-    
-    def _extract_topics_from_query(self, query: str) -> List[str]:
-        """Extract topic names from query (simple keyword matching)"""
-        # Simple topic extraction - can be enhanced with NLP
-        topic_keywords = {
-            'rotational motion': 'Rotational Motion',
-            'thermodynamics': 'Thermodynamics',
-            'organic chemistry': 'Organic Chemistry',
-            'calculus': 'Calculus',
-            'mechanics': 'Mechanics',
-            'electricity': 'Electricity',
-            'optics': 'Optics',
-            'genetics': 'Genetics',
-            'human physiology': 'Human Physiology'
-        }
-        
-        query_lower = query.lower()
-        detected = []
-        
-        for keyword, topic in topic_keywords.items():
-            if keyword in query_lower:
-                detected.append(topic)
-        
-        return detected
-    
-    def _generate_greeting(self, student_profile: Dict[str, Any]) -> str:
-        """Generate a friendly greeting response"""
-        import random
-        
-        region = student_profile.get('region', 'India')
-        exam = student_profile.get('exam', 'JEE')
-        
-        greetings = [
-            f"Hey there! 👋 Ready to tackle some {exam} concepts today? I'm here to help you understand anything you're working on!",
-            f"Hello! 😊 Great to see you! What concept would you like to explore today? Whether it's tough formulas or tricky theories, we'll break it down together!",
-            f"Hi! 🌟 I'm your AI Mentor, here to help you ace {exam}. Ask me anything - from quick doubts to deep concepts - and I'll explain it in the simplest way possible!",
-            f"Namaste! 🙏 Ready for some learning? I'm here to make complex concepts feel easy. What would you like to understand today?",
-            f"Hey! 💪 Let's crush some concepts together! Whether you need quick clarification or a detailed explanation, I've got you covered!"
-        ]
-        
-        return random.choice(greetings)
-    
-    # =================================================================
-    # TRUE AGENTIC METHODS: ReAct Loop Implementation
-    # =================================================================
-    
-    def _load_student_memory(self, user_id: str) -> None:
-        """Load or create memory for a student"""
-        if user_id not in self._memory_cache:
-            self._memory_cache[user_id] = MemorySystem(user_id=user_id)
-            logger.info(f"📚 Loaded memory for student {user_id[:8]}...")
-    
-    def _should_verify(self, response: str) -> bool:
-        """Check if response contains facts or calculations that should be verified"""
-        # Verify if response contains math, formulas, or specific facts
-        verification_triggers = [
-            '=',  # Equations
-            '\\(',  # LaTeX math
-            '\\[',  # LaTeX block math
-            'formula',
-            'equation',
-            'equals',
-            'calculated',
-            'result is',
-            'answer is',
-            'value is',
-        ]
-        response_lower = response.lower()
-        return any(trigger in response_lower for trigger in verification_triggers)
-    
-    async def _run_react_loop(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Override base ReActAgent's _run_react_loop for mentor-specific behavior.
-        
-        This is the heart of TRUE AGENTIC behavior:
-        1. THINK about the student's question
-        2. Decide if tools are needed
-        3. ACT using tools if needed
-        4. OBSERVE results
-        5. THINK again and refine
-        6. Generate final response
-        
-        Returns:
-            Dict with 'content' and metadata matching expected format
-        """
-        from services.dynamic_mentor_prompts import get_dynamic_mentor_prompt
-        
-        student_profile = context.get('student_profile', {})
-        subject = context.get('subject', 'General')
-        memory_context = context.get('memory_context')
-        
-        tools_used = []
-        tool_outputs = []
-        
-        # Step 1: Determine if tools are needed
-        tool_decision = self._analyze_tool_needs(query, subject)
-        
-        if tool_decision['needs_tools']:
-            for tool_name in tool_decision['tools_to_use']:
-                try:
-                    tool = self.tool_registry.get_tool(tool_name)
-                    if tool:
-                        logger.info(f"🔧 MentorAgent using tool: {tool_name}")
-                        result = await tool.execute(query=query, context=context)
-                        tools_used.append(tool_name)
-                        
-                        if result.success:
-                            tool_outputs.append({
-                                'tool': tool_name,
-                                'output': result.output
-                            })
-                except Exception as tool_error:
-                    logger.warning(f"⚠️ Tool {tool_name} failed: {tool_error}")
-        
-        # Step 2: Build enhanced prompt with tool outputs
-        enhanced_prompt = get_dynamic_mentor_prompt(
-            query=query,
-            subject=subject,
-            student_profile=student_profile,
-            memory_context=memory_context,
-            user_id=context.get('user_id', 'anonymous')
-        )
-        
-        # Add tool outputs to prompt if available
-        if tool_outputs:
-            tool_context = "\n\n## Research Results (from your tools):\n"
-            for output in tool_outputs:
-                tool_context += f"**{output['tool']}:** {output['output'][:500]}\n"
-            enhanced_prompt = tool_context + "\n\n" + enhanced_prompt
-        
-        # Step 3: Generate final response with all context
-        logger.info("🧠 MentorAgent generating warm, structured explanation...")
-        final_response = await self._generate_mentor_response(enhanced_prompt)
-        
-        # Return in expected format
-        return {
-            'content': final_response,
-            'tools_used': tools_used,
-            'reasoning_steps': len(tool_outputs) + 1,
-            'confidence': 0.85
-        }
-    
-    def _analyze_tool_needs(self, query: str, subject: str) -> Dict[str, Any]:
-        """Analyze if the query needs tool usage"""
-        query_lower = query.lower()
-        
-        needs_tools = False
-        tools_to_use = []
-        
-        # Check for calculation needs
-        if any(w in query_lower for w in ['calculate', 'solve', 'find the value', 'compute', '=']):
-            needs_tools = True
-            tools_to_use.append('calculator')
-        
-        # Check for fact verification needs
-        if any(w in query_lower for w in ['is it true', 'verify', 'check', 'correct', 'accurate']):
-            needs_tools = True
-            tools_to_use.append('fact_checker')
-        
-        # Check for knowledge lookup needs
-        if any(w in query_lower for w in ['what is', 'define', 'explain', 'meaning of', 'formula for']):
-            # Only use knowledge search for specific lookups
-            if len(query.split()) < 10:  # Short, specific queries
-                needs_tools = True
-                tools_to_use.append('knowledge_search')
-        
-        return {
-            'needs_tools': needs_tools,
-            'tools_to_use': tools_to_use
-        }
-    
-    def get_system_prompt(self, state: AgentState) -> str:
-        """Get system prompt for ReAct reasoning (override from ReActAgent)"""
-        return self.get_agent_persona()
-

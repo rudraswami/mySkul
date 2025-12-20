@@ -46,6 +46,54 @@ import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MemoryContextBanner from './MemoryContextBanner';
 import NotificationBell from './NotificationBell';
 import { NeuralThinkingIndicator } from './chat/NeuralThinkingIndicator';
+
+// ============================================
+// PROACTIVE SUGGESTIONS COMPONENT
+// Displays follow-up action buttons from AI
+// ============================================
+const ProactiveSuggestions = ({ suggestions, onSuggestionClick }) => {
+  if (!suggestions || suggestions.length === 0) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100"
+    >
+      {suggestions.map((suggestion, idx) => (
+        <button
+          key={idx}
+          onClick={() => onSuggestionClick(suggestion.action)}
+          className="px-3 py-1.5 text-sm bg-gradient-to-r from-purple-50 to-blue-50 
+                     text-purple-700 rounded-full border border-purple-200 
+                     hover:from-purple-100 hover:to-blue-100 hover:border-purple-300
+                     transition-all duration-200 shadow-sm hover:shadow"
+        >
+          {suggestion.label}
+        </button>
+      ))}
+    </motion.div>
+  );
+};
+
+// ============================================
+// PROACTIVE OPENER COMPONENT
+// Shows welcome back, streaks, milestones
+// ============================================
+const ProactiveOpener = ({ opener }) => {
+  if (!opener) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 
+                 border border-amber-200 rounded-xl shadow-sm"
+    >
+      <p className="text-amber-800 text-sm font-medium">{opener}</p>
+    </motion.div>
+  );
+};
 // WelcomeScreen - Inline fallback if not available
 let WelcomeScreen;
 try {
@@ -130,7 +178,7 @@ const formatRelativeTime = (dateString) => {
 };
 
 // Chat Message Component
-const ChatMessage = ({ message, isUser }) => {
+const ChatMessage = ({ message, isUser, onSuggestionClick }) => {
   const content = useMemo(() => normalizeAIContent(message.content), [message.content]);
   
   if (isUser) {
@@ -150,14 +198,31 @@ const ChatMessage = ({ message, isUser }) => {
     );
   }
 
+  // 🆕 Extract proactive data from message
+  const proactive = message.proactive || {};
+  
   return (
     <div className="flex justify-start mb-4">
       <div className="max-w-[90%]">
+        {/* 🆕 Proactive Opener (Welcome back, streaks, etc.) */}
+        {proactive.opener && (
+          <ProactiveOpener opener={proactive.opener} />
+        )}
+        
+        {/* Main AI Response */}
         <SmartResponse
           data={content}
           showActions={true}
           compact={false}
         />
+        
+        {/* 🆕 Proactive Suggestions (Follow-up buttons) */}
+        {proactive.suggestions && proactive.suggestions.length > 0 && onSuggestionClick && (
+          <ProactiveSuggestions 
+            suggestions={proactive.suggestions}
+            onSuggestionClick={onSuggestionClick}
+          />
+        )}
       </div>
     </div>
   );
@@ -192,6 +257,9 @@ export default function SathiClassroom() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
+  // 🆕 Session duration tracking for proactive break suggestions
+  const [sessionStartTime] = useState(() => Date.now());
+
   // Visual State
   const [visualArtifact, setVisualArtifact] = useState(null);
   
@@ -392,7 +460,9 @@ export default function SathiClassroom() {
             session_id: sessionId,
             subject: '',
             image_url: imageBase64,
-            image_context: 'Student uploaded image. Analyze it carefully.'
+            image_context: 'Student uploaded image. Analyze it carefully.',
+            // 🆕 Track session duration for proactive break suggestions
+            session_minutes: Math.floor((Date.now() - sessionStartTime) / 60000)
           })
         });
       } else {
@@ -406,7 +476,9 @@ export default function SathiClassroom() {
           body: JSON.stringify({
             message: messageToSend,
             session_id: sessionId,
-            subject: ''
+            subject: '',
+            // 🆕 Track session duration for proactive break suggestions
+            session_minutes: Math.floor((Date.now() - sessionStartTime) / 60000)
           })
         });
       }
@@ -423,11 +495,22 @@ export default function SathiClassroom() {
       if (data) {
         const aiContent = normalizeAIContent(data);
         
+        // 🆕 Extract proactive intelligence data
+        const proactiveData = data.proactive || {};
+        const proactiveOpener = proactiveData.opener || null;
+        const proactiveSuggestions = proactiveData.suggestions || [];
+        
         const aiMessage = {
           role: 'assistant',
           content: aiContent,
           timestamp: new Date().toISOString(),
-          message_id: data.message_id
+          message_id: data.message_id,
+          // 🆕 Attach proactive insights to message
+          proactive: {
+            opener: proactiveOpener,
+            suggestions: proactiveSuggestions,
+            insights: proactiveData.insights || []
+          }
         };
         
         setMessages(prev => [...prev, aiMessage]);
@@ -502,6 +585,10 @@ export default function SathiClassroom() {
                 key={idx}
                 message={msg}
                 isUser={msg.role === 'user'}
+                onSuggestionClick={(suggestion) => {
+                  setInputMessage(suggestion);
+                  setTimeout(() => handleSend(), 100);
+                }}
               />
             ))}
           </div>

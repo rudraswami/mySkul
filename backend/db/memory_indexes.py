@@ -90,7 +90,42 @@ async def create_memory_indexes(db: AsyncIOMotorClient):
         
         logger.info("✅ chat_messages indexes created")
         
-        logger.info("🎉 All memory system indexes created successfully")
+        # Collection 4: learning_events (Cognitive OS - Structured Events)
+        # =================================================================
+        
+        # Index 1: User + Timestamp (for recent events retrieval)
+        await db.learning_events.create_index([
+            ("user_id", 1),
+            ("timestamp", -1)
+        ], name="idx_events_user_time")
+        
+        # Index 2: User + Event Type (for pattern detection)
+        await db.learning_events.create_index([
+            ("user_id", 1),
+            ("event_type", 1),
+            ("timestamp", -1)
+        ], name="idx_events_user_type")
+        
+        # Index 3: Session-based retrieval
+        await db.learning_events.create_index([
+            ("session_id", 1),
+            ("timestamp", -1)
+        ], name="idx_events_session_time")
+        
+        logger.info("✅ learning_events indexes created (Cognitive OS)")
+        
+        # Collection 5: conversation_states (Behavioral State)
+        # =====================================================
+        
+        # Index for user+session state lookup
+        await db.conversation_states.create_index([
+            ("user_id", 1),
+            ("session_id", 1)
+        ], unique=True, name="idx_conv_state_user_session")
+        
+        logger.info("✅ conversation_states indexes created")
+        
+        logger.info("🎉 All memory system indexes created successfully (Cognitive OS Ready)")
         
         return True
         

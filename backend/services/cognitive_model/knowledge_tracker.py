@@ -455,7 +455,7 @@ class KnowledgeTracker:
             return self._cache[user_id]
         
         # Try to load from database
-        if self.db:
+        if self.db is not None:
             try:
                 record = await self.db.student_knowledge.find_one({"user_id": user_id})
                 if record:
@@ -471,7 +471,7 @@ class KnowledgeTracker:
     
     async def _save_knowledge(self, user_id: str, knowledge: Dict) -> None:
         """Save knowledge state to database"""
-        if not self.db:
+        if self.db is None:
             return
         
         try:
