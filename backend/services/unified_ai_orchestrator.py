@@ -619,56 +619,6 @@ class UnifiedAIOrchestrator:
                 except Exception as state_err:
                     logger.warning(f"⚠️ State update failed (non-blocking): {state_err}")
 
-            # === STEP 7.5: TEACH ME BACK v2 - LEARNING VERIFICATION ===
-            # Auto-detect when to prompt student for explanation (Feynman technique)
-            # Only triggers for Education Lane after high-quality explanations
-            try:
-                from services.teach_me_back_evaluator import check_and_build_teachback_prompt
-                
-                # Only check for education lane routes
-                education_routes = {'multi_agent', 'hybrid', 'react_agentic', 'visual_sync'}
-                if routing_decision.pipeline.value in education_routes:
-                    # Get main response content
-                    ai_response = result.get('main_response', '') or \
-                                  result.get('response', {}).get('default_view', {}).get('main_content', {}).get('content', '')
-                    
-                    # Get retrieval confidence from context
-                    retrieval_confidence = full_context.get('retrieval_confidence', 0.0)
-                    
-                    # Check if we should trigger teachback
-                    teachback_prompt = await check_and_build_teachback_prompt(
-                        route_type=routing_decision.pipeline.value,
-                        user_message=message,
-                        ai_response=ai_response,
-                        conversation_state=conversation_state,
-                        retrieval_confidence=retrieval_confidence,
-                        user_id=user_id
-                    )
-                    
-                    if teachback_prompt:
-                        # Append teachback prompt to response
-                        if 'main_response' in result and result['main_response']:
-                            result['main_response'] += teachback_prompt
-                        elif 'response' in result:
-                            # Handle nested response structure
-                            if isinstance(result['response'], dict):
-                                content = result['response'].get('default_view', {}).get('main_content', {})
-                                if isinstance(content, dict) and 'content' in content:
-                                    content['content'] += teachback_prompt
-                        
-                        # Mark that teachback was triggered
-                        result['teachback'] = {
-                            'triggered': True,
-                            'prompt_appended': True,
-                            'topic': conversation_state.get('last_topic', subject)
-                        }
-                        logger.info(f"🎓 Teach Me Back prompt added to response | request_id={request_id}")
-                        
-            except ImportError as ie:
-                logger.debug(f"Teach Me Back module not available: {ie}")
-            except Exception as tmb_err:
-                logger.warning(f"⚠️ Teach Me Back trigger failed (non-blocking): {tmb_err}")
-
             # === STEP 8: STATE ENFORCEMENT - THE LAW OF COGNITIVE OS ===
             # CRITICAL: STATE IS LAW. LLM responses that violate state are REJECTED.
             if result is None:
@@ -781,6 +731,85 @@ class UnifiedAIOrchestrator:
                 envelope = None  # Mark as failed
             
             # ================================================================
+            # STEP 9.25: TEACH ME BACK v2 - LEARNING VERIFICATION
+            # ================================================================
+            # Runs AFTER guardrails to ensure:
+            # 1. Never append on hard_block (cheating/self-harm)
+            # 2. Logs include guardrail_status
+            # 3. Suppresses during active solving mode
+            try:
+                from services.teach_me_back_evaluator import check_and_build_teachback_prompt
+                from services.guardrails_v2 import GuardrailStatus
+                
+                # GATE 1: Only for Education Lane routes
+                education_routes = {'multi_agent', 'hybrid', 'react_agentic', 'visual_sync'}
+                should_check_teachback = routing_decision.pipeline.value in education_routes
+                
+                # GATE 2: Skip on guardrails hard_block (cheating/self-harm/unsafe)
+                guardrail_status = "unknown"
+                if envelope:
+                    guardrail_status = envelope.guardrail_status.value if envelope.guardrail_status else "unknown"
+                    if envelope.guardrail_status in [GuardrailStatus.HARD_BLOCK, GuardrailStatus.REDIRECT]:
+                        should_check_teachback = False
+                        logger.debug(f"🎓 Teachback SKIPPED: guardrail={guardrail_status}")
+                
+                # GATE 3: Skip during active solving (symbolic verification in progress)
+                symbolic_meta = result.get("_symbolic", {})
+                if symbolic_meta.get("hybrid_enabled") and not symbolic_meta.get("verifier_passed"):
+                    should_check_teachback = False
+                    logger.debug(f"🎓 Teachback SKIPPED: active symbolic solving")
+                
+                # GATE 4: Skip if conversation indicates unresolved/multi-step problem
+                pending_question = conversation_state.get('ai_asked_question', False)
+                open_problem = conversation_state.get('open_problem', False)
+                if open_problem or pending_question:
+                    should_check_teachback = False
+                    logger.debug(f"🎓 Teachback SKIPPED: open_problem={open_problem}, pending_question={pending_question}")
+                
+                if should_check_teachback:
+                    # Get main response content
+                    ai_response = result.get('main_response', '') or \
+                                  result.get('response', {}).get('default_view', {}).get('main_content', {}).get('content', '')
+                    
+                    # Get retrieval confidence
+                    retrieval_confidence = full_context.get('retrieval_confidence', 0.0)
+                    if envelope and hasattr(envelope, 'retrieval_confidence'):
+                        retrieval_confidence = envelope.retrieval_confidence or retrieval_confidence
+                    
+                    # Check if we should trigger teachback
+                    teachback_prompt = await check_and_build_teachback_prompt(
+                        route_type=routing_decision.pipeline.value,
+                        user_message=message,
+                        ai_response=ai_response,
+                        conversation_state=conversation_state,
+                        retrieval_confidence=retrieval_confidence,
+                        user_id=user_id
+                    )
+                    
+                    if teachback_prompt:
+                        # Append teachback prompt to response
+                        if 'main_response' in result and result['main_response']:
+                            result['main_response'] += teachback_prompt
+                        elif 'response' in result and isinstance(result['response'], dict):
+                            content = result['response'].get('default_view', {}).get('main_content', {})
+                            if isinstance(content, dict) and 'content' in content:
+                                content['content'] += teachback_prompt
+                        
+                        # Mark teachback metadata (includes guardrail status for observability)
+                        result['teachback'] = {
+                            'triggered': True,
+                            'prompt_appended': True,
+                            'topic': conversation_state.get('last_topic', subject),
+                            'guardrail_status': guardrail_status
+                        }
+                        logger.info(f"🎓 Teach Me Back: prompt added | guardrail={guardrail_status} | request_id={request_id}")
+                        
+            except ImportError as ie:
+                logger.debug(f"Teach Me Back module not available: {ie}")
+            except Exception as tmb_err:
+                logger.warning(f"⚠️ Teach Me Back trigger failed (non-blocking): {tmb_err}")
+            
+            # ================================================================
             # STEP 9.5: MEMORY v2 - PERSIST SESSION (AFTER GUARDRAILS)
             # ================================================================
             # Memory writes happen AFTER guardrails so we can:
@@ -850,6 +879,14 @@ class UnifiedAIOrchestrator:
             
             generation_time = time.time() - start_time
             logger.info(f"✅ Orchestration complete in {generation_time:.2f}s | request_id={request_id}")
+            
+            # ================================================================
+            # STEP 10: SANITIZE RESPONSE — REMOVE ALL INTERNAL TRACES
+            # ================================================================
+            # CRITICAL: Never leak internal agent traces to the student UI
+            # This sanitizer runs on ALL responses from ALL lanes
+            result = self._sanitize_response_for_student(result, request_id)
+            
             return result
             
         except Exception as e:
@@ -890,6 +927,119 @@ class UnifiedAIOrchestrator:
             "correlation_id": correlation_id,
             "_debug": {"reason": reason}
         }
+    
+    def _sanitize_response_for_student(
+        self,
+        result: Dict[str, Any],
+        request_id: str = "unknown"
+    ) -> Dict[str, Any]:
+        """
+        SANITIZE RESPONSE — Remove ALL internal traces before returning to student.
+        
+        CRITICAL: This is the FINAL gate before any response reaches the student UI.
+        It removes:
+        - ReAct reasoning traces (thought, action, action_input)
+        - Internal debugging info (_debug, _internal, etc.)
+        - Raw reasoning chains
+        - Any JSON blobs that look like agent traces
+        
+        MUST run on ALL responses from ALL lanes (education/conversation/action).
+        """
+        import re
+        
+        if not result:
+            return result
+        
+        # Keys that should NEVER reach the student
+        INTERNAL_KEYS = {
+            'reasoning_chain', '_debug', '_internal', '_trace', '_symbolic',
+            'agent_trace', 'thoughts', 'raw_response', 'llm_raw', 'raw_content',
+            'debug_info', 'internal_metadata', 'tool_calls_raw'
+        }
+        
+        # Remove top-level internal keys
+        for key in INTERNAL_KEYS:
+            if key in result:
+                logger.debug(f"🧹 Sanitized: removed '{key}' from response | request_id={request_id}")
+                del result[key]
+        
+        # Sanitize the main_response text content
+        if 'main_response' in result and isinstance(result['main_response'], str):
+            result['main_response'] = self._sanitize_text_content(result['main_response'])
+        
+        # Sanitize nested response structure
+        if 'response' in result and isinstance(result['response'], dict):
+            result['response'] = self._sanitize_nested_dict(result['response'])
+            
+            # Deep sanitize main_content.content
+            if 'default_view' in result['response']:
+                dv = result['response']['default_view']
+                if isinstance(dv, dict) and 'main_content' in dv:
+                    mc = dv['main_content']
+                    if isinstance(mc, dict) and 'content' in mc:
+                        mc['content'] = self._sanitize_text_content(mc['content'])
+        
+        # Sanitize agentic_info to remove sensitive traces
+        if 'agentic_info' in result and isinstance(result['agentic_info'], dict):
+            # Keep only safe summary fields
+            safe_agentic = {
+                'tools_used': result['agentic_info'].get('tools_used', []),
+                'iterations': result['agentic_info'].get('iterations', 0),
+                'verified': result['agentic_info'].get('verified', False)
+            }
+            result['agentic_info'] = safe_agentic
+        
+        return result
+    
+    def _sanitize_text_content(self, text: str) -> str:
+        """
+        Sanitize text content to remove any embedded ReAct traces or JSON blobs.
+        """
+        import re
+        
+        if not text or not isinstance(text, str):
+            return text
+        
+        # Pattern for ReAct-style traces: {"thought": ..., "action": ..., "action_input": ...}
+        react_pattern = r'\{[^{}]*"(?:thought|action|action_input)"[^{}]*\}'
+        text = re.sub(react_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Pattern for "Thought: ...", "Action: ...", "Observation: ..." blocks
+        thought_block_pattern = r'(?:^|\n)\s*(?:Thought|Action|Observation|Action Input):\s*[^\n]+(?:\n|$)'
+        text = re.sub(thought_block_pattern, '\n', text, flags=re.IGNORECASE | re.MULTILINE)
+        
+        # Remove any remaining JSON that looks like internal debug
+        json_debug_pattern = r'\{[^{}]*"(?:_debug|_internal|_trace|raw_response)"[^{}]*\}'
+        text = re.sub(json_debug_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Clean up multiple newlines left behind
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        return text.strip()
+    
+    def _sanitize_nested_dict(self, d: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Recursively remove internal keys from nested dictionaries.
+        """
+        INTERNAL_KEYS = {
+            'reasoning_chain', '_debug', '_internal', '_trace', 'thoughts',
+            'raw_response', 'llm_raw', 'agent_trace', 'tool_calls_raw'
+        }
+        
+        if not isinstance(d, dict):
+            return d
+        
+        # Remove internal keys
+        sanitized = {k: v for k, v in d.items() if k not in INTERNAL_KEYS}
+        
+        # Recursively sanitize nested dicts
+        for k, v in sanitized.items():
+            if isinstance(v, dict):
+                sanitized[k] = self._sanitize_nested_dict(v)
+            elif isinstance(v, str):
+                sanitized[k] = self._sanitize_text_content(v)
+        
+        return sanitized
     
     async def _regenerate_with_state_enforcement(
         self,
@@ -2649,7 +2799,16 @@ Response:"""
         result: Dict[str, Any],
         routing_decision: Any
     ) -> Dict[str, Any]:
-        """Format agentic result to standard structure"""
+        """
+        Format agentic result to standard structure.
+        
+        CRITICAL: Do NOT expose reasoning_chain or internal traces to student.
+        These are logged internally but never returned to frontend.
+        """
+        # Log reasoning chain for observability (internal only)
+        if result.get("reasoning_chain"):
+            logger.debug(f"🔗 Agentic reasoning: {len(result.get('reasoning_chain', []))} steps logged internally")
+        
         return {
             "response": {
                 "default_view": {
@@ -2665,10 +2824,9 @@ Response:"""
             "agentic_info": {
                 "tools_used": result.get("tools_used", []),
                 "iterations": result.get("iterations", 0),
-                "revisions": result.get("revisions", 0),
                 "verified": result.get("metadata", {}).get("verified", False)
-            },
-            "reasoning_chain": result.get("reasoning_chain", [])
+            }
+            # REMOVED: "reasoning_chain" - NEVER expose to student
         }
     
     def _merge_hybrid_results(

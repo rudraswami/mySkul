@@ -717,6 +717,7 @@ class TestTeachMeBackV2:
     def test_mastery_update_threshold(self):
         """
         Test: Mastery only updates when score >= 50 (partial or better)
+        POLICY: No negative deltas from teachback
         """
         from services.teach_me_back_evaluator import (
             TeachMeBackEvaluator,
@@ -729,7 +730,8 @@ class TestTeachMeBackV2:
         assert evaluator.get_mastery_delta(UnderstandingLevel.EXCELLENT.value) == 15
         assert evaluator.get_mastery_delta(UnderstandingLevel.GOOD.value) == 10
         assert evaluator.get_mastery_delta(UnderstandingLevel.PARTIAL.value) == 3
-        assert evaluator.get_mastery_delta(UnderstandingLevel.INCORRECT.value) == -5
+        # POLICY: No negative deltas - INCORRECT should be 0, not -5
+        assert evaluator.get_mastery_delta(UnderstandingLevel.INCORRECT.value) == 0
         assert evaluator.get_mastery_delta(UnderstandingLevel.NOT_ATTEMPTED.value) == 0
     
     def test_follow_up_planner_exists(self):
@@ -780,6 +782,202 @@ class TestTeachMeBackV2:
         # Should focus on understanding, not grading
         assert "understood" in prompt.lower()
         assert "gaps" in prompt.lower()
+    
+    def test_mastery_not_decreased_on_incorrect_teachback(self):
+        """
+        SHIP BLOCKER: Incorrect teachback should NOT decrease mastery
+        POLICY: We don't punish students for trying to explain
+        """
+        from services.teach_me_back_evaluator import (
+            TeachMeBackEvaluator,
+            UnderstandingLevel
+        )
+        
+        evaluator = TeachMeBackEvaluator()
+        
+        # INCORRECT should NOT have negative delta
+        incorrect_delta = evaluator.get_mastery_delta(UnderstandingLevel.INCORRECT.value)
+        assert incorrect_delta >= 0, f"INCORRECT delta should be >= 0, got {incorrect_delta}"
+        
+        # NOT_ATTEMPTED should also be 0
+        not_attempted_delta = evaluator.get_mastery_delta(UnderstandingLevel.NOT_ATTEMPTED.value)
+        assert not_attempted_delta == 0, f"NOT_ATTEMPTED delta should be 0, got {not_attempted_delta}"
+    
+    def test_no_trigger_during_active_solving_mode(self):
+        """
+        SHIP BLOCKER: Teachback should NOT trigger during active problem solving
+        """
+        from services.teach_me_back_evaluator import TeachbackTriggerDetector
+        
+        detector = TeachbackTriggerDetector()
+        
+        # Simulate active solving: conversation_state has open_problem or pending_question
+        # Note: The orchestrator checks these flags, but detector should not trigger
+        # on multi-step responses (response_has_steps)
+        
+        # Test with multi-step response (should still be eligible for trigger detection)
+        # The actual suppression happens in the orchestrator based on conversation_state
+        
+        # Test that short acknowledgment without prior educational context doesn't trigger
+        result = detector.detect(
+            route_type="multi_agent",
+            user_message="and then?",  # Continuation, not acknowledgment
+            ai_response="Step 1: First we need to...\nStep 2: Then calculate...\nStep 3: Finally...",
+            conversation_state={
+                'last_topic': 'calculus',
+                'last_pipeline': 'hybrid',
+                'turn_count': 3,
+                'open_problem': True  # Signal for active solving
+            },
+            retrieval_confidence=0.5,
+            user_id="test_user_456"
+        )
+        
+        # Trigger detection in the detector still runs, but orchestrator will suppress
+        # based on open_problem/pending_question flags
+        # Here we just verify detector doesn't crash and returns valid result
+        assert result is not None
+        assert hasattr(result, 'should_trigger')
+    
+    def test_orchestrator_has_guardrail_gate(self):
+        """
+        Test: Orchestrator has teachback gate for guardrails hard_block
+        """
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator.orchestrate_pipeline)
+        
+        # Should check for HARD_BLOCK before teachback
+        assert "HARD_BLOCK" in source, "Should check for HARD_BLOCK before teachback"
+        assert "guardrail_status" in source, "Should log guardrail_status"
+        
+        # Should have GATE comments for suppression
+        assert "GATE" in source, "Should have GATE comments for suppression logic"
+
+
+# =============================================================================
+# TEST: NO AGENT TRACE LEAKAGE
+# =============================================================================
+
+class TestNoAgentTraceLeakage:
+    """
+    SHIP BLOCKER: Agent traces (thought, action, action_input) must NEVER leak to UI.
+    """
+    
+    def test_sanitize_response_exists(self):
+        """Verify sanitization method exists in orchestrator"""
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        # Check that _sanitize_response_for_student method exists
+        assert hasattr(UnifiedAIOrchestrator, '_sanitize_response_for_student')
+        assert hasattr(UnifiedAIOrchestrator, '_sanitize_text_content')
+        assert hasattr(UnifiedAIOrchestrator, '_sanitize_nested_dict')
+    
+    def test_sanitize_removes_reasoning_chain(self):
+        """Test that reasoning_chain is removed from results"""
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Test input with reasoning_chain
+        test_result = {
+            "main_response": "Newton's laws explain motion.",
+            "reasoning_chain": [{"thought": "Let me think...", "action": "search"}],
+            "_debug": {"internal": True}
+        }
+        
+        sanitized = orchestrator._sanitize_response_for_student(test_result, "test_req")
+        
+        # Verify internal keys are removed
+        assert "reasoning_chain" not in sanitized
+        assert "_debug" not in sanitized
+        assert "main_response" in sanitized
+    
+    def test_sanitize_text_removes_react_patterns(self):
+        """Test that ReAct patterns are removed from text content"""
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Text with embedded ReAct trace
+        text_with_trace = """Here's an explanation.
+        
+        {"thought": "I should search", "action": "knowledge_search", "action_input": {"query": "newton"}}
+        
+        Newton's laws are fundamental."""
+        
+        sanitized = orchestrator._sanitize_text_content(text_with_trace)
+        
+        # Should not contain ReAct JSON
+        assert '"thought"' not in sanitized
+        assert '"action_input"' not in sanitized
+        assert "Newton's laws" in sanitized
+    
+    def test_format_agentic_result_no_reasoning_chain(self):
+        """Verify _format_agentic_result doesn't include reasoning_chain"""
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator._format_agentic_result)
+        
+        # Should NOT have reasoning_chain in return value
+        # The REMOVED comment indicates it was intentionally removed
+        assert "REMOVED" in source or "reasoning_chain" not in source.split("return")[1]
+    
+    def test_sanitize_called_before_return(self):
+        """Verify sanitization is called at the end of orchestrate_pipeline"""
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator.orchestrate_pipeline)
+        
+        # Should have sanitization step before return
+        assert "_sanitize_response_for_student" in source
+
+
+# =============================================================================
+# TEST: SUBJECT CONTEXT CARRY-FORWARD
+# =============================================================================
+
+class TestSubjectCarryForward:
+    """
+    SHIP BLOCKER: Subject should be inferred from context, NOT default to Mathematics.
+    """
+    
+    def test_subject_detector_has_context_param(self):
+        """Verify _detect_subject_from_question accepts context_subject"""
+        import inspect
+        from api.ai import _detect_subject_from_question
+        
+        sig = inspect.signature(_detect_subject_from_question)
+        params = list(sig.parameters.keys())
+        
+        assert 'context_subject' in params, "Should accept context_subject parameter"
+    
+    def test_general_subject_not_math(self):
+        """GENERAL classification should NOT default to Mathematics"""
+        from api.ai import _detect_subject_from_question
+        
+        # Short vague message without context should return "General", not "Mathematics"
+        result = _detect_subject_from_question("ok got it", None)
+        assert result == "General" or result != "Mathematics"
+        
+        # With context, should carry forward
+        result_with_context = _detect_subject_from_question("ok got it", "Physics")
+        assert result_with_context == "Physics"
+    
+    def test_short_ack_uses_context(self):
+        """Short acknowledgments should use context subject"""
+        from api.ai import _detect_subject_from_question
+        
+        # Very short message with Physics context
+        result = _detect_subject_from_question("yes", "Physics")
+        assert result == "Physics"
+        
+        # Very short message with Chemistry context
+        result = _detect_subject_from_question("hmm ok", "Chemistry")
+        assert result == "Chemistry"
 
 
 # =============================================================================

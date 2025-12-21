@@ -1089,16 +1089,16 @@ async def stream_neuro_symbolic_response(
         )
 
 
-def _detect_subject_from_question(question: str) -> str:
-    """Auto-detect subject from question text"""
+def _detect_subject_from_question(question: str, context_subject: str = None) -> str:
+    """
+    Auto-detect subject from question text with context carry-forward.
+    
+    PRIORITY:
+    1. If context_subject is provided (from session/memory), use it for short/vague messages
+    2. Otherwise, classify from question text
+    3. For GENERAL, use context_subject if available, else "General" (NOT Mathematics)
+    """
     from services.question_classifier import QuestionClassifier, Subject
-    
-    if not question or not question.strip():
-        return "Mathematics"  # Default fallback
-    
-    classifier = QuestionClassifier()
-    analysis = classifier.classify(question)
-    detected_subject = analysis.subject
     
     # Map Subject enum to frontend format
     subject_map = {
@@ -1107,10 +1107,28 @@ def _detect_subject_from_question(question: str) -> str:
         Subject.CHEMISTRY: "Chemistry",
         Subject.BIOLOGY: "Biology",
         Subject.COMPUTER_SCIENCE: "Computer Science",
-        Subject.GENERAL: "Mathematics"  # Default to Mathematics
+        Subject.GENERAL: None  # Will use context or "General"
     }
     
-    return subject_map.get(detected_subject, "Mathematics")
+    # For empty or very short messages, rely on context
+    if not question or len(question.strip()) < 10:
+        if context_subject and context_subject != "General":
+            return context_subject
+        return "General"  # Not Mathematics - be honest
+    
+    classifier = QuestionClassifier()
+    analysis = classifier.classify(question)
+    detected_subject = analysis.subject
+    
+    mapped = subject_map.get(detected_subject)
+    
+    # If classified as GENERAL, carry forward context subject
+    if mapped is None:
+        if context_subject and context_subject != "General":
+            return context_subject
+        return "General"
+    
+    return mapped
 
 
 @router.post("/neuro-symbolic")
@@ -1195,15 +1213,39 @@ You MUST reference specific content from the image in your response."""
                 # Continue without image analysis but inform user
                 contextual_message = f"{request.message}\n\n(Note: There was an issue analyzing the uploaded image. Please describe what's in the image if you need help with it.)"
         
-        # Auto-detect subject if not provided (consider image analysis)
+        # Auto-detect subject if not provided (consider image analysis + context)
         detected_subject = request.subject
         if not detected_subject or detected_subject.strip() == "":
             if image_analysis and image_analysis.get('subject_detected'):
                 detected_subject = image_analysis['subject_detected']
                 logger.info(f"🔍 Subject detected from image: {detected_subject}")
             else:
-                detected_subject = _detect_subject_from_question(contextual_message)
-                logger.info(f"🔍 Auto-detected subject: {detected_subject} from question: {request.message[:50]}")
+                # Get context subject from session for carry-forward
+                context_subject = None
+                try:
+                    session_mem = await db.chat_sessions.find_one(
+                        {"session_id": request.session_id, "user_id": user.user_id},
+                        {"last_topic": 1, "detected_subject": 1}
+                    ) if request.session_id else None
+                    if session_mem:
+                        # Extract subject from last topic or stored subject
+                        context_subject = session_mem.get('detected_subject')
+                        if not context_subject:
+                            # Infer from last_topic if it contains subject hints
+                            last_topic = session_mem.get('last_topic', '')
+                            if 'physics' in last_topic.lower() or 'newton' in last_topic.lower():
+                                context_subject = 'Physics'
+                            elif 'chemistry' in last_topic.lower():
+                                context_subject = 'Chemistry'
+                            elif 'biology' in last_topic.lower():
+                                context_subject = 'Biology'
+                            elif 'math' in last_topic.lower() or 'calculus' in last_topic.lower():
+                                context_subject = 'Mathematics'
+                except Exception:
+                    pass
+                
+                detected_subject = _detect_subject_from_question(contextual_message, context_subject)
+                logger.info(f"🔍 Auto-detected subject: {detected_subject} (context: {context_subject}) from: {request.message[:50]}")
         
         # Update request subject for downstream processing
         request.subject = detected_subject
@@ -2483,7 +2525,11 @@ You MUST reference specific content from the image in your response."""
             if request.session_id and last_topic:
                 await db.chat_sessions.update_one(
                     {"session_id": request.session_id, "user_id": user.user_id},
-                    {"$set": {"last_topic": last_topic, "last_updated": time.time()}}
+                    {"$set": {
+                        "last_topic": last_topic,
+                        "detected_subject": detected_subject,  # Save for context carry-forward
+                        "last_updated": time.time()
+                    }}
                 )
         except Exception:
             pass

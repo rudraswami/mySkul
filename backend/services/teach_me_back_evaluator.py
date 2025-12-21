@@ -259,30 +259,42 @@ class TeachbackTriggerDetector:
         topic: str,
         signals: Dict[str, Any]
     ) -> str:
-        """Build a warm, student-first teachback prompt."""
+        """
+        Build a warm, student-first teachback prompt.
+        
+        DETERMINISTIC selection based on:
+        1. TeachbackMode (quick/step/deep)
+        2. Signal confidence (high retrieval = more direct prompt)
+        3. Message context (acknowledgment vs follow-up)
+        
+        NO randomization - predictable UX.
+        """
         topic_display = topic.replace('_', ' ').title() if topic else "this"
         
-        if mode == TeachbackMode.QUICK_CHECK:
-            prompts = [
-                f"Quick check! 🧠 Can you explain {topic_display} in your own words? Just 1-2 sentences is perfect!",
-                f"Got it? 😊 Try telling me what {topic_display} means - like you're explaining to a friend!",
-                f"Your turn! What's the main idea of {topic_display}? No pressure, just your understanding!"
-            ]
-        elif mode == TeachbackMode.STEP_CHECK:
-            prompts = [
-                f"Let's see if it clicked! 🎯 What would be the first step to solve a problem like this?",
-                f"Quick test! If I gave you a similar problem, what's the first thing you'd do?",
-                f"Your move! Walk me through how you'd start solving this type of question."
-            ]
-        else:  # DEEP_TEACH
-            prompts = [
-                f"Challenge time! 🌟 Can you teach {topic_display} back to me like I'm a friend who's never heard of it?",
-                f"Let's flip roles! Pretend I don't know anything about {topic_display} - how would you explain it?",
-                f"You're the teacher now! 📚 Explain {topic_display} in your own words - include an example if you can!"
-            ]
+        # Determine prompt style based on signals
+        high_confidence = signals.get('high_confidence_retrieval', False)
+        was_acknowledgment = signals.get('is_acknowledgment', False)
         
-        # Pick first prompt (can be randomized later)
-        return prompts[0]
+        if mode == TeachbackMode.QUICK_CHECK:
+            # Short, friendly - for after acknowledgments
+            if was_acknowledgment:
+                return f"Quick check! 🧠 Can you explain {topic_display} in 1-2 sentences?"
+            else:
+                return f"Your turn! What's the main idea of {topic_display}? No pressure!"
+                
+        elif mode == TeachbackMode.STEP_CHECK:
+            # Procedural - for formula/step content
+            if high_confidence:
+                return f"Let's see if it clicked! 🎯 What's the first step to solve this?"
+            else:
+                return f"Quick test! If I gave you a similar problem, how would you start?"
+                
+        else:  # DEEP_TEACH
+            # Challenge - for complex multi-step
+            if high_confidence:
+                return f"Challenge time! 🌟 Can you teach {topic_display} back to me like I'm hearing it for the first time?"
+            else:
+                return f"You're the teacher now! 📚 Explain {topic_display} in your own words."
 
 
 # =============================================================================
@@ -649,13 +661,17 @@ Keep each point under 20 words. Be kind but ACCURATE.
         Get mastery change based on understanding level.
         
         Used by API to update student mastery after teach-back.
+        
+        POLICY: No negative deltas from teachback.
+        - INCORRECT/NOT_ATTEMPTED → 0 (no change, store misconception tags instead)
+        - We don't punish students for trying to explain
         """
         deltas = {
             UnderstandingLevel.EXCELLENT.value: 15,
             UnderstandingLevel.GOOD.value: 10,
             UnderstandingLevel.PARTIAL.value: 3,
-            UnderstandingLevel.INCORRECT.value: -5,
-            UnderstandingLevel.NOT_ATTEMPTED.value: 0
+            UnderstandingLevel.INCORRECT.value: 0,      # No negative - store misconception instead
+            UnderstandingLevel.NOT_ATTEMPTED.value: 0   # No penalty for not trying
         }
         return deltas.get(understanding_level, 0)
 
@@ -742,8 +758,10 @@ async def process_teachback_response(
         {
             'evaluation': {...},  # Rubric scores
             'follow_up': {...},   # Next question
-            'mastery_delta': int, # Delta to apply (only if threshold met)
-            'should_update_mastery': bool
+            'mastery_delta': int, # Delta to apply (only if threshold met, NEVER negative)
+            'should_update_mastery': bool,
+            'misconception_tags': list,  # For memory storage on low scores
+            'memory_event': dict  # Compact event for Memory v2
         }
     """
     evaluator = get_teach_me_back_evaluator(config)
@@ -764,20 +782,55 @@ async def process_teachback_response(
     )
     
     # 3. Determine mastery update eligibility
-    # Only update if score >= 50 (partial understanding or better)
+    # POLICY: Only update if score >= 50 AND student provided explanation
+    # POLICY: NEVER apply negative delta from teachback
     score = evaluation.get('score', 0)
     understanding_level = evaluation.get('understanding_level', 'not_attempted')
+    gaps = evaluation.get('gaps', [])
     
-    should_update = score >= 50 and understanding_level not in ['not_attempted', 'incorrect']
+    # Check if student actually provided meaningful explanation (>10 chars)
+    has_explanation = len(student_explanation.strip()) > 10
+    
+    should_update = (
+        score >= 50 and 
+        has_explanation and 
+        understanding_level not in ['not_attempted', 'incorrect']
+    )
+    
+    # Get delta (will be 0 for incorrect/not_attempted due to policy)
     mastery_delta = evaluator.get_mastery_delta(understanding_level) if should_update else 0
     
+    # Extract misconception tags for low scores (stored in memory, not mastery)
+    misconception_tags = []
+    if score < 50 and gaps:
+        # Convert gaps to compact tags
+        misconception_tags = [
+            g[:50] if isinstance(g, str) else str(g)[:50] 
+            for g in gaps[:3]
+        ]
+    
+    # Build compact memory event (bounded storage)
+    memory_event = {
+        'type': 'teachback',
+        'topic': topic[:100],
+        'score': score,
+        'level': understanding_level,
+        'mastery_delta': mastery_delta,
+        'misconceptions': misconception_tags,
+        'follow_up_type': follow_up['type'],
+        'timestamp': datetime.now(timezone.utc).isoformat()
+    }
+    
     logger.info(f"🎓 Teachback processed: score={score}, level={understanding_level}, "
-                f"mastery_delta={mastery_delta}, follow_up_type={follow_up['type']}")
+                f"mastery_delta={mastery_delta}, misconceptions={len(misconception_tags)}, "
+                f"follow_up_type={follow_up['type']}")
     
     return {
         'evaluation': evaluation,
         'follow_up': follow_up,
         'mastery_delta': mastery_delta,
-        'should_update_mastery': should_update
+        'should_update_mastery': should_update,
+        'misconception_tags': misconception_tags,
+        'memory_event': memory_event
     }
 
