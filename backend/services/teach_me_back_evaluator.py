@@ -1,23 +1,27 @@
 """
-Teach Me Back Evaluator
-=======================
+Teach Me Back v2 — The Most Advanced Learning Verification System
+==================================================================
 
-Evaluates student explanations using the Feynman technique.
-Focus: What did they understand? What should they strengthen?
+Uses the Feynman technique to verify student understanding:
+- Auto-detects when to prompt for explanation (no keywords)
+- Evaluates student explanations with rubric-based scoring
+- Provides adaptive follow-up questions based on gaps
+- Updates mastery ONLY when understanding is demonstrated
 
-NOT a grading system. It's a learning helper.
+COMPONENTS:
+1. TeachbackTriggerDetector - Detects learning moments (structure-based)
+2. TeachMeBackEvaluator - Rubric-based evaluation
+3. TeachbackFollowUpPlanner - Adaptive question selection
 
-ENHANCED (v2.0):
-- Now includes understanding score (0-100)
-- Understanding level classification
-- Mastery update support for adaptive depth
+Philosophy: Every student is like our own child. Warm, supportive, but honest.
 """
 import logging
 import json
 import re
 from enum import Enum
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from services.llm_service import call_llm
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,341 @@ class UnderstandingLevel(Enum):
     PARTIAL = "partial"                  # Some understanding, gaps exist
     GOOD = "good"                        # Solid understanding
     EXCELLENT = "excellent"              # Deep understanding, can teach others
+
+
+class TeachbackMode(Enum):
+    """Type of teachback prompt to use."""
+    NONE = "none"                        # Don't trigger
+    QUICK_CHECK = "quick_check"          # "Explain in 1-2 lines"
+    STEP_CHECK = "step_check"            # "What's the next step?"
+    DEEP_TEACH = "deep_teach"            # "Teach it to a friend"
+
+
+@dataclass
+class TeachbackTrigger:
+    """Result from trigger detection."""
+    should_trigger: bool
+    mode: TeachbackMode
+    reason: str
+    prompt: str
+    topic: str
+    confidence: float
+
+
+# =============================================================================
+# TEACHBACK TRIGGER DETECTOR — Detects learning moments (NO KEYWORDS)
+# =============================================================================
+
+class TeachbackTriggerDetector:
+    """
+    Detects when to prompt student for explanation.
+    
+    Uses STRUCTURE-BASED signals, NOT keywords:
+    1. Route must be Education Lane (multi_agent, hybrid, react_agentic, visual_sync)
+    2. Prior turn was an explanation (AI provided educational content)
+    3. Student acknowledged or asked follow-up (short message after explanation)
+    4. Confidence/retrieval quality was high (topic was well-covered)
+    
+    Trigger modes:
+    - QUICK_CHECK: After short explanations or definitions
+    - STEP_CHECK: After problem-solving explanations
+    - DEEP_TEACH: After complex multi-step explanations
+    """
+    
+    # Education lane route types
+    EDUCATION_ROUTES = {'multi_agent', 'hybrid', 'react_agentic', 'visual_sync'}
+    
+    # Cooldown: Don't trigger teachback too often
+    MIN_TURNS_BETWEEN_TEACHBACK = 3
+    
+    def __init__(self):
+        self._last_teachback_turn = {}  # user_id -> turn_count
+    
+    def detect(
+        self,
+        route_type: str,
+        user_message: str,
+        ai_response: str,
+        conversation_state: Dict[str, Any],
+        retrieval_confidence: float = 0.0,
+        user_id: str = None
+    ) -> TeachbackTrigger:
+        """
+        Detect if this is a good moment for teachback.
+        
+        Returns TeachbackTrigger with should_trigger, mode, reason, prompt.
+        """
+        # 1. Must be Education Lane
+        if route_type.lower() not in self.EDUCATION_ROUTES:
+            return TeachbackTrigger(
+                should_trigger=False,
+                mode=TeachbackMode.NONE,
+                reason="not_education_lane",
+                prompt="",
+                topic="",
+                confidence=0.0
+            )
+        
+        # 2. Check cooldown
+        turn_count = conversation_state.get('turn_count', 0)
+        if user_id:
+            last_turn = self._last_teachback_turn.get(user_id, -999)
+            if turn_count - last_turn < self.MIN_TURNS_BETWEEN_TEACHBACK:
+                return TeachbackTrigger(
+                    should_trigger=False,
+                    mode=TeachbackMode.NONE,
+                    reason="cooldown",
+                    prompt="",
+                    topic="",
+                    confidence=0.0
+                )
+        
+        # 3. Detect learning moment signals
+        signals = self._detect_learning_signals(
+            user_message=user_message,
+            ai_response=ai_response,
+            conversation_state=conversation_state,
+            retrieval_confidence=retrieval_confidence
+        )
+        
+        # 4. Decide if we should trigger
+        if signals['trigger_score'] < 0.5:
+            return TeachbackTrigger(
+                should_trigger=False,
+                mode=TeachbackMode.NONE,
+                reason="low_signal_score",
+                prompt="",
+                topic="",
+                confidence=signals['trigger_score']
+            )
+        
+        # 5. Determine mode and build prompt
+        mode = self._select_mode(signals, ai_response)
+        topic = conversation_state.get('last_topic', '') or signals.get('detected_topic', 'this concept')
+        prompt = self._build_teachback_prompt(mode, topic, signals)
+        
+        # Update cooldown tracker
+        if user_id:
+            self._last_teachback_turn[user_id] = turn_count
+        
+        logger.info(f"🎓 Teachback triggered: mode={mode.value}, topic={topic}, score={signals['trigger_score']:.2f}")
+        
+        return TeachbackTrigger(
+            should_trigger=True,
+            mode=mode,
+            reason=signals['primary_reason'],
+            prompt=prompt,
+            topic=topic,
+            confidence=signals['trigger_score']
+        )
+    
+    def _detect_learning_signals(
+        self,
+        user_message: str,
+        ai_response: str,
+        conversation_state: Dict[str, Any],
+        retrieval_confidence: float
+    ) -> Dict[str, Any]:
+        """
+        Detect structure-based learning signals (NOT keyword matching).
+        """
+        signals = {
+            'trigger_score': 0.0,
+            'primary_reason': '',
+            'detected_topic': '',
+            'is_acknowledgment': False,
+            'is_short_follow_up': False,
+            'prior_was_explanation': False,
+            'high_confidence_retrieval': False,
+            'response_has_steps': False,
+            'response_has_formula': False
+        }
+        
+        msg_lower = user_message.lower().strip()
+        msg_len = len(msg_lower)
+        word_count = len(msg_lower.split())
+        
+        # Signal 1: Short acknowledgment after explanation (structure-based)
+        # Short message (<20 chars or <5 words) following a longer AI response
+        ai_response_len = len(ai_response) if ai_response else 0
+        if msg_len < 30 and word_count <= 5 and ai_response_len > 200:
+            signals['is_acknowledgment'] = True
+            signals['trigger_score'] += 0.3
+            signals['primary_reason'] = 'acknowledgment_after_explanation'
+        
+        # Signal 2: Short question/follow-up after explanation
+        if msg_len < 60 and '?' in user_message and ai_response_len > 200:
+            signals['is_short_follow_up'] = True
+            signals['trigger_score'] += 0.2
+            if not signals['primary_reason']:
+                signals['primary_reason'] = 'follow_up_question'
+        
+        # Signal 3: Prior turn was educational explanation
+        prior_intent = conversation_state.get('last_intent', '')
+        prior_pipeline = conversation_state.get('last_pipeline', '')
+        if prior_pipeline in ['multi_agent', 'hybrid', 'react_agentic']:
+            signals['prior_was_explanation'] = True
+            signals['trigger_score'] += 0.3
+            if not signals['primary_reason']:
+                signals['primary_reason'] = 'educational_context'
+        
+        # Signal 4: High retrieval confidence (well-grounded response)
+        if retrieval_confidence >= 0.7:
+            signals['high_confidence_retrieval'] = True
+            signals['trigger_score'] += 0.2
+        
+        # Signal 5: Response contains steps (numbered/bulleted)
+        if ai_response:
+            step_patterns = [r'\d+\.', r'\*\*Step', r'First,', r'Second,', r'Then,']
+            if any(re.search(p, ai_response) for p in step_patterns):
+                signals['response_has_steps'] = True
+                signals['trigger_score'] += 0.1
+        
+        # Signal 6: Response contains formula (educational math)
+        if ai_response and any(c in ai_response for c in ['=', '²', '∫', 'Σ', '√']):
+            signals['response_has_formula'] = True
+            signals['trigger_score'] += 0.1
+        
+        # Extract topic from conversation state
+        signals['detected_topic'] = conversation_state.get('last_topic', '') or \
+                                    conversation_state.get('current_subject', '')
+        
+        # Cap score at 1.0
+        signals['trigger_score'] = min(1.0, signals['trigger_score'])
+        
+        return signals
+    
+    def _select_mode(self, signals: Dict[str, Any], ai_response: str) -> TeachbackMode:
+        """Select appropriate teachback mode based on signals."""
+        response_len = len(ai_response) if ai_response else 0
+        
+        # Deep teach for long, complex responses
+        if response_len > 800 or signals.get('response_has_steps'):
+            return TeachbackMode.DEEP_TEACH
+        
+        # Step check for formula-heavy or procedural content
+        if signals.get('response_has_formula'):
+            return TeachbackMode.STEP_CHECK
+        
+        # Default to quick check
+        return TeachbackMode.QUICK_CHECK
+    
+    def _build_teachback_prompt(
+        self,
+        mode: TeachbackMode,
+        topic: str,
+        signals: Dict[str, Any]
+    ) -> str:
+        """Build a warm, student-first teachback prompt."""
+        topic_display = topic.replace('_', ' ').title() if topic else "this"
+        
+        if mode == TeachbackMode.QUICK_CHECK:
+            prompts = [
+                f"Quick check! 🧠 Can you explain {topic_display} in your own words? Just 1-2 sentences is perfect!",
+                f"Got it? 😊 Try telling me what {topic_display} means - like you're explaining to a friend!",
+                f"Your turn! What's the main idea of {topic_display}? No pressure, just your understanding!"
+            ]
+        elif mode == TeachbackMode.STEP_CHECK:
+            prompts = [
+                f"Let's see if it clicked! 🎯 What would be the first step to solve a problem like this?",
+                f"Quick test! If I gave you a similar problem, what's the first thing you'd do?",
+                f"Your move! Walk me through how you'd start solving this type of question."
+            ]
+        else:  # DEEP_TEACH
+            prompts = [
+                f"Challenge time! 🌟 Can you teach {topic_display} back to me like I'm a friend who's never heard of it?",
+                f"Let's flip roles! Pretend I don't know anything about {topic_display} - how would you explain it?",
+                f"You're the teacher now! 📚 Explain {topic_display} in your own words - include an example if you can!"
+            ]
+        
+        # Pick first prompt (can be randomized later)
+        return prompts[0]
+
+
+# =============================================================================
+# TEACHBACK FOLLOW-UP PLANNER — Adaptive next question selection
+# =============================================================================
+
+class TeachbackFollowUpPlanner:
+    """
+    Chooses adaptive follow-up based on rubric evaluation.
+    
+    Strategy:
+    - Misconception detected → Targeted correction question
+    - Missing concept → Bridging question
+    - Good understanding → Transfer question (apply in new context)
+    """
+    
+    def plan_follow_up(
+        self,
+        evaluation: Dict[str, Any],
+        topic: str,
+        original_explanation: str
+    ) -> Dict[str, Any]:
+        """
+        Plan the next follow-up based on evaluation results.
+        
+        Returns:
+            {
+                'type': 'correction' | 'bridging' | 'transfer' | 'celebration',
+                'question': str,
+                'focus_area': str,
+                'encouragement': str
+            }
+        """
+        score = evaluation.get('score', 50)
+        gaps = evaluation.get('gaps', [])
+        understood = evaluation.get('understood', [])
+        understanding_level = evaluation.get('understanding_level', 'partial')
+        
+        topic_display = topic.replace('_', ' ').title() if topic else "this concept"
+        
+        # EXCELLENT: Transfer question (apply to new situation)
+        if understanding_level == UnderstandingLevel.EXCELLENT.value or score >= 85:
+            return {
+                'type': 'transfer',
+                'question': f"Amazing explanation! 🌟 Now here's a challenge: Can you think of a real-life example where {topic_display} applies?",
+                'focus_area': 'application',
+                'encouragement': "You've really got this! Let's see you apply it."
+            }
+        
+        # GOOD: Light extension question
+        if understanding_level == UnderstandingLevel.GOOD.value or score >= 70:
+            return {
+                'type': 'extension',
+                'question': f"Great job! 💪 Quick bonus: What would happen if one of the conditions changed in {topic_display}?",
+                'focus_area': 'deeper_understanding',
+                'encouragement': "You're on the right track. Let's go a bit deeper!"
+            }
+        
+        # PARTIAL with gaps: Bridging question
+        if gaps and understanding_level == UnderstandingLevel.PARTIAL.value:
+            gap_focus = gaps[0] if isinstance(gaps[0], str) else str(gaps[0])
+            return {
+                'type': 'bridging',
+                'question': f"Good start! 😊 Let's fill in one piece: {gap_focus}. Can you tell me more about that part?",
+                'focus_area': gap_focus,
+                'encouragement': "You're getting there! Let's clarify this one part."
+            }
+        
+        # INCORRECT: Targeted correction
+        if understanding_level == UnderstandingLevel.INCORRECT.value or score < 50:
+            # Extract the main misconception
+            misconception = gaps[0] if gaps else "the core concept"
+            return {
+                'type': 'correction',
+                'question': f"Let's try a different angle! 🎯 What do you think is the MAIN PURPOSE of {topic_display}? Just one sentence!",
+                'focus_area': misconception if isinstance(misconception, str) else 'fundamentals',
+                'encouragement': "No worries! Learning takes practice. Let's break it down together."
+            }
+        
+        # NOT_ATTEMPTED: Gentle nudge
+        return {
+            'type': 'nudge',
+            'question': f"Give it a try! 💙 Even a rough attempt helps. What's ONE thing you remember about {topic_display}?",
+            'focus_area': 'any_recall',
+            'encouragement': "You've got this! Start with whatever comes to mind."
+        }
 
 
 class TeachMeBackEvaluator:
@@ -321,8 +660,14 @@ Keep each point under 20 words. Be kind but ACCURATE.
         return deltas.get(understanding_level, 0)
 
 
-# Singleton instance
+# =============================================================================
+# SINGLETON INSTANCES
+# =============================================================================
+
 _evaluator_instance = None
+_trigger_detector_instance = None
+_follow_up_planner_instance = None
+
 
 def get_teach_me_back_evaluator(config: Dict[str, Any] = None) -> TeachMeBackEvaluator:
     """Get or create evaluator instance."""
@@ -331,4 +676,108 @@ def get_teach_me_back_evaluator(config: Dict[str, Any] = None) -> TeachMeBackEva
         _evaluator_instance = TeachMeBackEvaluator(config)
     return _evaluator_instance
 
+
+def get_teachback_trigger_detector() -> TeachbackTriggerDetector:
+    """Get or create trigger detector instance."""
+    global _trigger_detector_instance
+    if _trigger_detector_instance is None:
+        _trigger_detector_instance = TeachbackTriggerDetector()
+    return _trigger_detector_instance
+
+
+def get_teachback_follow_up_planner() -> TeachbackFollowUpPlanner:
+    """Get or create follow-up planner instance."""
+    global _follow_up_planner_instance
+    if _follow_up_planner_instance is None:
+        _follow_up_planner_instance = TeachbackFollowUpPlanner()
+    return _follow_up_planner_instance
+
+
+# =============================================================================
+# TEACHBACK INTEGRATION HELPER — For Orchestrator use
+# =============================================================================
+
+async def check_and_build_teachback_prompt(
+    route_type: str,
+    user_message: str,
+    ai_response: str,
+    conversation_state: Dict[str, Any],
+    retrieval_confidence: float = 0.0,
+    user_id: str = None
+) -> Optional[str]:
+    """
+    Check if teachback should be triggered and return prompt to append.
+    
+    Called by UnifiedAIOrchestrator after educational responses.
+    Returns prompt string to append, or None if no teachback.
+    """
+    detector = get_teachback_trigger_detector()
+    
+    trigger = detector.detect(
+        route_type=route_type,
+        user_message=user_message,
+        ai_response=ai_response,
+        conversation_state=conversation_state,
+        retrieval_confidence=retrieval_confidence,
+        user_id=user_id
+    )
+    
+    if trigger.should_trigger:
+        logger.info(f"🎓 Teachback prompt added: mode={trigger.mode.value}, reason={trigger.reason}")
+        return f"\n\n---\n\n**💡 Quick check:**\n{trigger.prompt}"
+    
+    return None
+
+
+async def process_teachback_response(
+    student_explanation: str,
+    topic: str,
+    original_explanation: str,
+    config: Dict[str, Any] = None
+) -> Dict[str, Any]:
+    """
+    Process student's teachback response end-to-end.
+    
+    Returns:
+        {
+            'evaluation': {...},  # Rubric scores
+            'follow_up': {...},   # Next question
+            'mastery_delta': int, # Delta to apply (only if threshold met)
+            'should_update_mastery': bool
+        }
+    """
+    evaluator = get_teach_me_back_evaluator(config)
+    planner = get_teachback_follow_up_planner()
+    
+    # 1. Evaluate the explanation
+    evaluation = await evaluator.evaluate(
+        concept=topic,
+        original_explanation=original_explanation,
+        student_explanation=student_explanation
+    )
+    
+    # 2. Plan adaptive follow-up
+    follow_up = planner.plan_follow_up(
+        evaluation=evaluation,
+        topic=topic,
+        original_explanation=original_explanation
+    )
+    
+    # 3. Determine mastery update eligibility
+    # Only update if score >= 50 (partial understanding or better)
+    score = evaluation.get('score', 0)
+    understanding_level = evaluation.get('understanding_level', 'not_attempted')
+    
+    should_update = score >= 50 and understanding_level not in ['not_attempted', 'incorrect']
+    mastery_delta = evaluator.get_mastery_delta(understanding_level) if should_update else 0
+    
+    logger.info(f"🎓 Teachback processed: score={score}, level={understanding_level}, "
+                f"mastery_delta={mastery_delta}, follow_up_type={follow_up['type']}")
+    
+    return {
+        'evaluation': evaluation,
+        'follow_up': follow_up,
+        'mastery_delta': mastery_delta,
+        'should_update_mastery': should_update
+    }
 

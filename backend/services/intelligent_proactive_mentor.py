@@ -21,7 +21,7 @@ The AI doesn't just respond - it ANTICIPATES student needs!
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
@@ -50,6 +50,10 @@ class NudgeType(Enum):
     BREAK_SUGGESTION = "break_suggestion"
     MOTIVATION = "motivation"
     DAILY_SUMMARY = "daily_summary"
+    # Added for proactive_scheduler compatibility
+    COMEBACK = "comeback"
+    MORNING_GREETING = "morning_greeting"
+    SPACED_REP = "spaced_rep"  # Alias for REVISION_DUE in scheduler context
 
 
 @dataclass
@@ -505,17 +509,26 @@ class IntelligentProactiveMentor:
         """
         Detect if student has been studying too long and suggest a break.
         Prevents burnout!
+        
+        🔧 FIX: Only count CONTINUOUS session time (last 3 hours max), not all-time message span.
         """
         try:
-            # Get recent activity
+            # ================================================================
+            # FIX: Only look at messages from the CURRENT SESSION (last 3 hours)
+            # This prevents the "59449 minutes" bug caused by old message spans
+            # ================================================================
+            session_window = datetime.utcnow() - timedelta(hours=3)
+            
             recent_messages = await self.db.chat_messages.find({
-                'user_id': user_id
+                'user_id': user_id,
+                'timestamp': {'$gte': session_window}  # ✅ TIME-BOUNDED
             }).sort('timestamp', -1).limit(50).to_list(length=50)
             
-            if len(recent_messages) < 10:
+            # Need at least 5 messages in the window to consider it a "session"
+            if len(recent_messages) < 5:
                 return None
             
-            # Check time span of recent messages
+            # Check for continuous activity (not just message span)
             if recent_messages:
                 latest = recent_messages[0].get('timestamp')
                 earliest = recent_messages[-1].get('timestamp')
@@ -526,22 +539,40 @@ class IntelligentProactiveMentor:
                     if isinstance(earliest, str):
                         earliest = datetime.fromisoformat(earliest.replace('Z', '+00:00'))
                     
+                    # Make timezone-aware if needed
+                    if latest.tzinfo is None:
+                        latest = latest.replace(tzinfo=timezone.utc)
+                    if earliest.tzinfo is None:
+                        earliest = earliest.replace(tzinfo=timezone.utc)
+                    
                     session_minutes = (latest - earliest).total_seconds() / 60
                     
+                    # ================================================================
+                    # SANITY CHECK: Cap at 180 minutes (3 hours) to prevent bad data
+                    # If calculation shows > 180 mins, something is wrong - skip
+                    # ================================================================
+                    if session_minutes > 180:
+                        logger.warning(f"⚠️ Fatigue detection: session_minutes={session_minutes} > 180, skipping (bad data)")
+                        return None
+                    
                     if session_minutes >= self.STUDY_SESSION_MAX_MINUTES:
+                        # Round to reasonable number
+                        display_minutes = min(int(session_minutes), 180)
+                        
                         return ProactiveNudge(
                             nudge_type=NudgeType.BREAK_SUGGESTION,
                             title="☕ Time for a break!",
-                            message=f"You've been studying for {int(session_minutes)} minutes. A 10-minute break helps retention!",
+                            message=f"You've been focused for {display_minutes} minutes straight - amazing! A quick 10-minute break helps your brain consolidate learning.",
                             priority="medium",
                             actions=[
-                                {"label": "Take 10-min Break", "action": "start_break", "duration": 10},
-                                {"label": "5 more minutes", "action": "snooze_5min"},
-                                {"label": "I'm fine", "action": "dismiss"}
+                                {"label": "Start 10-min Break", "action": "start_break", "duration": 10},
+                                {"label": "Snooze 30m", "action": "snooze_30min"},
+                                {"label": "I'm in the zone!", "action": "dismiss"}
                             ],
                             data={
-                                'session_minutes': int(session_minutes),
-                                'messages_count': len(recent_messages)
+                                'session_minutes': display_minutes,
+                                'messages_count': len(recent_messages),
+                                'confidence': 'high' if len(recent_messages) >= 10 else 'medium'
                             }
                         )
             

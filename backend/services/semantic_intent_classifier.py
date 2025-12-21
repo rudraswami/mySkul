@@ -135,7 +135,7 @@ Analyze this message and return a JSON object with these fields:
    - "confusion" (lost, stuck, doesn't know what to do)
    - "celebration" (got it, understood, happy about progress)
    - "explore" (wants something new, different topic)
-   - "continue" (wants to resume previous topic)
+   - "continue" (wants to resume previous topic, asks "where did I stop", "last time", "what were we doing", "continue from before", session recall)
    - "help" (what can you do, how do you work)
    - "greeting" (hi, hello, hey)
    - "farewell" (bye, goodbye, see you)
@@ -174,10 +174,13 @@ CRITICAL UNDERSTANDING:
 - Life questions, emotions, random curiosity are ALL valid and should get warm responses
 - "I'm feeling lonely", "life sucks", "tell me something interesting" → emotional_support or chitchat
 - "need support", "feeling down", "stressed" → motivation or emotional_support
-- "great", "nice", "ok", "sure" → acknowledgment
+- "great", "nice", "ok", "sure", "hmm yes", "okay" → acknowledgment
 - "try something new", "what's next" → explore
+- "where did I stop", "last time", "what were we doing", "continue from before", "pick up where we left off" → continue (SESSION RECALL)
+- "getting bored", "feeling bored today", "I'm bored" → emotional_support (NOT explore or question!)
 - Be GENEROUS in understanding - students express themselves imperfectly
 - When in doubt, prefer chitchat or emotional_support over off_topic
+- SHORT MESSAGES like "hmm", "yes", "ok" should be acknowledgment, NOT general
 
 Return ONLY valid JSON, no other text."""
 

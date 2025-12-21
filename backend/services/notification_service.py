@@ -61,10 +61,201 @@ class NotificationService:
         'urgent': 1
     }
     
+    # ================================================================
+    # 🎯 NOTIFICATION POLICY ENGINE - Zero Spam
+    # ================================================================
+    
+    # Per-type cooldowns (minimum minutes between same type)
+    TYPE_COOLDOWNS = {
+        'break_suggestion': 60,      # 1 hour between break nudges
+        'streak_protection': 240,    # 4 hours between streak warnings
+        'spaced_rep': 180,           # 3 hours between review nudges
+        'morning_greeting': 1440,    # Once per day
+        'daily_summary': 1440,       # Once per day
+        'comeback': 4320,            # 3 days between comeback nudges
+        'reminder': 5,               # User-requested, allow frequent
+        'motivation': 120,           # 2 hours between motivation
+    }
+    
+    # Daily caps per type
+    DAILY_CAPS = {
+        'break_suggestion': 3,       # Max 3 break nudges/day
+        'streak_protection': 2,      # Max 2 streak warnings/day
+        'spaced_rep': 2,             # Max 2 review nudges/day
+        'morning_greeting': 1,       # Max 1/day
+        'daily_summary': 1,          # Max 1/day
+        'comeback': 1,               # Max 1/day
+        'motivation': 3,             # Max 3/day
+        'reminder': 20,              # User-requested, high cap
+    }
+    
+    # Skip if user active (for these types)
+    SKIP_IF_ACTIVE_TYPES = {'break_suggestion', 'motivation', 'spaced_rep'}
+    ACTIVE_THRESHOLD_MINUTES = 5
+    
     def __init__(self, db_client=None, websocket_manager=None):
         self.db = db_client
         self.ws_manager = websocket_manager
         self._notification_queue = asyncio.Queue()
+    
+    # ================================================================
+    # 🎯 POLICY ENGINE: should_send_notification()
+    # ================================================================
+    
+    async def should_send_notification(
+        self,
+        user_id: str,
+        notification_type: str,
+        context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        POLICY ENGINE: Check if notification is allowed.
+        
+        Returns:
+            {
+                'allowed': bool,
+                'reason': str,
+                'next_allowed_at': datetime (if blocked)
+            }
+        """
+        if self.db is None:
+            return {'allowed': True, 'reason': 'no_db'}
+        
+        now = datetime.utcnow()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # 1. Check quiet hours (except urgent)
+        if self._is_quiet_hours(user_id):
+            next_time = self._get_next_active_time()
+            return {
+                'allowed': False,
+                'reason': 'quiet_hours',
+                'next_allowed_at': next_time
+            }
+        
+        # 2. Check if user is currently active (for certain types)
+        if notification_type in self.SKIP_IF_ACTIVE_TYPES:
+            if await self._is_user_active(user_id):
+                return {
+                    'allowed': False,
+                    'reason': 'user_active',
+                    'next_allowed_at': now + timedelta(minutes=self.ACTIVE_THRESHOLD_MINUTES)
+                }
+        
+        # 3. Check type-specific cooldown
+        cooldown_minutes = self.TYPE_COOLDOWNS.get(notification_type, 30)
+        cooldown_threshold = now - timedelta(minutes=cooldown_minutes)
+        
+        recent_same_type = await self.db.user_notifications.find_one({
+            'user_id': user_id,
+            'type': notification_type,
+            'created_at': {'$gte': cooldown_threshold}
+        })
+        
+        if recent_same_type:
+            last_sent = recent_same_type.get('created_at', now)
+            next_allowed = last_sent + timedelta(minutes=cooldown_minutes)
+            return {
+                'allowed': False,
+                'reason': f'cooldown_{notification_type}',
+                'next_allowed_at': next_allowed,
+                'last_sent': last_sent
+            }
+        
+        # 4. Check daily cap
+        daily_cap = self.DAILY_CAPS.get(notification_type, 10)
+        today_count = await self.db.user_notifications.count_documents({
+            'user_id': user_id,
+            'type': notification_type,
+            'created_at': {'$gte': today_start}
+        })
+        
+        if today_count >= daily_cap:
+            tomorrow_start = today_start + timedelta(days=1)
+            return {
+                'allowed': False,
+                'reason': f'daily_cap_{notification_type}',
+                'next_allowed_at': tomorrow_start,
+                'count_today': today_count,
+                'cap': daily_cap
+            }
+        
+        # 5. Check for snooze/dismiss backoff
+        dismiss_count = await self._get_recent_dismiss_count(user_id, notification_type)
+        if dismiss_count >= 3:
+            # User dismissed 3+ times recently, back off
+            return {
+                'allowed': False,
+                'reason': 'user_dismissed_repeatedly',
+                'dismiss_count': dismiss_count
+            }
+        
+        # All checks passed
+        logger.debug(f"✅ Policy ALLOW: {notification_type} for user {user_id}")
+        return {'allowed': True, 'reason': 'passed_all_checks'}
+    
+    async def _is_user_active(self, user_id: str) -> bool:
+        """Check if user has recent activity (chat, session)"""
+        if self.db is None:
+            return False
+        
+        threshold = datetime.utcnow() - timedelta(minutes=self.ACTIVE_THRESHOLD_MINUTES)
+        
+        # Check recent chat messages
+        recent_msg = await self.db.chat_messages.find_one({
+            'user_id': user_id,
+            'timestamp': {'$gte': threshold}
+        })
+        if recent_msg:
+            return True
+        
+        # Check active sessions
+        recent_session = await self.db.chat_sessions.find_one({
+            'user_id': user_id,
+            'updated_at': {'$gte': threshold}
+        })
+        if recent_session:
+            return True
+        
+        return False
+    
+    async def _get_recent_dismiss_count(self, user_id: str, notification_type: str) -> int:
+        """Count how many times user dismissed this type recently (last 24h)"""
+        if self.db is None:
+            return 0
+        
+        threshold = datetime.utcnow() - timedelta(hours=24)
+        
+        return await self.db.notification_actions.count_documents({
+            'user_id': user_id,
+            'notification_type': notification_type,
+            'action': 'dismiss',
+            'timestamp': {'$gte': threshold}
+        })
+    
+    def _generate_idempotency_key(
+        self,
+        user_id: str,
+        notification_type: str,
+        window_minutes: int = 60
+    ) -> str:
+        """
+        Generate idempotency key to prevent duplicates.
+        Key changes every `window_minutes` to allow periodic notifications.
+        """
+        import hashlib
+        now = datetime.utcnow()
+        # Round to window
+        window_start = now.replace(
+            minute=(now.minute // window_minutes) * window_minutes if window_minutes < 60 else 0,
+            second=0,
+            microsecond=0
+        )
+        if window_minutes >= 60:
+            window_start = window_start.replace(hour=(now.hour // (window_minutes // 60)) * (window_minutes // 60))
+        
+        key_string = f"{user_id}:{notification_type}:{window_start.isoformat()}"
+        return hashlib.md5(key_string.encode()).hexdigest()[:16]
     
     async def send_notification(
         self,
@@ -76,7 +267,8 @@ class NotificationService:
         channels: List[str] = None,
         action: Dict[str, Any] = None,
         data: Dict[str, Any] = None,
-        schedule_time: datetime = None
+        schedule_time: datetime = None,
+        skip_policy_check: bool = False
     ) -> Dict[str, Any]:
         """
         Send notification through specified channels
@@ -91,11 +283,63 @@ class NotificationService:
             action: Action button config
             data: Additional data
             schedule_time: Future delivery time (optional)
+            skip_policy_check: Skip policy engine (for urgent user-requested)
         
         Returns:
             Notification result with status per channel
         """
         notification_id = str(uuid.uuid4())
+        
+        # ================================================================
+        # 🎯 POLICY ENGINE CHECK (unless skipped for urgent/user-requested)
+        # ================================================================
+        if not skip_policy_check and priority != 'urgent':
+            policy_result = await self.should_send_notification(
+                user_id=user_id,
+                notification_type=notification_type,
+                context={'priority': priority, 'title': title}
+            )
+            
+            if not policy_result.get('allowed', True):
+                reason = policy_result.get('reason', 'policy_blocked')
+                logger.info(f"🚫 Policy BLOCKED: {notification_type} for {user_id} | reason={reason}")
+                return {
+                    'notification_id': notification_id,
+                    'status': 'blocked_by_policy',
+                    'reason': reason,
+                    'next_allowed_at': policy_result.get('next_allowed_at')
+                }
+        
+        # ================================================================
+        # DEDUPE: Check idempotency key to prevent duplicates
+        # ================================================================
+        cooldown = self.TYPE_COOLDOWNS.get(notification_type, 60)
+        idempotency_key = self._generate_idempotency_key(user_id, notification_type, cooldown)
+        
+        if self.db is not None:
+            existing = await self.db.user_notifications.find_one({
+                'user_id': user_id,
+                'idempotency_key': idempotency_key
+            })
+            
+            if existing:
+                # Update existing instead of creating duplicate
+                await self.db.user_notifications.update_one(
+                    {'_id': existing['_id']},
+                    {
+                        '$set': {
+                            'message': message,
+                            'updated_at': datetime.utcnow()
+                        },
+                        '$inc': {'coalesce_count': 1}
+                    }
+                )
+                logger.info(f"🔄 Notification coalesced: {notification_type} for {user_id}")
+                return {
+                    'notification_id': existing.get('notification_id'),
+                    'status': 'coalesced',
+                    'coalesce_count': existing.get('coalesce_count', 1) + 1
+                }
         
         # Check rate limits
         if not await self._check_rate_limit(user_id, priority):
@@ -117,7 +361,7 @@ class NotificationService:
         if channels is None:
             channels = await self._get_user_channels(user_id)
         
-        # Build notification document
+        # Build notification document WITH idempotency key
         notification = {
             'notification_id': notification_id,
             'user_id': user_id,
@@ -131,7 +375,9 @@ class NotificationService:
             'created_at': datetime.utcnow(),
             'scheduled_time': schedule_time,
             'status': 'pending',
-            'delivery_status': {channel: 'pending' for channel in channels}
+            'delivery_status': {channel: 'pending' for channel in channels},
+            'idempotency_key': idempotency_key,  # ✅ Dedupe key
+            'coalesce_count': 1
         }
         
         # Save to database
@@ -171,6 +417,7 @@ class NotificationService:
                 }
             )
         
+        logger.info(f"✅ Notification sent: {notification_type} to {user_id}")
         return {
             'notification_id': notification_id,
             'status': 'sent',
@@ -202,9 +449,34 @@ class NotificationService:
     ) -> Dict[str, Any]:
         """Send in-app notification (real-time via WebSocket)"""
         user_id = notification['user_id']
+        idempotency_key = notification.get('idempotency_key')
         
-        # Store in notification center
+        # Store in notification center with dedupe
         if self.db is not None:
+            # Check for existing notification with same idempotency key
+            if idempotency_key:
+                existing = await self.db.user_notifications.find_one({
+                    'user_id': user_id,
+                    'idempotency_key': idempotency_key
+                })
+                
+                if existing:
+                    # Update existing instead of inserting duplicate
+                    await self.db.user_notifications.update_one(
+                        {'_id': existing['_id']},
+                        {
+                            '$set': {
+                                'message': notification['message'],
+                                'updated_at': datetime.utcnow(),
+                                'read': False  # Mark unread again
+                            },
+                            '$inc': {'coalesce_count': 1}
+                        }
+                    )
+                    logger.debug(f"🔄 In-app notification coalesced for {user_id}")
+                    return {'status': 'coalesced', 'existing_id': existing.get('notification_id')}
+            
+            # Insert new notification
             await self.db.user_notifications.insert_one({
                 'user_id': user_id,
                 'notification_id': notification['notification_id'],
@@ -214,7 +486,9 @@ class NotificationService:
                 'action': notification.get('action'),
                 'data': notification.get('data'),
                 'read': False,
-                'created_at': datetime.utcnow()
+                'created_at': datetime.utcnow(),
+                'idempotency_key': idempotency_key,
+                'coalesce_count': 1
             })
         
         # Send via WebSocket if user is online
@@ -444,6 +718,70 @@ class NotificationService:
         ).limit(limit)
         
         return await cursor.to_list(length=limit)
+    
+    async def cleanup_old_notifications(
+        self,
+        user_id: str,
+        max_per_user: int = 100
+    ) -> int:
+        """
+        Retention cleanup: Keep only the last N notifications per user.
+        Run periodically to prevent notification bloat.
+        
+        Returns: Number of notifications deleted
+        """
+        if self.db is None:
+            return 0
+        
+        # Get count of user's notifications
+        total_count = await self.db.user_notifications.count_documents({'user_id': user_id})
+        
+        if total_count <= max_per_user:
+            return 0
+        
+        # Find oldest notifications to delete
+        to_delete = total_count - max_per_user
+        
+        oldest = await self.db.user_notifications.find(
+            {'user_id': user_id},
+            {'_id': 1}
+        ).sort('created_at', 1).limit(to_delete).to_list(to_delete)
+        
+        if not oldest:
+            return 0
+        
+        ids_to_delete = [doc['_id'] for doc in oldest]
+        
+        result = await self.db.user_notifications.delete_many({
+            '_id': {'$in': ids_to_delete}
+        })
+        
+        logger.info(f"🧹 Cleaned {result.deleted_count} old notifications for user {user_id}")
+        return result.deleted_count
+    
+    async def record_notification_action(
+        self,
+        user_id: str,
+        notification_id: str,
+        notification_type: str,
+        action: str
+    ) -> bool:
+        """
+        Record user's response to a notification (for backoff policy).
+        Actions: 'dismiss', 'snooze', 'click', 'complete'
+        """
+        if self.db is None:
+            return False
+        
+        await self.db.notification_actions.insert_one({
+            'user_id': user_id,
+            'notification_id': notification_id,
+            'notification_type': notification_type,
+            'action': action,
+            'timestamp': datetime.utcnow()
+        })
+        
+        return True
     
     async def mark_as_read(
         self,

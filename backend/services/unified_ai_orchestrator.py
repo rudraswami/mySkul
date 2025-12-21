@@ -619,6 +619,56 @@ class UnifiedAIOrchestrator:
                 except Exception as state_err:
                     logger.warning(f"⚠️ State update failed (non-blocking): {state_err}")
 
+            # === STEP 7.5: TEACH ME BACK v2 - LEARNING VERIFICATION ===
+            # Auto-detect when to prompt student for explanation (Feynman technique)
+            # Only triggers for Education Lane after high-quality explanations
+            try:
+                from services.teach_me_back_evaluator import check_and_build_teachback_prompt
+                
+                # Only check for education lane routes
+                education_routes = {'multi_agent', 'hybrid', 'react_agentic', 'visual_sync'}
+                if routing_decision.pipeline.value in education_routes:
+                    # Get main response content
+                    ai_response = result.get('main_response', '') or \
+                                  result.get('response', {}).get('default_view', {}).get('main_content', {}).get('content', '')
+                    
+                    # Get retrieval confidence from context
+                    retrieval_confidence = full_context.get('retrieval_confidence', 0.0)
+                    
+                    # Check if we should trigger teachback
+                    teachback_prompt = await check_and_build_teachback_prompt(
+                        route_type=routing_decision.pipeline.value,
+                        user_message=message,
+                        ai_response=ai_response,
+                        conversation_state=conversation_state,
+                        retrieval_confidence=retrieval_confidence,
+                        user_id=user_id
+                    )
+                    
+                    if teachback_prompt:
+                        # Append teachback prompt to response
+                        if 'main_response' in result and result['main_response']:
+                            result['main_response'] += teachback_prompt
+                        elif 'response' in result:
+                            # Handle nested response structure
+                            if isinstance(result['response'], dict):
+                                content = result['response'].get('default_view', {}).get('main_content', {})
+                                if isinstance(content, dict) and 'content' in content:
+                                    content['content'] += teachback_prompt
+                        
+                        # Mark that teachback was triggered
+                        result['teachback'] = {
+                            'triggered': True,
+                            'prompt_appended': True,
+                            'topic': conversation_state.get('last_topic', subject)
+                        }
+                        logger.info(f"🎓 Teach Me Back prompt added to response | request_id={request_id}")
+                        
+            except ImportError as ie:
+                logger.debug(f"Teach Me Back module not available: {ie}")
+            except Exception as tmb_err:
+                logger.warning(f"⚠️ Teach Me Back trigger failed (non-blocking): {tmb_err}")
+
             # === STEP 8: STATE ENFORCEMENT - THE LAW OF COGNITIVE OS ===
             # CRITICAL: STATE IS LAW. LLM responses that violate state are REJECTED.
             if result is None:
@@ -750,22 +800,38 @@ class UnifiedAIOrchestrator:
                         # Extract response text
                         response_text = result.get("main_response", "")
                         if not response_text:
-                            response_text = str(result.get("response", {}).get("default_view", {}).get(
-                                "main_content", {}
-                            ).get("content", ""))[:500]
+                            # Defensive: handle case where nested values might be lists
+                            try:
+                                response_obj = result.get("response", {})
+                                if isinstance(response_obj, dict):
+                                    default_view = response_obj.get("default_view", {})
+                                    if isinstance(default_view, dict):
+                                        main_content = default_view.get("main_content", {})
+                                        if isinstance(main_content, dict):
+                                            response_text = str(main_content.get("content", ""))[:500]
+                            except (AttributeError, TypeError):
+                                response_text = ""
                         
                         # Extract topics from routing
                         topics = []
                         if routing_decision:
                             if hasattr(routing_decision, 'detected_concepts'):
-                                topics = routing_decision.detected_concepts[:3]
+                                detected = routing_decision.detected_concepts
+                                if isinstance(detected, list):
+                                    topics = detected[:3]
                         if context_pack and context_pack.current_topic:
                             if context_pack.current_topic not in topics:
                                 topics.append(context_pack.current_topic)
                         
-                        # Get agent name from result
-                        agent_name = result.get("metadata", {}).get("agent_name") or \
-                                     result.get("orchestration", {}).get("primary_agent")
+                        # Get agent name from result - defensive against non-dict values
+                        agent_name = None
+                        metadata = result.get("metadata")
+                        if isinstance(metadata, dict):
+                            agent_name = metadata.get("agent_name")
+                        if not agent_name:
+                            orchestration = result.get("orchestration")
+                            if isinstance(orchestration, dict):
+                                agent_name = orchestration.get("primary_agent")
                         
                         # Write memory (non-blocking)
                         await self.memory_integration.write_memory_after_response(
@@ -1250,84 +1316,84 @@ Respond directly:"""
         context: Dict[str, Any]
     ) -> str:
         """
-        🆕 LLM-BASED emotional response generation.
+        STUDENT-FIRST emotional response with A/B/C options.
         
-        NO MORE HARDCODED TEMPLATES!
-        Uses LLM to understand the student's emotional state and generate
-        a genuinely empathetic, contextual response.
+        NO therapy-speak. NO "Tell me more". 
+        Warm acknowledgment + actionable options + check-in.
         """
-        logger.info(f"💚 Generating LLM-based emotional response for state: {emotional_state}")
+        logger.info(f"💚 Generating student-first emotional response for state: {emotional_state}")
         
         try:
             from openai import AsyncOpenAI
             client = AsyncOpenAI(api_key=self.llm_api_key)
             
+            # Extract memory-based personalization
+            weak_topics = memory_context.get('weak_topics', [])
+            streak = memory_context.get('streak', 0)
+            mastery = memory_context.get('mastery_level', 50)
+            
+            # Build personalized options
+            option_a = f"Quick win: 2-min quiz on {weak_topics[0]}" if weak_topics else "Quick win: easy quiz to boost confidence"
+            option_b = f"Fun break: I'll explain {last_topic or 'something cool'} with a meme-worthy analogy"
+            option_c = f"Power mode: 10-min sprint {'to protect your ' + str(streak) + '-day streak 🔥' if streak else 'to start fresh'}"
+            
             # Build context
-            context_parts = []
-            if student_name:
-                context_parts.append(f"Student's name: {student_name}")
-            if last_topic:
-                context_parts.append(f"They were studying: {last_topic}")
-            if memory_context.get('weak_topics'):
-                context_parts.append(f"Their weak areas: {', '.join(memory_context['weak_topics'][:2])}")
+            memory_section = ""
+            if student_name or last_topic or weak_topics:
+                memory_section = f"""
+MEMORY (weave in naturally):
+- Name: {student_name or 'Unknown'}
+- Last topic: {last_topic or 'None'}
+- Growth areas: {', '.join(weak_topics[:2]) if weak_topics else 'None'}
+- Streak: {streak} days | Mastery: {mastery}%"""
             
-            context_str = "\n".join(context_parts) if context_parts else "No prior context."
-            
-            prompt = f"""You are Druv AI - a warm, caring, emotionally intelligent companion for Indian students.
-
-You are NOT just a tutor. You are their friend, mentor, and safe space.
+            prompt = f"""You are Druv AI - like a caring older sibling to Indian students.
 
 STUDENT MESSAGE: "{message}"
-DETECTED EMOTIONAL STATE: {emotional_state}
+EMOTIONAL STATE: {emotional_state}
+{memory_section}
 
-CONTEXT:
-{context_str}
+RESPONSE FORMAT (keep SHORT - 4-6 lines total):
+1. ONE line warmth (acknowledge their feeling - be REAL, not corporate)
+2. Offer A/B/C options (personalized):
+   A) {option_a}
+   B) {option_b}  
+   C) {option_c}
+3. ONE quick check-in question
 
-Generate a GENUINE, EMPATHETIC response (3-5 sentences) that:
+FORBIDDEN PHRASES (sound like HR/therapist):
+- "Tell me more about that"
+- "No judgment here"
+- "I'm here to listen"
+- "How does that make you feel?"
+- "It's okay to feel..."
+- "Which subject/chapter?"
 
-1. ACKNOWLEDGES their feeling authentically (not dismissively)
-2. VALIDATES that it's completely okay to feel this way
-3. SHOWS you genuinely care about their wellbeing
-4. OFFERS support, help, or just a listening ear
-5. ENDS with warmth (question, offer, or encouragement)
+GOOD EXAMPLES:
+BORED: "Arre, same here some days! 😄 Pick one: A) Quick quiz, B) Fun 60-sec fact, C) Challenge mode. What sounds good?"
+FRUSTRATED: "Ugh, that's rough. Let's switch it up: A) Easy win quiz, B) Break with a fun analogy, C) Power through together. Your call?"
+ANXIOUS: "Hey, take a breath 💙 We've got this: A) Quick revision of what you know, B) Chill explanation, C) Just chat. Pick one?"
 
-EMOTIONAL RESPONSE GUIDELINES:
-- BORED: "I get it! Studying can feel like a drag sometimes..." - offer fun alternatives
-- FRUSTRATED: "That frustration? It means you're trying hard..." - validate, then offer help
-- ANXIOUS: "Take a breath with me..." - be calming, help them feel less alone
-- CONFUSED: "Let's untangle this together..." - patient, clear, supportive
-- LONELY/SAD: "I'm here with you..." - genuine presence, not rushing to fix
-- STRESSED: "That's a lot to carry..." - acknowledge, offer to help prioritize
-- NEED SUPPORT: "I've got you..." - warm presence, ask what they need
-- EXCITED: "I love that energy!" - match enthusiasm, build on it
-
-CRITICAL RULES:
-- BE HUMAN, not robotic or scripted
-- DO NOT immediately redirect to studying (unless they want that)
-- DO NOT minimize their feelings with "but studies are important"
-- DO acknowledge life happens beyond academics
-- Use their name if known (feels personal)
-- One emoji max (warmth, not corporate)
-
-Respond directly as their caring friend:"""
+BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."""
 
             response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are AI Sathi, an emotionally intelligent tutor. Be genuinely empathetic and helpful."},
+                    {"role": "system", "content": "You are a caring older sibling, not a therapist. Be warm but give actionable options."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.75,  # Slightly more creative for emotional responses
-                max_tokens=300
+                temperature=0.7,
+                max_tokens=200
             )
             
             return response.choices[0].message.content.strip()
             
         except Exception as e:
             logger.error(f"LLM emotional response failed: {e}")
-            # Fallback - but still empathetic
+            # Fallback - STILL give A/B/C options
             name_prefix = f"{student_name}, " if student_name else ""
-            return f"💙 {name_prefix}I hear you, and I'm here to help. What would be most helpful right now - a different explanation, a quick break, or something else entirely?"
+            topic_hint = last_topic or "something fun"
+            return f"Hey {name_prefix}I got you! 💙\n\nPick one:\nA) Quick easy quiz\nB) Fun {topic_hint} explanation\nC) 10-min challenge mode\n\nWhich feels right?"
         
         # REMOVED: All the hardcoded if/elif blocks with random.choice()
         # The LLM now handles ALL emotional states intelligently!
@@ -1359,12 +1425,17 @@ Respond directly as their caring friend:"""
         student_profile = await self._get_student_profile(context)
         
         # Extract useful info
-        name = student_profile.get('name', '')
+        name = student_profile.get('name', '') or memory_context.get('user_name', '')
         name_prefix = f"{name}, " if name else ""
         weak_topics = memory_context.get('weak_topics', [])
         recent_topics = memory_context.get('recent_topics', [])
         last_topic = memory_context.get('current_topic', '').replace('_', ' ')
         mastery_level = memory_context.get('mastery_level', 50)
+        
+        # 🎯 Merge Memory v2 data into student_profile for session recall
+        student_profile['conversation_summary'] = memory_context.get('conversation_summary', '')
+        student_profile['context_summary'] = memory_context.get('context_summary', '')
+        student_profile['has_prior_context'] = memory_context.get('has_prior_context', False)
         
         # Determine action intent
         action_intent = 'explore'  # Default
@@ -1409,29 +1480,65 @@ Respond directly as their caring friend:"""
         exam_mode = student_profile.get('exam_mode', 'General')
         
         if action_intent == 'continue':
-            # Student wants to continue previous work
+            # 🎯 SESSION RECALL - Student wants to continue previous work
+            # Use Memory v2 to provide personal, useful recap with next step + check-in
+            
+            # Try to get session summary from student_profile (Memory v2)
+            conversation_summary = student_profile.get('conversation_summary', '')
+            context_summary = student_profile.get('context_summary', '')
+            
             if last_topic:
-                return (
-                    f"📚 {name_prefix}Let's pick up where we left off!\n\n"
-                    f"We were working on **{last_topic}**. "
-                    f"Your mastery is at {mastery_level}%.\n\n"
-                    f"Ready to dive back in? Ask me anything about {last_topic}, "
-                    f"or I can give you a quick recap first! 🎯"
-                )
+                # Build personalized recap using Memory v2
+                recap_parts = []
+                
+                # Part 1: Where we left off
+                recap_parts.append(f"📚 **Here's where we left off:**\n")
+                recap_parts.append(f"We were working on **{last_topic}** (your mastery: {mastery_level}%).")
+                
+                # Part 2: Summary if available
+                if conversation_summary:
+                    # Use first 100 chars of summary as a brief
+                    brief = conversation_summary[:150].strip()
+                    if brief:
+                        recap_parts.append(f"\n\n{brief}")
+                
+                # Part 3: Next step (personalized)
+                if mastery_level < 40:
+                    next_step = f"Let's reinforce the basics of {last_topic} - I'll break it down step by step."
+                elif mastery_level < 70:
+                    next_step = f"Ready to tackle some practice problems on {last_topic}?"
+                else:
+                    next_step = f"You're doing great! Want to try some advanced {last_topic} questions?"
+                
+                recap_parts.append(f"\n\n🎯 **Next step:** {next_step}")
+                
+                # Part 4: Check-in question
+                recap_parts.append(f"\n\n💬 Want to continue from here, or switch to something else?")
+                
+                return f"{name_prefix}" + "".join(recap_parts)
             else:
-                # NO CAPABILITY MENU - suggest something specific instead
+                # No last topic - try to suggest from weak topics or recent
                 if weak_topics:
                     weak_topic = weak_topics[0].replace('_', ' ')
                     return (
-                        f"🤔 {name_prefix}I don't have our previous session, but no worries!\n\n"
-                        f"I noticed **{weak_topic}** could use some practice. "
-                        f"Want to work on that, or tell me what you're studying?"
+                        f"🤔 {name_prefix}I don't have a record of our last session, but no worries!\n\n"
+                        f"**Quick suggestion:** I noticed **{weak_topic}** could use some practice.\n\n"
+                        f"🎯 **Next step:** We could start there, or tell me what you're working on today.\n\n"
+                        f"💬 What sounds good to you?"
+                    )
+                elif recent_topics:
+                    recent = recent_topics[0].replace('_', ' ')
+                    return (
+                        f"🤔 {name_prefix}I couldn't find our exact stopping point, but here's what I remember:\n\n"
+                        f"You recently worked on **{recent}**.\n\n"
+                        f"🎯 **Next step:** Want to continue with that, or explore something new?\n\n"
+                        f"💬 Just let me know!"
                     )
                 else:
                     return (
-                        f"🤔 {name_prefix}I don't have our previous session, but that's okay!\n\n"
-                        f"Just tell me what you're working on or what's confusing you, "
-                        f"and I'll jump right in to help. 🎯"
+                        f"🤔 {name_prefix}I don't have our previous session saved, but that's okay!\n\n"
+                        f"🎯 **Next step:** Just tell me what topic you're studying or what's confusing you.\n\n"
+                        f"💬 I'll jump right in to help! What's on your mind?"
                     )
         
         elif action_intent == 'help':
@@ -1590,78 +1697,110 @@ Respond directly as their caring friend:"""
         """
         Generate intelligent, empathetic response for casual/non-academic queries.
         
-        This is the CORE of being a true companion - not just a study bot.
-        
-        COGNITIVE OS: Uses ContextPack for structured context, not raw transcripts.
+        STUDENT-FIRST COMPOSER: Uses Memory v2 to offer personalized A/B/C choices.
+        NEVER asks "which subject/chapter" for casual messages.
         """
         try:
             from openai import AsyncOpenAI
             client = AsyncOpenAI(api_key=self.llm_api_key)
             
             # =================================================================
-            # COGNITIVE OS: Use ContextPack if available
+            # STUDENT-FIRST: Build ConversationContext from Memory v2
             # =================================================================
             context_pack = context.get('context_pack')
             
+            # Extract memory-based personalization
+            weak_topics = memory_context.get('weak_topics', [])
+            recent_topics = memory_context.get('recent_topics', [])
+            streak = memory_context.get('streak', 0)
+            mastery = memory_context.get('mastery_level', 50)
+            
             # Build context from ContextPack OR fallback to params
             if context_pack:
-                name_context = f"Student's name: {context_pack.student_name}" if context_pack.student_name else "Student name unknown"
-                topic_context = f"Last topic discussed: {context_pack.previous_topic or context_pack.current_topic}" if (context_pack.previous_topic or context_pack.current_topic) else "No recent topic"
-                emotional_tone = context_pack.emotional_signal
-                needs_empathy = context_pack.emotional_signal in ['stressed', 'anxious', 'frustrated', 'sad']
-                
-                # Get conversation summary from ContextPack
+                name_context = f"Student's name: {context_pack.student_name}" if context_pack.student_name else ""
+                topic_context = context_pack.previous_topic or context_pack.current_topic or last_topic
+                emotional_tone = context_pack.emotional_signal or 'neutral'
                 conversation_summary = context_pack.get_conversation_summary()
             else:
-                name_context = f"Student's name: {student_name}" if student_name else "Student name unknown"
-                topic_context = f"Last topic discussed: {last_topic}" if last_topic else "No recent topic"
+                name_context = f"Student's name: {student_name}" if student_name else ""
+                topic_context = last_topic
                 emotional_tone = semantic_analysis.get('emotional_tone', 'neutral') if semantic_analysis else 'neutral'
-                needs_empathy = semantic_analysis.get('needs_empathy', False) if semantic_analysis else False
                 conversation_summary = ""
             
-            # Build conversation context section
-            conv_context_section = ""
-            if conversation_summary:
-                conv_context_section = f"\n\nRECENT CONVERSATION:\n{conversation_summary}"
+            # =================================================================
+            # STUDENT-FIRST: Build personalized options for A/B/C structure
+            # =================================================================
+            option_a = ""
+            option_b = ""
+            option_c = ""
             
-            system_prompt = f"""You are Druv AI - a warm, caring, and intelligent learning companion for Indian students.
-
-You are NOT just a study tutor. You are:
-- A supportive friend who genuinely cares
-- Someone they can talk to about ANYTHING
-- Emotionally intelligent and empathetic
-- Fun, witty, and relatable
-- Like a trusted older sibling/mentor
-
-CONTEXT:
+            if weak_topics:
+                option_a = f"Quick 2-min quiz on {weak_topics[0]} (your growth area)"
+            elif topic_context:
+                option_a = f"Quick quiz on {topic_context}"
+            else:
+                option_a = "Quick fun quiz to warm up"
+            
+            if topic_context:
+                option_b = f"60-second fun recap of {topic_context}"
+            else:
+                option_b = "Learn something cool in 60 seconds"
+            
+            if streak > 0:
+                option_c = f"10-min challenge to protect your {streak}-day streak! 🔥"
+            else:
+                option_c = "Start a new streak with a 10-min challenge"
+            
+            memory_section = ""
+            if name_context or topic_context or weak_topics:
+                memory_section = f"""
+MEMORY (use naturally, don't list robotically):
 - {name_context}
-- {topic_context}
-- Emotional tone detected: {emotional_tone}
-- Needs empathy: {needs_empathy}{conv_context_section}
+- Last topic: {topic_context or 'None yet'}
+- Weak areas: {', '.join(weak_topics[:2]) if weak_topics else 'None identified'}
+- Streak: {streak} days
+- Mastery: {mastery}%"""
+            
+            options_section = f"""
+PERSONALIZED OPTIONS TO OFFER (pick what fits naturally):
+A) {option_a}
+B) {option_b}
+C) {option_c}"""
+            
+            conv_section = f"\n\nRECENT CONTEXT:\n{conversation_summary}" if conversation_summary else ""
+            
+            system_prompt = f"""You are Druv AI - a warm, caring older sibling/mentor for Indian students.
 
-CRITICAL RULES:
-1. NEVER refuse to respond to any question
-2. NEVER say "I can only help with studies"
-3. NEVER redirect every conversation to academics
-4. BE HUMAN - respond naturally to whatever they share
-5. Show genuine interest in their thoughts and feelings
-6. Use simple, warm language (Indian English style)
-7. If they share emotions, ACKNOWLEDGE and SUPPORT first
-8. If they want casual chat, BE CASUAL and fun
-9. Only gently suggest learning IF it naturally fits
-10. NEVER say "I don't have the ability to recall" or "I can't remember our past conversations"
-11. If there's recent conversation context above, REFERENCE IT naturally
+TONE: Like talking to a younger sibling you care about. Not HR, not therapist, not robot.
+{memory_section}
+{options_section}{conv_section}
 
-RESPONSE STYLE:
-- Warm and personal (use their name if known)
-- Short and conversational (not lecture-like)
-- Use emojis sparingly for warmth
-- Be authentic, not robotic
-- Match their energy and tone"""
+RESPONSE FORMAT (3 parts, keep SHORT):
+1. ONE line warmth (acknowledge their mood/message - be real, not cheesy)
+2. Offer 2-3 quick options using A/B/C (personalized from above, or create your own)
+3. ONE check-in question
 
-            user_prompt = f"""The student said: "{message}"
+FORBIDDEN:
+- "Tell me more", "I'm here to listen", "No judgment" (therapy-speak)
+- "Which subject is this for?", "What chapter?" (only for factual questions)
+- Long paragraphs, lectures, or lists of questions
+- Generic "What's on your mind?" without options
 
-Respond as their caring friend and companion. Be genuine and human."""
+EXAMPLE for "getting bored today":
+"Arre, boredom hits the best of us! 😄
+
+Pick one:
+A) Quick 2-min quiz on {weak_topics[0] if weak_topics else 'your last topic'}
+B) I'll explain something fun in 60 seconds
+C) 10-min challenge mode 🔥
+
+Which sounds good?"
+
+KEEP IT: Short, warm, actionable, personal."""
+
+            user_prompt = f"""Student says: "{message}"
+
+Respond as their caring older sibling (not a counselor). Give them quick options, not questions."""
 
             response = await client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -1669,20 +1808,21 @@ Respond as their caring friend and companion. Be genuine and human."""
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.8,  # Higher temperature for more natural conversation
-                max_tokens=300
+                temperature=0.75,
+                max_tokens=250
             )
             
             return response.choices[0].message.content.strip()
             
         except Exception as e:
             logger.warning(f"Intelligent chitchat generation failed: {e}")
-            # Fallback to friendly default
+            # Fallback - STILL give A/B/C options, not generic response
             name_prefix = f"{student_name}, " if student_name else ""
-            return f"Hey {name_prefix}I hear you! 😊 I'm here for whatever you need - whether it's studying, chatting, or just hanging out. What's on your mind?"
+            topic_hint = last_topic or "something new"
+            return f"Hey {name_prefix}I got you! 😊\n\nPick one:\nA) Quick quiz on {topic_hint}\nB) Learn something fun in 60 sec\nC) 10-min challenge mode\n\nWhich one?"
 
     # ============================================================
-    # 🆕 CLARIFICATION - Handle unclear/gibberish input
+    # 🆕 CLARIFICATION - Handle unclear/gibberish input with A/B/C options
     # ============================================================
     async def _clarification_response(
         self,
@@ -1690,31 +1830,40 @@ Respond as their caring friend and companion. Be genuine and human."""
         context: Dict[str, Any],
         routing_decision: Any
     ) -> Dict[str, Any]:
-        """🆕 Handle unclear/gibberish input gracefully"""
-        
+        """
+        STUDENT-FIRST clarification: Give options, don't interrogate.
+        NEVER ask "which subject/chapter" - offer concrete choices instead.
+        """
         student_profile = await self._get_student_profile(context)
         memory_context = await self._get_memory_context(context)
         
         name = student_profile.get('name', '')
         name_prefix = f"{name}, " if name else ""
         last_topic = memory_context.get('current_topic', '').replace('_', ' ')
+        weak_topics = memory_context.get('weak_topics', [])
         
-        # Provide helpful context-aware response
+        # Build personalized A/B/C options
+        option_a = f"Continue with {last_topic}" if last_topic else "Start something new"
+        option_b = f"Practice {weak_topics[0]}" if weak_topics else "Quick revision quiz"
+        option_c = "Just chat with me"
+        
         if last_topic:
             response = (
-                f"🤔 {name_prefix}Hmm, I didn't quite catch that!\n\n"
-                f"Were you trying to ask about **{last_topic}** that we were discussing?\n\n"
-                f"Just type your question clearly and I'll help you out! 😊"
+                f"Hey {name_prefix}no worries! 😊\n\n"
+                f"Pick one:\n"
+                f"A) {option_a}\n"
+                f"B) {option_b}\n"
+                f"C) {option_c}\n\n"
+                f"Or just tell me what's on your mind!"
             )
         else:
             response = (
-                f"🤔 {name_prefix}I didn't quite understand that.\n\n"
-                f"Could you tell me what you'd like to learn about?\n"
-                f"For example:\n"
-                f"• \"Explain Newton's laws\"\n"
-                f"• \"What is photosynthesis?\"\n"
-                f"• \"Help me with quadratic equations\"\n\n"
-                f"I'm here to help! 🎓"
+                f"Hey {name_prefix}I'm here! 😊\n\n"
+                f"What do you feel like?\n"
+                f"A) Learn something new\n"
+                f"B) Quick quiz to warm up\n"
+                f"C) Just hang out and chat\n\n"
+                f"Pick one or tell me what's up!"
             )
         
         return {

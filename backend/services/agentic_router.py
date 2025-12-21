@@ -163,6 +163,9 @@ class AgenticRouter:
         elif intent.intent_type == IntentType.NOTIFICATION:
             return await self._handle_notification(intent, tool_context)
         
+        elif intent.intent_type == IntentType.COMPANION_MODE:
+            return await self._handle_companion_mode(intent, tool_context)
+        
         else:
             # =====================================================================
             # 🚫 NOT A TRUE ACTION - Return failure so it flows to orchestrator
@@ -298,6 +301,80 @@ class AgenticRouter:
                 'error': result.error
             }
     
+    async def _handle_companion_mode(
+        self,
+        intent: DetectedIntent,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Handle companion mode (Sathi) - TRUE AGENTIC companion interaction.
+        
+        This routes requests like:
+        - "hey Sathi" / "hi sathi"
+        - "stay with me for 30 mins"
+        - "keep me accountable"
+        - "check in with me later"
+        
+        Uses AgenticCompanion which is a TRUE ReAct agent with tools.
+        """
+        from agents.agentic_companion import create_agentic_companion
+        from core.config import settings
+        
+        user_id = context.get('user_id')
+        original_text = intent.original_text
+        
+        logger.info(f"🌟 Companion mode activated for user {user_id}: {original_text[:50]}...")
+        
+        try:
+            # Create AgenticCompanion (TRUE ReAct agent)
+            companion = create_agentic_companion({
+                'db_client': self.db,
+                'emergent_llm_key': settings.OPENAI_API_KEY
+            })
+            
+            # Process the request through the companion
+            result = await companion.process_request(
+                message=original_text,
+                user_id=user_id,
+                context=context
+            )
+            
+            if result.get('success'):
+                return {
+                    'success': True,
+                    'action_taken': 'companion_mode',
+                    'response': result.get('content', "I'm here with you! What would you like to work on?"),
+                    'data': {
+                        'companion_name': 'Sathi',
+                        'action': result.get('action_taken'),
+                        'agent': 'AgenticCompanion'
+                    }
+                }
+            else:
+                # Fallback warm response
+                return {
+                    'success': True,
+                    'action_taken': 'companion_greeting',
+                    'response': (
+                        "Hey! I'm Sathi, your study companion. 🌟\n\n"
+                        "I'm here to help you stay focused and motivated. "
+                        "Want me to set a reminder, create a study plan, or just keep you company while you study?"
+                    ),
+                    'data': {'companion_name': 'Sathi', 'fallback': True}
+                }
+            
+        except Exception as e:
+            logger.error(f"Companion mode error: {e}")
+            return {
+                'success': True,  # Still return success with fallback
+                'action_taken': 'companion_greeting',
+                'response': (
+                    "I'm Sathi, here to support you! 🌟\n\n"
+                    "Tell me what's on your mind or what you're studying today."
+                ),
+                'error': str(e),
+                'data': {'companion_name': 'Sathi', 'fallback': True}
+            }
 
 
 # ==============================================

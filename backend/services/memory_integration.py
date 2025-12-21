@@ -621,6 +621,10 @@ class MemoryIntegrationService:
         
         summary_parts = []
         for msg in messages[-5:]:  # Last 5 messages only
+            # Defensive: skip if msg is not a dict (bad data)
+            if not isinstance(msg, dict):
+                continue
+            
             user_msg = msg.get("user_message", "")
             ai_response = msg.get("ai_response", {})
             
@@ -628,9 +632,20 @@ class MemoryIntegrationService:
                 # Extract just the question
                 summary_parts.append(f"Student asked: {user_msg[:100]}")
                 
-                # Extract key points from AI response
+                # Extract key points from AI response - DEFENSIVE chained .get()
                 if isinstance(ai_response, dict):
-                    response_text = str(ai_response.get("response", {}).get("default_view", {}).get("main_content", {}).get("content", ""))
+                    response_text = ""
+                    try:
+                        resp_obj = ai_response.get("response", {})
+                        if isinstance(resp_obj, dict):
+                            default_view = resp_obj.get("default_view", {})
+                            if isinstance(default_view, dict):
+                                main_content = default_view.get("main_content", {})
+                                if isinstance(main_content, dict):
+                                    response_text = str(main_content.get("content", ""))
+                    except (AttributeError, TypeError):
+                        response_text = ""
+                    
                     if response_text:
                         # Get first 150 chars as summary
                         summary_parts.append(f"AI explained: {response_text[:150]}...")
@@ -733,6 +748,7 @@ class MemoryIntegrationService:
                 )
                 
                 # Compact the memories (only essential fields)
+                # Defensive: only process dict items
                 pack["relevant_memories"] = [
                     {
                         "content": m.get("content", "")[:200],  # Bounded
@@ -740,6 +756,7 @@ class MemoryIntegrationService:
                         "similarity": m.get("similarity_score", 0)
                     }
                     for m in relevant_memories[:5]
+                    if isinstance(m, dict)
                 ]
             
             # 5. Check if needs encouragement
@@ -835,6 +852,9 @@ class MemoryIntegrationService:
             
             # 2. Update session summary if enough turns accumulated
             session_state = await self.memory_service.get_session_state(user_id, session_id)
+            # Defensive: ensure session_state is a dict
+            if not isinstance(session_state, dict):
+                session_state = {}
             turns = session_state.get("last_turns", [])
             
             if len(turns) >= 3 and len(turns) % 3 == 0:  # Every 3 turns
@@ -893,12 +913,18 @@ class MemoryIntegrationService:
         questions = []
         
         for turn in turns[-5:]:  # Last 5 turns only
+            # Defensive: skip if turn is not a dict (bad data)
+            if not isinstance(turn, dict):
+                continue
+            
             user_msg = turn.get("user", "")
             if user_msg:
                 questions.append(user_msg[:80])
             
             turn_topics = turn.get("topics", [])
-            topics.update(turn_topics)
+            # Defensive: ensure turn_topics is iterable
+            if isinstance(turn_topics, list):
+                topics.update(turn_topics)
         
         # Build summary
         parts = []

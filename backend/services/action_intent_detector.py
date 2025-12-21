@@ -41,6 +41,7 @@ class IntentType(Enum):
     FEEDBACK = "feedback"            # Giving feedback
     GREETING = "greeting"            # Just saying hi
     ACTION = "action"                # Generic action request
+    COMPANION_MODE = "companion_mode"  # Wants Sathi companion (accountability, stay with me)
 
 
 @dataclass
@@ -119,6 +120,23 @@ class ActionIntentDetector:
         IntentType.NOTIFICATION: [
             r'send\s+(?:me\s+)?(?:a\s+)?notification\s+(?:when|at|about)',
             r'push\s+notification',
+        ],
+        # COMPANION MODE - Routes to Sathi for accountability/companionship
+        IntentType.COMPANION_MODE: [
+            r'hey\s+sathi',
+            r'hi\s+sathi',
+            r'sathi\b',  # Direct name mention
+            r'stay\s+with\s+me',
+            r'keep\s+me\s+(?:company|accountable)',
+            r'check\s+(?:in|on)\s+(?:me|with\s+me)',
+            r'(?:be\s+)?my\s+(?:study\s+)?(?:buddy|companion|partner)',
+            r'(?:need|want)\s+(?:a\s+)?(?:study\s+)?(?:buddy|companion|partner)',
+            r'(?:study|learn)\s+with\s+me',
+            r'accountability\s+(?:mode|partner|buddy)',
+            r'accompany\s+me',
+            r'(?:talk|chat)\s+(?:to|with)\s+me\s+(?:like\s+)?(?:a\s+)?(?:friend|companion)',
+            r'साथी',  # Hindi: Sathi
+            r'mere\s+saath\s+raho',  # Hinglish: stay with me
         ],
     }
     

@@ -987,6 +987,44 @@ class GuardrailsEngine:
             return envelope
         
         # === STEP 3: GROUNDING VERIFICATION (First Pass) ===
+        # 🎯 TRI-LANE RESPONSE ENGINE: Skip grounding for Conversation Lane
+        # 
+        # LANE A (Conversation): emotional, chitchat, proactive, fast, clarification
+        #   → These are dialogue/memory-based, NOT factual claims
+        #   → Bypass grounding entirely (but keep safety + exam integrity)
+        #
+        # LANE B (Education): multi_agent, hybrid, react_agentic, visual_sync
+        #   → These make factual claims that need grounding
+        #   → Full guardrails apply
+        #
+        # LANE C (Action): Handled by agentic router before reaching here
+        #
+        # This is ROUTE-DRIVEN, not keyword-driven.
+        
+        # Educational routes that REQUIRE grounding verification
+        FACTUAL_ROUTES = {
+            'multi_agent',     # Educational explanations
+            'hybrid',          # Hybrid reasoning (factual)
+            'react_agentic',   # ReAct with tools (factual)
+            'visual_sync',     # Visual explanations (factual)
+        }
+        
+        route_type_lower = envelope.route_type.lower() if envelope.route_type else ""
+        
+        # Only apply grounding to factual/educational routes
+        requires_grounding = route_type_lower in FACTUAL_ROUTES
+        
+        if not requires_grounding:
+            # CONVERSATION LANE: Pass through without grounding
+            logger.info(f"🎯 Conversation Lane: route='{envelope.route_type}' → bypass grounding")
+            envelope.guardrail_status = GuardrailStatus.PASS
+            envelope.guardrail_actions.append(GuardrailAction.NONE)
+            envelope.final_answer = envelope.draft_answer
+            self._log_guardrail_decision(envelope, "conversation_lane_pass")
+            return envelope
+        
+        # EDUCATION LANE: Apply grounding verification
+        logger.info(f"📚 Education Lane: route='{envelope.route_type}' → grounding check")
         envelope.claims_extracted = self.grounding_verifier.extract_claims(envelope.draft_answer)
         
         if envelope.claims_extracted:
@@ -1078,8 +1116,14 @@ class GuardrailsEngine:
         """
         Generate response when grounding is too low.
         
-        CRITICAL: Must NOT hallucinate. Ask clarify or teach basics.
-        NO factual claims without citations.
+        🎯 STUDENT-FIRST: Never leave student hanging with "KB not found".
+        Instead: Acknowledge → What we CAN help with → Clarifying question → Options
+        
+        CRITICAL: Must NOT hallucinate factual claims. But CAN:
+        - Acknowledge the question
+        - Offer to help in different ways
+        - Ask clarifying questions
+        - Suggest next steps
         """
         # Check what we can offer
         has_any_context = len(envelope.retrieval_contexts) > 0
@@ -1090,24 +1134,31 @@ class GuardrailsEngine:
             section_hint = f" about {', '.join(sections)}" if sections else ""
             
             return (
-                f"I found some information{section_hint}, but I want to make sure "
-                "I give you a complete and accurate answer. 🎯\n\n"
-                "**To help you better, could you tell me:**\n"
-                "- What specific aspect are you most interested in?\n"
-                "- Is this for a particular exam or chapter?\n\n"
-                "This way I can give you the most relevant explanation!"
+                f"Great question! I found some information{section_hint}. 🎯\n\n"
+                "To give you the best explanation, I'd love to know:\n"
+                "- What specific aspect interests you most?\n"
+                "- Is this for exam prep or concept understanding?\n\n"
+                "**Quick options:**\n"
+                "• Tell me more details → I'll explain step-by-step\n"
+                "• \"Give me an example\" → I'll show you how it works\n"
+                "• \"Quiz me\" → Let's test your understanding\n\n"
+                "What sounds good?"
             )
         else:
-            # No context at all - teach basics, don't invent
+            # No context at all - STILL help, just differently
+            # Extract topic hint from user message if possible
+            topic_hint = envelope.user_message[:50] if envelope.user_message else "this topic"
+            
             return (
-                "I want to make sure I give you accurate information! 🎯\n\n"
-                "I couldn't find specific content on this in my knowledge base. "
-                "Let me help differently:\n\n"
-                "**Could you:**\n"
-                "- Rephrase your question with more details?\n"
-                "- Tell me which subject/chapter this relates to?\n"
-                "- Share what you already know, and I'll build from there?\n\n"
-                "I'd rather help you correctly than give you uncertain information. 💙"
+                f"I'd love to help you with that! 🎯\n\n"
+                "Let me understand your question better:\n"
+                "- Which subject is this for (Physics, Chemistry, Bio, Math)?\n"
+                "- What do you already know about it?\n\n"
+                "**Here's how I can help:**\n"
+                "• Explain the concept from basics\n"
+                "• Walk through an example problem\n"
+                "• Create a quick visual explanation\n\n"
+                "Just tell me a bit more, and I'll jump right in! 💪"
             )
     
     def _revise_to_supported(self, envelope: ResponseEnvelope) -> str:

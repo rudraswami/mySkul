@@ -265,9 +265,69 @@ class IntelligentRoutingEngine:
         logger.info(f"🧠 Routing query: {query[:60]}...")
         
         # ============================================================
-        # STEP 0: CHECK CONVERSATION STATE (STATE > CLASSIFIER)
+        # STEP 0: DIALOGUE-ACT DETECTION (Message Characteristics + State)
         # ============================================================
+        # 🎯 TRI-LANE: Detect dialogue acts based on message structure,
+        # NOT keywords. This ensures short/continuation messages route
+        # to Conversation Lane, not Education Lane.
+        
         conversation_state = context.get('conversation_state', {})
+        dialogue_act = self._detect_dialogue_act(query, conversation_state)
+        
+        if dialogue_act:
+            logger.info(f"💬 Dialogue Act Detected: {dialogue_act['act']} → {dialogue_act['lane']}")
+            
+            if dialogue_act['lane'] == 'conversation':
+                # Route to appropriate conversation pipeline
+                if dialogue_act['act'] in ['ack', 'continue', 'short_response']:
+                    # Acknowledgment or continuation - use proactive guidance
+                    return RoutingDecision(
+                        pipeline=RecommendedPipeline.PROACTIVE_GUIDANCE,
+                        complexity=QueryComplexity.SIMPLE,
+                        confidence=0.9,
+                        reasoning=f"Dialogue act: {dialogue_act['act']} - continuing conversation",
+                        agents_to_activate=['mentor'],
+                        tools_to_enable=[],
+                        enable_verification=False,
+                        enable_visual=False,
+                        max_iterations=2,
+                        timeout_seconds=10.0,
+                        use_knowledge_graph=False,
+                        use_memory=True,
+                        priority_factors={'continuity': 1.0},
+                        enable_agent_negotiation=False,
+                        extra_context={
+                            'dialogue_act': dialogue_act['act'],
+                            'action_intent': 'continue',
+                            'is_continuation': True
+                        }
+                    )
+                elif dialogue_act['act'] == 'emotional':
+                    # Emotional signal - use emotional support
+                    return RoutingDecision(
+                        pipeline=RecommendedPipeline.EMOTIONAL_SUPPORT,
+                        complexity=QueryComplexity.SIMPLE,
+                        confidence=0.85,
+                        reasoning=f"Dialogue act: emotional signal detected",
+                        agents_to_activate=['motivation'],
+                        tools_to_enable=[],
+                        enable_verification=False,
+                        enable_visual=False,
+                        max_iterations=2,
+                        timeout_seconds=10.0,
+                        use_knowledge_graph=False,
+                        use_memory=True,
+                        priority_factors={'empathy': 1.0},
+                        enable_agent_negotiation=False,
+                        extra_context={
+                            'dialogue_act': 'emotional',
+                            'emotional_tone': dialogue_act.get('tone', 'neutral')
+                        }
+                    )
+        
+        # ============================================================
+        # STEP 1: CHECK CONVERSATION STATE (STATE > CLASSIFIER)
+        # ============================================================
         
         # Check if there's a pending action (user clarified)
         if conversation_state.get('pending_action'):
@@ -493,6 +553,114 @@ class IntelligentRoutingEngine:
         }
         
         return action_tools.get(action_type, [])
+    
+    def _detect_dialogue_act(
+        self,
+        query: str,
+        conversation_state: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        🎯 TRI-LANE: Lightweight dialogue-act detection based on message STRUCTURE.
+        
+        NOT keyword-based. Uses:
+        1. Message length (word count)
+        2. Punctuation patterns
+        3. Prior conversation state
+        4. Message structure (questions vs statements)
+        
+        Returns:
+            {
+                'act': 'ack' | 'continue' | 'emotional' | 'short_response' | None,
+                'lane': 'conversation' | 'education' | None,
+                'confidence': float,
+                'tone': str (for emotional)
+            }
+            or None if no dialogue act detected (proceed to classifier)
+        """
+        if not query:
+            return None
+        
+        query_stripped = query.strip()
+        words = query_stripped.split()
+        word_count = len(words)
+        
+        # Structural indicators
+        ends_with_question = query_stripped.endswith('?')
+        is_single_punctuation = len(query_stripped) <= 2 and not query_stripped.isalnum()
+        has_prior_context = bool(conversation_state.get('last_topic') or conversation_state.get('pending_action'))
+        last_turn_asked_question = conversation_state.get('ai_asked_question', False)
+        
+        # ================================================================
+        # RULE 1: Very short messages (1-3 words) with prior context
+        # These are likely acknowledgments or continuations, NOT new queries
+        # ================================================================
+        if word_count <= 3 and has_prior_context:
+            # Check if it's a response to AI's question
+            if last_turn_asked_question:
+                return {
+                    'act': 'ack',
+                    'lane': 'conversation',
+                    'confidence': 0.85,
+                    'reason': f'Short response ({word_count} words) to AI question'
+                }
+            else:
+                # Short message with context but no question - likely continuation
+                return {
+                    'act': 'short_response',
+                    'lane': 'conversation',
+                    'confidence': 0.75,
+                    'reason': f'Short message ({word_count} words) with prior context'
+                }
+        
+        # ================================================================
+        # RULE 2: Single word or very short (1-2 words) - always conversation
+        # "yes", "ok", "hmm", "sure", "no" etc.
+        # ================================================================
+        if word_count <= 2:
+            return {
+                'act': 'ack',
+                'lane': 'conversation',
+                'confidence': 0.9,
+                'reason': f'Ultra-short message ({word_count} words)'
+            }
+        
+        # ================================================================
+        # RULE 3: Emotional indicators (structural, not keyword)
+        # Messages with exclamations, emotional punctuation patterns
+        # ================================================================
+        exclamation_count = query_stripped.count('!')
+        has_ellipsis = '...' in query_stripped or '…' in query_stripped
+        has_emoji_pattern = any(ord(c) > 127 and ord(c) < 65536 for c in query_stripped)
+        
+        # Emotional messages often have: exclamations, ellipsis, short + feeling words
+        if exclamation_count >= 2 or (has_ellipsis and word_count <= 6):
+            return {
+                'act': 'emotional',
+                'lane': 'conversation',
+                'confidence': 0.7,
+                'tone': 'expressive',
+                'reason': 'Emotional punctuation pattern'
+            }
+        
+        # ================================================================
+        # RULE 4: Session recall patterns (structural)
+        # Questions about prior conversation (short + temporal reference)
+        # ================================================================
+        has_temporal_reference = any(w in query_stripped.lower() for w in ['last', 'before', 'earlier', 'previous', 'again'])
+        is_recall_length = word_count <= 8  # Session recall questions are usually short
+        
+        if has_temporal_reference and is_recall_length and ends_with_question:
+            return {
+                'act': 'continue',
+                'lane': 'conversation',
+                'confidence': 0.8,
+                'reason': 'Temporal reference + question pattern'
+            }
+        
+        # ================================================================
+        # No dialogue act detected - proceed to semantic classifier
+        # ================================================================
+        return None
     
     def _detect_clarification_or_switch(
         self,
