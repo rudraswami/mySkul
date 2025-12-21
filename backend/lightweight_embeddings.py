@@ -1,101 +1,188 @@
 """
-Lightweight embedding service using external APIs instead of heavy ML models.
-This replaces sentence-transformers, torch, and transformers dependencies.
+Lightweight embedding service using OpenAI API for production-grade embeddings.
+Falls back to hash-based vectors if API unavailable.
+
+PRODUCTION UPGRADE (Dec 2025):
+- Primary: OpenAI text-embedding-3-small (1536 dimensions)
+- Fallback: Hash-based embeddings (384 dimensions)
+- Batching: Up to 100 texts per API call
+- Caching: In-memory cache for repeated queries
 """
 import asyncio
 import hashlib
-import json
 import os
 import logging
 from typing import List, Dict, Any, Optional
-import httpx
-try:
-    from emergentintegrations import EmergentLLMIntegration
-    EMERGENT_AVAILABLE = True
-except ImportError:
-    EmergentLLMIntegration = None
-    EMERGENT_AVAILABLE = False
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
+# OpenAI embedding configuration
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"  # 1536 dimensions, cost-effective
+OPENAI_EMBEDDING_DIMENSIONS = 1536
+EMBEDDING_BATCH_SIZE = 100  # OpenAI limit
+FALLBACK_DIMENSIONS = 384
+
+
 class LightweightEmbeddingService:
     """
-    Lightweight embedding service using external APIs.
-    Falls back to simple text similarity if APIs are unavailable.
+    Production-grade embedding service using OpenAI API.
+    
+    Features:
+    - OpenAI text-embedding-3-small for high-quality embeddings
+    - Batching for efficiency
+    - In-memory caching for repeated queries
+    - Hash-based fallback when API unavailable
     """
     
     def __init__(self):
-        self.client = None
+        self._openai_client = None
+        self._openai_available = False
         self.initialized = False
-        
+        self.model_name = OPENAI_EMBEDDING_MODEL
+        self.dimensions = OPENAI_EMBEDDING_DIMENSIONS
+        self._cache: Dict[str, List[float]] = {}
+        self._stats = {
+            "api_calls": 0,
+            "cache_hits": 0,
+            "fallback_used": 0
+        }
+    
     async def initialize(self):
-        """Initialize the embedding service"""
+        """Initialize the embedding service with OpenAI client"""
         if self.initialized:
             return
-            
+        
         try:
-            # Try to use Emergent LLM integration for embeddings
-            if EMERGENT_AVAILABLE:
-                self.client = EmergentLLMIntegration()
-                self.initialized = True
-                logger.info("✅ Lightweight embedding service initialized with Emergent integration")
+            # Try to initialize OpenAI client
+            import openai
+            api_key = os.getenv("OPENAI_API_KEY")
+            
+            if api_key:
+                self._openai_client = openai.AsyncOpenAI(api_key=api_key)
+                self._openai_available = True
+                self.dimensions = OPENAI_EMBEDDING_DIMENSIONS
+                logger.info(f"✅ Embedding service initialized: OpenAI {OPENAI_EMBEDDING_MODEL} ({self.dimensions}D)")
             else:
-                logger.warning("Emergent integration not available. Using fallback similarity.")
-                self.client = None
-                self.initialized = True
+                logger.warning("⚠️ OPENAI_API_KEY not set. Using fallback embeddings.")
+                self._openai_available = False
+                self.dimensions = FALLBACK_DIMENSIONS
+                self.model_name = "hash_fallback"
+                
+        except ImportError:
+            logger.warning("⚠️ openai package not installed. Using fallback embeddings.")
+            self._openai_available = False
+            self.dimensions = FALLBACK_DIMENSIONS
+            self.model_name = "hash_fallback"
         except Exception as e:
-            logger.warning(f"Failed to initialize embedding service: {e}. Using fallback similarity.")
-            self.client = None
-            self.initialized = True
+            logger.warning(f"⚠️ OpenAI init failed: {e}. Using fallback embeddings.")
+            self._openai_available = False
+            self.dimensions = FALLBACK_DIMENSIONS
+            self.model_name = "hash_fallback"
+        
+        self.initialized = True
     
     async def create_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Create embeddings for a list of texts.
-        Falls back to simple hash-based vectors if API unavailable.
+        Create embeddings for a list of texts using OpenAI API.
+        
+        Args:
+            texts: List of texts to embed
+            
+        Returns:
+            List of embedding vectors
         """
         await self.initialize()
         
         if not texts:
             return []
         
-        try:
-            # Try using Emergent LLM integration for embeddings
-            if self.client:
-                embeddings = []
-                # Use simple fallback for now - can be enhanced later with proper API calls
-                embeddings = [self._create_simple_embedding(text) for text in texts]
-                logger.info(f"Created {len(embeddings)} embeddings using simple method")
-                
-                return embeddings
+        # Check cache first
+        results = []
+        uncached_indices = []
+        uncached_texts = []
+        
+        for i, text in enumerate(texts):
+            cache_key = self._get_cache_key(text)
+            if cache_key in self._cache:
+                results.append((i, self._cache[cache_key]))
+                self._stats["cache_hits"] += 1
             else:
-                # Fallback to simple embeddings
-                return [self._create_simple_embedding(text) for text in texts]
+                uncached_indices.append(i)
+                uncached_texts.append(text)
+        
+        # Embed uncached texts
+        if uncached_texts:
+            if self._openai_available:
+                new_embeddings = await self._create_openai_embeddings(uncached_texts)
+            else:
+                new_embeddings = [self._create_fallback_embedding(t) for t in uncached_texts]
+                self._stats["fallback_used"] += len(uncached_texts)
+            
+            # Cache and add to results
+            for idx, text, embedding in zip(uncached_indices, uncached_texts, new_embeddings):
+                cache_key = self._get_cache_key(text)
+                self._cache[cache_key] = embedding
+                results.append((idx, embedding))
+        
+        # Sort by original index and return embeddings only
+        results.sort(key=lambda x: x[0])
+        return [emb for _, emb in results]
+    
+    async def _create_openai_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """Create embeddings using OpenAI API with batching"""
+        all_embeddings = []
+        
+        # Process in batches
+        for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+            batch = texts[i:i + EMBEDDING_BATCH_SIZE]
+            
+            try:
+                response = await self._openai_client.embeddings.create(
+                    model=OPENAI_EMBEDDING_MODEL,
+                    input=batch
+                )
                 
-        except Exception as e:
-            logger.error(f"Embedding creation error: {e}")
-            # Fallback to simple embeddings
-            return [self._create_simple_embedding(text) for text in texts]
+                # Extract embeddings in order
+                batch_embeddings = [item.embedding for item in response.data]
+                all_embeddings.extend(batch_embeddings)
+                self._stats["api_calls"] += 1
+                
+                logger.debug(f"📊 OpenAI embeddings: batch {i//EMBEDDING_BATCH_SIZE + 1}, "
+                            f"{len(batch)} texts embedded")
+                
+            except Exception as e:
+                logger.error(f"❌ OpenAI embedding error: {e}")
+                # Fallback for failed batch
+                fallback_embeddings = [self._create_fallback_embedding(t) for t in batch]
+                all_embeddings.extend(fallback_embeddings)
+                self._stats["fallback_used"] += len(batch)
+        
+        return all_embeddings
     
     async def create_single_embedding(self, text: str) -> List[float]:
         """Create embedding for a single text"""
         embeddings = await self.create_embeddings([text])
-        return embeddings[0] if embeddings else self._create_simple_embedding(text)
+        return embeddings[0] if embeddings else self._create_fallback_embedding(text)
     
-    def _create_simple_embedding(self, text: str, dimension: int = 384) -> List[float]:
+    def _get_cache_key(self, text: str) -> str:
+        """Generate cache key for text"""
+        # Normalize and hash
+        normalized = text.lower().strip()[:500]  # Limit for cache key
+        return hashlib.md5(normalized.encode()).hexdigest()
+    
+    def _create_fallback_embedding(self, text: str) -> List[float]:
         """
-        Create a simple hash-based embedding as fallback.
-        This provides basic semantic similarity without heavy ML models.
+        Create hash-based embedding as fallback.
+        Dimensions match current model (OpenAI: 1536, Fallback: 384)
         """
-        # Normalize text
         text = text.lower().strip()
+        dim = self.dimensions
         
-        # Create multiple hash seeds for different dimensions
         embeddings = []
-        for i in range(dimension):
-            # Use different seeds to create varied hash values
+        for i in range(dim):
             seed_text = f"{text}_{i}"
             hash_value = hashlib.md5(seed_text.encode()).hexdigest()
-            # Convert hex to float between -1 and 1
             numeric_value = int(hash_value[:8], 16) / (16**8) * 2 - 1
             embeddings.append(numeric_value)
         
@@ -104,7 +191,10 @@ class LightweightEmbeddingService:
     def calculate_similarity(self, embedding1: List[float], embedding2: List[float]) -> float:
         """Calculate cosine similarity between two embeddings"""
         try:
-            # Simple cosine similarity calculation
+            if len(embedding1) != len(embedding2):
+                logger.warning(f"Embedding dimension mismatch: {len(embedding1)} vs {len(embedding2)}")
+                return 0.0
+            
             dot_product = sum(a * b for a, b in zip(embedding1, embedding2))
             norm1 = sum(a * a for a in embedding1) ** 0.5
             norm2 = sum(b * b for b in embedding2) ** 0.5
@@ -117,29 +207,35 @@ class LightweightEmbeddingService:
             logger.error(f"Similarity calculation error: {e}")
             return 0.0
     
-    def calculate_text_similarity(self, text1: str, text2: str) -> float:
-        """
-        Calculate simple text similarity without embeddings.
-        Useful for basic keyword matching.
-        """
-        # Simple keyword-based similarity
-        words1 = set(text1.lower().split())
-        words2 = set(text2.lower().split())
-        
-        if not words1 and not words2:
-            return 1.0
-        if not words1 or not words2:
-            return 0.0
-        
-        intersection = len(words1.intersection(words2))
-        union = len(words1.union(words2))
-        
-        return intersection / union if union > 0 else 0.0
+    def get_stats(self) -> Dict[str, Any]:
+        """Get embedding service statistics"""
+        return {
+            "model": self.model_name,
+            "dimensions": self.dimensions,
+            "openai_available": self._openai_available,
+            "cache_size": len(self._cache),
+            **self._stats
+        }
+    
+    def clear_cache(self):
+        """Clear embedding cache"""
+        self._cache.clear()
+        logger.info("🗑️ Embedding cache cleared")
+
 
 # Global instance
 embedding_service = LightweightEmbeddingService()
+
 
 async def get_embedding_service() -> LightweightEmbeddingService:
     """Get the global embedding service instance"""
     await embedding_service.initialize()
     return embedding_service
+
+
+def get_embedding_dimensions() -> int:
+    """Get current embedding dimensions (for index configuration)"""
+    if embedding_service.initialized:
+        return embedding_service.dimensions
+    # Default to OpenAI dimensions if not initialized
+    return OPENAI_EMBEDDING_DIMENSIONS

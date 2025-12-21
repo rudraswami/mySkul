@@ -137,8 +137,16 @@ class DynamicMentorPrompts:
         if any(w in query_lower for w in ['how to', 'steps', 'process', 'procedure']):
             return 'step_by_step'
         
-        # Exam focus
-        if any(w in query_lower for w in ['exam', 'test', 'important', 'marks']):
+        # Exam focus - COGNITIVE OS FIX: Stricter detection
+        # Only trigger exam_focused for explicit exam preparation queries
+        # "test" alone is too generic (could mean "test your understanding")
+        # "marks" alone is too generic (could mean "leave marks on paper")
+        exam_phrases = [
+            'jee', 'neet', 'upsc', 'gate', 'exam prep', 'exam tips', 
+            'exam strategy', 'exam important', 'for exam', 'in exam',
+            'exam weightage', 'exam pattern'
+        ]
+        if any(phrase in query_lower for phrase in exam_phrases):
             return 'exam_focused'
         
         # Why/explanation

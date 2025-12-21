@@ -606,6 +606,10 @@ class UnifiedAIOrchestrator:
                 # CRITICAL: Hub failure is logged but response still returns
                 logger.error(f"❌ Learning/Magic failed: {hub_err} | request_id={request_id}")
 
+            # === STEP 6.5: MEMORY v2 - DEFERRED TO STEP 9.5 (after guardrails) ===
+            # Memory write moved AFTER guardrails to ensure crisis content is NOT stored
+            # See STEP 9.5 below
+
             # === STEP 7: Update Conversation State ===
             if state_manager:
                 try:
@@ -655,6 +659,128 @@ class UnifiedAIOrchestrator:
                         logger.info(f"⚖️ Response regenerated to comply with state law")
                     else:
                         logger.debug(f"⚖️ Response is legal - state enforcement passed")
+            
+            # ================================================================
+            # STEP 8.5: SYMBOLIC VERIFICATION (Auto-enable when math/logic needed)
+            # ================================================================
+            # Detects if query requires symbolic verification and verifies math
+            try:
+                from services.symbolic_verification_layer import apply_symbolic_verification
+                
+                result = await apply_symbolic_verification(
+                    query=message,
+                    result=result,
+                    context=full_context
+                )
+                
+                # Log if symbolic verification was applied
+                if result.get("_symbolic", {}).get("hybrid_enabled"):
+                    symbolic_meta = result.get("_symbolic", {})
+                    logger.info(f"🧮 Symbolic: mode={symbolic_meta.get('hybrid_mode')} | "
+                               f"passed={symbolic_meta.get('verifier_passed')} | "
+                               f"reason={symbolic_meta.get('reason_for_enable')}")
+                
+            except ImportError as ie:
+                logger.debug(f"Symbolic verification layer not available: {ie}")
+            except Exception as sym_err:
+                logger.warning(f"⚠️ Symbolic verification failed (non-blocking): {sym_err}")
+            
+            # ================================================================
+            # STEP 9: GUARDRAILS v2 - CONTENT VALIDATION & SAFETY
+            # ================================================================
+            # Two-pass verification: DRAFT → VERIFY → FINAL
+            # Checks: Safety, Exam Integrity, Grounding, Citations
+            try:
+                from services.guardrails_v2 import (
+                    get_guardrails_engine,
+                    create_envelope_from_result,
+                    apply_envelope_to_result,
+                    GuardrailStatus
+                )
+                
+                guardrails = get_guardrails_engine()
+                
+                # Create envelope from current result
+                envelope = create_envelope_from_result(
+                    user_message=message,
+                    result=result,
+                    routing_decision=routing_decision,
+                    context=full_context
+                )
+                
+                # Process through guardrails (Safety, Exam Integrity, Grounding)
+                envelope = await guardrails.process(envelope, full_context)
+                
+                # Apply guardrail decisions back to result
+                result = apply_envelope_to_result(envelope, result)
+                
+                # Log guardrail summary
+                if envelope.guardrail_status != GuardrailStatus.PASS:
+                    logger.info(f"🛡️ Guardrails: {envelope.guardrail_status.value} | "
+                               f"actions={[a.value for a in envelope.guardrail_actions]} | "
+                               f"request_id={request_id}")
+                else:
+                    logger.debug(f"🛡️ Guardrails: PASS | citations={len(envelope.retrieval_contexts)} | "
+                                f"support_rate={envelope.claim_support_rate:.2f}")
+                
+            except ImportError as ie:
+                logger.warning(f"⚠️ Guardrails v2 not available: {ie}")
+                envelope = None  # Mark as unavailable
+            except Exception as guard_err:
+                logger.error(f"❌ Guardrails failed (non-blocking): {guard_err}")
+                envelope = None  # Mark as failed
+            
+            # ================================================================
+            # STEP 9.5: MEMORY v2 - PERSIST SESSION (AFTER GUARDRAILS)
+            # ================================================================
+            # Memory writes happen AFTER guardrails so we can:
+            # 1. Skip storing crisis/self-harm content verbatim
+            # 2. Log guardrail status with the memory event
+            try:
+                if self.memory_integration:
+                    # Check guardrail safety flags - DO NOT store crisis content verbatim
+                    should_skip_memory = False
+                    if envelope:
+                        risk_flags = getattr(envelope, 'risk_flags', {})
+                        if risk_flags.get('self_harm') or risk_flags.get('unsafe'):
+                            should_skip_memory = True
+                            logger.info(f"🛡️ Memory write SKIPPED: safety flag detected | request_id={request_id}")
+                    
+                    if not should_skip_memory:
+                        # Extract response text
+                        response_text = result.get("main_response", "")
+                        if not response_text:
+                            response_text = str(result.get("response", {}).get("default_view", {}).get(
+                                "main_content", {}
+                            ).get("content", ""))[:500]
+                        
+                        # Extract topics from routing
+                        topics = []
+                        if routing_decision:
+                            if hasattr(routing_decision, 'detected_concepts'):
+                                topics = routing_decision.detected_concepts[:3]
+                        if context_pack and context_pack.current_topic:
+                            if context_pack.current_topic not in topics:
+                                topics.append(context_pack.current_topic)
+                        
+                        # Get agent name from result
+                        agent_name = result.get("metadata", {}).get("agent_name") or \
+                                     result.get("orchestration", {}).get("primary_agent")
+                        
+                        # Write memory (non-blocking)
+                        await self.memory_integration.write_memory_after_response(
+                            user_id=user_id,
+                            session_id=session_id,
+                            user_message=message[:500],  # Bounded
+                            ai_response=response_text[:1000],  # Bounded
+                            agent_name=agent_name,
+                            topics=topics,
+                            request_id=request_id
+                        )
+                        
+                        logger.debug(f"💾 Memory v2: session turn persisted | request_id={request_id}")
+            except Exception as mem_err:
+                logger.warning(f"⚠️ Memory v2 write failed (non-blocking): {mem_err}")
             
             generation_time = time.time() - start_time
             logger.info(f"✅ Orchestration complete in {generation_time:.2f}s | request_id={request_id}")
@@ -1028,72 +1154,80 @@ Respond directly:"""
         routing_decision: Any
     ) -> Dict[str, Any]:
         """
-        🆕 EMOTIONAL SUPPORT - Intelligent handling of mood/emotional queries
+        🆕 EMOTIONAL SUPPORT - TRUE AGENTIC handling of mood/emotional queries
+        
+        UPGRADED to use MotivationAgent as a TRUE ReAct agent with:
+        - Autonomous coaching mode selection
+        - Tool usage (memory_recall, study_planner, progress_tracker)
+        - Personalized, contextual responses
+        - Memory read for context, bounded coaching notes
         
         This handles queries like:
-        - "getting bored" → Engaging alternatives, quiz suggestions
-        - "I'm frustrated" → Empathy + alternative approach
-        - "this is confusing" → Clarification + visual aid offer
-        - "excited about this!" → Build momentum, deeper challenge
-        
-        KEY DIFFERENCE from static responses:
-        - Uses MotivationAgent for emotional intelligence
-        - Loads memory context (what was discussed recently)
-        - Generates contextual, personalized responses
+        - "I'm stressed about exams" → CALM_DOWN mode + action plan
+        - "I'm lazy, can't focus" → CONSISTENCY mode + micro-plan
+        - "I'm dumb at physics" → CONFIDENCE mode + reframing
+        - "I'm exhausted" → BURNOUT mode + rest advocacy
         """
-        from agents.motivation import MotivationAgent, get_motivation_enhancement
+        from agents.motivation import MotivationAgent
         
-        logger.info(f"💚 Emotional support pipeline for: {message[:50]}...")
+        logger.info(f"💪 Emotional support pipeline (TRUE AGENT) for: {message[:50]}...")
         
-        # Step 1: Get memory context - CRITICAL for continuity
-        memory_context = await self._get_memory_context(context)
-        recent_topics = memory_context.get('recent_topics', [])
-        recent_context = memory_context.get('recent_context', {})
-        
-        # Extract what was just discussed (last message topic)
-        last_topic = None
-        if recent_context and isinstance(recent_context, dict):
-            last_messages = recent_context.get('messages', [])
-            if last_messages:
-                for msg in reversed(last_messages):
-                    if msg.get('role') == 'assistant':
-                        # Try to extract topic from last AI response
-                        content = msg.get('content', '')[:200]
-                        last_topic = content
-                        break
-        
-        # Step 2: Detect emotional state using MotivationAgent
-        motivation_agent = MotivationAgent({})
-        emotional_state = motivation_agent.detect_emotional_state(message)
-        
-        logger.info(f"   Detected emotion: {emotional_state}")
-        logger.info(f"   Recent topics available: {len(recent_topics)}")
-        
-        # Step 3: Get student profile for personalization
+        # Step 1: Get student profile for context
         student_profile = await self._get_student_profile(context)
-        name = student_profile.get('name', '')
         
-        # Step 4: Generate contextual response based on emotional state
-        response_content = await self._generate_emotional_response(
-            emotional_state=emotional_state or 'neutral',
-            message=message,
-            student_name=name,
-            last_topic=last_topic,
-            memory_context=memory_context,
-            context=context
-        )
-        
-        # Step 5: Get motivation enhancement (actions, suggestions)
-        motivation_result = get_motivation_enhancement(message, {
+        # Step 2: Build context for MotivationAgent
+        agent_context = {
+            'user_id': context.get('user_id', ''),
+            'session_id': context.get('session_id', ''),
             'student_profile': student_profile,
-            'recent_topics': recent_topics
+            'current_topic': context.get('subject', 'general'),
+            'original_query': message,
+        }
+        
+        # Step 3: Run MotivationAgent (TRUE ReAct agent)
+        motivation_agent = MotivationAgent({})
+        
+        try:
+            result = await motivation_agent.run(
+                query=message,
+                context=agent_context
+            )
+            
+            # Log coaching mode for observability
+            metadata = result.get('metadata', {})
+            logger.info(f"💪 [Motivation] Complete: mode={metadata.get('coaching_mode')} | "
+                       f"tools={metadata.get('tools_used', [])}")
+            
+            # Add pipeline info
+            result['pipeline'] = 'emotional_support'
+            result['detected_subject'] = 'General'
+            result['memory_used'] = bool(metadata.get('tools_used'))
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ MotivationAgent run failed: {e}")
+            # Fallback to legacy behavior
+            return await self._emotional_support_fallback(message, context, student_profile)
+    
+    async def _emotional_support_fallback(
+        self,
+        message: str,
+        context: Dict[str, Any],
+        student_profile: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Fallback for emotional support if agent fails"""
+        from agents.motivation import get_motivation_enhancement
+        
+        motivation_result = get_motivation_enhancement(message, {
+            'student_profile': student_profile
         })
         
         return {
             "response": {
                 "default_view": {
                     "main_content": {
-                        "content": response_content,
+                        "content": "Hey, I'm here for you. Tell me more about what's going on.",
                         "type": "markdown"
                     }
                 },
@@ -1102,9 +1236,8 @@ Respond directly:"""
             "detected_subject": "General",
             "generation_time": 0.1,
             "pipeline": "emotional_support",
-            "emotional_state": emotional_state,
             "motivation": motivation_result.get('motivation'),
-            "memory_used": bool(recent_context)
+            "fallback": True
         }
     
     async def _generate_emotional_response(

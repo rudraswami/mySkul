@@ -34,6 +34,14 @@ from .recurring_reminder_tool import RecurringReminderTool
 from .notification_tool import NotificationTool, StudySummaryTool
 from .base_tool import BaseTool, ToolResult
 
+# StudyBuddy-specific tools for interactive learning
+from .study_buddy_tools import (
+    QuizGeneratorTool,
+    PracticeTrackerTool,
+    SpacedRepetitionTool,
+    FlashcardGeneratorTool
+)
+
 __all__ = [
     # Base
     'BaseTool',
@@ -52,5 +60,10 @@ __all__ = [
     'RecurringReminderTool',
     'NotificationTool',
     'StudySummaryTool',
+    # StudyBuddy tools
+    'QuizGeneratorTool',
+    'PracticeTrackerTool',
+    'SpacedRepetitionTool',
+    'FlashcardGeneratorTool',
 ]
 

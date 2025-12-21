@@ -332,6 +332,15 @@ export default function AITutorNeuroSymbolic() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   
+  // DEBUG: Track inputMessage changes
+  useEffect(() => {
+    console.log('📝 INPUT STATE CHANGED:', {
+      value: inputMessage,
+      length: inputMessage.length,
+      timestamp: new Date().toISOString()
+    });
+  }, [inputMessage]);
+  
   // CRITICAL FIX: Persist currentSession to localStorage for ChatGPT-style persistence
   const [currentSession, setCurrentSessionState] = useState(() => {
     // Initialize from localStorage on mount with try-catch for quota errors
@@ -463,19 +472,8 @@ export default function AITutorNeuroSymbolic() {
     loadDefaultPrompts();
   }, []);
   
-  // Listen for follow-up question events from MentorResponseV2
-  useEffect(() => {
-    const handleFollowUpQuestion = (event) => {
-      const { question } = event.detail;
-      setInputMessage(question);
-      setTimeout(() => {
-        handleSend();
-      }, 100);
-    };
-    
-    window.addEventListener('send-question', handleFollowUpQuestion);
-    return () => window.removeEventListener('send-question', handleFollowUpQuestion);
-  }, []);
+  // Ref to always have latest handleSend (initialized after handleSend is defined)
+  const handleSendRef = useRef(null);
   
   // Update floating follow-ups when messages change
   useEffect(() => {
@@ -785,6 +783,7 @@ export default function AITutorNeuroSymbolic() {
     const currentSelectedImage = selectedImage;
     
     // Clear input and image immediately (better UX - instant feedback)
+    console.log('🧹 handleSend CLEARING input, was:', messageToSend);
     setInputMessage('');
     setSelectedImage(null);
     setImagePreview(null);
@@ -1345,6 +1344,26 @@ export default function AITutorNeuroSymbolic() {
     });
   };
 
+  // Keep handleSendRef updated with latest handleSend
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  });
+
+  // Listen for follow-up question events from MentorResponseV2
+  // FIX: Use ref pattern to avoid stale closure bug
+  useEffect(() => {
+    const handleFollowUpQuestion = (event) => {
+      const { question } = event.detail;
+      if (question && handleSendRef.current) {
+        setInputMessage(question);
+        handleSendRef.current(question);
+      }
+    };
+    
+    window.addEventListener('send-question', handleFollowUpQuestion);
+    return () => window.removeEventListener('send-question', handleFollowUpQuestion);
+  }, []);
+
   // Quick send from default prompts
   const handleQuickSend = (prompt) => {
     handleSend(prompt);
@@ -1869,9 +1888,10 @@ export default function AITutorNeuroSymbolic() {
                     <button
                       key={idx}
                       onClick={() => {
-                        setInputMessage(typeof suggestion === 'string' ? suggestion : suggestion.text);
+                        const message = typeof suggestion === 'string' ? suggestion : suggestion.text;
+                        setInputMessage(message);
                         setFloatingFollowUps([]);
-                        setTimeout(() => handleSend(), 100);
+                        handleSend(message);  // FIX: Pass directly, no setTimeout
                       }}
                       className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full text-sm font-medium transition-colors"
                     >
@@ -1901,7 +1921,10 @@ export default function AITutorNeuroSymbolic() {
                   <textarea
                     ref={inputRef}
                     value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
+                    onChange={(e) => {
+                      console.log('⌨️ TEXTAREA onChange:', e.target.value.substring(0, 30));
+                      setInputMessage(e.target.value);
+                    }}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                     placeholder="Ask anything... I'll explain like a friend 💪"
                     className="flex-1 px-3 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm"
@@ -2862,7 +2885,7 @@ export default function AITutorNeuroSymbolic() {
                                 if (question) {
                                   setInputMessage(question);
                                   inputRef.current?.focus();
-                                  setTimeout(() => handleSend(), 100);
+                                  handleSend(question);  // FIX: Pass directly, no setTimeout
                                 }
                               }}
                               onInteraction={(action, data) => {
@@ -3022,7 +3045,7 @@ export default function AITutorNeuroSymbolic() {
                             setInputMessage(suggestionText);
                             setFloatingFollowUps([]);
                             inputRef.current?.focus();
-                            setTimeout(() => handleSend(), 100);
+                            handleSend(suggestionText);  // FIX: Pass directly, no setTimeout
                           }}
                           className="px-3 py-1.5 bg-white hover:bg-violet-50 border border-slate-200 hover:border-violet-400 rounded-full text-xs font-medium text-slate-700 hover:text-violet-700 transition-all shadow-sm hover:shadow-md"
                         >

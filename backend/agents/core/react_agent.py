@@ -238,8 +238,13 @@ class ReActAgent(ABC):
     
     def get_system_prompt(self, state: AgentState) -> str:
         """Build the system prompt for the LLM"""
-        tools_desc = self._get_tools_description()
-        persona = self.get_agent_persona()
+        tools_desc = self._get_tools_description(state.context)
+        # COGNITIVE OS FIX: Pass context to persona for context-aware behavior
+        try:
+            persona = self.get_agent_persona(state.context)
+        except TypeError:
+            # Backward compatibility: some agents don't accept context param
+            persona = self.get_agent_persona()
         
         return f"""{persona}
 
@@ -276,12 +281,17 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
 {state.get_reasoning_summary()}
 """
     
-    def _get_tools_description(self) -> str:
+    def _get_tools_description(self, context: dict = None) -> str:
         """Get descriptions of all available tools"""
         if not self.tool_registry:
             return "No tools available."
         
-        available = self.get_available_tools()
+        # COGNITIVE OS FIX: Pass context to get_available_tools
+        try:
+            available = self.get_available_tools(context)
+        except TypeError:
+            # Backward compatibility: some agents don't accept context param
+            available = self.get_available_tools()
         descriptions = []
         
         for tool_name in available:

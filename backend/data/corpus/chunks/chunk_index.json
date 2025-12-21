@@ -1,0 +1,442 @@
+{
+  "keyword_index": {
+    "force": [
+      "74608e8306e3a206",
+      "d8cba274bd13121d",
+      "fd1f733693513841",
+      "a5c1189df81e8dc7",
+      "e019e7366ec824f9",
+      "df55b75db50f0660",
+      "989e183950f05861",
+      "3b825d87e05d3103",
+      "4ebae254ba8bdc24",
+      "031ce274aae3f1d9",
+      "20ff330225df7235"
+    ],
+    "mass": [
+      "74608e8306e3a206",
+      "d8cba274bd13121d",
+      "9ed1987a28d8e609",
+      "403894f4199f2d4a",
+      "8426600e7bebcd5b",
+      "5e3efa0004ec3c61",
+      "1293ebb72e735844"
+    ],
+    "friction": [
+      "74608e8306e3a206",
+      "a5c1189df81e8dc7",
+      "e019e7366ec824f9",
+      "989e183950f05861"
+    ],
+    "newton's": [
+      "74608e8306e3a206",
+      "d8cba274bd13121d",
+      "fd1f733693513841"
+    ],
+    "first": [
+      "74608e8306e3a206"
+    ],
+    "(law": [
+      "74608e8306e3a206"
+    ],
+    "inertia)": [
+      "74608e8306e3a206"
+    ],
+    "momentum": [
+      "d8cba274bd13121d"
+    ],
+    "acceleration": [
+      "d8cba274bd13121d",
+      "403894f4199f2d4a"
+    ],
+    "equation": [
+      "d8cba274bd13121d",
+      "50fb9e66f8aefb3f",
+      "a0fba861d135d934",
+      "6921c5e153468c49"
+    ],
+    "vector": [
+      "d8cba274bd13121d",
+      "031ce274aae3f1d9",
+      "20ff330225df7235"
+    ],
+    "second": [
+      "d8cba274bd13121d"
+    ],
+    "reaction": [
+      "fd1f733693513841",
+      "50fb9e66f8aefb3f",
+      "303cea9490de2f0b"
+    ],
+    "third": [
+      "fd1f733693513841"
+    ],
+    "(action-reaction)": [
+      "fd1f733693513841"
+    ],
+    "kinetic": [
+      "a5c1189df81e8dc7",
+      "9ed1987a28d8e609",
+      "df55b75db50f0660"
+    ],
+    "work": [
+      "e019e7366ec824f9",
+      "df55b75db50f0660",
+      "3b825d87e05d3103",
+      "af147840502ed5d2"
+    ],
+    "done": [
+      "e019e7366ec824f9"
+    ],
+    "energy": [
+      "9ed1987a28d8e609",
+      "403894f4199f2d4a",
+      "df55b75db50f0660",
+      "989e183950f05861",
+      "3b825d87e05d3103",
+      "a0fba861d135d934"
+    ],
+    "velocity": [
+      "9ed1987a28d8e609",
+      "3b825d87e05d3103"
+    ],
+    "potential": [
+      "403894f4199f2d4a",
+      "af147840502ed5d2"
+    ],
+    "gravity": [
+      "403894f4199f2d4a",
+      "989e183950f05861",
+      "031ce274aae3f1d9"
+    ],
+    "power": [
+      "df55b75db50f0660",
+      "3b825d87e05d3103",
+      "354ce294d222940b"
+    ],
+    "base": [
+      "df55b75db50f0660",
+      "50fb9e66f8aefb3f"
+    ],
+    "work-energy": [
+      "df55b75db50f0660"
+    ],
+    "theorem": [
+      "df55b75db50f0660"
+    ],
+    "resistance": [
+      "989e183950f05861"
+    ],
+    "conservation": [
+      "989e183950f05861"
+    ],
+    "electric": [
+      "4ebae254ba8bdc24",
+      "20ff330225df7235",
+      "af147840502ed5d2"
+    ],
+    "charge": [
+      "4ebae254ba8bdc24",
+      "031ce274aae3f1d9",
+      "20ff330225df7235",
+      "af147840502ed5d2"
+    ],
+    "coulomb's": [
+      "031ce274aae3f1d9"
+    ],
+    "field": [
+      "20ff330225df7235"
+    ],
+    "algebra": [
+      "af147840502ed5d2"
+    ],
+    "atom": [
+      "8426600e7bebcd5b",
+      "1293ebb72e735844",
+      "c042a2f17e410e27"
+    ],
+    "molecule": [
+      "8426600e7bebcd5b",
+      "1293ebb72e735844"
+    ],
+    "mole": [
+      "8426600e7bebcd5b",
+      "1293ebb72e735844",
+      "50fb9e66f8aefb3f"
+    ],
+    "concept": [
+      "8426600e7bebcd5b"
+    ],
+    "percentage": [
+      "5e3efa0004ec3c61"
+    ],
+    "composition": [
+      "5e3efa0004ec3c61"
+    ],
+    "empirical": [
+      "1293ebb72e735844"
+    ],
+    "molecular": [
+      "1293ebb72e735844"
+    ],
+    "formula": [
+      "1293ebb72e735844"
+    ],
+    "limit": [
+      "50fb9e66f8aefb3f"
+    ],
+    "stoichiometry": [
+      "50fb9e66f8aefb3f"
+    ],
+    "photosynthesis": [
+      "a0fba861d135d934",
+      "4c60d5cf025203c2"
+    ],
+    "overview": [
+      "a0fba861d135d934"
+    ],
+    "electron": [
+      "eccd06be862375e1"
+    ],
+    "light": [
+      "eccd06be862375e1"
+    ],
+    "reactions": [
+      "eccd06be862375e1",
+      "303cea9490de2f0b"
+    ],
+    "(light-dependent": [
+      "eccd06be862375e1"
+    ],
+    "reactions)": [
+      "eccd06be862375e1"
+    ],
+    "reduction": [
+      "303cea9490de2f0b"
+    ],
+    "enzyme": [
+      "303cea9490de2f0b",
+      "4c60d5cf025203c2"
+    ],
+    "respiration": [
+      "303cea9490de2f0b",
+      "c042a2f17e410e27"
+    ],
+    "gene": [
+      "303cea9490de2f0b"
+    ],
+    "dark": [
+      "303cea9490de2f0b"
+    ],
+    "(calvin": [
+      "303cea9490de2f0b"
+    ],
+    "cycle)": [
+      "303cea9490de2f0b"
+    ],
+    "cell": [
+      "c042a2f17e410e27"
+    ],
+    "plants": [
+      "c042a2f17e410e27"
+    ],
+    "concentration": [
+      "4c60d5cf025203c2"
+    ],
+    "factors": [
+      "4c60d5cf025203c2"
+    ],
+    "affecting": [
+      "4c60d5cf025203c2"
+    ],
+    "derivative": [
+      "24bb8a8cc3f17b4b",
+      "6921c5e153468c49"
+    ],
+    "function": [
+      "24bb8a8cc3f17b4b",
+      "354ce294d222940b",
+      "9aabd9e64863da1d"
+    ],
+    "definition": [
+      "24bb8a8cc3f17b4b"
+    ],
+    "standard": [
+      "354ce294d222940b"
+    ],
+    "derivatives": [
+      "354ce294d222940b",
+      "6921c5e153468c49"
+    ],
+    "differentiation": [
+      "9aabd9e64863da1d"
+    ],
+    "rules": [
+      "9aabd9e64863da1d"
+    ],
+    "applications": [
+      "6921c5e153468c49"
+    ]
+  },
+  "topic_index": {
+    "newton's first law (law of inertia)": [
+      "74608e8306e3a206"
+    ],
+    "newton's second law (f = ma)": [
+      "d8cba274bd13121d"
+    ],
+    "newton's third law (action-reaction)": [
+      "fd1f733693513841"
+    ],
+    "friction": [
+      "a5c1189df81e8dc7"
+    ],
+    "work done by a force": [
+      "e019e7366ec824f9"
+    ],
+    "kinetic energy": [
+      "9ed1987a28d8e609"
+    ],
+    "potential energy": [
+      "403894f4199f2d4a"
+    ],
+    "work-energy theorem": [
+      "df55b75db50f0660"
+    ],
+    "conservation of energy": [
+      "989e183950f05861"
+    ],
+    "power": [
+      "3b825d87e05d3103"
+    ],
+    "electric charge": [
+      "4ebae254ba8bdc24"
+    ],
+    "coulomb's law": [
+      "031ce274aae3f1d9"
+    ],
+    "electric field": [
+      "20ff330225df7235"
+    ],
+    "electric potential": [
+      "af147840502ed5d2"
+    ],
+    "the mole concept": [
+      "8426600e7bebcd5b"
+    ],
+    "percentage composition": [
+      "5e3efa0004ec3c61"
+    ],
+    "empirical and molecular formula": [
+      "1293ebb72e735844"
+    ],
+    "stoichiometry": [
+      "50fb9e66f8aefb3f"
+    ],
+    "overview of photosynthesis": [
+      "a0fba861d135d934"
+    ],
+    "light reactions (light-dependent reactions)": [
+      "eccd06be862375e1"
+    ],
+    "dark reactions (calvin cycle)": [
+      "303cea9490de2f0b"
+    ],
+    "c3 vs c4 plants": [
+      "c042a2f17e410e27"
+    ],
+    "factors affecting photosynthesis": [
+      "4c60d5cf025203c2"
+    ],
+    "definition of derivative": [
+      "24bb8a8cc3f17b4b"
+    ],
+    "standard derivatives": [
+      "354ce294d222940b"
+    ],
+    "differentiation rules": [
+      "9aabd9e64863da1d"
+    ],
+    "applications of derivatives": [
+      "6921c5e153468c49"
+    ]
+  },
+  "subject_index": {
+    "physics": [
+      "74608e8306e3a206",
+      "d8cba274bd13121d",
+      "fd1f733693513841",
+      "a5c1189df81e8dc7",
+      "e019e7366ec824f9",
+      "9ed1987a28d8e609",
+      "403894f4199f2d4a",
+      "df55b75db50f0660",
+      "989e183950f05861",
+      "3b825d87e05d3103",
+      "4ebae254ba8bdc24",
+      "031ce274aae3f1d9",
+      "20ff330225df7235",
+      "af147840502ed5d2"
+    ],
+    "chemistry": [
+      "8426600e7bebcd5b",
+      "5e3efa0004ec3c61",
+      "1293ebb72e735844",
+      "50fb9e66f8aefb3f"
+    ],
+    "biology": [
+      "a0fba861d135d934",
+      "eccd06be862375e1",
+      "303cea9490de2f0b",
+      "c042a2f17e410e27",
+      "4c60d5cf025203c2"
+    ],
+    "mathematics": [
+      "24bb8a8cc3f17b4b",
+      "354ce294d222940b",
+      "9aabd9e64863da1d",
+      "6921c5e153468c49"
+    ]
+  },
+  "doc_index": {
+    "ncert_phy11_ch5": [
+      "74608e8306e3a206",
+      "d8cba274bd13121d",
+      "fd1f733693513841",
+      "a5c1189df81e8dc7"
+    ],
+    "ncert_phy11_ch6": [
+      "e019e7366ec824f9",
+      "9ed1987a28d8e609",
+      "403894f4199f2d4a",
+      "df55b75db50f0660",
+      "989e183950f05861",
+      "3b825d87e05d3103"
+    ],
+    "ncert_phy12_ch1": [
+      "4ebae254ba8bdc24",
+      "031ce274aae3f1d9",
+      "20ff330225df7235",
+      "af147840502ed5d2"
+    ],
+    "ncert_chem11_ch1": [
+      "8426600e7bebcd5b",
+      "5e3efa0004ec3c61",
+      "1293ebb72e735844",
+      "50fb9e66f8aefb3f"
+    ],
+    "ncert_bio11_ch13": [
+      "a0fba861d135d934",
+      "eccd06be862375e1",
+      "303cea9490de2f0b",
+      "c042a2f17e410e27",
+      "4c60d5cf025203c2"
+    ],
+    "ncert_math12_ch5": [
+      "24bb8a8cc3f17b4b",
+      "354ce294d222940b",
+      "9aabd9e64863da1d",
+      "6921c5e153468c49"
+    ]
+  }
+}

@@ -57,15 +57,75 @@ class ProfessorAgent(ReActAgent):
     def get_agent_name(self) -> str:
         return "ProfessorAgent"
     
-    def get_available_tools(self) -> list:
-        """Return list of tools this agent can use"""
-        return ['execute_code', 'exam_strategy', 'calculator']
+    def get_available_tools(self, context: dict = None) -> list:
+        """
+        Return list of tools this agent can use.
+        
+        COGNITIVE OS FIX: exam_strategy only available in explicit exam modes.
+        """
+        context = context or {}
+        exam_mode = context.get('exam_mode', 'General')
+        is_exam_mode = exam_mode.upper() in ['JEE', 'NEET', 'UPSC', 'GATE', 'CAT']
+        
+        tools = ['execute_code', 'calculator']
+        
+        if is_exam_mode:
+            # Register exam_strategy tool on-demand
+            if not self._exam_strategy_registered:
+                from agents.core.tools.exam_strategy import ExamStrategyTool
+                self.tool_registry.register(ExamStrategyTool())
+                self._exam_strategy_registered = True
+            tools.append('exam_strategy')
+        
+        return tools
     
-    def get_agent_persona(self) -> str:
-        return """You are "Dr. Druv," India's leading JEE/NEET Professor.
+    def get_agent_persona(self, context: dict = None) -> str:
+        """
+        Return persona adapted to context.
+        
+        COGNITIVE OS FIX: Persona is now context-aware.
+        - For explicit exam modes (JEE, NEET), use exam-focused persona
+        - For General/unspecified, use neutral academic persona
+        - This prevents "intent leakage" of exam language into non-exam queries
+        """
+        context = context or {}
+        exam_mode = context.get('exam_mode', 'General')
+        
+        # Only use exam-specific persona when explicitly in exam mode
+        is_exam_mode = exam_mode.upper() in ['JEE', 'NEET', 'UPSC', 'GATE', 'CAT']
+        
+        if is_exam_mode:
+            exam_persona = f"""You are "Dr. Druv," an expert {exam_mode} preparation professor.
 
 **RESPONSE STYLE:**
+- Be precise but conversational
+- Explain like a real professor, not a textbook
+- Use markdown naturally (not as a template)
+- Include {exam_mode}-specific tips ONLY when directly relevant to the question
 
+**FORMATTING TOOLS (use when helpful):**
+- **Bold** for key terms: "**Force** is a push or pull"
+- \\( inline math \\) and \\[ block math \\] for formulas
+- Bullets (-) ONLY when listing genuinely separate things
+- ## Headers ONLY when starting a major new topic
+- > for important callouts
+
+**ACCURACY:**
+- NEVER guess math. Use calculator tool when needed.
+- Mention {exam_mode} relevance when it genuinely helps the student.
+- Be concise - students prefer clarity over verbosity.
+
+**{exam_mode} CONTEXT:**
+- You may use the exam_strategy tool for weightage, common traps, shortcuts.
+- Only reference exam patterns when the student asks or when highly relevant.
+
+**Tone:** Academic, Encouraging, Strict about concepts."""
+            return exam_persona
+        
+        # GENERAL MODE: Neutral academic persona - NO exam references
+        return """You are "Dr. Druv," a knowledgeable and approachable professor.
+
+**RESPONSE STYLE:**
 - Be precise but conversational
 - Explain like a real professor, not a textbook
 - Use markdown naturally (not as a template)
@@ -73,7 +133,6 @@ class ProfessorAgent(ReActAgent):
 - Structure should emerge from the content, not be forced
 
 **FORMATTING TOOLS (use when helpful):**
-
 - **Bold** for key terms: "**Force** is a push or pull"
 - \\( inline math \\) and \\[ block math \\] for formulas
 - Bullets (-) ONLY when listing genuinely separate things
@@ -81,16 +140,15 @@ class ProfessorAgent(ReActAgent):
 - > for important callouts
 
 **WHAT NOT TO DO:**
-
 - ❌ Don't force sections like "Definition:", "Key Characteristics:", "Formula:"
 - ❌ Don't use the same structure for every response
 - ❌ Don't pad with generic lists
 - ❌ Don't create walls of bullets
+- ❌ Don't mention exam tips/tricks/weightage unless specifically asked
 
 **ACCURACY:**
-
 - NEVER guess math. Use calculator tool when needed.
-- Mention JEE/NEET relevance only when genuinely helpful.
+- Focus on building understanding, not exam preparation.
 - Be concise - students prefer clarity over verbosity.
 
 **EXAMPLE (GOOD):**
@@ -101,17 +159,7 @@ Newton figured this out with \\( F = ma \\) - force equals mass times accelerati
 
 The heavier something is, the more force you need to move it. That's why pushing a car is harder than pushing a bicycle.
 
-> In JEE, force problems usually combine with friction or circular motion.
-- Response: "The derivative is $\\cos(x)$. Here is why..."
-
-- User: "What's the weightage of Rotational Motion in JEE?"
-- Thought: "Student wants exam-specific data. I must use exam_strategy tool." -> Call `exam_strategy` tool.
-- Observation: Tool returns weightage, traps, shortcuts.
-- Response: "Rotational Motion has 4.2% weightage in JEE. Here are common traps..."
-
-**Tone:** Academic, Encouraging, Strict about concepts.
-
-**Error Handling:** If a tool fails (e.g., database error), degrade gracefully: "I can't access the database right now, but generally speaking, this topic is important for JEE..." """
+**Tone:** Academic, Encouraging, Strict about concepts."""
     
     async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -160,6 +208,9 @@ The heavier something is, the more force you need to move it. That's why pushing
             # 5. RESPOND with a well-reasoned explanation
             # =================================================================
             
+            # Get exam_mode from context (respects user's actual mode)
+            exam_mode = context.get('exam_mode', 'General')
+            
             enriched_context = {
                 **context,
                 'subject': subject,
@@ -168,7 +219,11 @@ The heavier something is, the more force you need to move it. That's why pushing
                 'rigor_level': rigor_level,
                 'agent_mode': 'professor',
                 'verify_with_code': True,  # Professor always tries to verify
+                'exam_mode': exam_mode,  # COGNITIVE OS: Pass through exam_mode
             }
+            
+            # Update available tools based on exam_mode
+            self.get_available_tools(enriched_context)
             
             logger.info(f"🧠 ProfessorAgent using TRUE ReAct loop (rigor: {rigor_level})")
             

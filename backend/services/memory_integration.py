@@ -1,6 +1,15 @@
 """
-Memory Integration Service - Complete Memory System Orchestration
-Integrates all memory components for seamless AI Tutor experience
+Memory Integration Service - Complete Memory System Orchestration (MEMORY v2)
+=============================================================================
+
+Integrates all memory components for seamless AI Tutor experience.
+
+MEMORY v2 ADDITIONS:
+- Persistent session state (survives restarts)
+- Selective memory recall (only relevant memories)
+- Memory contract compliance (canonical schemas)
+- Bounded memory growth
+- Multi-tenant isolation
 
 This service orchestrates:
 - Short-term context (MemoryService)
@@ -16,6 +25,9 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Debug flag
+MEMORY_DEBUG = os.getenv("MEMORY_DEBUG", "false").lower() == "true"
 
 
 class MemoryIntegrationService:
@@ -627,6 +639,276 @@ class MemoryIntegrationService:
             return ""
         
         return "\n".join(summary_parts)
+    
+    # =========================================================================
+    # MEMORY v2 - SELECTIVE RECALL (Intelligent Read)
+    # =========================================================================
+    
+    async def get_memory_context_pack(
+        self,
+        user_id: str,
+        session_id: str,
+        query: str,
+        route_type: str = "educational",
+        agent_name: str = None
+    ) -> Dict[str, Any]:
+        """
+        Build a COMPACT MemoryContextPack for agent consumption.
+        
+        SELECTIVE RECALL: Only retrieves memory RELEVANT to the current query.
+        Does NOT dump all memory - keeps prompts lean.
+        
+        MEMORY CONTRACT: Returns MemoryContextPack schema fields.
+        MULTI-TENANT: Isolated by user_id.
+        
+        Args:
+            user_id: User ID (for isolation)
+            session_id: Current session
+            query: Current user query (for relevance)
+            route_type: Routing type (affects recall strategy)
+            agent_name: Target agent (for agent-specific recall)
+        
+        Returns:
+            Dict matching MemoryContextPack schema
+        """
+        try:
+            pack = {
+                "user_id": user_id,
+                "session_id": session_id,
+                "student_name": "",
+                "exam_target": None,
+                "current_mastery": 0,
+                "mastery_bucket": "beginner",
+                "relevant_memories": [],
+                "session_summary": "",
+                "active_task": None,
+                "last_topic": None,
+                "preferred_explanation": "step_by_step",
+                "pacing": "normal",
+                "is_weak_area": False,
+                "needs_encouragement": False
+            }
+            
+            # 1. Get session state (persistent)
+            session_state = await self.memory_service.get_session_state(user_id, session_id)
+            pack["session_summary"] = session_state.get("session_summary", "")
+            pack["active_task"] = session_state.get("active_task")
+            pack["last_topic"] = session_state.get("last_retrieval_topics", [None])[0] if session_state.get("last_retrieval_topics") else None
+            
+            # 2. Get student profile (persistent)
+            profile = await self.memory_service.get_student_profile(user_id)
+            pack["exam_target"] = profile.get("exam_target")
+            pack["preferred_explanation"] = profile.get("preferred_explanation", "step_by_step")
+            pack["pacing"] = profile.get("pacing", "normal")
+            
+            # Get student name
+            try:
+                user_doc = await self.db.users.find_one({"user_id": user_id})
+                if user_doc:
+                    full_name = user_doc.get("full_name", "")
+                    pack["student_name"] = full_name.split()[0] if full_name else ""
+            except:
+                pass
+            
+            # 3. Get mastery for current topic
+            topic = self._extract_main_topic(query)
+            if topic:
+                topic_key = topic.lower().replace(" ", "_")
+                mastery_data = profile.get("mastery_by_topic", {}).get(topic_key, {})
+                mastery_score = mastery_data.get("mastery_score", 0.0) if isinstance(mastery_data, dict) else 0.0
+                pack["current_mastery"] = int(mastery_score * 100)
+                pack["mastery_bucket"] = self._get_mastery_bucket(pack["current_mastery"])
+                
+                # Check if weak area
+                weak_topics = profile.get("weak_topics", [])
+                pack["is_weak_area"] = topic_key in [t.lower().replace(" ", "_") for t in weak_topics]
+            
+            # 4. SELECTIVE RECALL - Only relevant memories (max 5)
+            if route_type in ["educational", "problem_solving", "concept"]:
+                relevant_memories = await self.semantic_memory.search_relevant_memories(
+                    user_id=user_id,
+                    query=query,
+                    top_k=5,
+                    min_similarity=0.4
+                )
+                
+                # Compact the memories (only essential fields)
+                pack["relevant_memories"] = [
+                    {
+                        "content": m.get("content", "")[:200],  # Bounded
+                        "topic": m.get("topic", ""),
+                        "similarity": m.get("similarity_score", 0)
+                    }
+                    for m in relevant_memories[:5]
+                ]
+            
+            # 5. Check if needs encouragement
+            if pack["is_weak_area"] or pack["current_mastery"] < 30:
+                pack["needs_encouragement"] = True
+            
+            if MEMORY_DEBUG:
+                logger.info(f"📦 MemoryContextPack built: user={user_id[:8]}, "
+                           f"mastery={pack['current_mastery']}%, memories={len(pack['relevant_memories'])}")
+            
+            return pack
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to build MemoryContextPack: {e}")
+            return {
+                "user_id": user_id,
+                "session_id": session_id,
+                "student_name": "",
+                "exam_target": None,
+                "current_mastery": 0,
+                "mastery_bucket": "beginner",
+                "relevant_memories": [],
+                "session_summary": "",
+                "active_task": None,
+                "last_topic": None,
+                "preferred_explanation": "step_by_step",
+                "pacing": "normal",
+                "is_weak_area": False,
+                "needs_encouragement": False
+            }
+    
+    # =========================================================================
+    # MEMORY v2 - INTELLIGENT WRITE (Memory Update Policy)
+    # =========================================================================
+    
+    async def write_memory_after_response(
+        self,
+        user_id: str,
+        session_id: str,
+        user_message: str,
+        ai_response: str,
+        agent_name: str = None,
+        topics: List[str] = None,
+        mastery_delta: float = None,
+        request_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Intelligently update memory after a response.
+        
+        MEMORY WRITE POLICY:
+        - At most 1 session_summary update (only if meaningfully changed)
+        - Mastery updates only when user confirms understanding
+        - Turn always added to session state
+        - Memory event logged for audit
+        
+        DOES NOT:
+        - Store raw long user text (summaries only)
+        - Update every interaction (selective)
+        - Overwrite full documents (diff updates)
+        
+        Args:
+            user_id: User ID
+            session_id: Session ID
+            user_message: User's message
+            ai_response: AI response text
+            agent_name: Agent that handled the response
+            topics: Topics discussed
+            mastery_delta: Mastery change (if any)
+            request_id: Request correlation ID
+        
+        Returns:
+            Dict with update summary
+        """
+        results = {
+            "turn_added": False,
+            "summary_updated": False,
+            "mastery_updated": False,
+            "event_logged": False,
+            "errors": []
+        }
+        
+        try:
+            # 1. Always add turn to session state (bounded)
+            turn_success = await self.memory_service.update_session_turn(
+                user_id=user_id,
+                session_id=session_id,
+                user_message=user_message,
+                ai_response=ai_response,
+                agent_name=agent_name,
+                topics=topics
+            )
+            results["turn_added"] = turn_success
+            
+            # 2. Update session summary if enough turns accumulated
+            session_state = await self.memory_service.get_session_state(user_id, session_id)
+            turns = session_state.get("last_turns", [])
+            
+            if len(turns) >= 3 and len(turns) % 3 == 0:  # Every 3 turns
+                new_summary = self._generate_session_summary(turns)
+                if new_summary:
+                    summary_success = await self.memory_service.update_session_summary(
+                        user_id=user_id,
+                        session_id=session_id,
+                        summary=new_summary
+                    )
+                    results["summary_updated"] = summary_success
+            
+            # 3. Update mastery if delta provided (user confirmed understanding)
+            if mastery_delta and topics:
+                for topic in topics[:3]:  # Max 3 topics
+                    await self.memory_service.update_topic_mastery(
+                        user_id=user_id,
+                        topic=topic,
+                        mastery_delta=mastery_delta
+                    )
+                results["mastery_updated"] = True
+            
+            # 4. Log memory event (audit trail)
+            event_success = await self.memory_service.log_memory_event(
+                user_id=user_id,
+                session_id=session_id,
+                event_type="topic_focus",
+                payload={
+                    "topics": topics or [],
+                    "agent": agent_name,
+                    "mastery_delta": mastery_delta
+                },
+                source_agent=agent_name,
+                request_id=request_id
+            )
+            results["event_logged"] = event_success
+            
+            if MEMORY_DEBUG:
+                logger.info(f"💾 Memory written: turn={results['turn_added']}, "
+                           f"summary={results['summary_updated']}, mastery={results['mastery_updated']}")
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to write memory: {e}")
+            results["errors"].append(str(e))
+            return results
+    
+    def _generate_session_summary(self, turns: List[Dict[str, Any]]) -> str:
+        """Generate a bounded session summary from turns."""
+        if not turns:
+            return ""
+        
+        # Extract key topics and questions
+        topics = set()
+        questions = []
+        
+        for turn in turns[-5:]:  # Last 5 turns only
+            user_msg = turn.get("user", "")
+            if user_msg:
+                questions.append(user_msg[:80])
+            
+            turn_topics = turn.get("topics", [])
+            topics.update(turn_topics)
+        
+        # Build summary
+        parts = []
+        if topics:
+            parts.append(f"Topics: {', '.join(list(topics)[:5])}")
+        if questions:
+            parts.append(f"Discussed: {'; '.join(questions[:3])}")
+        
+        summary = " | ".join(parts)
+        return summary[:800]  # Enforce bound
 
 
 # Convenience function for easy import

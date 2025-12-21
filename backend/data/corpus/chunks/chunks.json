@@ -1,0 +1,1027 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "74608e8306e3a206",
+      "doc_id": "ncert_phy11_ch5",
+      "section": "Laws of Motion > Newton's First Law (Law of Inertia)",
+      "text": "An object at rest stays at rest, and an object in motion continues in motion with the same speed and in the same direction unless acted upon by an external unbalanced force.\n\n**Key Points:**\n- Inertia is the property of matter that resists changes in motion\n- Mass is a measure of inertia - more mass means more inertia\n- This law defines the concept of force as something that changes motion\n\n**Examples:**\n1. A book on a table remains at rest until pushed\n2. A rolling ball eventually stops due to friction (an external force)\n3. Passengers lurch forward when a bus stops suddenly\n\n**Formula:** No specific formula, but leads to the concept: F = 0 implies \u0394v = 0",
+      "start_char": 17,
+      "end_char": 722,
+      "subject": "Physics",
+      "topic": "Newton's First Law (Law of Inertia)",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "mass",
+        "friction",
+        "newton's",
+        "first",
+        "(law",
+        "inertia)"
+      ],
+      "formulas": [
+        "F = 0 implies \u0394v = 0"
+      ],
+      "key_concepts": [
+        "force",
+        "mass",
+        "friction",
+        "newton's",
+        "first"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 5, Newton's First Law (Law of Inertia)",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "d8cba274bd13121d",
+      "doc_id": "ncert_phy11_ch5",
+      "section": "Laws of Motion > Newton's Second Law (F = ma)",
+      "text": "The rate of change of momentum of a body is directly proportional to the applied force and takes place in the direction in which the force acts.\n\n**Mathematical Form:**\nF = ma = m(dv/dt) = dp/dt\n\nwhere:\n- F = Force (Newtons, N)\n- m = Mass (kg)\n- a = Acceleration (m/s\u00b2)\n- p = Momentum (kg\u00b7m/s)\n\n**Key Points:**\n- Force and acceleration are vectors - direction matters\n- 1 Newton = force needed to accelerate 1 kg by 1 m/s\u00b2\n- Weight W = mg is a special case where a = g\n\n**Problem Solving Approach:**\n1. Draw free body diagram\n2. Choose coordinate system\n3. Write F = ma for each direction\n4. Solve equations",
+      "start_char": 723,
+      "end_char": 1364,
+      "subject": "Physics",
+      "topic": "Newton's Second Law (F = ma)",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "momentum",
+        "acceleration",
+        "mass",
+        "equation",
+        "vector",
+        "newton's",
+        "second"
+      ],
+      "formulas": [
+        "F = ma = m(dv/dt) = dp/dt",
+        "F = Force (Newtons",
+        "m = Mass (kg)",
+        "a = Acceleration (m/s\u00b2)",
+        "p = Momentum (kg\u00b7m/s)"
+      ],
+      "key_concepts": [
+        "force",
+        "momentum",
+        "acceleration",
+        "mass",
+        "equation"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 5, Newton's Second Law (F = ma)",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "fd1f733693513841",
+      "doc_id": "ncert_phy11_ch5",
+      "section": "Laws of Motion > Newton's Third Law (Action-Reaction)",
+      "text": "For every action, there is an equal and opposite reaction. When one body exerts a force on another body, the second body simultaneously exerts a force equal in magnitude and opposite in direction on the first body.\n\n**Key Points:**\n- Action and reaction act on DIFFERENT bodies\n- They are equal in magnitude, opposite in direction\n- They occur simultaneously\n- They do NOT cancel out (because they act on different objects)\n\n**Examples:**\n1. When you push a wall, the wall pushes back on you\n2. Rocket propulsion: gases push rocket up, rocket pushes gases down\n3. Walking: you push ground backward, ground pushes you forward\n\n**Common Misconception:** \"Action and reaction cancel out\" - FALSE! They act on different bodies.",
+      "start_char": 1365,
+      "end_char": 2130,
+      "subject": "Physics",
+      "topic": "Newton's Third Law (Action-Reaction)",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "reaction",
+        "newton's",
+        "third",
+        "(action-reaction)"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "force",
+        "reaction",
+        "newton's",
+        "third",
+        "(action-reaction)"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 5, Newton's Third Law (Action-Reaction)",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "a5c1189df81e8dc7",
+      "doc_id": "ncert_phy11_ch5",
+      "section": "Laws of Motion > Friction",
+      "text": "Friction is the force that opposes relative motion between surfaces in contact.\n\n**Types of Friction:**\n1. **Static Friction (fs):** Prevents motion from starting\n   - fs \u2264 \u03bcs \u00d7 N (maximum value)\n   - Always equal and opposite to applied force (up to maximum)\n\n2. **Kinetic Friction (fk):** Opposes motion when object is moving\n   - fk = \u03bck \u00d7 N (constant value)\n   - \u03bck < \u03bcs (kinetic coefficient is less than static)\n\n**Formulas:**\n- f = \u03bcN\n- fs(max) = \u03bcs \u00d7 N\n- fk = \u03bck \u00d7 N\n\nwhere:\n- \u03bc = coefficient of friction (dimensionless)\n- N = Normal force (N)\n\n**Factors Affecting Friction:**\n- Nature of surfaces in contact\n- Normal force pressing surfaces together\n- NOT dependent on area of contact (for dry friction)",
+      "start_char": 2131,
+      "end_char": 2856,
+      "subject": "Physics",
+      "topic": "Friction",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "kinetic",
+        "friction"
+      ],
+      "formulas": [
+        "k = \u03bck \u00d7 N (constant value)",
+        "f = \u03bcN",
+        "k = \u03bck \u00d7 N",
+        "N = Normal force (N)"
+      ],
+      "key_concepts": [
+        "force",
+        "kinetic",
+        "friction"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 5, Friction",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "e019e7366ec824f9",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Work Done by a Force",
+      "text": "Work is done when a force causes displacement. It is the product of force and displacement in the direction of force.\n\n**Formula:**\nW = F \u00b7 d \u00b7 cos(\u03b8)\n\nwhere:\n- W = Work done (Joules, J)\n- F = Force applied (N)\n- d = Displacement (m)\n- \u03b8 = Angle between force and displacement\n\n**Key Points:**\n- Work is a scalar quantity\n- 1 Joule = 1 N \u00d7 1 m\n- Work is positive when force and displacement are in same direction (\u03b8 < 90\u00b0)\n- Work is negative when force opposes displacement (\u03b8 > 90\u00b0)\n- Work is zero when force is perpendicular to displacement (\u03b8 = 90\u00b0)\n\n**Examples:**\n- Lifting a book: W = mgh (positive work by you)\n- Friction on sliding block: W = -\u03bcmgd (negative work)\n- Normal force: W = 0 (perpendicular to motion)",
+      "start_char": 26,
+      "end_char": 771,
+      "subject": "Physics",
+      "topic": "Work Done by a Force",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "work",
+        "friction",
+        "done"
+      ],
+      "formulas": [
+        "W = F \u00b7 d \u00b7 cos(\u03b8)",
+        "W = Work done (Joules",
+        "F = Force applied (N)",
+        "d = Displacement (m)",
+        "e = 1 N \u00d7 1 m"
+      ],
+      "key_concepts": [
+        "force",
+        "work",
+        "friction",
+        "done"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Work Done by a Force",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "9ed1987a28d8e609",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Kinetic Energy",
+      "text": "Energy possessed by a body due to its motion.\n\n**Formula:**\nKE = \u00bdmv\u00b2\n\nwhere:\n- KE = Kinetic energy (J)\n- m = Mass (kg)\n- v = Velocity (m/s)\n\n**Key Points:**\n- Always positive (v\u00b2 is always positive)\n- Depends on reference frame\n- Doubles when velocity doubles? No! Quadruples (v\u00b2 relationship)",
+      "start_char": 772,
+      "end_char": 1086,
+      "subject": "Physics",
+      "topic": "Kinetic Energy",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "energy",
+        "velocity",
+        "mass",
+        "kinetic"
+      ],
+      "formulas": [
+        "E = \u00bdmv\u00b2",
+        "E = Kinetic energy (J)",
+        "m = Mass (kg)",
+        "v = Velocity (m/s)"
+      ],
+      "key_concepts": [
+        "energy",
+        "velocity",
+        "mass",
+        "kinetic"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Kinetic Energy",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "403894f4199f2d4a",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Potential Energy",
+      "text": "Energy stored in a body due to its position or configuration.\n\n**Gravitational Potential Energy:**\nPE = mgh\n\nwhere:\n- PE = Potential energy (J)\n- m = Mass (kg)\n- g = Acceleration due to gravity (9.8 m/s\u00b2)\n- h = Height above reference (m)\n\n**Key Points:**\n- Reference point can be chosen arbitrarily\n- Can be positive, negative, or zero depending on reference\n- Only changes in PE are physically meaningful",
+      "start_char": 1087,
+      "end_char": 1514,
+      "subject": "Physics",
+      "topic": "Potential Energy",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "energy",
+        "acceleration",
+        "mass",
+        "potential",
+        "gravity"
+      ],
+      "formulas": [
+        "E = mgh",
+        "E = Potential energy (J)",
+        "m = Mass (kg)",
+        "g = Acceleration due to gravity (9.8 m/s\u00b2)",
+        "h = Height above reference (m)"
+      ],
+      "key_concepts": [
+        "energy",
+        "acceleration",
+        "mass",
+        "potential",
+        "gravity"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Potential Energy",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "df55b75db50f0660",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Work-Energy Theorem",
+      "text": "The net work done on a body equals the change in its kinetic energy.\n\n**Formula:**\nW_net = \u0394KE = \u00bdmv\u00b2 - \u00bdmu\u00b2\n\n**This is powerful because:**\n- Avoids dealing with forces directly\n- Works even with variable forces\n- Connects force-based and energy-based approaches",
+      "start_char": 1515,
+      "end_char": 1802,
+      "subject": "Physics",
+      "topic": "Work-Energy Theorem",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "energy",
+        "work",
+        "power",
+        "kinetic",
+        "base",
+        "work-energy",
+        "theorem"
+      ],
+      "formulas": [
+        "t = \u0394KE = \u00bdmv\u00b2 - \u00bdmu\u00b2"
+      ],
+      "key_concepts": [
+        "force",
+        "energy",
+        "work",
+        "power",
+        "kinetic"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Work-Energy Theorem",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "989e183950f05861",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Conservation of Energy",
+      "text": "Energy can neither be created nor destroyed, only transformed from one form to another.\n\n**For conservative forces:**\nTotal Energy = KE + PE = constant\n\n**Formula:**\n\u00bdmv\u2081\u00b2 + mgh\u2081 = \u00bdmv\u2082\u00b2 + mgh\u2082\n\n**Conservative Forces:** Gravity, spring force, electrostatic force\n**Non-conservative Forces:** Friction, air resistance",
+      "start_char": 1803,
+      "end_char": 2147,
+      "subject": "Physics",
+      "topic": "Conservation of Energy",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "energy",
+        "gravity",
+        "friction",
+        "resistance",
+        "conservation"
+      ],
+      "formulas": [
+        "y = KE + PE = constant"
+      ],
+      "key_concepts": [
+        "force",
+        "energy",
+        "gravity",
+        "friction",
+        "resistance"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Conservation of Energy",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "3b825d87e05d3103",
+      "doc_id": "ncert_phy11_ch6",
+      "section": "Work, Energy and Power > Power",
+      "text": "Rate of doing work or rate of energy transfer.\n\n**Formulas:**\nP = W/t = F \u00b7 v\n\nwhere:\n- P = Power (Watts, W)\n- W = Work done (J)\n- t = Time (s)\n- F = Force (N)\n- v = Velocity (m/s)\n\n**Units:**\n- 1 Watt = 1 J/s\n- 1 horsepower (hp) = 746 W",
+      "start_char": 2148,
+      "end_char": 2396,
+      "subject": "Physics",
+      "topic": "Power",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "force",
+        "energy",
+        "velocity",
+        "work",
+        "power"
+      ],
+      "formulas": [
+        "P = W/t = F \u00b7 v",
+        "P = Power (Watts",
+        "W = Work done (J)",
+        "t = Time (s)",
+        "F = Force (N)"
+      ],
+      "key_concepts": [
+        "force",
+        "energy",
+        "velocity",
+        "work",
+        "power"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 11 Physics Chapter 6, Power",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "4ebae254ba8bdc24",
+      "doc_id": "ncert_phy12_ch1",
+      "section": "Electric Charges and Fields > Electric Charge",
+      "text": "Electric charge is a fundamental property of matter that causes it to experience a force in an electric field.\n\n**Properties:**\n- Two types: positive and negative\n- Like charges repel, unlike charges attract\n- Charge is conserved (total charge in isolated system is constant)\n- Charge is quantized: q = ne (n = integer, e = 1.6 \u00d7 10\u207b\u00b9\u2079 C)\n\n**SI Unit:** Coulomb (C)",
+      "start_char": 31,
+      "end_char": 416,
+      "subject": "Physics",
+      "topic": "Electric Charge",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "force",
+        "electric",
+        "charge"
+      ],
+      "formulas": [
+        "q = ne (n = integer",
+        "e = 1.6 \u00d7 10\u207b\u00b9\u2079 C)"
+      ],
+      "key_concepts": [
+        "force",
+        "electric",
+        "charge"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 12 Physics Chapter 1, Electric Charge",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "031ce274aae3f1d9",
+      "doc_id": "ncert_phy12_ch1",
+      "section": "Electric Charges and Fields > Coulomb's Law",
+      "text": "The force between two point charges is directly proportional to the product of their magnitudes and inversely proportional to the square of the distance between them.\n\n**Formula:**\nF = k \u00d7 q\u2081 \u00d7 q\u2082 / r\u00b2\n\nwhere:\n- F = Force (N)\n- k = Coulomb's constant = 9 \u00d7 10\u2079 N\u00b7m\u00b2/C\u00b2\n- q\u2081, q\u2082 = Charges (C)\n- r = Distance between charges (m)\n\n**Vector Form:**\nF\u2081\u2082 = k \u00d7 q\u2081 \u00d7 q\u2082 \u00d7 r\u0302\u2081\u2082 / r\u00b2\n\n**Key Points:**\n- Inverse square law (like gravity)\n- Acts along the line joining the charges\n- Force is attractive for unlike charges, repulsive for like charges",
+      "start_char": 417,
+      "end_char": 974,
+      "subject": "Physics",
+      "topic": "Coulomb's Law",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "force",
+        "gravity",
+        "charge",
+        "vector",
+        "coulomb's"
+      ],
+      "formulas": [
+        "F = k \u00d7 q\u2081 \u00d7 q\u2082 / r\u00b2",
+        "F = Force (N)",
+        "k = Coulomb's constant = 9 \u00d7 10\u2079 N\u00b7m\u00b2/C\u00b2",
+        "r = Distance between charges (m)"
+      ],
+      "key_concepts": [
+        "force",
+        "gravity",
+        "charge",
+        "vector",
+        "coulomb's"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 12 Physics Chapter 1, Coulomb's Law",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "20ff330225df7235",
+      "doc_id": "ncert_phy12_ch1",
+      "section": "Electric Charges and Fields > Electric Field",
+      "text": "Electric field is the region around a charge where another charge experiences a force.\n\n**Definition:**\nE = F / q\u2080\n\nwhere q\u2080 is a small positive test charge.\n\n**For a Point Charge:**\nE = k \u00d7 Q / r\u00b2\n\n**Key Points:**\n- Vector quantity - has magnitude and direction\n- Direction: away from positive charge, toward negative charge\n- Field lines never cross\n- Closer field lines = stronger field\n\n**Electric Field Lines Properties:**\n1. Start from positive charges, end on negative charges\n2. Never cross each other\n3. Perpendicular to conductor surface\n4. Density indicates field strength",
+      "start_char": 975,
+      "end_char": 1578,
+      "subject": "Physics",
+      "topic": "Electric Field",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "force",
+        "electric",
+        "charge",
+        "vector",
+        "field"
+      ],
+      "formulas": [
+        "E = F / q\u2080",
+        "E = k \u00d7 Q / r\u00b2",
+        "s = stronger field"
+      ],
+      "key_concepts": [
+        "force",
+        "electric",
+        "charge",
+        "vector",
+        "field"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 12 Physics Chapter 1, Electric Field",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "af147840502ed5d2",
+      "doc_id": "ncert_phy12_ch1",
+      "section": "Electric Charges and Fields > Electric Potential",
+      "text": "Electric potential at a point is the work done per unit positive charge to bring a charge from infinity to that point.\n\n**Formula:**\nV = k \u00d7 Q / r\n\nwhere:\n- V = Electric potential (Volts, V)\n- Q = Source charge (C)\n- r = Distance from charge (m)\n\n**Potential Difference:**\nV_AB = V_A - V_B = W_AB / q\n\n**Relation to Electric Field:**\nE = -dV/dr\n\n**Key Points:**\n- Scalar quantity (easier to work with than E)\n- Potential due to multiple charges = algebraic sum\n- Equipotential surfaces are perpendicular to field lines",
+      "start_char": 1579,
+      "end_char": 2121,
+      "subject": "Physics",
+      "topic": "Electric Potential",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "work",
+        "potential",
+        "electric",
+        "charge",
+        "algebra"
+      ],
+      "formulas": [
+        "V = k \u00d7 Q / r",
+        "V = Electric potential (Volts",
+        "Q = Source charge (C)",
+        "r = Distance from charge (m)",
+        "B = V_A - V_B = W_AB / q"
+      ],
+      "key_concepts": [
+        "work",
+        "potential",
+        "electric",
+        "charge",
+        "algebra"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      },
+      "source_citation": "NCERT Class 12 Physics Chapter 1, Electric Potential",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "8426600e7bebcd5b",
+      "doc_id": "ncert_chem11_ch1",
+      "section": "Some Basic Concepts of Chemistry > The Mole Concept",
+      "text": "A mole is the amount of substance that contains as many entities (atoms, molecules, ions) as there are atoms in exactly 12 grams of carbon-12.\n\n**Avogadro's Number:**\nN\u2090 = 6.022 \u00d7 10\u00b2\u00b3 entities/mol\n\n**Key Formulas:**\n- Number of moles (n) = Given mass / Molar mass = m / M\n- Number of moles (n) = Number of entities / N\u2090 = N / N\u2090\n- Number of moles (for gases at STP) = Volume / 22.4 L\n\n**Molar Mass:**\n- Mass of 1 mole of substance\n- Numerically equal to molecular/atomic mass in g/mol\n- Example: M(H\u2082O) = 2(1) + 16 = 18 g/mol",
+      "start_char": 36,
+      "end_char": 584,
+      "subject": "Chemistry",
+      "topic": "The Mole Concept",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "mass",
+        "atom",
+        "molecule",
+        "mole",
+        "concept"
+      ],
+      "formulas": [
+        "s = m / M"
+      ],
+      "key_concepts": [
+        "mass",
+        "atom",
+        "molecule",
+        "mole",
+        "concept"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Chemistry Chapter 1, The Mole Concept",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "5e3efa0004ec3c61",
+      "doc_id": "ncert_chem11_ch1",
+      "section": "Some Basic Concepts of Chemistry > Percentage Composition",
+      "text": "Mass percentage of an element in a compound:\n\n**Formula:**\nMass % of element = (Mass of element in formula / Molar mass of compound) \u00d7 100\n\n**Example for H\u2082O:**\n- Mass % of H = (2 \u00d7 1 / 18) \u00d7 100 = 11.11%\n- Mass % of O = (16 / 18) \u00d7 100 = 88.89%",
+      "start_char": 585,
+      "end_char": 858,
+      "subject": "Chemistry",
+      "topic": "Percentage Composition",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "mass",
+        "percentage",
+        "composition"
+      ],
+      "formulas": [
+        "t = (Mass of element in formula / Molar mass of compound) \u00d7 100",
+        "H = (2 \u00d7 1 / 18) \u00d7 100 = 11.11%",
+        "O = (16 / 18) \u00d7 100 = 88.89%"
+      ],
+      "key_concepts": [
+        "mass",
+        "percentage",
+        "composition"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Chemistry Chapter 1, Percentage Composition",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "1293ebb72e735844",
+      "doc_id": "ncert_chem11_ch1",
+      "section": "Some Basic Concepts of Chemistry > Empirical and Molecular Formula",
+      "text": "**Empirical Formula:** Simplest whole number ratio of atoms\n**Molecular Formula:** Actual number of atoms in a molecule\n\nMolecular Formula = n \u00d7 Empirical Formula\n\nwhere n = Molar mass / Empirical formula mass\n\n**Steps to find formulas:**\n1. Convert mass % to mass (assume 100g sample)\n2. Convert mass to moles\n3. Divide by smallest number of moles\n4. Round to nearest whole numbers (empirical formula)\n5. Find n and multiply for molecular formula",
+      "start_char": 859,
+      "end_char": 1343,
+      "subject": "Chemistry",
+      "topic": "Empirical and Molecular Formula",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "mass",
+        "atom",
+        "molecule",
+        "mole",
+        "empirical",
+        "molecular",
+        "formula"
+      ],
+      "formulas": [
+        "a = n \u00d7 Empirical Formula",
+        "n = Molar mass / Empirical formula mass"
+      ],
+      "key_concepts": [
+        "mass",
+        "atom",
+        "molecule",
+        "mole",
+        "empirical"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Chemistry Chapter 1, Empirical and Molecular Formula",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "50fb9e66f8aefb3f",
+      "doc_id": "ncert_chem11_ch1",
+      "section": "Some Basic Concepts of Chemistry > Stoichiometry",
+      "text": "Quantitative relationships in chemical reactions based on balanced equations.\n\n**Key Concepts:**\n- Coefficients represent mole ratios\n- Limiting reagent: reactant that gets consumed first\n- Theoretical yield: maximum product possible\n- Actual yield: product actually obtained\n- Percentage yield = (Actual yield / Theoretical yield) \u00d7 100\n\n**Problem Solving Steps:**\n1. Write balanced equation\n2. Convert given quantities to moles\n3. Use mole ratios to find moles of desired substance\n4. Convert moles to required units",
+      "start_char": 1344,
+      "end_char": 1881,
+      "subject": "Chemistry",
+      "topic": "Stoichiometry",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "reaction",
+        "base",
+        "mole",
+        "equation",
+        "limit",
+        "stoichiometry"
+      ],
+      "formulas": [
+        "d = (Actual yield / Theoretical yield) \u00d7 100"
+      ],
+      "key_concepts": [
+        "reaction",
+        "base",
+        "mole",
+        "equation",
+        "limit"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Chemistry Chapter 1, Stoichiometry",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "a0fba861d135d934",
+      "doc_id": "ncert_bio11_ch13",
+      "section": "Photosynthesis in Higher Plants > Overview of Photosynthesis",
+      "text": "Photosynthesis is the process by which green plants convert light energy into chemical energy, producing glucose and oxygen.\n\n**Overall Equation:**\n6CO\u2082 + 6H\u2082O + Light Energy \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082\n\n**Location:** Chloroplasts (specifically in thylakoids and stroma)",
+      "start_char": 35,
+      "end_char": 325,
+      "subject": "Biology",
+      "topic": "Overview of Photosynthesis",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "energy",
+        "equation",
+        "photosynthesis",
+        "overview"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "energy",
+        "equation",
+        "photosynthesis",
+        "overview"
+      ],
+      "exam_relevance": {
+        "JEE": 1,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Biology Chapter 13, Overview of Photosynthesis",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "eccd06be862375e1",
+      "doc_id": "ncert_bio11_ch13",
+      "section": "Photosynthesis in Higher Plants > Light Reactions (Light-Dependent Reactions)",
+      "text": "Occur in the thylakoid membrane.\n\n**Key Events:**\n1. Light absorption by photosystems (PS I and PS II)\n2. Photolysis of water: 2H\u2082O \u2192 4H\u207a + 4e\u207b + O\u2082\n3. Electron transport chain\n4. ATP synthesis (photophosphorylation)\n5. NADPH formation\n\n**Products:** ATP, NADPH, O\u2082\n\n**Photosystems:**\n- **PS II (P680):** Absorbs light at 680nm, splits water\n- **PS I (P700):** Absorbs light at 700nm, produces NADPH",
+      "start_char": 326,
+      "end_char": 774,
+      "subject": "Biology",
+      "topic": "Light Reactions (Light-Dependent Reactions)",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "electron",
+        "light",
+        "reactions",
+        "(light-dependent",
+        "reactions)"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "electron",
+        "light",
+        "reactions",
+        "(light-dependent",
+        "reactions)"
+      ],
+      "exam_relevance": {
+        "JEE": 1,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Biology Chapter 13, Light Reactions (Light-Dependent Reactions)",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "303cea9490de2f0b",
+      "doc_id": "ncert_bio11_ch13",
+      "section": "Photosynthesis in Higher Plants > Dark Reactions (Calvin Cycle)",
+      "text": "Occur in the stroma. Also called light-independent reactions or C3 pathway.\n\n**Key Steps:**\n1. **Carbon Fixation:** CO\u2082 + RuBP \u2192 2 \u00d7 3-PGA (catalyzed by RuBisCO)\n2. **Reduction:** 3-PGA \u2192 G3P (uses ATP and NADPH)\n3. **Regeneration:** G3P \u2192 RuBP (uses ATP)\n\n**For 1 glucose:** 6 CO\u2082, 18 ATP, 12 NADPH required\n\n**RuBisCO:**\n- Most abundant enzyme on Earth\n- Fixes CO\u2082 to RuBP\n- Also has oxygenase activity (photorespiration)",
+      "start_char": 775,
+      "end_char": 1233,
+      "subject": "Biology",
+      "topic": "Dark Reactions (Calvin Cycle)",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "reaction",
+        "reduction",
+        "enzyme",
+        "respiration",
+        "gene",
+        "dark",
+        "reactions",
+        "(calvin",
+        "cycle)"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "reaction",
+        "reduction",
+        "enzyme",
+        "respiration",
+        "gene"
+      ],
+      "exam_relevance": {
+        "JEE": 1,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Biology Chapter 13, Dark Reactions (Calvin Cycle)",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "c042a2f17e410e27",
+      "doc_id": "ncert_bio11_ch13",
+      "section": "Photosynthesis in Higher Plants > C3 vs C4 Plants",
+      "text": "**C3 Plants:**\n- First product: 3-carbon compound (3-PGA)\n- Examples: Rice, wheat, potato\n- Less efficient in hot, dry conditions\n- Photorespiration occurs\n\n**C4 Plants:**\n- First product: 4-carbon compound (OAA)\n- Examples: Maize, sugarcane, sorghum\n- Kranz anatomy (bundle sheath cells)\n- More efficient in hot conditions\n- Minimal photorespiration",
+      "start_char": 1234,
+      "end_char": 1605,
+      "subject": "Biology",
+      "topic": "C3 vs C4 Plants",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "atom",
+        "cell",
+        "respiration",
+        "plants"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "atom",
+        "cell",
+        "respiration",
+        "plants"
+      ],
+      "exam_relevance": {
+        "JEE": 1,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Biology Chapter 13, C3 vs C4 Plants",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "4c60d5cf025203c2",
+      "doc_id": "ncert_bio11_ch13",
+      "section": "Photosynthesis in Higher Plants > Factors Affecting Photosynthesis",
+      "text": "**1. Light Intensity:**\n- Rate increases with light up to saturation point\n- After saturation, rate plateaus\n\n**2. CO\u2082 Concentration:**\n- Rate increases with CO\u2082 up to 0.05%\n- C4 plants respond better at low CO\u2082\n\n**3. Temperature:**\n- Optimum: 25-35\u00b0C for C3, higher for C4\n- Enzymes denature at high temperatures\n\n**4. Water:**\n- Required for photolysis\n- Stomatal closure in water stress reduces CO\u2082 entry",
+      "start_char": 1606,
+      "end_char": 2051,
+      "subject": "Biology",
+      "topic": "Factors Affecting Photosynthesis",
+      "subtopic": "",
+      "class_level": "11",
+      "keywords": [
+        "concentration",
+        "enzyme",
+        "factors",
+        "affecting",
+        "photosynthesis"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "concentration",
+        "enzyme",
+        "factors",
+        "affecting",
+        "photosynthesis"
+      ],
+      "exam_relevance": {
+        "JEE": 1,
+        "NEET": 5
+      },
+      "source_citation": "NCERT Class 11 Biology Chapter 13, Factors Affecting Photosynthesis",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "24bb8a8cc3f17b4b",
+      "doc_id": "ncert_math12_ch5",
+      "section": "Continuity and Differentiability > Definition of Derivative",
+      "text": "The derivative of a function f(x) at point x is defined as:\n\n**Formula:**\nf'(x) = lim[h\u21920] (f(x+h) - f(x)) / h\n\n**Interpretation:**\n- Geometrically: Slope of tangent at point x\n- Physically: Instantaneous rate of change",
+      "start_char": 36,
+      "end_char": 285,
+      "subject": "Mathematics",
+      "topic": "Definition of Derivative",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "derivative",
+        "function",
+        "definition"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "derivative",
+        "function",
+        "definition"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      },
+      "source_citation": "NCERT Class 12 Mathematics Chapter 5, Definition of Derivative",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "354ce294d222940b",
+      "doc_id": "ncert_math12_ch5",
+      "section": "Continuity and Differentiability > Standard Derivatives",
+      "text": "**Power Functions:**\n- d/dx(x\u207f) = nx\u207f\u207b\u00b9\n- d/dx(1/x) = -1/x\u00b2\n- d/dx(\u221ax) = 1/(2\u221ax)\n\n**Exponential and Logarithmic:**\n- d/dx(e\u02e3) = e\u02e3\n- d/dx(a\u02e3) = a\u02e3 ln(a)\n- d/dx(ln x) = 1/x\n- d/dx(log\u2090 x) = 1/(x ln a)\n\n**Trigonometric:**\n- d/dx(sin x) = cos x\n- d/dx(cos x) = -sin x\n- d/dx(tan x) = sec\u00b2x\n- d/dx(cot x) = -csc\u00b2x\n- d/dx(sec x) = sec x tan x\n- d/dx(csc x) = -csc x cot x\n\n**Inverse Trigonometric:**\n- d/dx(sin\u207b\u00b9x) = 1/\u221a(1-x\u00b2)\n- d/dx(cos\u207b\u00b9x) = -1/\u221a(1-x\u00b2)\n- d/dx(tan\u207b\u00b9x) = 1/(1+x\u00b2)",
+      "start_char": 286,
+      "end_char": 787,
+      "subject": "Mathematics",
+      "topic": "Standard Derivatives",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "power",
+        "function",
+        "standard",
+        "derivatives"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "power",
+        "function",
+        "standard",
+        "derivatives"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      },
+      "source_citation": "NCERT Class 12 Mathematics Chapter 5, Standard Derivatives",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "9aabd9e64863da1d",
+      "doc_id": "ncert_math12_ch5",
+      "section": "Continuity and Differentiability > Differentiation Rules",
+      "text": "**Sum/Difference Rule:**\nd/dx(f \u00b1 g) = f' \u00b1 g'\n\n**Product Rule:**\nd/dx(f\u00b7g) = f'\u00b7g + f\u00b7g'\n\n**Quotient Rule:**\nd/dx(f/g) = (f'\u00b7g - f\u00b7g') / g\u00b2\n\n**Chain Rule:**\nd/dx[f(g(x))] = f'(g(x)) \u00b7 g'(x)\n\n**Implicit Differentiation:**\nWhen y is defined implicitly by F(x,y) = 0, differentiate both sides with respect to x, treating y as a function of x.",
+      "start_char": 788,
+      "end_char": 1155,
+      "subject": "Mathematics",
+      "topic": "Differentiation Rules",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "function",
+        "differentiation",
+        "rules"
+      ],
+      "formulas": [],
+      "key_concepts": [
+        "function",
+        "differentiation",
+        "rules"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      },
+      "source_citation": "NCERT Class 12 Mathematics Chapter 5, Differentiation Rules",
+      "page_reference": ""
+    },
+    {
+      "chunk_id": "6921c5e153468c49",
+      "doc_id": "ncert_math12_ch5",
+      "section": "Continuity and Differentiability > Applications of Derivatives",
+      "text": "**Finding Maxima and Minima:**\n1. Find f'(x) = 0 (critical points)\n2. Use second derivative test:\n   - f''(x) > 0 \u2192 local minimum\n   - f''(x) < 0 \u2192 local maximum\n   - f''(x) = 0 \u2192 inconclusive\n\n**Rate of Change:**\nIf y = f(x), then dy/dx represents the rate of change of y with respect to x.\n\n**Tangent and Normal:**\n- Slope of tangent at (a, f(a)): m = f'(a)\n- Equation of tangent: y - f(a) = f'(a)(x - a)\n- Slope of normal: -1/f'(a)",
+      "start_char": 1156,
+      "end_char": 1623,
+      "subject": "Mathematics",
+      "topic": "Applications of Derivatives",
+      "subtopic": "",
+      "class_level": "12",
+      "keywords": [
+        "derivative",
+        "equation",
+        "applications",
+        "derivatives"
+      ],
+      "formulas": [
+        "y = f(x)",
+        "m = f'(a)"
+      ],
+      "key_concepts": [
+        "derivative",
+        "equation",
+        "applications",
+        "derivatives"
+      ],
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      },
+      "source_citation": "NCERT Class 12 Mathematics Chapter 5, Applications of Derivatives",
+      "page_reference": ""
+    }
+  ],
+  "documents": [
+    {
+      "doc_id": "ncert_phy11_ch5",
+      "filename": "ncert_physics_11_ch5_laws_of_motion.md",
+      "title": "NCERT Class 11 Physics Chapter 5",
+      "source_id": "ncert_physics_11",
+      "subject": "Physics",
+      "class_level": "11",
+      "chapter": "Laws of Motion",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.700301",
+      "content_hash": "903d2396f4cce926"
+    },
+    {
+      "doc_id": "ncert_phy11_ch6",
+      "filename": "ncert_physics_11_ch6_work_energy.md",
+      "title": "NCERT Class 11 Physics Chapter 6",
+      "source_id": "ncert_physics_11",
+      "subject": "Physics",
+      "class_level": "11",
+      "chapter": "Work, Energy and Power",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.709349",
+      "content_hash": "95b6d046d50af83c"
+    },
+    {
+      "doc_id": "ncert_phy12_ch1",
+      "filename": "ncert_physics_12_ch1_electrostatics.md",
+      "title": "NCERT Class 12 Physics Chapter 1",
+      "source_id": "ncert_physics_12",
+      "subject": "Physics",
+      "class_level": "12",
+      "chapter": "Electric Charges and Fields",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.712298",
+      "content_hash": "4cecfe42d6166f7f"
+    },
+    {
+      "doc_id": "ncert_chem11_ch1",
+      "filename": "ncert_chemistry_11_ch1_basic_concepts.md",
+      "title": "NCERT Class 11 Chemistry Chapter 1",
+      "source_id": "ncert_chemistry_11",
+      "subject": "Chemistry",
+      "class_level": "11",
+      "chapter": "Some Basic Concepts of Chemistry",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.750379",
+      "content_hash": "947108c7d44e9a84"
+    },
+    {
+      "doc_id": "ncert_bio11_ch13",
+      "filename": "ncert_biology_11_ch13_photosynthesis.md",
+      "title": "NCERT Class 11 Biology Chapter 13",
+      "source_id": "ncert_biology_11",
+      "subject": "Biology",
+      "class_level": "11",
+      "chapter": "Photosynthesis in Higher Plants",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.754298",
+      "content_hash": "405567a569357abc"
+    },
+    {
+      "doc_id": "ncert_math12_ch5",
+      "filename": "ncert_mathematics_12_ch5_derivatives.md",
+      "title": "NCERT Class 12 Mathematics Chapter 5",
+      "source_id": "ncert_math_12",
+      "subject": "Mathematics",
+      "class_level": "12",
+      "chapter": "Continuity and Differentiability",
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "fetched_at": "2025-12-20T18:03:48.755335",
+      "content_hash": "651e769f9691a5a0"
+    }
+  ],
+  "chunk_count": 27,
+  "doc_count": 6
+}

@@ -107,7 +107,9 @@ class SupervisorAgent(BaseAgent):
                 self.agent_negotiator.register_agent("mentor", self.mentor, ["explanation", "empathy", "metaphors"])
                 self.agent_negotiator.register_agent("professor", self.professor, ["derivation", "proof", "formal"])
                 self.agent_negotiator.register_agent("doubt_resolver", self.doubt_resolver, ["doubt", "confusion", "clarification"])
-                self.agent_negotiator.register_agent("exam_coach", self.exam_coach, ["exam", "strategy", "jee", "neet"])
+                # COGNITIVE OS FIX: More specific capabilities for exam_coach
+                # Only activate for explicit exam preparation, not generic "strategy"
+                self.agent_negotiator.register_agent("exam_coach", self.exam_coach, ["jee_preparation", "neet_preparation", "exam_strategy", "study_plan_for_exam"])
                 
                 self.use_hybrid_reasoning = True
                 logger.info("   ├── 🌍 UniversalKnowledgeGraph connected (multi-domain)")
@@ -159,8 +161,8 @@ class SupervisorAgent(BaseAgent):
         try:
             logger.info(f"🤖 Supervisor orchestrating query: {query[:100]}")
             
-            # Step 1: Analyze query intent
-            intent = self._detect_intent(query)
+            # Step 1: Analyze query intent (with context for mode-aware detection)
+            intent = self._detect_intent(query, context)
             logger.info(f"🎯 Detected intent: {intent}")
             
             # 🆕 Step 1.5: Use Agent Negotiation for TRUE multi-agent collaboration
@@ -259,13 +261,20 @@ class SupervisorAgent(BaseAgent):
                 'visual': None
             }
     
-    def _detect_intent(self, query: str) -> str:
+    def _detect_intent(self, query: str, context: Dict[str, Any] = None) -> str:
         """
-        Detect student intent from query
+        Detect student intent from query.
+        
+        COGNITIVE OS FIX: Now context-aware for mode validation.
+        
+        Args:
+            query: Student's question
+            context: Context dict with exam_mode, etc.
         
         Returns:
             Intent type: 'concept', 'derivation', 'application', 'comparison', 'doubt', etc.
         """
+        context = context or {}
         query_lower = query.lower().strip()
         
         # Greeting intent (must check FIRST before other patterns)
@@ -282,10 +291,24 @@ class SupervisorAgent(BaseAgent):
             return 'doubt'
         
         # EXAM STRATEGY INTENT - Route to ExamCoachAgent
-        # Check if student needs exam preparation guidance
+        # COGNITIVE OS FIX: Only route to ExamCoach if BOTH conditions are met:
+        # 1. Query explicitly mentions exam strategy (stricter pattern matching)
+        # 2. Exam context exists (user has explicit exam mode or query mentions exam)
+        exam_mode = context.get('exam_mode', 'General')
+        has_explicit_exam_mode = exam_mode.upper() in ['JEE', 'NEET', 'UPSC', 'GATE', 'CAT']
+        
         if ExamCoachAgent.is_exam_strategy_query(query):
-            logger.info("🏆 Detected EXAM_STRATEGY intent - routing to ExamCoach")
-            return 'exam_strategy'
+            # Additional check: Even with strict pattern matching, only route if:
+            # - User has explicit exam mode, OR
+            # - Query explicitly mentions an exam name
+            explicit_exam_in_query = any(exam in query_lower for exam in ['jee', 'neet', 'upsc', 'gate', 'cat', 'boards'])
+            
+            if has_explicit_exam_mode or explicit_exam_in_query:
+                logger.info(f"🏆 Detected EXAM_STRATEGY intent (exam_mode={exam_mode}) - routing to ExamCoach")
+                return 'exam_strategy'
+            else:
+                logger.info(f"⚠️ Exam-like query but exam_mode=General - NOT routing to ExamCoach")
+                # Fall through to concept/other intents
         
         # WEAK AREA ANALYSIS INTENT - Route to WeakAreaDetective
         # Check if student wants to know their weak areas

@@ -102,14 +102,61 @@ Remember:
     
     @staticmethod
     def is_exam_strategy_query(query: str) -> bool:
-        """Check if query is about exam strategy"""
-        patterns = [
-            'prepare', 'preparation', 'strategy', 'plan', 'study plan',
-            'jee', 'neet', 'exam', 'test', 'revision',
-            'tips', 'tricks', 'how to study', 'schedule'
+        """
+        Check if query is EXPLICITLY about exam strategy.
+        
+        COGNITIVE OS FIX: Made pattern matching stricter to prevent intent leakage.
+        - "test" alone won't trigger (too generic - could mean "test the code")
+        - "tips" alone won't trigger (too generic - could mean "tips for learning")
+        - Requires explicit exam context (JEE, NEET) or exam preparation phrases
+        
+        Returns True ONLY for explicit exam strategy requests like:
+        - "JEE preparation strategy"
+        - "How to prepare for NEET?"
+        - "Make me a study plan for JEE"
+        - "Exam tips for physics"
+        """
+        import re
+        query_lower = query.lower().strip()
+        
+        # EXPLICIT EXAM KEYWORDS - These MUST be present for exam routing
+        explicit_exam_keywords = ['jee', 'neet', 'upsc', 'gate', 'cat', 'boards']
+        has_explicit_exam = any(kw in query_lower for kw in explicit_exam_keywords)
+        
+        # STRATEGY/PREPARATION PHRASES - Combine with exam keywords
+        strategy_phrases = [
+            'exam preparation', 'exam strategy', 'exam tips',
+            'study plan for', 'prepare for', 'revision schedule',
+            'how to prepare', 'preparation strategy', 'study schedule for',
+            'mock test schedule', 'weightage', 'high-yield', 'important topics for',
+            'previous year questions', 'pyq', 'syllabus for', 'cutoff'
         ]
-        query_lower = query.lower()
-        return any(pattern in query_lower for pattern in patterns)
+        has_strategy_phrase = any(phrase in query_lower for phrase in strategy_phrases)
+        
+        # STRICT COMPOUND CHECK:
+        # 1. Explicit exam keyword + any prep-related word
+        # 2. OR explicit strategy phrase (which includes exam context)
+        if has_explicit_exam:
+            prep_words = ['prepar', 'strateg', 'plan', 'study', 'revis', 'tips', 'schedule']
+            has_prep_word = any(word in query_lower for word in prep_words)
+            if has_prep_word:
+                return True
+        
+        if has_strategy_phrase:
+            return True
+        
+        # Specific patterns with regex for "make me a X plan for Y"
+        plan_patterns = [
+            r'make\s+(?:me\s+)?a?\s*(?:study\s+)?plan\s+for\s+\w*(?:jee|neet|exam)',
+            r'(?:jee|neet)\s+(?:mains?|advanced)?\s*(?:prep|strategy|plan)',
+            r'how\s+(?:to|do\s+i)\s+(?:prepare|study)\s+for\s+(?:jee|neet|exam)',
+        ]
+        for pattern in plan_patterns:
+            if re.search(pattern, query_lower):
+                return True
+        
+        # Default: NOT an exam strategy query
+        return False
     
     async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """

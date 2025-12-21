@@ -296,6 +296,9 @@ class ContinuityEngine:
                 next_review = memory.get("next_review_at")
                 due_hours = 0
                 if next_review:
+                    # Ensure next_review is timezone-aware before subtraction
+                    if hasattr(next_review, 'tzinfo') and next_review.tzinfo is None:
+                        next_review = next_review.replace(tzinfo=timezone.utc)
                     due_hours = (now - next_review).total_seconds() / 3600
                 
                 reviews.append({

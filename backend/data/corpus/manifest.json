@@ -1,0 +1,37 @@
+{
+  "dataset_version": "2025-12-20T18:03:49.555331",
+  "content_hash": "220731689decddbe",
+  "num_documents": 6,
+  "num_chunks": 27,
+  "avg_chunk_len": 443.77777777777777,
+  "total_tokens_estimate": 2995,
+  "sources": [
+    {
+      "source_id": "ncert_physics_11",
+      "doc_count": 2,
+      "attribution": "NCERT, Govt. of India. Educational use only."
+    },
+    {
+      "source_id": "ncert_physics_12",
+      "doc_count": 1,
+      "attribution": "NCERT, Govt. of India. Educational use only."
+    },
+    {
+      "source_id": "ncert_chemistry_11",
+      "doc_count": 1,
+      "attribution": "NCERT, Govt. of India. Educational use only."
+    },
+    {
+      "source_id": "ncert_biology_11",
+      "doc_count": 1,
+      "attribution": "NCERT, Govt. of India. Educational use only."
+    },
+    {
+      "source_id": "ncert_math_12",
+      "doc_count": 1,
+      "attribution": "NCERT, Govt. of India. Educational use only."
+    }
+  ],
+  "created_at": "2025-12-20T18:03:49.555331",
+  "updated_at": "2025-12-20T18:03:49.555331"
+}

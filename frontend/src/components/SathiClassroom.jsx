@@ -388,18 +388,19 @@ export default function SathiClassroom() {
   };
 
   // Send message - using fetch to match working AITutorNeuroSymbolic pattern
-  const handleSend = useCallback(async () => {
-    if ((!inputMessage.trim() && !selectedImage) || loading) return;
+  // FIX: Accept optional messageText parameter to avoid stale closure issues
+  const handleSend = useCallback(async (messageText = null) => {
+    const messageToSend = messageText || inputMessage.trim();
+    if ((!messageToSend && !selectedImage) || loading) return;
     
     const userMessage = {
       role: 'user',
-      content: inputMessage.trim(),
+      content: messageToSend,
       image: imagePreview,
       timestamp: new Date().toISOString()
     };
     
     setMessages(prev => [...prev, userMessage]);
-    const messageToSend = inputMessage.trim();
     setInputMessage('');
     setLoading(true);
 
@@ -576,7 +577,7 @@ export default function SathiClassroom() {
         {messages.length === 0 ? (
           <WelcomeScreen onSuggestionClick={(suggestion) => {
             setInputMessage(suggestion);
-            setTimeout(() => handleSend(), 100);
+            handleSend(suggestion);  // FIX: Pass directly, no setTimeout
           }} />
         ) : (
           <div className="space-y-2">
@@ -587,7 +588,7 @@ export default function SathiClassroom() {
                 isUser={msg.role === 'user'}
                 onSuggestionClick={(suggestion) => {
                   setInputMessage(suggestion);
-                  setTimeout(() => handleSend(), 100);
+                  handleSend(suggestion);  // FIX: Pass directly, no setTimeout
                 }}
               />
             ))}
