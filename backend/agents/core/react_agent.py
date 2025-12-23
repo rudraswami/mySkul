@@ -404,8 +404,15 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
                 
                 # Check if we should finish
                 if thought_action.action == "FINISH":
+                    answer = thought_action.action_input.get("answer", "")
+                    
+                    # CRITICAL: If answer is empty or looks like JSON, regenerate
+                    if not answer or len(answer.strip()) < 20 or answer.strip().startswith('{'):
+                        logger.warning("[ReAct] Empty or invalid answer, regenerating with direct LLM call")
+                        answer = await self._generate_direct_answer(state)
+                    
                     state.status = AgentStatus.COMPLETE
-                    state.final_answer = thought_action.action_input.get("answer", thought_action.thought)
+                    state.final_answer = answer
                     state.confidence = thought_action.action_input.get("confidence", 0.8)
                     logger.info(f"[ReAct] Completed at step {state.iterations} with FINISH action")
                     break
@@ -727,26 +734,77 @@ Respond in valid JSON format with these fields:
             return None
     
     def _parse_llm_response(self, response: str) -> Dict[str, Any]:
-        """Parse the LLM's JSON response"""
+        """
+        Parse the LLM's JSON response.
+        
+        CRITICAL: Never return raw JSON as the answer. If parsing fails,
+        extract any meaningful text content or provide a graceful message.
+        """
+        import re
+        
+        # Clean the response first - remove markdown code blocks if present
+        cleaned = response.strip()
+        if cleaned.startswith('```'):
+            # Remove markdown code fences
+            cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+            cleaned = re.sub(r'\s*```$', '', cleaned)
+        
+        # Try to parse as JSON
         try:
-            # Try to parse as JSON
-            return json.loads(response)
+            return json.loads(cleaned)
         except json.JSONDecodeError:
-            # Try to extract JSON from response
-            import re
-            json_match = re.search(r'\{[\s\S]*\}', response)
-            if json_match:
-                try:
-                    return json.loads(json_match.group())
-                except:
-                    pass
-            
-            # Fallback
+            pass
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[\s\S]*\}', cleaned)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except:
+                pass
+        
+        # ================================================================
+        # CRITICAL FIX: Extract answer from malformed JSON
+        # Never return raw JSON to the UI
+        # ================================================================
+        
+        # Try to extract just the answer field from malformed JSON
+        answer_match = re.search(r'"answer"\s*:\s*"([^"]*(?:"[^"]*"[^"]*)*)"', cleaned)
+        if answer_match:
+            extracted_answer = answer_match.group(1)
+            # Clean up escaped characters
+            extracted_answer = extracted_answer.replace('\\"', '"').replace('\\n', '\n')
+            if len(extracted_answer) > 20:  # Reasonable answer length
+                logger.info(f"[ReAct] Extracted answer from malformed JSON ({len(extracted_answer)} chars)")
+                return {
+                    "thought": "Extracted answer from partial response",
+                    "action": "FINISH",
+                    "action_input": {"answer": extracted_answer}
+                }
+        
+        # Try to find clean text content (not JSON structure)
+        # Remove JSON-like patterns to find actual content
+        text_content = re.sub(r'\{[^{}]*"(?:thought|action|action_input)"[^{}]*\}', '', cleaned)
+        text_content = re.sub(r'"(?:thought|action|action_input)":\s*', '', text_content)
+        text_content = re.sub(r'[{}\[\]]', '', text_content)
+        text_content = text_content.strip(' \n",:')
+        
+        if len(text_content) > 50:  # Found substantial text
+            logger.info(f"[ReAct] Extracted text content from response ({len(text_content)} chars)")
             return {
-                "thought": response,
+                "thought": "Extracted text from response",
                 "action": "FINISH",
-                "action_input": {"answer": response}
+                "action_input": {"answer": text_content}
             }
+        
+        # Final fallback - DO NOT return raw JSON
+        # Instead, signal that we need to regenerate
+        logger.warning("[ReAct] Could not parse LLM response, returning empty for retry")
+        return {
+            "thought": "Response parsing failed",
+            "action": "FINISH",
+            "action_input": {"answer": ""}  # Empty triggers regeneration
+        }
     
     async def _generate_fallback_answer(self, state: AgentState) -> str:
         """Generate a fallback answer when max iterations reached"""
@@ -766,7 +824,14 @@ I hope this helps! Let me know if you'd like me to explore further."""
         return "I apologize, but I need more information to fully answer your question. Could you please clarify or rephrase?"
     
     def _format_response(self, state: AgentState) -> Dict[str, Any]:
-        """Format the final response"""
+        """
+        Format the final response.
+        
+        CRITICAL: This is the FINAL gate before content reaches the UI.
+        Must ensure NO JSON or internal traces leak through.
+        """
+        import re
+        
         # Fix escaped newlines in final answer (LLM returns \n as literal string)
         content = state.final_answer or ""
         if content:
@@ -776,31 +841,63 @@ I hope this helps! Let me know if you'd like me to explore further."""
             content = content.replace('\\t', '\t')
             content = content.replace('\\"', '"')
         
+        # ================================================================
+        # FINAL SANITIZATION: Remove ANY JSON/ReAct traces from content
+        # This is the LAST LINE OF DEFENSE before UI
+        # ================================================================
+        if content:
+            # Remove JSON blocks that look like ReAct reasoning
+            content = re.sub(
+                r'\{\s*"(?:thought|action|action_input|confidence|observation)"[^}]*\}',
+                '', content, flags=re.IGNORECASE | re.DOTALL
+            )
+            
+            # Remove partial/incomplete JSON that starts with these patterns
+            content = re.sub(r'^\s*\{\s*"(?:thought|action)"[^}]*$', '', content, flags=re.MULTILINE)
+            
+            # Remove lines that are just JSON keys
+            content = re.sub(r'^\s*"(?:thought|action|action_input|confidence)":\s*.*$', '', content, flags=re.MULTILINE)
+            
+            # Remove stray JSON delimiters at start/end
+            content = re.sub(r'^\s*[\{\[\]]+\s*', '', content)
+            content = re.sub(r'\s*[\}\]\[]+\s*$', '', content)
+            
+            # Clean up excessive whitespace from removals
+            content = re.sub(r'\n{3,}', '\n\n', content)
+            content = content.strip()
+        
+        # ================================================================
+        # NEVER include reasoning_chain in the response sent to frontend
+        # It's logged for observability but never exposed to student
+        # ================================================================
         return {
             "success": True,
             "agent": self.get_agent_name(),
             "content": content,
             "confidence": state.confidence,
-            "reasoning_chain": [ta.to_dict() for ta in state.reasoning_chain],
+            # REMOVED: "reasoning_chain" - NEVER expose to student
+            # Log it instead for observability
             "tools_used": state.tools_used,
             "iterations": state.iterations,
             "metadata": {
                 "agent_type": "react",
-                "duration_ms": (state.end_time - state.start_time).total_seconds() * 1000 if state.end_time else 0
+                "duration_ms": (state.end_time - state.start_time).total_seconds() * 1000 if state.end_time else 0,
+                "reasoning_steps": len(state.reasoning_chain)  # Just the count, not the content
             }
         }
     
     def _format_error_response(self, state: AgentState) -> Dict[str, Any]:
-        """Format an error response"""
+        """Format an error response - NEVER expose internal traces"""
         return {
             "success": False,
             "agent": self.get_agent_name(),
             "error": state.error,
             "content": "I encountered an issue processing your request. Please try again.",
-            "reasoning_chain": [ta.to_dict() for ta in state.reasoning_chain],
+            # REMOVED: "reasoning_chain" - NEVER expose to student
             "metadata": {
                 "agent_type": "react",
-                "error": True
+                "error": True,
+                "reasoning_steps": len(state.reasoning_chain)  # Just the count
             }
         }
 

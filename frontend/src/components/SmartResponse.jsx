@@ -237,15 +237,85 @@ const SmartResponse = ({
     const dualResponse = response.dual_response || {};
     
     // Helper function to safely extract string content
+    // CRITICAL: Never JSON.stringify - extract actual text only
+    // This is the FINAL safety net before any content reaches the UI
     const safeString = (value) => {
-      if (typeof value === 'string') return value;
+      if (typeof value === 'string') return sanitizeText(value);
       if (typeof value === 'number') return String(value);
-      if (Array.isArray(value)) return value.map(String).join('\n\n');
+      if (Array.isArray(value)) return value.filter(v => typeof v === 'string').map(sanitizeText).join('\n\n');
       if (value && typeof value === 'object') {
-        // If it's an object, try to extract text/content field
-        return value.text || value.content || value.message || JSON.stringify(value);
+        // FORBIDDEN KEYS - never extract from these (internal agent traces)
+        const FORBIDDEN = ['thought', 'action', 'action_input', '_debug', 'reasoning_chain', 
+                          'raw_response', 'raw_content', 'agent_trace', 'observation',
+                          'confidence', 'tool_calls_raw', 'llm_raw'];
+        
+        // If it's an object, try to extract text/content field - NEVER stringify
+        const extracted = value.text || value.content || value.message || value.explanation || value.answer;
+        if (extracted && typeof extracted === 'string') {
+          return sanitizeText(extracted);
+        }
+        // Deep search for any string content (skip forbidden keys)
+        for (const key of Object.keys(value)) {
+          if (FORBIDDEN.includes(key)) continue;
+          const val = value[key];
+          if (typeof val === 'string' && val.length > 30) {
+            return sanitizeText(val);
+          }
+        }
+        // NEVER stringify objects - this is what causes the { } leak
+        console.warn('⚠️ safeString: Could not extract text from object, returning null', Object.keys(value));
+        return null;
       }
       return null;
+    };
+    
+    // Sanitize text to remove any internal traces
+    // CRITICAL: Sanitize text to remove internal traces AND format for student display
+    const sanitizeText = (text) => {
+      if (!text || typeof text !== 'string') return text;
+      
+      // Remove JSON blocks with internal keys
+      let cleaned = text.replace(/\{[^{}]*"(?:thought|action|action_input|confidence|hybrid_reasoning|orchestration)"[^{}]*\}/gi, '');
+      
+      // Remove ReAct patterns
+      cleaned = cleaned.replace(/^(Thought|Action|Observation):\s*[^\n]+$/gim, '');
+      
+      // CRITICAL: Remove incomplete JSON at end (e.g., response ending with { or {"conf)
+      cleaned = cleaned.replace(/\s*\{\s*"?[a-z_]*"?\s*:?\s*$/i, '');
+      cleaned = cleaned.replace(/\s*\{\s*$/i, '');
+      
+      // Remove JSON blocks that appear after a sentence (common leak at end)
+      cleaned = cleaned.replace(/[\.\!\?]\s*\{[^{}]*"(?:conf|hyb|orch|pipe|rout)[^{}]*$/gi, (m) => m[0]);
+      
+      // Remove JSON fragments at very end like "}, or "], 
+      cleaned = cleaned.replace(/["']?\s*\}\s*,?\s*$/g, '');
+      cleaned = cleaned.replace(/["']?\s*\]\s*,?\s*$/g, '');
+      
+      // ================================================================
+      // LATEX/MATH FORMATTING - Critical for student readability
+      // ================================================================
+      // Remove LONE BACKSLASH lines
+      cleaned = cleaned.replace(/^\s*\\+\s*$/gm, '');
+      cleaned = cleaned.replace(/\\\s*\n\s*\n/g, '\n\n');
+      
+      // Normalize LaTeX delimiters for KaTeX/MathJax
+      cleaned = cleaned.replace(/\\\[\s*/g, '\n$$');
+      cleaned = cleaned.replace(/\s*\\\]/g, '$$\n');
+      cleaned = cleaned.replace(/\\\(\s*/g, '$');
+      cleaned = cleaned.replace(/\s*\\\)/g, '$');
+      
+      // Fix double-escaped backslashes in LaTeX
+      cleaned = cleaned.replace(/\$\$([^$]+)\$\$/g, (match, content) => {
+        return '$$' + content.replace(/\\\\([a-zA-Z]+)/g, '\\$1') + '$$';
+      });
+      
+      // Clean up excess whitespace
+      cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+      
+      // Remove trailing garbage
+      cleaned = cleaned.replace(/[,"\'\}\]]+\s*$/g, '');
+      
+      return cleaned.trim();
     };
     
     // Try multiple sources for main content (prioritize actual explanation)

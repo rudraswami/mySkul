@@ -191,19 +191,43 @@ class StreamingAIService:
             # In production, use LLM native streaming
             full_response = response.get('response', {})
             
-            # Stream default view first
-            yield {
-                'type': 'default_view',
-                'data': full_response.get('default_view', {}),
-                'complete': False
-            }
+            # CRITICAL: Extract clean text content for streaming
+            # Frontend expects 'text_chunk' with 'content' as string
+            main_content = ''
+            default_view = full_response.get('default_view', {})
+            if isinstance(default_view, dict):
+                mc = default_view.get('main_content', {})
+                if isinstance(mc, dict):
+                    main_content = mc.get('content', '')
+                elif isinstance(mc, str):
+                    main_content = mc
             
-            await asyncio.sleep(0.5)  # Small delay between chunks
+            # Also check progressive sections for explanation
+            if not main_content:
+                progressive = full_response.get('progressive_sections', {})
+                if isinstance(progressive, dict):
+                    main_content = progressive.get('explanation', '')
             
-            # Stream progressive sections
+            # Sanitize the content before streaming
+            main_content = self._sanitize_streaming_content(main_content)
+            
+            # Stream the clean text content
+            if main_content:
+                # Split into chunks for progressive display
+                chunk_size = 100
+                for i in range(0, len(main_content), chunk_size):
+                    chunk = main_content[i:i + chunk_size]
+                    yield {
+                        'type': 'text_chunk',
+                        'content': chunk,
+                        'complete': i + chunk_size >= len(main_content)
+                    }
+                    await asyncio.sleep(0.05)  # Small delay between chunks
+            
+            # Send complete event with full response data
             yield {
-                'type': 'progressive_sections',
-                'data': full_response.get('progressive_sections', {}),
+                'type': 'complete',
+                'data': full_response,
                 'complete': True
             }
             
@@ -288,6 +312,40 @@ class StreamingAIService:
         ]
         key_string = '|'.join(key_parts)
         return f"mentor_v2:{hashlib.md5(key_string.encode()).hexdigest()}"
+    
+    def _sanitize_streaming_content(self, content: str) -> str:
+        """
+        Sanitize content before streaming to remove any internal traces.
+        CRITICAL: This runs on every streamed chunk to ensure clean output.
+        """
+        import re
+        
+        if not content or not isinstance(content, str):
+            return content or ''
+        
+        # Remove JSON blocks containing internal keys
+        json_pattern = r'\{[^{}]*"(?:thought|action|action_input|confidence|observation)"[^{}]*\}'
+        content = re.sub(json_pattern, '', content, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Remove ReAct transcript patterns
+        react_pattern = r'(?:^|\n)\s*(?:Thought|Action|Observation|Action Input|Step \d+):\s*[^\n]*(?:\n|$)'
+        content = re.sub(react_pattern, '\n', content, flags=re.IGNORECASE | re.MULTILINE)
+        
+        # Remove standalone trace keys
+        trace_pattern = r'(?:^|\n)\s*"(?:thought|action|action_input)":\s*[^\n]+(?:\n|$)'
+        content = re.sub(trace_pattern, '\n', content, flags=re.IGNORECASE | re.MULTILINE)
+        
+        # Clean up orphaned braces at start
+        if content.strip().startswith('{') and '"thought"' not in content[:200].lower():
+            # Check if it's a lone brace
+            lines = content.split('\n')
+            if lines[0].strip() == '{':
+                content = '\n'.join(lines[1:])
+        
+        # Clean up multiple newlines
+        content = re.sub(r'\n{3,}', '\n\n', content)
+        
+        return content.strip()
     
     def _format_sse_event(self, event_name: str, data: Dict[str, Any]) -> str:
         """Format Server-Sent Event"""

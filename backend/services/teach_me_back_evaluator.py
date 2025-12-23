@@ -82,7 +82,8 @@ class TeachbackTriggerDetector:
     MIN_TURNS_BETWEEN_TEACHBACK = 3
     
     def __init__(self):
-        self._last_teachback_turn = {}  # user_id -> turn_count
+        # FIXED: Cooldown is now SESSION-ISOLATED: (user_id, session_id) -> turn_count
+        self._last_teachback_turn = {}
     
     def detect(
         self,
@@ -91,7 +92,8 @@ class TeachbackTriggerDetector:
         ai_response: str,
         conversation_state: Dict[str, Any],
         retrieval_confidence: float = 0.0,
-        user_id: str = None
+        user_id: str = None,
+        session_id: str = None
     ) -> TeachbackTrigger:
         """
         Detect if this is a good moment for teachback.
@@ -109,10 +111,12 @@ class TeachbackTriggerDetector:
                 confidence=0.0
             )
         
-        # 2. Check cooldown
+        # 2. Check cooldown (SESSION-ISOLATED)
         turn_count = conversation_state.get('turn_count', 0)
-        if user_id:
-            last_turn = self._last_teachback_turn.get(user_id, -999)
+        if user_id and session_id:
+            # Key is (user_id, session_id) for session isolation
+            cooldown_key = (user_id, session_id)
+            last_turn = self._last_teachback_turn.get(cooldown_key, -999)
             if turn_count - last_turn < self.MIN_TURNS_BETWEEN_TEACHBACK:
                 return TeachbackTrigger(
                     should_trigger=False,
@@ -147,9 +151,10 @@ class TeachbackTriggerDetector:
         topic = conversation_state.get('last_topic', '') or signals.get('detected_topic', 'this concept')
         prompt = self._build_teachback_prompt(mode, topic, signals)
         
-        # Update cooldown tracker
-        if user_id:
-            self._last_teachback_turn[user_id] = turn_count
+        # Update cooldown tracker (SESSION-ISOLATED)
+        if user_id and session_id:
+            cooldown_key = (user_id, session_id)
+            self._last_teachback_turn[cooldown_key] = turn_count
         
         logger.info(f"🎓 Teachback triggered: mode={mode.value}, topic={topic}, score={signals['trigger_score']:.2f}")
         
@@ -713,19 +718,26 @@ def get_teachback_follow_up_planner() -> TeachbackFollowUpPlanner:
 # TEACHBACK INTEGRATION HELPER — For Orchestrator use
 # =============================================================================
 
-async def check_and_build_teachback_prompt(
+async def check_and_build_teachback_payload(
     route_type: str,
     user_message: str,
     ai_response: str,
     conversation_state: Dict[str, Any],
     retrieval_confidence: float = 0.0,
-    user_id: str = None
-) -> Optional[str]:
+    user_id: str = None,
+    session_id: str = None
+) -> Optional[Dict[str, Any]]:
     """
-    Check if teachback should be triggered and return prompt to append.
+    Check if teachback should be triggered and return STRUCTURED payload.
     
     Called by UnifiedAIOrchestrator after educational responses.
-    Returns prompt string to append, or None if no teachback.
+    
+    IMPORTANT: Returns structured object for UI to render as CTA, NOT a string to append.
+    The frontend should render this as a clickable button that opens a modal.
+    
+    Returns:
+        Dict with triggered, mode, topic, cta_text, prompt, guardrail_status
+        or None if no teachback.
     """
     detector = get_teachback_trigger_detector()
     
@@ -735,13 +747,43 @@ async def check_and_build_teachback_prompt(
         ai_response=ai_response,
         conversation_state=conversation_state,
         retrieval_confidence=retrieval_confidence,
-        user_id=user_id
+        user_id=user_id,
+        session_id=session_id
     )
     
     if trigger.should_trigger:
-        logger.info(f"🎓 Teachback prompt added: mode={trigger.mode.value}, reason={trigger.reason}")
-        return f"\n\n---\n\n**💡 Quick check:**\n{trigger.prompt}"
+        logger.info(f"🎓 Teachback triggered: mode={trigger.mode.value}, reason={trigger.reason}")
+        return {
+            'triggered': True,
+            'mode': trigger.mode.value,
+            'topic': trigger.topic,
+            'cta_text': "Think you got it? Try explaining it back",
+            'prompt': trigger.prompt,
+            'confidence': trigger.confidence,
+            'reason': trigger.reason
+        }
     
+    return None
+
+
+# DEPRECATED: Keep for backward compatibility but log warning
+async def check_and_build_teachback_prompt(
+    route_type: str,
+    user_message: str,
+    ai_response: str,
+    conversation_state: Dict[str, Any],
+    retrieval_confidence: float = 0.0,
+    user_id: str = None,
+    session_id: str = None
+) -> Optional[str]:
+    """
+    DEPRECATED: Use check_and_build_teachback_payload instead.
+    
+    This function appends text to main_response which breaks the UX contract.
+    Kept for backward compatibility - returns None to prevent text appending.
+    """
+    logger.warning("⚠️ check_and_build_teachback_prompt is deprecated. Use check_and_build_teachback_payload.")
+    # Return None to prevent any text appending - the new API should be used
     return None
 
 

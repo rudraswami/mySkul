@@ -276,7 +276,8 @@ class ResponseAdapter:
                     'rag': agentic_response.get('rag', {}),
                     'learning_path': agentic_response.get('learning_path', [])
                 },
-                'raw_response': f"Mentor: {mentor_response.get('content', '')}\n\nProfessor: {professor_response.get('content', '')}",
+                # REMOVED: raw_response - NEVER expose raw LLM outputs to frontend
+                # Internal debugging: raw content can be logged server-side if needed
                 'question_type': 'greeting' if is_greeting else normalized_intent,
                 'generation_time': 2.5
             }

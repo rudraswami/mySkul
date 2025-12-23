@@ -332,7 +332,7 @@ refer to the conversation history above and provide a clear summary.
                     for msg in recent[-3:]:  # Last 3 exchanges
                         user_q = msg.get("user_message", "")
                         if user_q:
-                            history_parts.append(f"- Student asked: {user_q[:80]}")
+                            history_parts.append(f"- {user_q[:80]}")
                     if history_parts:
                         conversation_history = f"""
 PREVIOUS CONVERSATION:
@@ -1637,11 +1637,11 @@ You're making great progress by actively seeking to understand. Keep up this exc
                     {"$set": {"last_updated": datetime.now(timezone.utc).isoformat()}}
                 )
                 
+                # CRITICAL: No raw_response - consistent with display contract
                 return {
                     'success': True,
                     'message_id': message_id,
                     'response': greeting_response,
-                    'raw_response': 'greeting',
                     'generation_time': 0.1,
                     'question_type': 'greeting',
                     'intent': 'greeting'
@@ -2008,11 +2008,12 @@ You're making great progress by actively seeking to understand. Keep up this exc
                 response_dict['visual_offer'] = visual_offer
             # [JULES VISUAL ENHANCEMENT END]
 
+            # CRITICAL: NEVER return raw_response to frontend - it can leak internal traces
             return {
                 'success': True,
                 'message_id': message_id,
                 'response': response_dict,
-                'raw_response': raw_response,
+                # raw_response REMOVED - internal debugging only, never expose to UI
                 'generation_time': generation_time,
                 'question_type': question_type
             }

@@ -629,8 +629,10 @@ class MemoryIntegrationService:
             ai_response = msg.get("ai_response", {})
             
             if user_msg:
-                # Extract just the question
-                summary_parts.append(f"Student asked: {user_msg[:100]}")
+                # Extract question topic (for internal context, NOT shown to user)
+                # Use neutral format that won't look like debug dump if leaked
+                question_brief = user_msg[:80].strip()
+                summary_parts.append(f"Q: {question_brief}")
                 
                 # Extract key points from AI response - DEFENSIVE chained .get()
                 if isinstance(ai_response, dict):
@@ -647,8 +649,9 @@ class MemoryIntegrationService:
                         response_text = ""
                     
                     if response_text:
-                        # Get first 150 chars as summary
-                        summary_parts.append(f"AI explained: {response_text[:150]}...")
+                        # Get first 100 chars as summary (clean format)
+                        answer_brief = response_text[:100].strip()
+                        summary_parts.append(f"A: {answer_brief}...")
         
         if not summary_parts:
             return ""

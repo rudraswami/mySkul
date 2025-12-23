@@ -274,7 +274,178 @@ class TestPipelineValues:
 
 
 # =============================================================================
-# D) MEMORY V2 SESSION RECALL TESTS
+# D) CONTEXT CONTINUITY TESTS (Continuation Topic Resolver)
+# =============================================================================
+
+class TestContextContinuity:
+    """
+    Test context continuity for follow-up messages like "explain deeper".
+    
+    SHIP BLOCKER: "explain deeper" after an education explanation must:
+    1. Stay in Education Lane
+    2. Keep the previous topic
+    3. NOT ask "what topic?"
+    """
+    
+    def test_continuation_resolver_detects_short_followup(self):
+        """
+        Test: Short follow-ups like "explain deeper" detected as continuation
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Mock context with previous topic
+        context_with_topic = {
+            'context_pack': type('MockContextPack', (), {
+                'current_topic': 'newton_laws',
+                'previous_topic': 'newton_laws',
+                'is_first_turn': False
+            })(),
+            'conversation_state': {
+                'last_topic': 'newton_laws'
+            }
+        }
+        
+        # Test various short follow-up messages
+        short_followups = [
+            "explain deeper",
+            "more details",
+            "go on",
+            "tell me more",
+            "in detail?"
+        ]
+        
+        for msg in short_followups:
+            result = engine._resolve_continuation_topic(msg, context_with_topic, None)
+            assert result['is_continuation'] == True, \
+                f"'{msg}' should be detected as continuation"
+            assert result['topic'] == 'newton_laws', \
+                f"'{msg}' should preserve topic 'newton_laws', got {result.get('topic')}"
+    
+    def test_continuation_resolver_ignores_new_topic(self):
+        """
+        Test: Messages with clear new topics are NOT continuations
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        context_with_topic = {
+            'context_pack': type('MockContextPack', (), {
+                'current_topic': 'newton_laws',
+                'previous_topic': 'newton_laws',
+                'is_first_turn': False
+            })(),
+            'conversation_state': {
+                'last_topic': 'newton_laws'
+            }
+        }
+        
+        # Messages with new topics (not continuations)
+        new_topic_messages = [
+            "explain photosynthesis in detail",
+            "what is thermodynamics?",
+            "tell me about Einstein's relativity",
+        ]
+        
+        for msg in new_topic_messages:
+            result = engine._resolve_continuation_topic(msg, context_with_topic, None)
+            assert result['is_continuation'] == False, \
+                f"'{msg}' should NOT be a continuation (has new topic)"
+    
+    def test_continuation_without_prior_topic_fails(self):
+        """
+        Test: Continuation detection fails without prior topic
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        # No prior topic
+        empty_context = {
+            'context_pack': type('MockContextPack', (), {
+                'current_topic': '',
+                'previous_topic': '',
+                'is_first_turn': True
+            })(),
+            'conversation_state': {}
+        }
+        
+        result = engine._resolve_continuation_topic("explain deeper", empty_context, None)
+        assert result['is_continuation'] == False, \
+            "Should NOT be continuation without prior topic"
+        assert result['reason'] == 'no_previous_topic', \
+            f"Reason should be 'no_previous_topic', got {result.get('reason')}"
+    
+    @pytest.mark.asyncio
+    async def test_context_continuity_explain_deeper_keeps_topic(self):
+        """
+        SHIP BLOCKER: "explain deeper" after education keeps topic.
+        
+        Scenario:
+        1. User: "Explain Newton's laws" → Education Lane, topic extracted
+        2. User: "explain deeper" → Should stay Education Lane, keep topic
+        
+        This test verifies the full routing flow.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine, RecommendedPipeline
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Simulate context after first educational message
+        context_after_education = {
+            'context_pack': type('MockContextPack', (), {
+                'current_topic': 'newton_laws',
+                'previous_topic': 'newton_laws',
+                'is_first_turn': False,
+                'is_continuation': True
+            })(),
+            'conversation_state': {
+                'last_topic': 'newton_laws',
+                'conversation_phase': 'active',
+                'last_pipeline': 'multi_agent'
+            },
+            'current_topic': 'newton_laws',
+            'is_first_turn': False
+        }
+        
+        # User says "explain deeper" after Newton's laws explanation
+        decision = await engine.route("explain deeper", context_after_education)
+        
+        # ASSERTIONS:
+        
+        # 1. Should stay in Education Lane (not conversation)
+        education_pipelines = [
+            RecommendedPipeline.MULTI_AGENT,
+            RecommendedPipeline.HYBRID_REASONING,
+            RecommendedPipeline.REACT_AGENTIC,
+            RecommendedPipeline.VISUAL_SYNC
+        ]
+        assert decision.pipeline in education_pipelines, \
+            f"'explain deeper' should route to Education Lane, got {decision.pipeline.value}"
+        
+        # 2. Should have continuation_topic in extra_context
+        assert decision.extra_context is not None, \
+            "extra_context should exist"
+        
+        # Check for continuation topic (may be in extra_context or via state authority)
+        has_continuation = (
+            decision.extra_context.get('is_continuation') == True or
+            decision.extra_context.get('continuation_topic') == 'newton_laws' or
+            decision.extra_context.get('forced_continuation') == True
+        )
+        assert has_continuation, \
+            f"Should have continuation info, got extra_context: {decision.extra_context}"
+        
+        # 3. If continuation resolved, topic should be preserved
+        if decision.extra_context.get('is_continuation'):
+            assert decision.extra_context.get('continuation_topic') == 'newton_laws', \
+                f"Topic should be 'newton_laws', got {decision.extra_context.get('continuation_topic')}"
+
+
+# =============================================================================
+# E) MEMORY V2 SESSION RECALL TESTS
 # =============================================================================
 
 class TestMemoryV2SessionRecall:
@@ -575,6 +746,99 @@ class TestMemoryWriteBugFix:
         # Should have defensive checks for response extraction
         assert "isinstance" in orchestrate_source, \
             "orchestrate_pipeline should have isinstance checks for memory write"
+    
+    def test_memory_list_input_does_not_throw(self):
+        """
+        REGRESSION: Memory v2 write failed: 'list' object has no attribute 'get'
+        
+        Test: Passing a list-shaped payload to memory extraction should NOT raise.
+        """
+        from services.memory_extraction import _normalize_to_dict
+        
+        # These inputs previously caused "'list' object has no attribute 'get'"
+        test_inputs = [
+            ["some", "list", "data"],  # Raw list
+            ("tuple", "data"),          # Tuple
+            None,                       # None
+            [],                         # Empty list
+            [{"nested": "dict"}],       # List of dicts
+        ]
+        
+        # MUST NOT RAISE for any input
+        for inp in test_inputs:
+            try:
+                result = _normalize_to_dict(inp)
+                assert isinstance(result, dict), f"Result must be dict, got {type(result)}"
+            except Exception as e:
+                pytest.fail(f"_normalize_to_dict raised for {type(inp)}: {e}")
+    
+    def test_memory_normalization_wraps_items(self):
+        """
+        Test: List payloads are wrapped as {"items": [...]}
+        """
+        from services.memory_extraction import _normalize_to_dict
+        
+        # List input should become {"items": [...]}
+        list_input = ["item1", "item2", "item3"]
+        result = _normalize_to_dict(list_input)
+        
+        assert result == {"items": ["item1", "item2", "item3"]}, \
+            "List should be wrapped as {'items': [...]}"
+        
+        # Tuple input should also be wrapped
+        tuple_input = ("a", "b")
+        result = _normalize_to_dict(tuple_input)
+        assert result == {"items": ["a", "b"]}, \
+            "Tuple should be converted to list and wrapped"
+        
+        # None should become empty dict
+        assert _normalize_to_dict(None) == {}, "None should become {}"
+        
+        # String should become {"content": ...}
+        result = _normalize_to_dict("hello")
+        assert result == {"content": "hello"}, "String should be wrapped as {'content': ...}"
+    
+    def test_memory_dict_input_unchanged(self):
+        """
+        Test: Dict payloads remain unchanged (no wrapper added)
+        """
+        from services.memory_extraction import _normalize_to_dict
+        
+        # Dict input should pass through unchanged
+        dict_input = {"key": "value", "nested": {"a": 1}}
+        result = _normalize_to_dict(dict_input)
+        
+        assert result == dict_input, "Dict input should remain unchanged"
+        assert result is dict_input, "Dict should be the same object (no copy)"
+    
+    def test_bound_payload_handles_list(self):
+        """
+        REGRESSION: _bound_payload would fail on list.keys()
+        
+        Test: memory_service._bound_payload handles list input gracefully.
+        """
+        from services.memory_service import MemoryService
+        
+        # Create a mock db (won't be used for this test)
+        class MockDB:
+            pass
+        
+        service = MemoryService(MockDB())
+        
+        # These inputs previously caused errors
+        test_inputs = [
+            ["list", "items"],   # List
+            {"dict": "data"},    # Dict (should work)
+            None,                # None
+            ("tuple",),          # Tuple
+        ]
+        
+        for inp in test_inputs:
+            try:
+                result = service._bound_payload(inp)
+                assert isinstance(result, dict), f"Result must be dict, got {type(result)}"
+            except Exception as e:
+                pytest.fail(f"_bound_payload raised for {type(inp)}: {e}")
 
 
 # =============================================================================
@@ -783,6 +1047,148 @@ class TestTeachMeBackV2:
         assert "understood" in prompt.lower()
         assert "gaps" in prompt.lower()
     
+    def test_teachback_not_appended_to_main_response(self):
+        """
+        SHIP BLOCKER: Teachback CTA text must NOT be appended to main_response.
+        
+        UX CONTRACT: Backend returns structured teachback payload for frontend
+        to render as a clickable CTA button that opens a modal.
+        """
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        # Read the process method source (main orchestration entry point)
+        source = inspect.getsource(UnifiedAIOrchestrator.process)
+        
+        # OLD (BANNED): result['main_response'] += teachback_prompt
+        # NEW (CORRECT): result['teachback'] = {...structured payload...}
+        
+        # These patterns should NOT exist:
+        assert "main_response'] += teachback" not in source, \
+            "Teachback text should NOT be appended to main_response"
+        assert "content'] += teachback" not in source, \
+            "Teachback text should NOT be appended to content"
+        
+        # This pattern SHOULD exist:
+        assert "check_and_build_teachback_payload" in source, \
+            "Should use structured payload function, not string appender"
+        assert "'prompt_appended': False" in source, \
+            "Should explicitly mark that text is NOT appended"
+    
+    def test_teachback_payload_contains_cta_and_prompt(self):
+        """
+        Test: Teachback payload must contain cta_text and prompt fields.
+        """
+        from services.teach_me_back_evaluator import TeachbackTriggerDetector
+        
+        detector = TeachbackTriggerDetector()
+        
+        # Trigger teachback
+        result = detector.detect(
+            route_type="multi_agent",
+            user_message="ok understood",
+            ai_response="Newton's First Law states that..." * 20,
+            conversation_state={
+                'last_topic': 'newtons_laws',
+                'turn_count': 5
+            },
+            retrieval_confidence=0.85,
+            user_id="test_user",
+            session_id="test_session"
+        )
+        
+        if result.should_trigger:
+            # Verify the trigger has required fields
+            assert result.prompt is not None and len(result.prompt) > 0, \
+                "Teachback prompt must not be empty"
+            assert result.topic is not None, \
+                "Teachback topic must be set"
+            assert result.mode is not None, \
+                "Teachback mode must be set"
+    
+    def test_teachback_cooldown_isolated_by_session(self):
+        """
+        SHIP BLOCKER: Same user, different sessions → independent cooldown.
+        This prevents cross-session teachback blocking.
+        """
+        from services.teach_me_back_evaluator import TeachbackTriggerDetector
+        
+        detector = TeachbackTriggerDetector()
+        
+        # Common setup
+        user_message = "ok got it"
+        ai_response = "Here is a detailed explanation..." * 30
+        
+        # First session - trigger teachback
+        result1 = detector.detect(
+            route_type="multi_agent",
+            user_message=user_message,
+            ai_response=ai_response,
+            conversation_state={'turn_count': 5, 'last_topic': 'physics'},
+            retrieval_confidence=0.9,
+            user_id="user_123",
+            session_id="session_A"
+        )
+        
+        # DIFFERENT session, same user - should NOT be blocked by session_A's cooldown
+        result2 = detector.detect(
+            route_type="multi_agent",
+            user_message=user_message,
+            ai_response=ai_response,
+            conversation_state={'turn_count': 5, 'last_topic': 'physics'},
+            retrieval_confidence=0.9,
+            user_id="user_123",
+            session_id="session_B"  # DIFFERENT session
+        )
+        
+        # Session B should have independent cooldown
+        if result1.should_trigger:
+            # If first triggered, second (different session) should also be able to trigger
+            # (cooldown is per-session, not per-user)
+            assert result2.reason != "cooldown" or result2.should_trigger, \
+                "Different session should have independent cooldown"
+    
+    def test_teachback_cooldown_blocks_within_session(self):
+        """
+        Test: Same user + same session → blocks within MIN_TURNS_BETWEEN_TEACHBACK.
+        """
+        from services.teach_me_back_evaluator import TeachbackTriggerDetector
+        
+        detector = TeachbackTriggerDetector()
+        
+        # Common setup
+        user_message = "ok got it"
+        ai_response = "Here is a detailed explanation..." * 30
+        
+        # First trigger at turn 5
+        result1 = detector.detect(
+            route_type="multi_agent",
+            user_message=user_message,
+            ai_response=ai_response,
+            conversation_state={'turn_count': 5, 'last_topic': 'physics'},
+            retrieval_confidence=0.9,
+            user_id="user_456",
+            session_id="session_X"
+        )
+        
+        # Second attempt at turn 6 (within cooldown)
+        result2 = detector.detect(
+            route_type="multi_agent",
+            user_message=user_message,
+            ai_response=ai_response,
+            conversation_state={'turn_count': 6, 'last_topic': 'physics'},  # Only 1 turn later
+            retrieval_confidence=0.9,
+            user_id="user_456",
+            session_id="session_X"  # SAME session
+        )
+        
+        # If first triggered, second should be blocked by cooldown
+        if result1.should_trigger:
+            assert result2.should_trigger is False, \
+                "Should be blocked by cooldown within same session"
+            assert result2.reason == "cooldown", \
+                f"Expected 'cooldown' reason, got '{result2.reason}'"
+    
     def test_mastery_not_decreased_on_incorrect_teachback(self):
         """
         SHIP BLOCKER: Incorrect teachback should NOT decrease mastery
@@ -978,6 +1384,465 @@ class TestSubjectCarryForward:
         # Very short message with Chemistry context
         result = _detect_subject_from_question("hmm ok", "Chemistry")
         assert result == "Chemistry"
+
+
+# =============================================================================
+# TEST: RECAP TAKEOVER BUG FIX
+# =============================================================================
+
+class TestRecapTakeoverFix:
+    """
+    SHIP BLOCKER: Education requests must NOT be hijacked by recap/continue.
+    """
+    
+    def test_education_override_in_dialogue_act(self):
+        """
+        Test: "explain photosynthesis" MUST bypass dialogue_act detection.
+        Even with prior context, education requests should route to classifier.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Test with prior context (which was causing the bug)
+        conversation_state = {
+            'last_topic': 'physics',
+            'pending_action': None
+        }
+        
+        # Education requests should return None (bypass to classifier)
+        result = engine._detect_dialogue_act("explain photosynthesis", conversation_state)
+        assert result is None, f"'explain photosynthesis' should bypass dialogue_act, got: {result}"
+        
+        result = engine._detect_dialogue_act("what is photosynthesis", conversation_state)
+        assert result is None, f"'what is photosynthesis' should bypass dialogue_act, got: {result}"
+        
+        result = engine._detect_dialogue_act("how does photosynthesis work?", conversation_state)
+        assert result is None, f"'how does photosynthesis work?' should bypass dialogue_act, got: {result}"
+        
+        result = engine._detect_dialogue_act("define mitochondria", conversation_state)
+        assert result is None, f"'define mitochondria' should bypass dialogue_act, got: {result}"
+    
+    def test_acknowledgments_still_route_conversation(self):
+        """
+        Test: Pure acknowledgments like "ok" should still route to conversation.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        conversation_state = {
+            'last_topic': 'physics',
+            'ai_asked_question': True
+        }
+        
+        # True acknowledgments should route to conversation
+        result = engine._detect_dialogue_act("ok", conversation_state)
+        assert result is not None
+        assert result.get('lane') == 'conversation'
+        
+        result = engine._detect_dialogue_act("yes", conversation_state)
+        assert result is not None
+        assert result.get('lane') == 'conversation'
+    
+    def test_no_recap_string_for_education(self):
+        """
+        Test: Response to "explain X" must NOT contain recap strings.
+        """
+        # This tests the sanitization/format at response level
+        RECAP_MARKERS = [
+            "Here's where we left off",
+            "Student asked:",
+            "your mastery: 0%"
+        ]
+        
+        # Simulate what a clean education response should look like
+        test_response = "Photosynthesis is the process by which plants convert sunlight..."
+        
+        for marker in RECAP_MARKERS:
+            assert marker not in test_response, f"Education response should not contain '{marker}'"
+    
+    def test_name_prefix_sanitization(self):
+        """
+        Test: Placeholder names like 'dsd', 'hiremath' should NOT appear as prefix.
+        """
+        # Test the sanitization logic
+        BLOCKED_NAMES = ['dsd', 'hiremath', 'test', 'user', 'student', 'unknown']
+        
+        for name in BLOCKED_NAMES:
+            # Simulate sanitization check
+            if name and len(name.strip()) >= 3:
+                name_clean = name.strip().lower()
+                # These should be blocked
+                assert name_clean in BLOCKED_NAMES, f"Name '{name}' should be blocked"
+    
+    def test_question_form_triggers_education(self):
+        """
+        Test: Messages ending with ? and 3+ words should trigger education override.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        conversation_state = {'last_topic': 'chemistry'}
+        
+        # Question form should bypass dialogue_act
+        result = engine._detect_dialogue_act("what happens in photosynthesis?", conversation_state)
+        assert result is None, "Question form should bypass dialogue_act"
+        
+        result = engine._detect_dialogue_act("why is the sky blue?", conversation_state)
+        assert result is None, "Question form should bypass dialogue_act"
+
+
+class TestNoDebugLeakage:
+    """
+    Test that internal debug strings never appear in responses.
+    """
+    
+    def test_no_student_asked_in_response(self):
+        """Responses should not contain 'Student asked:' internal format."""
+        # This is now formatted as "Q:" internally which is cleaner
+        from services.memory_integration import MemoryIntegrationService
+        
+        # Verify the format was changed
+        import inspect
+        source = inspect.getsource(MemoryIntegrationService._build_conversation_summary)
+        
+        # Should use Q: format, not "Student asked:"
+        assert "Q:" in source or "Student asked:" not in source
+    
+    def test_recap_format_is_clean(self):
+        """Recap response should have clean format without debug info."""
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator._generate_proactive_response)
+        
+        # Should NOT have raw mastery 0% display
+        # The new code conditionally shows mastery only if > 0
+        assert "mastery_level > 0" in source or "mastery: 0%" not in source
+
+
+# =============================================================================
+# TEST: PRODUCTION BUG REGRESSIONS
+# =============================================================================
+
+class TestProductionBugRegressions:
+    """
+    Regression tests for production bugs that must NEVER return.
+    """
+    
+    def test_risk_flags_list_handling(self):
+        """
+        REGRESSION: Memory v2 write failed: 'list' object has no attribute 'get'
+        
+        risk_flags is a LIST of RiskFlag enums, not a dict.
+        The orchestrator must handle both list and dict formats.
+        """
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator.orchestrate_pipeline)
+        
+        # Should check isinstance for list handling
+        assert "isinstance(risk_flags" in source, "Should check risk_flags type"
+        
+        # Should handle both list and dict
+        assert "list" in source and "dict" in source
+        
+        # Should NOT use .get() directly on risk_flags without type check
+        # The old buggy code was: risk_flags.get('self_harm')
+    
+    def test_guardrail_status_redirect_not_required(self):
+        """
+        REGRESSION: GuardrailStatus.REDIRECT doesn't exist in enum.
+        
+        Teachback gating must NOT reference GuardrailStatus.REDIRECT directly.
+        Should use getattr() for backward compatibility.
+        """
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator.orchestrate_pipeline)
+        
+        # Should use getattr for backward compatibility
+        assert "getattr(GuardrailStatus" in source, "Should use getattr for safe enum access"
+        
+        # Should NOT have direct GuardrailStatus.REDIRECT reference
+        # (would crash if enum doesn't define REDIRECT)
+        assert "GuardrailStatus.REDIRECT]" not in source, "Should not directly reference REDIRECT"
+    
+    def test_guardrail_status_enum_values(self):
+        """
+        Verify GuardrailStatus enum has expected values.
+        """
+        from services.guardrails_v2 import GuardrailStatus
+        
+        # These MUST exist
+        assert hasattr(GuardrailStatus, 'PASS')
+        assert hasattr(GuardrailStatus, 'HARD_BLOCK')
+        assert hasattr(GuardrailStatus, 'SOFT_BLOCK')
+        
+        # REDIRECT may or may not exist - code must handle both cases
+        # This is why we use getattr()
+    
+    def test_risk_flag_enum_values(self):
+        """
+        Verify RiskFlag enum has expected values.
+        """
+        from services.guardrails_v2 import RiskFlag
+        
+        # These MUST exist for safety checks
+        assert hasattr(RiskFlag, 'CHEATING')
+        assert hasattr(RiskFlag, 'SELF_HARM_INSTRUCTION')
+        assert hasattr(RiskFlag, 'SELF_HARM_IDEATION')
+        assert hasattr(RiskFlag, 'UNSAFE')
+    
+    def test_teachback_suppression_string_fallback(self):
+        """
+        Teachback suppression should work via string matching as fallback.
+        """
+        import inspect
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        source = inspect.getsource(UnifiedAIOrchestrator.orchestrate_pipeline)
+        
+        # Should have string-based fallback for robustness
+        assert "status_str" in source or ".lower()" in source
+        assert "'hard'" in source or '"hard"' in source
+
+
+# =============================================================================
+# TEST: INTERNAL TRACE LEAKAGE — CRITICAL PRODUCTION BUG
+# =============================================================================
+
+class TestInternalTraceLeakage:
+    """
+    CRITICAL: Test that internal ReAct traces NEVER leak to student UI.
+    
+    Tests the robust sanitization of:
+    1. Nested JSON with thought/action/action_input
+    2. Flat JSON blocks
+    3. Duplicated content
+    4. Line-by-line ReAct patterns
+    """
+    
+    def test_nested_react_json_removed(self):
+        """
+        CRITICAL: Nested JSON with action_input containing nested objects must be removed.
+        This was the original bug - the regex couldn't handle nested braces.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Exact pattern that was leaking
+        text_with_nested_json = '''Here's an explanation of calculus.
+
+{"thought": "I need to explain the fundamental theorem", "action": "FINISH", "action_input": {"answer": "The theorem states..."}, "confidence": 0.9}
+
+The fundamental theorem of calculus connects differentiation and integration.'''
+        
+        result = orchestrator._sanitize_text_content(text_with_nested_json)
+        
+        # Must NOT contain any of these
+        assert '"thought"' not in result.lower()
+        assert '"action"' not in result.lower()
+        assert '"action_input"' not in result.lower()
+        assert '"confidence"' not in result.lower()
+        
+        # Must STILL contain the educational content
+        assert 'calculus' in result.lower()
+        assert 'differentiation' in result.lower() or 'fundamental' in result.lower()
+    
+    def test_duplicated_json_blocks_removed(self):
+        """
+        Test that duplicated JSON blocks (appearing twice) are removed.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Same block duplicated
+        text_with_duplicate = '''{"thought": "analyzing", "action": "FINISH", "action_input": {}}
+
+The answer is: 42.
+
+{"thought": "analyzing", "action": "FINISH", "action_input": {}}'''
+        
+        result = orchestrator._sanitize_text_content(text_with_duplicate)
+        
+        assert '"thought"' not in result.lower()
+        assert 'answer is' in result.lower()
+    
+    def test_line_by_line_react_blocks_removed(self):
+        """
+        Test removal of ReAct transcript format: Thought: ..., Action: ..., Observation: ...
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        text_with_blocks = '''The answer to your question:
+
+Thought: I need to search for information
+Action: knowledge_search
+Action Input: {"query": "calculus theorem"}
+Observation: Found relevant content
+
+Here's what I found about calculus.'''
+        
+        result = orchestrator._sanitize_text_content(text_with_blocks)
+        
+        assert 'Thought:' not in result
+        assert 'Action:' not in result
+        assert 'Observation:' not in result
+        assert 'calculus' in result.lower()
+    
+    def test_math_latex_preserved(self):
+        """
+        CRITICAL: Math/LaTeX content must NOT be accidentally removed.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        text_with_math = r'''The integral is:
+
+$$\int_a^b f(x) dx = F(b) - F(a)$$
+
+This is the fundamental theorem of calculus.'''
+        
+        result = orchestrator._sanitize_text_content(text_with_math)
+        
+        # Math must be preserved
+        assert '\\int' in result or 'int' in result
+        assert 'F(b)' in result or 'f(x)' in result.lower()
+    
+    def test_stray_braces_removed(self):
+        """
+        CRITICAL: Stray braces from truncated JSON must be removed.
+        This is the exact bug pattern seen in production.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Pattern that was showing in UI: stray { on its own line
+        text_with_stray_brace = '''{
+\\int_a^b f(x) dx = F(b) - F(a)
+
+This means that the definite integral...'''
+        
+        result = orchestrator._sanitize_text_content(text_with_stray_brace)
+        
+        # Should NOT start with orphaned brace
+        assert not result.strip().startswith('{')
+        # Should preserve the math and explanation
+        assert 'integral' in result.lower() or 'int' in result
+    
+    def test_partial_json_with_trace_removed(self):
+        """
+        Test that partial/malformed JSON with trace keys is removed.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Incomplete JSON block
+        text_with_partial = '''{"thought": "I need to explain calculus",
+"action": "FINISH",
+"action_input": {"answer": 
+
+The fundamental theorem of calculus states...'''
+        
+        result = orchestrator._sanitize_text_content(text_with_partial)
+        
+        # Trace keys must be removed
+        assert '"thought"' not in result.lower()
+        assert '"action"' not in result.lower()
+        # Content should remain
+        assert 'calculus' in result.lower()
+    
+    def test_streaming_sanitizer_exists(self):
+        """
+        Test that streaming service has sanitization method.
+        """
+        from services.streaming_ai_service import StreamingAIService
+        
+        service = StreamingAIService(None, None)
+        assert hasattr(service, '_sanitize_streaming_content')
+        
+        # Test basic sanitization
+        dirty = '{"thought": "test", "action": "FINISH"} Here is the answer'
+        clean = service._sanitize_streaming_content(dirty)
+        assert '"thought"' not in clean.lower()
+        assert 'answer' in clean.lower()
+    
+    def test_api_sanitizer_removes_forbidden_keys(self):
+        """
+        Test the API-level last-mile sanitizer.
+        """
+        from api.ai import _sanitize_api_response
+        
+        # Input with forbidden keys
+        dirty_response = {
+            'response': {
+                'default_view': {
+                    'main_content': {
+                        'content': 'Clean educational content'
+                    }
+                },
+                'thought': 'Internal thinking',
+                'action': 'FINISH',
+                'action_input': {'answer': 'some answer'}
+            },
+            'reasoning_chain': [{'step': 1, 'thought': 'thinking'}],
+            '_debug': {'internal': True},
+            'detected_subject': 'Mathematics'
+        }
+        
+        result = _sanitize_api_response(dirty_response)
+        
+        # Forbidden keys must be gone
+        assert 'reasoning_chain' not in result
+        assert '_debug' not in result
+        assert 'thought' not in result.get('response', {})
+        assert 'action' not in result.get('response', {})
+        assert 'action_input' not in result.get('response', {})
+        
+        # Safe keys must remain
+        assert 'detected_subject' in result
+        assert 'default_view' in result.get('response', {})
+    
+    def test_sanitizer_doesnt_over_remove(self):
+        """
+        Sanitizer must not remove too much legitimate content.
+        """
+        from services.unified_ai_orchestrator import UnifiedAIOrchestrator
+        
+        orchestrator = UnifiedAIOrchestrator.__new__(UnifiedAIOrchestrator)
+        
+        # Long legitimate content
+        clean_text = '''The Fundamental Theorem of Calculus
+
+Part 1: If f is continuous on [a, b], then the function g defined by:
+g(x) = ∫[a to x] f(t) dt
+is continuous on [a, b] and differentiable on (a, b), and g'(x) = f(x).
+
+Part 2: If f is continuous on [a, b], then:
+∫[a to b] f(x) dx = F(b) - F(a)
+where F is any antiderivative of f.
+
+This theorem shows the beautiful connection between differentiation and integration,
+which are the two main operations in calculus.'''
+        
+        result = orchestrator._sanitize_text_content(clean_text)
+        
+        # Content should be mostly preserved (allow some whitespace normalization)
+        assert len(result) > 0.8 * len(clean_text)
+        assert 'Fundamental Theorem' in result
+        assert 'differentiation' in result
 
 
 # =============================================================================

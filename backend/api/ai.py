@@ -2616,6 +2616,12 @@ You MUST reference specific content from the image in your response."""
         except Exception as motivation_error:
             logger.debug(f"ℹ️ Motivation enhancement skipped: {motivation_error}")
         
+        # ================================================================
+        # LAST-MILE SANITIZER — Final gate before returning to frontend
+        # ================================================================
+        # CRITICAL: Catch any internal traces that slipped through orchestrator
+        result = _sanitize_api_response(result)
+        
         return result
         # [JULES VISUAL ENHANCEMENT END]
         
@@ -2628,6 +2634,116 @@ You MUST reference specific content from the image in your response."""
             status_code=500,
             detail=f"Failed to generate response: {str(e)}"
         )
+
+
+def _sanitize_api_response(result: dict) -> dict:
+    """
+    LAST-MILE SANITIZER — Final gate before any response reaches frontend.
+    
+    This is a safety net that catches anything the orchestrator missed.
+    Runs at API level to guarantee no internal traces leak.
+    """
+    import re
+    import json
+    
+    if not result or not isinstance(result, dict):
+        return result
+    
+    # Keys that should NEVER reach frontend
+    # CRITICAL: This is the LAST-MILE SANITIZER - catches anything the orchestrator missed
+    FORBIDDEN_KEYS = {
+        # ReAct/Agent internal traces
+        'thought', 'action', 'action_input', 'confidence', 'observation',
+        # Reasoning/debug chains
+        'reasoning_chain', '_debug', '_internal', '_trace', '_symbolic',
+        'agent_trace', 'thoughts', 'debug_info', 'internal_metadata',
+        # Raw LLM outputs - NEVER expose to student
+        'raw_response', 'llm_raw', 'raw_content', 'raw_envelope',
+        'tool_calls_raw', 'planner_output',
+        # Additional internal keys that might leak
+        'mentor_raw', 'professor_raw', 'agentic_raw',
+        # TOP-LEVEL INTERNAL OBJECTS - NEVER expose to student UI
+        'hybrid_reasoning', 'orchestration', 'routing_decision',
+        'symbolic_proof', 'verification_passed', 'graph_context',
+        'knowledge_graph', 'cognitive_context'
+    }
+    
+    # TOP-LEVEL keys that should be REMOVED from the response
+    # These are metadata objects that belong in logs, not UI
+    TOP_LEVEL_INTERNAL = {
+        'hybrid_reasoning', 'orchestration', 'routing_decision',
+        'knowledge_graph', 'cognitive_context', 'agents_used',
+        'pipeline', 'verification', 'query'  # query was added for emotion detection
+    }
+    
+    def clean_dict(d):
+        """Recursively remove forbidden keys and sanitize strings."""
+        if not isinstance(d, dict):
+            return d
+        
+        cleaned = {}
+        for k, v in d.items():
+            # Skip forbidden keys
+            if k.lower() in FORBIDDEN_KEYS:
+                logger.debug(f"🧹 API sanitizer removed key: {k}")
+                continue
+            
+            # Recursively clean nested dicts
+            if isinstance(v, dict):
+                cleaned[k] = clean_dict(v)
+            elif isinstance(v, list):
+                cleaned[k] = [clean_dict(item) if isinstance(item, dict) else item for item in v]
+            elif isinstance(v, str):
+                cleaned[k] = clean_string(v)
+            else:
+                cleaned[k] = v
+        
+        return cleaned
+    
+    def clean_string(s):
+        """Remove any embedded ReAct JSON from strings."""
+        if not s or len(s) < 10:
+            return s
+        
+        # Quick check: does it look like it might have internal traces?
+        if '"thought"' not in s.lower() and '"action"' not in s.lower():
+            return s
+        
+        # Try to find and remove JSON blocks with internal keys
+        try:
+            # Pattern to match JSON objects (simplified for speed)
+            json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+            
+            def filter_json(match):
+                try:
+                    obj = json.loads(match.group())
+                    if isinstance(obj, dict):
+                        keys = {k.lower() for k in obj.keys()}
+                        if keys & {'thought', 'action', 'action_input', 'confidence', 'observation'}:
+                            return ''  # Remove this JSON block
+                except:
+                    pass
+                return match.group()
+            
+            s = re.sub(json_pattern, filter_json, s)
+        except:
+            pass
+        
+        # Clean up whitespace
+        s = re.sub(r'\n{3,}', '\n\n', s)
+        return s.strip()
+    
+    # STEP 1: Clean the entire result recursively
+    cleaned_result = clean_dict(result)
+    
+    # STEP 2: CRITICAL - Remove top-level internal objects that should NEVER reach frontend
+    # These objects contain internal metadata, not student-facing content
+    for key in list(cleaned_result.keys()):
+        if key in TOP_LEVEL_INTERNAL:
+            logger.debug(f"🧹 API sanitizer removed TOP-LEVEL key: {key}")
+            del cleaned_result[key]
+    
+    return cleaned_result
 
 
 # ====================================================================

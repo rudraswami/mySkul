@@ -581,6 +581,7 @@ class IntelligentRoutingEngine:
             return None
         
         query_stripped = query.strip()
+        query_lower = query_stripped.lower()
         words = query_stripped.split()
         word_count = len(words)
         
@@ -591,8 +592,46 @@ class IntelligentRoutingEngine:
         last_turn_asked_question = conversation_state.get('ai_asked_question', False)
         
         # ================================================================
+        # RULE 0: EDUCATION REQUEST OVERRIDE (HARD PRIORITY)
+        # ================================================================
+        # If the message looks like an education request, NEVER route to recap.
+        # This must run BEFORE short-message rules to prevent "explain X" takeover.
+        # 
+        # Education indicators (structure-based, NOT keyword-hardcoded):
+        # 1. Starts with educational verbs: explain/what/how/why/define/solve/derive/prove
+        # 2. Contains question-concept structure
+        # 3. Message length >= 2 words with noun concept
+        
+        EDUCATION_VERBS = {'explain', 'what', 'how', 'why', 'define', 'solve', 'derive', 
+                          'prove', 'calculate', 'find', 'describe', 'tell', 'show', 'teach'}
+        
+        first_word = words[0].lower().rstrip('?!,') if words else ''
+        
+        # Check if it's an education request
+        is_education_request = False
+        
+        # Pattern 1: Starts with education verb + has content
+        if first_word in EDUCATION_VERBS and word_count >= 2:
+            is_education_request = True
+        
+        # Pattern 2: "what is X", "how does X", "why does X" etc.
+        if word_count >= 2 and first_word in {'what', 'how', 'why', 'when', 'where', 'which'}:
+            is_education_request = True
+        
+        # Pattern 3: Question form with concept (ends with ? and has content)
+        if ends_with_question and word_count >= 3:
+            is_education_request = True
+        
+        # If education request detected, return None to let classifier handle it
+        # This OVERRIDES any prior continue/recap state
+        if is_education_request:
+            logger.debug(f"🎓 Education override: '{query_stripped[:50]}' bypasses dialogue-act → classifier")
+            return None  # Let semantic classifier route to education lane
+        
+        # ================================================================
         # RULE 1: Very short messages (1-3 words) with prior context
         # These are likely acknowledgments or continuations, NOT new queries
+        # But ONLY if not an education request (already handled above)
         # ================================================================
         if word_count <= 3 and has_prior_context:
             # Check if it's a response to AI's question
@@ -613,15 +652,19 @@ class IntelligentRoutingEngine:
                 }
         
         # ================================================================
-        # RULE 2: Single word or very short (1-2 words) - always conversation
+        # RULE 2: Single word or very short (1-2 words) - conversation
         # "yes", "ok", "hmm", "sure", "no" etc.
+        # BUT NOT education verbs - already handled in RULE 0
         # ================================================================
-        if word_count <= 2:
+        ACK_WORDS = {'yes', 'ok', 'okay', 'hmm', 'sure', 'no', 'yeah', 'yep', 'nope',
+                     'got', 'right', 'thanks', 'cool', 'nice', 'great', 'good', 'fine'}
+        
+        if word_count <= 2 and first_word in ACK_WORDS:
             return {
                 'act': 'ack',
                 'lane': 'conversation',
                 'confidence': 0.9,
-                'reason': f'Ultra-short message ({word_count} words)'
+                'reason': f'Ultra-short acknowledgment ({word_count} words)'
             }
         
         # ================================================================
@@ -942,7 +985,25 @@ class IntelligentRoutingEngine:
             # Educational queries - analyze complexity
             complexity_score = self._analyze_complexity(query, context)
             complexity = self._score_to_complexity(complexity_score, {})
-            return self._select_pipeline(query, complexity, context, {}, analysis)
+            decision = self._select_pipeline(query, complexity, context, {}, analysis)
+            
+            # ================================================================
+            # CONTINUATION RESOLVER - Inject previous topic for short follow-ups
+            # ================================================================
+            # If this is a short message lacking a clear topic, AND we have a
+            # previous education topic, inject it so downstream agents know
+            # what to "explain deeper" about.
+            continuation_result = self._resolve_continuation_topic(query, context, analysis)
+            if continuation_result.get('is_continuation'):
+                if decision.extra_context is None:
+                    decision.extra_context = {}
+                decision.extra_context['is_continuation'] = True
+                decision.extra_context['continuation_topic'] = continuation_result['topic']
+                decision.extra_context['continuation_reason'] = continuation_result['reason']
+                logger.info(f"📌 Continuation resolved | prev_topic={continuation_result['topic']} | "
+                           f"msg=\"{query[:40]}\" | route=education")
+            
+            return decision
         
         # ================================================================
         # OFF_TOPIC & GENERAL - Use CHITCHAT pipeline with LLM
@@ -1485,6 +1546,114 @@ class IntelligentRoutingEngine:
                 priority_factors={'speed': 0.1, 'depth': 0.9},
                 enable_agent_negotiation=True  # Full negotiation
             )
+    
+    def _resolve_continuation_topic(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        semantic_analysis: 'SemanticAnalysis' = None
+    ) -> Dict[str, Any]:
+        """
+        CONTINUATION RESOLVER — Detect short follow-up messages and inject previous topic.
+        
+        STRUCTURE-BASED detection (NOT keyword matching):
+        1. word_count <= 4 OR message is a short follow-up question
+        2. Message contains no clear new noun/topic (low content density)
+        3. Previous turn was Education Lane OR previous_topic exists
+        4. Previous topic available from context_pack/conversation_state
+        
+        Returns:
+            {
+                'is_continuation': bool,
+                'topic': str or None,
+                'reason': str
+            }
+        """
+        # Extract message structure
+        query_stripped = query.strip()
+        words = query_stripped.split()
+        word_count = len(words)
+        
+        # ================================================================
+        # RULE 1: Check if message is short enough to be a continuation
+        # ================================================================
+        # Short messages (<=4 words) OR short question (<=6 words with ?)
+        is_short_message = word_count <= 4
+        is_short_question = word_count <= 6 and query_stripped.endswith('?')
+        
+        if not (is_short_message or is_short_question):
+            return {'is_continuation': False, 'topic': None, 'reason': 'message_too_long'}
+        
+        # ================================================================
+        # RULE 2: Check if message introduces a NEW topic (has clear noun)
+        # ================================================================
+        # If the message contains a clear educational noun, it's NOT a continuation
+        # We detect this by checking if semantic_analysis found a topic
+        if semantic_analysis and hasattr(semantic_analysis, 'topic_mentioned'):
+            if semantic_analysis.topic_mentioned and len(semantic_analysis.topic_mentioned) > 3:
+                # Semantic analysis found a topic - this is a NEW question
+                return {'is_continuation': False, 'topic': None, 'reason': 'new_topic_detected'}
+        
+        # Also check for capitalized proper nouns (likely new topics)
+        # Skip common words that aren't topics
+        NON_TOPIC_WORDS = {'I', 'The', 'A', 'An', 'My', 'This', 'That', 'It', 'What', 'How', 
+                          'Why', 'Can', 'Could', 'Please', 'More', 'Explain', 'Tell', 'Me'}
+        proper_nouns = [w for w in words if len(w) > 1 and w[0].isupper() and w not in NON_TOPIC_WORDS]
+        if proper_nouns:
+            # Has proper nouns - this is a NEW topic, not a continuation
+            return {'is_continuation': False, 'topic': None, 'reason': 'proper_noun_detected'}
+        
+        # Check for educational subject nouns (lower case) that indicate a new topic
+        # These are common subject areas that override continuation
+        SUBJECT_NOUNS = {
+            'photosynthesis', 'thermodynamics', 'relativity', 'calculus', 'algebra',
+            'geometry', 'trigonometry', 'gravity', 'momentum', 'energy', 'friction',
+            'velocity', 'acceleration', 'force', 'atom', 'molecule', 'cell', 'dna',
+            'evolution', 'genetics', 'respiration', 'digestion', 'circuit', 'electron'
+        }
+        query_lower = query_stripped.lower()
+        found_subjects = [s for s in SUBJECT_NOUNS if s in query_lower]
+        if found_subjects and word_count > 2:
+            # Contains a subject noun and is more than 2 words - likely a NEW question
+            return {'is_continuation': False, 'topic': None, 'reason': 'subject_noun_detected'}
+        
+        # ================================================================
+        # RULE 3: Extract previous topic from context
+        # ================================================================
+        previous_topic = None
+        
+        # Try context_pack first (preferred)
+        context_pack = context.get('context_pack')
+        if context_pack:
+            if hasattr(context_pack, 'current_topic') and context_pack.current_topic:
+                previous_topic = context_pack.current_topic
+            elif hasattr(context_pack, 'previous_topic') and context_pack.previous_topic:
+                previous_topic = context_pack.previous_topic
+        
+        # Fallback to conversation_state
+        if not previous_topic:
+            conversation_state = context.get('conversation_state', {})
+            previous_topic = conversation_state.get('last_topic', '')
+        
+        # Fallback to memory context
+        if not previous_topic:
+            memory_ctx = context.get('memory_context', {})
+            previous_topic = memory_ctx.get('current_topic', '') or memory_ctx.get('last_topic', '')
+        
+        # ================================================================
+        # RULE 4: Check if we have a previous topic to continue
+        # ================================================================
+        if not previous_topic:
+            return {'is_continuation': False, 'topic': None, 'reason': 'no_previous_topic'}
+        
+        # ================================================================
+        # SUCCESS: This is a continuation request
+        # ================================================================
+        return {
+            'is_continuation': True,
+            'topic': previous_topic,
+            'reason': f'short_follow_up_{word_count}_words'
+        }
     
     def should_use_agentic(self, decision: RoutingDecision) -> bool:
         """Check if decision requires agentic system"""

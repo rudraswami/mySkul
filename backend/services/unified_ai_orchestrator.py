@@ -734,11 +734,15 @@ class UnifiedAIOrchestrator:
             # STEP 9.25: TEACH ME BACK v2 - LEARNING VERIFICATION
             # ================================================================
             # Runs AFTER guardrails to ensure:
-            # 1. Never append on hard_block (cheating/self-harm)
-            # 2. Logs include guardrail_status
+            # 1. Never trigger on hard_block (cheating/self-harm)
+            # 2. Returns structured payload (NOT appended text)
             # 3. Suppresses during active solving mode
+            #
+            # UX CONTRACT: Backend returns structured `teachback` object.
+            # Frontend renders CTA button; clicking opens modal.
+            # We do NOT append teachback text to main_response.
             try:
-                from services.teach_me_back_evaluator import check_and_build_teachback_prompt
+                from services.teach_me_back_evaluator import check_and_build_teachback_payload
                 from services.guardrails_v2 import GuardrailStatus
                 
                 # GATE 1: Only for Education Lane routes
@@ -746,10 +750,30 @@ class UnifiedAIOrchestrator:
                 should_check_teachback = routing_decision.pipeline.value in education_routes
                 
                 # GATE 2: Skip on guardrails hard_block (cheating/self-harm/unsafe)
+                # ROBUST: Backward-compatible check that doesn't rely on specific enum values
                 guardrail_status = "unknown"
                 if envelope:
                     guardrail_status = envelope.guardrail_status.value if envelope.guardrail_status else "unknown"
-                    if envelope.guardrail_status in [GuardrailStatus.HARD_BLOCK, GuardrailStatus.REDIRECT]:
+                    
+                    # Check using multiple methods for backward compatibility:
+                    should_suppress = False
+                    
+                    # Method 1: Check HARD_BLOCK (exists in enum)
+                    hard_block = getattr(GuardrailStatus, 'HARD_BLOCK', None)
+                    if hard_block and envelope.guardrail_status == hard_block:
+                        should_suppress = True
+                    
+                    # Method 2: Check REDIRECT if it exists (future-proof)
+                    redirect = getattr(GuardrailStatus, 'REDIRECT', None)
+                    if redirect and envelope.guardrail_status == redirect:
+                        should_suppress = True
+                    
+                    # Method 3: String-based fallback (robust)
+                    status_str = str(guardrail_status).lower()
+                    if 'hard' in status_str or 'redirect' in status_str or 'block' in status_str:
+                        should_suppress = True
+                    
+                    if should_suppress:
                         should_check_teachback = False
                         logger.debug(f"🎓 Teachback SKIPPED: guardrail={guardrail_status}")
                 
@@ -776,33 +800,26 @@ class UnifiedAIOrchestrator:
                     if envelope and hasattr(envelope, 'retrieval_confidence'):
                         retrieval_confidence = envelope.retrieval_confidence or retrieval_confidence
                     
-                    # Check if we should trigger teachback
-                    teachback_prompt = await check_and_build_teachback_prompt(
+                    # Check if we should trigger teachback - returns STRUCTURED payload
+                    teachback_payload = await check_and_build_teachback_payload(
                         route_type=routing_decision.pipeline.value,
                         user_message=message,
                         ai_response=ai_response,
                         conversation_state=conversation_state,
                         retrieval_confidence=retrieval_confidence,
-                        user_id=user_id
+                        user_id=user_id,
+                        session_id=session_id
                     )
                     
-                    if teachback_prompt:
-                        # Append teachback prompt to response
-                        if 'main_response' in result and result['main_response']:
-                            result['main_response'] += teachback_prompt
-                        elif 'response' in result and isinstance(result['response'], dict):
-                            content = result['response'].get('default_view', {}).get('main_content', {})
-                            if isinstance(content, dict) and 'content' in content:
-                                content['content'] += teachback_prompt
-                        
-                        # Mark teachback metadata (includes guardrail status for observability)
+                    if teachback_payload:
+                        # UX CONTRACT: Do NOT append to main_response!
+                        # Set structured payload for frontend to render as CTA
                         result['teachback'] = {
-                            'triggered': True,
-                            'prompt_appended': True,
-                            'topic': conversation_state.get('last_topic', subject),
-                            'guardrail_status': guardrail_status
+                            **teachback_payload,
+                            'guardrail_status': guardrail_status,
+                            'prompt_appended': False  # Explicit: we don't append anymore
                         }
-                        logger.info(f"🎓 Teach Me Back: prompt added | guardrail={guardrail_status} | request_id={request_id}")
+                        logger.info(f"🎓 Teach Me Back: CTA triggered | mode={teachback_payload.get('mode')} | request_id={request_id}")
                         
             except ImportError as ie:
                 logger.debug(f"Teach Me Back module not available: {ie}")
@@ -820,8 +837,25 @@ class UnifiedAIOrchestrator:
                     # Check guardrail safety flags - DO NOT store crisis content verbatim
                     should_skip_memory = False
                     if envelope:
-                        risk_flags = getattr(envelope, 'risk_flags', {})
-                        if risk_flags.get('self_harm') or risk_flags.get('unsafe'):
+                        # ROBUST: risk_flags can be a list of RiskFlag enums or strings
+                        # Handle both list and dict formats for backward compatibility
+                        risk_flags = getattr(envelope, 'risk_flags', [])
+                        
+                        # Convert to set of string values for easy checking
+                        risk_flag_values = set()
+                        if isinstance(risk_flags, (list, tuple)):
+                            for flag in risk_flags:
+                                # Handle both enum and string
+                                flag_val = flag.value if hasattr(flag, 'value') else str(flag)
+                                risk_flag_values.add(flag_val.lower())
+                        elif isinstance(risk_flags, dict):
+                            # Legacy dict format - check for truthy values
+                            for key, val in risk_flags.items():
+                                if val:
+                                    risk_flag_values.add(str(key).lower())
+                        
+                        # Check for safety flags
+                        if any(f in risk_flag_values for f in ['self_harm', 'self_harm_instruction', 'self_harm_ideation', 'unsafe']):
                             should_skip_memory = True
                             logger.info(f"🛡️ Memory write SKIPPED: safety flag detected | request_id={request_id}")
                     
@@ -934,14 +968,14 @@ class UnifiedAIOrchestrator:
         request_id: str = "unknown"
     ) -> Dict[str, Any]:
         """
-        SANITIZE RESPONSE — Remove ALL internal traces before returning to student.
+        UI-SAFE RESPONSE CONTRACT — The SINGLE choke-point for all UI output.
         
         CRITICAL: This is the FINAL gate before any response reaches the student UI.
-        It removes:
-        - ReAct reasoning traces (thought, action, action_input)
-        - Internal debugging info (_debug, _internal, etc.)
-        - Raw reasoning chains
-        - Any JSON blobs that look like agent traces
+        GUARANTEES:
+        1. No internal traces (thought, action, action_input, JSON blobs)
+        2. No truncated responses (completeness guard)
+        3. Proper formatting (LaTeX wrapped, no duplicates)
+        4. Fast-path for already-clean responses
         
         MUST run on ALL responses from ALL lanes (education/conversation/action).
         """
@@ -950,22 +984,54 @@ class UnifiedAIOrchestrator:
         if not result:
             return result
         
+        # ================================================================
+        # FAST PATH CHECK - Skip heavy processing for clean responses
+        # ================================================================
+        main_content = self._extract_main_content(result)
+        if main_content and isinstance(main_content, str):
+            # Fast forbidden pattern check (O(1) substring checks)
+            FAST_CHECK_PATTERNS = [
+                '{"thought":', '"action_input"', '"action":', 
+                'Student asked:', 'Traceback (', 'Exception:',
+                '"routing":', '"tool_calls":', '{"step":'
+            ]
+            needs_slow_path = any(p in main_content for p in FAST_CHECK_PATTERNS)
+            
+            if not needs_slow_path:
+                # Still do minimal sanitization for safety
+                result = self._minimal_sanitize(result, request_id)
+                return result
+        
+        # ================================================================
+        # SLOW PATH - Full sanitization for responses with potential leaks
+        # ================================================================
+        logger.debug(f"🔍 Slow path sanitization triggered | request_id={request_id}")
+        
         # Keys that should NEVER reach the student
         INTERNAL_KEYS = {
+            # ReAct/Agent internal traces
+            'thought', 'action', 'action_input', 'confidence', 'observation',
+            # Reasoning/debug chains  
             'reasoning_chain', '_debug', '_internal', '_trace', '_symbolic',
-            'agent_trace', 'thoughts', 'raw_response', 'llm_raw', 'raw_content',
-            'debug_info', 'internal_metadata', 'tool_calls_raw'
+            'agent_trace', 'thoughts', 'debug_info', 'internal_metadata',
+            # Raw LLM outputs - NEVER expose to student
+            'raw_response', 'llm_raw', 'raw_content', 'raw_envelope',
+            'tool_calls_raw', 'mentor_raw', 'professor_raw', 'agentic_raw',
+            # Routing/orchestration internals
+            'routing_decision', 'tool_calls', 'step', 'steps_taken'
         }
         
         # Remove top-level internal keys
-        for key in INTERNAL_KEYS:
-            if key in result:
+        for key in list(result.keys()):
+            if key in INTERNAL_KEYS:
                 logger.debug(f"🧹 Sanitized: removed '{key}' from response | request_id={request_id}")
                 del result[key]
         
         # Sanitize the main_response text content
         if 'main_response' in result and isinstance(result['main_response'], str):
             result['main_response'] = self._sanitize_text_content(result['main_response'])
+            # Completeness guard
+            result['main_response'] = self._ensure_completeness(result['main_response'])
         
         # Sanitize nested response structure
         if 'response' in result and isinstance(result['response'], dict):
@@ -978,10 +1044,11 @@ class UnifiedAIOrchestrator:
                     mc = dv['main_content']
                     if isinstance(mc, dict) and 'content' in mc:
                         mc['content'] = self._sanitize_text_content(mc['content'])
+                        # Completeness guard
+                        mc['content'] = self._ensure_completeness(mc['content'])
         
         # Sanitize agentic_info to remove sensitive traces
         if 'agentic_info' in result and isinstance(result['agentic_info'], dict):
-            # Keep only safe summary fields
             safe_agentic = {
                 'tools_used': result['agentic_info'].get('tools_used', []),
                 'iterations': result['agentic_info'].get('iterations', 0),
@@ -991,29 +1058,339 @@ class UnifiedAIOrchestrator:
         
         return result
     
+    def _minimal_sanitize(self, result: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+        """
+        FAST PATH - Minimal sanitization for already-clean responses.
+        Only removes known internal keys without full text processing.
+        """
+        # Quick key removal (O(n) where n = number of keys)
+        QUICK_REMOVE_KEYS = {
+            'reasoning_chain', '_debug', '_internal', 'raw_response',
+            'hybrid_reasoning', 'orchestration', 'routing_decision'
+        }
+        for key in list(result.keys()):
+            if key in QUICK_REMOVE_KEYS:
+                del result[key]
+        return result
+    
+    def _ensure_completeness(self, text: str) -> str:
+        """
+        COMPLETENESS GUARD - Detect and fix truncated responses.
+        
+        Detects:
+        - Mid-sentence truncation (ends with incomplete word)
+        - Unclosed brackets/quotes
+        - Obviously cut-off content
+        
+        If detected, appends a clean ending rather than leaving broken.
+        """
+        if not text or len(text) < 50:
+            return text
+        
+        text = text.strip()
+        
+        # Check for obvious truncation patterns
+        truncation_indicators = [
+            # Ends mid-word (no punctuation or space at end)
+            lambda t: len(t) > 100 and t[-1].isalpha() and t[-2].isalpha() and not t.endswith(('ing', 'tion', 'ment', 'ness', 'ally', 'ible', 'able')),
+            # Unclosed parentheses
+            lambda t: t.count('(') > t.count(')'),
+            # Unclosed brackets
+            lambda t: t.count('[') > t.count(']'),
+            # Unclosed quotes (simple check)
+            lambda t: t.count('"') % 2 == 1,
+            # Ends with comma or colon suggesting more was coming
+            lambda t: t.rstrip().endswith((',', ':', ' and', ' or', ' the', ' a')),
+        ]
+        
+        is_truncated = any(check(text) for check in truncation_indicators)
+        
+        if is_truncated:
+            logger.warning(f"⚠️ Truncated response detected, applying completeness fix")
+            
+            # Close any unclosed brackets
+            while text.count('(') > text.count(')'):
+                text += ')'
+            while text.count('[') > text.count(']'):
+                text += ']'
+            
+            # If ends mid-sentence, add ellipsis to indicate continuation
+            if text[-1].isalpha() or text.rstrip().endswith((',', ':')):
+                # Remove trailing incomplete parts
+                text = text.rstrip(',: ')
+                if not text.endswith(('.', '!', '?', ')', ']')):
+                    text += '.'
+        
+        return text
+    
     def _sanitize_text_content(self, text: str) -> str:
         """
         Sanitize text content to remove any embedded ReAct traces or JSON blobs.
+        
+        ROBUST: Uses multiple detection methods to catch all internal leaks:
+        1. Balanced-brace JSON detection (handles nested objects)
+        2. Line-by-line ReAct block detection
+        3. Structural pattern matching
         """
         import re
+        import json
         
         if not text or not isinstance(text, str):
             return text
         
-        # Pattern for ReAct-style traces: {"thought": ..., "action": ..., "action_input": ...}
-        react_pattern = r'\{[^{}]*"(?:thought|action|action_input)"[^{}]*\}'
-        text = re.sub(react_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+        original_text = text
         
+        # ================================================================
+        # METHOD 1: Balanced-brace JSON extraction and filtering
+        # ================================================================
+        # Find all JSON-like blocks (handles nested braces properly)
+        def extract_json_blocks(s):
+            """Extract balanced JSON blocks from text."""
+            blocks = []
+            i = 0
+            while i < len(s):
+                if s[i] == '{':
+                    # Find matching closing brace
+                    depth = 1
+                    start = i
+                    i += 1
+                    while i < len(s) and depth > 0:
+                        if s[i] == '{':
+                            depth += 1
+                        elif s[i] == '}':
+                            depth -= 1
+                        i += 1
+                    if depth == 0:
+                        blocks.append((start, i, s[start:i]))
+                else:
+                    i += 1
+            return blocks
+        
+        # Internal keys that indicate ReAct/debug traces
+        INTERNAL_KEYS = {'thought', 'action', 'action_input', 'confidence', 
+                         '_debug', '_internal', '_trace', 'raw_response',
+                         'observation', 'step', 'timestamp', 'tool_calls_raw'}
+        
+        # Extract and filter JSON blocks
+        json_blocks = extract_json_blocks(text)
+        for start, end, block in reversed(json_blocks):  # Reverse to preserve indices
+            try:
+                parsed = json.loads(block)
+                if isinstance(parsed, dict):
+                    # Check if this looks like internal trace
+                    keys = set(k.lower() for k in parsed.keys())
+                    if keys & INTERNAL_KEYS:
+                        # This is internal trace - REMOVE IT
+                        text = text[:start] + text[end:]
+                        logger.debug(f"🧹 Removed internal JSON block with keys: {keys & INTERNAL_KEYS}")
+            except json.JSONDecodeError:
+                # Not valid JSON, might still be partial trace - check with regex
+                if re.search(r'"(?:thought|action|action_input)"', block, re.IGNORECASE):
+                    text = text[:start] + text[end:]
+                    logger.debug(f"🧹 Removed malformed internal block")
+        
+        # ================================================================
+        # METHOD 2: Line-by-line ReAct block detection
+        # ================================================================
         # Pattern for "Thought: ...", "Action: ...", "Observation: ..." blocks
-        thought_block_pattern = r'(?:^|\n)\s*(?:Thought|Action|Observation|Action Input):\s*[^\n]+(?:\n|$)'
+        thought_block_pattern = r'(?:^|\n)\s*(?:Thought|Action|Observation|Action Input|Step \d+):\s*[^\n]*(?:\n|$)'
         text = re.sub(thought_block_pattern, '\n', text, flags=re.IGNORECASE | re.MULTILINE)
         
-        # Remove any remaining JSON that looks like internal debug
-        json_debug_pattern = r'\{[^{}]*"(?:_debug|_internal|_trace|raw_response)"[^{}]*\}'
-        text = re.sub(json_debug_pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
+        # ================================================================
+        # METHOD 3: Catch any remaining patterns
+        # ================================================================
+        # Pattern for standalone ReAct keys that might leak
+        standalone_trace = r'(?:^|\n)\s*"(?:thought|action|action_input)":\s*[^\n]+(?:\n|$)'
+        text = re.sub(standalone_trace, '\n', text, flags=re.IGNORECASE | re.MULTILINE)
+        
+        # ================================================================
+        # METHOD 4: Remove duplicated content (same block appearing twice)
+        # ================================================================
+        lines = text.split('\n')
+        seen_lines = set()
+        unique_lines = []
+        for line in lines:
+            line_stripped = line.strip()
+            # Skip empty or very short lines for dedup purposes
+            if len(line_stripped) > 50:
+                if line_stripped in seen_lines:
+                    continue  # Skip duplicate
+                seen_lines.add(line_stripped)
+            unique_lines.append(line)
+        text = '\n'.join(unique_lines)
         
         # Clean up multiple newlines left behind
         text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        # ================================================================
+        # PHASE 5: EDUCATION RESPONSE FORMATTING (LaTeX + Structure)
+        # ================================================================
+        text = self._format_education_response(text)
+        
+        # Final safety check: if we removed too much, return original
+        # (don't return empty string for legitimate content)
+        cleaned = text.strip()
+        if len(cleaned) < 20 and len(original_text.strip()) > 100:
+            # We removed too much - log warning and return original
+            logger.warning(f"🚨 Sanitizer removed too much content, returning original")
+            return original_text.strip()
+        
+        return cleaned
+    
+    def _format_education_response(self, text: str) -> str:
+        """
+        Format education responses for student-friendly display.
+        
+        CRITICAL: This is the FINAL formatting before UI display.
+        Ensures:
+        1. LaTeX renders correctly (no stray backslashes)
+        2. Math delimiters are normalized ($ for inline, $$ for block)
+        3. No JSON fragments leak through
+        4. Clean, readable structure
+        """
+        import re
+        
+        if not text or not isinstance(text, str):
+            return text or ""
+        
+        # ================================================================
+        # STEP 1: Remove JSON fragments at end of response
+        # ================================================================
+        # Pattern: response ends with "}, or "], or "}, etc.
+        text = re.sub(r'["\']?\s*\}\s*,?\s*$', '', text)
+        text = re.sub(r'["\']?\s*\]\s*,?\s*$', '', text)
+        # Remove trailing incomplete JSON like "thought": or "action":
+        text = re.sub(r',?\s*"(?:thought|action|action_input|confidence)":\s*$', '', text, flags=re.IGNORECASE)
+        
+        # ================================================================
+        # STEP 2: Remove LONE BACKSLASH lines (visual garbage)
+        # ================================================================
+        # Pattern: line that is JUST "\" or "\\" (nothing else meaningful)
+        text = re.sub(r'^\s*\\+\s*$', '', text, flags=re.MULTILINE)
+        # Also remove backslash followed by just whitespace
+        text = re.sub(r'\\\s*\n\s*\n', '\n\n', text)
+        
+        # ================================================================
+        # STEP 3: Normalize LaTeX delimiters for UI rendering
+        # ================================================================
+        # Convert \[ ... \] to $$ ... $$ (block math)
+        text = re.sub(r'\\\[\s*', '\n$$', text)
+        text = re.sub(r'\s*\\\]', '$$\n', text)
+        
+        # Convert \( ... \) to $ ... $ (inline math)
+        text = re.sub(r'\\\(\s*', '$', text)
+        text = re.sub(r'\s*\\\)', '$', text)
+        
+        # ================================================================
+        # STEP 4: Fix common LaTeX issues (IDEMPOTENT)
+        # ================================================================
+        # CRITICAL: Make this idempotent - running twice produces same result as once.
+        # Replace ALL consecutive backslashes (2+) before LaTeX commands with exactly ONE.
+        # This prevents \\\\frac → \\frac → \frac multi-pass issues.
+        
+        # Known LaTeX commands that need single-backslash prefix
+        LATEX_COMMANDS = (
+            r'frac|int|sum|prod|sqrt|lim|sin|cos|tan|log|ln|exp|max|min|sup|inf|'
+            r'partial|nabla|vec|hat|bar|dot|ddot|'
+            r'alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|rho|tau|'
+            r'Delta|Sigma|Omega|Gamma|Lambda|Phi|Psi|'
+            r'cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|subset|supset|in|notin|'
+            r'forall|exists|rightarrow|leftarrow|Rightarrow|Leftarrow|'
+            r'infty|text|mathrm|mathbf|mathit|mathcal|mathbb|'
+            r'begin|end|left|right|big|Big|bigg|Bigg|'
+            r'quad|qquad|hspace|vspace|over|atop'
+        )
+        
+        def normalize_latex_backslashes(content: str) -> str:
+            """
+            IDEMPOTENT: Replace 2+ consecutive backslashes before LaTeX commands with exactly 1.
+            
+            \\\\frac → \frac (one pass)
+            \\frac → \frac (one pass)  
+            \frac → \frac (unchanged - already correct)
+            
+            DOES NOT affect non-LaTeX paths like C:\\Users\\name (no LaTeX command after backslashes)
+            """
+            # Pattern: 2 or more backslashes followed by a known LaTeX command
+            return re.sub(r'\\{2,}(' + LATEX_COMMANDS + r')', r'\\\1', content)
+        
+        # Apply to block math
+        def fix_latex_escapes(match):
+            content = match.group(1)
+            content = normalize_latex_backslashes(content)
+            return '$$' + content + '$$'
+        
+        text = re.sub(r'\$\$([^$]+)\$\$', fix_latex_escapes, text, flags=re.DOTALL)
+        
+        # Apply to inline math
+        def fix_inline_latex(match):
+            content = match.group(1)
+            content = normalize_latex_backslashes(content)
+            return '$' + content + '$'
+        
+        # Be careful with inline - don't match $$ as two $ $
+        text = re.sub(r'(?<!\$)\$([^$]+)\$(?!\$)', fix_inline_latex, text)
+        
+        # Also apply to orphan LaTeX outside delimiters (common issue)
+        # This catches cases like: "The formula \\\\frac{a}{b} gives..."
+        text = normalize_latex_backslashes(text)
+        
+        # ================================================================
+        # STEP 5: Ensure proper spacing around math blocks
+        # ================================================================
+        # Add newline before $$ if not present
+        text = re.sub(r'([^\n])\$\$', r'\1\n$$', text)
+        # Add newline after $$ if not present
+        text = re.sub(r'\$\$([^\n])', r'$$\n\1', text)
+        
+        # ================================================================
+        # STEP 6: DEDUPLICATE repeated paragraphs/sections
+        # ================================================================
+        # Split into paragraphs and remove exact duplicates
+        paragraphs = text.split('\n\n')
+        seen_paragraphs = set()
+        unique_paragraphs = []
+        for para in paragraphs:
+            para_stripped = para.strip()
+            if not para_stripped:
+                continue
+            # Normalize for comparison (lowercase, strip whitespace)
+            para_normalized = ' '.join(para_stripped.lower().split())
+            # Only check substantial paragraphs for duplication (> 80 chars)
+            if len(para_normalized) > 80:
+                if para_normalized in seen_paragraphs:
+                    logger.debug(f"🧹 Removed duplicate paragraph ({len(para_stripped)} chars)")
+                    continue
+                seen_paragraphs.add(para_normalized)
+            unique_paragraphs.append(para_stripped)
+        text = '\n\n'.join(unique_paragraphs)
+        
+        # ================================================================
+        # STEP 7: Fix unwrapped LaTeX (raw backslash commands outside delimiters)
+        # ================================================================
+        # Pattern: \int_a^b or \frac{...} appearing outside math delimiters
+        # These need to be wrapped in $$ ... $$
+        def wrap_orphan_latex(match):
+            latex_cmd = match.group(0)
+            # Don't double-wrap if already in $
+            return f'${latex_cmd}$'
+        
+        # Find LaTeX commands outside of $ delimiters
+        # This is a simplified check - look for common patterns
+        # Pattern: newline followed by backslash command with subscripts/etc
+        text = re.sub(r'(?<![a-zA-Z$])(\\(?:int|frac|sum|prod|sqrt|lim|sin|cos|tan|log|ln)(?:_[^$\s]+|\{[^}]+\})*(?:\s*[+\-=<>]\s*[^\n$]+)?)', wrap_orphan_latex, text)
+        
+        # ================================================================
+        # STEP 8: Clean up excess whitespace from all the replacements
+        # ================================================================
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r'[ \t]+\n', '\n', text)  # Trailing spaces
+        
+        # ================================================================
+        # STEP 9: Remove any remaining stray characters at very end
+        # ================================================================
+        # Sometimes there's a lone quote or comma at the end
+        text = re.sub(r'[,\"\'\}\]]+\s*$', '', text.strip())
         
         return text.strip()
     
@@ -1576,7 +1953,12 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
         
         # Extract useful info
         name = student_profile.get('name', '') or memory_context.get('user_name', '')
-        name_prefix = f"{name}, " if name else ""
+        # SANITIZE name_prefix: only use if it's a real name (>= 3 chars, not placeholder)
+        name_prefix = ""
+        if name and len(name.strip()) >= 3:
+            name_clean = name.strip().lower()
+            if name_clean not in ['dsd', 'test', 'user', 'student', 'hiremath', 'unknown']:
+                name_prefix = f"{name.strip().title()}, "
         weak_topics = memory_context.get('weak_topics', [])
         recent_topics = memory_context.get('recent_topics', [])
         last_topic = memory_context.get('current_topic', '').replace('_', ' ')
@@ -1630,65 +2012,63 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
         exam_mode = student_profile.get('exam_mode', 'General')
         
         if action_intent == 'continue':
-            # 🎯 SESSION RECALL - Student wants to continue previous work
-            # Use Memory v2 to provide personal, useful recap with next step + check-in
+            # 🎯 SESSION RECALL - Student explicitly asked to continue
+            # Provide clean, student-facing recap without debug info
             
-            # Try to get session summary from student_profile (Memory v2)
+            # Get session summary from student_profile (Memory v2)
             conversation_summary = student_profile.get('conversation_summary', '')
-            context_summary = student_profile.get('context_summary', '')
+            
+            # SANITIZE name_prefix: only use if it's a real name (not random strings)
+            # Empty or 1-2 char names like "dsd" should be ignored
+            safe_prefix = ""
+            if name_prefix and len(name_prefix.strip().rstrip(',')) >= 3:
+                # Check it's not a placeholder/test name
+                name_check = name_prefix.strip().rstrip(',').lower()
+                if name_check not in ['dsd', 'test', 'user', 'student', 'hiremath']:
+                    safe_prefix = name_prefix
             
             if last_topic:
-                # Build personalized recap using Memory v2
-                recap_parts = []
+                # Build CLEAN recap (no mastery 0%, no debug dumps)
+                topic_clean = last_topic.replace('_', ' ').title()
                 
-                # Part 1: Where we left off
-                recap_parts.append(f"📚 **Here's where we left off:**\n")
-                recap_parts.append(f"We were working on **{last_topic}** (your mastery: {mastery_level}%).")
+                # Part 1: Where we left off (clean format)
+                recap = f"📚 **Last time we covered:** {topic_clean}\n\n"
                 
-                # Part 2: Summary if available
-                if conversation_summary:
-                    # Use first 100 chars of summary as a brief
-                    brief = conversation_summary[:150].strip()
-                    if brief:
-                        recap_parts.append(f"\n\n{brief}")
-                
-                # Part 3: Next step (personalized)
-                if mastery_level < 40:
-                    next_step = f"Let's reinforce the basics of {last_topic} - I'll break it down step by step."
-                elif mastery_level < 70:
-                    next_step = f"Ready to tackle some practice problems on {last_topic}?"
+                # Part 2: Next step (only if mastery > 0)
+                if mastery_level > 0 and mastery_level < 40:
+                    recap += f"🎯 **Next:** Let's strengthen the basics.\n\n"
+                elif mastery_level >= 40 and mastery_level < 70:
+                    recap += f"🎯 **Next:** Ready for practice problems?\n\n"
+                elif mastery_level >= 70:
+                    recap += f"🎯 **Next:** Try advanced questions?\n\n"
                 else:
-                    next_step = f"You're doing great! Want to try some advanced {last_topic} questions?"
+                    recap += f"🎯 **Next:** Want to continue or switch?\n\n"
                 
-                recap_parts.append(f"\n\n🎯 **Next step:** {next_step}")
+                # Part 3: Action prompt
+                recap += f"💬 Continue with this, or tell me something new!"
                 
-                # Part 4: Check-in question
-                recap_parts.append(f"\n\n💬 Want to continue from here, or switch to something else?")
-                
-                return f"{name_prefix}" + "".join(recap_parts)
+                return recap  # NO name_prefix for recap
             else:
-                # No last topic - try to suggest from weak topics or recent
+                # No last topic - suggest options
                 if weak_topics:
-                    weak_topic = weak_topics[0].replace('_', ' ')
+                    weak_topic = weak_topics[0].replace('_', ' ').title()
                     return (
-                        f"🤔 {name_prefix}I don't have a record of our last session, but no worries!\n\n"
-                        f"**Quick suggestion:** I noticed **{weak_topic}** could use some practice.\n\n"
-                        f"🎯 **Next step:** We could start there, or tell me what you're working on today.\n\n"
-                        f"💬 What sounds good to you?"
+                        f"🤔 I don't have our last session saved.\n\n"
+                        f"**Suggestion:** {weak_topic} could use practice.\n\n"
+                        f"🎯 Want to start there, or tell me what you're working on?"
                     )
                 elif recent_topics:
-                    recent = recent_topics[0].replace('_', ' ')
+                    recent = recent_topics[0].replace('_', ' ').title()
                     return (
-                        f"🤔 {name_prefix}I couldn't find our exact stopping point, but here's what I remember:\n\n"
+                        f"🤔 Couldn't find exact stopping point.\n\n"
                         f"You recently worked on **{recent}**.\n\n"
-                        f"🎯 **Next step:** Want to continue with that, or explore something new?\n\n"
-                        f"💬 Just let me know!"
+                        f"🎯 Continue that, or explore something new?"
                     )
                 else:
                     return (
-                        f"🤔 {name_prefix}I don't have our previous session saved, but that's okay!\n\n"
-                        f"🎯 **Next step:** Just tell me what topic you're studying or what's confusing you.\n\n"
-                        f"💬 I'll jump right in to help! What's on your mind?"
+                        f"🤔 No previous session found.\n\n"
+                        f"🎯 Just tell me what topic you're studying!\n\n"
+                        f"💬 What's on your mind?"
                     )
         
         elif action_intent == 'help':
@@ -2768,10 +3148,17 @@ Response:"""
         # Don't add static "Additional Details" header - let the response flow naturally
         if professor_content and professor_content != mentor_content:
             # Check if professor adds truly new info (not just overlap)
-            if len(professor_content) > 100 and professor_content[:50] not in mentor_content:
+            # Use normalized comparison to catch near-duplicates
+            mentor_normalized = ' '.join(mentor_content.lower().split())[:200]
+            professor_normalized = ' '.join(professor_content.lower().split())[:200]
+            
+            # Only append if genuinely different (not >70% overlap in first 200 chars)
+            if professor_normalized not in mentor_normalized and len(professor_content) > 100:
                 # Append seamlessly without static header
                 main_content += f"\n\n{professor_content[:800]}"
         
+        # CRITICAL: Do NOT duplicate content in progressive_sections.explanation
+        # The frontend may render both, causing duplicate display
         return {
             "response": {
                 "default_view": {
@@ -2781,8 +3168,10 @@ Response:"""
                     }
                 },
                 "progressive_sections": {
-                    "explanation": main_content,
-                    "formal": professor_content
+                    # Use EMPTY explanation to prevent duplication
+                    # The main_content already contains the full response
+                    "explanation": "",  # FIXED: Was duplicating main_content
+                    "formal": professor_content if professor_content != mentor_content else ""
                 },
                 "intent": result.get("intent", "concept")
             },

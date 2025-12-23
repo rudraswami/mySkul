@@ -6,9 +6,59 @@ import logging
 import uuid
 import re
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_to_dict(payload: Any) -> Dict[str, Any]:
+    """
+    DEFENSIVE: Normalize any input to a dict to prevent 'list' object has no attribute 'get' errors.
+    
+    This is a structural fix, NOT keyword-based.
+    
+    Normalization rules:
+    - dict → return as-is
+    - list → wrap as {"items": list}
+    - tuple/set → convert to list then wrap
+    - None → return {}
+    - pydantic BaseModel → convert to dict
+    - string → wrap as {"content": string}
+    - other → wrap as {"value": str(other)}
+    
+    NEVER raises. Always returns a dict.
+    """
+    if payload is None:
+        return {}
+    
+    if isinstance(payload, dict):
+        return payload
+    
+    if isinstance(payload, (list, tuple)):
+        # Wrap list/tuple as {"items": [...]}
+        items = list(payload) if isinstance(payload, tuple) else payload
+        return {"items": items}
+    
+    if isinstance(payload, set):
+        return {"items": list(payload)}
+    
+    if isinstance(payload, str):
+        return {"content": payload}
+    
+    # Check for pydantic model
+    if hasattr(payload, 'model_dump'):
+        try:
+            return payload.model_dump()
+        except Exception:
+            pass
+    elif hasattr(payload, 'dict'):
+        try:
+            return payload.dict()
+        except Exception:
+            pass
+    
+    # Fallback: wrap as {"value": str(payload)}
+    return {"value": str(payload)}
 
 
 class MemoryExtractor:
@@ -30,7 +80,7 @@ class MemoryExtractor:
         self,
         user_id: str,
         question: str,
-        response: Dict[str, Any],
+        response: Any,
         session_id: str,
         message_id: str = None
     ) -> List[Dict[str, Any]]:
@@ -40,7 +90,7 @@ class MemoryExtractor:
         Args:
             user_id: Student user ID
             question: Student's question
-            response: AI response data
+            response: AI response data (any type - will be normalized)
             session_id: Current session
             message_id: Message ID
         
@@ -49,6 +99,12 @@ class MemoryExtractor:
         """
         try:
             facts = []
+            
+            # DEFENSIVE: Normalize response to dict to prevent 'list' object has no attribute 'get'
+            original_type = type(response).__name__
+            response = _normalize_to_dict(response)
+            if original_type != 'dict':
+                logger.debug(f"💾 Memory normalize: converted {original_type} to dict wrapper | user={user_id[:8] if user_id else 'unknown'}")
             
             # Extract concepts from question and response
             concepts = self._extract_concepts(question, response)
@@ -137,7 +193,9 @@ class MemoryExtractor:
             List of concept identifiers
         """
         concepts = []
-        text = (question + " " + str(response.get('content', ''))).lower()
+        # DEFENSIVE: response should already be a dict from normalization, but be safe
+        response_content = response.get('content', '') if isinstance(response, dict) else str(response)
+        text = (question + " " + str(response_content)).lower()
         
         # Physics concepts
         if ("newton" in text or "नेवटन" in text) and "law" in text:
@@ -194,7 +252,8 @@ class MemoryExtractor:
     
     def _detect_metaphor_preference(self, response: Dict[str, Any]) -> Optional[str]:
         """Detect which metaphor style was used"""
-        response_text = str(response.get('content', '')).lower()
+        # DEFENSIVE: response should already be a dict from normalization, but be safe
+        response_text = str(response.get('content', '') if isinstance(response, dict) else response).lower()
         
         if "cricket" in response_text or "bowler" in response_text or "bat" in response_text:
             return "cricket"

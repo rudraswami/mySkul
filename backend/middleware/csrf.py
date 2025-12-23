@@ -36,7 +36,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             "/api/ai/visual-engine/",  # Visual engine endpoints (concept-break, etc.)
             "/api/ai/teach-me-back",  # Teach Me Back feature
             "/api/subscription/",  # Subscription endpoints
-            "/api/gamification/"  # Gamification endpoints
+            "/api/gamification/",  # Gamification endpoints
+            "/api/analytics/",  # Analytics/feedback endpoints
+            "/api/api/analytics/"  # Handle duplicate /api/ prefix edge case
         ]
     
     async def dispatch(self, request: Request, call_next):

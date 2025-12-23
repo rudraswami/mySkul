@@ -713,15 +713,32 @@ class MemoryService:
         overlap = len(old_words & new_words) / len(old_words)
         return overlap < 0.8  # >20% change
     
-    def _bound_payload(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Bound payload size for memory events."""
+    def _bound_payload(self, payload: Any) -> Dict[str, Any]:
+        """
+        Bound payload size for memory events.
+        
+        DEFENSIVE: Handles list/tuple/None inputs gracefully.
+        NEVER raises.
+        """
         import json
         try:
-            payload_str = json.dumps(payload)
+            # DEFENSIVE: Normalize payload to dict if it's a list/tuple/None
+            if payload is None:
+                return {}
+            
+            if isinstance(payload, (list, tuple)):
+                # Wrap list/tuple as {"items": [...]}
+                payload = {"items": list(payload) if isinstance(payload, tuple) else payload}
+            
+            if not isinstance(payload, dict):
+                # Fallback: wrap as {"value": str(payload)}
+                payload = {"value": str(payload)}
+            
+            payload_str = json.dumps(payload, default=str)  # default=str for non-serializable objects
             if len(payload_str) > 2000:
                 return {"truncated": True, "reason": "payload_too_large", "keys": list(payload.keys())}
             return payload
-        except:
+        except Exception:
             return {"error": "serialization_failed"}
     
     async def _prune_memory_events(self, user_id: str, max_events: int = 100):

@@ -117,6 +117,188 @@ const formatRelativeTime = (dateString) => {
   }
 };
 
+// ============================================================================
+// CRITICAL: Response Sanitization Helpers
+// These prevent internal agent traces from ever showing in the UI
+// ============================================================================
+
+/**
+ * Deep extract text content from any nested object structure
+ * NEVER returns JSON - always extracts actual text
+ */
+const deepExtractTextContent = (obj, maxDepth = 5) => {
+  if (!obj || maxDepth <= 0) return '';
+  
+  // If it's already a string, return it
+  if (typeof obj === 'string') return obj;
+  
+  // If it's not an object, stringify safely
+  if (typeof obj !== 'object' || Array.isArray(obj)) {
+    return Array.isArray(obj) ? obj.filter(s => typeof s === 'string').join('\n') : '';
+  }
+  
+  // Priority order for content extraction
+  const contentPaths = [
+    ['default_view', 'main_content', 'content'],
+    ['response', 'default_view', 'main_content', 'content'],
+    ['progressive_sections', 'explanation'],
+    ['main_response'],
+    ['content'],
+    ['explanation'],
+    ['answer'],
+    ['text'],
+    ['message'],
+  ];
+  
+  for (const path of contentPaths) {
+    let value = obj;
+    for (const key of path) {
+      value = value?.[key];
+      if (value === undefined) break;
+    }
+    if (typeof value === 'string' && value.length > 10) {
+      return value;
+    }
+  }
+  
+  // Recursively search all string values
+  for (const key of Object.keys(obj)) {
+    // Skip internal/trace keys
+    if (['thought', 'action', 'action_input', 'reasoning_chain', '_debug', '_trace'].includes(key)) {
+      continue;
+    }
+    const value = obj[key];
+    if (typeof value === 'string' && value.length > 50) {
+      return value;
+    }
+    if (typeof value === 'object' && value !== null) {
+      const extracted = deepExtractTextContent(value, maxDepth - 1);
+      if (extracted && extracted.length > 50) {
+        return extracted;
+      }
+    }
+  }
+  
+  return '';
+};
+
+/**
+ * Sanitize response text to remove any internal traces
+ * Uses structural detection - not keyword matching
+ * 
+ * CRITICAL: This is the FINAL sanitization before content reaches the UI.
+ * Must catch any JSON blocks containing internal trace keys at:
+ * - START of response
+ * - END of response (most common leak point!)
+ * - MIDDLE of response
+ */
+const sanitizeResponseText = (text) => {
+  if (!text || typeof text !== 'string') return text || '';
+  
+  // Internal keys that indicate trace/debug data that should NEVER be shown
+  const INTERNAL_KEYS = [
+    'thought', 'action', 'action_input', 'confidence', 'observation', 'step',
+    'hybrid_reasoning', 'orchestration', 'routing_decision', 'symbolic_proof',
+    'reasoning_chain', 'verification_passed', 'graph_context', 'pipeline'
+  ];
+  
+  // Remove any JSON blocks that contain internal trace keys
+  // Pattern: { ... "thought" ... } or { ... "confidence" ... } etc.
+  const internalKeyPattern = INTERNAL_KEYS.map(k => `"${k}"`).join('|');
+  const jsonBlockPattern = new RegExp(`\\{[^{}]*(?:${internalKeyPattern})[^{}]*\\}`, 'gi');
+  let cleaned = text.replace(jsonBlockPattern, '');
+  
+  // CRITICAL: Remove JSON blocks at END of response (common leak point!)
+  // Pattern: content ends with { ... } after normal text
+  // Look for JSON starting after a complete sentence (period, newline, etc.)
+  const endJsonPattern = /[\.\!\?\n]\s*\{[\s\S]*$/g;
+  const endMatch = cleaned.match(endJsonPattern);
+  if (endMatch) {
+    const potentialJson = endMatch[0].substring(endMatch[0].indexOf('{'));
+    // Check if it looks like internal JSON (has internal keys or starts with "conf", "hyb", etc.)
+    const looksInternal = INTERNAL_KEYS.some(key => 
+      potentialJson.toLowerCase().includes(`"${key}"`) || 
+      potentialJson.toLowerCase().includes(`"${key.substring(0, 4)}`)
+    ) || potentialJson.match(/^\s*\{\s*\n\s*"/);
+    
+    if (looksInternal) {
+      cleaned = cleaned.replace(endJsonPattern, (m) => m[0]); // Keep just the punctuation
+    }
+  }
+  
+  // Remove any multi-line JSON-like blocks at START of response
+  if (cleaned.trim().startsWith('{')) {
+    let depth = 0;
+    let endIndex = -1;
+    for (let i = 0; i < cleaned.length; i++) {
+      if (cleaned[i] === '{') depth++;
+      else if (cleaned[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          endIndex = i + 1;
+          break;
+        }
+      }
+    }
+    if (endIndex > 0 && endIndex < cleaned.length * 0.5) {
+      const potentialJson = cleaned.substring(0, endIndex);
+      if (INTERNAL_KEYS.some(key => potentialJson.toLowerCase().includes(`"${key}"`))) {
+        cleaned = cleaned.substring(endIndex).trim();
+      }
+    }
+  }
+  
+  // Remove ReAct-style patterns: "Thought: ...", "Action: ...", "Observation: ..."
+  const reactPattern = /^(Thought|Action|Observation|Action Input|Step \d+):\s*[^\n]+$/gim;
+  cleaned = cleaned.replace(reactPattern, '');
+  
+  // Remove standalone trace lines
+  const traceLinePattern = /^\s*"(?:thought|action|action_input|confidence)":\s*[^\n]+$/gim;
+  cleaned = cleaned.replace(traceLinePattern, '');
+  
+  // Remove incomplete JSON at end (common symptom: response ends with { or {"conf)
+  // This catches cases where JSON started rendering but was truncated
+  cleaned = cleaned.replace(/\s*\{\s*"?[a-z_]*"?\s*:?\s*$/i, '');
+  cleaned = cleaned.replace(/\s*\{\s*$/i, '');
+  
+  // Remove JSON fragments at end like "}, or "], 
+  cleaned = cleaned.replace(/["']?\s*\}\s*,?\s*$/g, '');
+  cleaned = cleaned.replace(/["']?\s*\]\s*,?\s*$/g, '');
+  
+  // ================================================================
+  // LATEX/MATH FORMATTING - Critical for student readability
+  // ================================================================
+  // Remove LONE BACKSLASH lines (these break visual flow)
+  cleaned = cleaned.replace(/^\s*\\+\s*$/gm, '');
+  cleaned = cleaned.replace(/\\\s*\n\s*\n/g, '\n\n');
+  
+  // Normalize LaTeX delimiters for KaTeX/MathJax rendering
+  // Convert \[ ... \] to $$ ... $$ (block math)
+  cleaned = cleaned.replace(/\\\[\s*/g, '\n$$');
+  cleaned = cleaned.replace(/\s*\\\]/g, '$$\n');
+  
+  // Convert \( ... \) to $ ... $ (inline math)
+  cleaned = cleaned.replace(/\\\(\s*/g, '$');
+  cleaned = cleaned.replace(/\s*\\\)/g, '$');
+  
+  // Fix double-escaped backslashes in LaTeX (\\int → \int)
+  cleaned = cleaned.replace(/\$\$([^$]+)\$\$/g, (match, content) => {
+    return '$$' + content.replace(/\\\\([a-zA-Z]+)/g, '\\$1') + '$$';
+  });
+  
+  // Clean up excessive newlines
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  
+  // Remove leading/trailing stray braces or backslashes that are orphaned
+  cleaned = cleaned.replace(/^\s*[\{\}\\]+\s*$/gm, '');
+  cleaned = cleaned.replace(/^\s*\{\s*\n\s*\\/gm, '');
+  
+  // Remove trailing commas, quotes, braces at very end
+  cleaned = cleaned.replace(/[,"\'\}\]]+\s*$/g, '');
+  
+  return cleaned.trim();
+};
+
 export default function AITutorNeuroSymbolic() {
   const { user } = useAuth();
   const { checkFeatureAccess, trackFeatureUsage } = useSubscription();
@@ -1393,6 +1575,7 @@ export default function AITutorNeuroSymbolic() {
   };
 
   // Helper function to normalize AI message content
+  // CRITICAL: Never JSON.stringify - always extract clean text
   const normalizeAIContent = (content) => {
     // If content is already a proper object with default_view, return as is
     if (typeof content === 'object' && content !== null && !Array.isArray(content) && content.default_view) {
@@ -1401,11 +1584,13 @@ export default function AITutorNeuroSymbolic() {
     
     // If content is a string, wrap it in proper structure
     if (typeof content === 'string') {
+      // SANITIZE: Remove any embedded JSON blocks that look like internal traces
+      const sanitizedContent = sanitizeResponseText(content);
       return {
         default_view: {
-          greeting: content.substring(0, 100),
+          greeting: sanitizedContent.substring(0, 100),
           main_content: {
-            content: content
+            content: sanitizedContent
           }
         },
         progressive_sections: {}
@@ -1414,13 +1599,18 @@ export default function AITutorNeuroSymbolic() {
     
     // If content is an object but missing default_view, try to extract meaningful data
     if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
+      // CRITICAL: Deep extraction - find actual text content, NEVER stringify
+      const extractedText = deepExtractTextContent(content);
+      
       // Check if it has any response-like structure
-      if (content.explanation || content.answer || content.response) {
+      if (content.explanation || content.answer || content.response || extractedText) {
+        const rawText = content.explanation || content.answer || content.response || extractedText;
+        const sanitizedText = sanitizeResponseText(rawText);
         return {
           default_view: {
-            greeting: content.greeting || 'Here\'s the explanation:',
+            greeting: '',  // No hardcoded greeting - let AI provide it
             main_content: {
-              content: content.explanation || content.answer || content.response || JSON.stringify(content)
+              content: sanitizedText
             }
           },
           progressive_sections: {},
@@ -1430,11 +1620,12 @@ export default function AITutorNeuroSymbolic() {
       
       // If it's an object with visual_sketch but no default_view, wrap it
       if (content.visual_sketch) {
+        const visualText = content.explanation || content.answer || deepExtractTextContent(content) || '';
         return {
           default_view: {
-            greeting: 'Visual explanation',
+            greeting: '',
             main_content: {
-              content: content.explanation || content.answer || 'Visual explanation provided'
+              content: sanitizeResponseText(visualText)
             }
           },
           progressive_sections: {},
@@ -1443,24 +1634,42 @@ export default function AITutorNeuroSymbolic() {
         };
       }
       
-      // Last resort: wrap the entire object
+      // Last resort: NEVER stringify - extract any available text or show error
+      // This prevents internal agent data from leaking to UI
+      const lastResortText = deepExtractTextContent(content);
+      if (lastResortText && lastResortText.length > 20) {
+        return {
+          default_view: {
+            greeting: '',
+            main_content: {
+              content: sanitizeResponseText(lastResortText)
+            }
+          },
+          progressive_sections: {},
+          detected_subject: content?.detected_subject || content?.subject || 'General'
+        };
+      }
+      
+      // If still no text found, return error message (never stringify raw objects)
+      console.warn('⚠️ normalizeAIContent: Could not extract text from response object', Object.keys(content || {}));
       return {
         default_view: {
-          greeting: 'Response',
+          greeting: '',
           main_content: {
-            content: JSON.stringify(content)
+            content: 'I processed your question but had trouble formatting the response. Please try asking again!'
           }
         },
         progressive_sections: {}
       };
     }
     
-    // Fallback for any other type
+    // Fallback for any other type - NEVER stringify
+    console.warn('⚠️ normalizeAIContent: Unexpected content type', typeof content);
     return {
       default_view: {
-        greeting: 'Response',
+        greeting: '',
         main_content: {
-          content: String(content || 'No content available')
+          content: 'Response received. Please try asking your question again for a better formatted answer.'
         }
       },
       progressive_sections: {}
