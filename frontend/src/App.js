@@ -28,7 +28,7 @@ import ToastRenderer from './components/ToastRenderer';
 
 // Lazy loaded components (code splitting for better initial load)
 const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
-const AITutor = lazy(() => import('./components/AITutorNeuroSymbolic')); // Neuro-Symbolic v3.0 - Production AI Tutor
+const AITutor = lazy(() => import('./components/AITutorNeuroSymbolic')); // Neuro-Symbolic v3.0 - lazy load
 const StudyPlanner = lazy(() => import('./components/StudyPlanner')); // AI Study Planner
 const MockTests = lazy(() => import('./components/MockTests'));
 const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
@@ -197,24 +197,6 @@ function AppContent() {
         } />
         <Route path="/contact" element={<Navigate to="/policies/contact" replace />} />
         
-        {/* AI Sathi - Full Screen (outside Navigation) - Uses AITutorNeuroSymbolic */}
-        <Route path="/tutor" element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader message="Loading AI Sathi..." />}>
-              <AITutor />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-        
-        {/* Alias for /sathi route */}
-        <Route path="/sathi" element={
-          <ProtectedRoute>
-            <Suspense fallback={<PageLoader message="Loading AI Sathi..." />}>
-              <AITutor />
-            </Suspense>
-          </ProtectedRoute>
-        } />
-        
         {/* Protected Routes - All require authentication */}
         <Route path="/*" element={
           <ProtectedRoute>
@@ -260,6 +242,11 @@ function AppContent() {
                   <Route path="/study-planner" element={
                     <Suspense fallback={<PageLoader message="Loading study planner..." />}>
                       <StudyPlanner />
+                    </Suspense>
+                  } />
+                  <Route path="/tutor" element={
+                    <Suspense fallback={<PageLoader message="Loading AI Tutor..." />}>
+                      <AITutor />
                     </Suspense>
                   } />
                   {/* HIDDEN FOR V1 - Launching in V2 */}

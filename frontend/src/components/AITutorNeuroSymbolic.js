@@ -45,9 +45,13 @@ import OnboardingTour from './OnboardingTour';
 import apiClient from '../api/client';
 import '../styles/ai-tutor-redesign.css'; // Shared scroll stability styles
 import '../styles/sathi-premium.css'; // Premium Sathi UI redesign
+import '../styles/sathi-premium-v2.css'; // Neural Premium Theme
 import '../styles/sathi-ux-audit-fixes.css'; // UI/UX Audit Permanent Fixes
 import '../styles/ui-comprehensive-fixes.css'; // Comprehensive UI/UX Fixes - ALL ISSUES
 import '../styles/classroom-layout.css'; // Digital Classroom Layout
+
+// Premium Welcome Component - Neural AI Interface
+import PremiumWelcome from './chat/PremiumWelcome';
 
 // V1 Enhancement Components
 import VisualSketchViewer from './visual/VisualSketchViewer';
@@ -1853,26 +1857,8 @@ export default function AITutorNeuroSymbolic() {
       </AnimatePresence>
       
       {/* 🎨 VISUAL GENERATION INDICATOR - Shows when generating visual */}
-      <AnimatePresence>
-        {isGeneratingVisual && (
-          <motion.div
-            initial={{ y: -60, opacity: 0 }}
-            animate={{ y: !isOnline ? 48 : 0, opacity: 1 }}
-            exit={{ y: -60, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-[9998] bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg"
-          >
-            <Loader className="w-4 h-4 animate-spin" />
-            <span className="font-medium text-sm">Generating visual explanation...</span>
-            <button 
-              onClick={cancelVisualGeneration}
-              className="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-            >
-              <X className="w-3 h-3" />
-              Cancel
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* REMOVED: Visual generation banner - per founder decision */}
+      {/* Header should only contain brand/title, no heavy visuals */}
       
       {/* 🎮 GAMIFICATION: Micro-Reward Popup */}
       <MicroReward 
@@ -1962,52 +1948,21 @@ export default function AITutorNeuroSymbolic() {
           userQuestion={currentUserQuestion}
         >
           {/* Chat Content - Messages + Input (ChatGPT/Gemini style) */}
-          <div className="flex flex-col h-full relative">
+          <div className={`flex flex-col h-full relative ${messages.length > 0 ? 'sathi-chat-wrapper' : ''}`}>
             {/* Scrollable Content Area */}
             <div 
               ref={chatContainerRef}
-              className="flex-1 overflow-y-auto"
+              className={`flex-1 overflow-y-auto ${messages.length > 0 ? 'sathi-chat-scroll' : ''}`}
             >
-              {/* Welcome Screen - Vertically centered in full height */}
+              {/* Welcome Screen - PREMIUM NEURAL AI MENTOR INTERFACE */}
               {showWelcome && messages.length === 0 ? (
-                <div className="min-h-full flex items-center justify-center p-6">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col items-center text-center w-full max-w-2xl"
-                  >
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-orange-400 rounded-3xl flex items-center justify-center mb-6 shadow-lg">
-                    <Sparkles className="w-10 h-10 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Hey! Ready to Learn? 💪</h2>
-                  <p className="text-gray-500 mb-6 max-w-sm">Your AI friend who explains things in the coolest way!</p>
-                  
-                  {/* Feature tags */}
-                  <div className="flex flex-wrap justify-center gap-2 mb-8">
-                    {['🏏 Cricket analogies', '🎯 Real examples', '📝 Exam tips', '🗣️ Hinglish!'].map((tag, i) => (
-                      <span key={i} className="px-3 py-1.5 bg-white rounded-full text-sm text-gray-600 border border-gray-200">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  {/* Quick prompts */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-                    {defaultPrompts.slice(0, 4).map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleQuickSend(typeof prompt === 'string' ? prompt : prompt.text)}
-                        className="p-4 bg-white hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl text-left transition-all"
-                      >
-                        <p className="text-sm text-gray-700">{typeof prompt === 'string' ? prompt : prompt.text}</p>
-                      </button>
-                    ))}
-                  </div>
-                  </motion.div>
-                </div>
+                <PremiumWelcome 
+                  onSendMessage={handleQuickSend}
+                  userProfile={user}
+                />
               ) : (
-                /* Messages Container - Centered content like ChatGPT */
-                <div className="max-w-4xl mx-auto px-4 py-4 w-full">
+                /* Messages Container - Premium Dark Theme */
+                <div className="max-w-4xl mx-auto px-4 py-6 w-full">
                 {/* Memory Context Banner */}
                 {messages.length > 0 && messages[messages.length - 1]?.content?.memory_context && (
                   <MemoryContextBanner memoryContext={messages[messages.length - 1].content.memory_context} />
@@ -2021,9 +1976,9 @@ export default function AITutorNeuroSymbolic() {
                         animate={{ opacity: 1, y: 0 }}
                       >
                         {message.type === 'user' && (
-                          <div className="flex justify-end mb-4">
-                            <div className="max-w-[85%] px-4 py-3 bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm">
-                              <p className="text-sm leading-relaxed">
+                          <div className="flex justify-end mb-5">
+                            <div className="sathi-user-message">
+                              <p>
                                 {/* FIXED: Extract actual user message, NEVER show "Question" fallback */}
                                 {(() => {
                                   if (typeof message.content === 'string' && message.content.trim()) {
@@ -2045,18 +2000,36 @@ export default function AITutorNeuroSymbolic() {
                           </div>
                         )}
                         
-                        {message.type === 'ai' && (
-                          <div className="flex justify-start mb-4">
-                            <div className="w-full">
-                              <SmartResponse
-                                response={message.content}
-                                visualSketch={message.visual_sketch || message.content?.visual_sketch}
-                                question={message.user_question || ''}
-                                onFollowUp={(q) => { setInputMessage(q); inputRef.current?.focus(); }}
-                              />
+                        {message.type === 'ai' && (() => {
+                          // BUGFIX: Skip streaming placeholders - thinking indicator handles this
+                          // This prevents duplicate icons during loading
+                          if (message.isStreaming) {
+                            const hasRealContent = 
+                              message.content?.default_view?.main_content?.content?.trim?.()?.length > 0 ||
+                              message.content?.default_view?.greeting?.trim?.()?.length > 0 ||
+                              (typeof message.content?.default_view?.main_content === 'string' && 
+                               message.content.default_view.main_content.trim().length > 0);
+                            if (!hasRealContent) return null;
+                          }
+                          
+                          return (
+                            <div className="flex gap-3 mb-6 sathi-ai-message-row">
+                              {/* Mini Avatar - Left side */}
+                              <div className="sathi-ai-avatar-left">
+                                <span>🧠</span>
+                              </div>
+                              {/* Response Content - Clean, readable */}
+                              <div className="flex-1 sathi-ai-message-content">
+                                <SmartResponse
+                                  response={message.content}
+                                  visualSketch={message.visual_sketch || message.content?.visual_sketch}
+                                  question={message.user_question || ''}
+                                  onFollowUp={(q) => { setInputMessage(q); inputRef.current?.focus(); }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                         
                         {message.type === 'error' && (
                           <div className="flex justify-center mb-4">
@@ -2075,10 +2048,18 @@ export default function AITutorNeuroSymbolic() {
                   </AnimatePresence>
                 </div>
               
-                {/* Loading Indicator */}
+                {/* Loading Indicator - Clean */}
                 {loading && (
-                  <div className="flex justify-start mb-4">
-                    <NeuralThinkingIndicator isLoading={loading} />
+                  <div className="flex gap-3 mb-6 sathi-ai-message-row">
+                    <div className="sathi-ai-avatar-left sathi-avatar-thinking">
+                      <span>🧠</span>
+                    </div>
+                    <div className="sathi-thinking-indicator">
+                      <span className="sathi-thinking-text">Thinking</span>
+                      <span className="sathi-thinking-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                      </span>
+                    </div>
                   </div>
                 )}
                 
@@ -2087,25 +2068,28 @@ export default function AITutorNeuroSymbolic() {
               )}
             </div>
             
-            {/* Input Area - Fixed at bottom like ChatGPT */}
-            <div className="flex-shrink-0 border-t border-gray-100 bg-white/95 backdrop-blur-sm">
-              <div className="max-w-4xl mx-auto px-4 py-3">
+            {/* Input Area - Premium Dark Theme */}
+            <div className={`flex-shrink-0 ${messages.length > 0 ? 'sathi-chat-input-container' : 'bg-white border-t border-gray-200/80 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.04)]'}`}>
+              <div className={messages.length > 0 ? 'sathi-chat-input-wrapper' : 'max-w-3xl mx-auto px-4 py-3'}>
               {/* Follow-up suggestions */}
               {floatingFollowUps.length > 0 && !loading && (
-                <div className="mb-3 flex flex-wrap gap-2">
+                <div className={messages.length > 0 ? 'sathi-chat-followups' : 'mb-2.5 flex flex-wrap gap-1.5'}>
                   {floatingFollowUps.map((suggestion, idx) => (
-                    <button
+                    <motion.button
                       key={idx}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
                       onClick={() => {
                         const message = typeof suggestion === 'string' ? suggestion : suggestion.text;
                         setInputMessage(message);
                         setFloatingFollowUps([]);
-                        handleSend(message);  // FIX: Pass directly, no setTimeout
+                        handleSend(message);
                       }}
-                      className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full text-sm font-medium transition-colors"
+                      className={messages.length > 0 ? 'sathi-chat-followup-chip' : 'px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-medium transition-colors border border-purple-100/50'}
                     >
                       {typeof suggestion === 'string' ? suggestion : suggestion.text}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               )}
@@ -2120,41 +2104,71 @@ export default function AITutorNeuroSymbolic() {
                 </div>
               )}
               
-              {/* Input Form */}
-              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
+              {/* Glow effect for dark theme */}
+              {messages.length > 0 && <div className="sathi-chat-input-glow" />}
+              
+              {/* Input Form - Premium styling when in chat */}
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={messages.length > 0 ? 'sathi-chat-input-form' : ''}>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-                <div className="flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 p-2 transition-all">
-                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-white transition-all disabled:opacity-50">
-                    <ImageIcon className="w-5 h-5" />
-                  </button>
-                  <textarea
-                    ref={inputRef}
-                    value={inputMessage}
-                    onChange={(e) => {
-                      console.log('⌨️ TEXTAREA onChange:', e.target.value.substring(0, 30));
-                      setInputMessage(e.target.value);
-                    }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                    placeholder="Ask anything... I'll explain like a friend 💪"
-                    className="flex-1 px-3 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm"
-                    rows={1}
-                    disabled={loading}
-                    style={{ minHeight: '40px', maxHeight: '100px' }}
-                  />
-                  <motion.button
-                    type="submit"
-                    disabled={(!inputMessage.trim() && !selectedImage) || loading}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                      inputMessage.trim() || selectedImage
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  </motion.button>
-                </div>
+                {messages.length === 0 ? (
+                  /* Welcome state - original styling */
+                  <div className="flex items-end gap-2 bg-white rounded-xl border border-gray-200 shadow-sm focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100/50 focus-within:shadow-md px-2 py-1.5 transition-all duration-200">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
+                    <textarea
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                      placeholder="Ask anything... I'll explain like a friend 💪"
+                      className="flex-1 px-2 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm leading-relaxed"
+                      rows={1}
+                      disabled={loading}
+                      style={{ minHeight: '38px', maxHeight: '120px' }}
+                    />
+                    <motion.button
+                      type="submit"
+                      disabled={(!inputMessage.trim() && !selectedImage) || loading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                        inputMessage.trim() || selectedImage
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </motion.button>
+                  </div>
+                ) : (
+                  /* Chat state - Premium dark styling */
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="sathi-chat-attach-btn">
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
+                    <textarea
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                      placeholder="Ask a follow-up... I'm still here 💪"
+                      className="sathi-chat-textarea"
+                      rows={1}
+                      disabled={loading}
+                      style={{ minHeight: '24px', maxHeight: '120px' }}
+                    />
+                    <motion.button
+                      type="submit"
+                      disabled={(!inputMessage.trim() && !selectedImage) || loading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`sathi-chat-send-btn ${(!inputMessage.trim() && !selectedImage) || loading ? 'opacity-40' : ''}`}
+                    >
+                      {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </motion.button>
+                  </>
+                )}
               </form>
               </div>
             </div>
@@ -2705,217 +2719,6 @@ export default function AITutorNeuroSymbolic() {
           style={{ minHeight: 0 }}
         >
           <div className="max-w-4xl mx-auto px-4 py-6 min-h-full flex flex-col">
-            {/* Welcome Screen - ULTRA PREMIUM STUDENT-CENTRIC DESIGN */}
-            {showWelcome && messages.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-16 px-4 relative"
-              >
-                {/* Background gradient mesh effect */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <div className="absolute top-0 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
-                  <div className="absolute top-20 right-1/4 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl" />
-                  <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-blue-500/8 rounded-full blur-3xl" />
-                </div>
-
-                {/* Premium Animated Logo - Sathi Identity */}
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', duration: 0.8, bounce: 0.4 }}
-                  className="relative inline-block mb-10"
-                >
-                  {/* Animated outer glow */}
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-3xl blur-2xl"
-                    animate={{ 
-                      opacity: [0.3, 0.5, 0.3],
-                      scale: [1.4, 1.6, 1.4]
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  
-                  {/* Main logo container with animated gradient */}
-                  <div className="relative w-28 h-28 rounded-3xl shadow-2xl shadow-purple-500/40 overflow-hidden">
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 50%, #F97316 100%)',
-                        backgroundSize: '200% 200%'
-                      }}
-                      animate={{
-                        backgroundPosition: ['0% 0%', '100% 100%', '0% 0%']
-                      }}
-                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    
-                    {/* Glass overlay */}
-                    <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
-                    
-                    {/* Sparkle effects */}
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-0"
-                    >
-                      <Sparkles className="w-5 h-5 text-white/40 absolute top-3 right-3" />
-                      <Sparkles className="w-4 h-4 text-white/30 absolute bottom-4 left-3" />
-                    </motion.div>
-                    
-                    {/* Handshake emoji */}
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <motion.span
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="text-6xl"
-                      >
-                        🤝
-                      </motion.span>
-                    </div>
-                  </div>
-                  
-                  {/* Online status with pulse */}
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white shadow-lg shadow-emerald-500/50 flex items-center justify-center"
-                  >
-                    <motion.div 
-                      className="w-2.5 h-2.5 bg-white rounded-full"
-                      animate={{ opacity: [1, 0.5, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    />
-                  </motion.div>
-                </motion.div>
-
-                {/* Title with animated gradient */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="mb-6"
-                >
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
-                    <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
-                      Hey! Ready to Learn?
-                    </span>
-                    <motion.span 
-                      className="inline-block ml-2"
-                      animate={{ rotate: [0, 14, -8, 14, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
-                    >
-                      💪
-                    </motion.span>
-                  </h1>
-                </motion.div>
-                
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-lg md:text-xl text-gray-600 mb-4 font-medium max-w-lg mx-auto"
-                >
-                  Your AI friend who explains things in the coolest way!
-                </motion.p>
-                
-                {/* Feature tags - Premium glass design */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex flex-wrap items-center justify-center gap-2 mb-12"
-                >
-                  {[
-                    { icon: '🏏', text: 'Cricket analogies' },
-                    { icon: '🎯', text: 'Real examples' },
-                    { icon: '📝', text: 'Exam tips' },
-                    { icon: '🗣️', text: 'Hinglish!' }
-                  ].map((tag, i) => (
-                    <motion.span
-                      key={tag.text}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6 + i * 0.1 }}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 border border-gray-200/80 shadow-sm hover:shadow-md hover:border-violet-200 transition-all cursor-default"
-                    >
-                      <span>{tag.icon}</span>
-                      <span>{tag.text}</span>
-                    </motion.span>
-                  ))}
-                </motion.div>
-
-                {/* Quick prompts - PREMIUM GLASSMORPHIC CARDS */}
-                {defaultPrompts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                    {defaultPrompts.map((prompt, index) => {
-                      const promptText = typeof prompt === 'string' ? prompt : prompt.text || prompt;
-                      
-                      // Premium icon and color schemes
-                      const cardStyles = [
-                        { icon: Book, gradient: 'from-blue-500 to-cyan-500', accent: 'text-blue-500', bg: 'hover:from-blue-50 hover:to-cyan-50' },
-                        { icon: Brain, gradient: 'from-violet-500 to-purple-500', accent: 'text-violet-500', bg: 'hover:from-violet-50 hover:to-purple-50' },
-                        { icon: Zap, gradient: 'from-orange-500 to-amber-500', accent: 'text-orange-500', bg: 'hover:from-orange-50 hover:to-amber-50' },
-                        { icon: Trophy, gradient: 'from-emerald-500 to-teal-500', accent: 'text-emerald-500', bg: 'hover:from-emerald-50 hover:to-teal-50' }
-                      ];
-                      
-                      const style = cardStyles[index % cardStyles.length];
-                      const IconComponent = style.icon;
-                      
-                      return (
-                        <motion.button
-                          key={index}
-                          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ 
-                            delay: 0.7 + index * 0.1, 
-                            type: 'spring', 
-                            stiffness: 100 
-                          }}
-                          whileHover={{ scale: 1.03, y: -4 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => handleQuickSend(promptText)}
-                          className={`group relative flex items-start gap-4 p-5 rounded-2xl text-left overflow-hidden transition-all duration-300 bg-white/80 backdrop-blur-sm border border-gray-200/80 shadow-sm hover:shadow-xl hover:border-transparent hover:bg-gradient-to-r ${style.bg}`}
-                        >
-                          {/* Accent line on hover */}
-                          <motion.div
-                            className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${style.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                          />
-                          
-                          {/* Icon container */}
-                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${style.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
-                            <IconComponent className="w-6 h-6 text-white" />
-                          </div>
-                          
-                          {/* Text content */}
-                          <div className="flex-1 min-w-0 pt-1">
-                            <p className="text-sm font-medium text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors">
-                              {promptText}
-                            </p>
-                          </div>
-                          
-                          {/* Arrow indicator */}
-                          <motion.div className="flex-shrink-0 pt-1">
-                            <ArrowRight className={`w-5 h-5 ${style.accent} opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300`} />
-                          </motion.div>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                {/* Fun tagline */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 }}
-                  className="mt-12 text-gray-400 text-sm"
-                >
-                  <p>Ask anything - I'll explain it like a friend! 💪</p>
-                </motion.div>
-              </motion.div>
-            )}
-
             {/* Messages Loading Skeleton */}
             {messagesLoading && (
               <div className="space-y-4 py-6 animate-pulse">

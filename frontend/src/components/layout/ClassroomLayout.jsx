@@ -57,8 +57,18 @@ const ClassroomHeader = ({
   rightActions,
   isBoardOpen,
   onToggleBoard,
-  hasVisual = false
+  hasVisual = false,
+  aiStatus = 'ready' // 'ready', 'listening', 'thinking', 'explaining'
 }) => {
+  // AI Status configurations
+  const statusConfig = {
+    ready: { text: 'Sathi is ready', color: 'bg-emerald-500', pulse: false },
+    listening: { text: 'Listening...', color: 'bg-blue-500', pulse: true },
+    thinking: { text: 'Thinking...', color: 'bg-purple-500', pulse: true },
+    explaining: { text: 'Explaining', color: 'bg-amber-500', pulse: false }
+  };
+  const status = statusConfig[aiStatus] || statusConfig.ready;
+
   return (
     <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-20">
       {/* Left Section */}
@@ -78,6 +88,11 @@ const ClassroomHeader = ({
           <div>
             <h1 className="text-base font-semibold text-gray-800">{title}</h1>
             <p className="text-xs text-gray-500 hidden sm:block">LEARNING WORKSPACE</p>
+          </div>
+          {/* AI Status Indicator */}
+          <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-gray-50 rounded-full border border-gray-100">
+            <span className={`w-2 h-2 rounded-full ${status.color} ${status.pulse ? 'animate-pulse' : ''}`} />
+            <span className="text-xs text-gray-500 font-medium">{status.text}</span>
           </div>
         </div>
       </div>
@@ -314,14 +329,14 @@ export default function ClassroomLayout({
             <div className="hidden md:flex flex-1 overflow-hidden">
               {/* Left Panel - Chat */}
               {/* ZEN MODE: Full width, content centered inside (like ChatGPT) */}
-              {/* LAB MODE: 40% left panel when visual active */}
-              {/* SMARTBOARD DISABLED: Always full width */}
+              {/* PREMIUM: Clean dark theme when chat is active */}
               <div 
-                className={`flex flex-col overflow-hidden transition-all duration-500 ease-in-out bg-white ${
+                className={`flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
                   SMARTBOARD_ENABLED && isBoardOpen 
                     ? 'w-[40%] min-w-[400px] border-r border-gray-200' 
                     : 'flex-1'
                 }`}
+                style={{ background: hasStartedChat ? '#12121c' : 'white' }}
               >
                 {/* Chat Content - Children handle their own scrolling */}
                 {children}
@@ -358,6 +373,7 @@ export default function ClassroomLayout({
             <div className={`md:hidden flex-1 flex flex-col overflow-hidden ${SMARTBOARD_ENABLED ? 'pb-16' : ''}`}>
               <AnimatePresence mode="wait">
                 {/* When SmartBoard disabled, always show chat */}
+                {/* PREMIUM: Clean dark theme when chat is active */}
                 {(!SMARTBOARD_ENABLED || activeTab === ACTIVE_TAB.CHAT) ? (
                   <motion.div
                     key="chat"
@@ -365,7 +381,8 @@ export default function ClassroomLayout({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="flex-1 flex flex-col bg-white overflow-hidden"
+                    className="flex-1 flex flex-col overflow-hidden"
+                    style={{ background: hasStartedChat ? '#12121c' : 'white' }}
                   >
                     {children}
                   </motion.div>

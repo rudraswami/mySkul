@@ -1,12 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient, authAPI } from '../api/client';
 
 const AuthContext = createContext();
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Auth check timeout (10 seconds)
-const AUTH_CHECK_TIMEOUT = 10000;
 
 // SECURITY: Remove console logging for production
 // console.log('AuthContext - Backend URL:', BACKEND_URL);
@@ -23,7 +20,6 @@ export function AuthProvider({ children }) {
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('dhruv_ai_token'));
 
   // Configure apiClient for authentication
@@ -98,9 +94,9 @@ export function AuthProvider({ children }) {
           console.log('ℹ️ No active session found');
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        // Set error state for UI to show retry option
-        setAuthError('Unable to connect. Please check your internet connection.');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth check failed:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -108,39 +104,6 @@ export function AuthProvider({ children }) {
 
     checkAuth();
   }, []); // Only run on mount, not when token changes
-
-  // Retry auth check function - exposed for UI retry buttons
-  const retryAuthCheck = useCallback(async () => {
-    setLoading(true);
-    setAuthError(null);
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), AUTH_CHECK_TIMEOUT);
-      
-      const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        setAuthError(null);
-      }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        setAuthError('Connection timed out. Please try again.');
-      } else {
-        setAuthError('Unable to connect. Please check your internet connection.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const loginWithGoogle = async (sessionData) => {
     try {
@@ -268,8 +231,6 @@ export function AuthProvider({ children }) {
     logout,
     updateUser,
     loading,
-    authError,
-    retryAuthCheck,
     token  // Added back for compatibility
   };
 
