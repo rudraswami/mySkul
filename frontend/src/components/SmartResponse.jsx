@@ -528,8 +528,9 @@ const SmartResponse = ({
     setFeedback(type);
     
     // Send to backend for tracking
+    // Note: apiClient baseURL already includes /api, so use relative path
     try {
-      await apiClient.post('/api/analytics/feedback', {
+      await apiClient.post('/analytics/feedback', {
         feedback_type: type,
         question: question,
         response_preview: content?.mainContent?.substring(0, 300)

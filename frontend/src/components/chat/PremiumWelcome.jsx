@@ -1,6 +1,6 @@
 /**
  * PremiumWelcome - Emotionally Intelligent AI Mentor Interface
- * Druv AI's signature welcome experience - warm, supportive, student-first
+ * DRON AI's signature welcome experience - warm, supportive, student-first
  * 
  * Design Philosophy: "Someone smart, calm, and supportive is sitting next to the student"
  */

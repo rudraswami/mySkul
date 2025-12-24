@@ -21,7 +21,7 @@ const ShareButtons = ({ response, question, visualSvg, onToast }) => {
 
   const shareToWhatsApp = () => {
     const responsePreview = response.substring(0, 200).replace(/\n/g, ' ');
-    const text = `Check out this amazing AI explanation I got on Druv AI! 🚀\n\n❓ Q: ${question}\n\n💡 A: ${responsePreview}...\n\n✨ Try Druv AI: ${window.location.origin}\n\n#DruvAI #AITutor #Learning`;
+    const text = `Check out this amazing AI explanation I got on DRON AI! 🚀\n\n❓ Q: ${question}\n\n💡 A: ${responsePreview}...\n\n✨ Try DRON AI: ${window.location.origin}\n\n#DRONAI #AITutor #Learning`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
     

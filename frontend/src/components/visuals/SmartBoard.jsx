@@ -493,7 +493,7 @@ const EmptyBoardState = () => {
 };
 
 // ============================================
-// LOADING SKELETON - "Dr. Druv is Sketching..." Animation
+// LOADING SKELETON - "Sathi is Sketching..." Animation
 // ============================================
 const SketchingLoadingState = () => {
   return (
@@ -610,7 +610,7 @@ const SketchingLoadingState = () => {
         className="text-xl font-bold text-gray-800 mb-2"
         style={fontSketchStyle}
       >
-        ✏️ Dr. Druv is sketching...
+        ✏️ Sathi is sketching...
       </h3>
       <p 
         className="text-gray-500 text-sm max-w-xs"

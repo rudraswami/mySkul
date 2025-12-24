@@ -70,7 +70,7 @@ const ClassroomHeader = ({
   const status = statusConfig[aiStatus] || statusConfig.ready;
 
   return (
-    <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-20">
+    <header className="flex-shrink-0 h-14 bg-slate-900 border-b border-slate-800/60 flex items-center justify-between px-4 z-20">
       {/* Left Section */}
       <div className="flex items-center gap-3">
         <button
@@ -90,7 +90,7 @@ const ClassroomHeader = ({
             <p className="text-xs text-gray-500 hidden sm:block">LEARNING WORKSPACE</p>
           </div>
           {/* AI Status Indicator */}
-          <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-gray-50 rounded-full border border-gray-100">
+          <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700/50">
             <span className={`w-2 h-2 rounded-full ${status.color} ${status.pulse ? 'animate-pulse' : ''}`} />
             <span className="text-xs text-gray-500 font-medium">{status.text}</span>
           </div>
@@ -149,7 +149,7 @@ const MobileTabBar = ({ activeTab, onTabChange, hasNewVisual }) => {
   }
   
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-6 z-30">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800/60 flex items-center justify-around px-6 z-30">
       <button
         onClick={() => onTabChange(ACTIVE_TAB.CHAT)}
         className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all ${
@@ -301,7 +301,7 @@ export default function ClassroomLayout({
   );
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="flex-1 h-full w-full flex flex-col bg-slate-950 overflow-hidden">
       {/* Header */}
       <ClassroomHeader
         onMenuClick={openSidebar}
@@ -316,7 +316,7 @@ export default function ClassroomLayout({
       <div className="flex-1 flex overflow-hidden">
         {/* === WELCOME MODE (Full Width, Centered) - No Chat Yet === */}
         {!hasStartedChat ? (
-          <div className="flex-1 flex flex-col bg-white overflow-y-auto">
+          <div className="flex-1 flex flex-col bg-slate-900 overflow-y-auto">
             <div className="flex-1 flex items-center justify-center">
               <div className="w-full max-w-4xl mx-auto px-6 py-8">
                 {welcomeScreen || children}

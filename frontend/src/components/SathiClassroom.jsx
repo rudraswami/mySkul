@@ -58,16 +58,16 @@ const ProactiveSuggestions = ({ suggestions, onSuggestionClick }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100"
+      className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-700/50"
     >
       {suggestions.map((suggestion, idx) => (
         <button
           key={idx}
           onClick={() => onSuggestionClick(suggestion.action)}
-          className="px-3 py-1.5 text-sm bg-gradient-to-r from-purple-50 to-blue-50 
-                     text-purple-700 rounded-full border border-purple-200 
-                     hover:from-purple-100 hover:to-blue-100 hover:border-purple-300
-                     transition-all duration-200 shadow-sm hover:shadow"
+          className="px-3 py-1.5 text-sm bg-violet-500/10 
+                     text-violet-300 rounded-full border border-violet-500/30 
+                     hover:bg-violet-500/20 hover:border-violet-500/50
+                     transition-all duration-200"
         >
           {suggestion.label}
         </button>
@@ -87,10 +87,10 @@ const ProactiveOpener = ({ opener }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 
-                 border border-amber-200 rounded-xl shadow-sm"
+      className="mb-4 p-4 bg-amber-500/10 
+                 border border-amber-500/30 rounded-xl"
     >
-      <p className="text-amber-800 text-sm font-medium">{opener}</p>
+      <p className="text-amber-300 text-sm font-medium">{opener}</p>
     </motion.div>
   );
 };
@@ -606,7 +606,7 @@ export default function SathiClassroom() {
       </div>
 
       {/* Input Area */}
-      <div className="flex-shrink-0 border-t border-gray-100 bg-white p-4">
+      <div className="flex-shrink-0 border-t border-slate-800/60 bg-slate-900 p-4">
         {/* Image Preview */}
         {imagePreview && (
           <div className="mb-3 relative inline-block">
@@ -614,7 +614,7 @@ export default function SathiClassroom() {
               <img
                 src={imagePreview}
                 alt="Upload preview"
-                className="max-h-32 max-w-xs object-contain bg-gray-50"
+                className="max-h-32 max-w-xs object-contain bg-slate-800/50 rounded-lg"
               />
               <button
                 type="button"
@@ -637,13 +637,13 @@ export default function SathiClassroom() {
             className="hidden"
           />
           
-          <div className="flex items-end gap-2 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 p-2 transition-all">
+          <div className="flex items-end gap-2 bg-slate-800/50 rounded-2xl border border-slate-700/50 focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/20 p-2 transition-all">
             {/* Image Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-white transition-all disabled:opacity-50"
+              className="flex-shrink-0 p-2 text-slate-400 hover:text-violet-400 rounded-lg hover:bg-slate-700/50 transition-all disabled:opacity-50"
             >
               <ImageIcon className="w-5 h-5" />
             </button>

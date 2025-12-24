@@ -1,5 +1,5 @@
 /**
- * Shared API client for Dhruv AI
+ * Shared API client for DRON AI
  * Centralized configuration for all API calls with React Query
  */
 import axios from 'axios';
@@ -25,21 +25,56 @@ export const apiClient = axios.create({
   withCredentials: true, // Enable cookies for hybrid auth
 });
 
-// CSRF token management
+// CSRF token management - Double-Submit Cookie pattern
 let csrfToken = null;
+let csrfFetchPromise = null; // Prevent parallel fetches
+
+/**
+ * Get CSRF token from cookie (Double-Submit pattern)
+ */
+const getCsrfFromCookie = () => {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrf_token') {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+};
 
 /**
  * Fetch and store CSRF token
+ * Uses cookie value if available, otherwise fetches from endpoint
  */
 const fetchCsrfToken = async () => {
-  try {
-    const response = await apiClient.get('/auth/csrf-token');
-    csrfToken = response?.data?.csrf_token || response?.headers?.['x-csrf-token'] || null;
+  // Check cookie first (most reliable for Double-Submit pattern)
+  const cookieToken = getCsrfFromCookie();
+  if (cookieToken) {
+    csrfToken = cookieToken;
     return csrfToken;
-  } catch (error) {
-    console.warn('Failed to fetch CSRF token:', error);
-    return null;
   }
+  
+  // Prevent parallel fetch requests
+  if (csrfFetchPromise) {
+    return csrfFetchPromise;
+  }
+  
+  csrfFetchPromise = (async () => {
+    try {
+      const response = await apiClient.get('/auth/csrf-token');
+      // Token is set via cookie by server; also available in response
+      csrfToken = response?.data?.csrf_token || response?.headers?.['x-csrf-token'] || getCsrfFromCookie();
+      return csrfToken;
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+      return null;
+    } finally {
+      csrfFetchPromise = null;
+    }
+  })();
+  
+  return csrfFetchPromise;
 };
 
 /**
@@ -54,15 +89,19 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Add CSRF token for state-changing requests
+    // Add CSRF token for state-changing requests (Double-Submit Cookie pattern)
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase())) {
+      // Try to get token from cookie first
+      let tokenToUse = getCsrfFromCookie() || csrfToken;
+      
       // Fetch CSRF token if not available
-      if (!csrfToken) {
-        await fetchCsrfToken();
+      if (!tokenToUse) {
+        tokenToUse = await fetchCsrfToken();
       }
       
-      if (csrfToken) {
-        config.headers['X-CSRF-Token'] = csrfToken;
+      if (tokenToUse) {
+        config.headers['X-CSRF-Token'] = tokenToUse;
+        csrfToken = tokenToUse; // Cache for future requests
       }
     }
     
@@ -83,18 +122,24 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // Handle CSRF token errors
-    if (error.response?.status === 403 && error.response.data?.detail?.includes('CSRF')) {
-      console.warn('CSRF token expired, refreshing...');
-      // Clear expired token and retry
-      csrfToken = null;
-      await fetchCsrfToken();
-      
-      // Retry the original request
-      if (csrfToken) {
-        originalRequest.headers['X-CSRF-Token'] = csrfToken;
-        originalRequest._retry = true;
-        return apiClient.request(originalRequest);
+    // Handle CSRF token errors - Single retry with fresh token
+    if (error.response?.status === 403 && 
+        (error.response.data?.detail?.includes('CSRF') || error.response.data?.detail?.includes('csrf'))) {
+      // Prevent infinite retry loops
+      if (!originalRequest._csrfRetry) {
+        console.warn('CSRF token expired/missing, refreshing...');
+        originalRequest._csrfRetry = true;
+        
+        // Clear cached token and fetch fresh one
+        csrfToken = null;
+        await fetchCsrfToken();
+        
+        // Retry the original request with fresh token
+        const freshToken = getCsrfFromCookie() || csrfToken;
+        if (freshToken) {
+          originalRequest.headers['X-CSRF-Token'] = freshToken;
+          return apiClient.request(originalRequest);
+        }
       }
     }
     

@@ -122,18 +122,18 @@ export default function LoginScreen() {
       {/* Left Panel - Premium Showcase */}
       <PremiumShowcase />
 
-      {/* Right Panel - Auth Forms */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+      {/* Right Panel - Auth Forms (Dark Theme with Calm Content Areas) */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
         <div className="w-full max-w-md">
           {/* Logo & Branding */}
           <div className="text-center mb-8 fade-in">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 mb-4 pulse-glow">
               <Brain className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {showSignup ? 'Create Account' : 'Sign in to Dhruv AI'}
+            <h2 className="text-3xl font-bold text-white mb-2">
+              {showSignup ? 'Create Account' : 'Sign in to DRON AI'}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-slate-400">
               {showSignup ? 'Join thousands of students learning smarter' : 'Start your intelligent learning journey'}
             </p>
           </div>
@@ -147,13 +147,13 @@ export default function LoginScreen() {
 
           {/* Auth Mode Toggle (only show for login) */}
           {!showSignup && (
-            <div className="flex mb-6 bg-white p-1 rounded-xl shadow-sm">
+            <div className="flex mb-6 bg-slate-800/50 p-1 rounded-xl border border-slate-700/50">
               <button
                 onClick={() => setAuthMode('google')}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                   authMode === 'google'
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Google Sign In
@@ -162,8 +162,8 @@ export default function LoginScreen() {
                 onClick={() => setAuthMode('email')}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                   authMode === 'email'
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 Email & Password
@@ -173,11 +173,11 @@ export default function LoginScreen() {
 
           {/* Google OAuth Login */}
           {!showSignup && authMode === 'google' && (
-            <div className="glass-card rounded-2xl p-8 shadow-xl fade-in">
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl fade-in">
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full btn-google py-4 px-6 rounded-xl font-semibold text-gray-700 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                className="w-full bg-white py-4 px-6 rounded-xl font-semibold text-gray-700 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
               >
                 <svg className="h-6 w-6" viewBox="0 0 24 24">
                   <path
@@ -200,9 +200,9 @@ export default function LoginScreen() {
                 <span>Continue with Google</span>
               </button>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center leading-relaxed">
-                  By continuing, you agree to Dhruv AI's Terms of Service and Privacy Policy.
+              <div className="mt-6 pt-6 border-t border-slate-700/50">
+                <p className="text-xs text-slate-500 text-center leading-relaxed">
+                  By continuing, you agree to DRON AI's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>
@@ -210,37 +210,37 @@ export default function LoginScreen() {
 
           {/* Email/Password Login Form */}
           {!showSignup && authMode === 'email' && (
-            <div className="glass-card rounded-2xl p-8 shadow-xl fade-in">
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl fade-in">
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="email"
                       required
                       value={loginData.email}
                       onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="your@email.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="password"
                       required
                       value={loginData.password}
                       onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="••••••••"
                     />
                   </div>
@@ -249,15 +249,15 @@ export default function LoginScreen() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  By continuing, you agree to Dhruv AI's Terms of Service and Privacy Policy.
+              <div className="mt-6 pt-6 border-t border-slate-700/50">
+                <p className="text-xs text-slate-500 text-center">
+                  By continuing, you agree to DRON AI's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>
@@ -265,87 +265,87 @@ export default function LoginScreen() {
 
           {/* Signup Form */}
           {showSignup && (
-            <div className="glass-card rounded-2xl p-8 shadow-xl fade-in">
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl fade-in">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Full Name *
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="text"
                       required
                       value={signupData.full_name}
                       onChange={(e) => setSignupData({...signupData, full_name: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="Enter your full name"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="email"
                       required
                       value={signupData.email}
                       onChange={(e) => setSignupData({...signupData, email: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="your@email.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Password *
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="password"
                       required
                       value={signupData.password}
                       onChange={(e) => setSignupData({...signupData, password: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="At least 6 characters"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Confirm Password *
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="password"
                       required
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({...signupData, confirmPassword: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="Re-enter password"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Exam Type *
                   </label>
                   <div className="relative">
-                    <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <select
                       required
                       value={signupData.exam_type}
                       onChange={(e) => setSignupData({...signupData, exam_type: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none bg-white"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent appearance-none"
                     >
                       <option value="JEE">JEE (Engineering)</option>
                       <option value="NEET">NEET (Medical)</option>
@@ -356,11 +356,11 @@ export default function LoginScreen() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Target Year *
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="number"
                       required
@@ -368,7 +368,7 @@ export default function LoginScreen() {
                       max={new Date().getFullYear() + 10}
                       value={signupData.target_year}
                       onChange={(e) => setSignupData({...signupData, target_year: e.target.value})}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                       placeholder="2025"
                     />
                   </div>
@@ -377,15 +377,15 @@ export default function LoginScreen() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  By signing up, you agree to Dhruv AI's Terms of Service and Privacy Policy.
+              <div className="mt-6 pt-6 border-t border-slate-700/50">
+                <p className="text-xs text-slate-500 text-center">
+                  By signing up, you agree to DRON AI's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>
@@ -398,7 +398,7 @@ export default function LoginScreen() {
                 setShowSignup(!showSignup);
                 setError('');
               }}
-              className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+              className="text-violet-400 hover:text-violet-300 font-medium text-sm"
             >
               {showSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
@@ -406,10 +406,10 @@ export default function LoginScreen() {
 
           {/* Additional Info */}
           <div className="mt-8 text-center fade-in-delay-2">
-            <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+            <div className="inline-flex items-center space-x-2 text-sm text-slate-500">
               <span>🔒 Secure authentication</span>
               <span>•</span>
-              <span>✅ Hallucination-Free AI</span>
+              <span>🧠 Hallucination-Free AI</span>
             </div>
           </div>
         </div>

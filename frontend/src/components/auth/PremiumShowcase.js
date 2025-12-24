@@ -15,7 +15,7 @@ export default function PremiumShowcase() {
       icon: <Zap className="h-8 w-8 text-white" />,
       title: "Unlimited Sessions",
       description: "Practice as much as you need. No limits on your learning journey",
-      gradient: "from-blue-500 to-cyan-600",
+      gradient: "from-violet-500 to-indigo-600",
       delay: "animate-float-delay-1"
     },
     {
@@ -58,7 +58,7 @@ export default function PremiumShowcase() {
         {/* Header */}
         <div className="text-center mb-12 fade-in">
           <h1 className="text-5xl font-bold text-white mb-4">
-            Welcome to <span className="text-yellow-300">Dhruv AI</span>
+            Welcome to <span className="text-violet-400">DRON AI</span>
           </h1>
           <p className="text-xl text-white/90 font-light">
             Your AI-powered learning companion for JEE, NEET & UPSC

@@ -34,41 +34,41 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-// Block type icons and colors
+// Block type icons and colors (Dark theme optimized)
 const BLOCK_CONFIG = {
   spaced_repetition: {
     icon: RefreshCw,
     color: 'from-blue-500 to-cyan-500',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
+    bgColor: 'bg-blue-500/10',
+    textColor: 'text-blue-400',
     label: 'Review'
   },
   deep_practice: {
     icon: Target,
     color: 'from-orange-500 to-red-500',
-    bgColor: 'bg-orange-50',
-    textColor: 'text-orange-700',
+    bgColor: 'bg-orange-500/10',
+    textColor: 'text-orange-400',
     label: 'Practice'
   },
   concept_introduction: {
     icon: BookOpen,
     color: 'from-purple-500 to-pink-500',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-700',
+    bgColor: 'bg-purple-500/10',
+    textColor: 'text-purple-400',
     label: 'Learn'
   },
   break: {
     icon: Coffee,
     color: 'from-green-500 to-emerald-500',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
+    bgColor: 'bg-emerald-500/10',
+    textColor: 'text-emerald-400',
     label: 'Break'
   },
   mock_test: {
     icon: Award,
     color: 'from-indigo-500 to-blue-500',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-700',
+    bgColor: 'bg-indigo-500/10',
+    textColor: 'text-indigo-400',
     label: 'Test'
   }
 };
@@ -174,7 +174,7 @@ const StudyPlanner = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
       </div>
     );
   }
@@ -182,12 +182,12 @@ const StudyPlanner = () => {
   if (!plan) {
     return (
       <div className="text-center py-12">
-        <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">No Study Plan Yet</h3>
-        <p className="text-gray-500 mb-6">Let's create your personalized daily plan!</p>
+        <Brain className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-slate-200 mb-2">No Study Plan Yet</h3>
+        <p className="text-slate-400 mb-6">Let's create your personalized daily plan!</p>
         <button
           onClick={loadTodayPlan}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
+          className="px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg font-medium hover:shadow-violet-500/25 transition-all"
         >
           Generate Today's Plan
         </button>
@@ -198,12 +198,12 @@ const StudyPlanner = () => {
   const progress = calculateProgress();
   
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 min-h-screen">
       {/* Header with Motivation */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 text-white shadow-lg"
+        className="bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -238,46 +238,46 @@ const StudyPlanner = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-700/50"
         >
-          <Clock className="w-8 h-8 text-blue-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-800">{plan.total_duration_minutes}m</p>
-          <p className="text-sm text-gray-500">Total Time</p>
+          <Clock className="w-8 h-8 text-violet-400 mb-2" />
+          <p className="text-2xl font-bold text-white">{plan.total_duration_minutes}m</p>
+          <p className="text-sm text-slate-400">Total Time</p>
         </motion.div>
         
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-700/50"
         >
-          <Zap className="w-8 h-8 text-yellow-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-800">{plan.goals.xp_target} XP</p>
-          <p className="text-sm text-gray-500">Today's Goal</p>
+          <Zap className="w-8 h-8 text-amber-400 mb-2" />
+          <p className="text-2xl font-bold text-white">{plan.goals.xp_target} XP</p>
+          <p className="text-sm text-slate-400">Today's Goal</p>
         </motion.div>
         
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-700/50"
         >
-          <Target className="w-8 h-8 text-orange-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-800">{plan.goals.topics_to_master}</p>
-          <p className="text-sm text-gray-500">Topics</p>
+          <Target className="w-8 h-8 text-orange-400 mb-2" />
+          <p className="text-2xl font-bold text-white">{plan.goals.topics_to_master}</p>
+          <p className="text-sm text-slate-400">Topics</p>
         </motion.div>
         
         <motion.div
           whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-700/50"
         >
-          <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
-          <p className="text-2xl font-bold text-gray-800">{Math.round(progress)}%</p>
-          <p className="text-sm text-gray-500">Progress</p>
+          <TrendingUp className="w-8 h-8 text-emerald-400 mb-2" />
+          <p className="text-2xl font-bold text-white">{Math.round(progress)}%</p>
+          <p className="text-sm text-slate-400">Progress</p>
         </motion.div>
       </div>
       
       {/* Adaptive Notes */}
       {plan.adaptive_notes && plan.adaptive_notes.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+        <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4 space-y-2">
           {plan.adaptive_notes.map((note, index) => (
-            <p key={index} className="text-blue-700 text-sm">{note}</p>
+            <p key={index} className="text-violet-300 text-sm">{note}</p>
           ))}
         </div>
       )}
@@ -297,8 +297,8 @@ const StudyPlanner = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className={`bg-white rounded-xl shadow-sm border ${
-                isCompleted ? 'border-green-300 bg-green-50/30' : 'border-gray-200'
+              className={`bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-sm border ${
+                isCompleted ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700/50'
               } overflow-hidden`}
             >
               <div className="p-4">
@@ -310,9 +310,9 @@ const StudyPlanner = () => {
                       className="flex-shrink-0"
                     >
                       {isCompleted ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-600" />
+                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                       ) : (
-                        <Circle className="w-6 h-6 text-gray-300 hover:text-gray-400" />
+                        <Circle className="w-6 h-6 text-slate-600 hover:text-slate-400" />
                       )}
                     </button>
                     
@@ -327,10 +327,10 @@ const StudyPlanner = () => {
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor}`}>
                           {config.label}
                         </span>
-                        <span className="text-xs text-gray-500">{block.subject}</span>
+                        <span className="text-xs text-slate-400">{block.subject}</span>
                       </div>
-                      <h3 className="font-semibold text-gray-800">{block.topic}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                      <h3 className="font-semibold text-slate-200">{block.topic}</h3>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {block.duration_minutes} min
@@ -347,12 +347,12 @@ const StudyPlanner = () => {
                       <div className="flex items-center gap-2">
                         {isActive ? (
                           <>
-                            <span className="text-lg font-mono font-bold text-blue-600">
+                            <span className="text-lg font-mono font-bold text-violet-400">
                               {formatTime(timerSeconds)}
                             </span>
                             <button
                               onClick={() => setActiveTimer(null)}
-                              className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                              className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
                             >
                               <Pause className="w-4 h-4" />
                             </button>
@@ -360,7 +360,7 @@ const StudyPlanner = () => {
                         ) : (
                           <button
                             onClick={() => startBlockTimer(index, block.duration_minutes)}
-                            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                            className="p-2 bg-violet-500/20 text-violet-400 rounded-lg hover:bg-violet-500/30"
                           >
                             <Play className="w-4 h-4" />
                           </button>
@@ -372,12 +372,12 @@ const StudyPlanner = () => {
                     {block.concepts && block.concepts.length > 0 && (
                       <button
                         onClick={() => setExpandedBlock(isExpanded ? null : index)}
-                        className="p-2 hover:bg-gray-100 rounded-lg"
+                        className="p-2 hover:bg-slate-700/50 rounded-lg"
                       >
                         {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                          <ChevronUp className="w-5 h-5 text-slate-400" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                          <ChevronDown className="w-5 h-5 text-slate-400" />
                         )}
                       </button>
                     )}
@@ -426,6 +426,10 @@ const StudyPlanner = () => {
 };
 
 export default StudyPlanner;
+
+
+
+
 
 
 

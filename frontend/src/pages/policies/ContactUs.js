@@ -99,7 +99,7 @@ export default function ContactUs() {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Office Address</h3>
                     <p className="text-gray-700 dark:text-gray-300">
-                      Druv AI<br />
+                      DRON AI<br />
                       Near Laksmi Hospital<br />
                       Kaggadasapur, Bangalore - 560093<br />
                       Karnataka, India

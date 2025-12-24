@@ -7,7 +7,7 @@ const testimonials = [
         name: "Priya Sharma",
         role: "JEE Advanced Rank 247",
         image: "https://images.unsplash.com/photo-1656236559909-b05a20191727?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB5b3V0aCUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NjM3OTExMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        quote: "Druv AI's Error Genome™ caught my conceptual gaps in rotational mechanics that I didn't even know existed. The 3D cricket physics module made vector analysis so intuitive!",
+        quote: "DRON AI's Error Genome™ caught my conceptual gaps in rotational mechanics that I didn't even know existed. The 3D cricket physics module made vector analysis so intuitive!",
         rating: 5,
         exam: "JEE",
         improvement: "+45% in Physics",
@@ -74,7 +74,7 @@ export function StudentTestimonials() {
                     </span>
                 </h2>
                 <p className="text-white/70 text-xl max-w-3xl mx-auto">
-                    Join thousands of Indian students who are achieving their dreams with Druv AI's revolutionary learning platform
+                    Join thousands of Indian students who are achieving their dreams with DRON AI's revolutionary learning platform
                 </p>
             </motion.div>
 

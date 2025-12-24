@@ -268,11 +268,11 @@ export default function Subscription() {
 
   if (loading || plansLoading) {
     return (
-      <div className="p-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+      <div className="p-8 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 min-h-screen">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
-            <LoadingSpinner size="lg" className="text-blue-600 mb-4" />
-            <p className="text-gray-600">Loading subscription information...</p>
+            <LoadingSpinner size="lg" className="text-violet-500 mb-4" />
+            <p className="text-slate-400">Loading subscription information...</p>
           </div>
         </div>
       </div>
@@ -280,32 +280,32 @@ export default function Subscription() {
   }
 
   return (
-    <div className="p-4 md:p-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header with gradient background */}
         <div className="text-center mb-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 rounded-3xl blur-3xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-violet-600/10 via-indigo-600/10 to-purple-600/10 rounded-3xl blur-3xl"></div>
           <div className="relative">
             <div className="flex items-center justify-center mb-6">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-2xl shadow-xl transform hover:scale-105 transition-transform">
+              <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 rounded-2xl shadow-xl transform hover:scale-105 transition-transform">
                 <Crown className="h-10 w-10 text-white" />
               </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-violet-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent mb-4">
               Choose Your Learning Plan
             </h1>
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 font-medium">
+            <p className="text-xl md:text-2xl text-slate-300 mb-8 font-medium">
               Unlock your full potential with AI-powered personalized learning
             </p>
             
             {/* Billing Toggle - Enhanced */}
-            <div className="flex items-center justify-center space-x-2 p-1.5 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg inline-flex border-2 border-gray-200">
+            <div className="flex items-center justify-center space-x-2 p-1.5 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg inline-flex border border-slate-700/50">
               <button
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-6 py-3 rounded-lg transition-all font-semibold ${
                   billingCycle === 'monthly' 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg scale-105' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
                 Monthly
@@ -314,12 +314,12 @@ export default function Subscription() {
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-6 py-3 rounded-lg transition-all font-semibold flex items-center gap-2 ${
                   billingCycle === 'yearly' 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg scale-105'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
                 <span>Yearly</span>
-                <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
+                <Badge className="bg-emerald-500 text-white text-xs px-2 py-0.5">
                   Save 17%
                 </Badge>
               </button>
@@ -330,7 +330,7 @@ export default function Subscription() {
         {/* Current Subscription - Enhanced */}
         {currentSubscription && (
           <div className="mb-10 relative">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 shadow-xl border-4 border-white">
+            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 shadow-xl border border-violet-500/30">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
@@ -349,7 +349,7 @@ export default function Subscription() {
                   </div>
                 </div>
                 <Badge 
-                  className="bg-white text-blue-600 px-4 py-2 text-lg font-bold shadow-lg"
+                  className="bg-white text-violet-600 px-4 py-2 text-lg font-bold shadow-lg"
                 >
                   ✓ Active
                 </Badge>
@@ -376,28 +376,28 @@ export default function Subscription() {
                 {/* Popular Badge */}
                 {isPopular && (
                   <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-full shadow-xl flex items-center gap-2 font-bold text-sm">
+                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-2 rounded-full shadow-xl flex items-center gap-2 font-bold text-sm">
                       <Star className="h-4 w-4 fill-current" />
                       MOST POPULAR
                     </div>
                   </div>
                 )}
 
-                {/* Plan Card */}
+                {/* Plan Card - Dark theme with calm content areas */}
                 <Card 
-                  className={`h-full border-4 transition-all duration-300 ${
+                  className={`h-full border transition-all duration-300 ${
                     isPopular 
-                      ? 'border-blue-500 shadow-2xl bg-gradient-to-br from-blue-50 to-purple-50' 
+                      ? 'border-violet-500/50 shadow-2xl shadow-violet-500/10 bg-slate-800/60 backdrop-blur-sm' 
                       : isCurrent 
-                        ? 'border-green-500 shadow-xl bg-green-50'
-                        : 'border-gray-200 hover:border-blue-300 shadow-lg bg-white'
+                        ? 'border-emerald-500/50 shadow-xl bg-slate-800/60 backdrop-blur-sm'
+                        : 'border-slate-700/50 hover:border-violet-500/30 shadow-lg bg-slate-800/40 backdrop-blur-sm'
                   }`}
                 >
                   <CardHeader className={`text-center pb-6 pt-8 ${isPopular ? 'pt-12' : ''}`}>
                     {/* Plan Emoji & Name */}
                     <div className="flex items-center justify-center gap-3 mb-4">
                       <span className="text-5xl">{plan.emoji || '🎓'}</span>
-                      <CardTitle className="text-3xl font-bold text-gray-900">
+                      <CardTitle className="text-3xl font-bold text-white">
                         {plan.name}
                       </CardTitle>
                     </div>
@@ -405,20 +405,20 @@ export default function Subscription() {
                     {/* Price */}
                     <div className="mb-4">
                       {plan.price_monthly === 0 ? (
-                        <div className="text-5xl font-bold text-gray-900">Free</div>
+                        <div className="text-5xl font-bold text-white">Free</div>
                       ) : (
                         <>
                           <div className="flex items-baseline justify-center gap-2">
-                            <span className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            <span className="text-5xl font-bold bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
                               ₹{monthlyPrice}
                             </span>
-                            <span className="text-gray-600 text-xl">
+                            <span className="text-slate-400 text-xl">
                               /{billingCycle === 'yearly' ? 'month' : 'month'}
                             </span>
                           </div>
                           {billingCycle === 'yearly' && yearlySavings > 0 && (
                             <div className="mt-2">
-                              <Badge className="bg-green-100 text-green-800 text-sm px-3 py-1">
+                              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm px-3 py-1">
                                 Save ₹{yearlySavings}/year
                               </Badge>
                             </div>
@@ -429,7 +429,7 @@ export default function Subscription() {
 
                     {/* Tagline */}
                     {plan.tagline && (
-                      <p className="text-gray-600 text-sm italic mb-6">
+                      <p className="text-slate-400 text-sm italic mb-6">
                         {plan.tagline}
                       </p>
                     )}
@@ -443,8 +443,8 @@ export default function Subscription() {
                           <div className="flex-shrink-0 mt-1">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                               isPopular 
-                                ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
-                                : 'bg-green-500'
+                                ? 'bg-gradient-to-r from-violet-500 to-indigo-500' 
+                                : 'bg-emerald-500'
                             }`}>
                               <Check className="h-4 w-4 text-white" />
                             </div>
@@ -452,12 +452,12 @@ export default function Subscription() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-xl">{feature.icon}</span>
-                              <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                              <span className="font-semibold text-slate-200 group-hover:text-violet-400 transition-colors">
                                 {feature.text}
                               </span>
                             </div>
                             {feature.subtext && (
-                              <p className="text-sm text-gray-500 ml-8 mt-0.5">
+                              <p className="text-sm text-slate-500 ml-8 mt-0.5">
                                 {feature.subtext}
                               </p>
                             )}
@@ -471,7 +471,7 @@ export default function Subscription() {
                       {isCurrent ? (
                         <Button 
                           disabled 
-                          className="w-full py-4 bg-green-100 text-green-800 font-bold text-lg rounded-xl cursor-not-allowed"
+                          className="w-full py-4 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-lg rounded-xl cursor-not-allowed"
                         >
                           <Check className="h-5 w-5 mr-2" />
                           Current Plan
@@ -484,8 +484,8 @@ export default function Subscription() {
                               disabled={upgrading && selectedPlan === plan.tier}
                               className={`w-full py-4 font-bold text-lg rounded-xl transition-all transform hover:scale-105 ${
                                 isPopular
-                                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl hover:shadow-2xl'
-                                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xl hover:shadow-violet-500/25'
+                                  : 'bg-violet-600 text-white hover:bg-violet-700 shadow-lg'
                               } disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                             >
                               {upgrading && selectedPlan === plan.tier ? (
@@ -513,8 +513,8 @@ export default function Subscription() {
         </div>
 
         {/* Features Comparison Table - Enhanced */}
-        <Card className="mb-12 shadow-xl border-2 border-gray-200">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+        <Card className="mb-12 shadow-xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-t-lg">
             <CardTitle className="text-3xl font-bold text-center flex items-center justify-center gap-3">
               <Target className="h-8 w-8" />
               Feature Comparison
@@ -524,86 +524,86 @@ export default function Subscription() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="pb-4 pr-6 text-lg font-bold text-gray-900">Features</th>
-                    <th className="pb-4 px-4 text-center text-lg font-bold text-gray-700">Free</th>
-                    <th className="pb-4 px-4 text-center text-lg font-bold text-blue-600">Student</th>
-                    <th className="pb-4 px-4 text-center text-lg font-bold text-purple-600">Pro</th>
+                  <tr className="border-b-2 border-slate-700/50">
+                    <th className="pb-4 pr-6 text-lg font-bold text-white">Features</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-slate-400">Free</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-violet-400">Student</th>
+                    <th className="pb-4 px-4 text-center text-lg font-bold text-indigo-400">Pro</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">AI Tutor Queries</td>
-                    <td className="py-4 px-4 text-center text-gray-600">10/month</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">AI Tutor Queries</td>
+                    <td className="py-4 px-4 text-center text-slate-500">10/month</td>
                     <td className="py-4 px-4 text-center">
-                      <span className="font-bold text-blue-600 flex items-center justify-center gap-1">
+                      <span className="font-bold text-violet-400 flex items-center justify-center gap-1">
                         <Infinity className="h-4 w-4" />
                         Unlimited
                       </span>
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                      <span className="font-bold text-indigo-400 flex items-center justify-center gap-1">
                         <Infinity className="h-4 w-4" />
                         Unlimited + Priority
                       </span>
                     </td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Mock Tests per Week</td>
-                    <td className="py-4 px-4 text-center text-gray-600">1</td>
-                    <td className="py-4 px-4 text-center text-blue-600 font-semibold">3</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Mock Tests per Week</td>
+                    <td className="py-4 px-4 text-center text-slate-500">1</td>
+                    <td className="py-4 px-4 text-center text-violet-400 font-semibold">3</td>
                     <td className="py-4 px-4 text-center">
-                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                      <span className="font-bold text-indigo-400 flex items-center justify-center gap-1">
                         <Infinity className="h-4 w-4" />
                         Unlimited
                       </span>
                     </td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">File Uploads</td>
-                    <td className="py-4 px-4 text-center text-gray-600">1/day</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">File Uploads</td>
+                    <td className="py-4 px-4 text-center text-slate-500">1/day</td>
                     <td className="py-4 px-4 text-center">
-                      <span className="font-bold text-blue-600 flex items-center justify-center gap-1">
+                      <span className="font-bold text-violet-400 flex items-center justify-center gap-1">
                         <Infinity className="h-4 w-4" />
                         Unlimited
                       </span>
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <span className="font-bold text-purple-600 flex items-center justify-center gap-1">
+                      <span className="font-bold text-indigo-400 flex items-center justify-center gap-1">
                         <Infinity className="h-4 w-4" />
                         Unlimited + OCR
                       </span>
                     </td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Analytics & Insights</td>
-                    <td className="py-4 px-4 text-center text-gray-600">Basic</td>
-                    <td className="py-4 px-4 text-center text-blue-600 font-semibold">Advanced + Weekly</td>
-                    <td className="py-4 px-4 text-center text-purple-600 font-semibold">Deep + Daily Personalized</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Analytics & Insights</td>
+                    <td className="py-4 px-4 text-center text-slate-500">Basic</td>
+                    <td className="py-4 px-4 text-center text-violet-400 font-semibold">Advanced + Weekly</td>
+                    <td className="py-4 px-4 text-center text-indigo-400 font-semibold">Deep + Daily Personalized</td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Voice Input</td>
-                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
-                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅</td>
-                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅ Full Sync</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Voice Input</td>
+                    <td className="py-4 px-4 text-center text-slate-600">❌</td>
+                    <td className="py-4 px-4 text-center text-emerald-400 font-semibold">✅</td>
+                    <td className="py-4 px-4 text-center text-emerald-400 font-semibold">✅ Full Sync</td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Parent Dashboard</td>
-                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
-                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
-                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅ Detailed Reports</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Parent Dashboard</td>
+                    <td className="py-4 px-4 text-center text-slate-600">❌</td>
+                    <td className="py-4 px-4 text-center text-slate-600">❌</td>
+                    <td className="py-4 px-4 text-center text-emerald-400 font-semibold">✅ Detailed Reports</td>
                   </tr>
-                  <tr className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Priority Support</td>
-                    <td className="py-4 px-4 text-center text-gray-600">Community</td>
-                    <td className="py-4 px-4 text-center text-gray-600">Standard</td>
-                    <td className="py-4 px-4 text-center text-purple-600 font-semibold">✅ Fastest Response</td>
+                  <tr className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Priority Support</td>
+                    <td className="py-4 px-4 text-center text-slate-500">Community</td>
+                    <td className="py-4 px-4 text-center text-slate-500">Standard</td>
+                    <td className="py-4 px-4 text-center text-indigo-400 font-semibold">✅ Fastest Response</td>
                   </tr>
                   <tr className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 pr-6 font-semibold text-gray-900">Offline Mode</td>
-                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
-                    <td className="py-4 px-4 text-center text-gray-400">❌</td>
-                    <td className="py-4 px-4 text-center text-green-600 font-semibold">✅</td>
+                    <td className="py-4 pr-6 font-semibold text-slate-200">Offline Mode</td>
+                    <td className="py-4 px-4 text-center text-slate-600">❌</td>
+                    <td className="py-4 px-4 text-center text-slate-600">❌</td>
+                    <td className="py-4 px-4 text-center text-emerald-400 font-semibold">✅</td>
                   </tr>
                 </tbody>
               </table>
@@ -614,19 +614,19 @@ export default function Subscription() {
         {/* Trust Signals */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
-            <Shield className="h-12 w-12 text-blue-600 mx-auto mb-3" />
+            <Shield className="h-12 w-12 text-violet-400 mx-auto mb-3" />
             <h3 className="font-bold text-lg text-gray-900 mb-2">100% Secure</h3>
-            <p className="text-gray-600">Your payment is safe and encrypted</p>
+            <p className="text-slate-500">Your payment is safe and encrypted</p>
           </div>
           <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
-            <Gift className="h-12 w-12 text-purple-600 mx-auto mb-3" />
+            <Gift className="h-12 w-12 text-indigo-400 mx-auto mb-3" />
             <h3 className="font-bold text-lg text-gray-900 mb-2">Cancel Anytime</h3>
-            <p className="text-gray-600">No long-term commitment required</p>
+            <p className="text-slate-500">No long-term commitment required</p>
           </div>
           <div className="bg-white rounded-xl p-6 shadow-lg text-center border-2 border-gray-100">
-            <TrendingUp className="h-12 w-12 text-green-600 mx-auto mb-3" />
+            <TrendingUp className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
             <h3 className="font-bold text-lg text-gray-900 mb-2">Student Discount</h3>
-            <p className="text-gray-600">Special pricing for verified students</p>
+            <p className="text-slate-500">Special pricing for verified students</p>
           </div>
         </div>
 
@@ -635,7 +635,7 @@ export default function Subscription() {
           <h3 className="text-2xl font-bold text-gray-900 mb-3">
             Need help choosing the right plan?
           </h3>
-          <p className="text-gray-600 mb-6 text-lg">
+          <p className="text-slate-500 mb-6 text-lg">
             Our team is here to help you find the perfect plan for your learning journey!
           </p>
           <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 text-lg font-semibold rounded-xl hover:shadow-xl transition-all">
@@ -653,7 +653,7 @@ export default function Subscription() {
               onClick={() => setShowPaymentModal(false)}
               className="absolute -top-2 -right-2 z-60 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
             >
-              <X className="h-5 w-5 text-gray-600" />
+              <X className="h-5 w-5 text-slate-500" />
             </button>
             
             {/* Payment Component */}

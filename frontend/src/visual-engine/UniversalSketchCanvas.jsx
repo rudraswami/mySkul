@@ -4,7 +4,7 @@
  * 
  * THE MODE ROUTER - Central coordinator for all visual rendering.
  * 
- * "If you can ask it, Druv can draw it."
+ * "If you can ask it, DRON AI can draw it."
  * 
  * This component implements the Gemini PRD's Universal Renderer:
  * - Reads JSON Blueprint from backend

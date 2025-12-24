@@ -39,16 +39,16 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative w-9 h-9">
             <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-600 rounded-xl blur-md opacity-70"
+              className="absolute inset-0 bg-gradient-to-br from-violet-500 via-indigo-500 to-purple-600 rounded-xl blur-md opacity-70"
               animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
               transition={{ duration: 3, repeat: Infinity }}
             />
-            <div className="relative w-full h-full bg-gradient-to-br from-[#000010] to-[#000020] rounded-xl border border-white/20 flex items-center justify-center shadow-lg">
-              <Brain className="h-5 w-5 text-cyan-400" />
+            <div className="relative w-full h-full bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl border border-white/20 flex items-center justify-center shadow-lg">
+              <Brain className="h-5 w-5 text-white" />
             </div>
           </div>
-          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            Druv<span className="text-cyan-400">.AI</span>
+          <span className="text-xl font-bold tracking-tight text-white">
+            DRON <span className="text-violet-400">AI</span>
           </span>
         </Link>
 
@@ -60,7 +60,7 @@ const Navbar = () => {
             onMouseEnter={() => setIsFeaturesOpen(true)}
             onMouseLeave={() => setIsFeaturesOpen(false)}
           >
-            <button className="text-sm font-semibold text-gray-300 hover:text-cyan-400 transition-colors uppercase tracking-wider flex items-center gap-1 group">
+            <button className="text-sm font-semibold text-gray-300 hover:text-violet-400 transition-colors uppercase tracking-wider flex items-center gap-1 group">
               Features
               <motion.svg
                 className="w-4 h-4"
@@ -94,14 +94,14 @@ const Navbar = () => {
                     >
                       <div className="text-2xl mt-0.5">{feature.icon}</div>
                       <div className="flex-1">
-                        <div className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
+                        <div className="text-sm font-bold text-white group-hover:text-violet-400 transition-colors">
                           {feature.name}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
                           {feature.desc}
                         </div>
                       </div>
-                      <svg className="w-4 h-4 text-gray-600 group-hover:text-cyan-400 transition-all group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-gray-600 group-hover:text-violet-400 transition-all group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </motion.a>
@@ -111,10 +111,10 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          <a href="#how-it-works" className="text-sm font-semibold text-gray-300 hover:text-cyan-400 transition-colors uppercase tracking-wider">
+          <a href="#how-it-works" className="text-sm font-semibold text-gray-300 hover:text-violet-400 transition-colors uppercase tracking-wider">
             How It Works
           </a>
-          <a href="#pricing" className="text-sm font-semibold text-gray-300 hover:text-cyan-400 transition-colors uppercase tracking-wider">
+          <a href="#pricing" className="text-sm font-semibold text-gray-300 hover:text-violet-400 transition-colors uppercase tracking-wider">
             Pricing
           </a>
         </div>
@@ -126,7 +126,7 @@ const Navbar = () => {
           </Link>
           <Link
             to="/register"
-            className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold text-sm rounded-full hover:shadow-[0_0_30px_rgba(6,214,160,0.5)] transition-all uppercase tracking-wider border border-white/20"
+            className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm rounded-full hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all uppercase tracking-wider border border-white/20"
           >
             Get Started
           </Link>
@@ -166,10 +166,10 @@ const Navbar = () => {
               </div>
 
               <div className="border-t border-white/10 pt-4 space-y-3">
-                <a href="#how-it-works" className="block text-sm font-semibold text-gray-300 hover:text-cyan-400 transition-colors uppercase tracking-wider">
+                <a href="#how-it-works" className="block text-sm font-semibold text-gray-300 hover:text-violet-400 transition-colors uppercase tracking-wider">
                   How It Works
                 </a>
-                <a href="#pricing" className="block text-sm font-semibold text-gray-300 hover:text-cyan-400 transition-colors uppercase tracking-wider">
+                <a href="#pricing" className="block text-sm font-semibold text-gray-300 hover:text-violet-400 transition-colors uppercase tracking-wider">
                   Pricing
                 </a>
                 <Link to="/login" className="block text-sm font-bold text-gray-300 hover:text-white transition-colors uppercase tracking-wider">
@@ -233,7 +233,7 @@ const Footer = () => {
     <footer className="relative bg-gradient-to-b from-[#000005] to-[#000010] py-16 border-t border-white/10 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
       </div>
 
@@ -245,16 +245,16 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-2 mb-4 group">
               <div className="relative w-10 h-10">
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-600 rounded-xl blur-md opacity-70"
+                  className="absolute inset-0 bg-gradient-to-br from-violet-500 via-indigo-500 to-purple-600 rounded-xl blur-md opacity-70"
                   animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
-                <div className="relative w-full h-full bg-gradient-to-br from-[#000010] to-[#000020] rounded-xl border border-white/20 flex items-center justify-center">
-                  <Brain className="h-5 w-5 text-cyan-400" />
+                <div className="relative w-full h-full bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl border border-white/20 flex items-center justify-center">
+                  <Brain className="h-5 w-5 text-white" />
                 </div>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Druv<span className="text-cyan-400">.AI</span>
+              <span className="text-2xl font-bold text-white">
+                DRON <span className="text-violet-400">AI</span>
               </span>
             </Link>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
@@ -268,7 +268,7 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all group"
+                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-violet-500/20 hover:border-violet-500/50 transition-all group"
                   aria-label={social.label}
                   title={`Follow us on ${social.label}`}
                 >
@@ -290,7 +290,7 @@ const Footer = () => {
                 { name: 'Pricing', href: '#pricing' }
               ].map((link) => (
                 <li key={link.name}>
-                  <a href={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                  <a href={link.href} className="text-gray-400 hover:text-violet-400 transition-colors text-sm">
                     {link.name}
                   </a>
                 </li>
@@ -310,7 +310,7 @@ const Footer = () => {
                 { name: 'Contact', href: '/policies/contact' }
               ].map((link) => (
                 <li key={link.name}>
-                  <Link to={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                  <Link to={link.href} className="text-gray-400 hover:text-violet-400 transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -330,7 +330,7 @@ const Footer = () => {
                 { name: 'Shipping Policy', href: '/policies/shipping' }
               ].map((link) => (
                 <li key={link.name}>
-                  <Link to={link.href} className="text-gray-400 hover:text-cyan-400 transition-colors text-sm">
+                  <Link to={link.href} className="text-gray-400 hover:text-violet-400 transition-colors text-sm">
                     {link.name}
                   </Link>
                 </li>
@@ -350,14 +350,14 @@ const Footer = () => {
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/50 transition-colors text-sm"
                 disabled={newsletterStatus.loading}
                 required
               />
               <button 
                 type="submit"
                 disabled={newsletterStatus.loading}
-                className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(6,214,160,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {newsletterStatus.loading ? (
                   <>
@@ -387,16 +387,16 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>© 2025 Druv.AI</span>
+            <span>© 2025 DRON AI</span>
             <span className="hidden md:inline">•</span>
             <span className="flex items-center gap-1.5">
               Made with <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" /> for India
             </span>
           </div>
           <div className="flex items-center gap-6 text-xs text-gray-500">
-            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Status</Link>
-            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Changelog</Link>
-            <Link to="/policies/contact" className="hover:text-cyan-400 transition-colors">Support</Link>
+            <Link to="/policies/contact" className="hover:text-violet-400 transition-colors">Status</Link>
+            <Link to="/policies/contact" className="hover:text-violet-400 transition-colors">Changelog</Link>
+            <Link to="/policies/contact" className="hover:text-violet-400 transition-colors">Support</Link>
           </div>
         </div>
       </div>

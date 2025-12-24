@@ -23,7 +23,7 @@ export const PageLoader = ({ message = "Loading..." }) => {
           </div>
           <LoadingSpinner size="lg" className="text-blue-600" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Dhruv AI</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">DRON AI</h2>
         <p className="text-gray-600">{message}</p>
       </div>
     </div>

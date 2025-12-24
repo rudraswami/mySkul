@@ -222,12 +222,12 @@ function AppContent() {
                   </motion.button>
                   <div className="flex items-center gap-2.5">
                     {/* Logo: Brain + Book */}
-                    <div className="relative w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
                       <Brain className="h-5 w-5 text-white absolute -top-0.5 -left-0.5" strokeWidth={2.5} />
                       <BookOpen className="h-4 w-4 text-white absolute -bottom-0.5 -right-0.5" strokeWidth={2.5} />
                     </div>
                     <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-                      Druv AI
+                      DRON <span className="text-violet-500">AI</span>
                     </h1>
                   </div>
                   <div className="w-10" /> {/* Spacer for centering */}

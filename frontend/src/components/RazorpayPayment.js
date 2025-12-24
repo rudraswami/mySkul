@@ -95,7 +95,7 @@ const RazorpayPayment = ({
         key: orderData.key_id || process.env.REACT_APP_RAZORPAY_KEY_ID,
         amount: orderData.amount,  // Backend returns amount in PAISE
         currency: orderData.currency,
-        name: 'Dhruv AI - EdTech Platform',
+        name: 'DRON AI - EdTech Platform',
         description: `${planName} Plan - ${billingCycle} subscription`,
         order_id: orderData.order_id,
         image: '/logo192.png',

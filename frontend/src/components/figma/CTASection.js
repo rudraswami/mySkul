@@ -101,7 +101,7 @@ export function CTASection() {
                                 </h2>
 
                                 <p className="text-white/70 text-xl mb-8 leading-relaxed">
-                                    Join thousands of students who are already learning smarter with Druv AI's
+                                    Join thousands of students who are already learning smarter with DRON AI's
                                     revolutionary Dual-Layer AI system.
                                 </p>
 

@@ -142,20 +142,43 @@ async def logout_user(
 
 @router.get("/csrf-token")
 async def get_csrf_token(request: Request, response: Response):
-    """Get or generate CSRF token and return it in body and header"""
-    # Prefer token from session; generate if missing
-    csrf_token = None
+    """
+    Get or generate CSRF token using Double-Submit Cookie pattern.
+    
+    Contract:
+    - Sets 'csrf_token' cookie (readable by JS for SPA)
+    - Returns token in JSON body
+    - Returns token in X-CSRF-Token header
+    - Client must send token back in X-CSRF-Token header on POST/PUT/PATCH/DELETE
+    - Middleware validates: header token == cookie token
+    """
+    import secrets
+    
+    # Always generate fresh token for security
+    csrf_token = secrets.token_urlsafe(32)
+    
+    # Store in session (backward compatibility)
     if "session" in request.scope:
-        csrf_token = request.session.get("csrf_token")
-
-    if not csrf_token:
-        import secrets
-        csrf_token = secrets.token_urlsafe(32)
-        if "session" in request.scope:
-            request.session["csrf_token"] = csrf_token
-
+        request.session["csrf_token"] = csrf_token
+    
+    # Set CSRF cookie (Double-Submit Cookie pattern)
+    # This cookie is readable by JavaScript to include in header
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8001')
+    is_https = backend_url.startswith('https://')
+    
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        max_age=3600,  # 1 hour
+        httponly=False,  # Must be readable by JS for double-submit
+        secure=is_https,
+        samesite="lax" if not is_https else "none",
+        path="/"
+    )
+    
     # Also expose via response header for clients that read headers
     response.headers["X-CSRF-Token"] = csrf_token
+    
     return {"csrf_token": csrf_token}
 
 
@@ -701,25 +724,7 @@ async def get_session(
 
 
 
-@router.get("/csrf-token")
-async def get_csrf_token(request: Request):
-    """
-    Get CSRF token for state-changing requests
-    The token is automatically generated and sent in the X-CSRF-Token header
-    """
-    import secrets
-    
-    # Generate new CSRF token
-    csrf_token = secrets.token_urlsafe(32)
-    
-    # Store in session
-    if hasattr(request, "session"):
-        request.session["csrf_token"] = csrf_token
-    
-    return {
-        "csrf_token": csrf_token,
-        "message": "CSRF token generated. Include this token in X-CSRF-Token header for all POST/PUT/PATCH/DELETE requests."
-    }
+# Note: csrf-token endpoint defined above (lines 143-181) - removed duplicate
 
 
 @router.post("/profile/complete")

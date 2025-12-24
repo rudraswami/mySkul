@@ -141,7 +141,7 @@ export default function ProfileSettings() {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -150,19 +150,19 @@ export default function ProfileSettings() {
               variant="ghost" 
               size="sm" 
               onClick={navigateBack}
-              className="mr-4"
+              className="mr-4 text-slate-400 hover:text-white hover:bg-slate-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl mr-4">
+            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-3 rounded-xl mr-4">
               <User className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+              <h1 className="text-3xl font-bold text-white mb-1">
                 Profile Settings
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Manage your account information and preferences
               </p>
             </div>
@@ -172,28 +172,28 @@ export default function ProfileSettings() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Information */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-md">
+            <Card className="border border-slate-700/50 shadow-md bg-slate-800/40 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="h-5 w-5 mr-2 text-blue-600" />
+                <CardTitle className="flex items-center text-white">
+                  <Settings className="h-5 w-5 mr-2 text-violet-400" />
                   Personal Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                     <div className="flex items-start">
-                      <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                      <p className="text-red-800 text-sm">{error}</p>
+                      <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5" />
+                      <p className="text-red-300 text-sm">{error}</p>
                     </div>
                   </div>
                 )}
 
                 {success && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                     <div className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                      <p className="text-green-800 text-sm">Profile updated successfully!</p>
+                      <CheckCircle className="h-5 w-5 text-emerald-400 mr-2 mt-0.5" />
+                      <p className="text-emerald-300 text-sm">Profile updated successfully!</p>
                     </div>
                   </div>
                 )}
@@ -201,19 +201,20 @@ export default function ProfileSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Full Name */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Full Name
                     </label>
                     <Input
                       value={profileData.full_name}
                       onChange={(e) => handleInputChange('full_name', e.target.value)}
                       placeholder="Enter your full name"
+                      className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Email Address
                     </label>
                     <Input
@@ -221,12 +222,13 @@ export default function ProfileSettings() {
                       value={profileData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       placeholder="Enter your email"
+                      className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
 
                   {/* Phone */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Phone Number
                     </label>
                     <Input
@@ -234,18 +236,19 @@ export default function ProfileSettings() {
                       value={profileData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="Enter your phone number"
+                      className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
 
                   {/* Exam Type */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Target Exam
                     </label>
                     <select
                       value={profileData.exam_type}
                       onChange={(e) => handleInputChange('exam_type', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-2 bg-slate-900/50 border border-slate-600/50 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                     >
                       <option value="">Select your target exam</option>
                       <option value="JEE">JEE (Engineering)</option>
@@ -257,7 +260,7 @@ export default function ProfileSettings() {
 
                   {/* Target Year */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Target Year
                     </label>
                     <Input
@@ -266,31 +269,34 @@ export default function ProfileSettings() {
                       onChange={(e) => handleInputChange('target_year', parseInt(e.target.value))}
                       min={new Date().getFullYear()}
                       max={new Date().getFullYear() + 5}
+                      className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
 
                   {/* Current Standard */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <label className="text-sm font-medium text-slate-300 mb-2 block">
                       Current Class/Standard
                     </label>
                     <Input
                       value={profileData.current_standard}
                       onChange={(e) => handleInputChange('current_standard', e.target.value)}
                       placeholder="e.g., Class 12, Graduate"
+                      className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                     />
                   </div>
                 </div>
 
                 {/* Institution */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-slate-300 mb-2 block">
                     Institution/School/College
                   </label>
                   <Input
                     value={profileData.institution}
                     onChange={(e) => handleInputChange('institution', e.target.value)}
                     placeholder="Enter your institution name"
+                    className="bg-slate-900/50 border-slate-600/50 text-white placeholder-slate-500 focus:ring-violet-500 focus:border-violet-500"
                   />
                 </div>
 
@@ -299,7 +305,7 @@ export default function ProfileSettings() {
                   <Button 
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
+                    className="w-full md:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-violet-500/25"
                   >
                     {saving ? (
                       <>
@@ -321,19 +327,19 @@ export default function ProfileSettings() {
           {/* Account Info Only - Subscription moved to dedicated /subscription page */}
           <div className="space-y-6">
             {/* Link to Subscription Page */}
-            <Card className="border-0 shadow-md bg-gradient-to-r from-purple-50 to-indigo-50">
+            <Card className="border border-violet-500/30 shadow-md bg-gradient-to-r from-violet-600/10 to-indigo-600/10 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="text-center">
-                  <Crown className="h-12 w-12 mx-auto text-purple-600 mb-3" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <Crown className="h-12 w-12 mx-auto text-violet-400 mb-3" />
+                  <h3 className="text-lg font-semibold text-white mb-2">
                     Manage Your Subscription
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-slate-400 mb-4">
                     View plans, upgrade, and manage billing
                   </p>
                   <Button
                     onClick={() => window.location.href = '/subscription'}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-violet-500/25"
                   >
                     Go to Subscription
                   </Button>
@@ -342,30 +348,30 @@ export default function ProfileSettings() {
             </Card>
 
             {/* Account Stats */}
-            <Card className="border-0 shadow-md">
+            <Card className="border border-slate-700/50 shadow-md bg-slate-800/40 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2 text-green-600" />
+                <CardTitle className="flex items-center text-white">
+                  <BookOpen className="h-5 w-5 mr-2 text-emerald-400" />
                   Account Overview
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 text-sm">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-400">
                     <span>Member Since:</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-slate-200">
                       {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-400">
                     <span>User ID:</span>
-                    <span className="font-medium font-mono text-xs">
+                    <span className="font-medium font-mono text-xs text-slate-200">
                       {user?.user_id?.substring(0, 8) || 'N/A'}...
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-400">
                     <span>Account Status:</span>
-                    <Badge variant="outline" className="text-green-600">
+                    <Badge variant="outline" className="text-emerald-400 border-emerald-500/30">
                       Active
                     </Badge>
                   </div>
