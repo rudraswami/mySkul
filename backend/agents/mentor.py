@@ -286,28 +286,35 @@ You are NOT just a tutor. You are:
             student_profile = context.get('student_profile', {})
             memory_context = context.get('memory_context')
             
-            # Check if this is a planning request
-            planning_keywords = [
-                'plan', 'schedule', 'timetable', 'how do i finish', 
-                'overwhelmed', 'no time', 'too much', "can't finish",
-                'study plan', 'what to study', 'where to start'
-            ]
+            # ================================================================
+            # DYNAMIC ACTIONABLE REQUEST (LLM-determined, NOT keyword-based)
+            # ================================================================
+            # The semantic classifier has already determined if user wants
+            # something CREATED. Use that signal instead of keyword matching.
+            output_type = context.get('output_type')
+            has_actionable_request = context.get('has_actionable_request', False)
             
-            is_planning_request = any(keyword in query_lower for keyword in planning_keywords)
+            # Log for observability
+            if has_actionable_request:
+                logger.info(f"[MentorAgent] ACTIONABLE REQUEST from semantic classifier: output_type={output_type}")
             
-            if is_planning_request and self.tool_registry:
-                # Use Study Planner Tool
-                logger.info("[MentorAgent] Detected planning request - using StudyPlannerTool")
+            # Handle study plan requests (LLM-determined)
+            if output_type == 'study_plan' and self.tool_registry:
+                logger.info("[MentorAgent] Generating study plan (LLM-determined actionable request)")
                 
                 # Extract weak topics from context or student profile
                 weak_topics = student_profile.get('weak_areas', [])
+                if not weak_topics and memory_context:
+                    weak_topics = memory_context.get('weak_topics', [])
                 if not weak_topics:
-                    # Try to extract from query or context
                     weak_topics = self._extract_topics_from_query(query)
                 
-                # Get available hours and days until exam
-                hours_available = context.get('hours_available', 6)  # Default 6 hours
-                days_until_exam = context.get('days_until_exam', 60)  # Default 60 days
+                # Try to parse days from the query (e.g., "next 3 days")
+                import re
+                days_match = re.search(r'(\d+)\s*days?', query.lower())
+                days_until_exam = int(days_match.group(1)) if days_match else context.get('days_until_exam', 3)
+                
+                hours_available = context.get('hours_available', 6)
                 
                 # Call Study Planner Tool
                 planner_tool = self.tool_registry.get_tool('study_planner')
@@ -320,18 +327,29 @@ You are NOT just a tutor. You are:
                     )
                     
                     if plan_result.success:
-                        # Combine planning response with mentor's warm introduction
-                        mentor_intro = "Hey! I can see you're feeling overwhelmed. No worries, yaar - let's turn this into a concrete plan! Here's your personalized study schedule:\n\n"
-                        full_response = mentor_intro + plan_result.output
+                        # Generate contextual intro (dynamic, not template)
+                        student_name = student_profile.get('name', '')
+                        name_prefix = f"{student_name}, " if student_name else ""
+                        
+                        # Build intro based on context
+                        if days_until_exam <= 3:
+                            intro = f"Alright {name_prefix}let's make these {days_until_exam} days count! 💪 Here's your focused study plan:\n\n"
+                        elif weak_topics:
+                            topics_str = ', '.join(weak_topics[:2])
+                            intro = f"Hey {name_prefix}I've put together a plan focusing on {topics_str}. Check it out:\n\n"
+                        else:
+                            intro = f"Hey {name_prefix}here's your study plan! 📚\n\n"
                         
                         return {
                             'success': True,
-                            'content': full_response,
+                            'content': intro + plan_result.output,
                             'agent': self.get_agent_name(),
                             'metadata': {
                                 'tone': 'supportive',
                                 'approach': 'planning',
                                 'tool_used': 'study_planner',
+                                'output_type': 'study_plan',
+                                'days_planned': days_until_exam,
                                 'weak_topics': weak_topics
                             }
                         }

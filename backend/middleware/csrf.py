@@ -1,13 +1,16 @@
 """
 CSRF Protection Middleware
 Provides Cross-Site Request Forgery protection for state-changing operations
+
+BUGFIX: Using JSONResponse instead of raising HTTPException inside dispatch()
+to avoid Starlette's TaskGroup causing unhandled ExceptionGroup (500 errors).
 """
 import logging
 import secrets
 from typing import Optional
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -91,18 +94,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 token_from_session = request.session.get("csrf_token")
             
             # Validate token
+            # BUGFIX: Return JSONResponse instead of raising HTTPException
+            # Raising inside BaseHTTPMiddleware causes ExceptionGroup and 500 errors
             if not token_from_header or not token_from_session:
                 logger.warning(f"CSRF token missing for {request.method} {request.url.path}")
-                raise HTTPException(
+                return JSONResponse(
                     status_code=403,
-                    detail="CSRF token missing. Please refresh the page and try again."
+                    content={"detail": "CSRF token missing. Please refresh the page and try again."}
                 )
             
             if not secrets.compare_digest(token_from_header, token_from_session):
                 logger.warning(f"CSRF token mismatch for {request.method} {request.url.path}")
-                raise HTTPException(
+                return JSONResponse(
                     status_code=403,
-                    detail="CSRF token invalid. Please refresh the page and try again."
+                    content={"detail": "CSRF token invalid. Please refresh the page and try again."}
                 )
         
         return await call_next(request)

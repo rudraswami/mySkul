@@ -577,15 +577,19 @@ class ConversationStateManager:
         This is the ONLY reliable way to detect first turn.
         Message history can be trimmed, frontend flags are fragile.
         DB is the source of truth.
+        
+        BUGFIX: Was querying 'session_messages' but messages are stored in 'chat_messages'.
         """
         try:
-            # Check if any messages exist in this session
-            message_count = await self.db.session_messages.count_documents({
-                "session_id": session_id
+            # FIXED: Query chat_messages (where messages are actually stored)
+            # Previously was querying session_messages which is always empty
+            message_count = await self.db.chat_messages.count_documents({
+                "session_id": session_id,
+                "user_id": user_id  # Also scope by user_id for safety
             })
             
             is_first = message_count == 0
-            logger.info(f"[State] is_truly_first_turn: {is_first} (messages: {message_count})")
+            logger.info(f"[State] is_truly_first_turn: {is_first} (messages: {message_count}, session: {session_id[:8] if session_id else 'None'})")
             return is_first
             
         except Exception as e:

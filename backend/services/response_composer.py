@@ -1040,9 +1040,18 @@ Does this make more sense? What part is still unclear?""",
         
         return instructions.get(intent, instructions["explanation"])
     
-    def _select_model(self, intent: str, question: str) -> tuple:
+    def _select_model(
+        self, 
+        intent: str, 
+        question: str,
+        routing_decision: Any = None,  # PHASE B: Accept routing decision for semantic info
+        semantic_analysis: Dict[str, Any] = None  # PHASE B: Accept semantic analysis
+    ) -> tuple:
         """
         Select the best model based on complexity and intent.
+        
+        PHASE B FIX: Uses routing decision complexity and semantic analysis
+        instead of keyword matching when ENABLE_SEMANTIC_MODEL_SELECTION is enabled.
         
         PRIORITY:
         1. Gemini 2.0 Flash - Primary (fast + intelligent)
@@ -1056,11 +1065,46 @@ Does this make more sense? What part is still unclear?""",
         """
         from core.config import settings
         
-        q_lower = question.lower()
         word_count = len(question.split())
         
         # Check if Gemini is available
         use_gemini = getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', '')
+        
+        # PHASE B: Semantic-based model selection (no keywords)
+        if settings.ENABLE_SEMANTIC_MODEL_SELECTION and routing_decision:
+            # Use routing decision complexity
+            complexity = getattr(routing_decision, 'complexity', None)
+            
+            # Simple/Trivial → Fast model
+            if complexity and complexity.value in ['trivial', 'simple']:
+                if use_gemini:
+                    return ("gemini", "gemini-2.0-flash")
+                return ("openai", "gpt-4o-mini")
+            
+            # Complex/Expert → Pro model
+            if complexity and complexity.value in ['complex', 'expert']:
+                if use_gemini:
+                    return ("gemini", "gemini-1.5-pro")
+                return ("openai", "gpt-4o")
+            
+            # Check for actionable requests that need more power
+            if semantic_analysis:
+                has_actionable = semantic_analysis.get('has_actionable_request', False)
+                output_type = semantic_analysis.get('requested_output_type', '')
+                
+                # Deliverables need more reasoning power
+                if has_actionable and output_type in ['study_plan', 'problem_solution', 'quiz']:
+                    if use_gemini:
+                        return ("gemini", "gemini-1.5-pro")
+                    return ("openai", "gpt-4o")
+            
+            # Default to flash for moderate complexity
+            if use_gemini:
+                return ("gemini", "gemini-2.0-flash")
+            return ("openai", "gpt-4o-mini")
+        
+        # LEGACY: Keyword-based model selection (only when flag disabled)
+        q_lower = question.lower()
         
         # Fast intents - use Gemini Flash (lightning fast)
         fast_intents = {
@@ -1080,7 +1124,7 @@ Does this make more sense? What part is still unclear?""",
                 return ("gemini", "gemini-2.0-flash")
             return ("openai", "gpt-4o-mini")
         
-        # Casual patterns - fast model
+        # Casual patterns - fast model (LEGACY)
         casual_patterns = [
             "remind", "hello", "hi ", "hey", "thanks", "thank you",
             "good morning", "good night", "how are", "bye", "ok",
@@ -1092,7 +1136,7 @@ Does this make more sense? What part is still unclear?""",
                 return ("gemini", "gemini-2.0-flash")
             return ("openai", "gpt-4o-mini")
         
-        # Complex academic work - use Gemini Pro for deep reasoning
+        # Complex academic work - use Gemini Pro for deep reasoning (LEGACY)
         complex_patterns = [
             "derive", "prove", "derivation", "proof",
             "step by step", "detailed explanation",

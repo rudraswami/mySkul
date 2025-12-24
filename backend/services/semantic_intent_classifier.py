@@ -91,6 +91,11 @@ class SemanticAnalysis:
     # Raw reasoning from LLM
     reasoning: str
     
+    # DYNAMIC ACTION DETECTION (LLM-determined, NOT keyword-based)
+    # This allows the system to understand when user wants something CREATED/DONE
+    has_actionable_request: bool = False  # User wants a specific deliverable created
+    requested_output_type: Optional[str] = None  # What the user wants: "study_plan", "solution", "schedule", etc.
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             "intent": self.intent.value,
@@ -104,7 +109,9 @@ class SemanticAnalysis:
             "needs_encouragement": self.needs_encouragement,
             "needs_clarification": self.needs_clarification,
             "suggested_response_style": self.suggested_response_style,
-            "reasoning": self.reasoning
+            "reasoning": self.reasoning,
+            "has_actionable_request": self.has_actionable_request,
+            "requested_output_type": self.requested_output_type
         }
 
 
@@ -135,18 +142,18 @@ Analyze this message and return a JSON object with these fields:
    - "confusion" (lost, stuck, doesn't know what to do)
    - "celebration" (got it, understood, happy about progress)
    - "explore" (wants something new, different topic)
-   - "continue" (wants to resume previous topic, asks "where did I stop", "last time", "what were we doing", "continue from before", session recall)
-   - "help" (what can you do, how do you work)
+   - "continue" (wants to resume previous topic, session recall)
+   - "help" (asking about capabilities: "what can you do", "how do you work")
    - "greeting" (hi, hello, hey)
    - "farewell" (bye, goodbye, see you)
-   - "chitchat" (casual conversation, jokes, how are you, random chat, life talk)
-   - "gratitude" (thanks, thank you, appreciate it)
+   - "chitchat" (casual conversation, jokes, how are you)
+   - "gratitude" (thanks, thank you)
    - "acknowledgment" (ok, sure, got it, yes, no, great, nice)
    - "unclear" (gibberish, typos, can't understand)
-   - "off_topic" (non-academic but valid conversation - movies, games, life advice, random questions)
-   - "general" (anything else that doesn't fit above)
+   - "off_topic" (non-academic but valid conversation)
+   - "general" (anything else)
 
-2. "confidence": 0.0 to 1.0 (how confident you are)
+2. "confidence": 0.0 to 1.0
 
 3. "emotional_tone": "positive", "negative", "neutral", "anxious", "frustrated", "excited", "bored", "confused", "lonely", "curious"
 
@@ -154,33 +161,44 @@ Analyze this message and return a JSON object with these fields:
 
 5. "topic_mentioned": The educational topic if mentioned, or null
 
-6. "is_follow_up": true if this seems to reference a previous conversation
+6. "is_follow_up": true if this references a previous conversation
 
 7. "urgency_level": "low", "medium", or "high"
 
-8. "needs_empathy": true if the student seems to need emotional support
+8. "needs_empathy": true if the student needs emotional support
 
-9. "needs_encouragement": true if they seem to need motivation
+9. "needs_encouragement": true if they need motivation
 
-10. "needs_clarification": true if their message is unclear and we should ask what they mean
+10. "needs_clarification": true if their message is unclear
 
 11. "suggested_response_style": "supportive", "educational", "casual", "formal", "encouraging", "friendly"
 
-12. "reasoning": Brief explanation of your classification (1-2 sentences)
+12. "reasoning": Brief explanation (1-2 sentences)
 
-CRITICAL UNDERSTANDING:
-- Druv AI is a COMPANION, not just a tutor. Students can discuss ANYTHING.
-- "off_topic" does NOT mean reject - it means "casual/non-academic conversation"
-- Life questions, emotions, random curiosity are ALL valid and should get warm responses
-- "I'm feeling lonely", "life sucks", "tell me something interesting" → emotional_support or chitchat
-- "need support", "feeling down", "stressed" → motivation or emotional_support
-- "great", "nice", "ok", "sure", "hmm yes", "okay" → acknowledgment
-- "try something new", "what's next" → explore
-- "where did I stop", "last time", "what were we doing", "continue from before", "pick up where we left off" → continue (SESSION RECALL)
-- "getting bored", "feeling bored today", "I'm bored" → emotional_support (NOT explore or question!)
-- Be GENEROUS in understanding - students express themselves imperfectly
-- When in doubt, prefer chitchat or emotional_support over off_topic
-- SHORT MESSAGES like "hmm", "yes", "ok" should be acknowledgment, NOT general
+=== CRITICAL: ACTIONABLE REQUEST DETECTION ===
+These fields detect when user wants something CREATED or DONE (not just explained):
+
+13. "has_actionable_request": true/false
+    - TRUE if the user wants a specific OUTPUT/DELIVERABLE created
+    - Examples of actionable: "create a plan", "make a schedule", "solve this problem", "build a timetable"
+    - NOT actionable: "explain photosynthesis", "what is Newton's law", "I'm bored", "help"
+    - The key question: Does the user expect something to be GENERATED/CREATED for them?
+
+14. "requested_output_type": null or one of:
+    - "study_plan" (wants a study schedule, revision timetable, preparation plan)
+    - "problem_solution" (wants a math/physics/chemistry problem solved step-by-step)
+    - "quiz" (wants practice questions generated)
+    - "summary" (wants notes/summary created)
+    - null (no specific deliverable requested)
+
+UNDERSTANDING NUANCES:
+- "I feel anxious about exams" → emotional_support, has_actionable_request=false (need support, not a plan)
+- "create a study plan for 3 days" → general, has_actionable_request=true, requested_output_type="study_plan"
+- "I have exam in 3 days, plan my study" → general, has_actionable_request=true, requested_output_type="study_plan"
+- "solve x^2 - 5x + 6 = 0" → question, has_actionable_request=true, requested_output_type="problem_solution"
+- "what is photosynthesis" → question, has_actionable_request=false (explanation, not creation)
+- "help" → help, has_actionable_request=false (capability question)
+- "help me create a timetable" → general, has_actionable_request=true, requested_output_type="study_plan"
 
 Return ONLY valid JSON, no other text."""
 
@@ -275,11 +293,15 @@ Return ONLY valid JSON, no other text."""
                 needs_encouragement=bool(result.get("needs_encouragement", False)),
                 needs_clarification=bool(result.get("needs_clarification", False)),
                 suggested_response_style=result.get("suggested_response_style", "supportive"),
-                reasoning=result.get("reasoning", "")
+                reasoning=result.get("reasoning", ""),
+                # NEW: Dynamic actionable request detection
+                has_actionable_request=bool(result.get("has_actionable_request", False)),
+                requested_output_type=result.get("requested_output_type")
             )
             
             logger.info(f"🧠 Semantic analysis: intent={intent.value}, tone={analysis.emotional_tone}, "
-                       f"confidence={analysis.confidence:.2f}")
+                       f"confidence={analysis.confidence:.2f}, "
+                       f"actionable={analysis.has_actionable_request}, output_type={analysis.requested_output_type}")
             
             return analysis
             
@@ -291,11 +313,49 @@ Return ONLY valid JSON, no other text."""
             return self._fallback_analysis(message)
     
     def _fallback_analysis(self, message: str) -> SemanticAnalysis:
-        """Fallback when LLM classification fails - still better than pattern matching"""
-        # Very basic heuristics as last resort
+        """
+        Fallback when LLM classification fails.
+        
+        PHASE B FIX: When ENABLE_SEMANTIC_ONLY_ROUTING is True, returns GENERAL
+        intent with low confidence instead of keyword matching. Downstream
+        handlers will ask a clarifying question when confidence is low.
+        """
+        from core.config import settings
         message_lower = message.lower().strip()
         
-        # Detect obvious patterns only as fallback
+        # PHASE B: No keyword matching when semantic-only mode is enabled
+        if settings.ENABLE_SEMANTIC_ONLY_ROUTING:
+            # Return GENERAL with very low confidence
+            # This signals downstream to ask for clarification
+            intent = SemanticIntent.GENERAL
+            confidence = 0.15  # Very low - triggers clarification path
+            reasoning = "LLM classification failed - returning GENERAL with low confidence for clarification"
+            
+            # Only structural detection (not keywords)
+            if len(message_lower) <= 2:
+                intent = SemanticIntent.UNCLEAR
+                reasoning = "Very short message (<=2 chars) - unclear"
+            elif '?' in message and len(message) > 5:
+                intent = SemanticIntent.QUESTION
+                confidence = 0.3
+                reasoning = "Question mark detected - likely a question"
+            
+            return SemanticAnalysis(
+                intent=intent,
+                confidence=confidence,
+                emotional_tone="neutral",
+                emotional_intensity=0.3,
+                topic_mentioned=None,
+                is_follow_up=False,
+                urgency_level="medium",
+                needs_empathy=True,
+                needs_encouragement=True,
+                needs_clarification=confidence < 0.3,  # Ask for clarification when uncertain
+                suggested_response_style="supportive",
+                reasoning=reasoning
+            )
+        
+        # LEGACY: Keyword-based fallback (only when flag disabled)
         if len(message_lower) <= 2 and not message_lower in ['hi', 'ok', 'no']:
             intent = SemanticIntent.UNCLEAR
         elif any(w in message_lower for w in ['help', 'support', 'stuck', 'confused']):
@@ -323,7 +383,7 @@ Return ONLY valid JSON, no other text."""
             needs_encouragement=True,
             needs_clarification=len(message_lower) < 5,
             suggested_response_style="supportive",
-            reasoning="Fallback classification due to LLM error"
+            reasoning="Fallback classification (legacy keyword mode)"
         )
 
 

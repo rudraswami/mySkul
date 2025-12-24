@@ -201,6 +201,28 @@ class Settings:
     AGENT_VERBOSE_LOGGING: bool = os.getenv("AGENT_VERBOSE_LOGGING", "true").lower() == "true"
     
     # =============================================================================
+    # 🧠 INTELLIGENCE SYSTEM FLAGS (Phase B/C hardcode removal + continuity)
+    # =============================================================================
+    # Enable semantic-only routing (no keyword matching in routing decisions)
+    ENABLE_SEMANTIC_ONLY_ROUTING: bool = os.getenv("ENABLE_SEMANTIC_ONLY_ROUTING", "true").lower() == "true"
+    
+    # Enable semantic-only mode selection (no keyword-based ResponseMode)
+    ENABLE_SEMANTIC_MODE_SELECTION: bool = os.getenv("ENABLE_SEMANTIC_MODE_SELECTION", "true").lower() == "true"
+    
+    # Enable semantic-only emotion detection (no keyword lists)
+    ENABLE_SEMANTIC_EMOTION_DETECTION: bool = os.getenv("ENABLE_SEMANTIC_EMOTION_DETECTION", "true").lower() == "true"
+    
+    # Enable continuity tracking (last_task_type, continuation context)
+    ENABLE_CONTINUITY_TRACKING: bool = os.getenv("ENABLE_CONTINUITY_TRACKING", "true").lower() == "true"
+    
+    # Enable semantic model selection (no keyword patterns for model routing)
+    ENABLE_SEMANTIC_MODEL_SELECTION: bool = os.getenv("ENABLE_SEMANTIC_MODEL_SELECTION", "true").lower() == "true"
+    
+    # Fallback behavior when LLM classification fails
+    # Options: "minimal_llm" (lightweight LLM call) or "safe_general" (return GENERAL intent)
+    CLASSIFICATION_FALLBACK_MODE: str = os.getenv("CLASSIFICATION_FALLBACK_MODE", "safe_general")
+    
+    # =============================================================================
     # OAUTH SETTINGS
     # =============================================================================
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")

@@ -1158,6 +1158,51 @@ async def generate_neuro_symbolic_response(
     8. Ask (follow-up question)
     """
     try:
+        # ========== IDEMPOTENCY GUARD ==========
+        # Prevent double-processing same request within short window
+        # Hash includes: user + session + message + mode (non-stream)
+        import hashlib
+        from datetime import datetime, timezone, timedelta
+        
+        # Include request mode in hash to differentiate stream vs non-stream
+        request_mode = "non_stream"
+        hash_input = f"{user.user_id}:{request.session_id}:{request.message}:{request_mode}"
+        request_hash = hashlib.md5(hash_input.encode()).hexdigest()[:16]
+        
+        # Check for recent identical request (within 15s window)
+        # Shorter window to allow legitimate retries
+        try:
+            recent_request = await db.request_idempotency.find_one({
+                "request_hash": request_hash,
+                "created_at": {"$gte": datetime.now(timezone.utc) - timedelta(seconds=15)}
+            })
+            
+            if recent_request and recent_request.get("response"):
+                logger.warning(f"⚠️ Duplicate request detected (hash={request_hash}), returning cached")
+                return recent_request["response"]
+        except Exception as e:
+            logger.debug(f"Idempotency check failed (continuing): {e}")
+        
+        # Store request hash to prevent duplicates
+        # TTL: MongoDB will auto-delete documents with expire_at in the past
+        # NOTE: Requires TTL index on 'expire_at' field in request_idempotency collection
+        try:
+            await db.request_idempotency.update_one(
+                {"request_hash": request_hash},
+                {
+                    "$set": {
+                        "request_hash": request_hash,
+                        "user_id": user.user_id,
+                        "session_id": request.session_id,
+                        "created_at": datetime.now(timezone.utc),
+                        "expire_at": datetime.now(timezone.utc) + timedelta(minutes=5)  # TTL: 5 min
+                    }
+                },
+                upsert=True
+            )
+        except Exception as e:
+            logger.debug(f"Idempotency insert failed (continuing): {e}")
+        
         # ========== IMAGE/DOCUMENT ANALYSIS ==========
         # If student uploaded an image, analyze it first
         image_analysis = None
@@ -2621,6 +2666,17 @@ You MUST reference specific content from the image in your response."""
         # ================================================================
         # CRITICAL: Catch any internal traces that slipped through orchestrator
         result = _sanitize_api_response(result)
+        
+        # ========== UPDATE IDEMPOTENCY CACHE (PHASE 5) ==========
+        # Store successful response for deduplication
+        try:
+            await db.request_idempotency.update_one(
+                {"request_hash": request_hash},
+                {"$set": {"response": result}},
+                upsert=False
+            )
+        except Exception as e:
+            logger.debug(f"Idempotency cache update failed: {e}")
         
         return result
         # [JULES VISUAL ENHANCEMENT END]

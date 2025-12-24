@@ -1969,26 +1969,57 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
         student_profile['context_summary'] = memory_context.get('context_summary', '')
         student_profile['has_prior_context'] = memory_context.get('has_prior_context', False)
         
-        # Determine action intent
+        # Determine action intent - PHASE C FIX: Preserve 'continue' intent from routing
         action_intent = 'explore'  # Default
+        last_output_type = ''
+        last_task_type = ''
+        last_assistant_message = ''
+        
         if routing_decision.extra_context:
+            # CRITICAL: Never override action_intent when routing says 'continue'
             action_intent = routing_decision.extra_context.get('action_intent', 'explore')
+            # PHASE C: Get last task info for proper continuation
+            last_output_type = routing_decision.extra_context.get('last_output_type', '')
+            last_task_type = routing_decision.extra_context.get('last_task_type', '')
+            last_assistant_message = routing_decision.extra_context.get('last_assistant_message', '')
+            
+            logger.info(f"🔄 Proactive intent: {action_intent}, last_output_type: {last_output_type}, last_task_type: {last_task_type}")
+        
+        # Also check context_pack for last task info if not in routing
+        context_pack = context.get('context_pack')
+        if context_pack and not last_output_type:
+            if hasattr(context_pack, 'last_output_type'):
+                last_output_type = context_pack.last_output_type
+                last_task_type = context_pack.last_task_type
+                last_assistant_message = context_pack.last_assistant_message
         
         # Generate intelligent, personalized response
-        response_content = await self._generate_proactive_response(
-            action_intent=action_intent,
-            name_prefix=name_prefix,
-            last_topic=last_topic,
-            weak_topics=weak_topics,
-            recent_topics=recent_topics,
-            mastery_level=mastery_level,
-            student_profile=student_profile
-        )
+        # BUGFIX: Pass context to avoid NameError
+        try:
+            response_content = await self._generate_proactive_response(
+                action_intent=action_intent,
+                name_prefix=name_prefix,
+                last_topic=last_topic,
+                weak_topics=weak_topics,
+                recent_topics=recent_topics,
+                mastery_level=mastery_level,
+                student_profile=student_profile,
+                context=context,  # BUGFIX: Pass context explicitly
+                # PHASE C: Pass last task info for proper continuation
+                last_output_type=last_output_type,
+                last_task_type=last_task_type,
+                last_assistant_message=last_assistant_message
+            )
+        except Exception as e:
+            logger.error(f"Proactive response generation failed: {e}")
+            # Fallback: Return safe generic response, don't crash orchestration
+            response_content = f"Hey{name_prefix}! What would you like to learn today? 📚"
         
         return {
             "main_response": response_content,
             "intent": f"proactive_{action_intent}",
             "response_type": "proactive_guidance",
+            "pipeline": "proactive_guidance",  # FIXED: Add pipeline key for normalizer
             "metadata": {
                 "action_intent": action_intent,
                 "personalized": True,
@@ -2005,27 +2036,52 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
         weak_topics: List[str],
         recent_topics: List[str],
         mastery_level: int,
-        student_profile: Dict[str, Any]
+        student_profile: Dict[str, Any],
+        context: Dict[str, Any] = None,  # BUGFIX: Add context parameter
+        # PHASE C: Last task info for proper continuation
+        last_output_type: str = '',
+        last_task_type: str = '',
+        last_assistant_message: str = ''
     ) -> str:
-        """Generate intelligent, personalized proactive responses"""
+        """
+        Generate intelligent, personalized proactive responses.
+        
+        PHASE C FIX: Now properly handles continuation after deliverables.
+        When user says "okay" after a study plan, this generates a proper
+        continuation response referencing the plan, NOT a generic response.
+        """
+        
+        # BUGFIX: Safe default - never None
+        context = context or {}
         
         exam_mode = student_profile.get('exam_mode', 'General')
         
+        # ================================================================
+        # PHASE C: INTELLIGENT CONTINUATION (Teacher-like behavior)
+        # ================================================================
         if action_intent == 'continue':
+            # SANITIZE name_prefix first
+            safe_prefix = ""
+            if name_prefix and len(name_prefix.strip().rstrip(',')) >= 3:
+                name_check = name_prefix.strip().rstrip(',').lower()
+                if name_check not in ['dsd', 'test', 'user', 'student', 'hiremath']:
+                    safe_prefix = name_prefix
+            
+            # PHASE C: Check if we have specific task info for targeted continuation
+            if last_output_type and last_task_type == 'deliverable':
+                return await self._generate_continuation_for_deliverable(
+                    last_output_type=last_output_type,
+                    last_assistant_message=last_assistant_message,
+                    safe_prefix=safe_prefix,
+                    exam_mode=exam_mode,
+                    context=context
+                )
+            
             # 🎯 SESSION RECALL - Student explicitly asked to continue
             # Provide clean, student-facing recap without debug info
             
             # Get session summary from student_profile (Memory v2)
             conversation_summary = student_profile.get('conversation_summary', '')
-            
-            # SANITIZE name_prefix: only use if it's a real name (not random strings)
-            # Empty or 1-2 char names like "dsd" should be ignored
-            safe_prefix = ""
-            if name_prefix and len(name_prefix.strip().rstrip(',')) >= 3:
-                # Check it's not a placeholder/test name
-                name_check = name_prefix.strip().rstrip(',').lower()
-                if name_check not in ['dsd', 'test', 'user', 'student', 'hiremath']:
-                    safe_prefix = name_prefix
             
             if last_topic:
                 # Build CLEAN recap (no mastery 0%, no debug dumps)
@@ -2161,6 +2217,86 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
                 )
 
     # ============================================================
+    # 🆕 PHASE C: CONTINUATION FOR DELIVERABLES (Teacher-like behavior)
+    # ============================================================
+    async def _generate_continuation_for_deliverable(
+        self,
+        last_output_type: str,
+        last_assistant_message: str,
+        safe_prefix: str,
+        exam_mode: str,
+        context: Dict[str, Any]
+    ) -> str:
+        """
+        Generate an intelligent continuation response after a deliverable.
+        
+        PHASE C FIX: When user says "okay"/"got it" after a study plan,
+        this generates a proper teacher-like continuation that:
+        1. Acknowledges the acknowledgment warmly
+        2. References the specific deliverable just created
+        3. Offers 1-2 targeted next steps (NOT generic capability list)
+        
+        NO HARDCODING: Uses LLM to generate contextual response.
+        """
+        try:
+            from openai import AsyncOpenAI
+            client = AsyncOpenAI(api_key=self.llm_api_key)
+            
+            # Determine continuation based on last output type
+            continuation_prompt = f"""You are Druv AI - a warm, intelligent tutor. The student just acknowledged your previous response.
+
+WHAT JUST HAPPENED:
+- You just provided: {last_output_type}
+- Your response summary: {last_assistant_message[:200]}...
+- Student said: "{context.get('message', 'okay')}"
+
+GENERATE A SHORT CONTINUATION (2-3 sentences max) that:
+1. Warmly acknowledges their response ("Great!", "Perfect!", "Awesome!" etc.)
+2. Offers ONE specific next step based on what you just gave them
+
+EXAMPLES OF GOOD CONTINUATIONS:
+- For study_plan: "Great! Want me to break down Day 1 in detail, or shall we pick which subjects to start with?"
+- For problem_solution: "Perfect! Want another similar problem to practice, or should I explain a different method?"
+- For explanation: "Got it! Want a quick example to solidify this, or ready for a practice question?"
+
+RULES:
+- Be warm and encouraging
+- Reference the specific deliverable you just gave
+- Offer 1-2 clear next options (not a menu of capabilities)
+- Keep it SHORT - max 3 sentences
+- Use one emoji max
+
+DO NOT:
+- List your capabilities
+- Ask "what would you like to do"
+- Be generic
+- Repeat what you just said
+
+Generate the continuation:"""
+
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a warm, encouraging tutor continuing a conversation with a student."},
+                    {"role": "user", "content": continuation_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=150
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            logger.error(f"Continuation generation failed: {e}")
+            # Fallback based on output type (minimal, not hardcoded templates)
+            if 'plan' in last_output_type.lower():
+                return "Perfect! 👍 Want me to detail Day 1, or pick which subjects to start with?"
+            elif 'solution' in last_output_type.lower():
+                return "Got it! 👍 Want another practice problem, or should I explain a different approach?"
+            else:
+                return "Great! 👍 Ready to continue? Just ask your next question!"
+    
+    # ============================================================
     # 🆕 CHITCHAT - Intelligent casual conversation handling
     # ============================================================
     async def _chitchat_response(
@@ -2208,6 +2344,7 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
             "main_response": response,
             "intent": "chitchat",
             "response_type": "intelligent_casual",
+            "pipeline": "chitchat",  # FIXED: Add pipeline key for normalizer
             "metadata": {
                 "personalized": True,
                 "llm_generated": True,
@@ -2400,6 +2537,7 @@ Respond as their caring older sibling (not a counselor). Give them quick options
             "main_response": response,
             "intent": "clarification",
             "response_type": "clarification",
+            "pipeline": "clarification",  # FIXED: Add pipeline key for normalizer
             "metadata": {"input_unclear": True, "original_input": message[:50]}
         }
     
@@ -2636,6 +2774,11 @@ Response:"""
         # =================================================================
         context_pack = context.get('context_pack')
         
+        # Get actionable request info from routing decision
+        extra_ctx = getattr(routing_decision, 'extra_context', {}) or {}
+        output_type = extra_ctx.get('output_type')
+        has_actionable_request = extra_ctx.get('has_actionable_request', False)
+        
         # Prepare context for supervisor
         supervisor_context = {
             "subject": context.get("subject", "General"),
@@ -2651,7 +2794,15 @@ Response:"""
             # NEW: ContextPack for agents
             "context_pack": context_pack,
             "db": self.db,  # Pass DB for agents
+            # DYNAMIC ACTIONABLE REQUEST (LLM-determined output type)
+            "output_type": output_type,
+            "has_actionable_request": has_actionable_request,
+            "requires_structured_output": extra_ctx.get('requires_structured_output', False),
         }
+        
+        # Log actionable request routing for observability
+        if has_actionable_request:
+            logger.info(f"🎯 Multi-agent handling ACTIONABLE REQUEST: output_type={output_type}")
         
         # Add ContextPack data to supervisor context for agents
         if context_pack:

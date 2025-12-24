@@ -1519,23 +1519,62 @@ class StudentIntelligenceHub:
         self,
         query: str,
         magic_context: MagicContext,
-        agent_type: str
+        agent_type: str,
+        semantic_analysis: Optional[Dict[str, Any]] = None  # PHASE B: Accept semantic analysis
     ) -> ResponseMode:
-        """Decide the best response mode for this interaction"""
-        # Emotional priority
+        """
+        Decide the best response mode for this interaction.
+        
+        PHASE B FIX: Uses semantic analysis fields instead of keyword matching
+        when ENABLE_SEMANTIC_MODE_SELECTION is enabled.
+        """
+        from core.config import settings
+        
+        # Emotional priority (from magic_context, not keywords)
         if magic_context.current_emotion in [EmotionalState.STRESSED, EmotionalState.ANXIOUS]:
             return ResponseMode.LISTENER
         
-        # Query-based
+        # Celebratory mode for achievements
+        if magic_context.recent_achievement:
+            return ResponseMode.CELEBRATOR
+        
+        # PHASE B: Semantic-based mode selection (no keywords)
+        if settings.ENABLE_SEMANTIC_MODE_SELECTION and semantic_analysis:
+            # Use semantic analysis fields for mode decision
+            emotional_tone = semantic_analysis.get('emotional_tone', 'neutral')
+            has_actionable = semantic_analysis.get('has_actionable_request', False)
+            output_type = semantic_analysis.get('requested_output_type', '')
+            intent = semantic_analysis.get('intent', '')
+            
+            # Emotional tones → LISTENER or FRIEND
+            if emotional_tone in ['anxious', 'frustrated', 'lonely', 'negative']:
+                return ResponseMode.LISTENER
+            if emotional_tone in ['bored', 'casual']:
+                return ResponseMode.FRIEND
+            
+            # Actionable requests → GUIDE
+            if has_actionable and output_type in ['study_plan', 'schedule', 'timetable']:
+                return ResponseMode.GUIDE
+            
+            # Quiz/test requests → CHALLENGER
+            if has_actionable and output_type in ['quiz', 'test', 'practice']:
+                return ResponseMode.CHALLENGER
+            
+            # Greeting/chitchat → FRIEND
+            if intent in ['greeting', 'chitchat', 'acknowledgment']:
+                return ResponseMode.FRIEND
+            
+            # Default to MENTOR for educational queries
+            return ResponseMode.MENTOR
+        
+        # LEGACY: Keyword-based mode selection (only when flag disabled)
         query_lower = query.lower()
         if "quiz" in query_lower or "test" in query_lower:
             return ResponseMode.CHALLENGER
         if "plan" in query_lower or "schedule" in query_lower:
             return ResponseMode.GUIDE
-        if magic_context.recent_achievement:
-            return ResponseMode.CELEBRATOR
         
-        # Casual detection
+        # Casual detection (legacy)
         casual_indicators = ["hi", "hello", "what's up", "how are you", "bored"]
         if any(ind in query_lower for ind in casual_indicators):
             return ResponseMode.FRIEND

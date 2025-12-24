@@ -482,28 +482,61 @@ class StudentStateEngine:
         
         return successes, struggles
     
-    async def _detect_emotion_state(self, user_id: str) -> str:
-        """Detect student's current emotional state from recent interactions."""
-        # Get recent messages
-        cursor = self.db.session_messages.find(
-            {"user_id": user_id},
-            sort=[("timestamp", -1)],
-            limit=5
-        )
+    async def _detect_emotion_state(
+        self, 
+        user_id: str,
+        semantic_analysis: Optional[Dict[str, Any]] = None  # PHASE B: Accept semantic analysis
+    ) -> str:
+        """
+        Detect student's current emotional state from recent interactions.
         
-        anxiety_indicators = ["help", "stuck", "confused", "don't understand", "struggling"]
-        frustration_indicators = ["not working", "still don't", "why won't", "impossible"]
-        curiosity_indicators = ["what if", "how does", "why do", "interesting", "tell me more"]
+        PHASE B FIX: Uses semantic analysis emotional_tone field when available,
+        instead of keyword matching.
+        """
+        from core.config import settings
         
-        async for doc in cursor:
-            message = doc.get("content", "").lower()
+        # PHASE B: Use semantic analysis when available and flag enabled
+        if settings.ENABLE_SEMANTIC_EMOTION_DETECTION and semantic_analysis:
+            emotional_tone = semantic_analysis.get('emotional_tone', 'neutral')
+            emotional_intensity = semantic_analysis.get('emotional_intensity', 0.3)
             
-            if any(ind in message for ind in frustration_indicators):
-                return "frustrated"
-            if any(ind in message for ind in anxiety_indicators):
-                return "anxious"
-            if any(ind in message for ind in curiosity_indicators):
-                return "curious"
+            # Map semantic emotional tones to our states
+            tone_mapping = {
+                'anxious': 'anxious',
+                'frustrated': 'frustrated',
+                'curious': 'curious',
+                'excited': 'curious',  # Excited often correlates with curiosity
+                'negative': 'anxious' if emotional_intensity > 0.5 else 'neutral',
+                'positive': 'curious' if emotional_intensity > 0.5 else 'neutral',
+                'confused': 'anxious',
+                'bored': 'neutral'
+            }
+            
+            return tone_mapping.get(emotional_tone, 'neutral')
+        
+        # LEGACY: Keyword-based detection (only when flag disabled or no semantic analysis)
+        try:
+            cursor = self.db.chat_messages.find(
+                {"user_id": user_id},
+                sort=[("timestamp", -1)],
+                limit=5
+            )
+            
+            anxiety_indicators = ["help", "stuck", "confused", "don't understand", "struggling"]
+            frustration_indicators = ["not working", "still don't", "why won't", "impossible"]
+            curiosity_indicators = ["what if", "how does", "why do", "interesting", "tell me more"]
+            
+            async for doc in cursor:
+                message = doc.get("content", "").lower()
+                
+                if any(ind in message for ind in frustration_indicators):
+                    return "frustrated"
+                if any(ind in message for ind in anxiety_indicators):
+                    return "anxious"
+                if any(ind in message for ind in curiosity_indicators):
+                    return "curious"
+        except Exception as e:
+            logger.debug(f"Emotion detection from DB failed: {e}")
         
         return "neutral"
     

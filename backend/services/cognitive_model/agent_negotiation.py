@@ -331,22 +331,103 @@ class AgentNegotiator:
         self,
         agent_name: str,
         query: str,
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        semantic_analysis: Optional[Dict[str, Any]] = None  # PHASE B: Accept semantic analysis
     ) -> float:
-        """Estimate agent confidence based on capabilities and query"""
+        """
+        Estimate agent confidence based on capabilities and query.
+        
+        PHASE B FIX: Uses semantic analysis fields instead of keyword matching
+        when flag is enabled.
+        """
+        from core.config import settings
+        
         capabilities = self.agent_capabilities.get(agent_name, [])
-        query_lower = query.lower()
         domain = context.get('subject', context.get('domain', '')).lower()
         
         score = 0.35  # Base confidence
         
-        # Check capability match
+        # Check capability match (domain-based, not keyword)
         for cap in capabilities:
             cap_lower = cap.lower()
-            if cap_lower in query_lower or cap_lower in domain:
+            if cap_lower in domain or domain in cap_lower:
                 score += 0.2
         
-        # Agent-specific keywords
+        # PHASE B: Semantic-based agent scoring (no keywords)
+        if settings.ENABLE_SEMANTIC_ONLY_ROUTING and semantic_analysis:
+            agent_key = agent_name.lower().replace("agent", "").strip()
+            
+            # Map semantic signals to agent suitability
+            intent = semantic_analysis.get('intent', '')
+            emotional_tone = semantic_analysis.get('emotional_tone', 'neutral')
+            has_actionable = semantic_analysis.get('has_actionable_request', False)
+            output_type = semantic_analysis.get('requested_output_type', '')
+            needs_empathy = semantic_analysis.get('needs_empathy', False)
+            
+            # Agent-semantic mappings (semantic signals, not keywords)
+            agent_semantic_scores = {
+                'mentor': {
+                    'base_intents': ['question', 'explanation', 'clarification'],
+                    'emotional_boost': ['confused', 'anxious', 'frustrated'],
+                    'output_types': ['explanation', 'study_plan'],
+                },
+                'professor': {
+                    'base_intents': ['question'],
+                    'output_types': ['problem_solution', 'proof', 'derivation'],
+                    'complexity_boost': True,  # Boost for complex queries
+                },
+                'doubt_resolver': {
+                    'base_intents': ['clarification'],
+                    'emotional_boost': ['confused', 'frustrated'],
+                    'needs_empathy_boost': True,
+                },
+                'exam_coach': {
+                    'output_types': ['study_plan', 'quiz', 'schedule'],
+                    'context_match': ['exam', 'test', 'jee', 'neet'],  # Subject context, not query keywords
+                },
+                'study_buddy': {
+                    'base_intents': ['practice'],
+                    'output_types': ['quiz', 'practice'],
+                },
+                'visualise': {
+                    'output_types': ['diagram', 'visual', 'graph'],
+                },
+                'weak_area_detective': {
+                    'needs_empathy_boost': True,
+                    'emotional_boost': ['frustrated', 'anxious'],
+                },
+            }
+            
+            agent_scoring = agent_semantic_scores.get(agent_key, {})
+            
+            # Score based on semantic signals
+            if intent in agent_scoring.get('base_intents', []):
+                score += 0.15
+            if emotional_tone in agent_scoring.get('emotional_boost', []):
+                score += 0.1
+            if output_type in agent_scoring.get('output_types', []):
+                score += 0.2
+            if needs_empathy and agent_scoring.get('needs_empathy_boost', False):
+                score += 0.1
+            
+            # Context match (subject/exam type, not query keywords)
+            for ctx_key in agent_scoring.get('context_match', []):
+                if ctx_key in domain.lower():
+                    score += 0.1
+                    break
+            
+            return min(1.0, score)
+        
+        # LEGACY: Keyword-based scoring (only when flag disabled)
+        query_lower = query.lower()
+        
+        # Check capability match in query (legacy)
+        for cap in capabilities:
+            cap_lower = cap.lower()
+            if cap_lower in query_lower:
+                score += 0.2
+        
+        # Agent-specific keywords (LEGACY)
         agent_keywords = {
             "mentor": ["explain", "understand", "help", "confused", "doubt", "intuition", "simple"],
             "professor": ["prove", "derive", "formal", "mathematical", "theorem", "rigorous", "step"],

@@ -281,11 +281,17 @@ class IntelligentRoutingEngine:
                 # Route to appropriate conversation pipeline
                 if dialogue_act['act'] in ['ack', 'continue', 'short_response']:
                     # Acknowledgment or continuation - use proactive guidance
+                    # PHASE C FIX: Include last task info for proper continuation
+                    last_output_type = context.get('last_output_type', '') or context.get('context_pack', {}).get('last_output_type', '')
+                    last_task_type = context.get('last_task_type', '') or context.get('context_pack', {}).get('last_task_type', '')
+                    last_assistant_message = context.get('last_assistant_message', '') or context.get('context_pack', {}).get('last_assistant_message', '')
+                    awaiting_continuation = context.get('awaiting_continuation', False) or context.get('context_pack', {}).get('awaiting_continuation', False)
+                    
                     return RoutingDecision(
                         pipeline=RecommendedPipeline.PROACTIVE_GUIDANCE,
                         complexity=QueryComplexity.SIMPLE,
                         confidence=0.9,
-                        reasoning=f"Dialogue act: {dialogue_act['act']} - continuing conversation",
+                        reasoning=f"Dialogue act: {dialogue_act['act']} - continuing conversation (last_output={last_output_type})",
                         agents_to_activate=['mentor'],
                         tools_to_enable=[],
                         enable_verification=False,
@@ -298,8 +304,13 @@ class IntelligentRoutingEngine:
                         enable_agent_negotiation=False,
                         extra_context={
                             'dialogue_act': dialogue_act['act'],
-                            'action_intent': 'continue',
-                            'is_continuation': True
+                            'action_intent': 'continue',  # CRITICAL: Must be 'continue', not 'explore'
+                            'is_continuation': True,
+                            # PHASE C: Pass last task info for proper continuation
+                            'last_output_type': last_output_type,
+                            'last_task_type': last_task_type,
+                            'last_assistant_message': last_assistant_message[:300] if last_assistant_message else '',
+                            'awaiting_continuation': awaiting_continuation
                         }
                     )
                 elif dialogue_act['act'] == 'emotional':
@@ -653,19 +664,35 @@ class IntelligentRoutingEngine:
         
         # ================================================================
         # RULE 2: Single word or very short (1-2 words) - conversation
-        # "yes", "ok", "hmm", "sure", "no" etc.
-        # BUT NOT education verbs - already handled in RULE 0
+        # PHASE B FIX: Use semantic classifier's intent/dialogue_act when available
+        # instead of ACK_WORDS list. Fallback to structural detection only.
         # ================================================================
-        ACK_WORDS = {'yes', 'ok', 'okay', 'hmm', 'sure', 'no', 'yeah', 'yep', 'nope',
-                     'got', 'right', 'thanks', 'cool', 'nice', 'great', 'good', 'fine'}
+        from core.config import settings
         
-        if word_count <= 2 and first_word in ACK_WORDS:
-            return {
-                'act': 'ack',
-                'lane': 'conversation',
-                'confidence': 0.9,
-                'reason': f'Ultra-short acknowledgment ({word_count} words)'
-            }
+        if settings.ENABLE_SEMANTIC_ONLY_ROUTING:
+            # PHASE B: Rely on semantic classifier for ack detection
+            # Only use structural detection (word count, not word lists)
+            if word_count <= 2:
+                # Very short message - let semantic classifier decide
+                # Don't hardcode ACK_WORDS - just flag as potential ack
+                return {
+                    'act': 'potential_ack',
+                    'lane': 'conversation',
+                    'confidence': 0.6,  # Lower confidence - needs semantic validation
+                    'reason': f'Ultra-short message ({word_count} words) - needs semantic validation'
+                }
+        else:
+            # LEGACY: ACK_WORDS based detection (only when flag disabled)
+            ACK_WORDS = {'yes', 'ok', 'okay', 'hmm', 'sure', 'no', 'yeah', 'yep', 'nope',
+                         'got', 'right', 'thanks', 'cool', 'nice', 'great', 'good', 'fine'}
+            
+            if word_count <= 2 and first_word in ACK_WORDS:
+                return {
+                    'act': 'ack',
+                    'lane': 'conversation',
+                    'confidence': 0.9,
+                    'reason': f'Ultra-short acknowledgment ({word_count} words) [legacy]'
+                }
         
         # ================================================================
         # RULE 3: Emotional indicators (structural, not keyword)
@@ -932,6 +959,55 @@ class IntelligentRoutingEngine:
         
         elif intent == SemanticIntent.CELEBRATION:
             return self._acknowledgment_decision(query, analysis)
+        
+        # ================================================================
+        # DYNAMIC ACTIONABLE REQUEST ROUTING (LLM-DETERMINED)
+        # ================================================================
+        # If LLM determined user wants something CREATED/DONE, route to multi-agent
+        # This is NOT keyword-based - the LLM semantically understands the request
+        if analysis.has_actionable_request and analysis.requested_output_type:
+            output_type = analysis.requested_output_type
+            
+            # Determine complexity and tools based on output type
+            if output_type == "problem_solution":
+                complexity_score = self._analyze_complexity(query, context)
+                complexity = self._score_to_complexity(complexity_score, {})
+                enable_verification = True
+                enable_visual = True
+                tools = ['calculator', 'knowledge_search']
+                agents = ['professor', 'mentor']
+            else:
+                # study_plan, quiz, summary, etc.
+                complexity = QueryComplexity.MODERATE
+                enable_verification = False
+                enable_visual = False
+                tools = ['study_planner']
+                agents = ['mentor']
+            
+            logger.info(f"🎯 ACTIONABLE REQUEST detected: output_type={output_type}")
+            
+            return RoutingDecision(
+                pipeline=RecommendedPipeline.MULTI_AGENT,
+                complexity=complexity,
+                confidence=analysis.confidence,
+                reasoning=f"Actionable request ({output_type}): {analysis.reasoning}",
+                agents_to_activate=agents,
+                tools_to_enable=tools,
+                enable_verification=enable_verification,
+                enable_visual=enable_visual,
+                max_iterations=5,
+                timeout_seconds=30.0,
+                use_knowledge_graph=output_type == "problem_solution",
+                use_memory=True,
+                priority_factors={'action_fulfillment': 1.0, 'structured_output': 0.9},
+                enable_agent_negotiation=output_type == "problem_solution",
+                extra_context={
+                    'semantic_analysis': analysis.to_dict(),
+                    'output_type': output_type,
+                    'has_actionable_request': True,
+                    'requires_structured_output': True
+                }
+            )
         
         elif intent in [SemanticIntent.EXPLORE_NEW, SemanticIntent.CONTINUE_PREVIOUS, SemanticIntent.GET_HELP]:
             action_type = {

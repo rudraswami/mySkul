@@ -158,6 +158,13 @@ class ContextPack:
     last_n_messages: List[Dict[str, Any]] = field(default_factory=list)  # Last 5 only
     last_n_events: List[Dict[str, Any]] = field(default_factory=list)    # Last 5 events
     
+    # =========== LAST TASK TRACKING (Phase C Continuity Fix) ===========
+    # Enables proper "okay" / "got it" continuation by knowing what we last did
+    last_output_type: str = ""  # study_plan, problem_solution, explanation, emotional_support, etc.
+    last_task_type: str = ""    # deliverable, explanation, conversation, emotional
+    last_assistant_message: str = ""  # Truncated last response (max 500 chars)
+    awaiting_continuation: bool = False  # True if last response was deliverable expecting ack
+    
     # =========== SPACED REPETITION ===========
     due_reviews: List[str] = field(default_factory=list)
     
@@ -211,6 +218,12 @@ class ContextPack:
             "previous_topic": self.previous_topic,
             "last_n_messages": self.last_n_messages,
             "last_n_events": self.last_n_events,
+            
+            # Last Task Tracking (Continuity v2)
+            "last_output_type": self.last_output_type,
+            "last_task_type": self.last_task_type,
+            "last_assistant_message": self.last_assistant_message,
+            "awaiting_continuation": self.awaiting_continuation,
             
             # Spaced Rep
             "due_reviews": self.due_reviews,
@@ -475,6 +488,24 @@ class ContextPackBuilder:
                     logger.warning(f"⚠️ Memory load failed: {e}")
             
             # ============================================================
+            # STEP 2b: LAST TASK TRACKING (Continuity v2 - Phase C Fix)
+            # ============================================================
+            # This enables proper "okay"/"got it" continuation
+            try:
+                from core.config import settings
+                if settings.ENABLE_CONTINUITY_TRACKING and self.db:
+                    last_task_info = await self._get_last_task_info(user_id, session_id)
+                    if last_task_info:
+                        pack.last_output_type = last_task_info.get('output_type', '')
+                        pack.last_task_type = last_task_info.get('task_type', '')
+                        pack.last_assistant_message = last_task_info.get('message', '')[:500]  # Truncate
+                        pack.awaiting_continuation = last_task_info.get('awaiting_continuation', False)
+                        loaded_components.append("last_task")
+                        logger.debug(f"   ✓ Last task: type={pack.last_output_type}, awaiting_ack={pack.awaiting_continuation}")
+            except Exception as e:
+                logger.debug(f"Last task tracking failed (non-critical): {e}")
+            
+            # ============================================================
             # STEP 3: MASTERY SNAPSHOT (CORE - must complete)
             # ============================================================
             try:
@@ -663,6 +694,77 @@ class ContextPackBuilder:
             return events
         except Exception:
             return []
+    
+    async def _get_last_task_info(
+        self,
+        user_id: str,
+        session_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get information about the last assistant response for continuity.
+        
+        PHASE C FIX: This enables proper "okay"/"got it" continuation by
+        understanding what we last delivered to the student.
+        
+        Returns:
+            {
+                'output_type': 'study_plan' | 'explanation' | 'problem_solution' | etc.,
+                'task_type': 'deliverable' | 'explanation' | 'conversation' | 'emotional',
+                'message': str (truncated to 500 chars),
+                'awaiting_continuation': bool
+            }
+        """
+        try:
+            # Get the most recent assistant message from chat_messages
+            last_message = await self.db.chat_messages.find_one(
+                {
+                    "session_id": session_id,
+                    "user_id": user_id
+                },
+                sort=[("timestamp", -1)]
+            )
+            
+            if not last_message:
+                return None
+            
+            # Extract the assistant response
+            ai_response = last_message.get('ai_response', {})
+            if isinstance(ai_response, str):
+                # Plain text response
+                message_text = ai_response
+                output_type = 'explanation'
+                task_type = 'explanation'
+            else:
+                # Structured response
+                message_text = ai_response.get('main_response', '') or ai_response.get('content', '')
+                # Get output_type from metadata if available
+                metadata = ai_response.get('metadata', {})
+                output_type = metadata.get('output_type', '') or ai_response.get('pipeline', '')
+                
+                # Determine task_type based on output_type
+                deliverable_types = {'study_plan', 'problem_solution', 'quiz', 'schedule', 'timetable'}
+                if output_type in deliverable_types or 'plan' in output_type.lower():
+                    task_type = 'deliverable'
+                elif output_type in {'emotional_support', 'motivation'}:
+                    task_type = 'emotional'
+                elif output_type in {'fast_response', 'chitchat', 'greeting'}:
+                    task_type = 'conversation'
+                else:
+                    task_type = 'explanation'
+            
+            # Determine if we're awaiting continuation (deliverable just sent)
+            awaiting_continuation = task_type == 'deliverable'
+            
+            return {
+                'output_type': output_type,
+                'task_type': task_type,
+                'message': message_text[:500] if message_text else '',
+                'awaiting_continuation': awaiting_continuation
+            }
+            
+        except Exception as e:
+            logger.debug(f"Failed to get last task info: {e}")
+            return None
 
 
 # =============================================================================
