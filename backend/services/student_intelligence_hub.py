@@ -117,6 +117,9 @@ class MagicContext:
     recommended_next: str = ""
     priority_topics: List[str] = field(default_factory=list)
     
+    # Error Genome™ - Common mistake patterns
+    common_mistake_types: List[str] = field(default_factory=list)
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             "student_name": self.student_name,
@@ -135,21 +138,22 @@ class MagicContext:
             "preferred_metaphor": self.preferred_metaphor,
             "current_streak": self.current_streak,
             "due_reviews": self.due_reviews,
-            "priority_topics": self.priority_topics
+            "priority_topics": self.priority_topics,
+            "common_mistake_types": self.common_mistake_types
         }
     
     def get_magic_prompts(self) -> List[str]:
         """Generate magic context prompts that make responses personal"""
         prompts = []
         
-        # Exam countdown magic
+        # Exam countdown magic - ENHANCED with natural reference
         if self.days_to_exam is not None:
             if self.days_to_exam <= 7:
-                prompts.append(f"URGENT: Only {self.days_to_exam} days to {self.exam_name}! Every minute counts.")
+                prompts.append(f"URGENT: Only {self.days_to_exam} days to {self.exam_name}! Say: 'With just {self.days_to_exam} days left, let's focus on...'")
             elif self.days_to_exam <= 30:
-                prompts.append(f"Exam alert: {self.days_to_exam} days to {self.exam_name}. Focus on high-yield topics.")
-            else:
-                prompts.append(f"Preparing for {self.exam_name} in {self.days_to_exam} days.")
+                prompts.append(f"Exam alert: {self.days_to_exam} days to {self.exam_name}. Reference time naturally: 'With {self.days_to_exam} days to go...'")
+            elif self.days_to_exam <= 60:
+                prompts.append(f"Preparing for {self.exam_name} in {self.days_to_exam} days. Mention exam relevance of this topic.")
         
         # Weak area magic
         if self.is_weak_area:
@@ -159,21 +163,48 @@ class MagicContext:
         if self.is_continuation:
             prompts.append(f"CONTINUING from previous session on {self.previous_topic}. Reference earlier learning.")
         
-        # Repetition magic
+        # Repetition magic - ENHANCED with different approach hint
         if self.times_asked_before > 1:
-            prompts.append(f"Student has asked about this {self.times_asked_before} times. Try a DIFFERENT approach this time.")
+            prompts.append(f"Student has asked about this {self.times_asked_before} times. Say: 'Let me try explaining this differently...' and use a NEW approach.")
         
         # Emotional magic
         if self.current_emotion in [EmotionalState.STRESSED, EmotionalState.ANXIOUS, EmotionalState.FRUSTRATED]:
-            prompts.append("Student seems stressed. Be extra patient and encouraging.")
+            prompts.append("Student seems stressed. Be extra patient and encouraging. Start with reassurance.")
         
         # Streak magic
         if self.current_streak >= 5:
-            prompts.append(f"Amazing {self.current_streak}-day streak! Acknowledge their consistency.")
+            prompts.append(f"Amazing {self.current_streak}-day streak! Acknowledge their consistency naturally.")
         
         # Achievement magic
         if self.recent_achievement:
             prompts.append(f"Recent achievement: {self.recent_achievement}. Celebrate progress!")
+        
+        # ==========================================================
+        # ERROR GENOME™ - Mistake Pattern Awareness (Phase 1)
+        # ==========================================================
+        if self.common_mistake_types:
+            mistake_guidance = []
+            for pattern in self.common_mistake_types[:2]:  # Top 2 patterns only
+                if pattern == "calculation_error":
+                    mistake_guidance.append("calculation errors → emphasize step-by-step arithmetic and double-checking")
+                elif pattern == "conceptual_confusion":
+                    mistake_guidance.append("conceptual confusion → clarify the 'why' before 'how', use analogies")
+                elif pattern == "formula_misuse":
+                    mistake_guidance.append("formula misapplication → explain WHEN each formula applies, conditions matter")
+                elif pattern == "sign_error":
+                    mistake_guidance.append("sign errors → highlight direction conventions, draw diagrams")
+                elif pattern == "unit_error":
+                    mistake_guidance.append("unit errors → emphasize unit conversions and dimensional analysis")
+                elif pattern == "reading_error":
+                    mistake_guidance.append("reading errors → encourage re-reading the question, highlight key words")
+            if mistake_guidance:
+                prompts.append(f"ERROR GENOME: Student commonly makes {'; '.join(mistake_guidance)}. Proactively address these.")
+        
+        # ==========================================================
+        # TRUST SIGNALS - AI Attribution (Phase 1)
+        # ==========================================================
+        # These are injected as guidance, not as specific phrases
+        prompts.append("TRUST SIGNAL: Use one of these naturally: 'Based on your learning pattern...', 'DRON AI noticed...', 'From your recent sessions...'")
         
         return prompts
 
@@ -396,6 +427,15 @@ class StudentIntelligenceHub:
             # Proactive Insights (Gap 10)
             due_reviews = await self.continuity_engine.get_due_reviews(user_id, limit=3)
             context.due_reviews = [r.get("topic", "") for r in due_reviews]
+            
+            # Error Genome™ - Fetch common mistake patterns (Phase 1)
+            try:
+                learning_profile = await self.db.learning_profiles.find_one({"user_id": user_id})
+                if learning_profile:
+                    context.common_mistake_types = learning_profile.get("common_mistake_types", [])
+            except Exception as e:
+                logger.warning(f"Could not fetch mistake patterns: {e}")
+                context.common_mistake_types = []
             
             logger.info(f"🪄 Magic context generated: exam in {context.days_to_exam} days, "
                        f"topic mastery {context.topic_mastery}%, "

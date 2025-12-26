@@ -70,6 +70,7 @@ class NotificationService:
         'break_suggestion': 60,      # 1 hour between break nudges
         'streak_protection': 240,    # 4 hours between streak warnings
         'spaced_rep': 180,           # 3 hours between review nudges
+        'revision_due': 180,         # 3 hours between revision nudges (same as spaced_rep)
         'morning_greeting': 1440,    # Once per day
         'daily_summary': 1440,       # Once per day
         'comeback': 4320,            # 3 days between comeback nudges
@@ -82,6 +83,7 @@ class NotificationService:
         'break_suggestion': 3,       # Max 3 break nudges/day
         'streak_protection': 2,      # Max 2 streak warnings/day
         'spaced_rep': 2,             # Max 2 review nudges/day
+        'revision_due': 2,           # Max 2 revision nudges/day (same as spaced_rep)
         'morning_greeting': 1,       # Max 1/day
         'daily_summary': 1,          # Max 1/day
         'comeback': 1,               # Max 1/day
@@ -324,17 +326,22 @@ class NotificationService:
             
             if existing:
                 # Update existing instead of creating duplicate
+                # ✅ FIX: Update title, message, AND created_at to show latest intelligent content
+                now = datetime.utcnow()
                 await self.db.user_notifications.update_one(
                     {'_id': existing['_id']},
                     {
                         '$set': {
-                            'message': message,
-                            'updated_at': datetime.utcnow()
+                            'title': title,      # ✅ Update title with new intelligent content
+                            'message': message,  # ✅ Update message with new intelligent content
+                            'created_at': now,   # ✅ Update timestamp so it appears as new
+                            'updated_at': now,
+                            'read': False        # ✅ Mark as unread again
                         },
                         '$inc': {'coalesce_count': 1}
                     }
                 )
-                logger.info(f"🔄 Notification coalesced: {notification_type} for {user_id}")
+                logger.info(f"🔄 Notification coalesced (refreshed): {notification_type} for {user_id}")
                 return {
                     'notification_id': existing.get('notification_id'),
                     'status': 'coalesced',
@@ -462,18 +469,22 @@ class NotificationService:
                 
                 if existing:
                     # Update existing instead of inserting duplicate
+                    # ✅ FIX: Update title, message, AND created_at to show latest intelligent content
+                    now = datetime.utcnow()
                     await self.db.user_notifications.update_one(
                         {'_id': existing['_id']},
                         {
                             '$set': {
-                                'message': notification['message'],
-                                'updated_at': datetime.utcnow(),
+                                'title': notification['title'],    # ✅ Update title
+                                'message': notification['message'],  # ✅ Update message
+                                'created_at': now,                   # ✅ Update timestamp so it appears new
+                                'updated_at': now,
                                 'read': False  # Mark unread again
                             },
                             '$inc': {'coalesce_count': 1}
                         }
                     )
-                    logger.debug(f"🔄 In-app notification coalesced for {user_id}")
+                    logger.debug(f"🔄 In-app notification coalesced (refreshed) for {user_id}")
                     return {'status': 'coalesced', 'existing_id': existing.get('notification_id')}
             
             # Insert new notification
@@ -812,6 +823,136 @@ class NotificationService:
             'user_id': user_id,
             'read': False
         })
+    
+    # ===========================================
+    # 🎯 OUTCOME TRACKING (For Mentor Learning)
+    # ===========================================
+    
+    async def track_notification_outcome(
+        self,
+        user_id: str,
+        notification_id: str,
+        outcome: str,
+        details: Dict[str, Any] = None
+    ) -> bool:
+        """
+        Track the outcome of a notification for learning.
+        
+        Outcomes:
+        - "clicked": User clicked/opened the notification
+        - "dismissed": User dismissed without action
+        - "studied": User started studying within 30 mins
+        - "ignored": No interaction for 2+ hours
+        - "snoozed": User snoozed the notification
+        
+        This data feeds back into the Mentor Companion to improve future decisions.
+        """
+        if self.db is None:
+            return False
+        
+        try:
+            await self.db.notification_outcomes.insert_one({
+                'user_id': user_id,
+                'notification_id': notification_id,
+                'outcome': outcome,
+                'details': details or {},
+                'created_at': datetime.utcnow()
+            })
+            
+            logger.info(f"📊 Outcome tracked: {notification_id} → {outcome}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to track outcome: {e}")
+            return False
+    
+    async def get_notification_effectiveness(self, user_id: str) -> Dict[str, Any]:
+        """
+        Compute notification effectiveness metrics for a user.
+        
+        Returns:
+        - response_rate: Percentage of notifications that got positive response
+        - best_time: Time of day with highest engagement
+        - ignored_count: Recent notifications ignored
+        """
+        if self.db is None:
+            return {"response_rate": 0.5, "ignored_count": 0}
+        
+        try:
+            now = datetime.utcnow()
+            thirty_days_ago = now - timedelta(days=30)
+            
+            # Total sent
+            total_sent = await self.db.user_notifications.count_documents({
+                'user_id': user_id,
+                'created_at': {'$gte': thirty_days_ago}
+            })
+            
+            if total_sent == 0:
+                return {"response_rate": 0.5, "ignored_count": 0}
+            
+            # Positive outcomes
+            positive_outcomes = await self.db.notification_outcomes.count_documents({
+                'user_id': user_id,
+                'outcome': {'$in': ['clicked', 'studied']},
+                'created_at': {'$gte': thirty_days_ago}
+            })
+            
+            # Ignored count (recent)
+            forty_eight_hours_ago = now - timedelta(hours=48)
+            ignored_recent = await self.db.notification_outcomes.count_documents({
+                'user_id': user_id,
+                'outcome': 'ignored',
+                'created_at': {'$gte': forty_eight_hours_ago}
+            })
+            
+            return {
+                "response_rate": positive_outcomes / total_sent if total_sent > 0 else 0.5,
+                "total_sent_30d": total_sent,
+                "positive_outcomes_30d": positive_outcomes,
+                "ignored_count_48h": ignored_recent
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to compute effectiveness: {e}")
+            return {"response_rate": 0.5, "ignored_count": 0}
+    
+    async def auto_track_ignored_notifications(self, user_id: str):
+        """
+        Automatically mark old unresponded notifications as 'ignored'.
+        Run periodically to keep outcome data accurate.
+        """
+        if self.db is None:
+            return
+        
+        try:
+            two_hours_ago = datetime.utcnow() - timedelta(hours=2)
+            
+            # Find notifications sent > 2 hours ago with no outcome
+            old_notifications = await self.db.user_notifications.find({
+                'user_id': user_id,
+                'created_at': {'$lt': two_hours_ago},
+                'read': False
+            }).to_list(length=50)
+            
+            for notif in old_notifications:
+                notification_id = notif.get('notification_id')
+                
+                # Check if outcome already tracked
+                existing = await self.db.notification_outcomes.find_one({
+                    'notification_id': notification_id
+                })
+                
+                if not existing:
+                    await self.track_notification_outcome(
+                        user_id=user_id,
+                        notification_id=notification_id,
+                        outcome='ignored',
+                        details={'auto_tracked': True, 'hours_old': 2}
+                    )
+            
+        except Exception as e:
+            logger.error(f"Failed to auto-track ignored: {e}")
 
 
 # ===========================================

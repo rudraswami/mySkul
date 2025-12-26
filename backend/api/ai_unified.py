@@ -224,6 +224,24 @@ Answer based on the image content above. Be direct and accurate."""
         except Exception as e:
             logger.warning(f"Failed to save message: {e}")
         
+        # 🆕 PHASE 3: Detect emotional state change
+        try:
+            from services.intelligent_proactive_mentor import get_proactive_mentor
+            mentor = await get_proactive_mentor(db)
+            
+            emotional_event = await mentor.detect_emotional_change(
+                user_id=user.user_id,
+                message_content=request.message
+            )
+            
+            if emotional_event:
+                # Handle in background - don't block response
+                import asyncio
+                asyncio.create_task(_handle_emotional_event(db, user.user_id, emotional_event))
+                
+        except Exception as e:
+            logger.debug(f"Emotional detection skipped: {e}")
+        
         # Record interaction with cognitive model
         if COGNITIVE_ENABLED and get_adaptive_engine and request.enable_adaptation:
             try:
@@ -469,5 +487,45 @@ async def get_learning_progress(
     
     return progress
 
+
+# =============================================================================
+# 🎯 PHASE 3: Helper for emotional event handling
+# =============================================================================
+
+async def _handle_emotional_event(db, user_id: str, event):
+    """
+    Handle emotional event in background.
+    
+    This runs asynchronously so the chat response isn't delayed.
+    """
+    try:
+        from services.intelligent_proactive_mentor import get_proactive_mentor
+        from services.notification_service import NotificationService
+        
+        mentor = await get_proactive_mentor(db)
+        decision = await mentor.handle_event(event)
+        
+        if decision and decision.approved and decision.message:
+            notification_service = NotificationService(db)
+            
+            await notification_service.send_notification(
+                user_id=user_id,
+                title=decision.message.get("title", ""),
+                message=decision.message.get("message", ""),
+                notification_type=decision.intent.value,
+                priority="medium",
+                data={
+                    "event_type": event.event_type.value,
+                    "mentor_intent": decision.intent.value,
+                    "mentor_tone": decision.tone,
+                    "source": "chat_emotional_detection"
+                },
+                skip_policy_check=True
+            )
+            
+            logger.info(f"📡 Emotional event {event.event_type.value} → notification sent to {user_id}")
+            
+    except Exception as e:
+        logger.warning(f"Failed to handle emotional event: {e}")
 
 

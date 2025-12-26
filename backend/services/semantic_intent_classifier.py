@@ -96,6 +96,36 @@ class SemanticAnalysis:
     has_actionable_request: bool = False  # User wants a specific deliverable created
     requested_output_type: Optional[str] = None  # What the user wants: "study_plan", "solution", "schedule", etc.
     
+    # ==========================================================================
+    # 🆕 SCOPE-AWARE RESPONSE FIELDS (Proportional Response System)
+    # ==========================================================================
+    # These fields enable the system to answer PROPORTIONALLY to what was asked,
+    # avoiding the "maximum output" behavior where small questions get large responses.
+    
+    # What kind of response does the student expect?
+    response_expectation: str = "conversational_advice"
+    # Options:
+    # - "conversational_advice": Quick suggestion/opinion (mentor advice)
+    # - "detailed_explanation": Teach me something in depth
+    # - "structured_deliverable": Create an artifact (plan, schedule, solution)
+    # - "emotional_acknowledgment": Support/empathy response
+    
+    # What's the time scope of the question?
+    temporal_scope: str = "unspecified"
+    # Options:
+    # - "immediate": Right now, this moment
+    # - "today": Just today
+    # - "this_week": Short-term (few days)
+    # - "long_term": Exam prep, multi-week planning
+    # - "unspecified": No clear time reference
+    
+    # How should the response be delivered?
+    delivery_mode: str = "conversational"
+    # Options:
+    # - "conversational": Like a friend talking (natural language)
+    # - "structured": Organized with sections (but not formal)
+    # - "formal": Document-like deliverable with headers
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             "intent": self.intent.value,
@@ -111,7 +141,11 @@ class SemanticAnalysis:
             "suggested_response_style": self.suggested_response_style,
             "reasoning": self.reasoning,
             "has_actionable_request": self.has_actionable_request,
-            "requested_output_type": self.requested_output_type
+            "requested_output_type": self.requested_output_type,
+            # Scope-aware fields
+            "response_expectation": self.response_expectation,
+            "temporal_scope": self.temporal_scope,
+            "delivery_mode": self.delivery_mode
         }
 
 
@@ -175,30 +209,87 @@ Analyze this message and return a JSON object with these fields:
 
 12. "reasoning": Brief explanation (1-2 sentences)
 
-=== CRITICAL: ACTIONABLE REQUEST DETECTION ===
-These fields detect when user wants something CREATED or DONE (not just explained):
+=== CRITICAL: SCOPE-AWARE RESPONSE FIELDS ===
+These fields determine HOW MUCH to respond - matching response scope to question scope.
 
-13. "has_actionable_request": true/false
-    - TRUE if the user wants a specific OUTPUT/DELIVERABLE created
-    - Examples of actionable: "create a plan", "make a schedule", "solve this problem", "build a timetable"
-    - NOT actionable: "explain photosynthesis", "what is Newton's law", "I'm bored", "help"
-    - The key question: Does the user expect something to be GENERATED/CREATED for them?
+13. "response_expectation": What kind of response does the student expect?
+    - "conversational_advice": Quick suggestion, mentor opinion, brief guidance
+    - "detailed_explanation": Wants to learn something in depth
+    - "structured_deliverable": Wants an ARTIFACT created (plan, schedule, solution document)
+    - "emotional_acknowledgment": Needs support/empathy response
+    
+    KEY DISTINCTION:
+    - "What should I study today?" → conversational_advice (wants quick suggestion)
+    - "Create a study plan for my exam" → structured_deliverable (wants artifact)
+    - "What do you think I should focus on?" → conversational_advice (wants opinion)
+    - "Make me a 7-day revision schedule" → structured_deliverable (wants document)
 
-14. "requested_output_type": null or one of:
-    - "study_plan" (wants a study schedule, revision timetable, preparation plan)
-    - "problem_solution" (wants a math/physics/chemistry problem solved step-by-step)
+14. "temporal_scope": What time frame is the question about?
+    - "immediate": Right now, this moment
+    - "today": Just today
+    - "this_week": Short-term (few days)
+    - "long_term": Exam prep, multi-week planning
+    - "unspecified": No clear time reference
+    
+    EXAMPLES:
+    - "What should I study today?" → "today"
+    - "Plan my exam prep" → "long_term"
+    - "What should I do now?" → "immediate"
+    - "What should I study?" → "unspecified"
+
+15. "delivery_mode": How should the response be formatted?
+    - "conversational": Like a friend talking, natural sentences
+    - "structured": Organized but not formal (bullet points okay)
+    - "formal": Document-like with headers, sections, tables
+
+=== ACTIONABLE REQUEST DETECTION ===
+16. "has_actionable_request": true/false
+    - TRUE ONLY if user wants a STRUCTURED DELIVERABLE created
+    - "Create a plan", "Make a schedule", "Build a timetable" → TRUE
+    - "What should I study?", "Any suggestions?", "What do you think?" → FALSE (advice, not deliverable)
+    
+17. "requested_output_type": null or one of:
+    - "study_plan" (ONLY for explicit: "create plan", "make schedule", "build timetable")
+    - "problem_solution" (wants a problem solved step-by-step)
     - "quiz" (wants practice questions generated)
     - "summary" (wants notes/summary created)
-    - null (no specific deliverable requested)
+    - null (no deliverable requested, just wants advice/explanation)
 
-UNDERSTANDING NUANCES:
-- "I feel anxious about exams" → emotional_support, has_actionable_request=false (need support, not a plan)
-- "create a study plan for 3 days" → general, has_actionable_request=true, requested_output_type="study_plan"
-- "I have exam in 3 days, plan my study" → general, has_actionable_request=true, requested_output_type="study_plan"
-- "solve x^2 - 5x + 6 = 0" → question, has_actionable_request=true, requested_output_type="problem_solution"
-- "what is photosynthesis" → question, has_actionable_request=false (explanation, not creation)
-- "help" → help, has_actionable_request=false (capability question)
-- "help me create a timetable" → general, has_actionable_request=true, requested_output_type="study_plan"
+=== CRITICAL EXAMPLES ===
+"What should I study today?"
+→ response_expectation: "conversational_advice"
+→ temporal_scope: "today"
+→ delivery_mode: "conversational"
+→ has_actionable_request: FALSE (asking for advice, not a plan)
+→ requested_output_type: null
+
+"Create a study plan for my Physics exam next week"
+→ response_expectation: "structured_deliverable"
+→ temporal_scope: "this_week"
+→ delivery_mode: "formal"
+→ has_actionable_request: TRUE
+→ requested_output_type: "study_plan"
+
+"What do you think I should focus on?"
+→ response_expectation: "conversational_advice"
+→ temporal_scope: "unspecified"
+→ delivery_mode: "conversational"
+→ has_actionable_request: FALSE
+→ requested_output_type: null
+
+"I have 2 hours, what should I do?"
+→ response_expectation: "conversational_advice"
+→ temporal_scope: "immediate"
+→ delivery_mode: "conversational"
+→ has_actionable_request: FALSE
+→ requested_output_type: null
+
+"Make me a revision timetable for the next 10 days"
+→ response_expectation: "structured_deliverable"
+→ temporal_scope: "this_week"
+→ delivery_mode: "formal"
+→ has_actionable_request: TRUE
+→ requested_output_type: "study_plan"
 
 Return ONLY valid JSON, no other text."""
 
@@ -294,14 +385,20 @@ Return ONLY valid JSON, no other text."""
                 needs_clarification=bool(result.get("needs_clarification", False)),
                 suggested_response_style=result.get("suggested_response_style", "supportive"),
                 reasoning=result.get("reasoning", ""),
-                # NEW: Dynamic actionable request detection
+                # Dynamic actionable request detection
                 has_actionable_request=bool(result.get("has_actionable_request", False)),
-                requested_output_type=result.get("requested_output_type")
+                requested_output_type=result.get("requested_output_type"),
+                # 🆕 SCOPE-AWARE RESPONSE FIELDS
+                response_expectation=result.get("response_expectation", "conversational_advice"),
+                temporal_scope=result.get("temporal_scope", "unspecified"),
+                delivery_mode=result.get("delivery_mode", "conversational")
             )
             
             logger.info(f"🧠 Semantic analysis: intent={intent.value}, tone={analysis.emotional_tone}, "
                        f"confidence={analysis.confidence:.2f}, "
-                       f"actionable={analysis.has_actionable_request}, output_type={analysis.requested_output_type}")
+                       f"response_expectation={analysis.response_expectation}, "
+                       f"temporal_scope={analysis.temporal_scope}, "
+                       f"actionable={analysis.has_actionable_request}")
             
             return analysis
             
@@ -352,7 +449,11 @@ Return ONLY valid JSON, no other text."""
                 needs_encouragement=True,
                 needs_clarification=confidence < 0.3,  # Ask for clarification when uncertain
                 suggested_response_style="supportive",
-                reasoning=reasoning
+                reasoning=reasoning,
+                # Default scope-aware fields for fallback
+                response_expectation="conversational_advice",
+                temporal_scope="unspecified",
+                delivery_mode="conversational"
             )
         
         # LEGACY: Keyword-based fallback (only when flag disabled)

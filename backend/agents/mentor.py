@@ -287,6 +287,27 @@ You are NOT just a tutor. You are:
             memory_context = context.get('memory_context')
             
             # ================================================================
+            # 🆕 SCOPE-AWARE RECOMMENDATION PATH (Proportional Response)
+            # ================================================================
+            # When routing says this is a recommendation (not a deliverable),
+            # generate a quick, contextual suggestion WITHOUT tools.
+            is_recommendation = context.get('is_recommendation', False)
+            avoid_comprehensive = context.get('avoid_comprehensive_output', False)
+            temporal_scope = context.get('temporal_scope', 'unspecified')
+            response_expectation = context.get('response_expectation', '')
+            
+            if is_recommendation or response_expectation == 'conversational_advice':
+                logger.info(f"[MentorAgent] RECOMMENDATION PATH: Quick contextual advice (scope: {temporal_scope})")
+                
+                # Generate proportional response - NO tools, just LLM with context
+                return await self._generate_recommendation_response(
+                    query=query,
+                    context=context,
+                    temporal_scope=temporal_scope,
+                    student_profile=student_profile
+                )
+            
+            # ================================================================
             # DYNAMIC ACTIONABLE REQUEST (LLM-determined, NOT keyword-based)
             # ================================================================
             # The semantic classifier has already determined if user wants
@@ -685,6 +706,150 @@ Keep it short and genuine. One emoji max."""
             ]
 
         return random.choice(greetings)
+    
+    async def _generate_recommendation_response(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        temporal_scope: str,
+        student_profile: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        🆕 Generate a quick, contextual recommendation response.
+        
+        This is the FIX for "What should I study today?" type questions.
+        
+        KEY PRINCIPLE: Answer PROPORTIONALLY to what was asked.
+        - "today" → suggestion for today only
+        - "this week" → brief guidance for the week
+        - "immediate" → what to do right now
+        
+        NO tools, NO comprehensive plans - just mentor advice.
+        """
+        try:
+            from core.config import settings
+            
+            # Get context pack if available
+            context_pack = context.get('context_pack')
+            
+            # Build student context for personalized suggestion
+            student_name = ""
+            recent_topic = ""
+            weak_areas = []
+            mastery_level = 50
+            days_to_exam = None
+            due_reviews = []
+            
+            if context_pack:
+                student_name = context_pack.student_name or ""
+                recent_topic = context_pack.previous_topic or context_pack.current_topic or ""
+                weak_areas = context_pack.weak_areas[:3] if context_pack.weak_areas else []
+                mastery_level = context_pack.current_topic_mastery or 50
+                days_to_exam = context_pack.days_to_exam
+                due_reviews = context_pack.due_reviews[:3] if context_pack.due_reviews else []
+            else:
+                student_name = student_profile.get('name', '')
+                weak_areas = student_profile.get('weak_areas', [])[:3]
+            
+            # Build context-aware recommendation prompt
+            name_part = f" {student_name}" if student_name else ""
+            
+            # Scope constraints based on temporal_scope
+            scope_instruction = {
+                "immediate": "Give a 1-2 sentence suggestion for what to do RIGHT NOW.",
+                "today": "Give a brief suggestion for TODAY only (2-3 sentences max).",
+                "this_week": "Give a brief suggestion for the next few days (3-4 sentences max).",
+                "unspecified": "Give a short, helpful suggestion (2-3 sentences).",
+                "long_term": "Give brief guidance, and offer to create a detailed plan if they want."
+            }.get(temporal_scope, "Give a brief, helpful suggestion (2-3 sentences).")
+            
+            context_parts = []
+            if recent_topic:
+                context_parts.append(f"They recently studied: {recent_topic}")
+            if weak_areas:
+                context_parts.append(f"Weak areas: {', '.join(weak_areas)}")
+            if due_reviews:
+                context_parts.append(f"Due for review: {', '.join(due_reviews)}")
+            if days_to_exam:
+                context_parts.append(f"Exam in {days_to_exam} days")
+            
+            context_str = "\n".join(context_parts) if context_parts else "No specific context available."
+            
+            recommendation_prompt = f"""You are Druv, a caring mentor for{name_part}.
+
+The student asked: "{query}"
+
+STUDENT CONTEXT:
+{context_str}
+
+YOUR TASK:
+{scope_instruction}
+
+RULES:
+1. Be conversational, like a friend giving advice
+2. Be BRIEF - match your response length to what they asked
+3. If they asked about "today", don't give a week-long plan
+4. Reference their context naturally (recent topics, weak areas)
+5. End with a quick question or offer to help more
+6. NO headers, NO bullet points, NO formal structure - just natural conversation
+
+Generate your brief, friendly recommendation:"""
+
+            # Call LLM for quick response
+            if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+                from services.llm_service import call_gemini
+                
+                response = await call_gemini(
+                    prompt=recommendation_prompt,
+                    api_key=settings.GEMINI_API_KEY,
+                    temperature=0.8,
+                    max_tokens=300,  # Short response
+                    model="gemini-2.0-flash",
+                    system_message="You are a friendly mentor giving quick, helpful advice. Be brief and conversational."
+                )
+            else:
+                # Fallback to OpenAI
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI()
+                
+                completion = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a friendly mentor giving quick, helpful advice. Be brief and conversational."},
+                        {"role": "user", "content": recommendation_prompt}
+                    ],
+                    temperature=0.8,
+                    max_tokens=300
+                )
+                response = completion.choices[0].message.content
+            
+            logger.info(f"[MentorAgent] RECOMMENDATION generated (scope: {temporal_scope}, length: {len(response)} chars)")
+            
+            return {
+                'success': True,
+                'content': response.strip() if response else "I'd suggest starting with what you found most interesting recently. What topic would you like to explore?",
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'friendly',
+                    'approach': 'recommendation',
+                    'response_type': 'conversational_advice',
+                    'temporal_scope': temporal_scope,
+                    'is_proportional_response': True
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"[MentorAgent] Recommendation generation failed: {e}", exc_info=True)
+            return {
+                'success': True,
+                'content': "I'd suggest picking up where you left off, or tackling a topic you've been curious about. What sounds good to you?",
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'friendly',
+                    'approach': 'recommendation_fallback',
+                    'error': str(e)
+                }
+            }
     
     async def _fallback_llm_response(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback to simple LLM response if ReAct loop fails"""

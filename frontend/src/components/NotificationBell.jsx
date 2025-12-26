@@ -27,6 +27,7 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastNotificationId, setLastNotificationId] = useState(null);
+  const [lastNotificationUpdated, setLastNotificationUpdated] = useState(null);
   const [activeToast, setActiveToast] = useState(null);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const dropdownRef = useRef(null);
@@ -94,15 +95,20 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
       const { unread_count, latest, has_new } = response.data;
       setUnreadCount(unread_count);
       
-      // Show toast for new notification
-      if (has_new && latest && latest.notification_id !== lastNotificationId) {
+      // Show toast for new notification OR updated notification (coalesced with new content)
+      // Check both notification_id AND created_at to detect content refreshes
+      const isNewNotification = latest && latest.notification_id !== lastNotificationId;
+      const isUpdatedContent = latest && latest.created_at !== lastNotificationUpdated;
+      
+      if (has_new && latest && (isNewNotification || isUpdatedContent)) {
         setLastNotificationId(latest.notification_id);
+        setLastNotificationUpdated(latest.created_at);
         showNotificationToast(latest);
       }
     } catch (error) {
       console.error('Failed to poll notifications:', error);
     }
-  }, [lastNotificationId]);
+  }, [lastNotificationId, lastNotificationUpdated]);
 
   // Fetch full notification list
   const fetchNotifications = async () => {
@@ -144,6 +150,22 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
     }
   };
 
+  // 📊 Track notification outcome for Mentor Companion learning
+  const trackOutcome = async (notificationId, outcome, details = null) => {
+    try {
+      await axios.post(`${API_URL}/api/notifications/outcome`, {
+        notification_id: notificationId,
+        outcome: outcome,
+        details: details
+      }, {
+        headers: getAuthHeaders()
+      });
+      console.log(`📊 Outcome tracked: ${notificationId} → ${outcome}`);
+    } catch (error) {
+      console.error('Failed to track outcome:', error);
+    }
+  };
+
   // Show toast notification
   const showNotificationToast = (notification) => {
     playNotificationSound();
@@ -161,6 +183,11 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
     if (!notification.read) {
       markAsRead(notification.notification_id);
     }
+    // 📊 Track that user clicked/engaged with this notification
+    trackOutcome(notification.notification_id, 'clicked', {
+      type: notification.type,
+      title: notification.title
+    });
   };
 
   // Handle quick actions
@@ -169,6 +196,12 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
     setSelectedNotification(null);
     setIsOpen(false);
     setActiveToast(null);
+    
+    // 📊 Track that user started studying after this notification - this is SUCCESS!
+    trackOutcome(notification.notification_id, 'studied', {
+      type: notification.type,
+      topic: notification.data?.topic || notification.message
+    });
     
     // Navigate to chat with topic pre-filled
     if (onStartStudy) {
@@ -180,11 +213,15 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
 
   const handleSnooze = async (notification, minutes = 30) => {
     try {
-      // TODO: Implement snooze API
-      // For now, just dismiss
       markAsRead(notification.notification_id);
       setSelectedNotification(null);
       setActiveToast(null);
+      
+      // 📊 Track snooze - user wants to engage later
+      trackOutcome(notification.notification_id, 'snoozed', {
+        type: notification.type,
+        snooze_minutes: minutes
+      });
       
       // Show snooze confirmation
       alert(`⏰ Snoozed for ${minutes} minutes! I'll remind you again.`);
@@ -197,6 +234,11 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
     markAsRead(notification.notification_id);
     setSelectedNotification(null);
     setActiveToast(null);
+    
+    // 📊 Track dismiss - notification wasn't valuable to user
+    trackOutcome(notification.notification_id, 'dismissed', {
+      type: notification.type
+    });
   };
 
   // Close dropdown when clicking outside
@@ -238,9 +280,10 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  // Get icon based on notification type
+  // Get icon based on notification type (includes Phase 3 Mentor Intent types)
   const getNotificationIcon = (type) => {
     switch (type) {
+      // Legacy types
       case 'reminder': return '⏰';
       case 'streak': return '🔥';
       case 'achievement': return '🏆';
@@ -249,6 +292,12 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
       case 'break': return '☕';
       case 'spaced_repetition': return '🧠';
       case 'revision': return '📖';
+      // Phase 3 Mentor Intent types
+      case 'help': return '💙';
+      case 'protect': return '🛡️';
+      case 'celebrate': return '🎉';
+      case 'guide': return '🧭';
+      case 'silence': return '🤫';
       default: return '🔔';
     }
   };
@@ -256,10 +305,16 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
   // Get action text based on notification type (clean, no redundant emoji)
   const getActionText = (type) => {
     switch (type) {
+      // Legacy types
       case 'reminder': return 'Start Studying';
       case 'revision': return 'Begin Revision';
       case 'spaced_repetition': return 'Quick Review';
       case 'break': return 'Take a Break';
+      // Phase 3 Mentor Intent types
+      case 'help': return 'Get Help';
+      case 'protect': return 'Keep Going';
+      case 'celebrate': return 'View Achievement';
+      case 'guide': return 'Continue Learning';
       default: return 'View Details';
     }
   };
@@ -708,10 +763,10 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                   justifyContent: 'center',
                   marginBottom: '12px'
                 }}>
-                  <span style={{ fontSize: '24px' }}>🔔</span>
+                  <span style={{ fontSize: '24px' }}>{getNotificationIcon(activeToast.type)}</span>
                 </div>
                 
-                {/* Title - No redundant emoji */}
+                {/* Title - Dynamic from notification (intelligent AI-generated) */}
                 <h2 style={{ 
                   color: 'white', 
                   margin: 0, 
@@ -719,7 +774,7 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                   fontWeight: '600',
                   lineHeight: '1.3'
                 }}>
-                  Spaced Repetition Reminder
+                  {stripMarkdown(activeToast.title) || 'Time for a quick review'}
                 </h2>
               </div>
               

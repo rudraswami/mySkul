@@ -961,10 +961,105 @@ class IntelligentRoutingEngine:
             return self._acknowledgment_decision(query, analysis)
         
         # ================================================================
-        # DYNAMIC ACTIONABLE REQUEST ROUTING (LLM-DETERMINED)
+        # 🆕 SCOPE-AWARE ROUTING (PROPORTIONAL RESPONSE SYSTEM)
         # ================================================================
-        # If LLM determined user wants something CREATED/DONE, route to multi-agent
-        # This is NOT keyword-based - the LLM semantically understands the request
+        # CHECK RESPONSE EXPECTATION FIRST - this determines output scope
+        # The key insight: "What should I study today?" is NOT a plan request
+        
+        response_expectation = getattr(analysis, 'response_expectation', 'conversational_advice')
+        temporal_scope = getattr(analysis, 'temporal_scope', 'unspecified')
+        delivery_mode = getattr(analysis, 'delivery_mode', 'conversational')
+        
+        logger.info(f"📏 Scope analysis: response_expectation={response_expectation}, "
+                   f"temporal_scope={temporal_scope}, delivery_mode={delivery_mode}")
+        
+        # ================================================================
+        # PATH 1: CONVERSATIONAL ADVICE (Quick suggestions, mentor opinion)
+        # ================================================================
+        # This is the FIX for "What should I study today?" - NO tools, just LLM
+        if response_expectation == "conversational_advice":
+            logger.info(f"💬 CONVERSATIONAL ADVICE path: Quick contextual suggestion (no tools)")
+            
+            return RoutingDecision(
+                pipeline=RecommendedPipeline.MULTI_AGENT,
+                complexity=QueryComplexity.SIMPLE,
+                confidence=analysis.confidence,
+                reasoning=f"Conversational advice request (scope: {temporal_scope}): {analysis.reasoning}",
+                agents_to_activate=['mentor'],
+                tools_to_enable=[],  # NO TOOLS - pure LLM response
+                enable_verification=False,
+                enable_visual=False,
+                max_iterations=2,
+                timeout_seconds=10.0,
+                use_knowledge_graph=False,
+                use_memory=True,  # Use context for personalized suggestion
+                priority_factors={'personalization': 1.0, 'brevity': 0.9},
+                enable_agent_negotiation=False,
+                extra_context={
+                    'semantic_analysis': analysis.to_dict(),
+                    'response_expectation': response_expectation,
+                    'temporal_scope': temporal_scope,
+                    'delivery_mode': delivery_mode,
+                    'is_recommendation': True,  # Flag for MentorAgent
+                    'max_response_scope': temporal_scope,  # Constraint for response
+                    'avoid_comprehensive_output': True  # Explicit instruction
+                }
+            )
+        
+        # ================================================================
+        # PATH 2: STRUCTURED DELIVERABLE (Full plans, schedules, documents)
+        # ================================================================
+        # Only route to StudyPlannerTool when user explicitly wants a DELIVERABLE
+        if response_expectation == "structured_deliverable":
+            output_type = analysis.requested_output_type
+            
+            # Problem solution path
+            if output_type == "problem_solution":
+                complexity_score = self._analyze_complexity(query, context)
+                complexity = self._score_to_complexity(complexity_score, {})
+                enable_verification = True
+                enable_visual = True
+                tools = ['calculator', 'knowledge_search']
+                agents = ['professor', 'mentor']
+            else:
+                # study_plan, quiz, summary - use appropriate tools
+                complexity = QueryComplexity.MODERATE
+                enable_verification = False
+                enable_visual = False
+                tools = ['study_planner'] if output_type == "study_plan" else []
+                agents = ['mentor']
+            
+            logger.info(f"📋 STRUCTURED DELIVERABLE path: output_type={output_type}, tools={tools}")
+            
+            return RoutingDecision(
+                pipeline=RecommendedPipeline.MULTI_AGENT,
+                complexity=complexity,
+                confidence=analysis.confidence,
+                reasoning=f"Structured deliverable ({output_type}): {analysis.reasoning}",
+                agents_to_activate=agents,
+                tools_to_enable=tools,
+                enable_verification=enable_verification,
+                enable_visual=enable_visual,
+                max_iterations=5,
+                timeout_seconds=30.0,
+                use_knowledge_graph=output_type == "problem_solution",
+                use_memory=True,
+                priority_factors={'action_fulfillment': 1.0, 'structured_output': 0.9},
+                enable_agent_negotiation=output_type == "problem_solution",
+                extra_context={
+                    'semantic_analysis': analysis.to_dict(),
+                    'output_type': output_type,
+                    'response_expectation': response_expectation,
+                    'temporal_scope': temporal_scope,
+                    'has_actionable_request': True,
+                    'requires_structured_output': True
+                }
+            )
+        
+        # ================================================================
+        # LEGACY: ACTIONABLE REQUEST ROUTING (Fallback for old classification)
+        # ================================================================
+        # This maintains backwards compatibility if response_expectation wasn't set
         if analysis.has_actionable_request and analysis.requested_output_type:
             output_type = analysis.requested_output_type
             
@@ -984,7 +1079,7 @@ class IntelligentRoutingEngine:
                 tools = ['study_planner']
                 agents = ['mentor']
             
-            logger.info(f"🎯 ACTIONABLE REQUEST detected: output_type={output_type}")
+            logger.info(f"🎯 LEGACY ACTIONABLE REQUEST: output_type={output_type}")
             
             return RoutingDecision(
                 pipeline=RecommendedPipeline.MULTI_AGENT,

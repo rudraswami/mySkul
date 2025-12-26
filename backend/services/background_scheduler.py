@@ -67,8 +67,12 @@ class BackgroundScheduler:
     
     async def _run_loop(self):
         """Main scheduler loop - runs every minute for TRUE AGENTIC behavior"""
+        loop_count = 0
+        
         while self._running:
             try:
+                loop_count += 1
+                
                 # ======================================
                 # CRITICAL: These enable TRUE AGENTS
                 # Without these, agents cannot act on their own
@@ -85,6 +89,14 @@ class BackgroundScheduler:
                 
                 # 4. PROACTIVE NUDGES - Makes AI feel alive and caring
                 await self._check_proactive_triggers()
+                
+                # 5. 🆕 LEARNING ENGINE - Run every 30 minutes (every 30 loops)
+                if loop_count % 30 == 0:
+                    await self._run_learning_engine()
+                
+                # 6. 🆕 EVENT DETECTION - Detect session ends, inactivity (every 5 mins)
+                if loop_count % 5 == 0:
+                    await self._detect_and_handle_events()
 
             except Exception as e:
                 logger.error(f"Scheduler error: {e}", exc_info=True)
@@ -260,16 +272,26 @@ class BackgroundScheduler:
     
     async def _process_intelligent_nudges(self, notification_service):
         """
-        🧠 Level 2 & 4: Process intelligent proactive nudges
+        🧠 MENTOR COMPANION - Intelligent Notification Decision Engine
         
-        Uses IntelligentProactiveMentor to generate contextual nudges:
-        - Streak protection
-        - Weak topic focus
-        - Study fatigue detection
-        - Motivation boosts
+        This is NOT a "send notifications" function.
+        This asks: "Does each student NEED something from us right now?"
+        
+        Architecture:
+        1. For each active user
+        2. Compute student state (cognitive, emotional, momentum)
+        3. Reason about intent (HELP > PROTECT > CELEBRATE > GUIDE > SILENCE)
+        4. Check interruption gate (should we actually interrupt?)
+        5. Only if approved: calibrate tone and compose message
+        6. Track outcome for learning
+        
+        Default outcome: SILENCE (most common, most respectful)
         """
         try:
-            from services.intelligent_proactive_mentor import get_proactive_mentor
+            from services.intelligent_proactive_mentor import (
+                get_proactive_mentor,
+                MentorIntent
+            )
             
             mentor = await get_proactive_mentor(self.db)
             
@@ -278,52 +300,354 @@ class BackgroundScheduler:
                 'is_active': True
             }).limit(100).to_list(length=100)
             
-            nudges_sent = 0
+            # Statistics for logging
+            stats = {
+                "evaluated": 0,
+                "silence": 0,
+                "wait": 0,
+                "backoff": 0,
+                "notified": 0
+            }
             
             for user in active_users:
                 user_id = user.get('user_id') or str(user.get('_id'))
                 
                 try:
-                    # Get all applicable nudges for this user
-                    nudges = await mentor.get_all_nudges(user_id)
+                    stats["evaluated"] += 1
                     
-                    # Only send the highest priority nudge (don't spam)
-                    if nudges:
-                        top_nudge = nudges[0]
+                    # ===================================================
+                    # 🎯 MENTOR COMPANION DECISION FLOW (with Learning)
+                    # Phase 2: Uses learned preferences to personalize
+                    # ===================================================
+                    
+                    decision = await mentor.make_mentor_decision_with_learning(user_id)
+                    
+                    # Log the decision for observability
+                    await self._log_mentor_decision(user_id, decision)
+                    
+                    if decision.action == "WAIT":
+                        stats["wait"] += 1
+                        continue
+                    
+                    if decision.action == "BACKOFF":
+                        stats["backoff"] += 1
+                        continue
+                    
+                    if decision.intent == MentorIntent.SILENCE:
+                        stats["silence"] += 1
+                        continue
+                    
+                    # ===================================================
+                    # Decision approved - send notification
+                    # ===================================================
+                    if decision.approved and decision.message:
+                        result = await notification_service.send_notification(
+                            user_id=user_id,
+                            title=decision.message.get("title", ""),
+                            message=decision.message.get("message", ""),
+                            notification_type=decision.intent.value,
+                            priority="high" if decision.intent == MentorIntent.HELP else "medium",
+                            data={
+                                'mentor_intent': decision.intent.value,
+                                'mentor_tone': decision.tone,
+                                'mentor_confidence': decision.confidence,
+                                'mentor_reason': decision.reason
+                            },
+                            skip_policy_check=True  # We already did intelligent checks
+                        )
                         
-                        # Check if we've sent this type of nudge recently
-                        recent_nudge = await self.db.user_notifications.find_one({
-                            'user_id': user_id,
-                            'type': top_nudge.nudge_type.value,
-                            'created_at': {'$gte': datetime.utcnow() - timedelta(hours=6)}
-                        })
-                        
-                        if not recent_nudge:
-                            # Send the nudge as notification
-                            await notification_service.send_notification(
-                                user_id=user_id,
-                                title=top_nudge.title,
-                                message=top_nudge.message,
-                                notification_type=top_nudge.nudge_type.value,
-                                priority=top_nudge.priority,
-                                data={
-                                    'actions': top_nudge.actions,
-                                    **top_nudge.data
-                                }
+                        if result.get('status') in ['sent', 'coalesced', 'stored']:
+                            stats["notified"] += 1
+                            logger.info(
+                                f"🧠 Mentor SENT to {user_id}: "
+                                f"intent={decision.intent.value}, tone={decision.tone}"
                             )
-                            
-                            nudges_sent += 1
-                            logger.debug(f"🧠 Nudge sent to {user_id}: {top_nudge.nudge_type.value}")
-                            
+                        
                 except Exception as e:
-                    logger.error(f"Error processing nudges for user {user_id}: {e}")
+                    logger.error(f"Error in mentor decision for {user_id}: {e}")
                     continue
             
-            if nudges_sent > 0:
-                logger.info(f"🧠 Intelligent nudges sent: {nudges_sent}")
+            # Log summary statistics
+            logger.info(
+                f"🧠 Mentor Companion Summary: "
+                f"evaluated={stats['evaluated']}, "
+                f"silence={stats['silence']}, "
+                f"wait={stats['wait']}, "
+                f"backoff={stats['backoff']}, "
+                f"notified={stats['notified']}"
+            )
+            
+            # Auto-track ignored notifications for learning
+            await self._auto_track_ignored_notifications(notification_service)
                 
         except Exception as e:
-            logger.error(f"Intelligent nudges processing error: {e}")
+            logger.error(f"Mentor Companion processing error: {e}")
+    
+    async def _log_mentor_decision(self, user_id: str, decision):
+        """Log mentor decision for analysis and debugging."""
+        try:
+            await self.db.mentor_decisions.insert_one({
+                'user_id': user_id,
+                'action': decision.action,
+                'intent': decision.intent.value,
+                'approved': decision.approved,
+                'reason': decision.reason,
+                'tone': decision.tone,
+                'confidence': decision.confidence,
+                'timestamp': datetime.utcnow()
+            })
+        except Exception as e:
+            logger.debug(f"Failed to log mentor decision: {e}")
+    
+    async def _auto_track_ignored_notifications(self, notification_service):
+        """Auto-track notifications that were ignored (no response in 2+ hours)."""
+        try:
+            # Get users who had notifications sent recently
+            two_hours_ago = datetime.utcnow() - timedelta(hours=2)
+            four_hours_ago = datetime.utcnow() - timedelta(hours=4)
+            
+            old_unread = await self.db.user_notifications.find({
+                'created_at': {'$gte': four_hours_ago, '$lt': two_hours_ago},
+                'read': False
+            }).to_list(length=100)
+            
+            for notif in old_unread:
+                user_id = notif.get('user_id')
+                notification_id = notif.get('notification_id')
+                
+                if user_id and notification_id:
+                    # Check if outcome already tracked
+                    existing = await self.db.notification_outcomes.find_one({
+                        'notification_id': notification_id
+                    })
+                    
+                    if not existing:
+                        await notification_service.track_notification_outcome(
+                            user_id=user_id,
+                            notification_id=notification_id,
+                            outcome='ignored',
+                            details={'auto_tracked': True}
+                        )
+            
+        except Exception as e:
+            logger.debug(f"Auto-track ignored error: {e}")
+    
+    # ==========================================================================
+    # 🎓 PHASE 2: LEARNING ENGINE
+    # ==========================================================================
+    
+    async def _run_learning_engine(self):
+        """
+        🧠 LEARNING ENGINE - Analyze outcomes and update student profiles.
+        
+        Runs every 30 minutes to:
+        1. Analyze notification outcomes for each active student
+        2. Update learning profiles with what works
+        3. Adjust frequency, timing, and tone preferences
+        
+        This is what makes the Mentor Companion get smarter over time.
+        """
+        try:
+            from services.intelligent_proactive_mentor import get_proactive_mentor
+            
+            mentor = await get_proactive_mentor(self.db)
+            
+            # Get users who have notification outcomes in the last 24 hours
+            # (Only analyze users with recent activity)
+            twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+            
+            users_with_outcomes = await self.db.notification_outcomes.aggregate([
+                {"$match": {"created_at": {"$gte": twenty_four_hours_ago}}},
+                {"$group": {"_id": "$user_id"}},
+                {"$limit": 50}  # Process max 50 users per run
+            ]).to_list(length=50)
+            
+            if not users_with_outcomes:
+                logger.debug("📚 Learning Engine: No recent outcomes to analyze")
+                return
+            
+            learned_count = 0
+            
+            for user_doc in users_with_outcomes:
+                user_id = user_doc.get("_id")
+                if not user_id:
+                    continue
+                
+                try:
+                    # Run learning analysis for this user
+                    profile = await mentor.analyze_and_learn(user_id)
+                    
+                    if profile.total_notifications_analyzed >= 5:
+                        learned_count += 1
+                        
+                except Exception as e:
+                    logger.warning(f"Learning failed for {user_id}: {e}")
+                    continue
+            
+            if learned_count > 0:
+                logger.info(f"📚 Learning Engine: Updated {learned_count} student profiles")
+            
+        except Exception as e:
+            logger.error(f"Learning Engine error: {e}")
+    
+    # ==========================================================================
+    # 🎯 PHASE 3: EVENT DETECTION
+    # ==========================================================================
+    
+    async def _detect_and_handle_events(self):
+        """
+        🎯 PHASE 3: Detect meaningful events and handle them.
+        
+        Instead of just polling "should we notify?", we detect:
+        - Session endings (opportunity for follow-up)
+        - Inactivity (re-engagement opportunity)
+        - Streak risks (protection)
+        
+        This runs every 5 minutes to catch events without polling every minute.
+        """
+        try:
+            from services.intelligent_proactive_mentor import (
+                get_proactive_mentor,
+                MentorEvent,
+                MentorEventData
+            )
+            from services.notification_service import NotificationService
+            
+            mentor = await get_proactive_mentor(self.db)
+            notification_service = NotificationService(self.db)
+            
+            now = datetime.utcnow()
+            
+            # Get recently active users (activity in last 2 hours)
+            two_hours_ago = now - timedelta(hours=2)
+            
+            recent_users = await self.db.chat_messages.aggregate([
+                {"$match": {"timestamp": {"$gte": two_hours_ago}}},
+                {"$group": {"_id": "$user_id"}},
+                {"$limit": 50}
+            ]).to_list(length=50)
+            
+            events_detected = 0
+            events_handled = 0
+            
+            for user_doc in recent_users:
+                user_id = user_doc.get("_id")
+                if not user_id:
+                    continue
+                
+                try:
+                    # ===== DETECT SESSION END =====
+                    session_event = await mentor.detect_session_end(user_id)
+                    
+                    if session_event:
+                        events_detected += 1
+                        
+                        # Check if we already handled this session end
+                        already_handled = await self.db.mentor_events.find_one({
+                            "user_id": user_id,
+                            "event_type": "session_ended",
+                            "logged_at": {"$gte": now - timedelta(minutes=30)}
+                        })
+                        
+                        if not already_handled:
+                            decision = await mentor.handle_event(session_event)
+                            
+                            if decision and decision.approved and decision.message:
+                                await notification_service.send_notification(
+                                    user_id=user_id,
+                                    title=decision.message.get("title", ""),
+                                    message=decision.message.get("message", ""),
+                                    notification_type=decision.intent.value,
+                                    priority="medium",
+                                    data={
+                                        "event_type": "session_ended",
+                                        "mentor_intent": decision.intent.value,
+                                        "mentor_tone": decision.tone
+                                    },
+                                    skip_policy_check=True
+                                )
+                                events_handled += 1
+                                logger.info(f"📡 Session end handled for {user_id}")
+                    
+                except Exception as e:
+                    logger.warning(f"Event detection error for {user_id}: {e}")
+                    continue
+            
+            # ===== DETECT INACTIVITY =====
+            # Check users who were active yesterday but not today
+            yesterday_start = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0)
+            today_start = now.replace(hour=0, minute=0, second=0)
+            
+            # Only run inactivity check during afternoon/evening (14:00 - 20:00)
+            if 14 <= now.hour <= 20:
+                inactive_pipeline = [
+                    # Users with activity yesterday
+                    {"$match": {
+                        "timestamp": {"$gte": yesterday_start, "$lt": today_start}
+                    }},
+                    {"$group": {"_id": "$user_id"}},
+                    {"$limit": 30}
+                ]
+                
+                yesterday_users = await self.db.chat_messages.aggregate(inactive_pipeline).to_list(30)
+                
+                for user_doc in yesterday_users:
+                    user_id = user_doc.get("_id")
+                    if not user_id:
+                        continue
+                    
+                    try:
+                        # Check if they have activity today
+                        today_activity = await self.db.chat_messages.find_one({
+                            "user_id": user_id,
+                            "timestamp": {"$gte": today_start}
+                        })
+                        
+                        if not today_activity:
+                            # Check if we already sent inactivity notification today
+                            already_notified = await self.db.user_notifications.find_one({
+                                "user_id": user_id,
+                                "type": {"$in": ["protect", "guide"]},
+                                "created_at": {"$gte": today_start}
+                            })
+                            
+                            if not already_notified:
+                                inactivity_event = MentorEventData(
+                                    event_type=MentorEvent.INACTIVITY_DETECTED,
+                                    user_id=user_id,
+                                    timestamp=now,
+                                    inactivity_hours=float((now - today_start).total_seconds() / 3600),
+                                    source="scheduler"
+                                )
+                                
+                                decision = await mentor.handle_event(inactivity_event)
+                                
+                                if decision and decision.approved and decision.message:
+                                    await notification_service.send_notification(
+                                        user_id=user_id,
+                                        title=decision.message.get("title", ""),
+                                        message=decision.message.get("message", ""),
+                                        notification_type=decision.intent.value,
+                                        priority="medium",
+                                        data={
+                                            "event_type": "inactivity",
+                                            "mentor_intent": decision.intent.value,
+                                            "mentor_tone": decision.tone
+                                        },
+                                        skip_policy_check=True
+                                    )
+                                    events_handled += 1
+                                    logger.info(f"📡 Inactivity handled for {user_id}")
+                        
+                    except Exception as e:
+                        logger.warning(f"Inactivity detection error for {user_id}: {e}")
+                        continue
+            
+            if events_detected > 0 or events_handled > 0:
+                logger.info(f"📡 Event Detection: detected={events_detected}, handled={events_handled}")
+            
+        except Exception as e:
+            logger.error(f"Event detection error: {e}")
     
     async def _send_daily_summaries(self, notification_service):
         """Send end-of-day study summaries"""

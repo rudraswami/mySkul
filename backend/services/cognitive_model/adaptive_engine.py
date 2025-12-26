@@ -164,7 +164,10 @@ class AdaptiveEngine:
     async def adapt_prompt(
         self,
         base_prompt: str,
-        context: AdaptiveContext
+        context: AdaptiveContext,
+        mistake_patterns: List[str] = None,
+        days_to_exam: int = None,
+        exam_name: str = None
     ) -> str:
         """
         Adapt an AI prompt based on student context.
@@ -174,6 +177,9 @@ class AdaptiveEngine:
         Args:
             base_prompt: Original system prompt
             context: AdaptiveContext with personalization parameters
+            mistake_patterns: Error Genome™ - common mistake types
+            days_to_exam: Days remaining to exam
+            exam_name: Name of target exam
             
         Returns:
             Enhanced prompt with personalization
@@ -215,6 +221,36 @@ class AdaptiveEngine:
             review_str = ", ".join(context.review_needed[:2])
             adaptations.append(f"- If relevant, briefly connect to: {review_str} (needs review)")
         
+        # ==========================================================
+        # ERROR GENOME™ - Mistake Pattern Awareness (Phase 1)
+        # ==========================================================
+        if mistake_patterns:
+            mistake_guidance = []
+            for pattern in mistake_patterns[:3]:
+                if pattern == "calculation_error":
+                    mistake_guidance.append("calculation errors - emphasize step-by-step arithmetic")
+                elif pattern == "conceptual_confusion":
+                    mistake_guidance.append("conceptual confusion - clarify the 'why' before 'how'")
+                elif pattern == "formula_misuse":
+                    mistake_guidance.append("formula misapplication - explain when each formula applies")
+                elif pattern == "sign_error":
+                    mistake_guidance.append("sign errors - highlight direction conventions")
+                elif pattern == "unit_error":
+                    mistake_guidance.append("unit errors - emphasize unit conversions")
+            if mistake_guidance:
+                adaptations.append(f"- ⚠️ ERROR GENOME: Watch for {', '.join(mistake_guidance)}")
+        
+        # ==========================================================
+        # EXAM URGENCY AWARENESS (Phase 1)
+        # ==========================================================
+        if days_to_exam is not None and days_to_exam <= 90:
+            if days_to_exam <= 7:
+                adaptations.append(f"- 🚨 CRITICAL: Only {days_to_exam} days to {exam_name}! Focus on high-yield, exam-ready content.")
+            elif days_to_exam <= 30:
+                adaptations.append(f"- ⏰ URGENT: {days_to_exam} days to {exam_name}. Reference time naturally in response.")
+            else:
+                adaptations.append(f"- 📅 Preparing for {exam_name} in {days_to_exam} days. Connect to exam relevance.")
+        
         # Build the adaptation section
         if adaptations:
             adaptation_section = f"""
@@ -223,6 +259,11 @@ PERSONALIZATION FOR THIS STUDENT:
 {chr(10).join(adaptations)}
 
 Current mastery of this topic: {context.current_topic_mastery:.0%}
+
+TRUST SIGNALS (use 1-2 naturally):
+- "Based on your learning patterns..."
+- "DRON AI noticed..."
+- "From your previous sessions..."
 """
             return base_prompt + adaptation_section
         

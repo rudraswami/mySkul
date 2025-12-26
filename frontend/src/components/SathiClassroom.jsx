@@ -178,7 +178,7 @@ const formatRelativeTime = (dateString) => {
 };
 
 // Chat Message Component
-const ChatMessage = ({ message, isUser, onSuggestionClick }) => {
+const ChatMessage = ({ message, isUser, onSuggestionClick, userQuestion }) => {
   const content = useMemo(() => normalizeAIContent(message.content), [message.content]);
   
   if (isUser) {
@@ -209,11 +209,11 @@ const ChatMessage = ({ message, isUser, onSuggestionClick }) => {
           <ProactiveOpener opener={proactive.opener} />
         )}
         
-        {/* Main AI Response */}
+        {/* Main AI Response - FIX: Use correct prop names */}
         <SmartResponse
-          data={content}
-          showActions={true}
-          compact={false}
+          response={content}
+          question={userQuestion || message.user_question || ''}
+          onFollowUp={onSuggestionClick}
         />
         
         {/* 🆕 Proactive Suggestions (Follow-up buttons) */}
@@ -581,17 +581,31 @@ export default function SathiClassroom() {
           }} />
         ) : (
           <div className="space-y-2">
-            {messages.map((msg, idx) => (
-              <ChatMessage
-                key={idx}
-                message={msg}
-                isUser={msg.role === 'user'}
-                onSuggestionClick={(suggestion) => {
-                  setInputMessage(suggestion);
-                  handleSend(suggestion);  // FIX: Pass directly, no setTimeout
-                }}
-              />
-            ))}
+            {messages.map((msg, idx) => {
+              // Find the preceding user message for context
+              let userQuestion = '';
+              if (msg.role === 'assistant' && idx > 0) {
+                for (let i = idx - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') {
+                    userQuestion = messages[i].content || messages[i].text || '';
+                    break;
+                  }
+                }
+              }
+              
+              return (
+                <ChatMessage
+                  key={msg.message_id || msg.timestamp || idx}
+                  message={msg}
+                  isUser={msg.role === 'user'}
+                  userQuestion={userQuestion}
+                  onSuggestionClick={(suggestion) => {
+                    setInputMessage(suggestion);
+                    handleSend(suggestion);
+                  }}
+                />
+              );
+            })}
           </div>
         )}
         

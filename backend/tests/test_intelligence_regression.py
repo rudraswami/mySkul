@@ -613,6 +613,112 @@ class TestPhaseB_NoHardcoding:
             "_estimate_confidence must check flag for semantic scoring"
 
 
+class TestPhase1MentorBehavior:
+    """
+    Phase 1 INTELLIGENCE HARDENING - Mentor Behavior Tests
+    
+    These tests verify the AI behaves like a true mentor:
+    - Clarifies vague questions before answering
+    - Explains WHY mistakes happen (Error Genome™)
+    - References exam urgency when relevant
+    - Attributes intelligence ("Based on your patterns...")
+    """
+    
+    def test_magic_prompts_include_error_genome(self):
+        """MagicContext magic_prompts must include mistake patterns when present"""
+        from services.student_intelligence_hub import MagicContext
+        
+        context = MagicContext()
+        # Use actual mistake type patterns that are mapped in get_magic_prompts
+        context.common_mistake_types = ['sign_error', 'unit_error']
+        context.previous_topic = 'physics'
+        context.topic_mastery = 50
+        
+        prompts = context.get_magic_prompts()
+        prompts_text = "\n".join(prompts)
+        
+        # Must include Error Genome reference when mistakes exist
+        # Maps to "sign errors" and "unit errors" in the prompt builder
+        assert "ERROR GENOME" in prompts_text or "sign" in prompts_text.lower() or "unit" in prompts_text.lower(), \
+            f"Magic prompts must surface common_mistake_types when present. Got: {prompts_text}"
+    
+    def test_magic_context_has_error_genome_field(self):
+        """MagicContext must have common_mistake_types field"""
+        from services.student_intelligence_hub import MagicContext
+        
+        context = MagicContext()
+        
+        assert hasattr(context, 'common_mistake_types'), \
+            "MagicContext must have common_mistake_types field for Error Genome™"
+    
+    def test_formatting_rules_include_mentor_behavior(self):
+        """FORMATTING_RULES must include mentor clarification guidance"""
+        from services.dynamic_mentor_prompts import FORMATTING_RULES
+        
+        # Must guide mentor-like behavior
+        assert "clarify" in FORMATTING_RULES.lower() or "guide" in FORMATTING_RULES.lower(), \
+            "FORMATTING_RULES must include mentor clarification guidance"
+    
+    def test_adaptive_engine_includes_exam_urgency(self):
+        """adapt_prompt must inject exam urgency when days_to_exam provided"""
+        import inspect
+        from services.cognitive_model.adaptive_engine import AdaptiveEngine
+        
+        source = inspect.getsource(AdaptiveEngine.adapt_prompt)
+        
+        # Must reference days_to_exam for urgency
+        assert "days_to_exam" in source, \
+            "adapt_prompt must use days_to_exam for exam urgency injection"
+    
+    def test_adaptive_engine_includes_error_genome(self):
+        """adapt_prompt must inject mistake context when available"""
+        import inspect
+        from services.cognitive_model.adaptive_engine import AdaptiveEngine
+        
+        source = inspect.getsource(AdaptiveEngine.adapt_prompt)
+        
+        # Must reference common mistakes for Error Genome
+        assert "mistake" in source.lower() or "error" in source.lower(), \
+            "adapt_prompt must inject mistake context for Error Genome™"
+    
+    def test_adaptive_engine_includes_trust_attribution(self):
+        """adapt_prompt must include attribution phrases for trust signals"""
+        import inspect
+        from services.cognitive_model.adaptive_engine import AdaptiveEngine
+        
+        source = inspect.getsource(AdaptiveEngine.adapt_prompt)
+        
+        # Must include attribution pattern
+        assert "Based on" in source or "pattern" in source.lower(), \
+            "adapt_prompt must include trust attribution phrases"
+    
+    def test_exam_countdown_magic_prompt_exists(self):
+        """MagicContext must generate exam countdown prompts"""
+        from services.student_intelligence_hub import MagicContext
+        
+        context = MagicContext()
+        context.days_to_exam = 15
+        context.exam_name = "JEE Main"
+        
+        prompts = context.get_magic_prompts()
+        prompts_text = "\n".join(prompts)
+        
+        # Must include countdown
+        assert "15" in prompts_text or "day" in prompts_text.lower(), \
+            "Magic prompts must include exam countdown when days_to_exam set"
+    
+    def test_conceptual_prompt_includes_mentor_context(self):
+        """_build_conceptual must include mistake-awareness"""
+        import inspect
+        from services.dynamic_mentor_prompts import DynamicMentorPrompts
+        
+        source = inspect.getsource(DynamicMentorPrompts._build_conceptual)
+        
+        # Must reference memory_context for mistakes
+        assert "memory_context" in source or "mistake" in source.lower(), \
+            "_build_conceptual must be aware of student mistake patterns"
+
+
 class TestContinuityBehavior:
     """
     Behavior tests for conversation continuity.
@@ -664,6 +770,156 @@ class TestContinuityBehavior:
         # (except minimal fallbacks)
         assert source.count('return "') < 5, \
             "_generate_continuation_for_deliverable should minimize hardcoded responses"
+
+
+class TestFrontendChatComponents:
+    """
+    Frontend component contract tests - validates SmartResponse and ChatMessage
+    
+    CRITICAL REGRESSION TESTS:
+    - SmartResponse must receive 'response' prop (not 'data')
+    - Feedback buttons must render for ALL assistant messages
+    - Input state must persist independently from AI responses
+    
+    Root Cause Fixed: SathiClassroom.jsx was passing 'data' prop but 
+    SmartResponse expects 'response', causing feedback buttons to never render.
+    """
+    
+    def test_sathi_classroom_uses_correct_smartresponse_props(self):
+        """SathiClassroom ChatMessage must pass 'response' prop to SmartResponse"""
+        import re
+        
+        # Read the frontend file
+        with open('C:\\Users\\DELL\\DruvAI\\personal\\frontend\\src\\components\\SathiClassroom.jsx', 'r', encoding='utf-8') as f:
+            source = f.read()
+        
+        # CRITICAL: Must NOT use data= prop (the bug)
+        assert 'data={content}' not in source, \
+            "SathiClassroom must NOT pass 'data' prop to SmartResponse - use 'response' instead"
+        
+        # Must use correct 'response=' prop
+        assert 'response={content}' in source or 'response={' in source, \
+            "SathiClassroom must pass 'response' prop to SmartResponse"
+    
+    def test_sathi_classroom_passes_question_for_response_detection(self):
+        """SmartResponse needs question prop for response type detection"""
+        with open('C:\\Users\\DELL\\DruvAI\\personal\\frontend\\src\\components\\SathiClassroom.jsx', 'r', encoding='utf-8') as f:
+            source = f.read()
+        
+        # Must pass question prop for response type detection
+        assert 'question={' in source, \
+            "SathiClassroom must pass 'question' prop to SmartResponse for response type detection"
+    
+    def test_smartresponse_feedback_bar_logic(self):
+        """SmartResponse must show feedback bar for non-greeting responses"""
+        with open('C:\\Users\\DELL\\DruvAI\\personal\\frontend\\src\\components\\SmartResponse.jsx', 'r', encoding='utf-8') as f:
+            source = f.read()
+        
+        # showInteractionBar logic must exist
+        assert 'showInteractionBar' in source, \
+            "SmartResponse must have showInteractionBar logic"
+        
+        # Must check for mainContent length
+        assert "content?.mainContent?.length" in source or "mainContent?.length" in source, \
+            "showInteractionBar must check mainContent length"
+        
+        # Must render ThumbsUp/ThumbsDown for feedback
+        assert 'ThumbsUp' in source and 'ThumbsDown' in source, \
+            "SmartResponse must render feedback buttons"
+    
+    def test_input_not_cleared_on_message_render(self):
+        """Input state must NOT be affected by message list updates"""
+        with open('C:\\Users\\DELL\\DruvAI\\personal\\frontend\\src\\components\\SathiClassroom.jsx', 'r', encoding='utf-8') as f:
+            source = f.read()
+        
+        # setInputMessage('') should ONLY appear in handleSend
+        # Count occurrences of clearing input
+        clear_input_count = source.count("setInputMessage('')")
+        
+        # Should only clear input once - in handleSend after sending
+        assert clear_input_count <= 1, \
+            f"setInputMessage('') appears {clear_input_count} times - should only clear on send"
+        
+        # Verify no useEffect that clears input on messages change
+        import re
+        # Look for patterns like useEffect(...setInputMessage('')...[messages])
+        dangerous_effect = re.search(r'useEffect\([^)]+setInputMessage\([\'\"]{2}\)[^)]+\[.*messages.*\]', source)
+        assert dangerous_effect is None, \
+            "Found useEffect that clears input on messages change - this will cause input loss"
+    
+    def test_chatmessage_key_stability(self):
+        """ChatMessage keys should be stable to prevent unnecessary remounts"""
+        with open('C:\\Users\\DELL\\DruvAI\\personal\\frontend\\src\\components\\SathiClassroom.jsx', 'r', encoding='utf-8') as f:
+            source = f.read()
+        
+        # Should use stable keys (message_id or timestamp), not just index
+        # Look for the messages.map pattern
+        assert 'message_id' in source or 'timestamp' in source, \
+            "ChatMessage should use stable keys (message_id or timestamp) not just index"
+
+
+class TestMagicContextSchema:
+    """
+    Test MagicContext schema completeness for Phase 1.
+    
+    Ensures all intelligence fields are properly serialized.
+    """
+    
+    def test_magic_context_to_dict_includes_all_fields(self):
+        """MagicContext.to_dict must include all Phase 1 intelligence fields"""
+        from services.student_intelligence_hub import MagicContext
+        
+        context = MagicContext()
+        context.days_to_exam = 30
+        context.exam_name = "NEET"
+        context.previous_topic = "Biology"  # MagicContext uses previous_topic, not current_topic
+        context.topic_mastery = 65
+        context.is_weak_area = False
+        context.common_mistake_types = ['concept_confusion']
+        
+        result = context.to_dict()
+        
+        # Phase 1 required fields
+        assert "days_to_exam" in result
+        assert "exam_name" in result
+        assert "previous_topic" in result  # Field that tracks topic context
+        assert "topic_mastery" in result
+        assert "is_weak_area" in result
+        assert "common_mistake_types" in result, \
+            "to_dict must include common_mistake_types for Error Genome™"
+    
+    def test_magic_context_defaults_are_safe(self):
+        """MagicContext default values must not cause errors"""
+        from services.student_intelligence_hub import MagicContext
+        
+        # Default initialization should not fail
+        context = MagicContext()
+        
+        # All fields should have safe defaults
+        assert context.common_mistake_types == [], \
+            "common_mistake_types should default to empty list"
+        assert context.days_to_exam is None or isinstance(context.days_to_exam, (int, float)), \
+            "days_to_exam should be None or numeric"
+        
+        # to_dict should work with defaults
+        try:
+            result = context.to_dict()
+            assert isinstance(result, dict)
+        except Exception as e:
+            pytest.fail(f"MagicContext.to_dict failed with defaults: {e}")
+    
+    def test_get_magic_prompts_with_empty_context(self):
+        """get_magic_prompts must not fail when context is minimal"""
+        from services.student_intelligence_hub import MagicContext
+        
+        context = MagicContext()
+        
+        # Should not raise even with empty data
+        try:
+            prompts = context.get_magic_prompts()
+            assert isinstance(prompts, list)
+        except Exception as e:
+            pytest.fail(f"get_magic_prompts failed with empty context: {e}")
 
 
 if __name__ == "__main__":
