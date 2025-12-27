@@ -155,6 +155,40 @@ class EnhancedSupervisor(SupervisorAgent):
                 except Exception as e:
                     logger.warning(f"⚠️ Hybrid reasoning failed (non-critical): {e}")
             
+            # ================================================================
+            # Step 1.6: PRE-GENERATION FORMULA CONSTRAINT INJECTION
+            # If formulas are available from RAG/KnowledgeGraph, inject them
+            # as EXPLICIT constraints that agents MUST follow.
+            # This prevents hallucination of incorrect formulas.
+            # ================================================================
+            ENABLE_FORMULA_CONSTRAINTS = True  # Feature flag (safe default: ON)
+            
+            if ENABLE_FORMULA_CONSTRAINTS:
+                formula_constraints = []
+                
+                # Get formulas from RAG
+                if enhanced_prompt and enhanced_prompt.formulas_available:
+                    formula_constraints.extend(enhanced_prompt.formulas_available[:5])
+                
+                # Get formulas from Knowledge Graph
+                if context.get('knowledge_graph', {}).get('formulas'):
+                    formula_constraints.extend(context['knowledge_graph']['formulas'][:5])
+                
+                # Get symbolic proof if available
+                if context.get('symbolic_solution'):
+                    formula_constraints.append(f"Verified Solution: {context['symbolic_solution']}")
+                
+                # Inject as agent constraint (non-breaking - agents can ignore if not applicable)
+                if formula_constraints:
+                    unique_formulas = list(set(formula_constraints))[:7]  # Dedupe, limit to 7
+                    context['_formula_constraints'] = unique_formulas
+                    context['_constraint_instruction'] = (
+                        "IMPORTANT: When using formulas, you MUST use these verified formulas: " +
+                        "; ".join(unique_formulas[:3]) +
+                        ". Do NOT invent or modify formulas."
+                    )
+                    logger.info(f"📐 Injected {len(unique_formulas)} formula constraints")
+            
             # Step 2: Run base supervisor orchestration
             base_result = await self.run(query, context)
             
@@ -166,6 +200,9 @@ class EnhancedSupervisor(SupervisorAgent):
             
             # Step 4: Run verification on the combined response
             verification_result = None
+            reattempt_count = 0
+            MAX_REATTEMPTS = 1  # Feature-flagged, safe limit
+            
             if self.enable_verification and response_text:
                 verification_result = await self.verification.verify_response(
                     response_text=response_text,
@@ -176,6 +213,62 @@ class EnhancedSupervisor(SupervisorAgent):
                     verify_logic=self.verify_logic
                 )
                 logger.info(f"✅ Verification: {verification_result.overall_status.value}, confidence: {verification_result.confidence_score:.2f}")
+                
+                # ================================================================
+                # NEURO-SYMBOLIC ENHANCEMENT: Re-attempt on critical failures
+                # If verification finds critical errors AND corrections exist,
+                # re-generate with corrections as constraints (additive, non-blocking)
+                # ================================================================
+                ENABLE_VERIFICATION_REATTEMPT = True  # Feature flag (safe default: ON)
+                
+                if (ENABLE_VERIFICATION_REATTEMPT and 
+                    not verification_result.is_safe_to_show and 
+                    verification_result.corrections_suggested and 
+                    reattempt_count < MAX_REATTEMPTS):
+                    
+                    logger.warning(f"⚠️ Verification failed with critical errors, attempting re-generation...")
+                    reattempt_count += 1
+                    
+                    try:
+                        # Inject corrections as constraints into context
+                        correction_context = context.copy()
+                        correction_context['_verification_corrections'] = verification_result.corrections_suggested
+                        correction_context['_reattempt_reason'] = 'verification_failure'
+                        correction_context['_original_errors'] = verification_result.issues_found
+                        
+                        # Build correction prompt for agents
+                        corrections_text = "\n".join([
+                            f"- {c.get('original', '')} → {c.get('correction', '')}" 
+                            for c in verification_result.corrections_suggested[:3]  # Limit to 3
+                        ])
+                        
+                        correction_prompt = f"""
+CRITICAL: The previous response contained mathematical errors. 
+Please regenerate with these corrections in mind:
+{corrections_text}
+
+Original question: {query}
+"""
+                        # Re-run base supervisor with correction hints
+                        base_result = await self.run(correction_prompt, correction_context)
+                        
+                        if base_result.get('success'):
+                            response_text = self._extract_response_text(base_result)
+                            
+                            # Re-verify the corrected response
+                            verification_result = await self.verification.verify_response(
+                                response_text=response_text,
+                                question=query,
+                                subject=subject,
+                                verify_math=self.verify_math,
+                                verify_facts=self.verify_facts,
+                                verify_logic=self.verify_logic
+                            )
+                            logger.info(f"✅ Re-verification after correction: {verification_result.overall_status.value}")
+                    
+                    except Exception as reattempt_err:
+                        logger.warning(f"⚠️ Re-attempt failed (non-blocking): {reattempt_err}")
+                        # Continue with original response - don't crash
             
             # Step 5: Create verification badge for UI
             badge = None
@@ -223,10 +316,13 @@ class EnhancedSupervisor(SupervisorAgent):
                 'badge': badge,
                 'metadata': {
                     **base_result.get('metadata', {}),
-                    'enhanced_supervisor_version': '2.0',  # Version bump
+                    'enhanced_supervisor_version': '2.1',  # Version bump for re-attempt feature
                     'rag_enabled': self.enable_rag,
                     'verification_enabled': self.enable_verification,
-                    'hybrid_reasoning_enabled': self.enable_hybrid_reasoning
+                    'hybrid_reasoning_enabled': self.enable_hybrid_reasoning,
+                    # NEURO-SYMBOLIC: Re-attempt tracking (non-breaking, additive metadata)
+                    'verification_reattempts': reattempt_count,
+                    'verification_reattempt_enabled': True
                 }
             }
             

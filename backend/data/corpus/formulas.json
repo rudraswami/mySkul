@@ -1,0 +1,755 @@
+{
+  "formulas": [
+    {
+      "formula_id": "phys_mech_001",
+      "name": "Newton's Second Law",
+      "formula": "F = ma",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "F: force (N), m: mass (kg), a: acceleration (m/s\u00b2)",
+      "units": "SI: Newton (N) = kg\u00b7m/s\u00b2",
+      "constraints": "Valid for constant mass systems",
+      "common_mistakes": [
+        "Forgetting to use vector form",
+        "Mixing up mass and weight"
+      ],
+      "tags": [
+        "newton",
+        "force",
+        "motion",
+        "dynamics"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_002",
+      "name": "Kinematic Equation (velocity-time)",
+      "formula": "v = u + at",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "v: final velocity, u: initial velocity, a: acceleration, t: time",
+      "units": "SI: m/s",
+      "constraints": "Valid for constant acceleration only",
+      "common_mistakes": [
+        "Using for non-uniform acceleration",
+        "Sign errors with direction"
+      ],
+      "tags": [
+        "kinematics",
+        "velocity",
+        "motion",
+        "SUVAT"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 4,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_003",
+      "name": "Kinematic Equation (displacement-time)",
+      "formula": "s = ut + \u00bdat\u00b2",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "s: displacement, u: initial velocity, a: acceleration, t: time",
+      "units": "SI: meters (m)",
+      "constraints": "Valid for constant acceleration only",
+      "common_mistakes": [
+        "Confusing displacement with distance",
+        "Forgetting \u00bd factor"
+      ],
+      "tags": [
+        "kinematics",
+        "displacement",
+        "motion",
+        "SUVAT"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_004",
+      "name": "Kinematic Equation (velocity-displacement)",
+      "formula": "v\u00b2 = u\u00b2 + 2as",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "v: final velocity, u: initial velocity, a: acceleration, s: displacement",
+      "units": "SI: m\u00b2/s\u00b2",
+      "constraints": "Valid for constant acceleration only",
+      "common_mistakes": [
+        "Forgetting to square velocities",
+        "Sign errors"
+      ],
+      "tags": [
+        "kinematics",
+        "velocity",
+        "displacement",
+        "SUVAT"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_005",
+      "name": "Kinetic Energy",
+      "formula": "KE = \u00bdmv\u00b2",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "KE: kinetic energy (J), m: mass (kg), v: velocity (m/s)",
+      "units": "SI: Joule (J) = kg\u00b7m\u00b2/s\u00b2",
+      "constraints": "v must be measured relative to reference frame",
+      "common_mistakes": [
+        "Forgetting \u00bd factor",
+        "Using speed instead of velocity magnitude"
+      ],
+      "tags": [
+        "energy",
+        "kinetic",
+        "motion",
+        "work-energy"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_006",
+      "name": "Gravitational Potential Energy",
+      "formula": "PE = mgh",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "PE: potential energy (J), m: mass (kg), g: gravity (9.8 m/s\u00b2), h: height (m)",
+      "units": "SI: Joule (J)",
+      "constraints": "Valid near Earth's surface where g is constant",
+      "common_mistakes": [
+        "Wrong reference height",
+        "Using varying g for large heights"
+      ],
+      "tags": [
+        "energy",
+        "potential",
+        "gravity",
+        "work-energy"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_007",
+      "name": "Work Done",
+      "formula": "W = Fd cos \u03b8",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "W: work (J), F: force (N), d: displacement (m), \u03b8: angle between F and d",
+      "units": "SI: Joule (J)",
+      "constraints": "\u03b8 must be angle between force and displacement vectors",
+      "common_mistakes": [
+        "Forgetting cos \u03b8",
+        "Using distance instead of displacement"
+      ],
+      "tags": [
+        "work",
+        "force",
+        "energy"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_008",
+      "name": "Power",
+      "formula": "P = W/t = Fv",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "P: power (W), W: work (J), t: time (s), F: force (N), v: velocity (m/s)",
+      "units": "SI: Watt (W) = J/s",
+      "constraints": "Fv form valid when F and v are parallel",
+      "common_mistakes": [
+        "Confusing average and instantaneous power"
+      ],
+      "tags": [
+        "power",
+        "energy",
+        "work"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 4,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "phys_mech_009",
+      "name": "Momentum",
+      "formula": "p = mv",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "p: momentum (kg\u00b7m/s), m: mass (kg), v: velocity (m/s)",
+      "units": "SI: kg\u00b7m/s",
+      "constraints": "Vector quantity - direction matters",
+      "common_mistakes": [
+        "Treating as scalar",
+        "Confusing with impulse"
+      ],
+      "tags": [
+        "momentum",
+        "motion",
+        "collision"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mech_010",
+      "name": "Friction Force",
+      "formula": "f = \u03bcN",
+      "subject": "Physics",
+      "topic": "Mechanics",
+      "variables": "f: friction force (N), \u03bc: coefficient of friction, N: normal force (N)",
+      "units": "SI: Newton (N)",
+      "constraints": "\u03bcs for static (max), \u03bck for kinetic friction",
+      "common_mistakes": [
+        "Using wrong \u03bc value",
+        "Forgetting N depends on orientation"
+      ],
+      "tags": [
+        "friction",
+        "force",
+        "contact"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_elec_001",
+      "name": "Coulomb's Law",
+      "formula": "F = kq\u2081q\u2082/r\u00b2",
+      "subject": "Physics",
+      "topic": "Electrostatics",
+      "variables": "F: force (N), k: 9\u00d710\u2079 N\u00b7m\u00b2/C\u00b2, q: charges (C), r: distance (m)",
+      "units": "SI: Newton (N)",
+      "constraints": "Point charges, medium is vacuum/air",
+      "common_mistakes": [
+        "Forgetting inverse square",
+        "Wrong sign for unlike charges"
+      ],
+      "tags": [
+        "coulomb",
+        "charge",
+        "electric",
+        "force",
+        "electrostatic"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_elec_002",
+      "name": "Ohm's Law",
+      "formula": "V = IR",
+      "subject": "Physics",
+      "topic": "Current Electricity",
+      "variables": "V: voltage (V), I: current (A), R: resistance (\u03a9)",
+      "units": "SI: Volt, Ampere, Ohm",
+      "constraints": "Valid for ohmic conductors at constant temperature",
+      "common_mistakes": [
+        "Applying to non-ohmic materials",
+        "Temperature dependence of R"
+      ],
+      "tags": [
+        "ohm",
+        "voltage",
+        "current",
+        "resistance",
+        "circuit"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_elec_003",
+      "name": "Electric Field (point charge)",
+      "formula": "E = kQ/r\u00b2",
+      "subject": "Physics",
+      "topic": "Electrostatics",
+      "variables": "E: electric field (N/C), k: 9\u00d710\u2079, Q: source charge (C), r: distance (m)",
+      "units": "SI: N/C or V/m",
+      "constraints": "Point charge in vacuum",
+      "common_mistakes": [
+        "Confusing with force formula",
+        "Direction errors"
+      ],
+      "tags": [
+        "electric",
+        "field",
+        "charge",
+        "electrostatic"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_elec_004",
+      "name": "Electrical Power",
+      "formula": "P = VI = I\u00b2R = V\u00b2/R",
+      "subject": "Physics",
+      "topic": "Current Electricity",
+      "variables": "P: power (W), V: voltage (V), I: current (A), R: resistance (\u03a9)",
+      "units": "SI: Watt (W)",
+      "constraints": "All forms equivalent for DC circuits",
+      "common_mistakes": [
+        "Using wrong form for given data",
+        "AC vs DC"
+      ],
+      "tags": [
+        "power",
+        "electrical",
+        "circuit",
+        "energy"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mod_001",
+      "name": "Einstein's Mass-Energy",
+      "formula": "E = mc\u00b2",
+      "subject": "Physics",
+      "topic": "Modern Physics",
+      "variables": "E: energy (J), m: mass (kg), c: speed of light (3\u00d710\u2078 m/s)",
+      "units": "SI: Joule (J)",
+      "constraints": "Mass-energy equivalence",
+      "common_mistakes": [
+        "Confusing rest mass with relativistic mass"
+      ],
+      "tags": [
+        "einstein",
+        "relativity",
+        "energy",
+        "mass"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 4,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "phys_mod_002",
+      "name": "Photoelectric Effect",
+      "formula": "h\u03bd = \u03c6 + KEmax",
+      "subject": "Physics",
+      "topic": "Modern Physics",
+      "variables": "h: Planck constant (6.626\u00d710\u207b\u00b3\u2074 J\u00b7s), \u03bd: frequency (Hz), \u03c6: work function (J), KE: kinetic energy (J)",
+      "units": "SI: Joule (J)",
+      "constraints": "\u03bd must exceed threshold frequency",
+      "common_mistakes": [
+        "Confusing threshold and incident frequency",
+        "Sign errors"
+      ],
+      "tags": [
+        "photoelectric",
+        "photon",
+        "planck",
+        "einstein",
+        "quantum"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      }
+    },
+    {
+      "formula_id": "phys_mod_003",
+      "name": "de Broglie Wavelength",
+      "formula": "\u03bb = h/p = h/mv",
+      "subject": "Physics",
+      "topic": "Modern Physics",
+      "variables": "\u03bb: wavelength (m), h: Planck constant, p: momentum (kg\u00b7m/s), m: mass (kg), v: velocity (m/s)",
+      "units": "SI: meters (m)",
+      "constraints": "Wave-particle duality",
+      "common_mistakes": [
+        "Using relativistic momentum for high speeds"
+      ],
+      "tags": [
+        "de broglie",
+        "wavelength",
+        "matter wave",
+        "quantum"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "chem_gen_001",
+      "name": "Ideal Gas Law",
+      "formula": "PV = nRT",
+      "subject": "Chemistry",
+      "topic": "States of Matter",
+      "variables": "P: pressure (Pa), V: volume (m\u00b3), n: moles, R: 8.314 J/(mol\u00b7K), T: temperature (K)",
+      "units": "SI: Pa, m\u00b3, mol, K",
+      "constraints": "Ideal gas behavior (low P, high T)",
+      "common_mistakes": [
+        "Wrong units for R",
+        "Using Celsius instead of Kelvin"
+      ],
+      "tags": [
+        "gas",
+        "ideal",
+        "mole",
+        "PV=nRT"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      }
+    },
+    {
+      "formula_id": "chem_gen_002",
+      "name": "Molarity",
+      "formula": "M = n/V = moles of solute / volume of solution (L)",
+      "subject": "Chemistry",
+      "topic": "Solutions",
+      "variables": "M: molarity (mol/L), n: moles of solute, V: volume in liters",
+      "units": "mol/L or M",
+      "constraints": "Volume is of solution, not solvent",
+      "common_mistakes": [
+        "Using solvent volume",
+        "Unit conversion errors"
+      ],
+      "tags": [
+        "molarity",
+        "concentration",
+        "solution",
+        "mole"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      }
+    },
+    {
+      "formula_id": "chem_gen_003",
+      "name": "Gibbs Free Energy",
+      "formula": "\u0394G = \u0394H - T\u0394S",
+      "subject": "Chemistry",
+      "topic": "Thermodynamics",
+      "variables": "\u0394G: Gibbs energy (J), \u0394H: enthalpy (J), T: temperature (K), \u0394S: entropy (J/K)",
+      "units": "SI: Joule (J)",
+      "constraints": "At constant T and P",
+      "common_mistakes": [
+        "Using \u00b0C instead of K",
+        "Sign convention errors"
+      ],
+      "tags": [
+        "gibbs",
+        "thermodynamics",
+        "spontaneity",
+        "entropy"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "chem_gen_004",
+      "name": "pH Definition",
+      "formula": "pH = -log[H\u207a]",
+      "subject": "Chemistry",
+      "topic": "Ionic Equilibrium",
+      "variables": "pH: acidity measure, [H\u207a]: hydrogen ion concentration (mol/L)",
+      "units": "Dimensionless (log scale)",
+      "constraints": "Valid for aqueous solutions",
+      "common_mistakes": [
+        "Forgetting negative sign",
+        "Logarithm base errors"
+      ],
+      "tags": [
+        "pH",
+        "acid",
+        "base",
+        "ionic",
+        "equilibrium"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 5
+      }
+    },
+    {
+      "formula_id": "chem_gen_005",
+      "name": "Nernst Equation",
+      "formula": "E = E\u00b0 - (RT/nF)lnQ",
+      "subject": "Chemistry",
+      "topic": "Electrochemistry",
+      "variables": "E: cell potential (V), E\u00b0: standard potential, R: gas constant, T: temp (K), n: electrons, F: Faraday constant, Q: reaction quotient",
+      "units": "SI: Volt (V)",
+      "constraints": "At equilibrium, E = 0",
+      "common_mistakes": [
+        "Wrong n value",
+        "Confusing Q and K"
+      ],
+      "tags": [
+        "nernst",
+        "electrochemistry",
+        "cell",
+        "potential"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 4
+      }
+    },
+    {
+      "formula_id": "math_alg_001",
+      "name": "Quadratic Formula",
+      "formula": "x = (-b \u00b1 \u221a(b\u00b2-4ac))/2a",
+      "subject": "Mathematics",
+      "topic": "Algebra",
+      "variables": "For ax\u00b2 + bx + c = 0: a, b, c are coefficients, x is the root",
+      "units": "N/A",
+      "constraints": "a \u2260 0",
+      "common_mistakes": [
+        "Sign errors in -b",
+        "Forgetting 2a in denominator"
+      ],
+      "tags": [
+        "quadratic",
+        "roots",
+        "polynomial",
+        "algebra"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "math_alg_002",
+      "name": "Discriminant",
+      "formula": "D = b\u00b2 - 4ac",
+      "subject": "Mathematics",
+      "topic": "Algebra",
+      "variables": "D: discriminant, a, b, c: quadratic coefficients",
+      "units": "N/A",
+      "constraints": "D>0: 2 real roots, D=0: 1 root, D<0: complex roots",
+      "common_mistakes": [
+        "Forgetting to check sign",
+        "Wrong coefficient identification"
+      ],
+      "tags": [
+        "discriminant",
+        "quadratic",
+        "roots",
+        "nature of roots"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "math_calc_001",
+      "name": "Power Rule (Derivative)",
+      "formula": "d/dx(x\u207f) = nx\u207f\u207b\u00b9",
+      "subject": "Mathematics",
+      "topic": "Calculus",
+      "variables": "n: power (any real number), x: variable",
+      "units": "N/A",
+      "constraints": "Valid for all real n",
+      "common_mistakes": [
+        "Forgetting to subtract 1 from power",
+        "Wrong coefficient"
+      ],
+      "tags": [
+        "derivative",
+        "differentiation",
+        "power rule",
+        "calculus"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "math_calc_002",
+      "name": "Chain Rule",
+      "formula": "d/dx[f(g(x))] = f'(g(x)) \u00b7 g'(x)",
+      "subject": "Mathematics",
+      "topic": "Calculus",
+      "variables": "f, g: functions, f': derivative of outer, g': derivative of inner",
+      "units": "N/A",
+      "constraints": "Both f and g must be differentiable",
+      "common_mistakes": [
+        "Forgetting inner derivative",
+        "Wrong order of application"
+      ],
+      "tags": [
+        "chain rule",
+        "derivative",
+        "composite",
+        "calculus"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      }
+    },
+    {
+      "formula_id": "math_calc_003",
+      "name": "Integration Power Rule",
+      "formula": "\u222bx\u207fdx = x\u207f\u207a\u00b9/(n+1) + C",
+      "subject": "Mathematics",
+      "topic": "Calculus",
+      "variables": "n: power (n \u2260 -1), C: constant of integration",
+      "units": "N/A",
+      "constraints": "n \u2260 -1 (use ln|x| for n=-1)",
+      "common_mistakes": [
+        "Forgetting +C",
+        "Using for n=-1"
+      ],
+      "tags": [
+        "integration",
+        "integral",
+        "power rule",
+        "calculus"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 2
+      }
+    },
+    {
+      "formula_id": "math_trig_001",
+      "name": "Pythagorean Identity",
+      "formula": "sin\u00b2\u03b8 + cos\u00b2\u03b8 = 1",
+      "subject": "Mathematics",
+      "topic": "Trigonometry",
+      "variables": "\u03b8: angle (any real number)",
+      "units": "N/A (dimensionless)",
+      "constraints": "Valid for all angles",
+      "common_mistakes": [
+        "Forgetting to square",
+        "Sign errors in manipulation"
+      ],
+      "tags": [
+        "trigonometry",
+        "identity",
+        "sine",
+        "cosine",
+        "pythagorean"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 4,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "math_comb_001",
+      "name": "Permutation",
+      "formula": "\u207fP\u1d63 = n!/(n-r)!",
+      "subject": "Mathematics",
+      "topic": "Permutations and Combinations",
+      "variables": "n: total items, r: items to arrange",
+      "units": "N/A (count)",
+      "constraints": "0 \u2264 r \u2264 n",
+      "common_mistakes": [
+        "Confusing with combination",
+        "Wrong factorial calculation"
+      ],
+      "tags": [
+        "permutation",
+        "factorial",
+        "arrangement",
+        "counting"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 3
+      }
+    },
+    {
+      "formula_id": "math_comb_002",
+      "name": "Combination",
+      "formula": "\u207fC\u1d63 = n!/[r!(n-r)!]",
+      "subject": "Mathematics",
+      "topic": "Permutations and Combinations",
+      "variables": "n: total items, r: items to select",
+      "units": "N/A (count)",
+      "constraints": "0 \u2264 r \u2264 n, order doesn't matter",
+      "common_mistakes": [
+        "Confusing with permutation",
+        "Forgetting denominator r!"
+      ],
+      "tags": [
+        "combination",
+        "factorial",
+        "selection",
+        "counting",
+        "choose"
+      ],
+      "source_id": "",
+      "exam_relevance": {
+        "JEE": 5,
+        "NEET": 3
+      }
+    }
+  ],
+  "count": 30,
+  "updated_at": "2025-12-26T06:09:17.811731"
+}

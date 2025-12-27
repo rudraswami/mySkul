@@ -79,6 +79,30 @@ class MentorAgent(ReActAgent):
             "study_planner",     # Generate study plans
         ]
     
+    def _get_domain_confidence_boost(self, subject: str, query: str) -> float:
+        """
+        Mentor specializes in conceptual explanations and emotional support.
+        High confidence for 'explain', 'help me understand', emotional queries.
+        """
+        query_lower = query.lower()
+        boost = 0.0
+        
+        # Mentor excels at explanations
+        explanation_signals = ['explain', 'understand', 'confused', 'help me', 'what is', 'why is']
+        if any(signal in query_lower for signal in explanation_signals):
+            boost += 0.25
+        
+        # Mentor handles emotional support
+        emotional_signals = ['stressed', 'worried', 'scared', 'exam', 'motivate', 'difficult']
+        if any(signal in query_lower for signal in emotional_signals):
+            boost += 0.2
+        
+        # All subjects welcome for general mentoring
+        if subject:
+            boost += 0.05
+        
+        return boost
+    
     def get_agent_persona(self) -> str:
         """Return the mentor's persona for ReAct reasoning"""
         return f"""You are "{self.MENTOR_NAME}" - a caring AI companion for Indian students.
@@ -247,6 +271,26 @@ You are NOT just a tutor. You are:
                 return await self._complete_pending_action(query, pending_action, context)
             
             # ================================================================
+            # PHASE 3: CONTINUITY INTELLIGENCE LOCK-IN
+            # ================================================================
+            # When awaiting_continuation is True, we MUST reference the last task.
+            # Generic responses are FORBIDDEN in this state.
+            awaiting_continuation = context.get('awaiting_continuation', False)
+            last_output_type = context.get('last_output_type', '')
+            last_task_type = context.get('last_task_type', '')
+            last_assistant_message = context.get('last_assistant_message', '')
+            
+            if awaiting_continuation and last_output_type:
+                logger.info(f"[MentorAgent] 🔄 CONTINUITY LOCK: Continuing {last_output_type} (type: {last_task_type})")
+                return await self._continue_previous_task(
+                    query=query,
+                    context=context,
+                    last_output_type=last_output_type,
+                    last_task_type=last_task_type,
+                    last_assistant_message=last_assistant_message
+                )
+            
+            # ================================================================
             # STEP 4: HANDLE BASED ON RESPONSE MODE
             # ================================================================
             if response_mode == 'listener':
@@ -287,14 +331,33 @@ You are NOT just a tutor. You are:
             memory_context = context.get('memory_context')
             
             # ================================================================
+            # 🚨 URGENCY-AWARE RESPONSE PATH (SYSTEM-LEVEL INTELLIGENCE)
+            # ================================================================
+            # HIGH URGENCY requests get structured, actionable responses.
+            # This is triggered by the routing engine's urgency override.
+            is_urgent = context.get('is_urgent', False)
+            urgency_level = context.get('urgency_level', 'medium')
+            response_expectation = context.get('response_expectation', '')
+            
+            if is_urgent or response_expectation == 'urgent_assistance':
+                logger.info(f"[MentorAgent] 🚨 URGENT ASSISTANCE PATH: Structured actionable response (urgency: {urgency_level})")
+                
+                # Generate structured, actionable response for time-critical situations
+                return await self._generate_urgent_response(
+                    query=query,
+                    context=context,
+                    student_profile=student_profile
+                )
+            
+            # ================================================================
             # 🆕 SCOPE-AWARE RECOMMENDATION PATH (Proportional Response)
             # ================================================================
             # When routing says this is a recommendation (not a deliverable),
             # generate a quick, contextual suggestion WITHOUT tools.
+            # Only for LOW/MEDIUM urgency queries.
             is_recommendation = context.get('is_recommendation', False)
             avoid_comprehensive = context.get('avoid_comprehensive_output', False)
             temporal_scope = context.get('temporal_scope', 'unspecified')
-            response_expectation = context.get('response_expectation', '')
             
             if is_recommendation or response_expectation == 'conversational_advice':
                 logger.info(f"[MentorAgent] RECOMMENDATION PATH: Quick contextual advice (scope: {temporal_scope})")
@@ -443,6 +506,27 @@ You are NOT just a tutor. You are:
                 'is_true_agent': True,
                 'agent_name': self.get_agent_name()
             })
+            
+            # ================================================================
+            # CRITICAL FIX: Ensure content is NEVER empty
+            # This is a safety net in case ReAct loop returns empty
+            # ================================================================
+            content = result.get('content', '')
+            if not content or len(content.strip()) < 20:
+                logger.warning(f"[MentorAgent] Empty content detected, generating fallback")
+                student_name = student_profile.get('name', '')
+                name_prefix = f"{student_name}, " if student_name else ""
+                result['content'] = f"""Hey {name_prefix}that's a great question! 🤝
+
+You asked about: "{query[:100]}{'...' if len(query) > 100 else ''}"
+
+I'd love to help you understand this better! Let me know:
+• Which part is most confusing?
+• Do you want the basics or dive deeper?
+• Are you preparing for an exam or just curious?
+
+Tell me more and I'll explain it in a way that clicks for you! 📚"""
+                result['metadata']['fallback_used'] = True
             
             # Log reasoning quality
             iterations = result.get('iterations', 0)
@@ -850,6 +934,338 @@ Generate your brief, friendly recommendation:"""
                     'error': str(e)
                 }
             }
+    
+    async def _generate_urgent_response(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        student_profile: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        🚨 Generate a structured, actionable response for time-critical situations.
+        
+        This is triggered when:
+        - urgency_level is HIGH (exam tomorrow, viva in 2 hours, etc.)
+        - temporal_scope is IMMEDIATE or TODAY
+        
+        KEY PRINCIPLE: Under pressure, students need:
+        1. CONCRETE action items (not vague advice)
+        2. STRUCTURED format (easier to scan quickly)
+        3. IMMEDIATE value (not clarifying questions)
+        4. CONFIDENCE support (reduce anxiety)
+        
+        This is NOT keyword-based - it's triggered by LLM-detected urgency.
+        """
+        try:
+            from core.config import settings
+            
+            # Get context pack if available
+            context_pack = context.get('context_pack')
+            
+            # Build student context
+            student_name = ""
+            recent_topics = []
+            weak_areas = []
+            exam_name = ""
+            days_to_exam = None
+            
+            if context_pack:
+                student_name = context_pack.student_name or ""
+                recent_topics = [context_pack.previous_topic, context_pack.current_topic]
+                recent_topics = [t for t in recent_topics if t][:3]
+                weak_areas = context_pack.weak_areas[:3] if context_pack.weak_areas else []
+                exam_name = context_pack.exam_name or ""
+                days_to_exam = context_pack.days_to_exam
+            else:
+                student_name = student_profile.get('name', '')
+                weak_areas = student_profile.get('weak_areas', [])[:3]
+                exam_name = student_profile.get('exam', '')
+            
+            # Build context string
+            name_part = f" {student_name}" if student_name else ""
+            
+            context_parts = []
+            if recent_topics:
+                context_parts.append(f"Recent study topics: {', '.join(recent_topics)}")
+            if weak_areas:
+                context_parts.append(f"Areas needing work: {', '.join(weak_areas)}")
+            if exam_name:
+                context_parts.append(f"Preparing for: {exam_name}")
+            if days_to_exam is not None:
+                if days_to_exam <= 1:
+                    context_parts.append("⚠️ EXAM IS TOMORROW OR TODAY")
+                else:
+                    context_parts.append(f"Days until exam: {days_to_exam}")
+            
+            context_str = "\n".join(context_parts) if context_parts else "No specific context available - provide general guidance."
+            
+            urgent_prompt = f"""You are Druv, a mentor helping{name_part} who is in a TIME-CRITICAL situation.
+
+The student asked: "{query}"
+
+STUDENT CONTEXT:
+{context_str}
+
+🚨 THIS IS AN URGENT REQUEST - The student needs help NOW, not later.
+
+YOUR RESPONSE MUST:
+1. Start with brief acknowledgment and reassurance (1 sentence)
+2. Provide 3-5 CONCRETE, ACTIONABLE items they can do RIGHT NOW
+3. Use clear structure with bullet points or numbers
+4. Include specific tips (not vague advice like "study well")
+5. End with a confidence booster (1 sentence)
+
+FORMAT EXAMPLE:
+"Got it{name_part}! Here's your quick action plan:
+
+**🎯 Priority Actions:**
+1. [Specific action with what/how]
+2. [Specific action with what/how]
+3. [Specific action with what/how]
+
+**⏰ Time Tip:** [One practical time management suggestion]
+
+**💪 Remember:** [Confidence booster]
+
+Which topic should we dive into first?"
+
+CRITICAL RULES:
+- Be SPECIFIC (e.g., "Review Newton's laws formulas" not "review physics")
+- Be STRUCTURED (use bullets/numbers - easier to scan under pressure)
+- Be ACTIONABLE (what they can DO, not what they should KNOW)
+- Be SUPPORTIVE (acknowledge pressure, provide confidence)
+- Do NOT ask multiple clarifying questions - HELP IMMEDIATELY
+- If you don't know their subject, give GENERAL high-yield exam tips
+
+Generate your urgent assistance response:"""
+
+            # Call LLM with higher token limit for comprehensive response
+            if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+                from services.llm_service import call_gemini
+                
+                response = await call_gemini(
+                    prompt=urgent_prompt,
+                    api_key=settings.GEMINI_API_KEY,
+                    temperature=0.7,  # Slightly lower for more focused response
+                    max_tokens=600,   # More tokens for structured response
+                    model="gemini-2.0-flash",
+                    system_message="You are a supportive mentor helping a student under time pressure. Be structured, actionable, and confidence-building."
+                )
+            else:
+                # Fallback to OpenAI
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI()
+                
+                completion = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a supportive mentor helping a student under time pressure. Be structured, actionable, and confidence-building."},
+                        {"role": "user", "content": urgent_prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=600
+                )
+                response = completion.choices[0].message.content
+            
+            logger.info(f"[MentorAgent] 🚨 URGENT RESPONSE generated (length: {len(response) if response else 0} chars)")
+            
+            # Ensure we never return empty content
+            if not response or len(response.strip()) < 50:
+                response = self._get_urgent_fallback_content(query, context_str)
+            
+            return {
+                'success': True,
+                'content': response.strip(),
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'supportive_urgent',
+                    'approach': 'urgent_assistance',
+                    'response_type': 'structured_actionable',
+                    'is_urgent': True,
+                    'is_proportional_response': False  # Comprehensive for urgent
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"[MentorAgent] Urgent response generation failed: {e}", exc_info=True)
+            # Even on failure, provide useful content - NEVER ask clarifying questions
+            return {
+                'success': True,
+                'content': self._get_urgent_fallback_content(query, ""),
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'supportive',
+                    'approach': 'urgent_fallback',
+                    'error': str(e)
+                }
+            }
+    
+    def _get_urgent_fallback_content(self, query: str, context_str: str) -> str:
+        """
+        Generate fallback content for urgent situations.
+        
+        CRITICAL: This NEVER asks clarifying questions.
+        It provides generic but useful exam/preparation tips.
+        """
+        return f"""I understand you need help quickly! Here's your action plan:
+
+**🎯 Top Priority Actions:**
+1. **Quick Review**: Go through your notes/highlights from the past week - focus on formulas, definitions, and key concepts
+2. **Practice Problems**: Solve 2-3 previous year questions or sample problems to warm up your problem-solving
+3. **Weak Areas**: Spend 20-30 minutes on topics you find most challenging - even a quick review helps
+4. **Rest Assured**: Make sure you're well-rested - a fresh mind performs better than an exhausted one
+
+**⏰ Time Management:**
+- Allocate specific time blocks for each subject/topic
+- Take 5-minute breaks every 25-30 minutes
+- Don't try to learn new concepts now - reinforce what you know
+
+**💪 Confidence Booster:**
+You've prepared for this! Trust your preparation and stay calm. Take deep breaths if you feel anxious.
+
+Which specific topic would you like me to help you with? I can provide targeted tips!"""
+    
+    async def _continue_previous_task(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        last_output_type: str,
+        last_task_type: str,
+        last_assistant_message: str
+    ) -> Dict[str, Any]:
+        """
+        PHASE 3: Continuity Intelligence Lock-In
+        
+        When awaiting_continuation is True, this method MUST:
+        1. Reference the last task/output explicitly
+        2. Continue or build upon what was just done
+        3. NEVER give a generic response
+        
+        This is enforced - generic responses are FORBIDDEN here.
+        """
+        try:
+            from core.config import settings
+            
+            logger.info(f"[MentorAgent] 🔄 CONTINUITY: Continuing {last_output_type}")
+            
+            # Determine continuation type
+            continuation_type = self._determine_continuation_type(query, last_output_type, last_task_type)
+            
+            # Build continuation prompt
+            continuation_prompt = f"""You are Druv, continuing a conversation with a student.
+
+CRITICAL CONTEXT:
+- You just provided a {last_output_type.replace('_', ' ').upper()}
+- The student responded: "{query}"
+- Previous response summary: "{last_assistant_message[:200]}..."
+
+YOUR TASK:
+Based on their response "{query}", continue naturally:
+
+IF they said "okay", "got it", "sure", "yes", "cool", "nice":
+→ Acknowledge warmly and suggest the NEXT STEP related to what you just gave them
+→ Example: "Great! Ready to dive into Day 1?" or "Perfect! Shall I explain the first concept?"
+
+IF they said "simpler", "easier", "don't understand":
+→ Simplify or re-explain the SAME content you just provided
+→ Break it down further, use analogies
+
+IF they said "more", "detail", "expand":
+→ Expand on the SAME content with more depth
+→ Add examples, explanations, or additional steps
+
+IF they asked a specific question:
+→ Answer it in the context of what you just provided
+→ Reference the {last_output_type} you gave them
+
+RULES:
+1. ALWAYS reference what you just gave them
+2. NEVER start fresh as if nothing happened
+3. NEVER ask "What would you like to learn?"
+4. Stay in the flow of the previous conversation
+
+Generate your continuation response:"""
+
+            # Call LLM
+            if getattr(settings, 'USE_GEMINI_PRIMARY', True) and getattr(settings, 'GEMINI_API_KEY', ''):
+                from services.llm_service import call_gemini
+                
+                response = await call_gemini(
+                    prompt=continuation_prompt,
+                    api_key=settings.GEMINI_API_KEY,
+                    temperature=0.7,
+                    max_tokens=400,
+                    model="gemini-2.0-flash",
+                    system_message="You are continuing an existing conversation. Reference the previous context."
+                )
+            else:
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI()
+                
+                completion = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are continuing an existing conversation. Reference the previous context."},
+                        {"role": "user", "content": continuation_prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=400
+                )
+                response = completion.choices[0].message.content
+            
+            return {
+                'success': True,
+                'content': response.strip() if response else self._get_continuation_fallback(last_output_type),
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'friendly',
+                    'approach': 'continuation',
+                    'continuation_type': continuation_type,
+                    'last_output_type': last_output_type,
+                    'is_continuation': True
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"[MentorAgent] Continuation failed: {e}", exc_info=True)
+            return {
+                'success': True,
+                'content': self._get_continuation_fallback(last_output_type),
+                'agent': self.get_agent_name(),
+                'metadata': {
+                    'tone': 'friendly',
+                    'approach': 'continuation_fallback',
+                    'error': str(e)
+                }
+            }
+    
+    def _determine_continuation_type(self, query: str, last_output_type: str, last_task_type: str) -> str:
+        """Determine what kind of continuation the user wants."""
+        query_lower = query.lower().strip()
+        
+        # Acknowledgment → proceed to next step
+        ack_signals = ['okay', 'ok', 'got it', 'sure', 'yes', 'yeah', 'cool', 'nice', 'great', 'thanks']
+        if any(query_lower.strip('!?.') == sig for sig in ack_signals) or len(query_lower.split()) <= 2:
+            return 'proceed'
+        
+        # Simplification request
+        if any(w in query_lower for w in ['simpler', 'simple', 'easier', 'easy', 'confused', 'understand']):
+            return 'simplify'
+        
+        # Expansion request
+        if any(w in query_lower for w in ['more', 'detail', 'expand', 'deeper', 'elaborate']):
+            return 'expand'
+        
+        # Question → contextual answer
+        if '?' in query:
+            return 'question'
+        
+        return 'proceed'
+    
+    def _get_continuation_fallback(self, last_output_type: str) -> str:
+        """Fallback continuation that references the last output."""
+        output_name = last_output_type.replace('_', ' ')
+        return f"Great! Let's continue with the {output_name}. Ready to move to the next part?"
     
     async def _fallback_llm_response(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback to simple LLM response if ReAct loop fails"""

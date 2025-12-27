@@ -164,6 +164,11 @@ class MemoryIntegrationService:
             context["continuity"] = continuity
             context["is_continuation"] = continuity.get("is_continuation", False)
             
+            # FIX: Ensure previous_topic is set for downstream use (context_pack)
+            # The continuity engine returns "last_topic", we normalize to "previous_topic"
+            if continuity.get("last_topic"):
+                context["continuity"]["previous_topic"] = continuity["last_topic"]
+            
             # 4. Extract current topic and get mastery
             current_topic = self._extract_main_topic(question)
             context["current_topic"] = current_topic

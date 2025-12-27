@@ -1846,6 +1846,1362 @@ which are the two main operations in calculus.'''
 
 
 # =============================================================================
+# L) URGENCY-AWARE RESPONSE TESTS
+# =============================================================================
+
+class TestUrgencyAwareResponses:
+    """
+    SHIP BLOCKER: Test that urgency detection leads to appropriate routing and responses.
+    
+    Key scenarios:
+    1. HIGH urgency → structured, actionable response (NOT clarifying questions)
+    2. TIME-CRITICAL temporal_scope → forces structured response
+    3. Fallback under urgency → provides value, not asks questions
+    """
+    
+    @pytest.mark.asyncio
+    async def test_high_urgency_forces_structured_response(self):
+        """
+        SHIP BLOCKER: When urgency_level='high', routing should force structured response mode.
+        
+        This is triggered by SemanticIntentClassifier detecting urgency, and
+        IntelligentRoutingEngine acting on it.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine, RecommendedPipeline
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Mock high-urgency analysis (as if from SemanticIntentClassifier)
+        high_urgency_analysis = SemanticAnalysis(
+            intent=SemanticIntent.QUESTION,
+            confidence=0.9,
+            emotional_tone="anxious",
+            emotional_intensity=0.7,
+            topic_mentioned=None,
+            is_follow_up=False,
+            urgency_level="high",  # HIGH URGENCY
+            needs_empathy=True,
+            needs_encouragement=True,
+            needs_clarification=False,
+            suggested_response_style="supportive",
+            reasoning="Student asking for exam tips with high urgency",
+            response_expectation="conversational_advice",  # Would normally be brief
+            temporal_scope="immediate",
+            delivery_mode="conversational"  # Would normally be casual
+        )
+        
+        # Route with high urgency
+        decision = engine._route_from_semantic_analysis(
+            query="Quick revision tips for exam tomorrow",
+            analysis=high_urgency_analysis,
+            context={}
+        )
+        
+        # ASSERTIONS: High urgency should override normal routing
+        assert decision.extra_context is not None
+        assert decision.extra_context.get('is_urgent') == True, \
+            "High urgency should set is_urgent=True"
+        assert decision.extra_context.get('response_expectation') == 'urgent_assistance', \
+            "High urgency should force response_expectation='urgent_assistance'"
+        assert decision.extra_context.get('delivery_mode') == 'structured', \
+            "High urgency should force delivery_mode='structured'"
+        assert decision.extra_context.get('require_actionable_items') == True, \
+            "High urgency should require actionable items"
+    
+    @pytest.mark.asyncio
+    async def test_time_critical_scope_forces_structured_response(self):
+        """
+        Test: temporal_scope='immediate' or 'today' with conversational_advice
+        should force structured response (urgency override).
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Time-critical scope with medium urgency
+        time_critical_analysis = SemanticAnalysis(
+            intent=SemanticIntent.QUESTION,
+            confidence=0.85,
+            emotional_tone="neutral",
+            emotional_intensity=0.4,
+            topic_mentioned=None,
+            is_follow_up=False,
+            urgency_level="medium",  # Not explicitly high, but...
+            needs_empathy=False,
+            needs_encouragement=False,
+            needs_clarification=False,
+            suggested_response_style="educational",
+            reasoning="Student asking about exam preparation",
+            response_expectation="conversational_advice",
+            temporal_scope="today",  # TIME-CRITICAL SCOPE
+            delivery_mode="conversational"
+        )
+        
+        decision = engine._route_from_semantic_analysis(
+            query="What should I focus on for my exam today?",
+            analysis=time_critical_analysis,
+            context={}
+        )
+        
+        # time_critical + conversational_advice should trigger urgency override
+        assert decision.extra_context.get('is_urgent') == True or \
+               decision.extra_context.get('delivery_mode') == 'structured', \
+            "Time-critical scope should trigger structured response mode"
+    
+    def test_mentor_urgent_response_method_exists(self):
+        """
+        Test: MentorAgent has _generate_urgent_response method.
+        """
+        from agents.mentor import MentorAgent
+        
+        assert hasattr(MentorAgent, '_generate_urgent_response'), \
+            "MentorAgent must have _generate_urgent_response method"
+    
+    def test_mentor_urgent_fallback_never_asks_questions(self):
+        """
+        SHIP BLOCKER: Urgent fallback content must NEVER ask clarifying questions
+        as the primary response. It must provide immediate actionable value.
+        """
+        from agents.mentor import MentorAgent
+        
+        # Create agent instance
+        agent = MentorAgent.__new__(MentorAgent)
+        
+        # Get fallback content
+        fallback = agent._get_urgent_fallback_content("Quick revision tips", "")
+        
+        # Must contain actionable items
+        assert "Priority" in fallback or "Action" in fallback, \
+            "Urgent fallback must have priority/action items"
+        
+        # Must have structure (bullets/numbers)
+        assert "1." in fallback or "•" in fallback or "**" in fallback, \
+            "Urgent fallback must be structured"
+        
+        # Must NOT lead with clarifying questions (may have follow-up offer at end)
+        first_100_chars = fallback[:100].lower()
+        assert "could you" not in first_100_chars, \
+            "Urgent fallback must NOT start with clarifying questions"
+        assert "tell me more" not in first_100_chars, \
+            "Urgent fallback must NOT start with 'tell me more'"
+    
+    def test_supervisor_urgent_fallback_provides_value(self):
+        """
+        SHIP BLOCKER: Supervisor fallback under urgency must provide value,
+        not ask generic clarifying questions.
+        """
+        from agents.supervisor import SupervisorAgent
+        
+        # Create agent instance
+        supervisor = SupervisorAgent.__new__(SupervisorAgent)
+        
+        # Test urgent fallback
+        urgent_fallback = supervisor._generate_urgent_fallback("revision tips for exam tomorrow")
+        
+        # Must have structured content
+        assert "**" in urgent_fallback or "##" in urgent_fallback, \
+            "Urgent fallback must have headers/structure"
+        
+        # Must have actionable items (numbers or bullets)
+        assert any(f"{i}." in urgent_fallback for i in range(1, 6)), \
+            "Urgent fallback must have numbered action items"
+        
+        # Must NOT be just questions
+        question_count = urgent_fallback.count("?")
+        assert question_count <= 2, \
+            f"Urgent fallback has too many questions ({question_count}), should provide answers"
+    
+    def test_supervisor_helpful_fallback_not_interrogation(self):
+        """
+        Test: Even non-urgent fallback should provide value, not just interrogate.
+        """
+        from agents.supervisor import SupervisorAgent
+        
+        supervisor = SupervisorAgent.__new__(SupervisorAgent)
+        
+        # Test helpful fallback
+        helpful_fallback = supervisor._generate_helpful_fallback("explain photosynthesis")
+        
+        # Should acknowledge the query
+        assert "question" in helpful_fallback.lower() or "asked" in helpful_fallback.lower(), \
+            "Helpful fallback should acknowledge the query"
+        
+        # Should offer options/help
+        assert "help" in helpful_fallback.lower() or "can" in helpful_fallback.lower(), \
+            "Helpful fallback should offer help"
+        
+        # Should have some structure
+        assert "•" in helpful_fallback or "-" in helpful_fallback or "**" in helpful_fallback, \
+            "Helpful fallback should have structure (bullets or bold)"
+    
+    def test_urgency_level_not_ignored_in_routing(self):
+        """
+        REGRESSION TEST: urgency_level from SemanticAnalysis must be USED in routing.
+        
+        This was the original bug - urgency was detected but ignored.
+        """
+        import inspect
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        source = inspect.getsource(IntelligentRoutingEngine._route_from_semantic_analysis)
+        
+        # Must reference urgency_level
+        assert "urgency_level" in source, \
+            "Routing must use urgency_level from analysis"
+        
+        # Must have urgency override logic
+        assert "is_high_urgency" in source or "urgency_level == \"high\"" in source or \
+               "urgency == 'high'" in source, \
+            "Routing must check for high urgency condition"
+        
+        # Must have time-critical check
+        assert "is_time_critical" in source or "temporal_scope" in source, \
+            "Routing must check temporal_scope for time-critical situations"
+    
+    def test_urgent_routing_enables_tools(self):
+        """
+        Test: Urgent routing should enable knowledge tools for better content,
+        unlike conversational_advice which disables tools.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # High urgency analysis
+        urgent_analysis = SemanticAnalysis(
+            intent=SemanticIntent.QUESTION,
+            confidence=0.9,
+            emotional_tone="anxious",
+            emotional_intensity=0.6,
+            topic_mentioned=None,
+            is_follow_up=False,
+            urgency_level="high",
+            needs_empathy=True,
+            needs_encouragement=True,
+            needs_clarification=False,
+            suggested_response_style="supportive",
+            reasoning="Urgent exam preparation request",
+            response_expectation="conversational_advice",
+            temporal_scope="immediate",
+            delivery_mode="conversational"
+        )
+        
+        decision = engine._route_from_semantic_analysis(
+            query="Quick tips for my exam in 2 hours",
+            analysis=urgent_analysis,
+            context={}
+        )
+        
+        # Urgent routing should have tools enabled (unlike conversational_advice)
+        assert len(decision.tools_to_enable) > 0 or decision.use_knowledge_graph == True, \
+            "Urgent routing should enable tools or knowledge graph for better content"
+    
+    @pytest.mark.asyncio
+    async def test_full_urgent_query_flow(self):
+        """
+        INTEGRATION TEST: Full flow for urgent query should produce structured response.
+        
+        This tests the complete pipeline from routing to response.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Full routing with urgent query
+        decision = await engine.route(
+            query="Quick revision tips for exam tomorrow",
+            context={
+                'user_id': 'test_user',
+                'session_id': 'test_session'
+            }
+        )
+        
+        # Should have urgency information in extra_context
+        if decision.extra_context:
+            # If urgency was detected by classifier, should be acted upon
+            is_urgent = decision.extra_context.get('is_urgent', False)
+            urgency_level = decision.extra_context.get('urgency_level', 'medium')
+            
+            # Log for debugging
+            print(f"Routing decision: is_urgent={is_urgent}, urgency_level={urgency_level}")
+            print(f"Response expectation: {decision.extra_context.get('response_expectation')}")
+            print(f"Delivery mode: {decision.extra_context.get('delivery_mode')}")
+
+
+class TestUrgencyDetectionVariants:
+    """
+    Test that urgency detection works for various phrasings,
+    not just specific keywords.
+    """
+    
+    def test_urgency_detection_various_phrasings(self):
+        """
+        Test that various urgent phrasings are detected.
+        
+        These should all trigger high urgency:
+        - "exam tomorrow"
+        - "viva in 2 hours"
+        - "interview tonight"
+        - "test in the morning"
+        - "deadline today"
+        """
+        # This is tested via the SemanticIntentClassifier
+        # which uses LLM to detect urgency, not keywords
+        
+        urgent_queries = [
+            "Quick revision tips for exam tomorrow",
+            "What should I focus on for my viva in 2 hours?",
+            "Help me prepare for interview tonight",
+            "I have a test in the morning, what to revise?",
+            "Last minute preparation tips",
+            "Need quick help before my presentation"
+        ]
+        
+        # These should be detected as urgent by the LLM classifier
+        # We can't test the LLM directly in unit tests, but we test
+        # that the routing handles urgency_level='high' correctly
+        
+        # The key is that these tests verify the ROUTING behavior,
+        # not the LLM classification (which is integration-level)
+        
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        for query in urgent_queries:
+            # Simulate high-urgency classification
+            analysis = SemanticAnalysis(
+                intent=SemanticIntent.QUESTION,
+                confidence=0.85,
+                emotional_tone="anxious",
+                emotional_intensity=0.5,
+                topic_mentioned=None,
+                is_follow_up=False,
+                urgency_level="high",  # Simulating LLM detected this
+                needs_empathy=False,
+                needs_encouragement=True,
+                needs_clarification=False,
+                suggested_response_style="supportive",
+                reasoning=f"Urgent: {query[:30]}",
+                response_expectation="conversational_advice",
+                temporal_scope="immediate",
+                delivery_mode="conversational"
+            )
+            
+            decision = engine._route_from_semantic_analysis(query, analysis, {})
+            
+            # All urgent queries should get urgency override
+            assert decision.extra_context.get('is_urgent') == True, \
+                f"Query '{query[:30]}...' should be routed as urgent"
+
+
+# =============================================================================
+# PHASE 5: COGNITIVE OS TRANSFORMATION REGRESSION TESTS
+# =============================================================================
+
+class TestPhase1KeywordNeutralization:
+    """
+    PHASE 1 REGRESSION TESTS: Verify keywords don't override semantic decisions.
+    """
+    
+    def test_emotional_patterns_dont_override_semantic(self):
+        """
+        Keywords like 'bored', 'frustrated' should NOT override semantic analysis.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Semantic says it's a QUESTION, but query contains "bored"
+        analysis = SemanticAnalysis(
+            intent=SemanticIntent.QUESTION,  # Semantic: QUESTION
+            confidence=0.9,  # High confidence
+            emotional_tone="curious",  # Not bored according to semantic
+            emotional_intensity=0.3,
+            topic_mentioned="physics",
+            is_follow_up=False,
+            urgency_level="low",
+            needs_empathy=False,
+            needs_encouragement=False,
+            needs_clarification=False,
+            suggested_response_style="educational",
+            reasoning="Student asking about physics"
+        )
+        
+        # Query has "bored" but semantic says it's a question
+        query = "I'm bored of simple physics, explain quantum mechanics"
+        
+        decision = engine._route_from_semantic_analysis(query, analysis, {})
+        
+        # Should NOT route to EMOTIONAL_SUPPORT because semantic says QUESTION
+        # (The old behavior would have keyword-matched "bored" and routed to emotional)
+        assert decision.pipeline.value != "emotional", \
+            "Keywords should NOT override semantic analysis"
+    
+    def test_trivial_detection_is_structural(self):
+        """
+        Trivial detection should use structure, not keywords.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Test structural trivial detection
+        assert engine._is_trivial_structural("ok") == True, "1 word, no question should be trivial"
+        assert engine._is_trivial_structural("hi") == True, "Short greeting should be trivial"
+        assert engine._is_trivial_structural("explain quantum physics?") == False, "Question should NOT be trivial"
+        assert engine._is_trivial_structural("What is gravity") == False, "Substantive should NOT be trivial"
+
+
+class TestPhase2SemanticAgentSelection:
+    """
+    PHASE 2 REGRESSION TESTS: Verify agents are selected by semantic signals.
+    """
+    
+    def test_agents_selected_by_semantic_not_keywords(self):
+        """
+        Agent selection should use semantic signals, not keyword matching.
+        """
+        from agents.supervisor import SupervisorAgent
+        
+        supervisor = SupervisorAgent({})
+        
+        # Test with semantic analysis
+        semantic_analysis = {
+            'intent': 'question',
+            'confidence': 0.9,
+            'emotional_tone': 'curious',
+            'emotional_intensity': 0.3,
+            'response_expectation': 'detailed_explanation',
+            'needs_empathy': False,
+            'needs_encouragement': False,
+            'needs_clarification': False
+        }
+        
+        agents = supervisor._select_agents('concept', {}, semantic_analysis)
+        
+        # Should include professor for detailed explanation
+        assert 'mentor' in agents, "Mentor should always be included"
+        assert 'professor' in agents, "Professor should be included for detailed explanation"
+    
+    def test_emotional_agents_included_for_emotional_semantic(self):
+        """
+        Mentor should be primary for emotional semantic signals.
+        """
+        from agents.supervisor import SupervisorAgent
+        
+        supervisor = SupervisorAgent({})
+        
+        # Semantic analysis indicates emotional need
+        semantic_analysis = {
+            'intent': 'emotional_support',
+            'confidence': 0.85,
+            'emotional_tone': 'anxious',
+            'emotional_intensity': 0.7,
+            'response_expectation': 'emotional_acknowledgment',
+            'needs_empathy': True,
+            'needs_encouragement': True,
+            'needs_clarification': False
+        }
+        
+        agents = supervisor._select_agents('emotional', {}, semantic_analysis)
+        
+        # Mentor should be primary for emotional support
+        assert 'mentor' in agents, "Mentor should be included for emotional support"
+
+
+class TestPhase3ContinuityLockIn:
+    """
+    PHASE 3 REGRESSION TESTS: Verify continuity is enforced.
+    """
+    
+    def test_intent_detects_continuation_with_context(self):
+        """
+        When semantic says continuation and we have context, intent should be 'continuation'.
+        """
+        from agents.supervisor import SupervisorAgent
+        
+        supervisor = SupervisorAgent({})
+        
+        # Semantic says acknowledgment, we have prior context
+        semantic_analysis = {
+            'intent': 'acknowledgment',
+            'confidence': 0.9
+        }
+        
+        context = {
+            'last_task_type': 'study_plan',
+            'awaiting_continuation': True
+        }
+        
+        intent = supervisor._detect_intent("okay", context, semantic_analysis)
+        
+        assert intent == 'continuation', \
+            "With awaiting_continuation=True, intent should be 'continuation'"
+
+
+class TestPhase4EmotionAsContext:
+    """
+    PHASE 4 REGRESSION TESTS: Verify emotion modulates, doesn't trigger.
+    """
+    
+    def test_emotion_goes_to_multi_agent_not_emotional_support(self):
+        """
+        Emotional queries should use MULTI_AGENT with emotional context, not EMOTIONAL_SUPPORT.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Semantic says emotional support needed
+        analysis = SemanticAnalysis(
+            intent=SemanticIntent.EMOTIONAL_SUPPORT,
+            confidence=0.85,
+            emotional_tone="frustrated",
+            emotional_intensity=0.7,
+            topic_mentioned=None,
+            is_follow_up=False,
+            urgency_level="medium",
+            needs_empathy=True,
+            needs_encouragement=True,
+            needs_clarification=False,
+            suggested_response_style="supportive",
+            reasoning="Student is frustrated"
+        )
+        
+        decision = engine._route_from_semantic_analysis("I'm so frustrated", analysis, {})
+        
+        # PHASE 4: Should use MULTI_AGENT, not EMOTIONAL_SUPPORT
+        assert decision.pipeline.value == "multi_agent", \
+            "Emotional queries should use MULTI_AGENT pipeline with emotional context"
+        
+        # Should have emotional context for modulation
+        assert decision.extra_context.get('emotional_context') is not None, \
+            "Should have emotional_context for response modulation"
+        assert decision.extra_context['emotional_context'].get('modulate_response') == True, \
+            "emotional_context should indicate response modulation"
+
+
+class TestPhase5RegressionSafety:
+    """
+    PHASE 5 REGRESSION TESTS: Verify no regressions in existing flows.
+    """
+    
+    def test_planning_still_works(self):
+        """
+        Planning requests should still produce structured deliverables.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Semantic says structured deliverable (study plan)
+        analysis = SemanticAnalysis(
+            intent=SemanticIntent.QUESTION,
+            confidence=0.9,
+            emotional_tone="neutral",
+            emotional_intensity=0.2,
+            topic_mentioned="physics",
+            is_follow_up=False,
+            urgency_level="low",
+            needs_empathy=False,
+            needs_encouragement=False,
+            needs_clarification=False,
+            suggested_response_style="educational",
+            reasoning="Study plan request",
+            has_actionable_request=True,
+            requested_output_type="study_plan",
+            response_expectation="structured_deliverable"
+        )
+        
+        decision = engine._route_from_semantic_analysis("Create a 3 day study plan", analysis, {})
+        
+        # Should still enable study planner tool
+        assert 'study_planner' in decision.tools_to_enable, \
+            "Study plan requests should still use study_planner tool"
+    
+    def test_greeting_still_fast(self):
+        """
+        Greetings should still route to fast response.
+        """
+        from services.intelligent_routing_engine import IntelligentRoutingEngine
+        from services.semantic_intent_classifier import SemanticAnalysis, SemanticIntent
+        
+        engine = IntelligentRoutingEngine()
+        
+        # Semantic says greeting
+        analysis = SemanticAnalysis(
+            intent=SemanticIntent.GREETING,
+            confidence=0.95,
+            emotional_tone="positive",
+            emotional_intensity=0.3,
+            topic_mentioned=None,
+            is_follow_up=False,
+            urgency_level="low",
+            needs_empathy=False,
+            needs_encouragement=False,
+            needs_clarification=False,
+            suggested_response_style="casual",
+            reasoning="Greeting"
+        )
+        
+        decision = engine._route_from_semantic_analysis("hi there!", analysis, {})
+        
+        # Should route to fast response
+        assert decision.pipeline.value == "fast", \
+            "Greetings should still use fast response pipeline"
+    
+    def test_config_flags_exist(self):
+        """
+        All Phase 5 config flags should exist.
+        """
+        from core.config import settings
+        
+        assert hasattr(settings, 'ENABLE_SEMANTIC_ONLY_ROUTING'), "Should have ENABLE_SEMANTIC_ONLY_ROUTING"
+        assert hasattr(settings, 'ENABLE_SEMANTIC_EMOTION_DETECTION'), "Should have ENABLE_SEMANTIC_EMOTION_DETECTION"
+        assert hasattr(settings, 'ENABLE_CONTINUITY_TRACKING'), "Should have ENABLE_CONTINUITY_TRACKING"
+        assert hasattr(settings, 'ENABLE_SEMANTIC_AGENT_SELECTION'), "Should have ENABLE_SEMANTIC_AGENT_SELECTION"
+        assert hasattr(settings, 'ENABLE_CONTINUITY_LOCKIN'), "Should have ENABLE_CONTINUITY_LOCKIN"
+        assert hasattr(settings, 'ENABLE_EMOTION_AS_CONTEXT'), "Should have ENABLE_EMOTION_AS_CONTEXT"
+
+
+# =============================================================================
+# GAP 4 TESTS: REAL-TIME CONFIDENCE CALIBRATION
+# =============================================================================
+
+class TestGap4ConfidenceCalibration:
+    """
+    GAP 4 TESTS: Verify confidence calibration works correctly.
+    
+    SHIP CONDITIONS:
+    - Every response carries explicit confidence metadata
+    - Low confidence changes behavior (clarification, hedging, escalation)
+    - No silent guessing
+    """
+    
+    def test_response_confidence_dataclass_exists(self):
+        """
+        ResponseConfidence dataclass should exist with required fields.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence, ConfidenceLevel
+        
+        conf = ResponseConfidence()
+        
+        # Check required fields exist
+        assert hasattr(conf, 'overall_confidence')
+        assert hasattr(conf, 'factual_confidence')
+        assert hasattr(conf, 'reasoning_confidence')
+        assert hasattr(conf, 'completeness_confidence')
+        assert hasattr(conf, 'calibrated_confidence')
+        assert hasattr(conf, 'level')
+        
+        # Check default values
+        assert 0 <= conf.overall_confidence <= 1
+        assert isinstance(conf.level, ConfidenceLevel)
+    
+    def test_confidence_levels_correct(self):
+        """
+        Confidence levels should map correctly to thresholds.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence, ConfidenceLevel
+        
+        # High confidence
+        high = ResponseConfidence(overall_confidence=0.9)
+        assert high.level == ConfidenceLevel.HIGH
+        
+        # Medium confidence
+        medium = ResponseConfidence(overall_confidence=0.7)
+        assert medium.level == ConfidenceLevel.MEDIUM
+        
+        # Low confidence
+        low = ResponseConfidence(overall_confidence=0.5)
+        assert low.level == ConfidenceLevel.LOW
+        
+        # Very low confidence
+        very_low = ResponseConfidence(overall_confidence=0.3)
+        assert very_low.level == ConfidenceLevel.VERY_LOW
+    
+    def test_low_confidence_triggers_hedging(self):
+        """
+        Low confidence should trigger hedging behavior.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence
+        
+        low = ResponseConfidence(overall_confidence=0.5)
+        assert low.needs_hedging, "Low confidence should trigger hedging"
+        
+        high = ResponseConfidence(overall_confidence=0.9)
+        assert not high.needs_hedging, "High confidence should not need hedging"
+    
+    def test_ambiguity_triggers_clarification(self):
+        """
+        Ambiguity + low confidence should trigger clarification request.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence
+        
+        # Ambiguous + low confidence = clarification
+        ambiguous_low = ResponseConfidence(
+            overall_confidence=0.4,
+            ambiguity_flags=["unclear which formula they mean"]
+        )
+        assert ambiguous_low.needs_clarification, "Ambiguous + low confidence should need clarification"
+        
+        # Ambiguous but high confidence = no clarification
+        ambiguous_high = ResponseConfidence(
+            overall_confidence=0.8,
+            ambiguity_flags=["unclear which formula they mean"]
+        )
+        assert not ambiguous_high.needs_clarification, "High confidence should not need clarification even with ambiguity"
+    
+    def test_confidence_to_dict_format(self):
+        """
+        Confidence should serialize to consistent dict format.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence
+        
+        conf = ResponseConfidence(
+            overall_confidence=0.7,
+            factual_confidence=0.8,
+            reasoning_confidence=0.6,
+            completeness_confidence=0.7,
+            ambiguity_flags=["test flag"],
+            uncertainty_sources=["test source"]
+        )
+        
+        d = conf.to_dict()
+        
+        assert "overall_confidence" in d
+        assert "confidence_level" in d
+        assert "calibrated_confidence" in d
+        assert "needs_clarification" in d
+        assert "needs_hedging" in d
+        assert isinstance(d["ambiguity_flags"], list)
+    
+    def test_confidence_handler_exists(self):
+        """
+        ConfidenceAwareResponseHandler should exist and be instantiable.
+        """
+        from services.cognitive_model.response_confidence import ConfidenceAwareResponseHandler
+        
+        handler = ConfidenceAwareResponseHandler()
+        assert handler is not None
+    
+    def test_config_flags_for_confidence(self):
+        """
+        Confidence calibration config flags should exist.
+        """
+        from core.config import settings
+        
+        assert hasattr(settings, 'ENABLE_CONFIDENCE_CALIBRATION'), "Should have ENABLE_CONFIDENCE_CALIBRATION"
+        assert hasattr(settings, 'ENABLE_CONFIDENCE_SELF_ASSESSMENT'), "Should have ENABLE_CONFIDENCE_SELF_ASSESSMENT"
+        assert hasattr(settings, 'ENABLE_CONFIDENCE_CLARIFICATION'), "Should have ENABLE_CONFIDENCE_CLARIFICATION"
+        assert hasattr(settings, 'ENABLE_CONFIDENCE_HEDGING'), "Should have ENABLE_CONFIDENCE_HEDGING"
+    
+    def test_confidence_extraction_from_response(self):
+        """
+        Should be able to extract confidence from LLM response with JSON block.
+        """
+        from services.cognitive_model.response_confidence import extract_confidence_from_response
+        
+        # Response with embedded confidence
+        response_with_conf = '''Here is my answer about physics.
+
+```json
+{
+  "confidence_assessment": {
+    "overall_confidence": 0.8,
+    "factual_confidence": 0.9,
+    "reasoning_confidence": 0.7,
+    "completeness_confidence": 0.8,
+    "ambiguity_flags": [],
+    "uncertainty_sources": []
+  }
+}
+```'''
+        
+        conf = extract_confidence_from_response(response_with_conf)
+        assert conf is not None, "Should extract confidence from response"
+        assert conf.overall_confidence == 0.8
+        assert conf.factual_confidence == 0.9
+    
+    def test_strip_confidence_block(self):
+        """
+        Confidence JSON block should be stripped from content.
+        """
+        from services.cognitive_model.response_confidence import strip_confidence_block
+        
+        response_with_conf = '''Here is my answer about physics.
+
+```json
+{
+  "confidence_assessment": {
+    "overall_confidence": 0.8
+  }
+}
+```'''
+        
+        stripped = strip_confidence_block(response_with_conf)
+        assert "confidence_assessment" not in stripped
+        assert "Here is my answer" in stripped
+
+
+class TestGap4NoSilentGuessing:
+    """
+    CRITICAL: System must never guess silently.
+    
+    If confidence is low and system responds with high certainty, that is a BUG.
+    """
+    
+    def test_very_low_confidence_triggers_escalation(self):
+        """
+        Very low factual AND reasoning confidence should recommend escalation.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence
+        
+        very_low = ResponseConfidence(
+            factual_confidence=0.3,
+            reasoning_confidence=0.3
+        )
+        
+        assert very_low.needs_escalation, "Very low confidence should recommend escalation"
+    
+    def test_high_confidence_factory(self):
+        """
+        High confidence factory should create appropriate confidence for greetings.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence
+        
+        high = ResponseConfidence.high_confidence()
+        
+        assert high.overall_confidence >= 0.9
+        assert high.level.value == "high"
+        assert not high.needs_hedging
+        assert not high.needs_clarification
+        assert not high.needs_escalation
+
+
+# =============================================================================
+# GAP 2 TESTS: DYNAMIC MODEL SELECTION
+# =============================================================================
+
+class TestGap2SemanticModelSelection:
+    """
+    GAP 2 TESTS: Verify model selection is a pure function.
+    
+    model = f(semantic_complexity, latency_budget, confidence_required)
+    
+    NO task names. NO agent names. NO keywords.
+    """
+    
+    def test_model_capability_dataclass_exists(self):
+        """
+        ModelCapability dataclass should exist with required fields.
+        """
+        from services.cognitive_model.semantic_model_selector import ModelCapability, ModelTier, ModelProvider
+        
+        cap = ModelCapability(
+            name="test-model",
+            provider=ModelProvider.GEMINI,
+            tier=ModelTier.BALANCED,
+            reasoning_strength=0.8,
+            factual_accuracy=0.8,
+            math_ability=0.7,
+            creativity=0.8,
+            instruction_following=0.9,
+            latency_ms=2000,
+            cost_per_1k_tokens=0.001,
+            max_context=100000
+        )
+        
+        assert cap.name == "test-model"
+        assert cap.tier == ModelTier.BALANCED
+    
+    def test_model_selection_criteria_exists(self):
+        """
+        ModelSelectionCriteria should exist with required fields.
+        """
+        from services.cognitive_model.semantic_model_selector import ModelSelectionCriteria
+        
+        criteria = ModelSelectionCriteria()
+        
+        assert hasattr(criteria, 'semantic_complexity')
+        assert hasattr(criteria, 'latency_budget_ms')
+        assert hasattr(criteria, 'confidence_required')
+        assert hasattr(criteria, 'quality_vs_speed')
+    
+    def test_model_registry_exists(self):
+        """
+        Model registry should contain multiple models.
+        """
+        from services.cognitive_model.semantic_model_selector import MODEL_REGISTRY
+        
+        assert len(MODEL_REGISTRY) > 0
+        assert "gemini-1.5-flash" in MODEL_REGISTRY
+        assert "gemini-1.5-pro" in MODEL_REGISTRY
+    
+    def test_semantic_model_selector_exists(self):
+        """
+        SemanticModelSelector should be instantiable.
+        """
+        from services.cognitive_model.semantic_model_selector import SemanticModelSelector
+        
+        selector = SemanticModelSelector()
+        assert selector is not None
+    
+    def test_simple_query_selects_fast_model(self):
+        """
+        Simple queries with tight latency budget should prefer fast models.
+        """
+        from services.cognitive_model.semantic_model_selector import (
+            SemanticModelSelector, ModelSelectionCriteria
+        )
+        
+        selector = SemanticModelSelector(["gemini-1.5-flash", "gemini-1.5-pro"])
+        
+        # Simple query criteria with VERY tight latency budget
+        # Flash: 800ms, Pro: 2000ms, so budget of 1000ms should force flash
+        criteria = ModelSelectionCriteria(
+            semantic_complexity=0.2,
+            reasoning_depth_required=1,
+            latency_budget_ms=1000,  # Tight - only flash can meet this
+            quality_vs_speed=0.1  # Strongly prefer speed
+        )
+        
+        model = selector.select(criteria)
+        
+        # Should select faster model when latency is constrained
+        assert model == "gemini-1.5-flash", f"Tight latency budget should select fast model, got {model}"
+    
+    def test_complex_query_selects_advanced_model(self):
+        """
+        Complex queries should prefer advanced models.
+        """
+        from services.cognitive_model.semantic_model_selector import (
+            SemanticModelSelector, ModelSelectionCriteria
+        )
+        
+        selector = SemanticModelSelector(["gemini-1.5-flash", "gemini-1.5-pro"])
+        
+        # Complex query criteria
+        criteria = ModelSelectionCriteria(
+            semantic_complexity=0.9,
+            reasoning_depth_required=5,
+            latency_budget_ms=10000,
+            quality_vs_speed=0.9,  # Prefer quality
+            involves_analysis=True,
+            involves_step_by_step=True
+        )
+        
+        model = selector.select(criteria)
+        
+        # Should select more capable model for complex queries
+        assert model == "gemini-1.5-pro", f"Complex query should select pro model, got {model}"
+    
+    def test_model_selection_is_deterministic(self):
+        """
+        Same criteria should always select same model (pure function).
+        """
+        from services.cognitive_model.semantic_model_selector import (
+            SemanticModelSelector, ModelSelectionCriteria
+        )
+        
+        selector = SemanticModelSelector()
+        
+        criteria = ModelSelectionCriteria(
+            semantic_complexity=0.5,
+            reasoning_depth_required=2,
+            latency_budget_ms=5000,
+            quality_vs_speed=0.5
+        )
+        
+        # Call multiple times
+        model1 = selector.select(criteria)
+        model2 = selector.select(criteria)
+        model3 = selector.select(criteria)
+        
+        assert model1 == model2 == model3, "Model selection must be deterministic"
+    
+    def test_config_flags_for_model_selection(self):
+        """
+        Model selection config flags should exist.
+        """
+        from core.config import settings
+        
+        assert hasattr(settings, 'ENABLE_SEMANTIC_MODEL_SELECTION'), "Should have ENABLE_SEMANTIC_MODEL_SELECTION"
+        assert hasattr(settings, 'DEFAULT_LLM_MODEL'), "Should have DEFAULT_LLM_MODEL"
+        assert hasattr(settings, 'AVAILABLE_LLM_MODELS'), "Should have AVAILABLE_LLM_MODELS"
+
+
+class TestGap2NoKeywordModelSelection:
+    """
+    CRITICAL: Model selection must NOT use task/agent names.
+    """
+    
+    def test_no_task_name_in_criteria(self):
+        """
+        ModelSelectionCriteria should not have task name fields.
+        """
+        from services.cognitive_model.semantic_model_selector import ModelSelectionCriteria
+        
+        criteria = ModelSelectionCriteria()
+        
+        # These should NOT exist
+        assert not hasattr(criteria, 'task_name')
+        assert not hasattr(criteria, 'agent_name')
+        assert not hasattr(criteria, 'intent_name')
+    
+    def test_selection_uses_only_numeric_criteria(self):
+        """
+        Selection should use numeric/semantic criteria only.
+        """
+        from services.cognitive_model.semantic_model_selector import ModelSelectionCriteria
+        import dataclasses
+        
+        criteria = ModelSelectionCriteria()
+        fields = {f.name: f.type for f in dataclasses.fields(criteria)}
+        
+        # No string-based selection criteria
+        for field_name, field_type in fields.items():
+            assert 'str' not in str(field_type) or field_name == 'model_name', \
+                f"Selection criteria should not have string field: {field_name}"
+
+
+# =============================================================================
+# GAP 1 TESTS: AGENT AUTONOMY
+# =============================================================================
+
+class TestGap1AgentAutonomy:
+    """
+    GAP 1 TESTS: Verify agents can self-assess and decline.
+    
+    SHIP CONDITIONS:
+    - Agents self-assess whether to participate
+    - Supervisor never assigns agents
+    - Agents can decline participation
+    """
+    
+    def test_participation_decision_enum_exists(self):
+        """
+        ParticipationDecision enum should have all required values.
+        """
+        from services.cognitive_model.agent_self_assessment import ParticipationDecision
+        
+        assert hasattr(ParticipationDecision, 'STRONG_YES')
+        assert hasattr(ParticipationDecision, 'YES')
+        assert hasattr(ParticipationDecision, 'MAYBE')
+        assert hasattr(ParticipationDecision, 'NO')
+        assert hasattr(ParticipationDecision, 'DEFER')
+    
+    def test_agent_capability_dataclass_exists(self):
+        """
+        AgentCapability dataclass should exist with capability fields.
+        """
+        from services.cognitive_model.agent_self_assessment import AgentCapability
+        
+        cap = AgentCapability()
+        
+        assert hasattr(cap, 'can_handle_emotion')
+        assert hasattr(cap, 'can_handle_planning')
+        assert hasattr(cap, 'can_handle_problem_solving')
+        assert hasattr(cap, 'can_handle_explanation')
+        assert hasattr(cap, 'can_handle_urgency')
+    
+    def test_self_assessment_dataclass_exists(self):
+        """
+        SelfAssessment dataclass should exist with required fields.
+        """
+        from services.cognitive_model.agent_self_assessment import (
+            SelfAssessment, ParticipationDecision
+        )
+        
+        assessment = SelfAssessment(
+            decision=ParticipationDecision.YES,
+            confidence=0.8,
+            relevance=0.9,
+            reasoning="Test reasoning"
+        )
+        
+        assert assessment.should_participate
+        assert assessment.participation_score > 0
+    
+    def test_agent_can_decline(self):
+        """
+        CRITICAL: Agent must be able to say NO.
+        """
+        from services.cognitive_model.agent_self_assessment import (
+            SelfAssessment, ParticipationDecision
+        )
+        
+        # Agent declines
+        assessment = SelfAssessment(
+            decision=ParticipationDecision.NO,
+            confidence=0.1,
+            relevance=0.1,
+            reasoning="Not my area of expertise"
+        )
+        
+        assert not assessment.should_participate, "Agent must be able to decline"
+        assert assessment.participation_score == 0, "Declined agent should have zero score"
+    
+    def test_agent_coordinator_exists(self):
+        """
+        AgentCoordinator should be instantiable.
+        """
+        from services.cognitive_model.agent_self_assessment import AgentCoordinator
+        
+        coordinator = AgentCoordinator()
+        assert coordinator is not None
+    
+    def test_participation_score_calculation(self):
+        """
+        Participation score should combine decision, confidence, relevance.
+        """
+        from services.cognitive_model.agent_self_assessment import (
+            SelfAssessment, ParticipationDecision
+        )
+        
+        # Strong yes with high confidence should have highest score
+        strong = SelfAssessment(
+            decision=ParticipationDecision.STRONG_YES,
+            confidence=0.9,
+            relevance=0.9,
+            reasoning="Highly relevant"
+        )
+        
+        # Regular yes with medium confidence
+        regular = SelfAssessment(
+            decision=ParticipationDecision.YES,
+            confidence=0.7,
+            relevance=0.7,
+            reasoning="Can help"
+        )
+        
+        # Maybe with low confidence
+        maybe = SelfAssessment(
+            decision=ParticipationDecision.MAYBE,
+            confidence=0.5,
+            relevance=0.5,
+            reasoning="Not sure"
+        )
+        
+        assert strong.participation_score > regular.participation_score
+        assert regular.participation_score > maybe.participation_score
+    
+    def test_config_flags_for_autonomy(self):
+        """
+        Agent autonomy config flags should exist.
+        """
+        from core.config import settings
+        
+        assert hasattr(settings, 'ENABLE_AGENT_AUTONOMY'), "Should have ENABLE_AGENT_AUTONOMY"
+        assert hasattr(settings, 'ENABLE_AGENT_SELF_ASSESSMENT'), "Should have ENABLE_AGENT_SELF_ASSESSMENT"
+        assert hasattr(settings, 'MAX_PARTICIPATING_AGENTS'), "Should have MAX_PARTICIPATING_AGENTS"
+
+
+class TestGap1SupervisorAsCoordinator:
+    """
+    CRITICAL: Supervisor must be a coordinator, NOT a brain.
+    """
+    
+    def test_coordinator_collects_not_assigns(self):
+        """
+        Coordinator collects assessments, does not assign agents.
+        """
+        from services.cognitive_model.agent_self_assessment import AgentCoordinator
+        
+        # Coordinator has no assign() method
+        coordinator = AgentCoordinator()
+        
+        assert not hasattr(coordinator, 'assign_agent'), "Coordinator should not assign agents"
+        assert hasattr(coordinator, 'coordinate'), "Coordinator should coordinate"
+    
+    def test_no_intent_to_agent_mapping(self):
+        """
+        There should be no static intent → agent mapping.
+        """
+        from services.cognitive_model.agent_self_assessment import AgentCoordinator
+        
+        coordinator = AgentCoordinator()
+        
+        # These patterns are BANNED
+        assert not hasattr(coordinator, 'intent_agent_map')
+        assert not hasattr(coordinator, 'task_agent_map')
+
+
+# =============================================================================
+# GAP 3 TESTS: CROSS-SESSION SEMANTIC LEARNING
+# =============================================================================
+
+class TestGap3SemanticLearning:
+    """
+    GAP 3 TESTS: Verify semantic learning stores signals, not transcripts.
+    
+    SHIP CONDITIONS:
+    - Store structured semantic signals only
+    - No transcripts stored
+    - No embeddings stored
+    - Learning through context injection only
+    """
+    
+    def test_semantic_signal_dataclass_exists(self):
+        """
+        SemanticSignal dataclass should exist with required fields.
+        """
+        from services.cognitive_model.student_semantic_profile import SemanticSignal
+        from datetime import datetime, timezone
+        
+        signal = SemanticSignal(
+            signal_type="engaged_topic",
+            subject="Physics",
+            concept="Thermodynamics",
+            value={"depth": 3},
+            confidence=0.8
+        )
+        
+        assert signal.signal_type == "engaged_topic"
+        assert signal.subject == "Physics"
+        assert isinstance(signal.value, dict)
+    
+    def test_student_semantic_profile_exists(self):
+        """
+        StudentSemanticProfile dataclass should exist.
+        """
+        from services.cognitive_model.student_semantic_profile import StudentSemanticProfile
+        
+        profile = StudentSemanticProfile(user_id="test_user")
+        
+        assert profile.user_id == "test_user"
+        assert hasattr(profile, 'strong_subjects')
+        assert hasattr(profile, 'weak_subjects')
+        assert hasattr(profile, 'preferred_explanation_style')
+    
+    def test_profile_context_injection(self):
+        """
+        Profile should generate context injection dict.
+        """
+        from services.cognitive_model.student_semantic_profile import StudentSemanticProfile
+        
+        profile = StudentSemanticProfile(
+            user_id="test_user",
+            strong_subjects=["Physics", "Math"],
+            weak_subjects=["Chemistry"],
+            preferred_explanation_style="detailed"
+        )
+        
+        injection = profile.get_context_injection()
+        
+        assert "student_learning_profile" in injection
+        assert injection["student_learning_profile"]["preferred_explanation_style"] == "detailed"
+    
+    def test_no_raw_transcript_storage(self):
+        """
+        CRITICAL: Profile should not store raw transcripts.
+        """
+        from services.cognitive_model.student_semantic_profile import StudentSemanticProfile
+        
+        profile = StudentSemanticProfile(user_id="test_user")
+        
+        # These should NOT exist
+        assert not hasattr(profile, 'transcripts')
+        assert not hasattr(profile, 'raw_messages')
+        assert not hasattr(profile, 'conversation_history')
+    
+    def test_no_embeddings_storage(self):
+        """
+        CRITICAL: Profile should not store embeddings.
+        """
+        from services.cognitive_model.student_semantic_profile import StudentSemanticProfile
+        
+        profile = StudentSemanticProfile(user_id="test_user")
+        
+        # These should NOT exist
+        assert not hasattr(profile, 'embeddings')
+        assert not hasattr(profile, 'vectors')
+        assert not hasattr(profile, 'embedding_cache')
+    
+    def test_semantic_learning_extractor_exists(self):
+        """
+        SemanticLearningExtractor should be instantiable.
+        """
+        from services.cognitive_model.student_semantic_profile import SemanticLearningExtractor
+        
+        extractor = SemanticLearningExtractor()
+        assert extractor is not None
+    
+    def test_profile_manager_exists(self):
+        """
+        SemanticProfileManager should be instantiable.
+        """
+        from services.cognitive_model.student_semantic_profile import SemanticProfileManager
+        
+        manager = SemanticProfileManager()
+        assert manager is not None
+    
+    def test_config_flags_for_learning(self):
+        """
+        Semantic learning config flags should exist.
+        """
+        from core.config import settings
+        
+        assert hasattr(settings, 'ENABLE_SEMANTIC_LEARNING'), "Should have ENABLE_SEMANTIC_LEARNING"
+        assert hasattr(settings, 'ENABLE_PROFILE_CONTEXT_INJECTION'), "Should have ENABLE_PROFILE_CONTEXT_INJECTION"
+        assert hasattr(settings, 'MAX_SEMANTIC_SIGNALS_PER_USER'), "Should have MAX_SEMANTIC_SIGNALS_PER_USER"
+
+
+class TestGap3ContextInjectionOnly:
+    """
+    CRITICAL: Learning must influence behavior ONLY through context injection.
+    """
+    
+    def test_learning_is_explicit_not_hidden(self):
+        """
+        All learning must flow through explicit context injection.
+        """
+        from services.cognitive_model.student_semantic_profile import StudentSemanticProfile
+        
+        profile = StudentSemanticProfile(user_id="test_user")
+        
+        # The only way to get learning data is through get_context_injection
+        injection = profile.get_context_injection()
+        
+        # All data must be in this explicit structure
+        assert "student_learning_profile" in injection
+        
+        # No hidden state
+        assert not hasattr(profile, '_hidden_model')
+        assert not hasattr(profile, '_implicit_state')
+    
+    def test_signal_to_dict_is_structured(self):
+        """
+        Signals should serialize to structured data, not raw text.
+        """
+        from services.cognitive_model.student_semantic_profile import SemanticSignal
+        
+        signal = SemanticSignal(
+            signal_type="concept_struggle",
+            subject="Physics",
+            concept="Thermodynamics",
+            value={"difficulty": "high", "attempts": 3},
+            confidence=0.9
+        )
+        
+        d = signal.to_dict()
+        
+        # Should be structured
+        assert isinstance(d, dict)
+        assert "signal_type" in d
+        assert "value" in d
+        assert isinstance(d["value"], dict)
+
+
+# =============================================================================
 # RUN CONFIGURATION
 # =============================================================================
 

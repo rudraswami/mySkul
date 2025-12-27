@@ -38,9 +38,18 @@ except ImportError:
     logger.warning("EnhancedSupervisor not available, using standard routing")
 
 
-def analyze_query_complexity(query: str) -> str:
+def analyze_query_complexity(query: str, semantic_analysis: dict = None) -> str:
     """
     COGNITO-OS v4.0 - Analyze query complexity for intelligent routing
+    
+    UPGRADED: Now accepts semantic analysis from SemanticIntentClassifier
+    for more accurate complexity detection. Falls back to keyword patterns
+    only when semantic analysis is unavailable.
+    
+    Args:
+        query: The student's question
+        semantic_analysis: Optional dict from SemanticIntentClassifier with
+                          intent, confidence, emotional_tone, etc.
     
     Returns:
         - "simple": Greetings, acknowledgments, short facts
@@ -49,6 +58,50 @@ def analyze_query_complexity(query: str) -> str:
     """
     import re
     query_lower = query.lower().strip()
+    
+    # ================================================================
+    # PHASE 1: USE SEMANTIC ANALYSIS IF AVAILABLE (Intelligent Path)
+    # ================================================================
+    if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+        intent = semantic_analysis.get('intent', 'general')
+        
+        # Simple intents (no deep processing needed)
+        simple_intents = [
+            'greeting', 'farewell', 'gratitude', 'acknowledgment', 
+            'chitchat', 'celebration'
+        ]
+        if intent in simple_intents:
+            logger.debug(f"🎯 Semantic complexity: simple (intent={intent})")
+            return "simple"
+        
+        # Complex intents (need full verification + hybrid reasoning)
+        complex_intents = ['clarification', 'confusion', 'practice']
+        has_actionable = semantic_analysis.get('has_actionable_request', False)
+        output_type = semantic_analysis.get('requested_output_type')
+        
+        # Complex if: clarification/confusion OR actionable request OR problem solving
+        if intent in complex_intents or has_actionable or output_type in ['problem_solution', 'study_plan']:
+            logger.debug(f"🎯 Semantic complexity: complex (intent={intent}, actionable={has_actionable})")
+            return "complex"
+        
+        # Educational intents = standard complexity
+        educational_intents = ['question', 'explanation', 'explore', 'help', 'continue']
+        if intent in educational_intents:
+            # But upgrade to complex if urgency is high
+            if semantic_analysis.get('urgency_level') == 'high':
+                logger.debug(f"🎯 Semantic complexity: complex (urgent educational)")
+                return "complex"
+            logger.debug(f"🎯 Semantic complexity: standard (intent={intent})")
+            return "standard"
+        
+        # Default for other intents
+        logger.debug(f"🎯 Semantic complexity: standard (fallback for intent={intent})")
+        return "standard"
+    
+    # ================================================================
+    # PHASE 2: KEYWORD FALLBACK (When semantic unavailable)
+    # ================================================================
+    logger.debug("⚠️ Using keyword-based complexity (semantic unavailable)")
     
     # SIMPLE: Greetings, acknowledgments, and affirmations
     # CRITICAL: Include ALL natural human responses - these must never go unanswered
@@ -105,16 +158,18 @@ def analyze_query_complexity(query: str) -> str:
     return "standard"
 
 
-def get_appropriate_supervisor(query: str, config: dict) -> SupervisorAgent:
+def get_appropriate_supervisor(query: str, config: dict, semantic_analysis: dict = None) -> SupervisorAgent:
     """
     COGNITO-OS v4.0 - Intelligent supervisor selection based on query complexity
+    
+    UPGRADED: Now accepts semantic_analysis for more accurate routing.
     
     Routing Strategy:
     - simple → SupervisorAgent (fast mode, <500ms)
     - standard → EnhancedSupervisor (RAG + math verify)
     - complex → EnhancedSupervisor (full verify + knowledge graph + hybrid reasoning)
     """
-    complexity = analyze_query_complexity(query)
+    complexity = analyze_query_complexity(query, semantic_analysis)
     logger.info(f"🎯 Query complexity: {complexity}")
     
     if complexity == "simple":
@@ -1856,8 +1911,19 @@ You MUST reference specific content from the image in your response."""
                 emergent_llm_key = os.environ.get('OPENAI_API_KEY')
                 config = {"emergent_llm_key": emergent_llm_key}
                 
-                # Use intelligent routing based on query complexity
-                supervisor = get_appropriate_supervisor(contextual_message, config)
+                # Try to get semantic analysis for better routing (fallback-friendly)
+                fallback_semantic_analysis = None
+                try:
+                    from services.semantic_intent_classifier import get_semantic_classifier
+                    classifier = get_semantic_classifier()
+                    semantic_result = await classifier.classify(contextual_message)
+                    fallback_semantic_analysis = semantic_result.to_dict()
+                    logger.info(f"🧠 Agentic fallback: Got semantic analysis (intent={semantic_result.intent.value})")
+                except Exception as sem_err:
+                    logger.debug(f"Semantic classifier unavailable in fallback path: {sem_err}")
+                
+                # Use intelligent routing based on query complexity (with semantic if available)
+                supervisor = get_appropriate_supervisor(contextual_message, config, fallback_semantic_analysis)
                 
                 # ================================================================
                 # MEMORY SYSTEM INTEGRATION - Retrieve context before processing
@@ -1931,8 +1997,8 @@ You MUST reference specific content from the image in your response."""
                             "response_style": learning_profile.get("preferences", {}).get("response_style")
                         }
                 
-                # Determine query complexity for advanced features
-                query_complexity = analyze_query_complexity(contextual_message)
+                # Determine query complexity for advanced features (using semantic if available)
+                query_complexity = analyze_query_complexity(contextual_message, fallback_semantic_analysis)
                 
                 # Prepare enhanced context for agentic system
                 agentic_context = {

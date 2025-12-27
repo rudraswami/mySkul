@@ -155,7 +155,8 @@ class Settings:
     # =============================================================================
     # GEMINI PRO - PRIMARY REASONING MODEL (Lightning fast, deeply intelligent)
     # =============================================================================
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyCvZFnJiADdLqvMZ0lAtgRzKtJxJkMKglo")
+    # SECURITY FIX: Removed hardcoded API keys - must be set via environment
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")  # For NETRA v4 visual reasoning (fastest, cost-effective)
     GEMINI_PRO_MODEL: str = os.getenv("GEMINI_PRO_MODEL", "gemini-1.5-pro-latest")  # Deep reasoning
     GEMINI_VISUAL_MODEL: str = os.getenv("GEMINI_VISUAL_MODEL", "gemini-2.0-flash-001")  # For advanced reasoning (not image gen)
@@ -165,12 +166,14 @@ class Settings:
     # DEEPSEEK & VISION MODEL SETTINGS
     # =============================================================================
     # DeepSeek - Fallback reasoning model (70B for deep thinking)
-    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "sk-288b009e0be14411a1c11b4649c360be")
+    # SECURITY FIX: Removed hardcoded API keys - must be set via environment
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-reasoner")
     DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
     
     # Kimi-VL - PRIMARY Vision model (OCR, diagrams, formulas, textbook pages)
-    KIMI_VISION_API_KEY: str = os.getenv("KIMI_VISION_API_KEY", "sk-aEzUhSMy0Izz6bUnbJiwtpBxDADeI94vByaUTqOvOV6y2EP9")
+    # SECURITY FIX: Removed hardcoded API keys - must be set via environment
+    KIMI_VISION_API_KEY: str = os.getenv("KIMI_VISION_API_KEY", "")
     KIMI_VISION_MODEL: str = os.getenv("KIMI_VISION_MODEL", "moonshot-v1-8k-vision-preview")
     KIMI_VISION_BASE_URL: str = os.getenv("KIMI_VISION_BASE_URL", "https://api.moonshot.ai/v1")
     
@@ -221,6 +224,92 @@ class Settings:
     # Fallback behavior when LLM classification fails
     # Options: "minimal_llm" (lightweight LLM call) or "safe_general" (return GENERAL intent)
     CLASSIFICATION_FALLBACK_MODE: str = os.getenv("CLASSIFICATION_FALLBACK_MODE", "safe_general")
+    
+    # =============================================================================
+    # 🔒 PHASE 5: SAFETY & REGRESSION CONTROL FLAGS
+    # =============================================================================
+    # Enable semantic agent selection (agents selected by semantic analysis, not keywords)
+    ENABLE_SEMANTIC_AGENT_SELECTION: bool = os.getenv("ENABLE_SEMANTIC_AGENT_SELECTION", "true").lower() == "true"
+    
+    # Enable continuity lock-in (awaiting_continuation forces continuation, no generic responses)
+    ENABLE_CONTINUITY_LOCKIN: bool = os.getenv("ENABLE_CONTINUITY_LOCKIN", "true").lower() == "true"
+    
+    # Enable emotion as context (emotion modulates response, doesn't trigger pipeline)
+    ENABLE_EMOTION_AS_CONTEXT: bool = os.getenv("ENABLE_EMOTION_AS_CONTEXT", "true").lower() == "true"
+    
+    # Log comparison between keyword and semantic decisions (for monitoring rollout)
+    LOG_KEYWORD_SEMANTIC_COMPARISON: bool = os.getenv("LOG_KEYWORD_SEMANTIC_COMPARISON", "false").lower() == "true"
+    
+    # =============================================================================
+    # 🎯 COGNITIVE OS GAP 4: CONFIDENCE CALIBRATION FLAGS
+    # =============================================================================
+    # Enable real-time confidence calibration (GAP 4)
+    ENABLE_CONFIDENCE_CALIBRATION: bool = os.getenv("ENABLE_CONFIDENCE_CALIBRATION", "true").lower() == "true"
+    
+    # Enable confidence self-assessment in LLM prompts
+    ENABLE_CONFIDENCE_SELF_ASSESSMENT: bool = os.getenv("ENABLE_CONFIDENCE_SELF_ASSESSMENT", "true").lower() == "true"
+    
+    # Enable clarification requests when confidence is low
+    ENABLE_CONFIDENCE_CLARIFICATION: bool = os.getenv("ENABLE_CONFIDENCE_CLARIFICATION", "true").lower() == "true"
+    
+    # Enable hedging language when confidence is moderate
+    ENABLE_CONFIDENCE_HEDGING: bool = os.getenv("ENABLE_CONFIDENCE_HEDGING", "true").lower() == "true"
+    
+    # Enable persistent calibration using historical accuracy data
+    # When enabled, adjusts confidence based on past prediction accuracy
+    ENABLE_PERSISTENT_CALIBRATION: bool = os.getenv("ENABLE_PERSISTENT_CALIBRATION", "true").lower() == "true"
+    
+    # Enable agent self-assessment (agents decide their own confidence)
+    # When enabled, agents can opt-out of queries they assess as poor fit
+    ENABLE_AGENT_SELF_ASSESSMENT: bool = os.getenv("ENABLE_AGENT_SELF_ASSESSMENT", "true").lower() == "true"
+    
+    # Minimum confidence threshold before hedging is applied (0.0-1.0)
+    CONFIDENCE_HEDGING_THRESHOLD: float = float(os.getenv("CONFIDENCE_HEDGING_THRESHOLD", "0.7"))
+    
+    # Minimum confidence threshold before clarification is requested (0.0-1.0)
+    CONFIDENCE_CLARIFICATION_THRESHOLD: float = float(os.getenv("CONFIDENCE_CLARIFICATION_THRESHOLD", "0.5"))
+    
+    # =============================================================================
+    # 🤖 COGNITIVE OS GAP 2: DYNAMIC MODEL SELECTION FLAGS
+    # =============================================================================
+    # Enable semantic model selection (GAP 2)
+    ENABLE_SEMANTIC_MODEL_SELECTION: bool = os.getenv("ENABLE_SEMANTIC_MODEL_SELECTION", "true").lower() == "true"
+    
+    # Default model when semantic selection is disabled
+    DEFAULT_LLM_MODEL: str = os.getenv("DEFAULT_LLM_MODEL", "gemini-1.5-flash")
+    
+    # Available models for selection (comma-separated)
+    AVAILABLE_LLM_MODELS: str = os.getenv("AVAILABLE_LLM_MODELS", "gemini-1.5-flash,gemini-1.5-pro,gpt-4o-mini")
+    
+    # =============================================================================
+    # 🤖 COGNITIVE OS GAP 1: AGENT AUTONOMY FLAGS
+    # =============================================================================
+    # Enable agent autonomy (agents self-assess, not assigned by supervisor)
+    ENABLE_AGENT_AUTONOMY: bool = os.getenv("ENABLE_AGENT_AUTONOMY", "true").lower() == "true"
+    
+    # Enable agent self-assessment in routing
+    ENABLE_AGENT_SELF_ASSESSMENT: bool = os.getenv("ENABLE_AGENT_SELF_ASSESSMENT", "true").lower() == "true"
+    
+    # Maximum agents that can participate in a single response
+    MAX_PARTICIPATING_AGENTS: int = int(os.getenv("MAX_PARTICIPATING_AGENTS", "3"))
+    
+    # Minimum participation score to be considered (0-1)
+    MIN_AGENT_PARTICIPATION_SCORE: float = float(os.getenv("MIN_AGENT_PARTICIPATION_SCORE", "0.3"))
+    
+    # =============================================================================
+    # 📚 COGNITIVE OS GAP 3: CROSS-SESSION SEMANTIC LEARNING FLAGS
+    # =============================================================================
+    # Enable cross-session semantic learning (GAP 3)
+    ENABLE_SEMANTIC_LEARNING: bool = os.getenv("ENABLE_SEMANTIC_LEARNING", "true").lower() == "true"
+    
+    # Enable context injection from semantic profiles
+    ENABLE_PROFILE_CONTEXT_INJECTION: bool = os.getenv("ENABLE_PROFILE_CONTEXT_INJECTION", "true").lower() == "true"
+    
+    # Maximum signals to store per user
+    MAX_SEMANTIC_SIGNALS_PER_USER: int = int(os.getenv("MAX_SEMANTIC_SIGNALS_PER_USER", "100"))
+    
+    # Enable learning from user feedback
+    ENABLE_FEEDBACK_LEARNING: bool = os.getenv("ENABLE_FEEDBACK_LEARNING", "true").lower() == "true"
     
     # =============================================================================
     # OAUTH SETTINGS

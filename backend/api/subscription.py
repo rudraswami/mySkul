@@ -764,4 +764,3 @@ async def verify_razorpay_payment(
         logger = logging.getLogger(__name__)
         logger.error(f"Payment verification failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Payment verification failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")

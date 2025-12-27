@@ -162,18 +162,35 @@ apiClient.interceptors.response.use(
     // Handle authentication errors (token expired)
     if (error.response?.status === 401) {
       const errorDetail = error.response.data?.detail || '';
+      const requestUrl = error.config?.url || '';
       
-      // Check if token is expired
-      if (errorDetail.includes('expired') || errorDetail.includes('invalid')) {
-        console.warn('Token expired, user needs to re-authenticate');
+      // Don't clear/redirect for auth validation endpoints - let AuthContext handle those
+      const isAuthValidation = requestUrl.includes('/user/profile') || 
+                               requestUrl.includes('/auth/session');
+      
+      if (!isAuthValidation) {
+        console.warn('🔒 401 Unauthorized on protected API call');
         
-        // Clear expired token
+        // Clear auth data on 401 from non-auth-validation endpoints
+        // This handles mid-session token expiry
         localStorage.removeItem('dhruv_ai_token');
+        localStorage.removeItem('dhruv_ai_user');
         
-        // Add user-friendly message
+        // Redirect to login for non-auth-validation 401s
+        // This handles cases where user's session expires while using the app
+        if (typeof window !== 'undefined' && 
+            !window.location.pathname.includes('/login') && 
+            !window.location.pathname.includes('/auth/callback') &&
+            window.location.pathname !== '/') {
+          console.log('🔄 Session expired, redirecting to login');
+          window.location.href = '/login';
+        }
+      }
+      
+      // Check if token is expired for user message
+      if (errorDetail.includes('expired') || errorDetail.includes('invalid')) {
         error.userMessage = 'Your session has expired. Please log in again.';
       } else {
-        console.warn('Authentication error:', error.response.data);
         error.userMessage = 'Authentication required. Please log in.';
       }
     }

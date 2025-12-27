@@ -181,6 +181,9 @@ def create_app() -> FastAPI:
             "/api/netra/v4/analyze",
             "/api/netra/v4/health",
             "/api/netra/v4/metrics",
+            # 📧 Newsletter API (public - no auth required)
+            "/api/newsletter/subscribe",
+            "/api/newsletter/unsubscribe",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")

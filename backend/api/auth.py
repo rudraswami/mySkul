@@ -670,61 +670,9 @@ async def google_auth_callback(
     }
 
 
-@router.get("/session")
-async def get_session(
-    request: Request,
-    db = Depends(get_database)
-):
-    """
-    Check existing session from cookie or Authorization header
-    Returns current user if session is valid
-    """
-    from models.core import User
-    from datetime import datetime, timezone
-    
-    # Try cookie first
-    session_token = request.cookies.get("dhruv_ai_session")
-    
-    # Fallback to Authorization header
-    if not session_token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            session_token = auth_header.split(" ")[1]
-    
-    # Also check old JWT cookie for backward compatibility
-    if not session_token:
-        session_token = request.cookies.get("dhruv_ai_auth")
-    
-    if not session_token:
-        raise HTTPException(status_code=401, detail="No active session")
-    
-    # Find user with valid session
-    current_time_iso = datetime.now(timezone.utc).isoformat()
-    user_doc = await db.users.find_one({
-        "session_token": session_token,
-        "session_expiry": {"$gt": current_time_iso}
-    })
-    
-    if not user_doc:
-        raise HTTPException(status_code=401, detail="Session expired or invalid")
-    
-    user = User(**user_doc)
-    
-    return {
-        "user": {
-            "user_id": user.user_id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "photo_url": user.photo_url,
-            "exam_type": user.exam_type,
-            "profile_completed": user.profile_completed,
-            "subscription_type": user.subscription_type
-        }
-    }
-
-
-
-# Note: csrf-token endpoint defined above (lines 143-181) - removed duplicate
+# NOTE: Duplicate @router.get("/session") was removed (Dec 26, 2024)
+# The primary session endpoint is defined at line 185 using AuthService
+# This duplicate was causing route shadowing issues
 
 
 @router.post("/profile/complete")

@@ -47,6 +47,21 @@ export function VisualLearning() {
 
     return (
         <section className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-sm rounded-3xl flex items-center justify-center">
+                <div className="text-center">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="px-8 py-4 bg-gradient-to-r from-amber-500/30 to-orange-500/30 border-2 border-amber-400/50 rounded-2xl backdrop-blur-md"
+                    >
+                        <span className="text-amber-300 text-2xl font-bold uppercase tracking-wider">✨ Coming Soon</span>
+                    </motion.div>
+                    <p className="text-white/70 mt-4 text-lg">3D Visual Learning launching soon!</p>
+                </div>
+            </div>
+            
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}

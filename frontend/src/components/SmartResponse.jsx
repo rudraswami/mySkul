@@ -332,25 +332,28 @@ const SmartResponse = ({
         ? defaultView.main_content.content || defaultView.main_content.text
         : defaultView.main_content;
       const safeMain = safeString(mainContentValue);
-      if (safeMain && safeMain.length > 50) {
+      // CRITICAL FIX: Lowered threshold from 50 to 10 to catch shorter valid responses
+      if (safeMain && safeMain.length > 10) {
         mainContent = safeMain;
       }
     }
     // Priority 3: Dual response mentor content
     else if (dualResponse.mentor) {
       const mentorContent = safeString(dualResponse.mentor.content || dualResponse.mentor.text);
-      if (mentorContent && mentorContent.length > 50) {
+      // CRITICAL FIX: Lowered threshold from 50 to 10
+      if (mentorContent && mentorContent.length > 10) {
         mainContent = mentorContent;
       }
     }
     // Priority 4: Direct main_content string
-    else if (typeof defaultView.main_content === 'string' && defaultView.main_content.length > 50) {
+    else if (typeof defaultView.main_content === 'string' && defaultView.main_content.length > 10) {
       mainContent = defaultView.main_content;
     }
     // Priority 5: Metaphor text as fallback
     else if (defaultView.metaphor) {
       const metaphorText = safeString(defaultView.metaphor.text || defaultView.metaphor);
-      if (metaphorText && metaphorText.length > 50) {
+      // CRITICAL FIX: Lowered threshold from 50 to 10
+      if (metaphorText && metaphorText.length > 10) {
         mainContent = metaphorText;
       }
     }
@@ -364,9 +367,16 @@ const SmartResponse = ({
     // Priority 7: Greeting as last resort
     else if (defaultView.greeting) {
       const greetingText = safeString(defaultView.greeting);
-      if (greetingText && greetingText.length > 20) {
+      // CRITICAL FIX: Lowered threshold from 20 to 5
+      if (greetingText && greetingText.length > 5) {
         mainContent = greetingText;
       }
+    }
+    // Priority 8: ULTIMATE FALLBACK - if still no content, generate a placeholder
+    // This ensures the UI NEVER shows empty response
+    if (!mainContent && response) {
+      console.warn('⚠️ SmartResponse: All content extraction failed, using ultimate fallback');
+      mainContent = "I'm processing your question. Please try asking again or rephrase your question for a better response.";
     }
     
     // CRITICAL: Ensure mainContent is always a string or null, never an object

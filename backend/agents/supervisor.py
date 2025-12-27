@@ -34,15 +34,43 @@ from agents.study_buddy import StudyBuddyAgent
 from agents.parent_report import ParentReportAgent
 from agents.core.tool_registry import create_tool_registry
 
-# COGNITO-OS v3.0 - Universal Education Components
+# COGNITO-OS v3.0 - Universal Education Components (Graceful Degradation)
+# Each component is loaded independently to maximize availability
+COGNITO_OS_AVAILABLE = False
+KNOWLEDGE_GRAPH_AVAILABLE = False
+HYBRID_ENGINE_AVAILABLE = False
+AGENT_NEGOTIATOR_AVAILABLE = False
+
+# Import Knowledge Graph
 try:
     from services.knowledge_base.universal_knowledge_graph import get_universal_knowledge_graph
-    from services.hybrid_reasoning_engine import get_hybrid_reasoning_engine
-    from services.cognitive_model.agent_negotiation import get_agent_negotiator
-    COGNITO_OS_AVAILABLE = True
+    KNOWLEDGE_GRAPH_AVAILABLE = True
 except ImportError as e:
-    COGNITO_OS_AVAILABLE = False
-    logging.warning(f"Cognito-OS components not available: {e}")
+    logging.warning(f"⚠️ UniversalKnowledgeGraph not available: {e}")
+    get_universal_knowledge_graph = None
+
+# Import Hybrid Reasoning Engine
+try:
+    from services.hybrid_reasoning_engine import get_hybrid_reasoning_engine
+    HYBRID_ENGINE_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"⚠️ HybridReasoningEngine not available: {e}")
+    get_hybrid_reasoning_engine = None
+
+# Import Agent Negotiator
+try:
+    from services.cognitive_model.agent_negotiation import get_agent_negotiator
+    AGENT_NEGOTIATOR_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"⚠️ AgentNegotiator not available: {e}")
+    get_agent_negotiator = None
+
+# Set overall flag if any component is available
+COGNITO_OS_AVAILABLE = KNOWLEDGE_GRAPH_AVAILABLE or HYBRID_ENGINE_AVAILABLE or AGENT_NEGOTIATOR_AVAILABLE
+
+if COGNITO_OS_AVAILABLE:
+    logging.info(f"🧠 Cognito-OS: KnowledgeGraph={KNOWLEDGE_GRAPH_AVAILABLE}, "
+                 f"HybridEngine={HYBRID_ENGINE_AVAILABLE}, Negotiator={AGENT_NEGOTIATOR_AVAILABLE}")
 
 logger = logging.getLogger(__name__)
 
@@ -91,16 +119,33 @@ class SupervisorAgent(BaseAgent):
         self.study_buddy = StudyBuddyAgent(config)  # Peer learning simulation
         self.parent_report = ParentReportAgent(config)  # Guardian communication
         
-        # COGNITO-OS v3.0 - Universal Education Components
+        # COGNITO-OS v3.0 - Universal Education Components (Graceful Degradation)
+        # Each component loads independently - failure of one doesn't block others
         self.knowledge_graph = None
         self.hybrid_engine = None
         self.agent_negotiator = None
-        self.use_hybrid_reasoning = False  # Flag to enable hybrid reasoning
+        self.use_hybrid_reasoning = False
         
-        if COGNITO_OS_AVAILABLE:
+        # Load Knowledge Graph (independent)
+        if KNOWLEDGE_GRAPH_AVAILABLE and get_universal_knowledge_graph:
             try:
                 self.knowledge_graph = get_universal_knowledge_graph()
+                logger.info("   ├── 🌍 UniversalKnowledgeGraph connected")
+            except Exception as e:
+                logger.warning(f"⚠️ KnowledgeGraph init failed: {e}")
+        
+        # Load Hybrid Reasoning Engine (independent)
+        if HYBRID_ENGINE_AVAILABLE and get_hybrid_reasoning_engine:
+            try:
                 self.hybrid_engine = get_hybrid_reasoning_engine()
+                self.use_hybrid_reasoning = True
+                logger.info("   ├── 🧠 HybridReasoningEngine active")
+            except Exception as e:
+                logger.warning(f"⚠️ HybridEngine init failed: {e}")
+        
+        # Load Agent Negotiator (independent)
+        if AGENT_NEGOTIATOR_AVAILABLE and get_agent_negotiator:
+            try:
                 self.agent_negotiator = get_agent_negotiator()
                 
                 # Register agents with negotiator for collaboration
@@ -108,15 +153,19 @@ class SupervisorAgent(BaseAgent):
                 self.agent_negotiator.register_agent("professor", self.professor, ["derivation", "proof", "formal"])
                 self.agent_negotiator.register_agent("doubt_resolver", self.doubt_resolver, ["doubt", "confusion", "clarification"])
                 # COGNITIVE OS FIX: More specific capabilities for exam_coach
-                # Only activate for explicit exam preparation, not generic "strategy"
                 self.agent_negotiator.register_agent("exam_coach", self.exam_coach, ["jee_preparation", "neet_preparation", "exam_strategy", "study_plan_for_exam"])
                 
-                self.use_hybrid_reasoning = True
-                logger.info("   ├── 🌍 UniversalKnowledgeGraph connected (multi-domain)")
-                logger.info("   ├── 🧠 HybridReasoningEngine active (Neural + Symbolic)")
                 logger.info("   └── 🤝 AgentNegotiator ready (collaborative)")
             except Exception as e:
-                logger.warning(f"⚠️ Cognito-OS components failed to load: {e}")
+                logger.warning(f"⚠️ AgentNegotiator init failed: {e}")
+        
+        # Log degradation status if any component is missing
+        if not (self.knowledge_graph and self.hybrid_engine and self.agent_negotiator):
+            missing = []
+            if not self.knowledge_graph: missing.append("KnowledgeGraph")
+            if not self.hybrid_engine: missing.append("HybridEngine")
+            if not self.agent_negotiator: missing.append("Negotiator")
+            logger.warning(f"⚠️ Cognito-OS degraded mode: missing {', '.join(missing)}")
         
         logger.info("🤖 Supervisor initialized with TRUE AGENTIC system (Cognito OS v3.0)")
         logger.info("   ├── Mentor agent initialized")
@@ -160,6 +209,40 @@ class SupervisorAgent(BaseAgent):
         """
         try:
             logger.info(f"🤖 Supervisor orchestrating query: {query[:100]}")
+            
+            # ================================================================
+            # Step 0: COGNITIVE CONTROL LAYER (Meta-Reasoning)
+            # Reason about "who should think" BEFORE agent selection.
+            # This is TRUE cognitive control - the system reasons about reasoning.
+            # ADDITIVE: Does not modify existing selection, only provides signals.
+            # ================================================================
+            try:
+                from services.cognitive_model.cognitive_control import inject_cognitive_control
+                
+                available_agents = ['mentor', 'professor', 'visualise', 'doubt_resolver', 
+                                   'exam_coach', 'study_buddy', 'weak_area_detective', 'parent_report']
+                cognitive_plan = inject_cognitive_control(context, query, available_agents)
+                logger.info(f"🧠 Cognitive control: {cognitive_plan.reasoning}")
+            except ImportError:
+                logger.debug("Cognitive control layer not available")
+            except Exception as cog_err:
+                logger.debug(f"Cognitive control failed (non-blocking): {cog_err}")
+            
+            # ================================================================
+            # Step 0.5: SHARED REASONING STATE (Multi-Agent Collaboration)
+            # Inject thread-safe shared state for agents to exchange insights
+            # during their execution. TRUE shared reasoning, not just metadata.
+            # ADDITIVE: Agents use if available, proceed normally if not.
+            # ================================================================
+            try:
+                from services.cognitive_model.shared_reasoning_state import inject_shared_state
+                
+                shared_state = inject_shared_state(context, query)
+                logger.info(f"🧠 Shared reasoning state initialized")
+            except ImportError:
+                logger.debug("Shared reasoning state not available")
+            except Exception as state_err:
+                logger.debug(f"Shared state init failed (non-blocking): {state_err}")
             
             # Step 1: Analyze query intent (with context for mode-aware detection)
             intent = self._detect_intent(query, context)
@@ -226,6 +309,28 @@ class SupervisorAgent(BaseAgent):
             # Step 4: Validate responses
             validated_responses = self._validate_responses(agent_responses)
             
+            # Step 4.5: 🔍 CROSS-VERIFICATION FALLBACK (When negotiator unavailable)
+            # If we're running in parallel mode without negotiation, still verify
+            # mathematical/factual content between agents for consistency
+            should_cross_verify = (
+                context.get('enable_agent_negotiation', False) and 
+                not use_negotiation and  # Negotiation was requested but unavailable
+                len(validated_responses) > 1
+            )
+            
+            if should_cross_verify:
+                try:
+                    verified_responses = await self._cross_verify_parallel_responses(
+                        query=query,
+                        agent_responses=validated_responses,
+                        context=context
+                    )
+                    validated_responses = verified_responses
+                    logger.info("✅ Cross-verification complete (negotiator fallback)")
+                except Exception as verify_err:
+                    logger.warning(f"⚠️ Cross-verification failed (non-blocking): {verify_err}")
+                    # Continue with unverified responses
+            
             # Step 5: Combine and structure final response
             combined_response = self._merge_responses(
                 query=query,
@@ -233,6 +338,87 @@ class SupervisorAgent(BaseAgent):
                 agent_responses=validated_responses,
                 context=context
             )
+            
+            # ================================================================
+            # Step 5.5: ALWAYS-ON COLLABORATION METADATA (Lightweight Layer)
+            # Even in parallel execution mode, track which agents contributed
+            # and add collaboration summary. This is ADDITIVE and NON-BLOCKING.
+            # ================================================================
+            ENABLE_COLLABORATION_TRACKING = True  # Feature flag (safe default: ON)
+            
+            if ENABLE_COLLABORATION_TRACKING:
+                try:
+                    # Build collaboration summary
+                    contributing_agents = []
+                    agent_confidences = {}
+                    
+                    for agent_name, response in validated_responses.items():
+                        if response.get('success') and response.get('content'):
+                            contributing_agents.append(agent_name)
+                            # Extract confidence if available
+                            confidence = response.get('metadata', {}).get('confidence', 0.7)
+                            agent_confidences[agent_name] = confidence
+                    
+                    # Calculate aggregate confidence
+                    if agent_confidences:
+                        avg_confidence = sum(agent_confidences.values()) / len(agent_confidences)
+                    else:
+                        avg_confidence = 0.7
+                    
+                    # Add collaboration metadata (non-breaking - new field)
+                    combined_response['collaboration'] = {
+                        'mode': 'negotiated' if use_negotiation else 'parallel',
+                        'agents_contributed': contributing_agents,
+                        'agent_confidences': agent_confidences,
+                        'aggregate_confidence': round(avg_confidence, 2),
+                        'cross_verified': should_cross_verify if 'should_cross_verify' in dir() else False,
+                        'negotiation_available': self.agent_negotiator is not None
+                    }
+                    
+                    logger.info(f"🤝 Collaboration: {len(contributing_agents)} agents, "
+                               f"confidence={avg_confidence:.2f}, mode={'negotiated' if use_negotiation else 'parallel'}")
+                
+                except Exception as collab_err:
+                    logger.debug(f"Collaboration tracking failed (non-blocking): {collab_err}")
+                    # Continue without collaboration metadata
+            
+            # ================================================================
+            # Step 5.7: AGENT CHALLENGE MECHANISM (Post-Response Disputes)
+            # Detect contradictions and allow agents to challenge each other.
+            # This is TRUE agent autonomy - agents don't just produce outputs,
+            # they reason about and dispute each other's claims.
+            # ADDITIVE: Only runs when contradictions detected, non-blocking.
+            # ================================================================
+            if len(validated_responses) > 1:
+                try:
+                    from services.cognitive_model.agent_challenge import get_challenge_system
+                    
+                    challenge_system = get_challenge_system()
+                    challenge_result = await challenge_system.run_challenge_round(
+                        agent_responses=validated_responses,
+                        query=query,
+                        context=context
+                    )
+                    
+                    if challenge_result.get('challenge_round_ran'):
+                        # Apply corrections to validated responses
+                        validated_responses = challenge_result['responses']
+                        
+                        # Add challenge metadata to combined response
+                        combined_response['_challenge_round'] = {
+                            'challenges': challenge_result['challenges'],
+                            'resolutions': challenge_result['resolutions']
+                        }
+                        
+                        upheld = sum(1 for r in challenge_result['resolutions'] 
+                                    if r.get('outcome') == 'upheld')
+                        logger.info(f"⚔️ Challenge round: {len(challenge_result['challenges'])} challenges, "
+                                   f"{upheld} upheld")
+                    
+                except ImportError:
+                    logger.debug("Agent challenge mechanism not available")
+                except Exception as challenge_err:
+                    logger.debug(f"Challenge round failed (non-blocking): {challenge_err}")
             
             # Step 6: 💪 MOTIVATION MIDDLEWARE - Add emotional support if needed
             # This enhances the response with motivational content based on student state
@@ -261,15 +447,24 @@ class SupervisorAgent(BaseAgent):
                 'visual': None
             }
     
-    def _detect_intent(self, query: str, context: Dict[str, Any] = None) -> str:
+    def _detect_intent(
+        self, 
+        query: str, 
+        context: Dict[str, Any] = None,
+        semantic_analysis: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Detect student intent from query.
         
-        COGNITIVE OS FIX: Now context-aware for mode validation.
+        PHASE 1 FIX: This method is now semantics-first.
+        - When semantic_analysis is available, use it as authoritative
+        - Keyword patterns only run when semantic fails or confidence is low
+        - Agent routing is based on semantic intent, not keyword matching
         
         Args:
             query: Student's question
             context: Context dict with exam_mode, etc.
+            semantic_analysis: Dict from SemanticIntentClassifier (optional)
         
         Returns:
             Intent type: 'concept', 'derivation', 'application', 'comparison', 'doubt', etc.
@@ -277,132 +472,210 @@ class SupervisorAgent(BaseAgent):
         context = context or {}
         query_lower = query.lower().strip()
         
-        # Greeting intent (must check FIRST before other patterns)
-        greeting_words = ['hi', 'hello', 'hey', 'namaste', 'hii', 'heya', 'yo']
-        # Check if entire message is just a greeting (with possible punctuation)
+        # ================================================================
+        # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+        # ================================================================
+        if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+            intent = semantic_analysis.get('intent', 'general')
+            
+            # Map semantic intents to supervisor intents
+            semantic_to_supervisor = {
+                'greeting': 'greeting',
+                'farewell': 'greeting',
+                'gratitude': 'greeting',
+                'acknowledgment': 'acknowledgment',  # Will continue previous task
+                'clarification': 'doubt',  # Confusion maps to doubt resolver
+                'confusion': 'doubt',
+                'question': 'concept',
+                'explanation': 'concept',
+                'practice': 'application',
+                'emotional_support': 'emotional',
+                'motivation': 'emotional',
+                'explore': 'concept',  # Explore new topics = conceptual
+                'continue': 'continuation',  # Continue previous work
+                'chitchat': 'chitchat',
+                'help': 'help',
+                'general': 'concept',  # Default to concept
+            }
+            
+            mapped_intent = semantic_to_supervisor.get(intent, 'concept')
+            logger.info(f"🧠 SEMANTIC intent: {intent} -> supervisor intent: {mapped_intent}")
+            
+            # For specific agent routing, still check agent capabilities
+            # but use semantic signals, not keywords
+            if mapped_intent == 'doubt':
+                logger.info("🎯 Semantic: DOUBT intent - routing to AgenticDoubtResolver")
+                return 'doubt'
+            
+            if mapped_intent == 'continuation':
+                # Check if there's a previous task to continue
+                if context.get('last_task_type') or context.get('awaiting_continuation'):
+                    return 'continuation'
+                return 'concept'  # No context to continue, treat as new
+            
+            # PHASE 3: If awaiting_continuation is True, ANY acknowledgment is continuation
+            if context.get('awaiting_continuation') and mapped_intent == 'acknowledgment':
+                logger.info("🔄 CONTINUITY LOCK: awaiting_continuation=True, forcing continuation intent")
+                return 'continuation'
+            
+            return mapped_intent
+        
+        # ================================================================
+        # LEGACY FALLBACK: Only when semantic analysis unavailable
+        # ================================================================
+        logger.warning("⚠️ LEGACY: Using keyword-based intent detection (semantic unavailable)")
+        
+        # Greeting intent - STRUCTURAL (check if entire message is short greeting)
         clean_query = query_lower.strip('!?.,:;')
-        if clean_query in greeting_words or len(query_lower.split()) <= 3 and any(word in query_lower for word in greeting_words):
+        word_count = len(query_lower.split())
+        if word_count <= 3 and len(clean_query) <= 10:
+            # Very short message - likely greeting/ack, let agents handle
             return 'greeting'
         
-        # DOUBT INTENT - Route to AgenticDoubtResolver ONLY for TRUE confusion
-        # NOTE: is_doubt_query() is now RESTRICTIVE - normal questions go to concept/application
-        if AgenticDoubtResolver.is_doubt_query(query):
-            logger.info("🎯 Detected TRUE DOUBT intent (genuine confusion) - routing to AgenticDoubtResolver")
-            return 'doubt'
+        # PHASE 1: Agent routing via keyword patterns (LEGACY ONLY)
+        # These are hints, not decisions - agents will still negotiate
         
-        # EXAM STRATEGY INTENT - Route to ExamCoachAgent
-        # COGNITIVE OS FIX: Only route to ExamCoach if BOTH conditions are met:
-        # 1. Query explicitly mentions exam strategy (stricter pattern matching)
-        # 2. Exam context exists (user has explicit exam mode or query mentions exam)
-        exam_mode = context.get('exam_mode', 'General')
-        has_explicit_exam_mode = exam_mode.upper() in ['JEE', 'NEET', 'UPSC', 'GATE', 'CAT']
-        
-        if ExamCoachAgent.is_exam_strategy_query(query):
-            # Additional check: Even with strict pattern matching, only route if:
-            # - User has explicit exam mode, OR
-            # - Query explicitly mentions an exam name
-            explicit_exam_in_query = any(exam in query_lower for exam in ['jee', 'neet', 'upsc', 'gate', 'cat', 'boards'])
-            
-            if has_explicit_exam_mode or explicit_exam_in_query:
-                logger.info(f"🏆 Detected EXAM_STRATEGY intent (exam_mode={exam_mode}) - routing to ExamCoach")
-                return 'exam_strategy'
-            else:
-                logger.info(f"⚠️ Exam-like query but exam_mode=General - NOT routing to ExamCoach")
-                # Fall through to concept/other intents
-        
-        # WEAK AREA ANALYSIS INTENT - Route to WeakAreaDetective
-        # Check if student wants to know their weak areas
-        if WeakAreaDetectiveAgent.is_weak_area_query(query):
-            logger.info("🔍 Detected WEAK_AREA intent - routing to WeakAreaDetective")
-            return 'weak_area_analysis'
-        
-        # STUDY BUDDY INTENT - Route to StudyBuddy
-        # Check if student wants to study together / peer learning
-        if StudyBuddyAgent.is_buddy_query(query):
-            logger.info("🤝 Detected STUDY_BUDDY intent - routing to StudyBuddy")
-            return 'study_buddy'
-        
-        # PARENT REPORT INTENT (NEW) - Route to ParentReport
-        # Check if request is for parent/guardian report
-        if ParentReportAgent.is_parent_report_query(query):
-            logger.info("👨‍👩‍👧 Detected PARENT_REPORT intent - routing to ParentReport")
-            return 'parent_report'
-        
-        # Comparison intent
-        if any(word in query_lower for word in ['compare', 'difference', 'vs', 'versus', 'contrast']):
-            return 'comparison'
-        
-        # Derivation/proof intent
-        if any(word in query_lower for word in ['derive', 'prove', 'proof', 'show that']):
-            return 'derivation'
-        
-        # Application/problem-solving intent
-        if any(word in query_lower for word in ['solve', 'calculate', 'find', 'compute']):
-            return 'application'
-        
-        # Clarification intent - also route to doubt resolver
-        if any(word in query_lower for word in ['clarify', 'explain again', 'what do you mean', 'elaborate']):
-            return 'doubt'  # Changed from 'clarification' to use DoubtResolver
+        # Check specialized agents (they have their own semantic checks now)
+        # Only use these as fallback when semantic classification failed
         
         # Default: conceptual explanation
+        # Let agents negotiate the actual handling
         return 'concept'
     
     def _select_agents(
         self,
         intent: str,
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        semantic_analysis: Optional[Dict[str, Any]] = None
     ) -> List[str]:
         """
-        Select which agents to activate based on intent
+        Select which agents to activate based on intent.
+        
+        PHASE 2 FIX: Uses semantic agent selection.
+        When semantic analysis is available, agents are selected based on:
+        1. Semantic intent + emotional signals
+        2. Agent capability matching
+        3. Response expectation (conversational vs structured)
+        
+        NOT based on keyword-to-agent mapping.
         
         Returns:
             List of agent names to run
         """
+        # ================================================================
+        # PHASE 2: SEMANTIC AGENT SELECTION
+        # ================================================================
+        if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+            return self._select_agents_semantic(semantic_analysis, context)
+        
+        # ================================================================
+        # LEGACY FALLBACK: Intent-based selection
+        # ================================================================
+        logger.debug("📋 Using legacy intent-based agent selection")
+        
         # For greetings, ONLY run Mentor
         if intent == 'greeting':
             return ['mentor']
         
         # DOUBT INTENT - Use specialized DoubtResolver
-        # DoubtResolver provides quick, empathetic, visual explanations
         if intent == 'doubt':
             agents = ['doubt_resolver']
-            # Always include visual for doubts - visuals help clear confusion
             if context.get('request_visual', True):
                 agents.append('visualise')
             return agents
         
-        # EXAM STRATEGY INTENT - Use ExamCoach
-        # ExamCoach provides strategic exam preparation guidance
-        if intent == 'exam_strategy':
-            # ExamCoach handles strategy alone - no need for mentor/professor
-            return ['exam_coach']
-        
-        # WEAK AREA ANALYSIS INTENT - Use WeakAreaDetective
-        # WeakAreaDetective analyzes performance and finds gaps
-        if intent == 'weak_area_analysis':
-            return ['weak_area_detective']
-        
-        # STUDY BUDDY INTENT - Use StudyBuddy
-        # StudyBuddy provides peer learning simulation
-        if intent == 'study_buddy':
-            return ['study_buddy']
-        
-        # PARENT REPORT INTENT (NEW) - Use ParentReport
-        # ParentReport generates guardian-focused reports
-        if intent == 'parent_report':
-            return ['parent_report']
-        
-        # Always run Mentor (emotional support)
+        # Default: Mentor + Professor for educational queries
         agents = ['mentor']
-        
-        # Professor for formal explanations (skip for greetings)
-        if intent not in ['greeting']:
+        if intent not in ['greeting', 'acknowledgment']:
             agents.append('professor')
         
-        # Visualise for concept/derivation (skip for comparisons/greetings)
+        # Visual for substantive educational queries
         if context.get('request_visual', True) and intent in ['concept', 'derivation', 'application']:
             agents.append('visualise')
         
+        return agents
+    
+    def _select_agents_semantic(
+        self,
+        semantic_analysis: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> List[str]:
+        """
+        PHASE 2: Semantic-based agent selection.
+        
+        Agents are selected based on:
+        1. What the student NEEDS (emotional support, explanation, practice)
+        2. How the response should be DELIVERED (structured, conversational)
+        3. Student's emotional state
+        
+        NOT based on keyword matching.
+        """
+        agents = []
+        
+        intent = semantic_analysis.get('intent', 'general')
+        emotional_tone = semantic_analysis.get('emotional_tone', 'neutral')
+        emotional_intensity = semantic_analysis.get('emotional_intensity', 0)
+        response_expectation = semantic_analysis.get('response_expectation', 'conversational_advice')
+        needs_empathy = semantic_analysis.get('needs_empathy', False)
+        needs_encouragement = semantic_analysis.get('needs_encouragement', False)
+        
+        # ================================================================
+        # AGENT CAPABILITY MATCHING (Semantic, not keyword)
+        # ================================================================
+        
+        # MENTOR: Emotional support, metaphors, encouragement
+        # Required for: emotional states, confusion, or when empathy needed
+        mentor_relevant = any([
+            needs_empathy,
+            needs_encouragement,
+            emotional_intensity > 0.4,
+            emotional_tone in ['anxious', 'frustrated', 'confused', 'bored'],
+            intent in ['emotional_support', 'motivation', 'confusion', 'celebration'],
+            response_expectation == 'emotional_acknowledgment',
+        ])
+        
+        # PROFESSOR: Formal explanations, derivations, proofs
+        # Required for: structured deliverables, deep explanations
+        professor_relevant = any([
+            response_expectation in ['structured_deliverable', 'detailed_explanation'],
+            intent in ['question', 'explanation', 'practice'],
+            semantic_analysis.get('topic_mentioned'),  # Has a specific topic
+        ])
+        
+        # DOUBT_RESOLVER: Confusion, clarification, stuck
+        # Required for: explicit confusion or clarification requests
+        doubt_relevant = any([
+            intent in ['clarification', 'confusion'],
+            emotional_tone == 'confused',
+            semantic_analysis.get('needs_clarification', False),
+        ])
+        
+        # ================================================================
+        # BUILD AGENT LIST (Order matters - mentor first for tone)
+        # ================================================================
+        
+        # Mentor always runs for emotional intelligence
+        if mentor_relevant or True:  # Always include mentor for tone
+            agents.append('mentor')
+        
+        # Doubt resolver for confusion
+        if doubt_relevant:
+            agents.insert(0, 'doubt_resolver')  # Primary for doubt
+        
+        # Professor for substantive content
+        if professor_relevant and not doubt_relevant:
+            agents.append('professor')
+        
+        # Visual for educational queries
+        if context.get('request_visual', True):
+            if intent in ['question', 'explanation', 'practice'] or response_expectation == 'detailed_explanation':
+                agents.append('visualise')
+        
+        # Ensure at least mentor
+        if not agents:
+            agents = ['mentor']
+        
+        logger.info(f"🧠 SEMANTIC agent selection: {agents} (intent={intent}, tone={emotional_tone})")
         return agents
     
     async def _run_agents_parallel(
@@ -419,41 +692,50 @@ class SupervisorAgent(BaseAgent):
         """
         tasks = {}
         
-        # Create tasks for each agent
-        if 'mentor' in agents:
+        # Helper to check if agent should participate (agent autonomy)
+        def agent_should_run(agent, name):
+            if hasattr(agent, 'should_abstain'):
+                should_abstain, reason = agent.should_abstain(query, context)
+                if should_abstain:
+                    logger.info(f"   🚫 {name} self-abstained: {reason}")
+                    return False
+            return True
+        
+        # Create tasks for each agent (with self-abstain check)
+        if 'mentor' in agents and agent_should_run(self.mentor, 'Mentor'):
             logger.info("   Routing to Mentor agent...")
             tasks['mentor'] = self.mentor.process(query, context)
         
-        if 'professor' in agents:
+        if 'professor' in agents and agent_should_run(self.professor, 'Professor'):
             logger.info("   Routing to Professor agent...")
             tasks['professor'] = self.professor.process(query, context)
         
-        if 'visualise' in agents:
+        if 'visualise' in agents and agent_should_run(self.visualise, 'Visualise'):
             logger.info("   Routing to Visualise agent...")
             tasks['visualise'] = self.visualise.process(query, context)
         
         # NEW: DoubtResolver agent for doubt/confusion queries
-        if 'doubt_resolver' in agents:
+        if 'doubt_resolver' in agents and agent_should_run(self.doubt_resolver, 'DoubtResolver'):
             logger.info("   🎯 Routing to DoubtResolver agent...")
             tasks['doubt_resolver'] = self.doubt_resolver.process(query, context)
         
         # NEW: ExamCoach agent for exam strategy queries
-        if 'exam_coach' in agents:
+        if 'exam_coach' in agents and agent_should_run(self.exam_coach, 'ExamCoach'):
             logger.info("   🏆 Routing to ExamCoach agent...")
             tasks['exam_coach'] = self.exam_coach.process(query, context)
         
         # WeakAreaDetective agent for performance analysis
-        if 'weak_area_detective' in agents:
+        if 'weak_area_detective' in agents and agent_should_run(self.weak_area_detective, 'WeakAreaDetective'):
             logger.info("   🔍 Routing to WeakAreaDetective agent...")
             tasks['weak_area_detective'] = self.weak_area_detective.process(query, context)
         
         # StudyBuddy agent for peer learning
-        if 'study_buddy' in agents:
+        if 'study_buddy' in agents and agent_should_run(self.study_buddy, 'StudyBuddy'):
             logger.info("   🤝 Routing to StudyBuddy agent...")
             tasks['study_buddy'] = self.study_buddy.process(query, context)
         
         # NEW: ParentReport agent for guardian communication
-        if 'parent_report' in agents:
+        if 'parent_report' in agents and agent_should_run(self.parent_report, 'ParentReport'):
             logger.info("   👨‍👩‍👧 Routing to ParentReport agent...")
             tasks['parent_report'] = self.parent_report.process(query, context)
         
@@ -561,6 +843,102 @@ class SupervisorAgent(BaseAgent):
         
         return validated
     
+    async def _cross_verify_parallel_responses(
+        self,
+        query: str,
+        agent_responses: Dict[str, Any],
+        context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Cross-verify responses from parallel agents when full negotiation is unavailable.
+        
+        This provides a lightweight verification layer:
+        1. Extract mathematical claims from mentor/professor responses
+        2. Use MathVerifier to check consistency
+        3. Flag contradictions (don't auto-correct, but mark)
+        4. Add verification metadata to responses
+        
+        This is a GRACEFUL FALLBACK - not as powerful as full negotiation,
+        but better than no verification at all.
+        
+        Returns:
+            Enhanced agent_responses with verification metadata
+        """
+        mentor_response = agent_responses.get('mentor', {})
+        professor_response = agent_responses.get('professor', {})
+        
+        # Only verify if we have both mentor and professor responses
+        if not (mentor_response.get('success') and professor_response.get('success')):
+            return agent_responses
+        
+        mentor_content = mentor_response.get('content', '')
+        professor_content = professor_response.get('content', '')
+        
+        # Skip verification for very short responses (greetings, etc.)
+        if len(mentor_content) < 50 and len(professor_content) < 50:
+            return agent_responses
+        
+        try:
+            # Use MathVerifier for mathematical content verification
+            from services.verification.math_verifier import MathVerifier, VerificationStatus
+            
+            verifier = MathVerifier()
+            verification_results = []
+            
+            # Verify mentor response
+            if mentor_content:
+                mentor_verification = verifier.verify_response(
+                    response_text=mentor_content,
+                    question=query,
+                    subject=context.get('subject', 'General')
+                )
+                verification_results.append({
+                    'agent': 'mentor',
+                    'status': mentor_verification.status.value,
+                    'confidence': mentor_verification.confidence,
+                    'errors': mentor_verification.errors
+                })
+            
+            # Verify professor response
+            if professor_content:
+                professor_verification = verifier.verify_response(
+                    response_text=professor_content,
+                    question=query,
+                    subject=context.get('subject', 'General')
+                )
+                verification_results.append({
+                    'agent': 'professor',
+                    'status': professor_verification.status.value,
+                    'confidence': professor_verification.confidence,
+                    'errors': professor_verification.errors
+                })
+            
+            # Add verification metadata to responses
+            if 'mentor' in agent_responses:
+                agent_responses['mentor']['cross_verification'] = {
+                    'verified': True,
+                    'results': [r for r in verification_results if r['agent'] == 'mentor']
+                }
+            if 'professor' in agent_responses:
+                agent_responses['professor']['cross_verification'] = {
+                    'verified': True,
+                    'results': [r for r in verification_results if r['agent'] == 'professor']
+                }
+            
+            # Log verification status
+            errors_found = sum(len(r.get('errors', [])) for r in verification_results)
+            if errors_found > 0:
+                logger.warning(f"🔍 Cross-verification found {errors_found} potential issues")
+            else:
+                logger.info("🔍 Cross-verification passed - no inconsistencies found")
+            
+        except ImportError:
+            logger.debug("MathVerifier not available for cross-verification")
+        except Exception as e:
+            logger.warning(f"Cross-verification error (non-blocking): {e}")
+        
+        return agent_responses
+    
     def _merge_responses(
         self,
         query: str,
@@ -630,6 +1008,33 @@ class SupervisorAgent(BaseAgent):
                 'metadata': doubt_response.get('metadata', {}),
                 'success': True,
                 'agent': 'doubt_resolver'
+            }
+        
+        # ================================================================
+        # CRITICAL FIX: Ensure primary_response ALWAYS has content
+        # If primary agent returned empty content, generate INTELLIGENT fallback
+        # ================================================================
+        primary_content = primary_response.get('content', '') if primary_response else ''
+        if not primary_content or len(primary_content.strip()) < 20:
+            logger.warning(f"⚠️ [Supervisor] Primary response empty, generating intelligent fallback for: {query[:50]}...")
+            
+            # Generate fallback that PROVIDES VALUE, not asks questions
+            # Check if this is an urgent context
+            is_urgent = (context or {}).get('is_urgent', False)
+            urgency_level = (context or {}).get('urgency_level', 'medium')
+            
+            if is_urgent or urgency_level == 'high':
+                # URGENT FALLBACK: Provide immediate actionable help
+                fallback_content = self._generate_urgent_fallback(query)
+            else:
+                # STANDARD FALLBACK: Provide helpful generic content + one clarifying option
+                fallback_content = self._generate_helpful_fallback(query)
+            
+            primary_response = {
+                'content': fallback_content,
+                'metadata': {'fallback': True, 'is_urgent': is_urgent, 'original_agent': primary_response.get('agent', 'unknown') if primary_response else 'none'},
+                'success': True,
+                'agent': 'mentor'
             }
         
         result = {
@@ -723,4 +1128,84 @@ class SupervisorAgent(BaseAgent):
             logger.warning(f"Knowledge graph enhancement failed: {e}")
         
         return response
+    
+    def _generate_urgent_fallback(self, query: str) -> str:
+        """
+        🚨 Generate fallback content for URGENT situations.
+        
+        CRITICAL PRINCIPLES:
+        1. NEVER ask clarifying questions under urgency
+        2. ALWAYS provide actionable content immediately
+        3. Use generic but useful exam/preparation tips
+        4. Offer to help with specifics as a follow-up (not gating)
+        
+        This is triggered when:
+        - is_urgent=True in context
+        - urgency_level='high' in context
+        """
+        query_lower = query.lower()
+        
+        # Detect if it's revision/tips/preparation related
+        is_revision_related = any(word in query_lower for word in 
+            ['revision', 'revise', 'tips', 'prepare', 'last minute', 'quick', 'exam', 'test', 'viva', 'interview'])
+        
+        if is_revision_related:
+            return f"""Got it! Here's your quick action plan: 🎯
+
+**📋 Priority Revision Strategy:**
+1. **Formula Sheet Review** (15 min): Go through all key formulas/definitions you've noted
+2. **Previous Questions** (30 min): Solve 3-5 previous year questions - they reveal exam patterns
+3. **Weak Spots** (20 min): Quick review of topics you find challenging - even basics help
+4. **Mental Prep** (5 min): Deep breaths, confidence affirmations - you've got this!
+
+**⏰ Time Tips:**
+- Don't start new topics now - reinforce what you know
+- Take 5-min breaks every 25 minutes
+- Stay hydrated, avoid heavy meals
+
+**💪 Remember:** You've prepared for this moment. Trust yourself!
+
+Which subject or topic should we focus on? I can give you targeted tips!"""
+        else:
+            # Generic helpful response for other urgent queries
+            return f"""I'm here to help! Here's what I can do for you right now: 🤝
+
+**Based on your question:** "{query[:80]}{'...' if len(query) > 80 else ''}"
+
+**🎯 Quick Options:**
+1. **Explain a concept** - I'll break it down step by step
+2. **Solve a problem** - Walk through the solution together
+3. **Quick revision** - Key points on any topic
+4. **Practice questions** - Test your understanding
+
+**💡 Pro Tip:** The more specific you are, the better I can help!
+
+What would you like to start with?"""
+    
+    def _generate_helpful_fallback(self, query: str) -> str:
+        """
+        Generate helpful fallback for non-urgent situations.
+        
+        This is BETTER than the old fallback because:
+        1. It acknowledges the query
+        2. Provides SOME immediate value (general guidance)
+        3. Offers one clear path forward (not multiple confusing questions)
+        
+        This is NOT used for urgent situations.
+        """
+        query_short = query[:100] + '...' if len(query) > 100 else query
+        
+        return f"""Great question! Let me help you with that. 🎯
+
+**You asked:** "{query_short}"
+
+I can help you in several ways:
+- **Explain concepts** with examples and analogies
+- **Solve problems** step-by-step
+- **Create practice questions** to test understanding
+- **Provide revision tips** for any topic
+
+**💡 To give you the best answer:** Could you tell me which subject this is about (Physics, Chemistry, Biology, Math)?
+
+Or just ask your question in more detail, and I'll jump right in!"""
 

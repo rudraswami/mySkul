@@ -38,7 +38,9 @@ class TestKnowledgeSearch:
         result = await tool.execute(query="friction", subject="Physics")
         
         assert result.success, f"Search failed: {result.error}"
-        assert result.metadata.get("retrieval_method") in ["curriculum_retriever", "fallback"]
+        # Updated to include corpus_v2 methods
+        method = result.metadata.get("retrieval_method", "")
+        assert method.startswith("corpus_v2") or method in ["curriculum_retriever", "fallback"], f"Unexpected method: {method}"
         
         # Should have some content
         assert len(result.output) > 50, "Response too short"
@@ -180,7 +182,8 @@ class TestExamStrategy:
         result = await tool.execute(topic="mechanics", exam_type="JEE")
         
         assert result.success
-        assert result.metadata.get("retrieval_method") in ["exam_strategy_bank", "no_data_fallback", "fallback", "general_advice"]
+        # Updated to include strategy_bank method
+        assert result.metadata.get("retrieval_method") in ["strategy_bank", "exam_strategy_bank", "no_data_fallback", "fallback", "general_advice"]
         
         logger.info(f"✅ Mechanics JEE strategy: found={result.metadata.get('found')}")
     

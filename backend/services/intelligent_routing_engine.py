@@ -64,6 +64,9 @@ class RoutingDecision:
     enable_agent_negotiation: bool = False
     # 🆕 Extra context for specific pipelines (e.g., action_intent type)
     extra_context: Dict[str, Any] = None
+    # 🆕 GAP 2: Model selection criteria (NOT the model itself)
+    # Model is selected at EXECUTION TIME by SemanticModelSelector
+    model_selection_criteria: Dict[str, Any] = None
 
 
 class IntelligentRoutingEngine:
@@ -513,38 +516,49 @@ class IntelligentRoutingEngine:
             # Fall through to pattern matching ONLY if LLM fails
         
         # ============================================================
-        # FALLBACK: Pattern matching (only if LLM classification fails)
+        # FALLBACK: Pattern matching (LEGACY - only if LLM fails completely)
         # ============================================================
-        logger.info("📋 Using fallback pattern matching...")
+        # PHASE 1 FIX: This path should be rare. Semantic classification
+        # is the authoritative intelligence layer. Keywords are only hints.
+        logger.warning("⚠️ LEGACY FALLBACK: Using pattern matching (semantic failed)")
         
-        # Check for obvious gibberish
+        # Check for obvious gibberish (structural, not keyword - acceptable)
         if self._is_gibberish(query):
-            logger.info(f"❓ Detected unclear/gibberish input")
+            logger.info(f"❓ Detected unclear/gibberish input (structural)")
             return self._clarification_decision(query, context)
         
-        # Check for action intents via patterns
-        action_intent = self._detect_action_intent(query)
-        if action_intent:
-            logger.info(f"🎯 Detected action intent: {action_intent}")
-            return self._action_intent_decision(query, action_intent, context)
+        # PHASE 1: Keyword patterns are HINTS only, not decision-makers
+        # They guide default routing when no semantic signal exists
+        # The response is still shaped by the pipeline, not keywords
         
-        # Check for emotional queries via patterns
-        emotional_state = self._detect_emotional_state(query)
-        if emotional_state:
-            logger.info(f"💚 Detected emotional state: {emotional_state}")
-            return self._emotional_decision(query, emotional_state, context)
-        
-        # Check for trivial queries
-        if self._is_trivial(query):
+        # Check for trivial queries (structural: length + punctuation)
+        if self._is_trivial_structural(query):
+            logger.info("📋 Trivial query detected (structural fallback)")
             return self._trivial_decision(query)
         
-        # Analyze complexity for educational queries
-        complexity_score = self._analyze_complexity(query, context)
+        # Default to multi-agent pipeline for any substantive query
+        # Let the agents figure out intent - don't force it via keywords
         student_context = await self._get_student_context(context)
-        complexity = self._score_to_complexity(complexity_score, student_context)
-        decision = self._select_pipeline(query, complexity, context, student_context)
+        
+        # Use conservative complexity (don't let keywords decide depth)
+        decision = RoutingDecision(
+            pipeline=RecommendedPipeline.MULTI_AGENT,
+            complexity=QueryComplexity.MODERATE,  # Conservative default
+            confidence=0.6,  # Lower confidence for fallback
+            reasoning="LEGACY FALLBACK: Semantic classification unavailable - using default pipeline",
+            agents_to_activate=['mentor', 'professor'],  # Let agents negotiate
+            tools_to_enable=['knowledge_search'],
+            enable_verification=False,
+            enable_visual=False,
+            max_iterations=3,
+            timeout_seconds=15.0,
+            use_knowledge_graph=False,
+            use_memory=True,
+            priority_factors={'fallback': 1.0},
+            enable_agent_negotiation=True  # IMPORTANT: Let agents decide
+        )
 
-        logger.info(f"✅ Routing: {decision.pipeline.value} (pattern-based, complexity: {complexity.value})")
+        logger.info(f"✅ Routing: {decision.pipeline.value} (LEGACY fallback)")
         return decision
     
     def _get_tools_for_action(self, action_type: str) -> List[str]:
@@ -916,12 +930,14 @@ class IntelligentRoutingEngine:
             return self._acknowledgment_decision(query, analysis)
         
         elif intent in [SemanticIntent.EMOTIONAL_SUPPORT, SemanticIntent.MOTIVATION_NEED]:
+            # PHASE 4 FIX: Emotion modulates response, doesn't change pipeline
+            # Use MULTI_AGENT with emotional context - mentor handles empathy
             return RoutingDecision(
-                pipeline=RecommendedPipeline.EMOTIONAL_SUPPORT,
+                pipeline=RecommendedPipeline.MULTI_AGENT,  # NOT EMOTIONAL_SUPPORT
                 complexity=QueryComplexity.SIMPLE,
                 confidence=analysis.confidence,
-                reasoning=f"Semantic: {analysis.reasoning}",
-                agents_to_activate=['mentor', 'motivation'],
+                reasoning=f"Semantic (emotional): {analysis.reasoning}",
+                agents_to_activate=['mentor'],  # Mentor handles emotion + content
                 tools_to_enable=[],
                 enable_verification=False,
                 enable_visual=False,
@@ -934,17 +950,25 @@ class IntelligentRoutingEngine:
                 extra_context={
                     'semantic_analysis': analysis.to_dict(),
                     'needs_empathy': analysis.needs_empathy,
-                    'emotional_tone': analysis.emotional_tone
+                    'emotional_tone': analysis.emotional_tone,
+                    # PHASE 4: Emotion is CONTEXT, not routing override
+                    'emotional_context': {
+                        'detected_emotion': analysis.emotional_tone,
+                        'intensity': analysis.emotional_intensity,
+                        'modulate_response': True,  # Signal to agent
+                        'prioritize_empathy': True
+                    }
                 }
             )
         
         elif intent == SemanticIntent.CONFUSION:
+            # PHASE 4 FIX: Confusion routes to doubt_resolver with emotional context
             return RoutingDecision(
-                pipeline=RecommendedPipeline.EMOTIONAL_SUPPORT,
+                pipeline=RecommendedPipeline.MULTI_AGENT,  # NOT EMOTIONAL_SUPPORT
                 complexity=QueryComplexity.SIMPLE,
                 confidence=analysis.confidence,
                 reasoning=f"Student confused: {analysis.reasoning}",
-                agents_to_activate=['mentor'],
+                agents_to_activate=['doubt_resolver', 'mentor'],  # Doubt + empathy
                 tools_to_enable=[],
                 enable_verification=False,
                 enable_visual=False,
@@ -954,7 +978,17 @@ class IntelligentRoutingEngine:
                 use_memory=True,
                 priority_factors={'clarity': 1.0, 'empathy': 0.8},
                 enable_agent_negotiation=False,
-                extra_context={'semantic_analysis': analysis.to_dict(), 'emotional_state': 'confused'}
+                extra_context={
+                    'semantic_analysis': analysis.to_dict(),
+                    'emotional_state': 'confused',
+                    # PHASE 4: Emotional context for response modulation
+                    'emotional_context': {
+                        'detected_emotion': 'confused',
+                        'intensity': analysis.emotional_intensity,
+                        'modulate_response': True,
+                        'use_gentle_tone': True
+                    }
+                }
             )
         
         elif intent == SemanticIntent.CELEBRATION:
@@ -969,13 +1003,64 @@ class IntelligentRoutingEngine:
         response_expectation = getattr(analysis, 'response_expectation', 'conversational_advice')
         temporal_scope = getattr(analysis, 'temporal_scope', 'unspecified')
         delivery_mode = getattr(analysis, 'delivery_mode', 'conversational')
+        urgency_level = getattr(analysis, 'urgency_level', 'medium')
         
         logger.info(f"📏 Scope analysis: response_expectation={response_expectation}, "
-                   f"temporal_scope={temporal_scope}, delivery_mode={delivery_mode}")
+                   f"temporal_scope={temporal_scope}, delivery_mode={delivery_mode}, "
+                   f"urgency_level={urgency_level}")
+        
+        # ================================================================
+        # 🚨 URGENCY-AWARE OVERRIDE (SYSTEM-LEVEL INTELLIGENCE)
+        # ================================================================
+        # HIGH URGENCY queries (exam tomorrow, viva in 2 hours, interview tonight, etc.)
+        # need STRUCTURED, ACTIONABLE responses regardless of response_expectation.
+        # This is NOT keyword-based - it uses LLM-detected urgency from SemanticAnalysis.
+        #
+        # The principle: When time is critical, students need:
+        # - Concrete action items (not vague advice)
+        # - Structured format (easier to scan under pressure)
+        # - Immediate value (not clarifying questions)
+        #
+        is_high_urgency = urgency_level == "high"
+        is_time_critical = temporal_scope in ["immediate", "today"]
+        
+        if is_high_urgency or (is_time_critical and response_expectation == "conversational_advice"):
+            logger.info(f"🚨 URGENCY OVERRIDE: High urgency ({urgency_level}) or time-critical ({temporal_scope}) "
+                       f"- forcing structured response mode")
+            
+            # Override to structured mode - student needs actionable help NOW
+            return RoutingDecision(
+                pipeline=RecommendedPipeline.MULTI_AGENT,
+                complexity=QueryComplexity.MODERATE,  # Not trivial - needs substance
+                confidence=analysis.confidence,
+                reasoning=f"URGENCY OVERRIDE: {urgency_level} urgency, {temporal_scope} scope - providing structured actionable response",
+                agents_to_activate=['mentor'],
+                tools_to_enable=['knowledge_search'],  # Enable knowledge tools for better content
+                enable_verification=False,
+                enable_visual=False,
+                max_iterations=3,  # Allow more iterations for quality
+                timeout_seconds=15.0,  # More time for comprehensive response
+                use_knowledge_graph=True,  # Use knowledge for concrete suggestions
+                use_memory=True,
+                priority_factors={'actionability': 1.0, 'structure': 0.9, 'urgency': 1.0},
+                enable_agent_negotiation=False,
+                extra_context={
+                    'semantic_analysis': analysis.to_dict(),
+                    'response_expectation': 'urgent_assistance',  # New mode for mentor
+                    'temporal_scope': temporal_scope,
+                    'delivery_mode': 'structured',  # Force structured output
+                    'is_recommendation': False,  # NOT a casual recommendation
+                    'is_urgent': True,  # Flag for downstream agents
+                    'urgency_level': urgency_level,
+                    'avoid_comprehensive_output': False,  # Allow comprehensive help
+                    'require_actionable_items': True  # Must provide concrete steps
+                }
+            )
         
         # ================================================================
         # PATH 1: CONVERSATIONAL ADVICE (Quick suggestions, mentor opinion)
         # ================================================================
+        # Only for LOW/MEDIUM urgency, non-time-critical queries
         # This is the FIX for "What should I study today?" - NO tools, just LLM
         if response_expectation == "conversational_advice":
             logger.info(f"💬 CONVERSATIONAL ADVICE path: Quick contextual suggestion (no tools)")
@@ -1002,7 +1087,9 @@ class IntelligentRoutingEngine:
                     'delivery_mode': delivery_mode,
                     'is_recommendation': True,  # Flag for MentorAgent
                     'max_response_scope': temporal_scope,  # Constraint for response
-                    'avoid_comprehensive_output': True  # Explicit instruction
+                    'avoid_comprehensive_output': True,  # Explicit instruction
+                    'is_urgent': False,
+                    'urgency_level': urgency_level
                 }
             )
         
@@ -1400,19 +1487,48 @@ class IntelligentRoutingEngine:
             extra_context={'action_intent': action_intent}
         )
     
-    def _detect_emotional_state(self, query: str) -> Optional[str]:
+    def _detect_emotional_state(
+        self, 
+        query: str,
+        semantic_analysis: Optional['SemanticAnalysis'] = None
+    ) -> Optional[str]:
         """
-        🆕 Detect emotional state from query.
+        Detect emotional state from query.
         
-        This catches queries like:
-        - "getting bored" → bored
-        - "I'm so frustrated" → frustrated
-        - "this is confusing" → confused
-        - "excited about this!" → excited
+        PHASE 1 FIX: This is now a HINT method. When semantic analysis is
+        available, its emotional_tone field takes precedence. Pattern matching
+        only runs when:
+        1. No semantic analysis available
+        2. Semantic confidence is low (< 0.5)
         
         Returns:
             Emotional state string or None
         """
+        from core.config import settings
+        
+        # PHASE 1: Semantic analysis is authoritative when available
+        if settings.ENABLE_SEMANTIC_EMOTION_DETECTION and semantic_analysis:
+            # Use semantic emotional tone, not patterns
+            if semantic_analysis.confidence >= 0.5:
+                tone = semantic_analysis.emotional_tone
+                intensity = semantic_analysis.emotional_intensity
+                
+                # Only return emotional state if intensity is significant
+                if intensity >= 0.4:
+                    # Map semantic tones to our emotion states
+                    tone_to_emotion = {
+                        'anxious': 'anxious',
+                        'frustrated': 'frustrated',
+                        'confused': 'confused',
+                        'bored': 'bored',
+                        'excited': 'excited',
+                        'negative': 'frustrated' if intensity > 0.6 else None,
+                    }
+                    return tone_to_emotion.get(tone)
+                return None
+        
+        # LEGACY FALLBACK: Pattern matching (only when semantic unavailable)
+        logger.debug("📋 Using pattern-based emotion detection (semantic unavailable)")
         query_clean = query.strip()
         
         for emotion, patterns in self._compiled_emotional.items():
@@ -1429,54 +1545,46 @@ class IntelligentRoutingEngine:
         context: Dict[str, Any]
     ) -> RoutingDecision:
         """
-        🆕 Return routing decision for emotional queries.
+        PHASE 4 FIX: Emotion modulates response, doesn't change pipeline.
         
-        These get special handling:
-        - Use MotivationAgent for support
-        - MUST use memory (context from recent conversation)
-        - Adapt response based on emotional state
+        Emotional queries now go through MULTI_AGENT with emotional context.
+        The mentor agent uses this context to modulate tone and framing.
         """
-        # Determine appropriate response style based on emotion
-        if emotional_state in ['bored', 'frustrated', 'anxious', 'confused']:
-            # Negative emotions need MORE support
-            return RoutingDecision(
-                pipeline=RecommendedPipeline.EMOTIONAL_SUPPORT,
-                complexity=QueryComplexity.SIMPLE,  # Not complex academically
-                confidence=0.9,
-                reasoning=f"Emotional state detected: {emotional_state} - routing to MotivationAgent",
-                agents_to_activate=['motivation', 'mentor'],  # MotivationAgent + Mentor for warm response
-                tools_to_enable=['memory_recall'],  # Need to know recent context
-                enable_verification=False,
-                enable_visual=False,
-                max_iterations=1,
-                timeout_seconds=10.0,
-                use_knowledge_graph=False,
-                use_memory=True,  # 🔥 CRITICAL: Must use memory for context!
-                priority_factors={'empathy': 1.0, 'speed': 0.8, 'depth': 0.2},
-                enable_agent_negotiation=False,
-                # 🆕 Extra metadata for emotional handling
-            )
-        else:
-            # Positive emotions (excited, success) - build momentum
-            return RoutingDecision(
-                pipeline=RecommendedPipeline.EMOTIONAL_SUPPORT,
-                complexity=QueryComplexity.SIMPLE,
-                confidence=0.85,
-                reasoning=f"Positive emotional state: {emotional_state} - encouraging momentum",
-                agents_to_activate=['motivation', 'mentor'],
-                tools_to_enable=['memory_recall'],
-                enable_verification=False,
-                enable_visual=False,
-                max_iterations=1,
-                timeout_seconds=10.0,
-                use_knowledge_graph=False,
-                use_memory=True,  # 🔥 Use memory to reference recent success
-                priority_factors={'encouragement': 1.0, 'momentum': 0.8},
-                enable_agent_negotiation=False
-            )
+        # PHASE 4: Emotion as SIGNAL, not TRIGGER
+        # All emotions route to mentor with emotional context
+        return RoutingDecision(
+            pipeline=RecommendedPipeline.MULTI_AGENT,  # NOT EMOTIONAL_SUPPORT
+            complexity=QueryComplexity.SIMPLE,
+            confidence=0.85,
+            reasoning=f"Emotional signal: {emotional_state} - mentor with emotional context",
+            agents_to_activate=['mentor'],  # Mentor handles both emotion and content
+            tools_to_enable=[],
+            enable_verification=False,
+            enable_visual=False,
+            max_iterations=2,
+            timeout_seconds=10.0,
+            use_knowledge_graph=False,
+            use_memory=True,  # Need memory for context
+            priority_factors={'empathy': 1.0, 'support': 0.8},
+            enable_agent_negotiation=False,
+            extra_context={
+                # PHASE 4: Emotional context for response modulation
+                'emotional_context': {
+                    'detected_emotion': emotional_state,
+                    'modulate_response': True,
+                    'prioritize_empathy': emotional_state in ['frustrated', 'anxious', 'confused', 'bored'],
+                    'celebrate_success': emotional_state in ['excited', 'success', 'happy'],
+                }
+            }
+        )
     
     def _is_trivial(self, query: str) -> bool:
-        """Check if query is trivial (greetings, thanks, etc.)"""
+        """
+        Check if query is trivial (greetings, thanks, etc.)
+        
+        PHASE 1 NOTE: This method uses keyword patterns. When semantic analysis
+        is available, it takes precedence. This is only for fallback.
+        """
         query_clean = query.strip()
         
         # Very short queries (< 4 words) that match trivial patterns
@@ -1486,6 +1594,32 @@ class IntelligentRoutingEngine:
                     return True
         
         return False
+    
+    def _is_trivial_structural(self, query: str) -> bool:
+        """
+        PHASE 1 FIX: Structural trivial detection (no keywords).
+        
+        Uses message STRUCTURE, not content, to detect trivial messages:
+        - Very short (1-2 words)
+        - No question mark
+        - No educational indicators
+        
+        This is safe because:
+        - It doesn't decide WHAT kind of trivial (greeting vs thanks)
+        - It only gates routing, not response content
+        - The actual response is still generated by agents
+        """
+        query_clean = query.strip()
+        word_count = len(query_clean.split())
+        
+        # Structural indicators only
+        is_very_short = word_count <= 2
+        no_question = '?' not in query_clean
+        no_complex_punct = not any(c in query_clean for c in ['?', '!', '...', '"'])
+        
+        # Very short, no question = likely trivial
+        # But don't be too aggressive - let semantic handle most cases
+        return is_very_short and no_question and no_complex_punct
     
     def _trivial_decision(self, query: str) -> RoutingDecision:
         """Return fast-path decision for trivial queries"""
@@ -1505,60 +1639,69 @@ class IntelligentRoutingEngine:
             priority_factors={'speed': 1.0, 'depth': 0.0}
         )
     
-    def _analyze_complexity(self, query: str, context: Dict[str, Any]) -> float:
+    def _analyze_complexity(
+        self, 
+        query: str, 
+        context: Dict[str, Any],
+        semantic_analysis: Optional['SemanticAnalysis'] = None
+    ) -> float:
         """
         Analyze query complexity on a 0-1 scale.
         
-        Factors:
-        - Pattern matching for complexity indicators
+        PHASE 1 FIX: This now uses primarily STRUCTURAL analysis,
+        not keyword patterns. Keyword patterns are hints only.
+        
+        STRUCTURAL Factors (safe, non-semantic):
+        - Mathematical notation (equations, LaTeX, functions)
         - Query length
+        - Multi-part structure (conjunctions)
         - Subject difficulty
-        - Question structure
+        
+        Keyword patterns are demoted to low-weight hints.
         """
         query_lower = query.lower()
         score = 0.3  # Base complexity for any educational query
         
-        # Factor 1: Complexity patterns
-        for pattern, weight in self.COMPLEXITY_PATTERNS.items():
-            if pattern in query_lower:
-                score += weight * 0.3
-        
-        # Factor 2: Query length (longer = more complex)
+        # STRUCTURAL Factor 1: Query length (longer = more complex)
+        # This is structural, not semantic
         word_count = len(query.split())
         if word_count > 20:
             score += 0.15
         elif word_count > 10:
             score += 0.08
         
-        # Factor 3: Mathematical content
+        # STRUCTURAL Factor 2: Mathematical notation (safe - detects symbols, not words)
         math_indicators = [
             r'\d+\s*[+\-*/^=]\s*\d+',  # Equations
-            r'f\(x\)',  # Functions
+            r'f\s*\(.*\)',  # Functions
             r'd[xy]/d[xy]',  # Derivatives
-            r'∫|integral',  # Integrals
-            r'\\frac|\\sqrt',  # LaTeX
+            r'∫|∑|∏',  # Math symbols
+            r'\\frac|\\sqrt|\\int',  # LaTeX
+            r'\^[0-9n]',  # Exponents
+            r'[a-z]\s*=\s*[a-z0-9]',  # Variable assignments
         ]
         for pattern in math_indicators:
             if re.search(pattern, query, re.IGNORECASE):
                 score += 0.2
                 break
         
-        # Factor 4: Subject multiplier
+        # STRUCTURAL Factor 3: Multi-part structure (conjunction count)
+        # This detects sentence structure, not semantic meaning
+        conjunction_count = len(re.findall(r'\b(and|also|then|after|before|while)\b', query_lower))
+        score += min(0.15, conjunction_count * 0.05)
+        
+        # STRUCTURAL Factor 4: Subject multiplier (based on domain complexity)
         subject = context.get('subject', 'general').lower()
         multiplier = self.SUBJECT_MULTIPLIERS.get(subject, 1.0)
         score *= multiplier
         
-        # Factor 5: Multi-part questions
-        if any(phrase in query_lower for phrase in ['and also', 'additionally', 'furthermore', 'as well as']):
-            score += 0.15
-        
-        # Factor 6: Deep understanding indicators
-        deep_indicators = [
-            'intuition', 'fundamental', 'underlying', 'principle',
-            'conceptually', 'theoretically', 'mathematically', 'rigorously'
-        ]
-        if any(ind in query_lower for ind in deep_indicators):
-            score += 0.2
+        # PHASE 1: Keyword patterns are HINTS only (heavily downweighted)
+        # These should NOT determine routing, only provide minor signals
+        # Weight: 0.1x instead of 0.3x (demoted by 3x)
+        if not semantic_analysis or semantic_analysis.confidence < 0.6:
+            for pattern, weight in self.COMPLEXITY_PATTERNS.items():
+                if pattern in query_lower:
+                    score += weight * 0.1  # Demoted from 0.3 to 0.1
         
         return min(1.0, score)
     

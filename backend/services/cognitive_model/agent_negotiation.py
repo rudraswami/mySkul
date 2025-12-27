@@ -260,9 +260,19 @@ class AgentNegotiator:
         
         for name, agent in self.agents.items():
             try:
+                # === AGENT AUTONOMY: Self-Initiated Abstain ===
+                # Check if agent wants to opt-out BEFORE computing confidence
+                if hasattr(agent, 'should_abstain'):
+                    should_abstain, abstain_reason = agent.should_abstain(query, context)
+                    if should_abstain:
+                        logger.info(f"🚫 {name} self-abstained: {abstain_reason}")
+                        continue  # Skip this agent entirely
+                
                 # Get confidence (try multiple methods)
+                # COGNITIVE OS: Agents now have TRUE self-assessment
                 if hasattr(agent, 'evaluate_confidence'):
                     confidence = agent.evaluate_confidence(query, context)
+                    logger.debug(f"📊 {name} self-assessed confidence: {confidence:.2f}")
                 elif hasattr(agent, 'get_confidence'):
                     confidence = agent.get_confidence(query)
                 else:

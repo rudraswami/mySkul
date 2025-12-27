@@ -1,0 +1,286 @@
+{
+  "strategies": [
+    {
+      "strategy_id": "jee_phys_mechanics",
+      "exam_type": "JEE",
+      "topic": "Mechanics",
+      "subject": "Physics",
+      "weightage_percent": 25.0,
+      "common_traps": [
+        "Confusing reference frames in relative motion",
+        "Sign errors in projectile motion",
+        "Forgetting pseudo forces in non-inertial frames",
+        "Wrong application of conservation laws"
+      ],
+      "shortcut_technique": "**Energy Method**: When forces are complex, use energy conservation. Work-energy theorem is often faster than Newton's laws for problems involving variable forces.",
+      "ncert_relevance": "NCERT Class 11 Chapters 3-7 cover mechanics. JEE expects deeper problem-solving skills beyond NCERT.",
+      "pyq_pattern": "5-7 questions per paper. Often combined with calculus. NLM + circular motion is common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 15.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "jee_phys_electro",
+      "exam_type": "JEE",
+      "topic": "Electrostatics and Current Electricity",
+      "subject": "Physics",
+      "weightage_percent": 15.0,
+      "common_traps": [
+        "Confusing electric field and potential formulas",
+        "Sign errors in work done by electric field",
+        "Wrong application of Kirchhoff's laws",
+        "Forgetting internal resistance"
+      ],
+      "shortcut_technique": "**Potential Method**: For complex charge configurations, calculate potential first (scalar), then field if needed. This avoids vector addition.",
+      "ncert_relevance": "NCERT Class 12 Chapters 1-3. JEE tests circuit analysis skills heavily.",
+      "pyq_pattern": "4-6 questions. RC circuits and Gauss's law are favorites.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 12.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "jee_phys_modern",
+      "exam_type": "JEE",
+      "topic": "Modern Physics",
+      "subject": "Physics",
+      "weightage_percent": 10.0,
+      "common_traps": [
+        "Confusing binding energy per nucleon trends",
+        "Wrong threshold frequency calculation",
+        "Confusing activity with number of atoms",
+        "Sign errors in decay equations"
+      ],
+      "shortcut_technique": "**Ratio Method**: For radioactivity problems, always work with ratios (N/N\u2080, A/A\u2080). Avoid absolute calculations when possible.",
+      "ncert_relevance": "NCERT Class 12 Chapters 11-13. JEE tests numerical applications.",
+      "pyq_pattern": "3-4 questions. Photoelectric effect and nuclear physics common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 8.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "jee_chem_organic",
+      "exam_type": "JEE",
+      "topic": "Organic Chemistry",
+      "subject": "Chemistry",
+      "weightage_percent": 35.0,
+      "common_traps": [
+        "Confusing SN1 vs SN2 mechanisms",
+        "Wrong stability order of carbocations",
+        "Missing stereochemistry in reactions",
+        "Ignoring electronic effects (resonance, inductive)"
+      ],
+      "shortcut_technique": "**Mechanism First**: Always draw the mechanism. Identify: (1) nucleophile, (2) electrophile, (3) leaving group. This predicts products accurately.",
+      "ncert_relevance": "NCERT Class 12 Chapters 10-16. JEE expects mechanism understanding.",
+      "pyq_pattern": "10-12 questions. Reaction mechanisms and named reactions dominate.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 18.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "jee_chem_physical",
+      "exam_type": "JEE",
+      "topic": "Physical Chemistry",
+      "subject": "Chemistry",
+      "weightage_percent": 35.0,
+      "common_traps": [
+        "Unit conversion errors (especially in gas laws)",
+        "Sign convention in thermodynamics",
+        "Confusing molarity and molality",
+        "Wrong equilibrium constant expressions"
+      ],
+      "shortcut_technique": "**Dimensional Analysis**: Always check units. If answer has wrong units, the method is wrong. This catches 90% of calculation errors.",
+      "ncert_relevance": "NCERT Class 11 Chapters 1-7, Class 12 Chapters 1-5. JEE needs numerical proficiency.",
+      "pyq_pattern": "10-12 questions. Electrochemistry and equilibrium are high-weightage.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 18.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "jee_math_calculus",
+      "exam_type": "JEE",
+      "topic": "Calculus",
+      "subject": "Mathematics",
+      "weightage_percent": 35.0,
+      "common_traps": [
+        "Forgetting constant of integration",
+        "Wrong limits in definite integrals",
+        "Confusing maxima/minima conditions",
+        "Chain rule errors in differentiation"
+      ],
+      "shortcut_technique": "**Substitution Strategy**: For integration, always check if u-substitution works first. 70% of JEE integrals can be solved by substitution alone.",
+      "ncert_relevance": "NCERT Class 12 Chapters 5-8. JEE expects mastery of all techniques.",
+      "pyq_pattern": "10-12 questions. Definite integrals and application of derivatives common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 20.0,
+      "difficulty_rating": 5
+    },
+    {
+      "strategy_id": "jee_math_algebra",
+      "exam_type": "JEE",
+      "topic": "Algebra",
+      "subject": "Mathematics",
+      "weightage_percent": 25.0,
+      "common_traps": [
+        "Wrong binomial coefficient calculation",
+        "Missing terms in sequence sums",
+        "Complex number argument errors",
+        "Matrix multiplication order"
+      ],
+      "shortcut_technique": "**Pattern Recognition**: In sequences, always check if it's AP, GP, or AGP. For matrices, check if special properties apply (symmetric, orthogonal).",
+      "ncert_relevance": "NCERT Class 11 Chapters 4-9, Class 12 Chapters 3-4. JEE adds complexity.",
+      "pyq_pattern": "8-10 questions. Matrices and quadratics are favorites.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 15.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "neet_bio_physiology",
+      "exam_type": "NEET",
+      "topic": "Human Physiology",
+      "subject": "Biology",
+      "weightage_percent": 20.0,
+      "common_traps": [
+        "Confusing different types of blood cells",
+        "Mixing up hormone sources and targets",
+        "Wrong cardiac cycle phases",
+        "Nephron structure confusion"
+      ],
+      "shortcut_technique": "**System-by-System**: Study each body system completely before moving to next. Use flowcharts for processes like digestion, respiration.",
+      "ncert_relevance": "NCERT Class 11 Chapters 17-22, Class 12 Chapters 16-19. NEET directly tests NCERT content.",
+      "pyq_pattern": "15-20 questions. Diagrams are crucial. Focus on NCERT figures.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 15.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "neet_bio_genetics",
+      "exam_type": "NEET",
+      "topic": "Genetics and Evolution",
+      "subject": "Biology",
+      "weightage_percent": 18.0,
+      "common_traps": [
+        "Confusing genotype vs phenotype ratios",
+        "Wrong pedigree analysis",
+        "Missing sex-linked inheritance patterns",
+        "Confusing DNA replication vs transcription"
+      ],
+      "shortcut_technique": "**Punnett Square Practice**: Do 10 pedigree problems daily. For molecular biology, memorize the enzymes and their functions.",
+      "ncert_relevance": "NCERT Class 12 Chapters 5-7. NEET expects application skills.",
+      "pyq_pattern": "12-15 questions. Pedigree analysis and molecular biology common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 12.0,
+      "difficulty_rating": 4
+    },
+    {
+      "strategy_id": "neet_bio_botany",
+      "exam_type": "NEET",
+      "topic": "Plant Biology",
+      "subject": "Biology",
+      "weightage_percent": 25.0,
+      "common_traps": [
+        "Confusing C3 vs C4 vs CAM plants",
+        "Wrong plant hormone effects",
+        "Mixing up tissue types",
+        "Life cycle stage confusion"
+      ],
+      "shortcut_technique": "**Diagram-First Approach**: For plant anatomy, always start by drawing the diagram. Label all parts. This helps in MCQ elimination.",
+      "ncert_relevance": "NCERT Class 11 Chapters 5-15, Class 12 Chapters 2-3, 13-15. NCERT figures are gold.",
+      "pyq_pattern": "20-25 questions. Photosynthesis and plant anatomy are high-weightage.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 18.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "neet_phys_mechanics",
+      "exam_type": "NEET",
+      "topic": "Mechanics",
+      "subject": "Physics",
+      "weightage_percent": 20.0,
+      "common_traps": [
+        "Unit conversion errors",
+        "Wrong sign in projectile problems",
+        "Confusing work and energy signs",
+        "Forgetting to resolve components"
+      ],
+      "shortcut_technique": "**NCERT Numerical Focus**: NEET physics is formula-based. Memorize formulas and practice NCERT back-of-chapter numericals.",
+      "ncert_relevance": "NCERT Class 11 Chapters 3-7. NEET tests direct NCERT content.",
+      "pyq_pattern": "8-10 questions. Direct formula application is common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 12.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "neet_chem_organic",
+      "exam_type": "NEET",
+      "topic": "Organic Chemistry",
+      "subject": "Chemistry",
+      "weightage_percent": 30.0,
+      "common_traps": [
+        "Confusing functional group reactions",
+        "Wrong IUPAC naming",
+        "Missing isomer counts",
+        "Reaction condition errors"
+      ],
+      "shortcut_technique": "**Functional Group Mastery**: Learn reactions grouped by functional group. Make a table: Functional Group \u2192 Reagent \u2192 Product.",
+      "ncert_relevance": "NCERT Class 12 Chapters 10-16. NEET directly tests NCERT reactions.",
+      "pyq_pattern": "15-18 questions. Named reactions and conversions are favorites.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 15.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "cbse_phys_electricity",
+      "exam_type": "CBSE",
+      "topic": "Electricity and Magnetism",
+      "subject": "Physics",
+      "weightage_percent": 18.0,
+      "common_traps": [
+        "Series vs parallel resistance formulas",
+        "Kirchhoff's laws sign errors",
+        "Magnetic field direction mistakes",
+        "Unit conversion errors"
+      ],
+      "shortcut_technique": "**Circuit Simplification**: Always simplify circuits to series-parallel combinations. Redraw complex circuits step by step.",
+      "ncert_relevance": "NCERT Class 10 Chapter 12, Class 12 Chapters 3-5. CBSE follows NCERT exactly.",
+      "pyq_pattern": "10-12 marks. Circuit numericals and magnetic effect of current common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 12.0,
+      "difficulty_rating": 3
+    },
+    {
+      "strategy_id": "cbse_chem_reactions",
+      "exam_type": "CBSE",
+      "topic": "Chemical Reactions",
+      "subject": "Chemistry",
+      "weightage_percent": 15.0,
+      "common_traps": [
+        "Unbalanced equations",
+        "Wrong oxidation states",
+        "Missing reaction conditions",
+        "Confusing reaction types"
+      ],
+      "shortcut_technique": "**Balance First**: Always balance equations before answering. Check: atoms balanced, charges balanced (for ionic), conditions written.",
+      "ncert_relevance": "NCERT Class 10 Chapters 1-4, Class 12 Chapters 1-8. Direct NCERT testing.",
+      "pyq_pattern": "8-10 marks. Balancing and identifying reaction types common.",
+      "source_id": "",
+      "syllabus_reference": "",
+      "recommended_time_percent": 10.0,
+      "difficulty_rating": 2
+    }
+  ],
+  "count": 14,
+  "updated_at": "2025-12-26T06:09:17.831726"
+}

@@ -276,12 +276,17 @@ class StudyBuddyAgent(ReActAgent):
         return False
     
     def _get_memory_for_user(self, user_id: str, db=None) -> MemorySystem:
-        """Get or create memory system for user"""
+        """
+        Get or create memory system for user with REAL database persistence.
+        
+        MEMORY CONTRACT: Uses MemoryService as SINGLE SOURCE OF TRUTH.
+        """
         if user_id not in self._memory_cache:
-            self._memory_cache[user_id] = MemorySystem(
-                user_id=user_id,
-                long_term=LongTermMemory(user_id=user_id, db_client=db)
-            )
+            # Create memory with database connection for persistence
+            self._memory_cache[user_id] = MemorySystem(student_id=user_id, db=db)
+        elif db and not self._memory_cache[user_id]._db:
+            # Update db if now available
+            self._memory_cache[user_id].set_db(db)
         return self._memory_cache[user_id]
     
     async def _read_student_context(self, user_id: str, context: Dict) -> Dict[str, Any]:

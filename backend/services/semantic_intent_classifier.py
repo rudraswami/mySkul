@@ -198,6 +198,13 @@ Analyze this message and return a JSON object with these fields:
 6. "is_follow_up": true if this references a previous conversation
 
 7. "urgency_level": "low", "medium", or "high"
+   
+   URGENCY DETECTION EXAMPLES (CRITICAL):
+   - HIGH: "exam tomorrow", "viva in 2 hours", "test in the morning", "interview tonight", "quick revision", "last minute tips", "quick tips", any mention of imminent deadline
+   - MEDIUM: "exam next week", "preparing for test", general study questions
+   - LOW: "want to learn", "curious about", no time pressure mentioned
+   
+   KEY RULE: Any mention of "tomorrow", "today", "tonight", "in X hours", "quick", "last minute", or other imminent time = HIGH urgency
 
 8. "needs_empathy": true if the student needs emotional support
 
@@ -290,6 +297,20 @@ These fields determine HOW MUCH to respond - matching response scope to question
 → delivery_mode: "formal"
 → has_actionable_request: TRUE
 → requested_output_type: "study_plan"
+
+=== URGENT QUERY EXAMPLE (CRITICAL) ===
+"Quick revision tips for exam tomorrow"
+→ response_expectation: "conversational_advice"
+→ temporal_scope: "today"
+→ delivery_mode: "structured" (NOT conversational - urgent needs structure!)
+→ urgency_level: "high" (CRITICAL - "tomorrow" = imminent deadline)
+→ has_actionable_request: FALSE
+→ requested_output_type: null
+
+"Last minute tips for my viva in 2 hours"
+→ urgency_level: "high" (CRITICAL - imminent)
+→ temporal_scope: "immediate"
+→ needs_encouragement: true
 
 Return ONLY valid JSON, no other text."""
 

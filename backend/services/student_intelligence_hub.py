@@ -509,13 +509,20 @@ class StudentIntelligenceHub:
             )
             result.mastery_delta = mastery_delta
             
-            # 5. Update mastery
-            if mastery_delta != 0 and topic != "general_concept":
-                current_mastery = await self.mastery_tracker.get_mastery_level(user_id, topic)
+            # 5. Update mastery - ALWAYS track, even for general topics
+            # FIX: Previously skipped "general_concept" - this caused memory to never build up
+            if mastery_delta != 0:
+                # Use subject as fallback topic if we got "general_concept"
+                tracking_topic = topic
+                if topic == "general_concept":
+                    # Try to extract from response or use subject
+                    tracking_topic = self._extract_topic_from_response(response) or f"{detected_topic}_general" or "general_learning"
+                
+                current_mastery = await self.mastery_tracker.get_mastery_level(user_id, tracking_topic)
                 
                 await self.mastery_tracker.update_mastery(
                     user_id=user_id,
-                    topic=topic,
+                    topic=tracking_topic,
                     delta=mastery_delta,
                     reason=f"interaction_{interaction_quality}"
                 )
@@ -523,7 +530,7 @@ class StudentIntelligenceHub:
                 result.mastery_updated = True
                 result.new_mastery = min(100, max(0, current_mastery + mastery_delta))
                 
-                logger.info(f"📈 Mastery updated: {topic} -> {result.new_mastery}% (+{mastery_delta})")
+                logger.info(f"📈 Mastery updated: {tracking_topic} -> {result.new_mastery}% (+{mastery_delta})")
             
             # 6. Schedule spaced repetition if needed
             if understanding in ["good", "excellent"] and topic != "general_concept":
@@ -559,13 +566,17 @@ class StudentIntelligenceHub:
             )
             result.achievements_unlocked = achievements
             
-            # 9. Update concept thread
-            if concepts:
-                await self.continuity_engine.update_concept_thread(
-                    user_id=user_id,
-                    topic=topic,
-                    concepts=concepts
-                )
+            # 9. Update concept thread - ALWAYS track something for continuity
+            # FIX: Previously only tracked if concepts were extracted
+            # Now we always track the topic for "previous_topic" to work
+            tracking_topic = topic if topic != "general_concept" else (detected_topic or "general_learning")
+            tracking_concepts = concepts if concepts else [tracking_topic]
+            
+            await self.continuity_engine.update_concept_thread(
+                user_id=user_id,
+                topic=tracking_topic,
+                concepts=tracking_concepts
+            )
             
             logger.info(f"📚 Learning loop closed: mastery +{mastery_delta}, XP +{xp_earned}, "
                        f"achievements: {achievements}")
@@ -1291,29 +1302,63 @@ class StudentIntelligenceHub:
     async def _detect_current_emotion(
         self,
         query: str,
-        user_id: str
+        user_id: str,
+        semantic_analysis: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Detect current emotional state from query and patterns"""
-        query_lower = query.lower()
+        """
+        Detect current emotional state from query and patterns.
         
-        # Simple keyword detection (in production, use LLM)
-        emotional_keywords = {
-            EmotionalState.STRESSED: ["stressed", "stress", "pressure", "overwhelmed", "too much"],
-            EmotionalState.ANXIOUS: ["anxious", "worried", "nervous", "scared", "fear"],
-            EmotionalState.FRUSTRATED: ["frustrated", "annoyed", "angry", "stuck", "can't understand"],
-            EmotionalState.CONFUSED: ["confused", "don't understand", "don't get", "unclear"],
-            EmotionalState.TIRED: ["tired", "exhausted", "sleepy", "can't focus"],
-            EmotionalState.MOTIVATED: ["motivated", "excited", "ready", "let's do this"],
-            EmotionalState.HAPPY: ["happy", "great", "awesome", "love it", "thanks"]
-        }
+        PHASE 1 FIX: Uses semantic analysis when available.
+        Keyword detection only runs as legacy fallback.
+        """
+        from core.config import settings
         
         detected = EmotionalState.NEUTRAL
-        for state, keywords in emotional_keywords.items():
-            if any(kw in query_lower for kw in keywords):
-                detected = state
-                break
         
-        # Get emotional pattern
+        # ================================================================
+        # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+        # ================================================================
+        if settings.ENABLE_SEMANTIC_EMOTION_DETECTION and semantic_analysis:
+            confidence = semantic_analysis.get('confidence', 0)
+            if confidence >= 0.5:
+                tone = semantic_analysis.get('emotional_tone', 'neutral')
+                intensity = semantic_analysis.get('emotional_intensity', 0)
+                
+                # Map semantic tones to emotional states
+                tone_to_state = {
+                    'anxious': EmotionalState.ANXIOUS,
+                    'frustrated': EmotionalState.FRUSTRATED,
+                    'confused': EmotionalState.CONFUSED,
+                    'excited': EmotionalState.MOTIVATED,
+                    'positive': EmotionalState.HAPPY if intensity > 0.5 else EmotionalState.NEUTRAL,
+                    'negative': EmotionalState.STRESSED if intensity > 0.5 else EmotionalState.NEUTRAL,
+                    'bored': EmotionalState.TIRED,
+                }
+                
+                detected = tone_to_state.get(tone, EmotionalState.NEUTRAL)
+                logger.debug(f"🧠 SEMANTIC emotion detection: {tone} -> {detected}")
+        else:
+            # ================================================================
+            # LEGACY FALLBACK: Keyword detection (only when semantic unavailable)
+            # ================================================================
+            logger.debug("📋 Using legacy keyword emotion detection")
+            query_lower = query.lower()
+            
+            # Minimal keyword set (structural signals only)
+            # These are explicit emotional statements, not inferred
+            emotional_keywords = {
+                EmotionalState.STRESSED: ["i'm stressed", "so stressed", "too much pressure"],
+                EmotionalState.ANXIOUS: ["i'm anxious", "so worried", "really nervous"],
+                EmotionalState.FRUSTRATED: ["i'm frustrated", "so frustrated", "stuck"],
+                EmotionalState.CONFUSED: ["i'm confused", "don't understand", "makes no sense"],
+            }
+            
+            for state, keywords in emotional_keywords.items():
+                if any(kw in query_lower for kw in keywords):
+                    detected = state
+                    break
+        
+        # Get emotional pattern from profile
         pattern = ""
         try:
             profile = await self.db.user_emotional_profile.find_one({"user_id": user_id})
@@ -1682,6 +1727,46 @@ class StudentIntelligenceHub:
                 concepts.append(concept)
         
         return concepts
+    
+    def _extract_topic_from_response(self, response: Dict[str, Any]) -> Optional[str]:
+        """
+        Extract topic from AI response content.
+        
+        This helps track mastery even when the query was generic but
+        the response covered a specific topic.
+        
+        Args:
+            response: AI response dict
+        
+        Returns:
+            Extracted topic name or None
+        """
+        try:
+            # Extract text from response
+            response_text = ""
+            if isinstance(response, dict):
+                # Try different response structures
+                default_view = response.get('response', {}).get('default_view', {})
+                main_content = default_view.get('main_content', {})
+                
+                if isinstance(main_content, dict):
+                    response_text = main_content.get('content', '') or main_content.get('text', '')
+                elif isinstance(main_content, str):
+                    response_text = main_content
+                
+                # Also check for subject
+                if response.get('detected_subject') and response['detected_subject'] != 'General':
+                    return f"{response['detected_subject'].lower().replace(' ', '_')}_general"
+            
+            if not response_text:
+                return None
+            
+            # Use the same extraction logic
+            return self._extract_main_topic(response_text)
+            
+        except Exception as e:
+            logger.debug(f"Topic extraction from response failed: {e}")
+            return None
     
     def _calculate_exam_urgency(self, days: Optional[int]) -> ExamUrgency:
         """Calculate exam urgency level"""

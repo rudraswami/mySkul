@@ -168,6 +168,14 @@ class ContextPack:
     # =========== SPACED REPETITION ===========
     due_reviews: List[str] = field(default_factory=list)
     
+    # =========== PERSISTENT MEMORY (Real Student Data) ===========
+    # These fields contain REAL memory from the database, not fake data
+    relevant_memories: List[Dict[str, Any]] = field(default_factory=list)  # Semantic search results
+    past_struggles: List[str] = field(default_factory=list)  # Topics student struggled with before
+    what_helped_before: str = ""  # What explanations worked
+    learning_preference: str = ""  # visual, step_by_step, intuitive, etc.
+    preferred_analogies: List[str] = field(default_factory=list)  # cricket, cooking, etc.
+    
     # =========== PROACTIVE INTELLIGENCE ===========
     magic_prompts: List[str] = field(default_factory=list)
     needs_encouragement: bool = False
@@ -227,6 +235,13 @@ class ContextPack:
             
             # Spaced Rep
             "due_reviews": self.due_reviews,
+            
+            # Persistent Memory (Real Data)
+            "relevant_memories": self.relevant_memories,
+            "past_struggles": self.past_struggles,
+            "what_helped_before": self.what_helped_before,
+            "learning_preference": self.learning_preference,
+            "preferred_analogies": self.preferred_analogies,
             
             # Proactive
             "magic_prompts": self.magic_prompts,
@@ -297,6 +312,29 @@ class ContextPack:
         # Due reviews
         if self.due_reviews:
             prompt_parts.append(f"Due for review: {', '.join(self.due_reviews[:3])}")
+        
+        # =========== PERSISTENT MEMORY (Real Student Data) ===========
+        # Past struggles - enables "Last time you struggled with..."
+        if self.past_struggles:
+            prompt_parts.append(f"Past struggles: {', '.join(self.past_struggles[:3])}")
+        
+        # What helped before - enables adaptive explanations
+        if self.what_helped_before:
+            prompt_parts.append(f"What helped before: {self.what_helped_before}")
+        
+        # Learning preference - enables "You usually prefer..."
+        if self.learning_preference:
+            prompt_parts.append(f"Learning style: {self.learning_preference}")
+        
+        # Preferred analogies
+        if self.preferred_analogies:
+            prompt_parts.append(f"Prefers analogies from: {', '.join(self.preferred_analogies[:3])}")
+        
+        # Relevant past memories
+        if self.relevant_memories:
+            memory_hints = [m.get('content', '')[:100] for m in self.relevant_memories[:3] if isinstance(m, dict)]
+            if memory_hints:
+                prompt_parts.append(f"Related past discussions:\n- " + "\n- ".join(memory_hints))
         
         # Recent conversation
         conv_summary = self.get_conversation_summary()
@@ -477,9 +515,20 @@ class ContextPackBuilder:
                         
                         # Get additional context from memory
                         pack.current_topic = context.get('current_topic', '')
-                        pack.previous_topic = context.get('continuity', {}).get('previous_topic', '')
+                        
+                        # Get previous topic with fallback chain
+                        continuity = context.get('continuity', {})
+                        pack.previous_topic = (
+                            continuity.get('previous_topic', '') or  # From continuity
+                            continuity.get('last_topic', '') or      # Alternative key
+                            context.get('weak_topics', [''])[0]      # Fallback to first weak topic
+                        )
                         pack.is_continuation = context.get('is_continuation', False)
                         pack.student_name = context.get('user_name', '')
+                        
+                        # ============= REAL PERSISTENT MEMORY =============
+                        # Get relevant memories (semantic search results)
+                        pack.relevant_memories = context.get('relevant_memories', [])
                         
                         loaded_components.append("memory")
                 except asyncio.TimeoutError:
@@ -506,6 +555,45 @@ class ContextPackBuilder:
                 logger.debug(f"Last task tracking failed (non-critical): {e}")
             
             # ============================================================
+            # STEP 2c: PERSISTENT STUDENT PROFILE (Real Memory)
+            # ============================================================
+            try:
+                if self.memory_integration:
+                    # Get REAL student profile from MemoryService
+                    memory_pack = await asyncio.wait_for(
+                        self.memory_integration.get_memory_context_pack(
+                            user_id=user_id,
+                            session_id=session_id,
+                            query=message,
+                            route_type="educational"
+                        ),
+                        timeout=3.0
+                    )
+                    
+                    # Populate persistent memory fields
+                    pack.learning_preference = memory_pack.get('preferred_explanation', '')
+                    pack.relevant_memories = memory_pack.get('relevant_memories', [])
+                    pack.past_struggles = pack.weak_areas  # Already loaded weak areas serve as struggles
+                    
+                    # Get student profile for more details
+                    profile = await self.memory_integration.memory_service.get_student_profile(user_id)
+                    if profile:
+                        pack.preferred_analogies = profile.get('preferred_analogies', [])
+                        
+                        # What helped before - infer from profile
+                        if profile.get('preferred_explanation'):
+                            pack.what_helped_before = f"{profile.get('preferred_explanation')} explanations"
+                        if profile.get('pacing'):
+                            pack.what_helped_before += f", {profile.get('pacing')} pacing"
+                    
+                    loaded_components.append("student_profile")
+                    logger.debug(f"   ✓ Student profile: pref={pack.learning_preference}")
+            except asyncio.TimeoutError:
+                logger.warning(f"⚠️ Student profile timeout | request_id={request_id}")
+            except Exception as e:
+                logger.debug(f"Student profile load failed (non-critical): {e}")
+            
+            # ============================================================
             # STEP 3: MASTERY SNAPSHOT (CORE - must complete)
             # ============================================================
             try:
@@ -527,6 +615,14 @@ class ContextPackBuilder:
                     timeout=3.0
                 )
                 pack.weak_areas = [t.get('topic', '') for t in weak_topics[:5]]
+                
+                # FIX: If no weak areas exist, initialize defaults based on exam type/subject
+                # This ensures new users get personalized defaults instead of empty lists
+                if not pack.weak_areas:
+                    pack.weak_areas = self._get_default_weak_areas(subject, pack.exam_name)
+                    if pack.weak_areas:
+                        loaded_components.append("default_weak_areas")
+                        logger.info(f"   📋 Initialized default weak areas: {pack.weak_areas[:3]}")
                 
                 loaded_components.append("mastery")
                 logger.debug(f"   ✓ Mastery: {pack.current_topic}={mastery}%")
@@ -670,6 +766,94 @@ class ContextPackBuilder:
             'expert': 'expert'
         }
         return depth_map.get(mastery_bucket, 'medium')
+    
+    def _get_default_weak_areas(self, subject: str, exam_name: str) -> List[str]:
+        """
+        Get default weak areas based on exam type and subject.
+        
+        This ensures new users get personalized defaults instead of empty lists.
+        These are commonly challenging topics for each exam type.
+        
+        Args:
+            subject: Current subject context
+            exam_name: Exam type (JEE, NEET, CBSE, etc.)
+        
+        Returns:
+            List of default weak area topics
+        """
+        exam_name_lower = (exam_name or "").lower()
+        subject_lower = (subject or "").lower()
+        
+        # JEE-specific weak areas (most students struggle with)
+        if "jee" in exam_name_lower:
+            return [
+                "calculus_integrals",
+                "thermodynamics",
+                "organic_chemistry_reactions",
+                "coordinate_geometry",
+                "electromagnetic_induction"
+            ]
+        
+        # NEET-specific weak areas
+        elif "neet" in exam_name_lower:
+            return [
+                "human_physiology",
+                "organic_chemistry",
+                "genetics",
+                "plant_physiology",
+                "cell_biology"
+            ]
+        
+        # CBSE Board exam defaults by class
+        elif "cbse" in exam_name_lower or "board" in exam_name_lower:
+            return [
+                "calculus_derivatives",
+                "organic_chemistry",
+                "electrostatics",
+                "probability",
+                "ray_optics"
+            ]
+        
+        # Subject-specific defaults
+        elif "physics" in subject_lower:
+            return [
+                "thermodynamics",
+                "electromagnetism",
+                "wave_optics",
+                "rotational_mechanics",
+                "modern_physics"
+            ]
+        elif "chemistry" in subject_lower:
+            return [
+                "organic_reactions",
+                "chemical_equilibrium",
+                "electrochemistry",
+                "coordination_compounds",
+                "thermochemistry"
+            ]
+        elif "math" in subject_lower:
+            return [
+                "calculus_integrals",
+                "probability",
+                "3d_geometry",
+                "differential_equations",
+                "complex_numbers"
+            ]
+        elif "biology" in subject_lower:
+            return [
+                "genetics",
+                "cell_biology",
+                "human_physiology",
+                "ecology",
+                "plant_biology"
+            ]
+        
+        # Generic defaults for unknown context
+        return [
+            "fundamentals",
+            "problem_solving",
+            "conceptual_understanding"
+        ]
     
     async def _get_recent_events(
         self, 

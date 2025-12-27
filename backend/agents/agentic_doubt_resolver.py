@@ -104,142 +104,144 @@ NEVER:
         ]
     
     @staticmethod
-    def is_doubt_query(query: str) -> bool:
+    def is_doubt_query(
+        query: str, 
+        semantic_analysis: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """
         Detect if this is a doubt/confusion query needing empathetic agentic handling.
         
-        PHILOSOPHY: Capture student confusion more generously.
-        Students often express confusion in subtle ways. A real teacher would
-        pick up on these signals. We should too.
+        PHASE 1 FIX: This method now defers to semantic analysis when available.
+        Keyword patterns only run as fallback when:
+        1. No semantic analysis available
+        2. Semantic confidence is low (< 0.5)
         
-        The AgenticDoubtResolver provides:
-        - Empathetic, patient explanations
-        - Step-by-step reasoning with tools
-        - Memory of what confused the student before
-        - Verification to ensure accuracy
+        The semantic classifier already detects confusion, clarification,
+        and emotional states - we should use that intelligence.
         """
+        # ================================================================
+        # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+        # ================================================================
+        if semantic_analysis:
+            confidence = semantic_analysis.get('confidence', 0)
+            if confidence >= 0.5:
+                intent = semantic_analysis.get('intent', '')
+                emotional_tone = semantic_analysis.get('emotional_tone', '')
+                
+                # Semantic signals that indicate doubt
+                doubt_intents = ['clarification', 'confusion', 'emotional_support']
+                doubt_tones = ['confused', 'frustrated', 'anxious']
+                
+                if intent in doubt_intents:
+                    logger.info(f"🧠 SEMANTIC DOUBT detected (intent={intent})")
+                    return True
+                
+                if emotional_tone in doubt_tones and semantic_analysis.get('emotional_intensity', 0) > 0.4:
+                    logger.info(f"🧠 SEMANTIC DOUBT detected (tone={emotional_tone}, intense)")
+                    return True
+                
+                # Semantic says not a doubt - trust it
+                return False
+        
+        # ================================================================
+        # LEGACY FALLBACK: Keyword patterns (only when semantic unavailable)
+        # ================================================================
+        logger.debug("📋 Using legacy keyword doubt detection (semantic unavailable)")
+        
         query_lower = query.lower().strip()
         
-        # ==========================================================================
-        # TIER 1: EXPLICIT CONFUSION (High confidence - definitely a doubt)
-        # ==========================================================================
+        # STRUCTURAL detection only (not keyword lists)
+        # 1. Very short follow-up questions often indicate confusion
+        word_count = len(query_lower.split())
+        has_question = '?' in query_lower
+        
+        if word_count <= 3 and has_question:
+            # "Why?", "How?", "What?" - might be confusion
+            # Let routing decide, not us
+            return False
+        
+        # 2. Messages with multiple question marks = frustration/confusion
+        question_mark_count = query_lower.count('?')
+        if question_mark_count >= 2:
+            logger.info(f"🤔 STRUCTURAL: Multiple questions detected")
+            return True
+        
+        # 3. Explicit confusion signals (minimal keyword set - structural)
+        # These are so explicit they're essentially structural
         explicit_confusion = [
-            # Direct confusion statements
-            "don't understand", "dont understand", "do not understand",
-            "not understanding", "can't understand", "cannot understand",
-            "confused about", "i'm confused", "i am confused", "so confused",
-            "still confused", "very confused", "really confused",
-            "makes no sense", "doesn't make sense", "does not make sense",
-            
-            # Stuck/blocked expressions
-            "i'm stuck", "i am stuck", "getting stuck", "got stuck",
-            "can't figure", "cannot figure", "struggling with",
-            
-            # Frustration indicators
-            "still don't get", "still dont get", "not getting it",
-            "don't get it", "dont get it", "what am i missing",
-            "where am i going wrong", "help me understand",
-            
-            # Request for re-explanation
-            "explain again", "explain it again", "one more time",
-            "clarify this", "need clarification",
-            
-            # Hindi/Hinglish confusion expressions
-            "samajh nahi aa raha", "samajh nahi aaya", "समझ नहीं आ रहा",
-            "samajh me nahi", "clear nahi hai", "confuse ho gaya",
+            "don't understand", "can't understand", "i'm confused",
+            "makes no sense", "help me understand", "explain again"
         ]
         
         if any(phrase in query_lower for phrase in explicit_confusion):
-            logger.info(f"🤔 TRUE DOUBT detected (explicit confusion): '{query[:50]}...'")
+            logger.info(f"🤔 EXPLICIT DOUBT detected (structural): '{query[:50]}...'")
             return True
         
-        # ==========================================================================
-        # TIER 2: SUBTLE CONFUSION (Nuanced signals that real teachers catch)
-        # ==========================================================================
-        subtle_confusion = [
-            # Questioning understanding
-            "but why", "but how", "but what",  # "But" often signals lingering doubt
-            "wait, so", "wait so", "so basically",  # Re-processing signals
-            "i thought", "i think i",  # Uncertainty hedging
-            
-            # Requesting different angles
-            "can you explain", "could you explain",  # Polite re-request
-            "what does it mean", "what do you mean",
-            "in simple terms", "in simple words", "simply explain",
-            "eli5", "explain like i'm 5", "dumb it down",
-            
-            # Partial understanding signals
-            "i get that but", "i understand but", "okay but",
-            "that part is clear but", "this part confuses",
-            "lost after", "lost at", "lost me at",
-            
-            # Seeking confirmation (often means doubt)
-            "am i right", "is that right", "is this right",
-            "did i get", "have i got",
-            
-            # Asking "why" in specific ways (conceptual doubt)
-            "why exactly", "why specifically", "why does this happen",
-            "how come", "how is that possible",
-            
-            # Common student doubt phrases
-            "not sure", "not clear", "a bit confused",
-            "little confused", "kind of confused",
-            "having trouble", "having difficulty", "trouble understanding",
-            
-            # Help requests
-            "please help", "can you help", "need help with",
-            "help with this", "help me with",
-        ]
-        
-        if any(phrase in query_lower for phrase in subtle_confusion):
-            logger.info(f"🤔 SUBTLE DOUBT detected: '{query[:50]}...'")
-            return True
-        
-        # ==========================================================================
-        # TIER 3: FOLLOW-UP PATTERNS (Often indicate previous doubt)
-        # ==========================================================================
-        # Short follow-ups after explanations often mean the student didn't fully get it
-        short_followups = ["why?", "how?", "why is that?", "how so?", "really?", "huh?"]
-        if query_lower.strip('?!. ') in [f.strip('?!. ') for f in short_followups]:
-            logger.info(f"🤔 SHORT FOLLOW-UP detected (likely confusion): '{query}'")
-            return True
-        
-        # ==========================================================================
-        # DEFAULT: Not a doubt - route to standard explanation flow
-        # ==========================================================================
+        # Default: Not detected - let semantic handle in main flow
         return False
     
     @staticmethod
-    def is_deep_reasoning_query(query: str) -> bool:
+    def is_deep_reasoning_query(
+        query: str,
+        semantic_analysis: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """
         Detect if query needs deep multi-step reasoning with tools.
         
-        This is for complex problems that benefit from:
-        - Tool usage (calculator, knowledge search)
-        - Step-by-step verification
-        - ReAct loop reasoning
+        PHASE 1 FIX: Uses structural indicators, not keywords.
+        Deep reasoning is detected by:
+        1. Mathematical notation (equations, formulas)
+        2. Multi-step structure (numbered items, "and then")
+        3. Semantic analysis signals (response_expectation, complexity)
         
-        NOT for simple conceptual questions.
+        NOT by keyword matching on "solve", "prove", etc.
         """
-        query_lower = query.lower().strip()
+        # ================================================================
+        # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+        # ================================================================
+        if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+            response_expectation = semantic_analysis.get('response_expectation', '')
+            
+            # Semantic signals that indicate deep reasoning
+            if response_expectation == 'structured_deliverable':
+                output_type = semantic_analysis.get('requested_output_type', '')
+                if output_type == 'problem_solution':
+                    logger.info(f"🧠 SEMANTIC: Deep reasoning (structured problem solution)")
+                    return True
+            
+            # Not detected by semantic - trust it
+            return False
         
-        deep_reasoning_triggers = [
-            # Multi-step problem solving
-            "solve this step by step", "show all steps", "step by step solution",
-            "derive and prove", "prove that", "prove this",
-            "calculate and explain", "solve and verify",
-            
-            # Verification requests
-            "verify my solution", "check my answer", "is this correct",
-            "check if this is right", "verify this calculation",
-            
-            # Complex analysis
-            "analyze in detail", "comprehensive analysis",
-            "find all the formulas", "list all methods",
+        # ================================================================
+        # LEGACY FALLBACK: STRUCTURAL detection (no keywords)
+        # ================================================================
+        import re
+        
+        # 1. Mathematical content (structural - detects symbols)
+        math_patterns = [
+            r'\d+\s*[+\-*/^=]\s*\d+',  # Equations
+            r'd[xy]/d[xy]',  # Derivatives
+            r'∫|∑|∏',  # Math symbols
+            r'\\frac|\\sqrt|\\int',  # LaTeX
+            r'=\s*\?',  # Find X format
         ]
         
-        if any(trigger in query_lower for trigger in deep_reasoning_triggers):
-            logger.info(f"🧠 DEEP REASONING query detected: '{query[:50]}...'")
+        has_math = any(re.search(p, query) for p in math_patterns)
+        
+        # 2. Multi-step structure (numbered items, steps)
+        has_numbered = bool(re.search(r'(?:1\.|step 1|first,?)', query.lower()))
+        has_multiple_parts = bool(re.search(r'(?:and then|after that|next,?|finally)', query.lower()))
+        
+        # 3. Verification request (structural - question about correctness)
+        query_lower = query.lower()
+        is_verification = '?' in query and any(w in query_lower for w in ['correct', 'right', 'wrong', 'check'])
+        
+        if has_math and (has_numbered or has_multiple_parts or len(query.split()) > 25):
+            logger.info(f"🧠 STRUCTURAL: Deep reasoning (math + complexity)")
+            return True
+        
+        if is_verification and has_math:
+            logger.info(f"🧠 STRUCTURAL: Deep reasoning (verification of math)")
             return True
         
         return False
@@ -289,11 +291,16 @@ NEVER:
         """
         logger.info(f"🧠 AgenticDoubtResolver processing: {query[:50]}...")
         
-        # Initialize or get memory for this student
+        # Initialize or get memory for this student (with REAL database persistence)
         student_id = context.get('user_id', 'anonymous')
+        db = context.get('db')  # Get database from context for persistent memory
+        
         if student_id not in self._memory_cache:
-            self._memory_cache[student_id] = MemorySystem(student_id)
-            await self._memory_cache[student_id].initialize()
+            self._memory_cache[student_id] = MemorySystem(student_id, db=db)
+            await self._memory_cache[student_id].initialize(db=db)
+        elif db and not self._memory_cache[student_id]._db:
+            # If db is now available but wasn't before, update the memory system
+            self._memory_cache[student_id].set_db(db)
         
         memory = self._memory_cache[student_id]
         

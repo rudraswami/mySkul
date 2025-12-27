@@ -1,442 +1,2796 @@
 {
   "keyword_index": {
-    "force": [
-      "74608e8306e3a206",
-      "d8cba274bd13121d",
-      "fd1f733693513841",
-      "a5c1189df81e8dc7",
-      "e019e7366ec824f9",
-      "df55b75db50f0660",
-      "989e183950f05861",
-      "3b825d87e05d3103",
-      "4ebae254ba8bdc24",
-      "031ce274aae3f1d9",
-      "20ff330225df7235"
+    "ion": [
+      "518a6e217679d18f",
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d",
+      "7273ab193ba953af",
+      "82ff29f77ead5c25",
+      "dcfa9cafae4f6b9d",
+      "2098941dabb6854e",
+      "38f24e38d84d6ce4",
+      "cea365c340841799",
+      "bcf4406bda58325c",
+      "e5cb1f14382b26c1",
+      "7d8d9789981ca44c",
+      "d8aed66623d2e10c",
+      "8c41ecd66148a1b1",
+      "158038d5ab6c1496",
+      "a8aac8f93faa835a",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "938de822021bda77",
+      "658cd143d786dd64",
+      "15c5581842695d58",
+      "38b18e2a73b0dba5",
+      "d572f080cdc82395",
+      "58f295297f7baf40",
+      "ffe6938a3e22a6bc",
+      "02c107cf3ae26f00",
+      "041ac25e6ce14e36",
+      "56510e3023c76f51",
+      "231a2b5823f0f74a",
+      "14e47d24aef954e7",
+      "5f8ca6d9dc2c31c2",
+      "d9e32408115b9683",
+      "7b042f2b0bcf4668",
+      "f4066fa0a5737cdd",
+      "237adfb7a1efe7c2",
+      "08d9fd51dd27388c",
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "fb427cb4dcb1409d",
+      "6d85065c36a9a7ff",
+      "722af7dba9e0288f",
+      "e6add88abbc5f0ad",
+      "62a89f020bff89a1",
+      "1f531c4e39246a04",
+      "ed06c8e7b095f306",
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "c4746c15ad5c1375",
+      "427e45a4ed721b42",
+      "efe63a1e01b764f6",
+      "5cb17afaa287989c",
+      "e17ad376ae02c5a9",
+      "11de4d97d261cc5f",
+      "c92a6ddaa3d25190",
+      "3b77de942643f77a",
+      "63d35a5eb87845fa",
+      "4ea392b3032683f0",
+      "ea06b53ebeaa95d3",
+      "6187826302fe5d58",
+      "13cfa7c165bac102",
+      "bd14017f0c50d8fb",
+      "e63df2e8f0492c0a",
+      "320881c957a9d08f",
+      "5fd0f6afac58ac30",
+      "b69b8ad3ea405155",
+      "4c32633c6a0d62bd",
+      "42c88af5d2e45bea",
+      "26e2dcab3c065a92",
+      "5e8c0a78f6835057",
+      "85131d0ed58675e0",
+      "b4834c83b5819988",
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "e4d7b3bcc79d1569",
+      "57882c54d7f66f6a",
+      "17db606cbae2f420",
+      "045576e3c2ad95a9",
+      "d6f6dae8d89612cc",
+      "c64156badd09f477",
+      "e496945a19761c7c",
+      "92c2b52e7de822c9",
+      "968b7f9510b022bc",
+      "fc4b4347b4f29bd7",
+      "1f7f90428b03ccd6",
+      "7885f01e62204643",
+      "ae6831f3130cd25f",
+      "ec96d8fd553b7896",
+      "8924ab2c61d2b7d4",
+      "2d5195ad82cfa7b3",
+      "7daac65227e734d6",
+      "b31790744dc2a940",
+      "34abe612a0d7bd13",
+      "6bcd85677a25eaa3",
+      "044e823cd1e4cbcd",
+      "a806d02caba60f4f",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd",
+      "9c0c4e1c00484e84",
+      "8e0cc254eda292cb",
+      "68d359fa2e2dac81",
+      "4c630ffc0889ed8e",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "6e461826f2f074c5",
+      "33f7591f543fe5d4",
+      "124bd3222ebeec86",
+      "8ec1c0bc9071f9e1",
+      "ca9f81fcb4d9eb32",
+      "1d9611cd81c2dcec",
+      "e4964e35a25f76d3",
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "44db399650ca49cc",
+      "3034dc9baa39db0b",
+      "ec987c67917ab4d8",
+      "824247844929a69b",
+      "b80c8be93126056c",
+      "b0863635bf6629e0",
+      "8c42a261db6cc1aa",
+      "b949204eb78ebf45",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "91296eced309880d",
+      "0c1ebe22debaeec2",
+      "96c6d3fdb118cd4b",
+      "b639b296748ee120",
+      "8dfafb2a320f15b0",
+      "7b721ebae03f7192",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4",
+      "fd490fabc6e1c32a",
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "8b37b53f20e28535",
+      "c5116441d8c09a67",
+      "5845ef1c28276877",
+      "b993359e01dbd29e",
+      "12b514b0e42f2882",
+      "c9f2bb775380a08d",
+      "c814a41c31d358dd",
+      "f9da6430e8cc6fbf",
+      "925ea3e121b4cc62",
+      "5ca189ba222ac769",
+      "5b186eeb72c72545",
+      "536874452c30d175",
+      "cad88d68641f398d",
+      "325d1bb73d8c4354",
+      "8ca04e69f2422697",
+      "1d62127955072a94",
+      "01f0a6b49ab119ad",
+      "4985df2c2866a9d7",
+      "3a87ed29db3c6a3c",
+      "f5f6ce721b883c1f",
+      "c417ac86f772a1f8",
+      "8bc5042b0a607ec4",
+      "1771467780bb74ae"
     ],
-    "mass": [
-      "74608e8306e3a206",
-      "d8cba274bd13121d",
-      "9ed1987a28d8e609",
-      "403894f4199f2d4a",
-      "8426600e7bebcd5b",
-      "5e3efa0004ec3c61",
-      "1293ebb72e735844"
-    ],
-    "friction": [
-      "74608e8306e3a206",
-      "a5c1189df81e8dc7",
-      "e019e7366ec824f9",
-      "989e183950f05861"
-    ],
-    "newton's": [
-      "74608e8306e3a206",
-      "d8cba274bd13121d",
-      "fd1f733693513841"
-    ],
-    "first": [
-      "74608e8306e3a206"
-    ],
-    "(law": [
-      "74608e8306e3a206"
-    ],
-    "inertia)": [
-      "74608e8306e3a206"
-    ],
-    "momentum": [
-      "d8cba274bd13121d"
-    ],
-    "acceleration": [
-      "d8cba274bd13121d",
-      "403894f4199f2d4a"
-    ],
-    "equation": [
-      "d8cba274bd13121d",
-      "50fb9e66f8aefb3f",
-      "a0fba861d135d934",
-      "6921c5e153468c49"
-    ],
-    "vector": [
-      "d8cba274bd13121d",
-      "031ce274aae3f1d9",
-      "20ff330225df7235"
-    ],
-    "second": [
-      "d8cba274bd13121d"
-    ],
-    "reaction": [
-      "fd1f733693513841",
-      "50fb9e66f8aefb3f",
-      "303cea9490de2f0b"
-    ],
-    "third": [
-      "fd1f733693513841"
-    ],
-    "(action-reaction)": [
-      "fd1f733693513841"
-    ],
-    "kinetic": [
-      "a5c1189df81e8dc7",
-      "9ed1987a28d8e609",
-      "df55b75db50f0660"
-    ],
-    "work": [
-      "e019e7366ec824f9",
-      "df55b75db50f0660",
-      "3b825d87e05d3103",
-      "af147840502ed5d2"
-    ],
-    "done": [
-      "e019e7366ec824f9"
-    ],
-    "energy": [
-      "9ed1987a28d8e609",
-      "403894f4199f2d4a",
-      "df55b75db50f0660",
-      "989e183950f05861",
-      "3b825d87e05d3103",
-      "a0fba861d135d934"
-    ],
-    "velocity": [
-      "9ed1987a28d8e609",
-      "3b825d87e05d3103"
-    ],
-    "potential": [
-      "403894f4199f2d4a",
-      "af147840502ed5d2"
-    ],
-    "gravity": [
-      "403894f4199f2d4a",
-      "989e183950f05861",
-      "031ce274aae3f1d9"
-    ],
-    "power": [
-      "df55b75db50f0660",
-      "3b825d87e05d3103",
-      "354ce294d222940b"
-    ],
-    "base": [
-      "df55b75db50f0660",
-      "50fb9e66f8aefb3f"
-    ],
-    "work-energy": [
-      "df55b75db50f0660"
-    ],
-    "theorem": [
-      "df55b75db50f0660"
-    ],
-    "resistance": [
-      "989e183950f05861"
-    ],
-    "conservation": [
-      "989e183950f05861"
-    ],
-    "electric": [
-      "4ebae254ba8bdc24",
-      "20ff330225df7235",
-      "af147840502ed5d2"
-    ],
-    "charge": [
-      "4ebae254ba8bdc24",
-      "031ce274aae3f1d9",
-      "20ff330225df7235",
-      "af147840502ed5d2"
-    ],
-    "coulomb's": [
-      "031ce274aae3f1d9"
-    ],
-    "field": [
-      "20ff330225df7235"
-    ],
-    "algebra": [
-      "af147840502ed5d2"
-    ],
-    "atom": [
-      "8426600e7bebcd5b",
-      "1293ebb72e735844",
-      "c042a2f17e410e27"
-    ],
-    "molecule": [
-      "8426600e7bebcd5b",
-      "1293ebb72e735844"
-    ],
-    "mole": [
-      "8426600e7bebcd5b",
-      "1293ebb72e735844",
-      "50fb9e66f8aefb3f"
-    ],
-    "concept": [
-      "8426600e7bebcd5b"
-    ],
-    "percentage": [
-      "5e3efa0004ec3c61"
-    ],
-    "composition": [
-      "5e3efa0004ec3c61"
-    ],
-    "empirical": [
-      "1293ebb72e735844"
-    ],
-    "molecular": [
-      "1293ebb72e735844"
-    ],
-    "formula": [
-      "1293ebb72e735844"
-    ],
-    "limit": [
-      "50fb9e66f8aefb3f"
-    ],
-    "stoichiometry": [
-      "50fb9e66f8aefb3f"
-    ],
-    "photosynthesis": [
-      "a0fba861d135d934",
-      "4c60d5cf025203c2"
-    ],
-    "overview": [
-      "a0fba861d135d934"
-    ],
-    "electron": [
-      "eccd06be862375e1"
-    ],
-    "light": [
-      "eccd06be862375e1"
-    ],
-    "reactions": [
-      "eccd06be862375e1",
-      "303cea9490de2f0b"
-    ],
-    "(light-dependent": [
-      "eccd06be862375e1"
-    ],
-    "reactions)": [
-      "eccd06be862375e1"
-    ],
-    "reduction": [
-      "303cea9490de2f0b"
-    ],
-    "enzyme": [
-      "303cea9490de2f0b",
-      "4c60d5cf025203c2"
-    ],
-    "respiration": [
-      "303cea9490de2f0b",
-      "c042a2f17e410e27"
-    ],
-    "gene": [
-      "303cea9490de2f0b"
-    ],
-    "dark": [
-      "303cea9490de2f0b"
-    ],
-    "(calvin": [
-      "303cea9490de2f0b"
-    ],
-    "cycle)": [
-      "303cea9490de2f0b"
+    "sequence": [
+      "518a6e217679d18f",
+      "231a2b5823f0f74a",
+      "7b042f2b0bcf4668"
     ],
     "cell": [
-      "c042a2f17e410e27"
+      "518a6e217679d18f",
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d",
+      "7273ab193ba953af",
+      "38f24e38d84d6ce4",
+      "bcf4406bda58325c",
+      "e5cb1f14382b26c1",
+      "7d8d9789981ca44c",
+      "d8aed66623d2e10c",
+      "8c41ecd66148a1b1",
+      "a8aac8f93faa835a",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "658cd143d786dd64",
+      "02c107cf3ae26f00",
+      "5fd0f6afac58ac30",
+      "b69b8ad3ea405155",
+      "4c32633c6a0d62bd",
+      "908c0d29b77869b6",
+      "42c88af5d2e45bea",
+      "b4834c83b5819988",
+      "d169b79d7dbf8e50"
     ],
-    "plants": [
-      "c042a2f17e410e27"
+    "protein": [
+      "518a6e217679d18f",
+      "7d8d9789981ca44c",
+      "8c41ecd66148a1b1",
+      "158038d5ab6c1496",
+      "a8aac8f93faa835a",
+      "938de822021bda77",
+      "658cd143d786dd64",
+      "5f8ca6d9dc2c31c2",
+      "7b042f2b0bcf4668"
+    ],
+    "nucleus": [
+      "518a6e217679d18f",
+      "e5cb1f14382b26c1",
+      "8c41ecd66148a1b1",
+      "85c6d52db956e95a"
+    ],
+    "cycle": [
+      "518a6e217679d18f",
+      "7273ab193ba953af"
+    ],
+    "chromosome": [
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "38b18e2a73b0dba5",
+      "7820eeea2f3ca413",
+      "62f1b121e099cb3d"
+    ],
+    "membrane": [
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "dcfa9cafae4f6b9d",
+      "e5cb1f14382b26c1",
+      "7d8d9789981ca44c",
+      "8c41ecd66148a1b1",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea"
+    ],
+    "mitosis": [
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "c39d3826b37c824d"
+    ],
+    "reduction": [
+      "6984163818a1be2f",
+      "2098941dabb6854e",
+      "5fd0f6afac58ac30",
+      "8e0cc254eda292cb",
+      "325d1bb73d8c4354"
+    ],
+    "combination": [
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "5845ef1c28276877",
+      "c417ac86f772a1f8"
+    ],
+    "meiosis": [
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d"
+    ],
+    "gene": [
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d",
+      "7273ab193ba953af",
+      "2098941dabb6854e",
+      "8c41ecd66148a1b1",
+      "38b18e2a73b0dba5",
+      "d572f080cdc82395",
+      "ffe6938a3e22a6bc",
+      "02c107cf3ae26f00",
+      "7820eeea2f3ca413",
+      "62f1b121e099cb3d",
+      "041ac25e6ce14e36",
+      "231a2b5823f0f74a",
+      "14e47d24aef954e7",
+      "d9e32408115b9683",
+      "7b042f2b0bcf4668",
+      "016b3864cb03c3fb",
+      "62a89f020bff89a1",
+      "63d35a5eb87845fa",
+      "4ea392b3032683f0",
+      "6187826302fe5d58",
+      "6638dd8d68c9aa3d",
+      "17db606cbae2f420",
+      "e496945a19761c7c",
+      "219023b7aef9bf64",
+      "7daac65227e734d6",
+      "cad88d68641f398d"
+    ],
+    "significance": [
+      "1224c4da6d317b63"
+    ],
+    "differences": [
+      "c39d3826b37c824d"
     ],
     "concentration": [
-      "4c60d5cf025203c2"
+      "7273ab193ba953af",
+      "cea365c340841799",
+      "7d8d9789981ca44c",
+      "ea06b53ebeaa95d3",
+      "13cfa7c165bac102",
+      "4c32633c6a0d62bd",
+      "42c88af5d2e45bea",
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "57882c54d7f66f6a",
+      "045576e3c2ad95a9"
+    ],
+    "regulation": [
+      "7273ab193ba953af",
+      "d9e32408115b9683"
+    ],
+    "energy": [
+      "82ff29f77ead5c25",
+      "85c6d52db956e95a",
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "62a89f020bff89a1",
+      "ed06c8e7b095f306",
+      "af797aa639c14abe",
+      "5fd0f6afac58ac30",
+      "6638dd8d68c9aa3d",
+      "d6f6dae8d89612cc",
+      "c64156badd09f477",
+      "824247844929a69b",
+      "b80c8be93126056c",
+      "282fd88253d0f3f4",
+      "b0863635bf6629e0",
+      "ee680ff35a8bddc8",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "96c6d3fdb118cd4b",
+      "7b721ebae03f7192",
+      "b993359e01dbd29e",
+      "0168958f3b98baf9",
+      "601518ab06d0edb3",
+      "536874452c30d175",
+      "8ca04e69f2422697",
+      "1d62127955072a94",
+      "01f0a6b49ab119ad"
+    ],
+    "equation": [
+      "82ff29f77ead5c25",
+      "08d9fd51dd27388c",
+      "4c32633c6a0d62bd",
+      "c64156badd09f477",
+      "044e823cd1e4cbcd",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "ca9f81fcb4d9eb32",
+      "8dd98039e3edf95c",
+      "c417ac86f772a1f8"
+    ],
+    "photosynthesis": [
+      "82ff29f77ead5c25",
+      "cea365c340841799",
+      "b059ce6cf1cd7bea"
+    ],
+    "overview": [
+      "82ff29f77ead5c25"
+    ],
+    "electron": [
+      "dcfa9cafae4f6b9d",
+      "85c6d52db956e95a",
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "62a89f020bff89a1",
+      "93fece80fc4f4125",
+      "ed06c8e7b095f306",
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "c4746c15ad5c1375",
+      "427e45a4ed721b42",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "5cb17afaa287989c",
+      "908c0d29b77869b6",
+      "2231b50b542d7fec",
+      "a756a992c74876c7"
+    ],
+    "light": [
+      "dcfa9cafae4f6b9d",
+      "4985df2c2866a9d7",
+      "3a87ed29db3c6a3c"
+    ],
+    "reactions": [
+      "dcfa9cafae4f6b9d",
+      "2098941dabb6854e",
+      "c92a6ddaa3d25190"
+    ],
+    "(light-dependent": [
+      "dcfa9cafae4f6b9d"
+    ],
+    "reactions)": [
+      "dcfa9cafae4f6b9d"
+    ],
+    "reaction": [
+      "2098941dabb6854e",
+      "b059ce6cf1cd7bea",
+      "08d9fd51dd27388c",
+      "11de4d97d261cc5f",
+      "c92a6ddaa3d25190",
+      "3b77de942643f77a",
+      "5fd0f6afac58ac30",
+      "b69b8ad3ea405155",
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "d6f6dae8d89612cc",
+      "e496945a19761c7c",
+      "44db399650ca49cc"
+    ],
+    "enzyme": [
+      "2098941dabb6854e",
+      "cea365c340841799",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "56510e3023c76f51",
+      "231a2b5823f0f74a",
+      "f4066fa0a5737cdd",
+      "e496945a19761c7c"
+    ],
+    "respiration": [
+      "2098941dabb6854e",
+      "38f24e38d84d6ce4",
+      "5855516d31df0869",
+      "6187826302fe5d58"
+    ],
+    "dark": [
+      "2098941dabb6854e"
+    ],
+    "(calvin": [
+      "2098941dabb6854e"
+    ],
+    "cycle)": [
+      "2098941dabb6854e"
+    ],
+    "atom": [
+      "38f24e38d84d6ce4",
+      "237adfb7a1efe7c2",
+      "11ebb3b4f9662ebd",
+      "85c6d52db956e95a",
+      "fb427cb4dcb1409d",
+      "e6add88abbc5f0ad",
+      "62a89f020bff89a1",
+      "1f531c4e39246a04",
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "427e45a4ed721b42",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "5cb17afaa287989c"
+    ],
+    "plants": [
+      "38f24e38d84d6ce4"
     ],
     "factors": [
-      "4c60d5cf025203c2"
+      "cea365c340841799",
+      "6638dd8d68c9aa3d"
     ],
     "affecting": [
-      "4c60d5cf025203c2"
-    ],
-    "derivative": [
-      "24bb8a8cc3f17b4b",
-      "6921c5e153468c49"
+      "cea365c340841799",
+      "6638dd8d68c9aa3d"
     ],
     "function": [
-      "24bb8a8cc3f17b4b",
-      "354ce294d222940b",
-      "9aabd9e64863da1d"
+      "bcf4406bda58325c",
+      "7d8d9789981ca44c",
+      "d8aed66623d2e10c",
+      "8c41ecd66148a1b1",
+      "a8aac8f93faa835a",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "938de822021bda77",
+      "658cd143d786dd64",
+      "56510e3023c76f51",
+      "7885f01e62204643",
+      "ae6831f3130cd25f",
+      "2d5195ad82cfa7b3",
+      "b31790744dc2a940",
+      "34abe612a0d7bd13",
+      "6bcd85677a25eaa3",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd",
+      "8e0cc254eda292cb"
     ],
-    "definition": [
-      "24bb8a8cc3f17b4b"
+    "organism": [
+      "bcf4406bda58325c",
+      "14e47d24aef954e7"
+    ],
+    "theory": [
+      "bcf4406bda58325c",
+      "c4746c15ad5c1375",
+      "af797aa639c14abe",
+      "d6f6dae8d89612cc"
+    ],
+    "prokaryotic": [
+      "e5cb1f14382b26c1"
+    ],
+    "eukaryotic": [
+      "e5cb1f14382b26c1"
+    ],
+    "cells": [
+      "e5cb1f14382b26c1",
+      "5fd0f6afac58ac30"
+    ],
+    "integral": [
+      "7d8d9789981ca44c",
+      "a806d02caba60f4f",
+      "c814a41c31d358dd"
+    ],
+    "(plasma": [
+      "7d8d9789981ca44c"
+    ],
+    "membrane)": [
+      "7d8d9789981ca44c"
+    ],
+    "solution": [
+      "d8aed66623d2e10c",
+      "4ea392b3032683f0",
+      "ea06b53ebeaa95d3",
+      "6187826302fe5d58",
+      "13cfa7c165bac102",
+      "e63df2e8f0492c0a",
+      "5fd0f6afac58ac30",
+      "7daac65227e734d6"
+    ],
+    "wall": [
+      "d8aed66623d2e10c"
+    ],
+    "matrix": [
+      "8c41ecd66148a1b1",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea"
+    ],
+    "endoplasmic": [
+      "158038d5ab6c1496"
+    ],
+    "reticulum": [
+      "158038d5ab6c1496"
+    ],
+    "golgi": [
+      "a8aac8f93faa835a"
+    ],
+    "apparatus": [
+      "a8aac8f93faa835a"
+    ],
+    "lysosomes": [
+      "4e3ed89fb96fdaef"
+    ],
+    "power": [
+      "5855516d31df0869",
+      "968b7f9510b022bc",
+      "34abe612a0d7bd13",
+      "4b4eb83a8034f392",
+      "282fd88253d0f3f4",
+      "ee680ff35a8bddc8",
+      "d169b79d7dbf8e50",
+      "0168958f3b98baf9",
+      "01f0a6b49ab119ad",
+      "c417ac86f772a1f8",
+      "8bc5042b0a607ec4",
+      "1771467780bb74ae"
+    ],
+    "circular": [
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "85c6d52db956e95a",
+      "1d9611cd81c2dcec",
+      "0c1ebe22debaeec2",
+      "1a51042d0178f32a",
+      "f9da6430e8cc6fbf"
+    ],
+    "mitochondria": [
+      "5855516d31df0869"
+    ],
+    "chloroplasts": [
+      "b059ce6cf1cd7bea"
+    ],
+    "ribosomes": [
+      "938de822021bda77"
+    ],
+    "cytoskeleton": [
+      "658cd143d786dd64"
+    ],
+    "mendelian": [
+      "15c5581842695d58"
+    ],
+    "genetics": [
+      "15c5581842695d58"
+    ],
+    "mendel's": [
+      "38b18e2a73b0dba5"
+    ],
+    "laws": [
+      "38b18e2a73b0dba5",
+      "b639b296748ee120",
+      "b993359e01dbd29e",
+      "25e309fad9bb7f94"
+    ],
+    "monohybrid": [
+      "d572f080cdc82395"
+    ],
+    "cross": [
+      "d572f080cdc82395",
+      "f4c105930fd95151"
+    ],
+    "dihybrid": [
+      "f4c105930fd95151"
+    ],
+    "incomplete": [
+      "cccd509aaa17844f"
+    ],
+    "dominance": [
+      "cccd509aaa17844f"
+    ],
+    "co-dominance": [
+      "6c5f9aafdb660380"
+    ],
+    "multiple": [
+      "58f295297f7baf40",
+      "865321e5b8f4da2a"
+    ],
+    "alleles": [
+      "58f295297f7baf40"
+    ],
+    "polygenic": [
+      "ffe6938a3e22a6bc"
+    ],
+    "inheritance": [
+      "ffe6938a3e22a6bc",
+      "62f1b121e099cb3d"
+    ],
+    "pleiotropy": [
+      "02c107cf3ae26f00"
+    ],
+    "determination": [
+      "7820eeea2f3ca413"
+    ],
+    "sex-linked": [
+      "62f1b121e099cb3d"
+    ],
+    "pedigree": [
+      "041ac25e6ce14e36"
+    ],
+    "analysis": [
+      "041ac25e6ce14e36",
+      "33f7591f543fe5d4"
+    ],
+    "chromosomal": [
+      "69f5c2a96137ab7a"
+    ],
+    "disorders": [
+      "69f5c2a96137ab7a"
+    ],
+    "bond": [
+      "2fba347871eff6a8",
+      "5f8ca6d9dc2c31c2",
+      "62a89f020bff89a1",
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "c4746c15ad5c1375",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "6638dd8d68c9aa3d"
+    ],
+    "base": [
+      "2fba347871eff6a8",
+      "14e47d24aef954e7",
+      "7b042f2b0bcf4668",
+      "08d9fd51dd27388c",
+      "cda89d46affb233b",
+      "c4746c15ad5c1375",
+      "c92a6ddaa3d25190",
+      "282fd88253d0f3f4"
+    ],
+    "structure": [
+      "2fba347871eff6a8"
+    ],
+    "replication": [
+      "56510e3023c76f51"
+    ],
+    "transcription": [
+      "231a2b5823f0f74a"
+    ],
+    "acid": [
+      "14e47d24aef954e7",
+      "5f8ca6d9dc2c31c2",
+      "cda89d46affb233b",
+      "b4834c83b5819988"
+    ],
+    "genetic": [
+      "14e47d24aef954e7"
+    ],
+    "code": [
+      "14e47d24aef954e7"
+    ],
+    "translation": [
+      "5f8ca6d9dc2c31c2"
+    ],
+    "expression": [
+      "d9e32408115b9683"
+    ],
+    "human": [
+      "7b042f2b0bcf4668"
+    ],
+    "genome": [
+      "7b042f2b0bcf4668"
+    ],
+    "project": [
+      "7b042f2b0bcf4668"
+    ],
+    "(hgp)": [
+      "7b042f2b0bcf4668"
+    ],
+    "graph": [
+      "f4066fa0a5737cdd",
+      "045576e3c2ad95a9",
+      "c64156badd09f477",
+      "33f7591f543fe5d4"
+    ],
+    "evolution": [
+      "f4066fa0a5737cdd"
+    ],
+    "fingerprinting": [
+      "f4066fa0a5737cdd"
+    ],
+    "mass": [
+      "237adfb7a1efe7c2",
+      "17932e49879cf5af",
+      "11ebb3b4f9662ebd",
+      "85c6d52db956e95a",
+      "efadfea925d0c1a9",
+      "ea06b53ebeaa95d3",
+      "320881c957a9d08f",
+      "85131d0ed58675e0",
+      "74bd2b30d83c894f",
+      "124bd3222ebeec86",
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "824247844929a69b",
+      "b80c8be93126056c",
+      "8c42a261db6cc1aa",
+      "b949204eb78ebf45",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "a756a992c74876c7"
+    ],
+    "molecule": [
+      "237adfb7a1efe7c2",
+      "11ebb3b4f9662ebd",
+      "1f531c4e39246a04",
+      "fe1febf25b33ebbd",
+      "efe63a1e01b764f6",
+      "e4d7b3bcc79d1569",
+      "d6f6dae8d89612cc"
+    ],
+    "mole": [
+      "237adfb7a1efe7c2",
+      "11ebb3b4f9662ebd",
+      "08d9fd51dd27388c",
+      "1f531c4e39246a04",
+      "fe1febf25b33ebbd",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "efadfea925d0c1a9",
+      "c92a6ddaa3d25190",
+      "ea06b53ebeaa95d3",
+      "6187826302fe5d58",
+      "bd14017f0c50d8fb",
+      "e4d7b3bcc79d1569",
+      "d6f6dae8d89612cc"
+    ],
+    "concept": [
+      "237adfb7a1efe7c2"
+    ],
+    "percentage": [
+      "17932e49879cf5af"
+    ],
+    "composition": [
+      "17932e49879cf5af",
+      "219023b7aef9bf64"
+    ],
+    "empirical": [
+      "11ebb3b4f9662ebd"
+    ],
+    "molecular": [
+      "11ebb3b4f9662ebd",
+      "af797aa639c14abe"
+    ],
+    "formula": [
+      "11ebb3b4f9662ebd",
+      "c417ac86f772a1f8"
+    ],
+    "limit": [
+      "08d9fd51dd27388c"
+    ],
+    "relation": [
+      "08d9fd51dd27388c",
+      "85131d0ed58675e0",
+      "1f7f90428b03ccd6",
+      "7885f01e62204643",
+      "8924ab2c61d2b7d4",
+      "824247844929a69b",
+      "d8cd76b3019bf23b",
+      "0c1ebe22debaeec2",
+      "fd490fabc6e1c32a"
+    ],
+    "stoichiometry": [
+      "08d9fd51dd27388c"
+    ],
+    "charge": [
+      "85c6d52db956e95a",
+      "62a89f020bff89a1",
+      "93fece80fc4f4125",
+      "fe1febf25b33ebbd",
+      "427e45a4ed721b42",
+      "85131d0ed58675e0",
+      "b4834c83b5819988",
+      "50107d3a7ea6f36e",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4",
+      "fd490fabc6e1c32a",
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "d169b79d7dbf8e50",
+      "b993359e01dbd29e",
+      "c9f2bb775380a08d",
+      "f9da6430e8cc6fbf"
+    ],
+    "atomic": [
+      "85c6d52db956e95a",
+      "fb427cb4dcb1409d"
+    ],
+    "models": [
+      "85c6d52db956e95a"
+    ],
+    "momentum": [
+      "032ce2cdcff18304",
+      "6d85065c36a9a7ff",
+      "8dd98039e3edf95c",
+      "b639b296748ee120"
+    ],
+    "magnetic": [
+      "032ce2cdcff18304",
+      "af797aa639c14abe",
+      "c9f2bb775380a08d",
+      "1a51042d0178f32a",
+      "f9da6430e8cc6fbf",
+      "601518ab06d0edb3",
+      "5b186eeb72c72545",
+      "c6da64c438b3f66a",
+      "25e309fad9bb7f94",
+      "cad88d68641f398d",
+      "325d1bb73d8c4354",
+      "1d62127955072a94"
+    ],
+    "angular": [
+      "032ce2cdcff18304",
+      "722af7dba9e0288f",
+      "1d9611cd81c2dcec",
+      "b639b296748ee120",
+      "8bc5042b0a607ec4"
+    ],
+    "orbital": [
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "722af7dba9e0288f",
+      "ed06c8e7b095f306",
+      "fe1febf25b33ebbd",
+      "427e45a4ed721b42",
+      "af797aa639c14abe",
+      "0c1ebe22debaeec2"
+    ],
+    "quantum": [
+      "032ce2cdcff18304"
+    ],
+    "numbers": [
+      "032ce2cdcff18304"
+    ],
+    "set": [
+      "016b3864cb03c3fb",
+      "92c2b52e7de822c9",
+      "1c50d5737296e7ec",
+      "968b7f9510b022bc",
+      "0230045053a6acd5",
+      "1f7f90428b03ccd6"
+    ],
+    "electronic": [
+      "016b3864cb03c3fb"
+    ],
+    "configuration": [
+      "016b3864cb03c3fb"
+    ],
+    "wave": [
+      "fb427cb4dcb1409d",
+      "6d85065c36a9a7ff",
+      "8bc5042b0a607ec4"
+    ],
+    "wavelength": [
+      "fb427cb4dcb1409d",
+      "6d85065c36a9a7ff",
+      "8bc5042b0a607ec4"
+    ],
+    "series": [
+      "fb427cb4dcb1409d",
+      "5845ef1c28276877",
+      "5b186eeb72c72545"
+    ],
+    "spectra": [
+      "fb427cb4dcb1409d"
+    ],
+    "dual": [
+      "6d85065c36a9a7ff"
+    ],
+    "nature": [
+      "6d85065c36a9a7ff"
+    ],
+    "matter": [
+      "6d85065c36a9a7ff"
+    ],
+    "orbitals": [
+      "722af7dba9e0288f"
+    ],
+    "shapes": [
+      "722af7dba9e0288f"
+    ],
+    "modern": [
+      "e6add88abbc5f0ad"
+    ],
+    "periodic": [
+      "e6add88abbc5f0ad",
+      "62a89f020bff89a1"
+    ],
+    "table": [
+      "e6add88abbc5f0ad"
+    ],
+    "proton": [
+      "62a89f020bff89a1"
+    ],
+    "species": [
+      "62a89f020bff89a1",
+      "b69b8ad3ea405155"
+    ],
+    "trends": [
+      "62a89f020bff89a1"
+    ],
+    "diagonal": [
+      "93fece80fc4f4125"
+    ],
+    "relationship": [
+      "93fece80fc4f4125",
+      "908c0d29b77869b6"
+    ],
+    "oxidation": [
+      "1f531c4e39246a04",
+      "5fd0f6afac58ac30"
+    ],
+    "important": [
+      "1f531c4e39246a04"
+    ],
+    "groups": [
+      "1f531c4e39246a04"
+    ],
+    "anomalous": [
+      "ed06c8e7b095f306"
+    ],
+    "properties": [
+      "ed06c8e7b095f306",
+      "efadfea925d0c1a9",
+      "e63df2e8f0492c0a",
+      "5ed756163b966089"
+    ],
+    "first": [
+      "ed06c8e7b095f306",
+      "2a241783dfbb6a84"
+    ],
+    "element": [
+      "ed06c8e7b095f306"
+    ],
+    "electric": [
+      "cda89d46affb233b",
+      "5fd0f6afac58ac30",
+      "85131d0ed58675e0",
+      "50107d3a7ea6f36e",
+      "8cd9d8ed599c87c4",
+      "fd490fabc6e1c32a",
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "325d1bb73d8c4354",
+      "1d62127955072a94",
+      "01f0a6b49ab119ad"
+    ],
+    "types": [
+      "cda89d46affb233b",
+      "4ea392b3032683f0",
+      "1c50d5737296e7ec"
+    ],
+    "chemical": [
+      "cda89d46affb233b",
+      "c92a6ddaa3d25190"
+    ],
+    "bonds": [
+      "cda89d46affb233b"
+    ],
+    "lewis": [
+      "fe1febf25b33ebbd"
+    ],
+    "structures": [
+      "fe1febf25b33ebbd"
+    ],
+    "octet": [
+      "fe1febf25b33ebbd"
+    ],
+    "rule": [
+      "fe1febf25b33ebbd"
+    ],
+    "vsepr": [
+      "c4746c15ad5c1375"
+    ],
+    "hybridization": [
+      "427e45a4ed721b42"
+    ],
+    "hydrogen": [
+      "efe63a1e01b764f6"
+    ],
+    "bonding": [
+      "efe63a1e01b764f6"
+    ],
+    "resonance": [
+      "5cb17afaa287989c"
+    ],
+    "classification": [
+      "dec0302cb6ff3b27"
+    ],
+    "nomenclature": [
+      "e17ad376ae02c5a9"
+    ],
+    "organic": [
+      "efadfea925d0c1a9"
+    ],
+    "physical": [
+      "efadfea925d0c1a9"
+    ],
+    "preparation": [
+      "11de4d97d261cc5f"
+    ],
+    "methods": [
+      "11de4d97d261cc5f",
+      "8172685995b37ebd"
+    ],
+    "catalyst": [
+      "3b77de942643f77a",
+      "6638dd8d68c9aa3d",
+      "e496945a19761c7c"
+    ],
+    "haloarenes": [
+      "3b77de942643f77a"
+    ],
+    "polyhalogen": [
+      "63d35a5eb87845fa"
+    ],
+    "compounds": [
+      "63d35a5eb87845fa"
+    ],
+    "solutions": [
+      "4ea392b3032683f0",
+      "13cfa7c165bac102"
+    ],
+    "terms": [
+      "ea06b53ebeaa95d3"
+    ],
+    "solubility": [
+      "6187826302fe5d58"
+    ],
+    "ideal": [
+      "13cfa7c165bac102"
+    ],
+    "non-ideal": [
+      "13cfa7c165bac102"
+    ],
+    "raoult's": [
+      "bd14017f0c50d8fb"
+    ],
+    "colligative": [
+      "e63df2e8f0492c0a"
+    ],
+    "abnormal": [
+      "320881c957a9d08f"
+    ],
+    "molar": [
+      "320881c957a9d08f"
+    ],
+    "masses": [
+      "320881c957a9d08f"
+    ],
+    "electrochemical": [
+      "5fd0f6afac58ac30"
+    ],
+    "potential": [
+      "b69b8ad3ea405155",
+      "4c32633c6a0d62bd",
+      "b80c8be93126056c",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "fd490fabc6e1c32a",
+      "8b37b53f20e28535",
+      "b993359e01dbd29e",
+      "601518ab06d0edb3"
+    ],
+    "electrode": [
+      "b69b8ad3ea405155"
+    ],
+    "equilibrium": [
+      "4c32633c6a0d62bd",
+      "e496945a19761c7c",
+      "601518ab06d0edb3"
+    ],
+    "nernst": [
+      "4c32633c6a0d62bd"
+    ],
+    "between": [
+      "908c0d29b77869b6",
+      "5ca189ba222ac769"
+    ],
+    "\u03b4g\u00b0,": [
+      "908c0d29b77869b6"
+    ],
+    "conductance": [
+      "42c88af5d2e45bea"
+    ],
+    "variation": [
+      "26e2dcab3c065a92"
+    ],
+    "conductivity": [
+      "26e2dcab3c065a92"
+    ],
+    "kohlrausch's": [
+      "5e8c0a78f6835057"
+    ],
+    "electrolysis": [
+      "85131d0ed58675e0"
+    ],
+    "batteries": [
+      "b4834c83b5819988"
+    ],
+    "rate": [
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "e4d7b3bcc79d1569",
+      "57882c54d7f66f6a"
+    ],
+    "order": [
+      "e4d7b3bcc79d1569",
+      "045576e3c2ad95a9"
+    ],
+    "integrated": [
+      "57882c54d7f66f6a"
+    ],
+    "equations": [
+      "57882c54d7f66f6a",
+      "7daac65227e734d6",
+      "748b7ee2ff3a1485"
+    ],
+    "half-life": [
+      "17db606cbae2f420"
+    ],
+    "relations": [
+      "17db606cbae2f420",
+      "1f7f90428b03ccd6"
+    ],
+    "determining": [
+      "045576e3c2ad95a9"
+    ],
+    "frequency": [
+      "d6f6dae8d89612cc",
+      "1d9611cd81c2dcec"
+    ],
+    "collision": [
+      "d6f6dae8d89612cc"
+    ],
+    "logarithm": [
+      "c64156badd09f477",
+      "34abe612a0d7bd13",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd"
+    ],
+    "activation": [
+      "c64156badd09f477"
+    ],
+    "kinetic": [
+      "e496945a19761c7c",
+      "3034dc9baa39db0b",
+      "824247844929a69b",
+      "282fd88253d0f3f4"
+    ],
+    "effect": [
+      "e496945a19761c7c"
+    ],
+    "sets": [
+      "92c2b52e7de822c9",
+      "1c50d5737296e7ec",
+      "fc4b4347b4f29bd7"
+    ],
+    "subsets": [
+      "968b7f9510b022bc"
+    ],
+    "operations": [
+      "fc4b4347b4f29bd7",
+      "5ed756163b966089"
+    ],
+    "counting": [
+      "0230045053a6acd5"
+    ],
+    "formulas": [
+      "0230045053a6acd5",
+      "c9ebf3f32074ce67",
+      "865321e5b8f4da2a"
+    ],
+    "polynomial": [
+      "7885f01e62204643"
+    ],
+    "functions": [
+      "7885f01e62204643",
+      "219023b7aef9bf64",
+      "ae6831f3130cd25f"
+    ],
+    "inverse": [
+      "ae6831f3130cd25f"
+    ],
+    "angles": [
+      "ec96d8fd553b7896",
+      "2d5195ad82cfa7b3"
+    ],
+    "measurement": [
+      "ec96d8fd553b7896"
+    ],
+    "trigonometric": [
+      "1f1d13175466e2ee",
+      "7daac65227e734d6"
+    ],
+    "ratios": [
+      "1f1d13175466e2ee"
     ],
     "standard": [
-      "354ce294d222940b"
+      "8a6351c862817c91",
+      "34abe612a0d7bd13",
+      "4b4eb83a8034f392"
+    ],
+    "values": [
+      "8a6351c862817c91"
+    ],
+    "fundamental": [
+      "8924ab2c61d2b7d4"
+    ],
+    "identities": [
+      "8924ab2c61d2b7d4"
+    ],
+    "signs": [
+      "79e9ef9738134ef2"
+    ],
+    "quadrants": [
+      "79e9ef9738134ef2"
+    ],
+    "allied": [
+      "2d5195ad82cfa7b3"
+    ],
+    "compound": [
+      "c9ebf3f32074ce67"
+    ],
+    "angle": [
+      "c9ebf3f32074ce67",
+      "865321e5b8f4da2a"
+    ],
+    "sum/difference": [
+      "d8fbda56aaf53820"
+    ],
+    "product": [
+      "d8fbda56aaf53820",
+      "345d00563a9a8f0c"
+    ],
+    "derivative": [
+      "b31790744dc2a940",
+      "044e823cd1e4cbcd"
+    ],
+    "definition": [
+      "b31790744dc2a940"
+    ],
+    "exponential": [
+      "34abe612a0d7bd13",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd"
     ],
     "derivatives": [
-      "354ce294d222940b",
-      "6921c5e153468c49"
+      "34abe612a0d7bd13",
+      "044e823cd1e4cbcd"
     ],
     "differentiation": [
-      "9aabd9e64863da1d"
+      "6bcd85677a25eaa3"
     ],
     "rules": [
-      "9aabd9e64863da1d"
+      "6bcd85677a25eaa3"
     ],
     "applications": [
-      "6921c5e153468c49"
+      "044e823cd1e4cbcd"
+    ],
+    "introduction": [
+      "a806d02caba60f4f"
+    ],
+    "integration": [
+      "a806d02caba60f4f",
+      "8172685995b37ebd"
+    ],
+    "integrals": [
+      "4b4eb83a8034f392",
+      "2aaf00089e3b8282",
+      "9c0c4e1c00484e84"
+    ],
+    "algebra": [
+      "8172685995b37ebd",
+      "fd490fabc6e1c32a"
+    ],
+    "special": [
+      "2aaf00089e3b8282"
+    ],
+    "definite": [
+      "9c0c4e1c00484e84"
+    ],
+    "area": [
+      "37aebadd3d401d5f"
+    ],
+    "under": [
+      "37aebadd3d401d5f"
+    ],
+    "curves": [
+      "37aebadd3d401d5f"
+    ],
+    "gamma": [
+      "8e0cc254eda292cb"
+    ],
+    "(for": [
+      "8e0cc254eda292cb"
+    ],
+    "reference)": [
+      "8e0cc254eda292cb"
+    ],
+    "motion": [
+      "68d359fa2e2dac81",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "6e461826f2f074c5",
+      "ca9f81fcb4d9eb32",
+      "1d9611cd81c2dcec",
+      "2a241783dfbb6a84",
+      "3034dc9baa39db0b",
+      "ec987c67917ab4d8",
+      "824247844929a69b",
+      "96c6d3fdb118cd4b",
+      "b639b296748ee120",
+      "325d1bb73d8c4354"
+    ],
+    "vector": [
+      "68d359fa2e2dac81",
+      "5ba0e44e95607bd5",
+      "124bd3222ebeec86",
+      "8ec1c0bc9071f9e1",
+      "997a33def5cace86",
+      "8dd98039e3edf95c",
+      "8c42a261db6cc1aa",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4"
+    ],
+    "distance": [
+      "68d359fa2e2dac81"
+    ],
+    "displacement": [
+      "68d359fa2e2dac81"
+    ],
+    "velocity": [
+      "5ba0e44e95607bd5",
+      "4c630ffc0889ed8e",
+      "748b7ee2ff3a1485",
+      "6e461826f2f074c5",
+      "33f7591f543fe5d4",
+      "124bd3222ebeec86",
+      "ca9f81fcb4d9eb32",
+      "1d9611cd81c2dcec",
+      "e4964e35a25f76d3",
+      "824247844929a69b",
+      "ee680ff35a8bddc8",
+      "91296eced309880d",
+      "0c1ebe22debaeec2",
+      "a756a992c74876c7",
+      "f9da6430e8cc6fbf",
+      "cad88d68641f398d"
+    ],
+    "speed": [
+      "5ba0e44e95607bd5"
+    ],
+    "acceleration": [
+      "4c630ffc0889ed8e",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "33f7591f543fe5d4",
+      "124bd3222ebeec86",
+      "1d9611cd81c2dcec",
+      "8dd98039e3edf95c",
+      "b80c8be93126056c",
+      "b949204eb78ebf45",
+      "8dfafb2a320f15b0"
+    ],
+    "(suvat)": [
+      "748b7ee2ff3a1485"
+    ],
+    "gravity": [
+      "74bd2b30d83c894f",
+      "ca9f81fcb4d9eb32",
+      "b80c8be93126056c",
+      "b0863635bf6629e0",
+      "b949204eb78ebf45",
+      "50c2d33cbdcbe319"
+    ],
+    "resistance": [
+      "74bd2b30d83c894f",
+      "ca9f81fcb4d9eb32",
+      "b0863635bf6629e0",
+      "8b37b53f20e28535",
+      "c5116441d8c09a67",
+      "d169b79d7dbf8e50",
+      "12b514b0e42f2882",
+      "5b186eeb72c72545"
+    ],
+    "free": [
+      "74bd2b30d83c894f"
+    ],
+    "fall": [
+      "74bd2b30d83c894f"
+    ],
+    "relative": [
+      "6e461826f2f074c5",
+      "e4964e35a25f76d3"
+    ],
+    "graphical": [
+      "33f7591f543fe5d4"
+    ],
+    "force": [
+      "124bd3222ebeec86",
+      "1d9611cd81c2dcec",
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "44db399650ca49cc",
+      "3034dc9baa39db0b",
+      "ec987c67917ab4d8",
+      "282fd88253d0f3f4",
+      "b0863635bf6629e0",
+      "ee680ff35a8bddc8",
+      "8c42a261db6cc1aa",
+      "50107d3a7ea6f36e",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4",
+      "c9f2bb775380a08d",
+      "f9da6430e8cc6fbf",
+      "925ea3e121b4cc62",
+      "5ca189ba222ac769"
+    ],
+    "scalar": [
+      "124bd3222ebeec86"
+    ],
+    "quantities": [
+      "124bd3222ebeec86"
+    ],
+    "addition": [
+      "8ec1c0bc9071f9e1"
+    ],
+    "subtraction": [
+      "8ec1c0bc9071f9e1"
+    ],
+    "resolution": [
+      "997a33def5cace86"
+    ],
+    "vectors": [
+      "997a33def5cace86"
+    ],
+    "projectile": [
+      "ca9f81fcb4d9eb32"
+    ],
+    "uniform": [
+      "1d9611cd81c2dcec"
+    ],
+    "friction": [
+      "2a241783dfbb6a84",
+      "3034dc9baa39db0b",
+      "ec987c67917ab4d8",
+      "b0863635bf6629e0"
+    ],
+    "newton's": [
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "44db399650ca49cc",
+      "8c42a261db6cc1aa"
+    ],
+    "(law": [
+      "2a241783dfbb6a84"
+    ],
+    "inertia)": [
+      "2a241783dfbb6a84"
+    ],
+    "newton": [
+      "8dd98039e3edf95c"
+    ],
+    "second": [
+      "8dd98039e3edf95c"
+    ],
+    "third": [
+      "44db399650ca49cc"
+    ],
+    "(action-reaction)": [
+      "44db399650ca49cc"
+    ],
+    "work": [
+      "ec987c67917ab4d8",
+      "282fd88253d0f3f4",
+      "ee680ff35a8bddc8",
+      "9975e56e3023644c",
+      "fd490fabc6e1c32a",
+      "d169b79d7dbf8e50",
+      "f9da6430e8cc6fbf"
+    ],
+    "done": [
+      "ec987c67917ab4d8"
+    ],
+    "work-energy": [
+      "282fd88253d0f3f4"
+    ],
+    "theorem": [
+      "282fd88253d0f3f4"
+    ],
+    "conservation": [
+      "b0863635bf6629e0"
+    ],
+    "universal": [
+      "8c42a261db6cc1aa"
+    ],
+    "gravitation": [
+      "8c42a261db6cc1aa"
+    ],
+    "gravitational": [
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b"
+    ],
+    "escape": [
+      "91296eced309880d"
+    ],
+    "satellite": [
+      "96c6d3fdb118cd4b"
+    ],
+    "kepler's": [
+      "b639b296748ee120"
+    ],
+    "planetary": [
+      "b639b296748ee120"
+    ],
+    "weightlessness": [
+      "8dfafb2a320f15b0"
+    ],
+    "binding": [
+      "7b721ebae03f7192"
+    ],
+    "coulomb's": [
+      "50c2d33cbdcbe319"
+    ],
+    "field": [
+      "8cd9d8ed599c87c4",
+      "c9f2bb775380a08d"
+    ],
+    "current": [
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "8b37b53f20e28535",
+      "5845ef1c28276877",
+      "b993359e01dbd29e",
+      "12b514b0e42f2882",
+      "1a51042d0178f32a",
+      "c814a41c31d358dd",
+      "5ca189ba222ac769",
+      "601518ab06d0edb3",
+      "5b186eeb72c72545",
+      "536874452c30d175",
+      "325d1bb73d8c4354",
+      "8ca04e69f2422697",
+      "2b3eff0b8845be35",
+      "01f0a6b49ab119ad"
+    ],
+    "drift": [
+      "a756a992c74876c7"
+    ],
+    "ohm's": [
+      "8b37b53f20e28535"
+    ],
+    "resistivity": [
+      "c5116441d8c09a67"
+    ],
+    "voltage": [
+      "5845ef1c28276877",
+      "d169b79d7dbf8e50",
+      "5b186eeb72c72545",
+      "01f0a6b49ab119ad"
+    ],
+    "resistors": [
+      "5845ef1c28276877"
+    ],
+    "internal": [
+      "d169b79d7dbf8e50",
+      "f5f6ce721b883c1f"
+    ],
+    "kirchhoff's": [
+      "b993359e01dbd29e"
+    ],
+    "electrical": [
+      "0168958f3b98baf9"
+    ],
+    "wheatstone": [
+      "12b514b0e42f2882"
+    ],
+    "bridge": [
+      "12b514b0e42f2882"
+    ],
+    "biot-savart": [
+      "1a51042d0178f32a"
+    ],
+    "ampere's": [
+      "c814a41c31d358dd"
+    ],
+    "circuital": [
+      "c814a41c31d358dd"
+    ],
+    "moving": [
+      "f9da6430e8cc6fbf",
+      "5b186eeb72c72545"
+    ],
+    "(lorentz": [
+      "f9da6430e8cc6fbf"
+    ],
+    "force)": [
+      "f9da6430e8cc6fbf"
+    ],
+    "current-carrying": [
+      "925ea3e121b4cc62"
+    ],
+    "conductor": [
+      "925ea3e121b4cc62"
+    ],
+    "parallel": [
+      "5ca189ba222ac769"
+    ],
+    "currents": [
+      "5ca189ba222ac769",
+      "325d1bb73d8c4354"
+    ],
+    "torque": [
+      "601518ab06d0edb3",
+      "5b186eeb72c72545"
+    ],
+    "loop": [
+      "601518ab06d0edb3"
+    ],
+    "coil": [
+      "5b186eeb72c72545"
+    ],
+    "galvanometer": [
+      "5b186eeb72c72545"
+    ],
+    "flux": [
+      "c6da64c438b3f66a"
+    ],
+    "faraday's": [
+      "25e309fad9bb7f94"
+    ],
+    "electromagnetic": [
+      "25e309fad9bb7f94"
+    ],
+    "induction": [
+      "25e309fad9bb7f94"
+    ],
+    "lenz's": [
+      "536874452c30d175"
+    ],
+    "motional": [
+      "cad88d68641f398d"
+    ],
+    "eddy": [
+      "325d1bb73d8c4354"
+    ],
+    "self-inductance": [
+      "8ca04e69f2422697"
+    ],
+    "mutual": [
+      "2b3eff0b8845be35"
+    ],
+    "inductance": [
+      "2b3eff0b8845be35"
+    ],
+    "generator": [
+      "1d62127955072a94"
+    ],
+    "transformer": [
+      "01f0a6b49ab119ad"
+    ],
+    "reflection": [
+      "4985df2c2866a9d7",
+      "f5f6ce721b883c1f"
+    ],
+    "refraction": [
+      "3a87ed29db3c6a3c"
+    ],
+    "total": [
+      "f5f6ce721b883c1f"
+    ],
+    "thin": [
+      "c417ac86f772a1f8"
+    ],
+    "lens": [
+      "c417ac86f772a1f8"
+    ],
+    "prism": [
+      "8bc5042b0a607ec4"
+    ],
+    "optical": [
+      "1771467780bb74ae"
+    ],
+    "instruments": [
+      "1771467780bb74ae"
     ]
   },
   "topic_index": {
-    "newton's first law (law of inertia)": [
-      "74608e8306e3a206"
+    "cell cycle": [
+      "518a6e217679d18f"
     ],
-    "newton's second law (f = ma)": [
-      "d8cba274bd13121d"
+    "mitosis": [
+      "74dcc86a684a46ef"
     ],
-    "newton's third law (action-reaction)": [
-      "fd1f733693513841"
+    "meiosis": [
+      "6984163818a1be2f"
     ],
-    "friction": [
-      "a5c1189df81e8dc7"
+    "significance of meiosis": [
+      "1224c4da6d317b63"
     ],
-    "work done by a force": [
-      "e019e7366ec824f9"
+    "key differences": [
+      "c39d3826b37c824d"
     ],
-    "kinetic energy": [
-      "9ed1987a28d8e609"
-    ],
-    "potential energy": [
-      "403894f4199f2d4a"
-    ],
-    "work-energy theorem": [
-      "df55b75db50f0660"
-    ],
-    "conservation of energy": [
-      "989e183950f05861"
-    ],
-    "power": [
-      "3b825d87e05d3103"
-    ],
-    "electric charge": [
-      "4ebae254ba8bdc24"
-    ],
-    "coulomb's law": [
-      "031ce274aae3f1d9"
-    ],
-    "electric field": [
-      "20ff330225df7235"
-    ],
-    "electric potential": [
-      "af147840502ed5d2"
-    ],
-    "the mole concept": [
-      "8426600e7bebcd5b"
-    ],
-    "percentage composition": [
-      "5e3efa0004ec3c61"
-    ],
-    "empirical and molecular formula": [
-      "1293ebb72e735844"
-    ],
-    "stoichiometry": [
-      "50fb9e66f8aefb3f"
+    "cell cycle regulation": [
+      "7273ab193ba953af"
     ],
     "overview of photosynthesis": [
-      "a0fba861d135d934"
+      "82ff29f77ead5c25"
     ],
     "light reactions (light-dependent reactions)": [
-      "eccd06be862375e1"
+      "dcfa9cafae4f6b9d"
     ],
     "dark reactions (calvin cycle)": [
-      "303cea9490de2f0b"
+      "2098941dabb6854e"
     ],
     "c3 vs c4 plants": [
-      "c042a2f17e410e27"
+      "38f24e38d84d6ce4"
     ],
     "factors affecting photosynthesis": [
-      "4c60d5cf025203c2"
+      "cea365c340841799"
+    ],
+    "cell theory": [
+      "bcf4406bda58325c"
+    ],
+    "prokaryotic vs eukaryotic cells": [
+      "e5cb1f14382b26c1"
+    ],
+    "cell membrane (plasma membrane)": [
+      "7d8d9789981ca44c"
+    ],
+    "cell wall": [
+      "d8aed66623d2e10c"
+    ],
+    "nucleus": [
+      "8c41ecd66148a1b1"
+    ],
+    "endoplasmic reticulum": [
+      "158038d5ab6c1496"
+    ],
+    "golgi apparatus": [
+      "a8aac8f93faa835a"
+    ],
+    "lysosomes": [
+      "4e3ed89fb96fdaef"
+    ],
+    "mitochondria": [
+      "5855516d31df0869"
+    ],
+    "chloroplasts": [
+      "b059ce6cf1cd7bea"
+    ],
+    "ribosomes": [
+      "938de822021bda77"
+    ],
+    "cytoskeleton": [
+      "658cd143d786dd64"
+    ],
+    "mendelian genetics": [
+      "15c5581842695d58"
+    ],
+    "mendel's laws": [
+      "38b18e2a73b0dba5"
+    ],
+    "monohybrid cross": [
+      "d572f080cdc82395"
+    ],
+    "dihybrid cross": [
+      "f4c105930fd95151"
+    ],
+    "incomplete dominance": [
+      "cccd509aaa17844f"
+    ],
+    "co-dominance": [
+      "6c5f9aafdb660380"
+    ],
+    "multiple alleles": [
+      "58f295297f7baf40"
+    ],
+    "polygenic inheritance": [
+      "ffe6938a3e22a6bc"
+    ],
+    "pleiotropy": [
+      "02c107cf3ae26f00"
+    ],
+    "sex determination": [
+      "7820eeea2f3ca413"
+    ],
+    "sex-linked inheritance": [
+      "62f1b121e099cb3d"
+    ],
+    "pedigree analysis": [
+      "041ac25e6ce14e36"
+    ],
+    "chromosomal disorders": [
+      "69f5c2a96137ab7a"
+    ],
+    "dna structure": [
+      "2fba347871eff6a8"
+    ],
+    "dna replication": [
+      "56510e3023c76f51"
+    ],
+    "transcription": [
+      "231a2b5823f0f74a"
+    ],
+    "genetic code": [
+      "14e47d24aef954e7"
+    ],
+    "translation": [
+      "5f8ca6d9dc2c31c2"
+    ],
+    "regulation of gene expression": [
+      "d9e32408115b9683"
+    ],
+    "human genome project (hgp)": [
+      "7b042f2b0bcf4668"
+    ],
+    "dna fingerprinting": [
+      "f4066fa0a5737cdd"
+    ],
+    "the mole concept": [
+      "237adfb7a1efe7c2"
+    ],
+    "percentage composition": [
+      "17932e49879cf5af"
+    ],
+    "empirical and molecular formula": [
+      "11ebb3b4f9662ebd"
+    ],
+    "stoichiometry": [
+      "08d9fd51dd27388c"
+    ],
+    "atomic models": [
+      "85c6d52db956e95a"
+    ],
+    "quantum numbers": [
+      "032ce2cdcff18304"
+    ],
+    "electronic configuration": [
+      "016b3864cb03c3fb"
+    ],
+    "atomic spectra": [
+      "fb427cb4dcb1409d"
+    ],
+    "dual nature of matter": [
+      "6d85065c36a9a7ff"
+    ],
+    "orbitals and shapes": [
+      "722af7dba9e0288f"
+    ],
+    "modern periodic table": [
+      "e6add88abbc5f0ad"
+    ],
+    "periodic trends": [
+      "62a89f020bff89a1"
+    ],
+    "diagonal relationship": [
+      "93fece80fc4f4125"
+    ],
+    "important groups": [
+      "1f531c4e39246a04"
+    ],
+    "anomalous properties of first element": [
+      "ed06c8e7b095f306"
+    ],
+    "types of chemical bonds": [
+      "cda89d46affb233b"
+    ],
+    "lewis structures and octet rule": [
+      "fe1febf25b33ebbd"
+    ],
+    "vsepr theory": [
+      "c4746c15ad5c1375"
+    ],
+    "hybridization": [
+      "427e45a4ed721b42"
+    ],
+    "molecular orbital theory": [
+      "af797aa639c14abe"
+    ],
+    "hydrogen bonding": [
+      "efe63a1e01b764f6"
+    ],
+    "resonance": [
+      "5cb17afaa287989c"
+    ],
+    "classification": [
+      "dec0302cb6ff3b27"
+    ],
+    "nomenclature": [
+      "e17ad376ae02c5a9"
+    ],
+    "physical properties": [
+      "efadfea925d0c1a9"
+    ],
+    "preparation methods": [
+      "11de4d97d261cc5f"
+    ],
+    "chemical reactions": [
+      "c92a6ddaa3d25190"
+    ],
+    "haloarenes": [
+      "3b77de942643f77a"
+    ],
+    "polyhalogen compounds": [
+      "63d35a5eb87845fa"
+    ],
+    "types of solutions": [
+      "4ea392b3032683f0"
+    ],
+    "concentration terms": [
+      "ea06b53ebeaa95d3"
+    ],
+    "solubility": [
+      "6187826302fe5d58"
+    ],
+    "ideal and non-ideal solutions": [
+      "13cfa7c165bac102"
+    ],
+    "raoult's law": [
+      "bd14017f0c50d8fb"
+    ],
+    "colligative properties": [
+      "e63df2e8f0492c0a"
+    ],
+    "abnormal molar masses": [
+      "320881c957a9d08f"
+    ],
+    "electrochemical cells": [
+      "5fd0f6afac58ac30"
+    ],
+    "electrode potential": [
+      "b69b8ad3ea405155"
+    ],
+    "nernst equation": [
+      "4c32633c6a0d62bd"
+    ],
+    "relationship between e\u00b0, \u03b4g\u00b0, and k": [
+      "908c0d29b77869b6"
+    ],
+    "conductance": [
+      "42c88af5d2e45bea"
+    ],
+    "variation of conductivity": [
+      "26e2dcab3c065a92"
+    ],
+    "kohlrausch's law": [
+      "5e8c0a78f6835057"
+    ],
+    "electrolysis": [
+      "85131d0ed58675e0"
+    ],
+    "batteries": [
+      "b4834c83b5819988"
+    ],
+    "rate of reaction": [
+      "9c7ebc9da7f1551a"
+    ],
+    "factors affecting rate": [
+      "6638dd8d68c9aa3d"
+    ],
+    "rate law and order": [
+      "e4d7b3bcc79d1569"
+    ],
+    "integrated rate equations": [
+      "57882c54d7f66f6a"
+    ],
+    "half-life relations": [
+      "17db606cbae2f420"
+    ],
+    "determining order": [
+      "045576e3c2ad95a9"
+    ],
+    "collision theory": [
+      "d6f6dae8d89612cc"
+    ],
+    "activation energy": [
+      "c64156badd09f477"
+    ],
+    "effect of catalyst": [
+      "e496945a19761c7c"
+    ],
+    "sets": [
+      "92c2b52e7de822c9"
+    ],
+    "types of sets": [
+      "1c50d5737296e7ec"
+    ],
+    "subsets": [
+      "968b7f9510b022bc"
+    ],
+    "operations on sets": [
+      "fc4b4347b4f29bd7"
+    ],
+    "properties of set operations": [
+      "5ed756163b966089"
+    ],
+    "counting formulas": [
+      "0230045053a6acd5"
+    ],
+    "relations": [
+      "1f7f90428b03ccd6"
+    ],
+    "functions": [
+      "7885f01e62204643"
+    ],
+    "composition of functions": [
+      "219023b7aef9bf64"
+    ],
+    "inverse functions": [
+      "ae6831f3130cd25f"
+    ],
+    "angles and measurement": [
+      "ec96d8fd553b7896"
+    ],
+    "trigonometric ratios": [
+      "1f1d13175466e2ee"
+    ],
+    "standard values": [
+      "8a6351c862817c91"
+    ],
+    "fundamental identities": [
+      "8924ab2c61d2b7d4"
+    ],
+    "signs in quadrants": [
+      "79e9ef9738134ef2"
+    ],
+    "allied angles": [
+      "2d5195ad82cfa7b3"
+    ],
+    "compound angle formulas": [
+      "c9ebf3f32074ce67"
+    ],
+    "multiple angle formulas": [
+      "865321e5b8f4da2a"
+    ],
+    "sum/difference to product": [
+      "d8fbda56aaf53820"
+    ],
+    "product to sum": [
+      "345d00563a9a8f0c"
+    ],
+    "trigonometric equations": [
+      "7daac65227e734d6"
     ],
     "definition of derivative": [
-      "24bb8a8cc3f17b4b"
+      "b31790744dc2a940"
     ],
     "standard derivatives": [
-      "354ce294d222940b"
+      "34abe612a0d7bd13"
     ],
     "differentiation rules": [
-      "9aabd9e64863da1d"
+      "6bcd85677a25eaa3"
     ],
     "applications of derivatives": [
-      "6921c5e153468c49"
+      "044e823cd1e4cbcd"
+    ],
+    "introduction to integration": [
+      "a806d02caba60f4f"
+    ],
+    "standard integrals": [
+      "4b4eb83a8034f392"
+    ],
+    "integration methods": [
+      "8172685995b37ebd"
+    ],
+    "special integrals": [
+      "2aaf00089e3b8282"
+    ],
+    "definite integrals": [
+      "9c0c4e1c00484e84"
+    ],
+    "area under curves": [
+      "37aebadd3d401d5f"
+    ],
+    "gamma function (for reference)": [
+      "8e0cc254eda292cb"
+    ],
+    "distance and displacement": [
+      "68d359fa2e2dac81"
+    ],
+    "speed and velocity": [
+      "5ba0e44e95607bd5"
+    ],
+    "acceleration": [
+      "4c630ffc0889ed8e"
+    ],
+    "equations of motion (suvat)": [
+      "748b7ee2ff3a1485"
+    ],
+    "free fall motion": [
+      "74bd2b30d83c894f"
+    ],
+    "relative motion": [
+      "6e461826f2f074c5"
+    ],
+    "graphical analysis": [
+      "33f7591f543fe5d4"
+    ],
+    "scalar and vector quantities": [
+      "124bd3222ebeec86"
+    ],
+    "vector addition and subtraction": [
+      "8ec1c0bc9071f9e1"
+    ],
+    "resolution of vectors": [
+      "997a33def5cace86"
+    ],
+    "projectile motion": [
+      "ca9f81fcb4d9eb32"
+    ],
+    "uniform circular motion": [
+      "1d9611cd81c2dcec"
+    ],
+    "relative velocity in 2d": [
+      "e4964e35a25f76d3"
+    ],
+    "newton's first law (law of inertia)": [
+      "2a241783dfbb6a84"
+    ],
+    "newton's second law (f = ma)": [
+      "8dd98039e3edf95c"
+    ],
+    "newton's third law (action-reaction)": [
+      "44db399650ca49cc"
+    ],
+    "friction": [
+      "3034dc9baa39db0b"
+    ],
+    "work done by a force": [
+      "ec987c67917ab4d8"
+    ],
+    "kinetic energy": [
+      "824247844929a69b"
+    ],
+    "potential energy": [
+      "b80c8be93126056c"
+    ],
+    "work-energy theorem": [
+      "282fd88253d0f3f4"
+    ],
+    "conservation of energy": [
+      "b0863635bf6629e0"
+    ],
+    "power": [
+      "ee680ff35a8bddc8"
+    ],
+    "newton's law of universal gravitation": [
+      "8c42a261db6cc1aa"
+    ],
+    "acceleration due to gravity": [
+      "b949204eb78ebf45"
+    ],
+    "gravitational potential energy": [
+      "9975e56e3023644c"
+    ],
+    "gravitational potential": [
+      "d8cd76b3019bf23b"
+    ],
+    "escape velocity": [
+      "91296eced309880d"
+    ],
+    "orbital velocity": [
+      "0c1ebe22debaeec2"
+    ],
+    "satellite motion": [
+      "96c6d3fdb118cd4b"
+    ],
+    "kepler's laws of planetary motion": [
+      "b639b296748ee120"
+    ],
+    "weightlessness": [
+      "8dfafb2a320f15b0"
+    ],
+    "binding energy": [
+      "7b721ebae03f7192"
+    ],
+    "electric charge": [
+      "50107d3a7ea6f36e"
+    ],
+    "coulomb's law": [
+      "50c2d33cbdcbe319"
+    ],
+    "electric field": [
+      "8cd9d8ed599c87c4"
+    ],
+    "electric potential": [
+      "fd490fabc6e1c32a"
+    ],
+    "electric current": [
+      "2231b50b542d7fec"
+    ],
+    "drift velocity and current": [
+      "a756a992c74876c7"
+    ],
+    "ohm's law": [
+      "8b37b53f20e28535"
+    ],
+    "resistance and resistivity": [
+      "c5116441d8c09a67"
+    ],
+    "combination of resistors": [
+      "5845ef1c28276877"
+    ],
+    "emf and internal resistance": [
+      "d169b79d7dbf8e50"
+    ],
+    "kirchhoff's laws": [
+      "b993359e01dbd29e"
+    ],
+    "electrical power and energy": [
+      "0168958f3b98baf9"
+    ],
+    "wheatstone bridge": [
+      "12b514b0e42f2882"
+    ],
+    "magnetic field": [
+      "c9f2bb775380a08d"
+    ],
+    "biot-savart law": [
+      "1a51042d0178f32a"
+    ],
+    "ampere's circuital law": [
+      "c814a41c31d358dd"
+    ],
+    "force on moving charge (lorentz force)": [
+      "f9da6430e8cc6fbf"
+    ],
+    "force on current-carrying conductor": [
+      "925ea3e121b4cc62"
+    ],
+    "force between parallel currents": [
+      "5ca189ba222ac769"
+    ],
+    "torque on current loop": [
+      "601518ab06d0edb3"
+    ],
+    "moving coil galvanometer": [
+      "5b186eeb72c72545"
+    ],
+    "magnetic flux": [
+      "c6da64c438b3f66a"
+    ],
+    "faraday's laws of electromagnetic induction": [
+      "25e309fad9bb7f94"
+    ],
+    "lenz's law": [
+      "536874452c30d175"
+    ],
+    "motional emf": [
+      "cad88d68641f398d"
+    ],
+    "eddy currents": [
+      "325d1bb73d8c4354"
+    ],
+    "self-inductance": [
+      "8ca04e69f2422697"
+    ],
+    "mutual inductance": [
+      "2b3eff0b8845be35"
+    ],
+    "ac generator": [
+      "1d62127955072a94"
+    ],
+    "transformer": [
+      "01f0a6b49ab119ad"
+    ],
+    "reflection of light": [
+      "4985df2c2866a9d7"
+    ],
+    "refraction of light": [
+      "3a87ed29db3c6a3c"
+    ],
+    "total internal reflection": [
+      "f5f6ce721b883c1f"
+    ],
+    "thin lens formula": [
+      "c417ac86f772a1f8"
+    ],
+    "prism": [
+      "8bc5042b0a607ec4"
+    ],
+    "optical instruments": [
+      "1771467780bb74ae"
     ]
   },
   "subject_index": {
-    "physics": [
-      "74608e8306e3a206",
-      "d8cba274bd13121d",
-      "fd1f733693513841",
-      "a5c1189df81e8dc7",
-      "e019e7366ec824f9",
-      "9ed1987a28d8e609",
-      "403894f4199f2d4a",
-      "df55b75db50f0660",
-      "989e183950f05861",
-      "3b825d87e05d3103",
-      "4ebae254ba8bdc24",
-      "031ce274aae3f1d9",
-      "20ff330225df7235",
-      "af147840502ed5d2"
+    "biology": [
+      "518a6e217679d18f",
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d",
+      "7273ab193ba953af",
+      "82ff29f77ead5c25",
+      "dcfa9cafae4f6b9d",
+      "2098941dabb6854e",
+      "38f24e38d84d6ce4",
+      "cea365c340841799",
+      "bcf4406bda58325c",
+      "e5cb1f14382b26c1",
+      "7d8d9789981ca44c",
+      "d8aed66623d2e10c",
+      "8c41ecd66148a1b1",
+      "158038d5ab6c1496",
+      "a8aac8f93faa835a",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "938de822021bda77",
+      "658cd143d786dd64",
+      "15c5581842695d58",
+      "38b18e2a73b0dba5",
+      "d572f080cdc82395",
+      "f4c105930fd95151",
+      "cccd509aaa17844f",
+      "6c5f9aafdb660380",
+      "58f295297f7baf40",
+      "ffe6938a3e22a6bc",
+      "02c107cf3ae26f00",
+      "7820eeea2f3ca413",
+      "62f1b121e099cb3d",
+      "041ac25e6ce14e36",
+      "69f5c2a96137ab7a",
+      "2fba347871eff6a8",
+      "56510e3023c76f51",
+      "231a2b5823f0f74a",
+      "14e47d24aef954e7",
+      "5f8ca6d9dc2c31c2",
+      "d9e32408115b9683",
+      "7b042f2b0bcf4668",
+      "f4066fa0a5737cdd"
     ],
     "chemistry": [
-      "8426600e7bebcd5b",
-      "5e3efa0004ec3c61",
-      "1293ebb72e735844",
-      "50fb9e66f8aefb3f"
-    ],
-    "biology": [
-      "a0fba861d135d934",
-      "eccd06be862375e1",
-      "303cea9490de2f0b",
-      "c042a2f17e410e27",
-      "4c60d5cf025203c2"
+      "237adfb7a1efe7c2",
+      "17932e49879cf5af",
+      "11ebb3b4f9662ebd",
+      "08d9fd51dd27388c",
+      "85c6d52db956e95a",
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "fb427cb4dcb1409d",
+      "6d85065c36a9a7ff",
+      "722af7dba9e0288f",
+      "e6add88abbc5f0ad",
+      "62a89f020bff89a1",
+      "93fece80fc4f4125",
+      "1f531c4e39246a04",
+      "ed06c8e7b095f306",
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "c4746c15ad5c1375",
+      "427e45a4ed721b42",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "5cb17afaa287989c",
+      "dec0302cb6ff3b27",
+      "e17ad376ae02c5a9",
+      "efadfea925d0c1a9",
+      "11de4d97d261cc5f",
+      "c92a6ddaa3d25190",
+      "3b77de942643f77a",
+      "63d35a5eb87845fa",
+      "4ea392b3032683f0",
+      "ea06b53ebeaa95d3",
+      "6187826302fe5d58",
+      "13cfa7c165bac102",
+      "bd14017f0c50d8fb",
+      "e63df2e8f0492c0a",
+      "320881c957a9d08f",
+      "5fd0f6afac58ac30",
+      "b69b8ad3ea405155",
+      "4c32633c6a0d62bd",
+      "908c0d29b77869b6",
+      "42c88af5d2e45bea",
+      "26e2dcab3c065a92",
+      "5e8c0a78f6835057",
+      "85131d0ed58675e0",
+      "b4834c83b5819988",
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "e4d7b3bcc79d1569",
+      "57882c54d7f66f6a",
+      "17db606cbae2f420",
+      "045576e3c2ad95a9",
+      "d6f6dae8d89612cc",
+      "c64156badd09f477",
+      "e496945a19761c7c"
     ],
     "mathematics": [
-      "24bb8a8cc3f17b4b",
-      "354ce294d222940b",
-      "9aabd9e64863da1d",
-      "6921c5e153468c49"
+      "92c2b52e7de822c9",
+      "1c50d5737296e7ec",
+      "968b7f9510b022bc",
+      "fc4b4347b4f29bd7",
+      "5ed756163b966089",
+      "0230045053a6acd5",
+      "1f7f90428b03ccd6",
+      "7885f01e62204643",
+      "219023b7aef9bf64",
+      "ae6831f3130cd25f",
+      "ec96d8fd553b7896",
+      "1f1d13175466e2ee",
+      "8a6351c862817c91",
+      "8924ab2c61d2b7d4",
+      "79e9ef9738134ef2",
+      "2d5195ad82cfa7b3",
+      "c9ebf3f32074ce67",
+      "865321e5b8f4da2a",
+      "d8fbda56aaf53820",
+      "345d00563a9a8f0c",
+      "7daac65227e734d6",
+      "b31790744dc2a940",
+      "34abe612a0d7bd13",
+      "6bcd85677a25eaa3",
+      "044e823cd1e4cbcd",
+      "a806d02caba60f4f",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd",
+      "2aaf00089e3b8282",
+      "9c0c4e1c00484e84",
+      "37aebadd3d401d5f",
+      "8e0cc254eda292cb"
+    ],
+    "physics": [
+      "68d359fa2e2dac81",
+      "5ba0e44e95607bd5",
+      "4c630ffc0889ed8e",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "6e461826f2f074c5",
+      "33f7591f543fe5d4",
+      "124bd3222ebeec86",
+      "8ec1c0bc9071f9e1",
+      "997a33def5cace86",
+      "ca9f81fcb4d9eb32",
+      "1d9611cd81c2dcec",
+      "e4964e35a25f76d3",
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "44db399650ca49cc",
+      "3034dc9baa39db0b",
+      "ec987c67917ab4d8",
+      "824247844929a69b",
+      "b80c8be93126056c",
+      "282fd88253d0f3f4",
+      "b0863635bf6629e0",
+      "ee680ff35a8bddc8",
+      "8c42a261db6cc1aa",
+      "b949204eb78ebf45",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "91296eced309880d",
+      "0c1ebe22debaeec2",
+      "96c6d3fdb118cd4b",
+      "b639b296748ee120",
+      "8dfafb2a320f15b0",
+      "7b721ebae03f7192",
+      "50107d3a7ea6f36e",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4",
+      "fd490fabc6e1c32a",
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "8b37b53f20e28535",
+      "c5116441d8c09a67",
+      "5845ef1c28276877",
+      "d169b79d7dbf8e50",
+      "b993359e01dbd29e",
+      "0168958f3b98baf9",
+      "12b514b0e42f2882",
+      "c9f2bb775380a08d",
+      "1a51042d0178f32a",
+      "c814a41c31d358dd",
+      "f9da6430e8cc6fbf",
+      "925ea3e121b4cc62",
+      "5ca189ba222ac769",
+      "601518ab06d0edb3",
+      "5b186eeb72c72545",
+      "c6da64c438b3f66a",
+      "25e309fad9bb7f94",
+      "536874452c30d175",
+      "cad88d68641f398d",
+      "325d1bb73d8c4354",
+      "8ca04e69f2422697",
+      "2b3eff0b8845be35",
+      "1d62127955072a94",
+      "01f0a6b49ab119ad",
+      "4985df2c2866a9d7",
+      "3a87ed29db3c6a3c",
+      "f5f6ce721b883c1f",
+      "c417ac86f772a1f8",
+      "8bc5042b0a607ec4",
+      "1771467780bb74ae"
     ]
   },
   "doc_index": {
-    "ncert_phy11_ch5": [
-      "74608e8306e3a206",
-      "d8cba274bd13121d",
-      "fd1f733693513841",
-      "a5c1189df81e8dc7"
+    "a881f41de5db7614": [
+      "518a6e217679d18f",
+      "74dcc86a684a46ef",
+      "6984163818a1be2f",
+      "1224c4da6d317b63",
+      "c39d3826b37c824d",
+      "7273ab193ba953af"
     ],
-    "ncert_phy11_ch6": [
-      "e019e7366ec824f9",
-      "9ed1987a28d8e609",
-      "403894f4199f2d4a",
-      "df55b75db50f0660",
-      "989e183950f05861",
-      "3b825d87e05d3103"
+    "6fd7e8c65c59cc12": [
+      "82ff29f77ead5c25",
+      "dcfa9cafae4f6b9d",
+      "2098941dabb6854e",
+      "38f24e38d84d6ce4",
+      "cea365c340841799"
     ],
-    "ncert_phy12_ch1": [
-      "4ebae254ba8bdc24",
-      "031ce274aae3f1d9",
-      "20ff330225df7235",
-      "af147840502ed5d2"
+    "7519364661bf959e": [
+      "bcf4406bda58325c",
+      "e5cb1f14382b26c1",
+      "7d8d9789981ca44c",
+      "d8aed66623d2e10c",
+      "8c41ecd66148a1b1",
+      "158038d5ab6c1496",
+      "a8aac8f93faa835a",
+      "4e3ed89fb96fdaef",
+      "5855516d31df0869",
+      "b059ce6cf1cd7bea",
+      "938de822021bda77",
+      "658cd143d786dd64"
     ],
-    "ncert_chem11_ch1": [
-      "8426600e7bebcd5b",
-      "5e3efa0004ec3c61",
-      "1293ebb72e735844",
-      "50fb9e66f8aefb3f"
+    "6ebfbbf83b0a61c7": [
+      "15c5581842695d58",
+      "38b18e2a73b0dba5",
+      "d572f080cdc82395",
+      "f4c105930fd95151",
+      "cccd509aaa17844f",
+      "6c5f9aafdb660380",
+      "58f295297f7baf40",
+      "ffe6938a3e22a6bc",
+      "02c107cf3ae26f00",
+      "7820eeea2f3ca413",
+      "62f1b121e099cb3d",
+      "041ac25e6ce14e36",
+      "69f5c2a96137ab7a"
     ],
-    "ncert_bio11_ch13": [
-      "a0fba861d135d934",
-      "eccd06be862375e1",
-      "303cea9490de2f0b",
-      "c042a2f17e410e27",
-      "4c60d5cf025203c2"
+    "721b36ca360bb552": [
+      "2fba347871eff6a8",
+      "56510e3023c76f51",
+      "231a2b5823f0f74a",
+      "14e47d24aef954e7",
+      "5f8ca6d9dc2c31c2",
+      "d9e32408115b9683",
+      "7b042f2b0bcf4668",
+      "f4066fa0a5737cdd"
     ],
-    "ncert_math12_ch5": [
-      "24bb8a8cc3f17b4b",
-      "354ce294d222940b",
-      "9aabd9e64863da1d",
-      "6921c5e153468c49"
+    "59086e09f6bf5482": [
+      "237adfb7a1efe7c2",
+      "17932e49879cf5af",
+      "11ebb3b4f9662ebd",
+      "08d9fd51dd27388c"
+    ],
+    "271848e31af0d4ef": [
+      "85c6d52db956e95a",
+      "032ce2cdcff18304",
+      "016b3864cb03c3fb",
+      "fb427cb4dcb1409d",
+      "6d85065c36a9a7ff",
+      "722af7dba9e0288f"
+    ],
+    "e0d5728236a94080": [
+      "e6add88abbc5f0ad",
+      "62a89f020bff89a1",
+      "93fece80fc4f4125",
+      "1f531c4e39246a04",
+      "ed06c8e7b095f306"
+    ],
+    "a5842f76072ac408": [
+      "cda89d46affb233b",
+      "fe1febf25b33ebbd",
+      "c4746c15ad5c1375",
+      "427e45a4ed721b42",
+      "af797aa639c14abe",
+      "efe63a1e01b764f6",
+      "5cb17afaa287989c"
+    ],
+    "daad384584f28b3b": [
+      "dec0302cb6ff3b27",
+      "e17ad376ae02c5a9",
+      "efadfea925d0c1a9",
+      "11de4d97d261cc5f",
+      "c92a6ddaa3d25190",
+      "3b77de942643f77a",
+      "63d35a5eb87845fa"
+    ],
+    "44cfd3b0e94ac5f3": [
+      "4ea392b3032683f0",
+      "ea06b53ebeaa95d3",
+      "6187826302fe5d58",
+      "13cfa7c165bac102",
+      "bd14017f0c50d8fb",
+      "e63df2e8f0492c0a",
+      "320881c957a9d08f"
+    ],
+    "6671828e91f6cb36": [
+      "5fd0f6afac58ac30",
+      "b69b8ad3ea405155",
+      "4c32633c6a0d62bd",
+      "908c0d29b77869b6",
+      "42c88af5d2e45bea",
+      "26e2dcab3c065a92",
+      "5e8c0a78f6835057",
+      "85131d0ed58675e0",
+      "b4834c83b5819988"
+    ],
+    "8f6b4afceb0408b6": [
+      "9c7ebc9da7f1551a",
+      "6638dd8d68c9aa3d",
+      "e4d7b3bcc79d1569",
+      "57882c54d7f66f6a",
+      "17db606cbae2f420",
+      "045576e3c2ad95a9",
+      "d6f6dae8d89612cc",
+      "c64156badd09f477",
+      "e496945a19761c7c"
+    ],
+    "1d5bcf8d9f198069": [
+      "92c2b52e7de822c9",
+      "1c50d5737296e7ec",
+      "968b7f9510b022bc",
+      "fc4b4347b4f29bd7",
+      "5ed756163b966089",
+      "0230045053a6acd5",
+      "1f7f90428b03ccd6",
+      "7885f01e62204643",
+      "219023b7aef9bf64",
+      "ae6831f3130cd25f"
+    ],
+    "062a277fceaffe0e": [
+      "ec96d8fd553b7896",
+      "1f1d13175466e2ee",
+      "8a6351c862817c91",
+      "8924ab2c61d2b7d4",
+      "79e9ef9738134ef2",
+      "2d5195ad82cfa7b3",
+      "c9ebf3f32074ce67",
+      "865321e5b8f4da2a",
+      "d8fbda56aaf53820",
+      "345d00563a9a8f0c",
+      "7daac65227e734d6"
+    ],
+    "d217446c58e006cc": [
+      "b31790744dc2a940",
+      "34abe612a0d7bd13",
+      "6bcd85677a25eaa3",
+      "044e823cd1e4cbcd"
+    ],
+    "c730f157168e6f83": [
+      "a806d02caba60f4f",
+      "4b4eb83a8034f392",
+      "8172685995b37ebd",
+      "2aaf00089e3b8282",
+      "9c0c4e1c00484e84",
+      "37aebadd3d401d5f",
+      "8e0cc254eda292cb"
+    ],
+    "408f0c11684b85af": [
+      "68d359fa2e2dac81",
+      "5ba0e44e95607bd5",
+      "4c630ffc0889ed8e",
+      "748b7ee2ff3a1485",
+      "74bd2b30d83c894f",
+      "6e461826f2f074c5",
+      "33f7591f543fe5d4"
+    ],
+    "867196fba9632981": [
+      "124bd3222ebeec86",
+      "8ec1c0bc9071f9e1",
+      "997a33def5cace86",
+      "ca9f81fcb4d9eb32",
+      "1d9611cd81c2dcec",
+      "e4964e35a25f76d3"
+    ],
+    "65cb0ba119394f1f": [
+      "2a241783dfbb6a84",
+      "8dd98039e3edf95c",
+      "44db399650ca49cc",
+      "3034dc9baa39db0b"
+    ],
+    "c0ce2751596241f3": [
+      "ec987c67917ab4d8",
+      "824247844929a69b",
+      "b80c8be93126056c",
+      "282fd88253d0f3f4",
+      "b0863635bf6629e0",
+      "ee680ff35a8bddc8"
+    ],
+    "306e1a2e52a20a4d": [
+      "8c42a261db6cc1aa",
+      "b949204eb78ebf45",
+      "9975e56e3023644c",
+      "d8cd76b3019bf23b",
+      "91296eced309880d",
+      "0c1ebe22debaeec2",
+      "96c6d3fdb118cd4b",
+      "b639b296748ee120",
+      "8dfafb2a320f15b0",
+      "7b721ebae03f7192"
+    ],
+    "6b273ed3890c2067": [
+      "50107d3a7ea6f36e",
+      "50c2d33cbdcbe319",
+      "8cd9d8ed599c87c4",
+      "fd490fabc6e1c32a"
+    ],
+    "aab071e390efb78d": [
+      "2231b50b542d7fec",
+      "a756a992c74876c7",
+      "8b37b53f20e28535",
+      "c5116441d8c09a67",
+      "5845ef1c28276877",
+      "d169b79d7dbf8e50",
+      "b993359e01dbd29e",
+      "0168958f3b98baf9",
+      "12b514b0e42f2882"
+    ],
+    "4641d37d247a9550": [
+      "c9f2bb775380a08d",
+      "1a51042d0178f32a",
+      "c814a41c31d358dd",
+      "f9da6430e8cc6fbf",
+      "925ea3e121b4cc62",
+      "5ca189ba222ac769",
+      "601518ab06d0edb3",
+      "5b186eeb72c72545"
+    ],
+    "5f5af2faf6e76bcf": [
+      "c6da64c438b3f66a",
+      "25e309fad9bb7f94",
+      "536874452c30d175",
+      "cad88d68641f398d",
+      "325d1bb73d8c4354",
+      "8ca04e69f2422697",
+      "2b3eff0b8845be35",
+      "1d62127955072a94",
+      "01f0a6b49ab119ad"
+    ],
+    "2ad2823792febbac": [
+      "4985df2c2866a9d7",
+      "3a87ed29db3c6a3c",
+      "f5f6ce721b883c1f",
+      "c417ac86f772a1f8",
+      "8bc5042b0a607ec4",
+      "1771467780bb74ae"
     ]
   }
 }

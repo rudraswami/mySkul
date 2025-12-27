@@ -21,28 +21,63 @@ INTENTS = (
 )
 
 
-def detect_intent(question: str, previous_text: Optional[str] = None) -> str:
+def detect_intent(
+    question: str, 
+    previous_text: Optional[str] = None,
+    semantic_analysis: Optional[Dict] = None
+) -> str:
+    """
+    Detect intent for adaptive visual response.
+    
+    PHASE 1 FIX: This now defers to semantic analysis when available.
+    Keyword regex only runs as legacy fallback.
+    
+    Args:
+        question: The student's question
+        previous_text: Previous text context
+        semantic_analysis: Dict from SemanticIntentClassifier (optional)
+    
+    Returns:
+        Intent string for visual adaptation
+    """
+    # ================================================================
+    # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+    # ================================================================
+    if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+        intent = semantic_analysis.get('intent', '')
+        response_expectation = semantic_analysis.get('response_expectation', '')
+        
+        # Map semantic intents to visual intents
+        semantic_to_visual = {
+            'explanation': 'conceptual_explanation',
+            'question': 'conceptual_explanation',
+            'practice': 'application_based',
+            'clarification': 'clarification_or_followup',
+            'confusion': 'clarification_or_followup',
+        }
+        
+        if intent in semantic_to_visual:
+            return semantic_to_visual[intent]
+        
+        # Check for compare intent via response expectation or topic
+        topic = semantic_analysis.get('topic_mentioned', '') or ''
+        if 'vs' in topic.lower() or 'compare' in (semantic_analysis.get('reasoning', '') or '').lower():
+            return 'compare_contrast'
+        
+        # Default
+        return 'conceptual_explanation'
+    
+    # ================================================================
+    # LEGACY FALLBACK: Regex patterns (only when semantic unavailable)
+    # ================================================================
     q = (question or "").strip().lower()
 
-    if re.search(r"\b(what is|define|meaning of|state)\b", q):
-        return "definition"
-
-    if re.search(r"\b(compare|difference between|vs\b|versus|contrast)\b", q):
+    # STRUCTURAL detection: Look for compare structure (X vs Y)
+    if ' vs ' in q or ' versus ' in q or re.search(r"difference between .+ and", q):
         return "compare_contrast"
 
-    if re.search(r"\b(derive|prove|exception|edge case|in depth|deep dive|why exactly)\b", q):
-        return "deep_dive"
-
-    if re.search(r"\b(real[- ]world|practical|application|use case|daily life|where.*used|apply)\b", q):
-        return "application_based"
-
-    if re.search(r"\b(again|another way|tell me differently|clarify|follow ?up|more detail|i know)\b", q):
-        return "clarification_or_followup"
-
     # Default: conceptual explanation
-    if re.search(r"\b(explain|how does|how do|why)\b", q):
-        return "conceptual_explanation"
-
+    # Let the visual system use default templates
     return "conceptual_explanation"
 
 

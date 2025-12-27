@@ -1,0 +1,148 @@
+{
+  "sources": [
+    {
+      "source_id": "ncert_physics_11",
+      "name": "NCERT Physics Class 11",
+      "source_type": "structured",
+      "domain": "physics",
+      "urls": [
+        "local://curriculum/ncert_physics_11.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_physics_12",
+      "name": "NCERT Physics Class 12",
+      "source_type": "structured",
+      "domain": "physics",
+      "urls": [
+        "local://curriculum/ncert_physics_12.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_chemistry_11",
+      "name": "NCERT Chemistry Class 11",
+      "source_type": "structured",
+      "domain": "chemistry",
+      "urls": [
+        "local://curriculum/ncert_chemistry_11.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_chemistry_12",
+      "name": "NCERT Chemistry Class 12",
+      "source_type": "structured",
+      "domain": "chemistry",
+      "urls": [
+        "local://curriculum/ncert_chemistry_12.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_math_11",
+      "name": "NCERT Mathematics Class 11",
+      "source_type": "structured",
+      "domain": "mathematics",
+      "urls": [
+        "local://curriculum/ncert_math_11.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_math_12",
+      "name": "NCERT Mathematics Class 12",
+      "source_type": "structured",
+      "domain": "mathematics",
+      "urls": [
+        "local://curriculum/ncert_math_12.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_biology_11",
+      "name": "NCERT Biology Class 11",
+      "source_type": "structured",
+      "domain": "biology",
+      "urls": [
+        "local://curriculum/ncert_biology_11.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "ncert_biology_12",
+      "name": "NCERT Biology Class 12",
+      "source_type": "structured",
+      "domain": "biology",
+      "urls": [
+        "local://curriculum/ncert_biology_12.json"
+      ],
+      "attribution": "NCERT, Govt. of India. Educational use only.",
+      "version": "2023-24",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "jee_syllabus",
+      "name": "JEE Main & Advanced Syllabus",
+      "source_type": "structured",
+      "domain": "general",
+      "urls": [
+        "local://exam/jee_syllabus.json"
+      ],
+      "attribution": "NTA, Govt. of India. Public syllabus document.",
+      "version": "2024",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "neet_syllabus",
+      "name": "NEET Syllabus",
+      "source_type": "structured",
+      "domain": "general",
+      "urls": [
+        "local://exam/neet_syllabus.json"
+      ],
+      "attribution": "NTA, Govt. of India. Public syllabus document.",
+      "version": "2024",
+      "last_updated": "",
+      "metadata": {}
+    },
+    {
+      "source_id": "formula_bank",
+      "name": "Educational Formula Bank",
+      "source_type": "structured",
+      "domain": "general",
+      "urls": [
+        "local://formulas/formula_bank.json"
+      ],
+      "attribution": "Compiled from NCERT and standard textbooks. Educational use.",
+      "version": "1.0",
+      "last_updated": "",
+      "metadata": {}
+    }
+  ],
+  "updated_at": "2025-12-26T06:11:30.640509"
+}

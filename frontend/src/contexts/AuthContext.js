@@ -67,6 +67,11 @@ export function AuthProvider({ children }) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
       
+      // Get current token from localStorage (may have been set by OAuth redirect above)
+      const currentToken = localStorage.getItem('dhruv_ai_token');
+      
+      let sessionValidated = false;
+      
       try {
         // Check for session via new endpoint (supports both OAuth and JWT)
         const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
@@ -79,27 +84,56 @@ export function AuthProvider({ children }) {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+          // Keep localStorage in sync with validated session
+          localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
           console.log('✅ Session validated, user loaded:', data.user.email);
-        } else if (token) {
-          // Fallback to old JWT method
-          try {
-            const profileResponse = await apiClient.get('/user/profile');
-            setUser(profileResponse.data);
-          } catch (error) {
-            if (error.response?.status === 401 || error.response?.status === 403) {
-              logout();
-            }
-          }
-        } else {
-          console.log('ℹ️ No active session found');
+          sessionValidated = true;
         }
+        // If session returns 401 or other error, we'll try JWT fallback below
       } catch (error) {
+        // Session endpoint failed (network error, etc.) - will try JWT fallback
         if (process.env.NODE_ENV === 'development') {
-          console.error('Auth check failed:', error);
+          console.warn('Session check failed, trying JWT fallback:', error.message);
         }
-      } finally {
-        setLoading(false);
       }
+      
+      // If session validation failed, try JWT token fallback
+      if (!sessionValidated && currentToken) {
+        console.log('🔑 Trying JWT token fallback...');
+        try {
+          const profileResponse = await apiClient.get('/user/profile');
+          setUser(profileResponse.data);
+          localStorage.setItem('dhruv_ai_user', JSON.stringify(profileResponse.data));
+          console.log('✅ JWT validated, user loaded:', profileResponse.data.email);
+          sessionValidated = true;
+        } catch (error) {
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            // JWT is explicitly invalid - clear everything
+            console.log('⚠️ JWT invalid (401/403), clearing auth data');
+            setUser(null);
+            localStorage.removeItem('dhruv_ai_user');
+            localStorage.removeItem('dhruv_ai_token');
+          } else {
+            // Other error (network, 500, etc.) - keep existing user data from localStorage
+            // This prevents logout on temporary network issues
+            console.warn('JWT validation failed with non-auth error, keeping cached user');
+          }
+        }
+      }
+      
+      // If no session validated AND no token exists, user is not logged in
+      if (!sessionValidated && !currentToken) {
+        console.log('ℹ️ No active session and no token found');
+        // Only clear if there's stale user data without any token
+        const storedUser = localStorage.getItem('dhruv_ai_user');
+        if (storedUser) {
+          console.log('🧹 Clearing orphaned user data (no token)');
+          setUser(null);
+          localStorage.removeItem('dhruv_ai_user');
+        }
+      }
+      
+      setLoading(false);
     };
 
     checkAuth();
@@ -216,6 +250,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       localStorage.removeItem('dhruv_ai_token');
+      localStorage.removeItem('dhruv_ai_user'); // FIX: Clear persisted user data
     }
   };
 

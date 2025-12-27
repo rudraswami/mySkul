@@ -123,13 +123,14 @@ class LongTermMemory:
     """
     Long-term memory for persistent student information.
     
+    MEMORY CONTRACT: Uses MemoryService as the SINGLE SOURCE OF TRUTH.
+    All data is persisted to MongoDB via MemoryService.
+    
     Stores:
     - Learning patterns (what approaches work for this student)
     - Common mistakes (to proactively address)
     - Preferences (communication style, examples they relate to)
     - Progress tracking (topics mastered, weak areas)
-    
-    In production, this would be backed by a database.
     """
     
     def __init__(self, student_id: str):
@@ -144,22 +145,91 @@ class LongTermMemory:
             "engagement_patterns": {}
         }
         self._loaded = False
+        self._memory_service = None
+        self._db = None
+    
+    def _get_memory_service(self, db=None):
+        """Get or create MemoryService instance."""
+        actual_db = db or self._db
+        if actual_db and self._memory_service is None:
+            try:
+                from services.memory_service import MemoryService
+                self._memory_service = MemoryService(actual_db)
+            except ImportError:
+                logger.warning("MemoryService not available")
+        return self._memory_service
     
     async def load(self, db=None) -> None:
-        """Load memories from persistent storage"""
-        if db:
-            # In production: load from database
-            # data = await db.student_memory.find_one({"student_id": self.student_id})
-            pass
+        """
+        Load memories from REAL persistent storage (MongoDB via MemoryService).
+        
+        This is the SINGLE SOURCE OF TRUTH for long-term memory.
+        """
+        self._db = db or self._db
+        memory_service = self._get_memory_service(db)
+        
+        if memory_service:
+            try:
+                # Load real student profile from MongoDB
+                profile = await memory_service.get_student_profile(self.student_id)
+                
+                if profile:
+                    # Map profile data to patterns
+                    self._patterns["learning_style"] = profile.get("preferred_explanation", None)
+                    self._patterns["preferred_examples"] = profile.get("preferred_analogies", [])
+                    self._patterns["strong_topics"] = profile.get("strong_topics", [])
+                    self._patterns["weak_topics"] = profile.get("weak_topics", [])
+                    
+                    # Load common mistakes from profile
+                    mistakes_data = profile.get("common_mistakes", [])
+                    self._patterns["common_mistakes"] = mistakes_data if isinstance(mistakes_data, list) else []
+                    
+                    # Load engagement patterns
+                    self._patterns["engagement_patterns"] = profile.get("engagement_patterns", {})
+                    
+                    logger.info(f"💾 REAL memory loaded from MongoDB for student {self.student_id}")
+                else:
+                    logger.info(f"💾 No existing profile found for student {self.student_id}, starting fresh")
+            except Exception as e:
+                logger.warning(f"💾 Failed to load memory from MongoDB: {e}")
+        else:
+            logger.warning(f"💾 No database connection - memory will be session-only for {self.student_id}")
+        
         self._loaded = True
-        logger.info(f"💾 Loaded long-term memory for student {self.student_id}")
     
     async def save(self, db=None) -> None:
-        """Save memories to persistent storage"""
-        if db:
-            # In production: save to database
-            pass
-        logger.info(f"💾 Saved long-term memory for student {self.student_id}")
+        """
+        Save memories to REAL persistent storage (MongoDB via MemoryService).
+        
+        This persists across restarts and is shared across all agents.
+        """
+        self._db = db or self._db
+        memory_service = self._get_memory_service(db)
+        
+        if memory_service:
+            try:
+                # Build update dict from patterns
+                updates = {
+                    "preferred_explanation": self._patterns.get("learning_style"),
+                    "preferred_analogies": self._patterns.get("preferred_examples", []),
+                    "strong_topics": self._patterns.get("strong_topics", []),
+                    "weak_topics": self._patterns.get("weak_topics", []),
+                    "common_mistakes": self._patterns.get("common_mistakes", []),
+                    "engagement_patterns": self._patterns.get("engagement_patterns", {}),
+                    "last_updated": datetime.now().isoformat()
+                }
+                
+                # Persist to MongoDB
+                success = await memory_service.update_student_profile(self.student_id, updates)
+                
+                if success:
+                    logger.info(f"💾 REAL memory saved to MongoDB for student {self.student_id}")
+                else:
+                    logger.warning(f"💾 Failed to save memory for {self.student_id}")
+            except Exception as e:
+                logger.error(f"💾 Error saving memory to MongoDB: {e}")
+        else:
+            logger.warning(f"💾 No database connection - memory NOT persisted for {self.student_id}")
     
     def add_memory(
         self, 
@@ -249,8 +319,11 @@ class MemorySystem:
     """
     Unified memory system combining short-term and long-term memory.
     
+    MEMORY CONTRACT: Uses MemoryService as the SINGLE SOURCE OF TRUTH.
+    All long-term data persists to MongoDB across restarts and agents.
+    
     Usage:
-        memory = MemorySystem(student_id="123")
+        memory = MemorySystem(student_id="123", db=db)
         await memory.initialize()
         
         # Short-term operations
@@ -265,21 +338,32 @@ class MemorySystem:
         context = memory.get_context_for_prompt()
     """
     
-    def __init__(self, student_id: str, short_term_size: int = 20):
+    def __init__(self, student_id: str, short_term_size: int = 20, db=None):
         self.student_id = student_id
         self.short_term = ShortTermMemory(max_items=short_term_size)
         self.long_term = LongTermMemory(student_id)
+        self._db = db
         self._initialized = False
     
+    def set_db(self, db) -> None:
+        """Set database connection for persistent memory."""
+        self._db = db
+        self.long_term._db = db
+    
     async def initialize(self, db=None) -> None:
-        """Initialize memory system"""
-        await self.long_term.load(db)
+        """Initialize memory system with database connection."""
+        actual_db = db or self._db
+        if actual_db:
+            self._db = actual_db
+        await self.long_term.load(self._db)
         self._initialized = True
-        logger.info(f"🧠 Memory system initialized for {self.student_id}")
+        logger.info(f"🧠 Memory system initialized for {self.student_id} (persistent={self._db is not None})")
     
     async def save(self, db=None) -> None:
-        """Persist long-term memories"""
-        await self.long_term.save(db)
+        """Persist long-term memories to database."""
+        actual_db = db or self._db
+        await self.long_term.save(actual_db)
+        logger.info(f"🧠 Memory saved for {self.student_id}")
     
     # Short-term operations
     def remember(self, content: str, memory_type: str = "conversation", **metadata) -> None:

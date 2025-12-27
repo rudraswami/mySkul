@@ -5,69 +5,71 @@ import { useState } from "react";
 const features = [
     {
         icon: Dna,
-        title: "Error Genome™",
-        description: "Detects microscopic errors at the root level, just like a top-performing student would identify conceptual gaps.",
-        details: "Our AI analyzes your thought patterns and identifies where misconceptions begin, offering targeted corrections that stick.",
+        title: "Dual AI System",
+        description: "AI Mentor explains like your best friend while AI Professor ensures academic accuracy. Two minds, one goal - your success.",
+        details: "Our dual-layer approach combines emotional intelligence with rigorous academic verification for trustworthy, relatable learning.",
         color: "from-purple-500 to-purple-600",
         bgColor: "bg-purple-500/10",
         borderColor: "border-purple-500/30",
         iconColor: "text-purple-400",
-        stats: "99.9% error detection accuracy",
+        stats: "100% verified responses",
     },
     {
         icon: ShieldCheck,
-        title: "Symbolic Verification Engine",
-        description: "Every generated answer is logically verified through symbolic reasoning, ensuring zero hallucination in solutions.",
-        details: "Mathematical proofs and logical chains validate each step, making our AI the most trustworthy learning companion.",
+        title: "Teach Me Back",
+        description: "Explain concepts back to the AI and get instant feedback. The best way to learn is to teach - we make it possible.",
+        details: "Research shows teaching others improves retention by 90%. Our AI listens to your explanations and helps you identify gaps.",
         color: "from-pink-500 to-pink-600",
         bgColor: "bg-pink-500/10",
         borderColor: "border-pink-500/30",
         iconColor: "text-pink-400",
-        stats: "100% verified solutions",
+        stats: "90% better retention",
     },
     {
         icon: FileText,
-        title: "Mock Test Engine",
-        description: "Generate high-quality JEE/NEET/UPSC mock tests instantly with adaptive difficulty tailored to your performance.",
-        details: "Tests adapt in real-time based on your answers, ensuring optimal challenge level for maximum learning efficiency.",
+        title: "Hinglish Support",
+        description: "Ask questions in Hindi, English, or mix both! Our AI understands how you naturally communicate and responds accordingly.",
+        details: "No more struggling with English-only tutors. Learn in your comfortable language while building English vocabulary naturally.",
         color: "from-blue-500 to-blue-600",
         bgColor: "bg-blue-500/10",
         borderColor: "border-blue-500/30",
         iconColor: "text-blue-400",
-        stats: "100K+ tests generated",
+        stats: "Hindi + English support",
     },
     {
-        icon: Eye,
-        title: "Visual Reasoning Engine",
-        description: "Complex concepts transformed into animated visual reasoning steps that make learning intuitive and memorable.",
-        details: "See abstract ideas come to life with dynamic visualizations that reveal the 'why' behind every concept.",
+        icon: TrendingUp,
+        title: "Adaptive Learning",
+        description: "AI remembers your strengths and weaknesses, adjusting difficulty and explanations to match your learning pace.",
+        details: "No more one-size-fits-all education. Get personalized attention that adapts to how you learn best.",
         color: "from-cyan-500 to-cyan-600",
         bgColor: "bg-cyan-500/10",
         borderColor: "border-cyan-500/30",
         iconColor: "text-cyan-400",
-        stats: "3x faster comprehension",
+        stats: "2x faster progress",
     },
     {
-        icon: Box,
-        title: "3D Visual Learning",
-        description: "Experience concepts through culturally relevant 3D metaphors - from cricket physics to temple geometry.",
-        details: "Learn through familiar contexts that resonate with Indian culture, making abstract concepts tangible and relatable.",
+        icon: Eye,
+        title: "Visual Explanations",
+        description: "Complex diagrams, step-by-step solutions, and concept maps generated instantly to help you visualize and understand.",
+        details: "From chemical structures to physics diagrams - see concepts come alive with AI-generated visual explanations.",
         color: "from-violet-500 to-violet-600",
         bgColor: "bg-violet-500/10",
         borderColor: "border-violet-500/30",
         iconColor: "text-violet-400",
-        stats: "50+ cultural modules",
+        comingSoon: true,
+        stats: "Coming Soon",
     },
     {
-        icon: TrendingUp,
-        title: "Adaptive Learning Path",
-        description: "AI analyzes your strengths and weaknesses to create a personalized learning journey that accelerates growth.",
-        details: "Dynamic curriculum that evolves with you, focusing on areas that need attention while reinforcing strengths.",
+        icon: Box,
+        title: "Mock Tests",
+        description: "Generate unlimited practice tests tailored to your exam - JEE, NEET, UPSC, Banking, SSC and more.",
+        details: "AI-powered test generation with detailed solutions and performance analytics to track your preparation.",
         color: "from-fuchsia-500 to-fuchsia-600",
         bgColor: "bg-fuchsia-500/10",
         borderColor: "border-fuchsia-500/30",
         iconColor: "text-fuchsia-400",
-        stats: "2x faster progress",
+        comingSoon: true,
+        stats: "Coming Soon",
     },
 ];
 
@@ -97,6 +99,13 @@ function FlipCard({ feature, index }) {
                     className={`absolute inset-0 ${feature.bgColor} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden`}
                     style={{ backfaceVisibility: "hidden" }}
                 >
+                    {/* Coming Soon Badge */}
+                    {feature.comingSoon && (
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-full">
+                            <span className="text-amber-300 text-xs font-bold uppercase tracking-wider">Coming Soon</span>
+                        </div>
+                    )}
+                    
                     {/* Animated Icon */}
                     <motion.div
                         className={`w-20 h-20 ${feature.bgColor} rounded-2xl flex items-center justify-center mb-6 border ${feature.borderColor} relative`}

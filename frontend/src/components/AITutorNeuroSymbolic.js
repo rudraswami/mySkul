@@ -1693,66 +1693,56 @@ export default function AITutorNeuroSymbolic() {
         const ids = new Set();
         const list = Array.isArray(data.messages) ? data.messages : [];
         list.forEach(msg => {
-          // Combined format: user_message + ai response fields
-          if (msg.user_message) {
-            const uid = (msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${crypto.randomUUID()}`);
-            if (!ids.has(uid)) {
-              // Ensure user content is always a string
-              const userContent = typeof msg.user_message === 'string' 
+          // BUGFIX: Check for user_message OR message field to ensure user messages are never lost
+          // The key issue was that empty/falsy user_message would skip adding the user message entirely
+          const hasUserMessage = msg.user_message !== undefined || msg.message !== undefined;
+          const aiPayload = msg.dual_response || msg.response || msg.ai_response;
+          
+          // Extract user content from any available field
+          const extractUserContent = () => {
+            if (msg.user_message !== undefined && msg.user_message !== null) {
+              return typeof msg.user_message === 'string' 
                 ? msg.user_message 
                 : (msg.user_message?.message || String(msg.user_message));
-              parsed.push({ 
-                type: 'user', 
-                content: userContent, 
-                timestamp: msg.timestamp || new Date().toISOString(), 
-                message_id: uid 
-              });
-              ids.add(uid);
             }
-            const aiPayload = msg.dual_response || msg.response || msg.ai_response;
-            if (aiPayload) {
-              const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
-              if (!ids.has(aid)) {
-                // CRITICAL: Normalize AI content to ensure it's always a proper object
-                parsed.push({ 
-                  type: 'ai', 
-                  content: normalizeAIContent(aiPayload), 
-                  timestamp: msg.timestamp || new Date().toISOString(), 
-                  message_id: aid,
-                  // Preserve additional fields
-                  teaching_visual: msg.teaching_visual || aiPayload?.teaching_visual,
-                  visual_data: msg.visual_data || aiPayload?.visual_data,
-                  visual_sketch: msg.visual_sketch || aiPayload?.visual_sketch
-                });
-                ids.add(aid);
-              }
-            }
-          } else if (msg.message && !msg.response && !msg.ai_response) {
-            // Separate user message
-            const uid = msg.message_id || `user_${Date.now()}_${crypto.randomUUID()}`;
-            if (!ids.has(uid)) {
-              const userContent = typeof msg.message === 'string' 
+            if (msg.message !== undefined && msg.message !== null) {
+              return typeof msg.message === 'string' 
                 ? msg.message 
                 : String(msg.message);
-              parsed.push({ 
-                type: 'user', 
-                content: userContent, 
-                timestamp: msg.timestamp || new Date().toISOString(), 
-                message_id: uid 
-              });
-              ids.add(uid);
             }
-          } else if (msg.response || msg.ai_response) {
-            // Separate AI response
-              const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
-              if (!ids.has(aid)) {
-              const aiPayload = msg.response || msg.ai_response;
+            return ''; // Fallback to empty string if no user message found
+          };
+          
+          // Always add user message if ANY user content field exists (even if empty)
+          if (hasUserMessage) {
+            const uid = (msg.message_id ? `${msg.message_id}_user` : `user_${Date.now()}_${crypto.randomUUID()}`);
+            if (!ids.has(uid)) {
+              const userContent = extractUserContent();
+              // Only add if content is not empty (skip truly empty messages)
+              if (userContent.trim()) {
+                parsed.push({ 
+                  type: 'user', 
+                  content: userContent, 
+                  timestamp: msg.timestamp || new Date().toISOString(), 
+                  message_id: uid 
+                });
+                ids.add(uid);
+              }
+            }
+          }
+          
+          // Add AI response if present
+          if (aiPayload) {
+            const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
+            if (!ids.has(aid)) {
               // CRITICAL: Normalize AI content to ensure it's always a proper object
               parsed.push({ 
                 type: 'ai', 
                 content: normalizeAIContent(aiPayload), 
                 timestamp: msg.timestamp || new Date().toISOString(), 
                 message_id: aid,
+                // Preserve user_question for context (helps with history display)
+                user_question: extractUserContent(),
                 // Preserve additional fields
                 teaching_visual: msg.teaching_visual || aiPayload?.teaching_visual,
                 visual_data: msg.visual_data || aiPayload?.visual_data,

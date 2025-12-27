@@ -167,7 +167,184 @@ class ReActAgent(ABC):
         # Global timeout for entire ReAct loop (configurable)
         self.global_timeout = self.config.get('global_timeout', self.DEFAULT_GLOBAL_TIMEOUT)
         
+        # Feature flag for self-assessment (safe default: ON)
+        # Respects both config and global settings
+        try:
+            from core.config import settings
+            global_flag = getattr(settings, 'ENABLE_AGENT_SELF_ASSESSMENT', True)
+        except ImportError:
+            global_flag = True
+        self.enable_self_assessment = self.config.get('enable_self_assessment', global_flag)
+        
         logger.info(f"🤖 {self.get_agent_name()} initialized (ReAct mode, timeout={self.global_timeout}s)")
+    
+    def evaluate_confidence(self, query: str, context: Dict[str, Any]) -> float:
+        """
+        SELF-ASSESSMENT: Agent evaluates its own confidence for handling this query.
+        
+        This enables TRUE agent autonomy - agents decide their own fitness,
+        not external routing logic.
+        
+        Override in subclasses for specialized confidence assessment.
+        
+        Args:
+            query: The student's question
+            context: Request context (subject, exam_mode, etc.)
+            
+        Returns:
+            Confidence score 0.0 to 1.0
+        """
+        if not self.enable_self_assessment:
+            return 0.7  # Default confidence when disabled
+        
+        # Base confidence from agent type and query match
+        base_confidence = 0.5
+        
+        # Check if agent has relevant tools
+        if self.tool_registry:
+            available_tools = self.get_available_tools() if hasattr(self, 'get_available_tools') else []
+            if available_tools:
+                base_confidence += 0.1
+        
+        # Subject match boost
+        subject = context.get('subject', '').lower()
+        agent_name = self.get_agent_name().lower()
+        
+        # Domain expertise mapping (can be overridden by subclasses)
+        domain_boost = self._get_domain_confidence_boost(subject, query)
+        
+        return min(1.0, base_confidence + domain_boost)
+    
+    def _get_domain_confidence_boost(self, subject: str, query: str) -> float:
+        """
+        Get confidence boost based on domain expertise.
+        Override in subclasses for specialized matching.
+        """
+        # Default implementation - no boost
+        return 0.0
+    
+    def should_abstain(self, query: str, context: Dict[str, Any]) -> tuple:
+        """
+        SELF-INITIATED ABSTAIN: Agent decides if it should skip this query.
+        
+        Checks:
+        1. Self-assessed confidence
+        2. Cognitive control signals (if available)
+        
+        Returns:
+            Tuple of (should_abstain: bool, reason: str)
+        """
+        # Check cognitive control signals first
+        try:
+            from services.cognitive_model.cognitive_control import get_cognitive_signal
+            
+            signal = get_cognitive_signal(context, self.get_agent_name())
+            if signal:
+                decision = signal.get('decision')
+                if decision == 'should_defer':
+                    defer_to = signal.get('defer_to', 'another agent')
+                    return (True, f"Cognitive control: deferring to {defer_to}")
+                elif decision == 'may_abstain':
+                    # May abstain - check confidence to decide
+                    pass  # Continue to confidence check
+        except ImportError:
+            pass  # Cognitive control not available
+        except Exception:
+            pass  # Any error, proceed with confidence check
+        
+        confidence = self.evaluate_confidence(query, context)
+        
+        if confidence < 0.3:
+            return (True, f"Low confidence ({confidence:.2f}) - not suited for this query")
+        
+        return (False, "")
+    
+    async def _post_insight_to_shared_state(
+        self,
+        context: Dict[str, Any],
+        thought: str,
+        confidence: float = 0.7
+    ):
+        """
+        Post an insight to the shared reasoning state if available.
+        
+        This enables TRUE multi-agent collaboration: agents share their
+        intermediate thoughts as they reason, not just final outputs.
+        
+        ADDITIVE: Only runs if shared state exists, completely non-blocking.
+        """
+        try:
+            from services.cognitive_model.shared_reasoning_state import (
+                get_shared_state, InsightType
+            )
+            
+            shared_state = get_shared_state(context)
+            if shared_state is None:
+                return  # No shared state available, proceed normally
+            
+            # Determine insight type from thought content
+            thought_lower = thought.lower()
+            if any(w in thought_lower for w in ['i think', 'hypothesis', 'might be', 'could be']):
+                insight_type = InsightType.HYPOTHESIS
+            elif any(w in thought_lower for w in ['verified', 'confirmed', 'calculated']):
+                insight_type = InsightType.FACT
+            elif any(w in thought_lower for w in ['warning', 'careful', 'note that']):
+                insight_type = InsightType.WARNING
+            elif any(w in thought_lower for w in ['unsure', 'not sure', 'need help']):
+                insight_type = InsightType.QUESTION
+            else:
+                insight_type = InsightType.HYPOTHESIS
+            
+            # Post the insight (non-blocking)
+            await shared_state.post_insight(
+                agent_name=self.get_agent_name(),
+                insight_type=insight_type,
+                content=thought[:500],  # Limit length
+                confidence=confidence
+            )
+            
+        except ImportError:
+            pass  # Module not available, proceed normally
+        except Exception:
+            pass  # Any error, proceed normally - this is non-blocking
+    
+    async def _get_insights_from_shared_state(
+        self,
+        context: Dict[str, Any],
+        min_confidence: float = 0.5
+    ) -> str:
+        """
+        Get relevant insights from other agents for context enrichment.
+        
+        Returns a formatted string of insights that can be added to prompts.
+        """
+        try:
+            from services.cognitive_model.shared_reasoning_state import get_shared_state
+            
+            shared_state = get_shared_state(context)
+            if shared_state is None:
+                return ""
+            
+            # Get insights from other agents
+            insights = await shared_state.get_latest_insights(
+                exclude_agent=self.get_agent_name(),
+                limit=3
+            )
+            
+            if not insights:
+                return ""
+            
+            # Format insights for prompt
+            formatted = "\n[INSIGHTS FROM OTHER AGENTS]\n"
+            for insight in insights:
+                formatted += f"- {insight.agent_name} ({insight.insight_type.value}): {insight.content[:200]}\n"
+            
+            return formatted
+            
+        except ImportError:
+            return ""
+        except Exception:
+            return ""
     
     def _get_adaptive_iterations(self, query: str, context: Dict[str, Any]) -> int:
         """
@@ -277,6 +454,8 @@ Student Query: {state.query}
 Subject: {state.context.get('subject', 'General')}
 Student Name: {state.context.get('student_profile', {}).get('user_name', 'Student')}
 
+{self._get_constraint_instruction(state.context)}
+
 ## REASONING SO FAR
 {state.get_reasoning_summary()}
 """
@@ -307,6 +486,32 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         descriptions.append("  Parameters: {\"answer\": \"Your final response to the student\"}")
         
         return "\n".join(descriptions)
+    
+    def _get_constraint_instruction(self, context: dict) -> str:
+        """
+        Get formula/fact constraints from context for pre-generation injection.
+        
+        This is part of the NEURO-SYMBOLIC enhancement:
+        - Formulas verified by RAG/KnowledgeGraph are injected as constraints
+        - Symbolic proofs are provided as verified solutions
+        - This prevents hallucination of incorrect formulas
+        
+        Non-breaking: Returns empty string if no constraints available.
+        """
+        instruction = context.get('_constraint_instruction', '')
+        
+        # Add symbolic solution if available
+        symbolic = context.get('symbolic_solution')
+        if symbolic and instruction:
+            instruction += f"\n\nVerified symbolic solution: {symbolic}"
+        elif symbolic:
+            instruction = f"VERIFIED SOLUTION AVAILABLE: {symbolic}"
+        
+        # Wrap in section header if present
+        if instruction:
+            return f"## VERIFIED CONSTRAINTS\n{instruction}"
+        
+        return ""
     
     async def run(
         self,
@@ -391,6 +596,18 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
                 logger.info(f"[ReAct] Step {state.iterations}/{adaptive_max}: THINKING...")
                 
                 thought_action = await self._think(state)
+                
+                # ================================================================
+                # SHARED REASONING: Post insight to shared state if available
+                # This enables TRUE multi-agent collaboration during reasoning
+                # ADDITIVE: Only runs if shared state exists, non-blocking
+                # ================================================================
+                if thought_action and thought_action.thought:
+                    await self._post_insight_to_shared_state(
+                        context=state.context,
+                        thought=thought_action.thought,
+                        confidence=getattr(thought_action, 'confidence', 0.7)
+                    )
                 
                 # _think now always returns a ThoughtAction (with FINISH on failure)
                 if not thought_action:
@@ -829,6 +1046,7 @@ I hope this helps! Let me know if you'd like me to explore further."""
         
         CRITICAL: This is the FINAL gate before content reaches the UI.
         Must ensure NO JSON or internal traces leak through.
+        MUST NEVER return empty content - always provide a valid response.
         """
         import re
         
@@ -865,6 +1083,27 @@ I hope this helps! Let me know if you'd like me to explore further."""
             # Clean up excessive whitespace from removals
             content = re.sub(r'\n{3,}', '\n\n', content)
             content = content.strip()
+        
+        # ================================================================
+        # CRITICAL FIX: NEVER return empty content
+        # If content is empty after all processing, provide a helpful fallback
+        # This ensures the UI always has something to display
+        # ================================================================
+        if not content or len(content.strip()) < 20:
+            subject = state.context.get('subject', 'your question')
+            query_short = state.query[:80] + "..." if len(state.query) > 80 else state.query
+            content = f"""Great question about {subject}! 📚
+
+You asked: "{query_short}"
+
+Let me help you understand this better. Could you tell me which specific part you'd like me to focus on? That way I can give you the most useful explanation.
+
+Feel free to ask about:
+• The basic concept
+• How to apply it
+• Practice problems
+• Tips for remembering it"""
+            logger.warning(f"[ReAct] Empty content detected, using fallback for: {state.query[:50]}...")
         
         # ================================================================
         # NEVER include reasoning_chain in the response sent to frontend

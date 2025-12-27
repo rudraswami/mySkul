@@ -79,6 +79,32 @@ class ProfessorAgent(ReActAgent):
         
         return tools
     
+    def _get_domain_confidence_boost(self, subject: str, query: str) -> float:
+        """
+        Professor specializes in rigorous solving, proofs, and formal reasoning.
+        High confidence for 'solve', 'prove', 'verify', 'calculate', 'derivation'.
+        """
+        query_lower = query.lower()
+        boost = 0.0
+        
+        # Professor excels at formal problem-solving
+        formal_signals = ['solve', 'prove', 'verify', 'calculate', 'derive', 'derivation', 
+                          'step by step', 'show that', 'find the']
+        if any(signal in query_lower for signal in formal_signals):
+            boost += 0.3
+        
+        # Strong subjects
+        strong_subjects = ['math', 'physics', 'chemistry', 'mathematics']
+        if any(subj in subject.lower() for subj in strong_subjects):
+            boost += 0.15
+        
+        # Exam mode boost
+        exam_signals = ['jee', 'neet', 'gate', 'exam']
+        if any(signal in query_lower for signal in exam_signals):
+            boost += 0.1
+        
+        return boost
+    
     def get_agent_persona(self, context: dict = None) -> str:
         """
         Return persona adapted to context.

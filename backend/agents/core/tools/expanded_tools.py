@@ -206,7 +206,27 @@ class QuizGeneratorTool(BaseTool):
 # ============== Memory & Context Tools ==============
 
 class MemoryRecallTool(BaseTool):
-    """Recall information from student memory"""
+    """
+    Recall information from REAL persistent student memory.
+    
+    MEMORY CONTRACT: Uses MemoryService as the SINGLE SOURCE OF TRUTH.
+    NO hardcoded data. Returns real student data from MongoDB.
+    """
+    
+    def __init__(self, db=None):
+        """Initialize with optional database connection."""
+        super().__init__()
+        self._db = db
+        self._memory_service = None
+    
+    def _get_memory_service(self, db=None):
+        """Lazy-load MemoryService with provided or stored db."""
+        if self._memory_service is None:
+            actual_db = db or self._db
+            if actual_db:
+                from services.memory_service import MemoryService
+                self._memory_service = MemoryService(actual_db)
+        return self._memory_service
 
     @property
     def name(self) -> str:
@@ -214,48 +234,132 @@ class MemoryRecallTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Recall previous interactions, preferences, and patterns from student memory."
+        return "Recall real student memory: preferences, weak/strong areas, past struggles, learning style."
 
     @property
     def parameters(self) -> Dict[str, str]:
         return {
-            "query": "What to recall (e.g., 'previous doubts', 'learning style')",
-            "user_id": "Student ID"
+            "query": "What to recall (e.g., 'weak_topics', 'preferences', 'streak', 'goals')",
+            "user_id": "Student ID (required)"
         }
 
     async def execute(self, query: str, user_id: str = "", **kwargs) -> ToolResult:
-        """Recall from memory"""
+        """
+        Recall REAL memory from persistent database.
+        
+        NO FAKE DATA. If memory is empty, returns honest empty result.
+        """
         try:
-            # Simulated memory recall
-            memories = {
-                "learning_style": "Visual learner, responds well to diagrams",
-                "previous_doubts": "Struggled with momentum conservation last week",
-                "preferences": "Likes cricket analogies, studies better in evening",
-                "weak_areas": "Calculus integration, organic chemistry reactions",
-                "strong_areas": "Physics mechanics, algebra"
-            }
-
-            # Find relevant memory
-            query_lower = query.lower()
-            relevant = []
-
-            for key, value in memories.items():
-                if any(word in query_lower for word in key.split('_')):
-                    relevant.append(f"{key}: {value}")
-
-            if relevant:
-                result = "\n".join(relevant)
+            if not user_id:
+                return ToolResult.error_result("user_id is required for memory recall")
+            
+            # Get database from context if not already set
+            context = kwargs.get('context', {})
+            db = context.get('db') or self._db
+            
+            memory_service = self._get_memory_service(db)
+            
+            # If no database connection, return honest empty result
+            if not memory_service:
                 return ToolResult.success_result(
-                    f"Memory recall for student:\n{result}",
-                    metadata={"memories": relevant}
+                    "Memory service not available (no database connection)",
+                    metadata={"memories": [], "status": "no_db"},
+                    data={}
                 )
-
+            
+            # Get REAL student profile from persistent storage
+            profile = await memory_service.get_student_profile(user_id)
+            
+            # Build memory response from REAL data
+            memories = {}
+            query_lower = query.lower()
+            
+            # Extract relevant data based on query
+            if 'weak' in query_lower or 'struggle' in query_lower or 'difficulty' in query_lower:
+                weak_topics = profile.get('weak_topics', [])
+                if weak_topics:
+                    memories['weak_areas'] = ', '.join(weak_topics)
+            
+            if 'strong' in query_lower or 'good' in query_lower or 'strength' in query_lower:
+                strong_topics = profile.get('strong_topics', [])
+                if strong_topics:
+                    memories['strong_areas'] = ', '.join(strong_topics)
+            
+            if 'preference' in query_lower or 'style' in query_lower or 'learn' in query_lower:
+                pref_explanation = profile.get('preferred_explanation', '')
+                pref_analogies = profile.get('preferred_analogies', [])
+                pacing = profile.get('pacing', '')
+                if pref_explanation:
+                    memories['explanation_style'] = pref_explanation
+                if pref_analogies:
+                    memories['preferred_analogies'] = ', '.join(pref_analogies)
+                if pacing:
+                    memories['learning_pace'] = pacing
+            
+            if 'streak' in query_lower or 'practice' in query_lower or 'consistency' in query_lower:
+                streak = profile.get('practice_streak', 0)
+                revision_streak = profile.get('revision_streak', 0)
+                if streak > 0:
+                    memories['practice_streak'] = f"{streak} days"
+                if revision_streak > 0:
+                    memories['revision_streak'] = f"{revision_streak} days"
+            
+            if 'goal' in query_lower or 'target' in query_lower or 'exam' in query_lower:
+                goals = profile.get('current_goals', [])
+                exam_target = profile.get('exam_target', '')
+                if goals:
+                    memories['goals'] = ', '.join(goals)
+                if exam_target:
+                    memories['exam_target'] = exam_target
+            
+            if 'mastery' in query_lower or 'topic' in query_lower or 'progress' in query_lower:
+                mastery_by_topic = profile.get('mastery_by_topic', {})
+                if mastery_by_topic:
+                    # Get top 5 topics by mastery
+                    sorted_topics = sorted(
+                        mastery_by_topic.items(),
+                        key=lambda x: x[1].get('mastery_score', 0) if isinstance(x[1], dict) else 0,
+                        reverse=True
+                    )[:5]
+                    if sorted_topics:
+                        memories['topic_mastery'] = '; '.join([
+                            f"{t}: {int(v.get('mastery_score', 0) * 100) if isinstance(v, dict) else 0}%"
+                            for t, v in sorted_topics
+                        ])
+            
+            # If query is generic (all, everything, history), return all available
+            if any(word in query_lower for word in ['all', 'everything', 'history', 'full', 'complete']):
+                if profile.get('weak_topics'):
+                    memories['weak_areas'] = ', '.join(profile['weak_topics'])
+                if profile.get('strong_topics'):
+                    memories['strong_areas'] = ', '.join(profile['strong_topics'])
+                if profile.get('preferred_explanation'):
+                    memories['explanation_style'] = profile['preferred_explanation']
+                if profile.get('practice_streak', 0) > 0:
+                    memories['practice_streak'] = f"{profile['practice_streak']} days"
+                if profile.get('exam_target'):
+                    memories['exam_target'] = profile['exam_target']
+            
+            # Format response
+            if memories:
+                result_lines = [f"{key}: {value}" for key, value in memories.items()]
+                result = "\n".join(result_lines)
+                return ToolResult.success_result(
+                    f"Student memory (real data):\n{result}",
+                    metadata={"memories": result_lines, "status": "from_db"},
+                    data=memories
+                )
+            
+            # Honest empty result - NO FAKE DATA
             return ToolResult.success_result(
-                "No specific memories found for this query",
-                metadata={"memories": []}
+                "No memory data found for this student yet. This is a new student or no relevant data for this query.",
+                metadata={"memories": [], "status": "empty"},
+                data={}
             )
 
         except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Memory recall error: {e}")
             return ToolResult.error_result(f"Memory recall failed: {e}")
 
 

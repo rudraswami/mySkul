@@ -250,7 +250,8 @@ const StatCard = ({ value, label, icon: Icon, delay }) => (
 // --- Main Component ---
 
 export function HeroSection() {
-    // Calculate perfect triangle positions
+    // Calculate perfect triangle positions - responsive scaling
+    // Base values for larger screens, will be scaled down via CSS transform
     const centerX = 450;
     const centerY = 450;
     const radius = 320;
@@ -297,27 +298,26 @@ export function HeroSection() {
                     >
                         <Cpu className="w-4 h-4 text-cyan-400" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300 text-sm font-bold tracking-wide uppercase">
-                            India's First Cognitive OS
+                            Your 24/7 Study Companion
                         </span>
                     </motion.div>
 
                     {/* Headline */}
                     <h1 className="text-5xl lg:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight drop-shadow-2xl">
-                        India's Most Loved <br />
+                        Learn Smarter, <br />
                         <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(6,214,160,0.5)]">
-                            AI Tutor
+                            Not Harder
                         </span>
                     </h1>
 
                     {/* Subtext */}
                     <p className="text-lg text-white/80 mb-6 leading-relaxed max-w-xl">
-                        Get instant explanations, practice tests, and personalized study plans.
-                        Perfect for <span className="text-cyan-300 font-bold">JEE, NEET & CBSE</span> students.
+                        Your personal AI tutor that explains concepts like a friend, verifies answers like a professor, and adapts to your learning style.
                     </p>
                     
                     <p className="text-base text-white/70 mb-12 leading-relaxed max-w-xl">
                         🤝 AI Mentor explains intuitively • 🎓 AI Professor verifies academically • 
-                        🏏 Hinglish support • Starting at ₹99/month
+                        🏏 Hinglish support • ✨ Free to start
                     </p>
 
                     {/* CTAs */}
@@ -358,16 +358,16 @@ export function HeroSection() {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-3 gap-5 w-full border-t border-white/10 pt-10">
-                        <StatCard value="12,847+" label="Students Learning" icon={GraduationCap} delay={0.4} />
+                        <StatCard value="10K+" label="Active Learners" icon={GraduationCap} delay={0.4} />
                         <StatCard value="4.8/5" label="Student Rating" icon={Target} delay={0.5} />
-                        <StatCard value="JEE • NEET • CBSE" label="All Exams" icon={Sparkles} delay={0.6} />
+                        <StatCard value="All Exams" label="JEE • NEET • UPSC & More" icon={Sparkles} delay={0.6} />
                     </div>
                 </motion.div>
 
                 {/* --- Right Content (7 Columns) - Premium Cognitive Engine --- */}
                 <motion.div
                     id="orbit-container"
-                    className="lg:col-span-7 relative h-[900px] flex items-center justify-center perspective-1000"
+                    className="lg:col-span-7 relative h-[600px] lg:h-[800px] xl:h-[900px] flex items-center justify-center perspective-1000 scale-[0.6] sm:scale-[0.7] lg:scale-[0.85] xl:scale-100 origin-center"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 1.2, ease: "easeOut" }}

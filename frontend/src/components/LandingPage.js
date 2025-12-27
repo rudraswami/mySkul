@@ -26,10 +26,10 @@ const Navbar = () => {
   }, []);
 
   const features = [
-    { name: 'AI Tutor', desc: 'Personalized learning companion', icon: '🎓' },
-    { name: 'Mock Tests', desc: 'Adaptive practice engine', icon: '📝' },
-    { name: 'Error Genome', desc: 'Pattern recognition system', icon: '🧬' },
-    { name: 'Visual Professor', desc: 'Concept visualization', icon: '👨‍🏫' }
+    { name: 'AI Mentor + Professor', desc: 'Dual AI that explains & verifies', icon: '🤝' },
+    { name: 'Teach Me Back', desc: 'Learn by teaching the AI', icon: '🎯' },
+    { name: 'Hinglish Support', desc: 'Hindi + English mixing', icon: '🗣️' },
+    { name: 'Adaptive Learning', desc: 'Personalized to your pace', icon: '📈' }
   ];
 
   return (
@@ -258,7 +258,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              India's first Cognitive OS for JEE, NEET & UPSC. Powered by dual-layer AI combining emotional intelligence and symbolic reasoning.
+              Your personal AI tutor for all competitive exams. Powered by dual-layer AI that explains like a mentor and verifies like a professor.
             </p>
             {/* Social Links */}
             <div className="flex gap-3">
@@ -284,9 +284,9 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { name: 'AI Tutor', href: '#features' },
-                { name: 'Mock Tests', href: '#features' },
-                { name: 'Error Genome', href: '#features' },
-                { name: 'Visual Professor', href: '#features' },
+                { name: 'Teach Me Back', href: '#features' },
+                { name: 'Hinglish Support', href: '#features' },
+                { name: 'Adaptive Learning', href: '#features' },
                 { name: 'Pricing', href: '#pricing' }
               ].map((link) => (
                 <li key={link.name}>

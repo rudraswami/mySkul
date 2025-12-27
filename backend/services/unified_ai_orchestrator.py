@@ -440,6 +440,64 @@ class UnifiedAIOrchestrator:
                 # Default to multi-agent
                 result = await self._multi_agent_response(message, full_context, routing_decision)
             
+            # === STEP 2.5: CONFIDENCE CALIBRATION (Cognitive OS GAP 4) ===
+            # Every response MUST carry explicit confidence metadata.
+            # Low confidence changes behavior (clarification, hedging, escalation).
+            # Silence about uncertainty is a bug.
+            try:
+                from core.config import settings
+                from services.cognitive_model.response_confidence import (
+                    get_confidence_handler,
+                    extract_confidence_from_response,
+                    strip_confidence_block,
+                    ResponseConfidence
+                )
+                
+                if getattr(settings, 'ENABLE_CONFIDENCE_CALIBRATION', True):
+                    # Extract main content for confidence analysis
+                    main_content = self._extract_main_content(result)
+                    
+                    if main_content:
+                        # Try to extract embedded confidence from LLM response
+                        confidence = extract_confidence_from_response(main_content)
+                        
+                        if confidence is None:
+                            # If LLM didn't provide confidence, estimate based on response characteristics
+                            confidence = self._estimate_response_confidence(main_content, routing_decision)
+                        
+                        # Process through confidence-aware handler
+                        confidence_handler = get_confidence_handler(self.db)
+                        confidence_result = await confidence_handler.process_response(
+                            content=strip_confidence_block(main_content) if confidence else main_content,
+                            confidence=confidence,
+                            query=message,
+                            context=full_context
+                        )
+                        
+                        # Update result with confidence metadata
+                        result["confidence"] = confidence_result.get("confidence", {})
+                        
+                        # If content was modified (hedging, clarification), update the response
+                        if confidence_result.get("action_taken") in ("hedging_added", "clarification_requested"):
+                            self._update_main_content(result, confidence_result.get("content", main_content))
+                            logger.info(f"🎯 Confidence: {confidence_result.get('action_taken')} | "
+                                       f"level={confidence.level.value} | calibrated={confidence.calibrated_confidence:.2f}")
+                        
+                        # Flag for escalation if needed (orchestrator can decide to retry with stronger model)
+                        if confidence_result.get("should_escalate") and routing_decision.pipeline.value != "react_agentic":
+                            result["_confidence_escalation_suggested"] = True
+                            logger.info(f"⬆️ Confidence: Escalation recommended (confidence too low)")
+                    else:
+                        # No main content - use default confidence
+                        result["confidence"] = ResponseConfidence.default().to_dict()
+                        
+            except ImportError as ie:
+                logger.debug(f"Confidence calibration not available: {ie}")
+            except Exception as conf_err:
+                logger.warning(f"⚠️ Confidence calibration failed (non-blocking): {conf_err}")
+                # Add default confidence on error
+                result["confidence"] = {"confidence_level": "unknown", "overall_confidence": 0.5}
+            
             # === STEP 3: Cognitive Enhancement (Cognitive OS v2.0) ===
             # Handles: Student state tracking, depth adaptation, consistency checking
             # NOTE: TeachMeBack is handled separately via TeachMeBackModal → /api/ai/teach-me-back
@@ -2779,6 +2837,45 @@ Response:"""
         output_type = extra_ctx.get('output_type')
         has_actionable_request = extra_ctx.get('has_actionable_request', False)
         
+        # =================================================================
+        # 🚨 URGENCY FLAGS - CRITICAL for intelligent response adaptation
+        # These must be passed to supervisor/mentor for proper handling
+        # =================================================================
+        is_urgent = extra_ctx.get('is_urgent', False)
+        urgency_level = extra_ctx.get('urgency_level', 'medium')
+        response_expectation = extra_ctx.get('response_expectation', 'conversational_advice')
+        require_actionable_items = extra_ctx.get('require_actionable_items', False)
+        
+        # Log urgency for observability
+        if is_urgent or urgency_level == 'high':
+            logger.info(f"🚨 URGENT QUERY DETECTED: urgency_level={urgency_level}, "
+                       f"response_expectation={response_expectation}")
+        
+        # =================================================================
+        # GAP 2: SEMANTIC MODEL SELECTION (at execution time)
+        # Model = f(semantic_complexity, latency_budget, confidence_required)
+        # =================================================================
+        selected_model = None
+        try:
+            from core.config import settings
+            if getattr(settings, 'ENABLE_SEMANTIC_MODEL_SELECTION', True):
+                from services.cognitive_model.semantic_model_selector import (
+                    select_model_for_semantic,
+                    ModelSelectionCriteria
+                )
+                
+                semantic_analysis = extra_ctx.get('semantic_analysis')
+                if semantic_analysis:
+                    selected_model = select_model_for_semantic(semantic_analysis, context)
+                    logger.info(f"🤖 Model selected: {selected_model}")
+                else:
+                    # Fallback to default if no semantic analysis
+                    selected_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gemini-1.5-flash')
+        except Exception as model_err:
+            logger.warning(f"⚠️ Semantic model selection failed (using default): {model_err}")
+            from core.config import settings
+            selected_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gemini-1.5-flash')
+        
         # Prepare context for supervisor
         supervisor_context = {
             "subject": context.get("subject", "General"),
@@ -2798,6 +2895,17 @@ Response:"""
             "output_type": output_type,
             "has_actionable_request": has_actionable_request,
             "requires_structured_output": extra_ctx.get('requires_structured_output', False),
+            # =================================================================
+            # 🚨 URGENCY FLAGS - MUST be passed for intelligent fallback
+            # =================================================================
+            "is_urgent": is_urgent,
+            "urgency_level": urgency_level,
+            "response_expectation": response_expectation,
+            "require_actionable_items": require_actionable_items,
+            # =================================================================
+            # 🤖 GAP 2: SELECTED MODEL (from semantic criteria)
+            # =================================================================
+            "selected_model": selected_model,
         }
         
         # Log actionable request routing for observability
@@ -3288,6 +3396,26 @@ Response:"""
         elif result.get("mentor", {}).get("success"):
             mentor_content = result["mentor"].get("content", "")
         
+        # ================================================================
+        # CRITICAL FIX: NEVER allow empty mentor_content
+        # This is the LAST LINE OF DEFENSE before response reaches frontend
+        # ================================================================
+        if not mentor_content or len(mentor_content.strip()) < 20:
+            query = result.get("query", "your question")
+            query_short = query[:80] + "..." if len(query) > 80 else query
+            mentor_content = f"""I'm here to help! 🤝
+
+You asked: "{query_short}"
+
+This is a great question! Let me know which aspect you'd like me to explain:
+• The core concept
+• Step-by-step breakdown  
+• Real-world examples
+• Quick tips and tricks
+
+Just tell me what would help you most, and I'll dive right in! 📚"""
+            logger.warning(f"⚠️ [Orchestrator] Empty mentor_content, using fallback")
+        
         professor_content = ""
         if result.get("professor", {}).get("content"):
             professor_content = result["professor"]["content"]
@@ -3494,6 +3622,83 @@ I'm here to help! 🤝""",
             return None
         except Exception:
             return None
+    
+    def _estimate_response_confidence(self, content: str, routing_decision) -> 'ResponseConfidence':
+        """
+        Estimate response confidence when LLM doesn't provide explicit confidence.
+        
+        This is a FALLBACK only. LLM-provided confidence is always preferred.
+        Uses semantic signals, not keyword matching.
+        """
+        from services.cognitive_model.response_confidence import ResponseConfidence, ConfidenceLevel
+        
+        # Base confidence depends on pipeline complexity
+        base_confidence = 0.7
+        
+        if routing_decision:
+            pipeline = routing_decision.pipeline.value
+            
+            # Higher confidence for simpler pipelines (less can go wrong)
+            if pipeline in ("fast", "chitchat"):
+                base_confidence = 0.9
+            elif pipeline in ("multi_agent", "hybrid"):
+                base_confidence = 0.75
+            elif pipeline in ("react_agentic", "visual_sync"):
+                base_confidence = 0.65  # Complex pipelines = more uncertainty
+        
+        # Structural analysis for confidence adjustment
+        factual = 0.7
+        reasoning = 0.7
+        completeness = 0.7
+        
+        # Short responses might be incomplete
+        if len(content) < 100:
+            completeness = 0.5
+        
+        # Very long responses might be overconfident rambling
+        if len(content) > 3000:
+            factual = max(0.5, factual - 0.1)
+        
+        # Check for explicit uncertainty markers in content
+        uncertainty_phrases = [
+            "i'm not sure", "i think", "possibly", "might be",
+            "could be", "it's possible", "generally speaking",
+            "in most cases", "typically", "usually"
+        ]
+        content_lower = content.lower()
+        uncertainty_count = sum(1 for phrase in uncertainty_phrases if phrase in content_lower)
+        if uncertainty_count > 0:
+            # Model is already expressing uncertainty - adjust confidence
+            base_confidence = max(0.4, base_confidence - (uncertainty_count * 0.1))
+        
+        return ResponseConfidence(
+            overall_confidence=base_confidence,
+            factual_confidence=factual,
+            reasoning_confidence=reasoning,
+            completeness_confidence=completeness
+        )
+    
+    def _update_main_content(self, result: Dict[str, Any], new_content: str):
+        """
+        Update the main content in the result structure.
+        
+        Handles multiple content paths for robustness.
+        """
+        try:
+            # Path 1: response.default_view.main_content.content
+            if "response" in result and "default_view" in result["response"]:
+                main_content = result["response"]["default_view"].get("main_content", {})
+                if isinstance(main_content, dict):
+                    result["response"]["default_view"]["main_content"]["content"] = new_content
+                else:
+                    result["response"]["default_view"]["main_content"] = {"content": new_content, "type": "markdown"}
+            
+            # Path 2: Also update main_response for consistency
+            if "main_response" in result:
+                result["main_response"] = new_content
+                
+        except Exception as e:
+            logger.warning(f"Failed to update main content: {e}")
     
     def _apply_cognitive_enhancement(
         self,

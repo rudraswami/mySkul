@@ -208,21 +208,55 @@ Answer based on the image content above. Be direct and accurate."""
         await sub_service.track_feature_use(user.user_id, FeatureName.AI_MENTOR.value, 1)
         
         # Save message to session
+        message_id = str(uuid.uuid4())
+        session_id = request.session_id or f"temp_{user.user_id}"
+        detected_subject = result.get("detected_subject", "General")
+        
         try:
-            message_id = str(uuid.uuid4())
             await db.chat_messages.insert_one({
                 "message_id": message_id,
-                "session_id": request.session_id or f"temp_{user.user_id}",
+                "session_id": session_id,
                 "user_id": user.user_id,
                 "user_message": request.message,
                 "ai_response": result["response"],
                 "visual_data": result.get("visual_data"),
                 "intent": result.get("intent_detected"),
-                "subject": result.get("detected_subject"),
+                "subject": detected_subject,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.warning(f"Failed to save message: {e}")
+        
+        # 🆕 MEMORY WRITE: Persist memory after EVERY response
+        # Uses MemoryIntegrationService as SINGLE SOURCE OF TRUTH
+        try:
+            from services.memory_integration import MemoryIntegrationService
+            memory_integration = MemoryIntegrationService(db)
+            
+            # Extract response text for memory
+            response_text = ""
+            try:
+                default_view = result.get("response", {}).get("default_view", {})
+                main_content = default_view.get("main_content", {})
+                response_text = main_content.get("content", str(result.get("response", "")))[:1000]
+            except (AttributeError, TypeError):
+                response_text = str(result.get("response", ""))[:1000]
+            
+            # Write memory (non-blocking for performance)
+            asyncio.create_task(
+                memory_integration.write_memory_after_response(
+                    user_id=user.user_id,
+                    session_id=session_id,
+                    user_message=request.message[:500],  # Bounded
+                    ai_response=response_text,
+                    agent_name="unified_ai",
+                    topics=[detected_subject] if detected_subject != "General" else None,
+                    request_id=message_id
+                )
+            )
+            logger.info(f"💾 Memory write scheduled for user {user.user_id[:8]}...")
+        except Exception as e:
+            logger.warning(f"Memory write failed (non-critical): {e}")
         
         # 🆕 PHASE 3: Detect emotional state change
         try:

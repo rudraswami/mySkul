@@ -73,15 +73,48 @@ Use the query_user_data tool to get actual performance metrics.
 Use the analyze_data tool to generate insights."""
     
     @staticmethod
-    def is_weak_area_query(query: str) -> bool:
-        """Check if query is about weak areas"""
-        patterns = [
-            'weak', 'weakness', 'struggle', 'struggling', 'difficult', 'difficulty',
-            'not good at', 'bad at', 'improve', 'improvement', 'gap', 'knowledge gap',
-            'where am i weak', 'what should i focus', 'what to study'
-        ]
+    def is_weak_area_query(
+        query: str,
+        semantic_analysis: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """
+        Check if query is about weak areas.
+        
+        PHASE 1 FIX: Uses semantic analysis when available.
+        Keyword patterns only run as fallback.
+        """
+        # ================================================================
+        # PHASE 1: SEMANTIC ANALYSIS IS AUTHORITATIVE
+        # ================================================================
+        if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
+            intent = semantic_analysis.get('intent', '')
+            topic_mentioned = semantic_analysis.get('topic_mentioned', '')
+            
+            # Check if semantic analysis detected self-assessment intent
+            # This is inferred from the reasoning/context, not keywords
+            if intent == 'question' and topic_mentioned:
+                # Check if topic is self-referential (about student's own abilities)
+                reasoning = semantic_analysis.get('reasoning', '').lower()
+                if any(signal in reasoning for signal in ['self-assessment', 'weak', 'strength', 'gap', 'improvement']):
+                    logger.info(f"🧠 SEMANTIC: Weak area query detected via reasoning")
+                    return True
+            
+            # Not detected by semantic - trust it
+            return False
+        
+        # ================================================================
+        # LEGACY FALLBACK: Minimal keyword detection
+        # ================================================================
+        logger.debug("📋 Using legacy weak area detection (semantic unavailable)")
+        
         query_lower = query.lower()
-        return any(pattern in query_lower for pattern in patterns)
+        
+        # Minimal set of structural patterns (explicit self-assessment)
+        explicit_patterns = [
+            'where am i weak', 'what should i focus', 'what are my weak',
+            'analyze my', 'my weak areas', 'my weaknesses'
+        ]
+        return any(pattern in query_lower for pattern in explicit_patterns)
     
     async def process(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
