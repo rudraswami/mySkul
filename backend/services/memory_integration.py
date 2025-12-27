@@ -19,6 +19,7 @@ This service orchestrates:
 - Spaced repetition (SpacedRepetitionEngine)
 - Memory extraction (MemoryExtractor)
 """
+import asyncio
 import logging
 import os
 from datetime import datetime, timezone, timedelta
@@ -124,6 +125,8 @@ class MemoryIntegrationService:
         
         Returns:
             Dict with all context needed for personalized response
+        
+        OPTIMIZED: Parallel execution of independent async calls to reduce latency.
         """
         try:
             context = {
@@ -132,12 +135,86 @@ class MemoryIntegrationService:
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
-            # 1. Get recent conversation context
-            recent_messages = await self.memory_service.get_conversation_context(
-                session_id=session_id,
-                user_id=user_id,
-                window_size=10  # Increased from 5 to 10 for better context
+            # Extract current topic early (sync operation)
+            current_topic = self._extract_main_topic(question)
+            context["current_topic"] = current_topic
+            
+            # ================================================================
+            # PARALLEL EXECUTION: Run independent async calls concurrently
+            # This reduces total time from ~sum(all_calls) to ~max(slowest_call)
+            # ================================================================
+            async def safe_get_conversation():
+                try:
+                    return await self.memory_service.get_conversation_context(
+                        session_id=session_id,
+                        user_id=user_id,
+                        window_size=10
+                    )
+                except Exception as e:
+                    logger.warning(f"Conversation context fetch failed: {e}")
+                    return []
+            
+            async def safe_search_memories():
+                try:
+                    return await self.semantic_memory.search_relevant_memories(
+                        user_id=user_id,
+                        query=question,
+                        top_k=3,
+                        min_similarity=0.4
+                    )
+                except Exception as e:
+                    logger.warning(f"Semantic memory search failed: {e}")
+                    return []
+            
+            async def safe_detect_continuation():
+                try:
+                    return await self.continuity_engine.detect_topic_continuation(
+                        user_id=user_id,
+                        current_query=question
+                    )
+                except Exception as e:
+                    logger.warning(f"Continuity detection failed: {e}")
+                    return {}
+            
+            async def safe_get_mastery():
+                try:
+                    return await self.mastery_tracker.get_mastery_level(
+                        user_id=user_id,
+                        topic=current_topic
+                    )
+                except Exception as e:
+                    logger.warning(f"Mastery fetch failed: {e}")
+                    return 0
+            
+            async def safe_get_profile():
+                try:
+                    return await self._get_user_profile(user_id)
+                except Exception as e:
+                    logger.warning(f"User profile fetch failed: {e}")
+                    return {}
+            
+            async def safe_get_weak_topics():
+                try:
+                    return await self.mastery_tracker.get_weak_topics(user_id, threshold=40)
+                except Exception as e:
+                    logger.warning(f"Weak topics fetch failed: {e}")
+                    return []
+            
+            # Run all in parallel
+            results = await asyncio.gather(
+                safe_get_conversation(),
+                safe_search_memories(),
+                safe_detect_continuation(),
+                safe_get_mastery(),
+                safe_get_profile(),
+                safe_get_weak_topics(),
+                return_exceptions=False  # Exceptions already handled in safe_* functions
             )
+            
+            # Unpack results
+            recent_messages, relevant_memories, continuity, mastery_level, user_profile, weak_topics = results
+            
+            # 1. Recent conversation context
             context["recent_context"] = recent_messages
             context["has_prior_context"] = len(recent_messages) > 0
             
@@ -147,52 +224,32 @@ class MemoryIntegrationService:
             else:
                 context["conversation_summary"] = ""
             
-            # 2. Get relevant long-term memories
-            relevant_memories = await self.semantic_memory.search_relevant_memories(
-                user_id=user_id,
-                query=question,
-                top_k=3,
-                min_similarity=0.4
-            )
+            # 2. Relevant long-term memories
             context["relevant_memories"] = relevant_memories
             
-            # 3. Check for topic continuation
-            continuity = await self.continuity_engine.detect_topic_continuation(
-                user_id=user_id,
-                current_query=question
-            )
+            # 3. Topic continuation
             context["continuity"] = continuity
             context["is_continuation"] = continuity.get("is_continuation", False)
             
             # FIX: Ensure previous_topic is set for downstream use (context_pack)
-            # The continuity engine returns "last_topic", we normalize to "previous_topic"
             if continuity.get("last_topic"):
                 context["continuity"]["previous_topic"] = continuity["last_topic"]
             
-            # 4. Extract current topic and get mastery
-            current_topic = self._extract_main_topic(question)
-            context["current_topic"] = current_topic
-            
-            mastery_level = await self.mastery_tracker.get_mastery_level(
-                user_id=user_id,
-                topic=current_topic
-            )
+            # 4. Mastery level
             context["mastery_level"] = mastery_level
             context["mastery_bucket"] = self._get_mastery_bucket(mastery_level)
             
-            # 5. Get user preferences
-            user_profile = await self._get_user_profile(user_id)
+            # 5. User preferences
             context["preferences"] = user_profile.get("preferences", {})
             context["user_name"] = user_profile.get("name", "")
             
-            # 6. Get weak topics for potential recommendations
-            weak_topics = await self.mastery_tracker.get_weak_topics(user_id, threshold=40)
+            # 6. Weak topics
             context["weak_topics"] = [t["topic"] for t in weak_topics[:3]]
             
             # 7. Build context summary for AI prompt
             context["context_summary"] = self._build_context_summary(context)
             
-            logger.info(f"🧠 Enhanced context retrieved: {len(recent_messages)} recent, "
+            logger.info(f"🧠 Enhanced context (parallel): {len(recent_messages)} recent, "
                        f"{len(relevant_memories)} memories, mastery={mastery_level}")
             
             return context

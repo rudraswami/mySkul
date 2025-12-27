@@ -97,6 +97,13 @@ class BackgroundScheduler:
                 # 6. 🆕 EVENT DETECTION - Detect session ends, inactivity (every 5 mins)
                 if loop_count % 5 == 0:
                     await self._detect_and_handle_events()
+                
+                # 7. 🔄 NOTIFICATION RETRY QUEUE - Process failed notifications
+                await self._process_notification_retries()
+                
+                # 8. 🔌 WEBSOCKET CLEANUP - Remove stale connections (every 2 mins)
+                if loop_count % 2 == 0:
+                    await self._cleanup_websocket_connections()
 
             except Exception as e:
                 logger.error(f"Scheduler error: {e}", exc_info=True)
@@ -216,6 +223,41 @@ class BackgroundScheduler:
                     
         except Exception as e:
             logger.error(f"Notification processing error: {e}")
+    
+    async def _process_notification_retries(self):
+        """
+        Process failed notification deliveries from the retry queue.
+        
+        Uses exponential backoff to retry failed push/email deliveries.
+        """
+        try:
+            from services.notification_service import NotificationService
+            
+            notification_service = NotificationService(self.db)
+            processed = await notification_service.process_retry_queue()
+            
+            if processed > 0:
+                logger.info(f"🔄 Processed {processed} notification retries")
+                
+        except Exception as e:
+            logger.error(f"Notification retry processing error: {e}")
+    
+    async def _cleanup_websocket_connections(self):
+        """
+        Clean up stale WebSocket connections.
+        
+        Removes connections that haven't responded to heartbeat.
+        """
+        try:
+            from services.websocket_manager import get_websocket_manager
+            
+            ws_manager = get_websocket_manager()
+            await ws_manager.cleanup_stale_connections()
+            
+        except ImportError:
+            pass  # WebSocket manager not available
+        except Exception as e:
+            logger.debug(f"WebSocket cleanup error: {e}")
     
     async def _check_proactive_triggers(self):
         """

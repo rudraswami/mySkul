@@ -126,3 +126,5 @@ Microscope: RP = 2n sin θ/λ
 Telescope: RP = D/1.22λ
 
 
+
+

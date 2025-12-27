@@ -513,9 +513,34 @@ const SmartResponse = ({
   // COGNITO-OS v4.0 - Clean answer only
   const isSimpleResponse = responseType === 'greeting' || responseType === 'acknowledgment';
   
-  // Teach Me Back Modal - show for explanation responses (not greetings, not short facts)
+  // Teach Me Back Modal - Use backend payload if available, fallback to heuristic
   const [showTeachMeBackModal, setShowTeachMeBackModal] = useState(false);
-  const showTeachMeBackOption = responseType === 'explanation' && content?.mainContent?.length > 200;
+  
+  // Extract teachback payload from response (backend determines when to show)
+  const teachbackPayload = useMemo(() => {
+    if (response?.teachback?.triggered) {
+      return {
+        show: true,
+        topic: response.teachback.topic || question?.substring(0, 100) || 'this concept',
+        ctaText: response.teachback.cta_text || 'Think you got it? Try explaining it back',
+        prompt: response.teachback.prompt || '',
+        mode: response.teachback.mode || 'quick_check'
+      };
+    }
+    // Fallback to heuristic if backend didn't provide payload
+    if (responseType === 'explanation' && content?.mainContent?.length > 200) {
+      return {
+        show: true,
+        topic: question?.substring(0, 100) || 'this concept',
+        ctaText: 'Think you got it? Try explaining it back',
+        prompt: '',
+        mode: 'quick_check'
+      };
+    }
+    return { show: false };
+  }, [response?.teachback, responseType, content?.mainContent?.length, question]);
+  
+  const showTeachMeBackOption = teachbackPayload.show;
   
   // Interaction states
   const [copied, setCopied] = useState(false);
@@ -652,7 +677,7 @@ const SmartResponse = ({
         </motion.div>
       )}
       
-      {/* TEACH ME BACK - Subtle invitation for complex explanations */}
+      {/* TEACH ME BACK - Dynamic invitation based on backend intelligence */}
       {showTeachMeBackOption && (
         <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
           <button
@@ -660,7 +685,7 @@ const SmartResponse = ({
             className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center gap-2 transition-colors"
           >
             <span>💭</span>
-            <span>Think you got it? Try explaining it back</span>
+            <span>{teachbackPayload.ctaText}</span>
           </button>
         </div>
       )}
@@ -669,8 +694,10 @@ const SmartResponse = ({
       <TeachMeBackModal
         isOpen={showTeachMeBackModal}
         onClose={() => setShowTeachMeBackModal(false)}
-        concept={question?.substring(0, 100) || 'this concept'}
+        concept={teachbackPayload.topic}
         originalExplanation={content?.mainContent || ''}
+        initialPrompt={teachbackPayload.prompt}
+        mode={teachbackPayload.mode}
       />
     </div>
   );

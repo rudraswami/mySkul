@@ -136,3 +136,5 @@ N_s/N_p = V_s/V_p = I_p/I_s
 4. Magnetostriction
 
 
+
+

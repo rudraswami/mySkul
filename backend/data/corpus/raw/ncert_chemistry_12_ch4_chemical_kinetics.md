@@ -135,3 +135,5 @@ Michaelis-Menten kinetics:
 Rate = V_max[S]/(K_m + [S])
 
 
+
+

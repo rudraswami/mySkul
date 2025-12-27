@@ -109,3 +109,5 @@ Fᶜ = mv²/r = mω²r
 - Drift = (velocity of river) × (time to cross)
 
 
+
+

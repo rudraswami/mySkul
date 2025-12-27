@@ -245,8 +245,10 @@ class SupervisorAgent(BaseAgent):
                 logger.debug(f"Shared state init failed (non-blocking): {state_err}")
             
             # Step 1: Analyze query intent (with context for mode-aware detection)
-            intent = self._detect_intent(query, context)
-            logger.info(f"🎯 Detected intent: {intent}")
+            # Extract semantic_analysis from context for intelligent intent detection
+            semantic_analysis = context.get('semantic_analysis')
+            intent = self._detect_intent(query, context, semantic_analysis)
+            logger.info(f"🎯 Detected intent: {intent} | semantic_available: {semantic_analysis is not None}")
             
             # 🆕 Step 1.5: Use Agent Negotiation for TRUE multi-agent collaboration
             # EXPANDED: Now enabled for most educational intents, not just complex queries
@@ -296,7 +298,7 @@ class SupervisorAgent(BaseAgent):
             
             # Step 2: Determine which agents to activate (if not using negotiation)
             if not use_negotiation or 'mentor' not in locals().get('agent_responses', {}):
-                agents_to_run = self._select_agents(intent, context)
+                agents_to_run = self._select_agents(intent, context, semantic_analysis)
                 logger.info(f"👥 Activating agents: {', '.join(agents_to_run)}")
                 
                 # Step 3: Run agents in parallel (non-blocking)

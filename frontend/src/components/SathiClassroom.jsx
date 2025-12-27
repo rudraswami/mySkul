@@ -556,7 +556,7 @@ export default function SathiClassroom() {
   const headerRightActions = (
     <>
       <NotificationBell />
-      <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+      <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors">
         <Settings className="w-5 h-5" />
       </button>
     </>
@@ -619,8 +619,9 @@ export default function SathiClassroom() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="flex-shrink-0 border-t border-slate-800/60 bg-slate-900 p-4">
+      {/* Input Area - Properly centered */}
+      <div className="flex-shrink-0 border-t border-slate-800/60 bg-gradient-to-t from-slate-900 to-slate-900/95 px-4 py-4">
+        <div className="max-w-3xl mx-auto">
         {/* Image Preview */}
         {imagePreview && (
           <div className="mb-3 relative inline-block">
@@ -651,13 +652,13 @@ export default function SathiClassroom() {
             className="hidden"
           />
           
-          <div className="flex items-end gap-2 bg-slate-800/50 rounded-2xl border border-slate-700/50 focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/20 p-2 transition-all">
+          <div className="flex items-end gap-3 bg-slate-800/60 rounded-2xl border border-slate-700/50 focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/20 p-2.5 transition-all shadow-lg">
             {/* Image Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="flex-shrink-0 p-2 text-slate-400 hover:text-violet-400 rounded-lg hover:bg-slate-700/50 transition-all disabled:opacity-50"
+              className="flex-shrink-0 p-2.5 text-slate-400 hover:text-violet-400 rounded-xl hover:bg-slate-700/50 transition-all disabled:opacity-50"
             >
               <ImageIcon className="w-5 h-5" />
             </button>
@@ -674,10 +675,10 @@ export default function SathiClassroom() {
                 }
               }}
               placeholder="Ask anything... I'll explain like a friend 💪"
-              className="flex-1 px-3 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm"
+              className="flex-1 px-2 py-2.5 bg-transparent border-0 focus:ring-0 outline-none resize-none text-slate-100 placeholder-slate-500 text-[15px] leading-relaxed"
               rows={1}
               disabled={loading}
-              style={{ minHeight: '40px', maxHeight: '100px' }}
+              style={{ minHeight: '44px', maxHeight: '120px' }}
             />
             
             {/* Send Button */}
@@ -686,10 +687,10 @@ export default function SathiClassroom() {
               disabled={(!inputMessage.trim() && !selectedImage) || loading}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
                 inputMessage.trim() || selectedImage
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white shadow-lg shadow-purple-500/25'
+                  : 'bg-slate-700 text-slate-500 cursor-not-allowed'
               }`}
             >
               {loading ? (
@@ -700,6 +701,7 @@ export default function SathiClassroom() {
             </motion.button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

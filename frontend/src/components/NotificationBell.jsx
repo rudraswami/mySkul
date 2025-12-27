@@ -351,33 +351,58 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
           🔔
         </motion.span>
         
-        {/* Badge */}
+        {/* Badge with pulse animation */}
         <AnimatePresence>
           {unreadCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                borderRadius: '10px',
-                minWidth: '20px',
-                height: '20px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 6px',
-                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)'
-              }}
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </motion.span>
+            <>
+              {/* Pulse glow effect */}
+              <motion.span
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: [1, 1.5, 1], 
+                  opacity: [0.6, 0, 0.6] 
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }}
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#ef4444',
+                  pointerEvents: 'none'
+                }}
+              />
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: 'white',
+                  borderRadius: '10px',
+                  minWidth: '20px',
+                  height: '20px',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 6px',
+                  boxShadow: '0 2px 10px rgba(239, 68, 68, 0.5)'
+                }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </motion.span>
+            </>
           )}
         </AnimatePresence>
       </motion.button>
@@ -402,120 +427,227 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
               zIndex: 10001
             }}
           >
-            {/* Header */}
+            {/* Header - Friendly greeting style */}
             <div style={{
-              padding: '16px 20px',
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
-              borderBottom: '1px solid rgba(255,255,255,0.1)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              padding: '18px 20px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.12) 100%)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🔔</span>
-                <h3 style={{ margin: 0, color: 'white', fontSize: '16px', fontWeight: '600' }}>
-                  Notifications
-                </h3>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: unreadCount > 0 ? '10px' : '0'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <motion.span 
+                    animate={{ rotate: [0, -10, 10, -10, 0] }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    style={{ fontSize: '22px' }}
+                  >
+                    🔔
+                  </motion.span>
+                  <div>
+                    <h3 style={{ margin: 0, color: 'white', fontSize: '16px', fontWeight: '600' }}>
+                      {unreadCount > 0 ? `Hey! ${unreadCount} update${unreadCount > 1 ? 's' : ''} for you` : 'Notifications'}
+                    </h3>
+                    {unreadCount === 0 && (
+                      <p style={{ 
+                        margin: '2px 0 0', 
+                        fontSize: '12px', 
+                        color: 'rgba(255,255,255,0.5)' 
+                      }}>
+                        Stay on track with reminders
+                      </p>
+                    )}
+                  </div>
+                </div>
                 {unreadCount > 0 && (
-                  <span style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    padding: '3px 10px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    color: 'white',
-                    fontWeight: '600'
-                  }}>
-                    {unreadCount} new
-                  </span>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => markAsRead(null)}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.8)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    ✓ Mark all read
+                  </motion.button>
                 )}
               </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={() => markAsRead(null)}
-                  style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    color: '#a5b4fc',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.15)'}
-                  onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-                >
-                  Mark all read
-                </button>
+              
+              {/* Progress indicator when there are unread */}
+              {unreadCount > 0 && notifications.length > 0 && (
+                <div style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  borderRadius: '4px',
+                  height: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((notifications.length - unreadCount) / notifications.length) * 100}%` }}
+                    transition={{ duration: 0.5 }}
+                    style={{
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #22c55e 0%, #10b981 100%)',
+                      borderRadius: '4px'
+                    }}
+                  />
+                </div>
               )}
             </div>
 
             {/* Notification List or Detail View */}
             <div style={{ maxHeight: '440px', overflowY: 'auto' }}>
               {selectedNotification ? (
-                // Detail View - Cleaner design
+                // Detail View - Friendly, student-focused design
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  style={{ padding: '20px' }}
+                  style={{ padding: '0' }}
                 >
-                  {/* Back button */}
-                  <button
-                    onClick={() => setSelectedNotification(null)}
-                    style={{
-                      background: 'rgba(255,255,255,0.1)',
-                      border: 'none',
-                      color: '#a5b4fc',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                  >
-                    ← Back to all
-                  </button>
+                  {/* Header with gradient */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%)',
+                    padding: '16px 20px',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)'
+                  }}>
+                    <button
+                      onClick={() => setSelectedNotification(null)}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.8)',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                    >
+                      ← Back
+                    </button>
+                  </div>
                   
-                  {/* Notification detail - Better sized icon */}
-                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                  {/* Content area */}
+                  <div style={{ padding: '24px 20px' }}>
+                    {/* Icon with pulse animation for unread */}
+                    <motion.div
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 12 }}
+                      style={{
+                        width: '72px',
+                        height: '72px',
+                        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%)',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 20px',
+                        border: '2px solid rgba(99, 102, 241, 0.3)',
+                        boxShadow: '0 8px 24px rgba(99, 102, 241, 0.2)'
+                      }}
+                    >
+                      <span style={{ fontSize: '36px' }}>
+                        {getNotificationIcon(selectedNotification.type)}
+                      </span>
+                    </motion.div>
+                    
+                    {/* Title with better typography */}
+                    <h3 style={{ 
+                      color: 'white', 
+                      margin: '0 0 12px', 
+                      fontSize: '18px', 
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      lineHeight: '1.4'
+                    }}>
+                      {stripMarkdown(selectedNotification.title)}
+                    </h3>
+                    
+                    {/* Message with card style */}
                     <div style={{
-                      width: '64px',
-                      height: '64px',
-                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-                      borderRadius: '16px',
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      marginBottom: '16px'
+                    }}>
+                      <p style={{ 
+                        color: 'rgba(255,255,255,0.85)', 
+                        margin: 0, 
+                        fontSize: '14px', 
+                        lineHeight: '1.6',
+                        textAlign: 'center'
+                      }}>
+                        {formatMessage(selectedNotification)}
+                      </p>
+                    </div>
+                    
+                    {/* Time with icon */}
+                    <div style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      margin: '0 auto 16px'
+                      gap: '6px',
+                      marginBottom: '24px'
                     }}>
-                      <span style={{ fontSize: '32px' }}>
-                        {getNotificationIcon(selectedNotification.type)}
+                      <span style={{ fontSize: '12px' }}>🕐</span>
+                      <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>
+                        {formatTimeAgo(selectedNotification.created_at)}
                       </span>
                     </div>
-                    <h3 style={{ color: 'white', margin: '0 0 8px', fontSize: '18px', fontWeight: '600' }}>
-                      {stripMarkdown(selectedNotification.title)}
-                    </h3>
-                    <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
-                      {formatMessage(selectedNotification)}
-                    </p>
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '10px', display: 'block' }}>
-                      {formatTimeAgo(selectedNotification.created_at)}
-                    </span>
+                    
+                    {/* Motivational message based on type */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+                      borderRadius: '10px',
+                      padding: '10px 14px',
+                      marginBottom: '20px',
+                      border: '1px solid rgba(34, 197, 94, 0.2)'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '12px',
+                        color: 'rgba(255,255,255,0.7)',
+                        textAlign: 'center'
+                      }}>
+                        {selectedNotification.type === 'reminder' && "🎯 Small steps lead to big achievements!"}
+                        {selectedNotification.type === 'streak' && "🔥 You're on fire! Keep the momentum going!"}
+                        {selectedNotification.type === 'achievement' && "🏆 Amazing work! You've earned this!"}
+                        {selectedNotification.type === 'help' && "💙 I'm here to help you succeed!"}
+                        {!['reminder', 'streak', 'achievement', 'help'].includes(selectedNotification.type) && "✨ Every moment of learning counts!"}
+                      </p>
+                    </div>
                   </div>
                   
-                  {/* Action Buttons - Consistent styling */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {/* Action Buttons - Bottom fixed */}
+                  <div style={{ 
+                    padding: '16px 20px 20px',
+                    background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 100%)'
+                  }}>
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)' }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleStartStudying(selectedNotification)}
                       style={{
+                        width: '100%',
                         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                         border: 'none',
                         color: 'white',
@@ -528,16 +660,17 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        marginBottom: '10px'
                       }}
                     >
-                      <span>📚</span>
+                      <span>🚀</span>
                       {getActionText(selectedNotification.type)}
                     </motion.button>
                     
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <motion.button
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.02, background: 'rgba(255,255,255,0.12)' }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleSnooze(selectedNotification, 30)}
                         style={{
@@ -593,48 +726,138 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                 </div>
               ) : notifications.length === 0 ? (
                 <div style={{ 
-                  padding: '50px 20px', 
-                  textAlign: 'center', 
-                  color: 'rgba(255,255,255,0.5)' 
+                  padding: '40px 24px', 
+                  textAlign: 'center'
                 }}>
-                  <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px', opacity: 0.5 }}>🔕</span>
-                  <p style={{ margin: 0, fontSize: '15px' }}>No notifications yet</p>
-                  <p style={{ margin: '8px 0 0', fontSize: '13px', opacity: 0.7 }}>
-                    Reminders and updates will appear here
+                  {/* Friendly illustration */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', damping: 15 }}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
+                      borderRadius: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 16px',
+                      border: '1px solid rgba(99, 102, 241, 0.2)'
+                    }}
+                  >
+                    <span style={{ fontSize: '36px' }}>✨</span>
+                  </motion.div>
+                  
+                  <h4 style={{ 
+                    margin: '0 0 8px', 
+                    fontSize: '16px', 
+                    fontWeight: '600',
+                    color: 'white'
+                  }}>
+                    You're all caught up!
+                  </h4>
+                  
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '13px', 
+                    color: 'rgba(255,255,255,0.6)',
+                    lineHeight: '1.5'
+                  }}>
+                    I'll remind you about study sessions,<br/>
+                    achievements, and important updates 💪
                   </p>
+                  
+                  {/* Tip card */}
+                  <div style={{
+                    marginTop: '20px',
+                    padding: '12px 16px',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(99, 102, 241, 0.15)'
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '12px',
+                      color: 'rgba(255,255,255,0.7)'
+                    }}>
+                      💡 <strong>Tip:</strong> Ask me to set a reminder and I'll notify you!
+                    </p>
+                  </div>
                 </div>
               ) : (
-                // Notification List
+                // Notification List - Enhanced friendly design
                 notifications.map((notification, index) => (
                   <motion.div
                     key={notification.notification_id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03, type: 'spring', damping: 20 }}
+                    whileHover={{ 
+                      backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                      x: 4
+                    }}
                     onClick={() => handleNotificationClick(notification)}
                     style={{
-                      padding: '14px 20px',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      padding: '14px 18px',
+                      margin: '0 8px 6px 8px',
+                      borderRadius: '12px',
                       cursor: 'pointer',
-                      opacity: notification.read ? 0.6 : 1,
-                      background: notification.read ? 'transparent' : 'rgba(102, 126, 234, 0.08)'
+                      background: notification.read 
+                        ? 'rgba(255,255,255,0.02)' 
+                        : 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                      border: notification.read 
+                        ? '1px solid transparent' 
+                        : '1px solid rgba(99, 102, 241, 0.15)',
+                      position: 'relative',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                      <div style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
-                        background: notification.read ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '22px',
-                        flexShrink: 0
-                      }}>
+                    {/* Unread indicator dot */}
+                    {!notification.read && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                          boxShadow: '0 0 8px rgba(99, 102, 241, 0.6)'
+                        }}
+                      />
+                    )}
+                    
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      {/* Icon with better styling */}
+                      <motion.div 
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '14px',
+                          background: notification.read 
+                            ? 'rgba(255,255,255,0.05)' 
+                            : 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '22px',
+                          flexShrink: 0,
+                          border: notification.read 
+                            ? '1px solid rgba(255,255,255,0.08)' 
+                            : '1px solid rgba(99, 102, 241, 0.25)',
+                          boxShadow: notification.read 
+                            ? 'none' 
+                            : '0 4px 12px rgba(99, 102, 241, 0.15)'
+                        }}
+                      >
                         {getNotificationIcon(notification.type)}
-                      </div>
+                      </motion.div>
+                      
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ 
                           display: 'flex', 
@@ -643,9 +866,10 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                           marginBottom: '4px'
                         }}>
                           <strong style={{ 
-                            color: 'white', 
+                            color: notification.read ? 'rgba(255,255,255,0.7)' : 'white', 
                             fontSize: '14px',
-                            fontWeight: notification.read ? '500' : '600'
+                            fontWeight: notification.read ? '500' : '600',
+                            lineHeight: '1.3'
                           }}>
                             {stripMarkdown(notification.title)}
                           </strong>
@@ -653,16 +877,17 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                             color: 'rgba(255,255,255,0.4)', 
                             fontSize: '11px',
                             whiteSpace: 'nowrap',
-                            marginLeft: '8px'
+                            marginLeft: '8px',
+                            marginTop: '2px'
                           }}>
                             {formatTimeAgo(notification.created_at)}
                           </span>
                         </div>
                         <p style={{ 
                           margin: 0, 
-                          color: 'rgba(255,255,255,0.7)',
+                          color: notification.read ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.75)',
                           fontSize: '13px',
-                          lineHeight: '1.4',
+                          lineHeight: '1.45',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           display: '-webkit-box',
@@ -672,27 +897,31 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                           {formatMessage(notification)}
                         </p>
                         
-                        {/* Quick hint */}
+                        {/* Action hint with better styling */}
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          marginTop: '8px'
+                          gap: '6px',
+                          marginTop: '10px'
                         }}>
-                          {!notification.read && (
-                            <span style={{
-                              width: '8px',
-                              height: '8px',
-                              background: '#667eea',
-                              borderRadius: '50%'
-                            }} />
-                          )}
-                          <span style={{
-                            fontSize: '11px',
-                            color: '#a5b4fc'
-                          }}>
-                            Tap to view options →
-                          </span>
+                          <motion.span 
+                            whileHover={{ x: 3 }}
+                            style={{
+                              fontSize: '12px',
+                              color: notification.read ? 'rgba(165, 180, 252, 0.6)' : '#a5b4fc',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {notification.type === 'reminder' && '📖 View & Start'}
+                            {notification.type === 'streak' && '🔥 Keep it going'}
+                            {notification.type === 'achievement' && '🏆 See achievement'}
+                            {notification.type === 'help' && '💬 Get help'}
+                            {!['reminder', 'streak', 'achievement', 'help'].includes(notification.type) && '👀 View details'}
+                            <span style={{ marginLeft: '2px' }}>→</span>
+                          </motion.span>
                         </div>
                       </div>
                     </div>
@@ -730,71 +959,150 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
             }}
             onClick={() => setActiveToast(null)}
           >
-            {/* Toast Card - Centered via flexbox parent */}
+            {/* Toast Card - Friendly, student-focused design */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: '360px',
-                background: '#ffffff',
-                borderRadius: '20px',
-                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                maxWidth: '380px',
+                background: 'linear-gradient(180deg, #1e1e2e 0%, #171720 100%)',
+                borderRadius: '24px',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
                 overflow: 'hidden'
               }}
             >
-              {/* Header - Compact & Clean */}
+              {/* Decorative top accent */}
               <div style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                padding: '20px 20px 18px',
+                height: '4px',
+                background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
+              }} />
+              
+              {/* Header - Friendly greeting style */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                padding: '24px 24px 20px',
                 textAlign: 'center'
               }}>
-                {/* Icon - Smaller, cleaner */}
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '14px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '12px'
-                }}>
-                  <span style={{ fontSize: '24px' }}>{getNotificationIcon(activeToast.type)}</span>
-                </div>
+                {/* Animated icon with glow */}
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', delay: 0.1, damping: 12 }}
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.25) 100%)',
+                    borderRadius: '18px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px',
+                    border: '2px solid rgba(99, 102, 241, 0.3)',
+                    boxShadow: '0 8px 24px rgba(99, 102, 241, 0.25)'
+                  }}
+                >
+                  <span style={{ fontSize: '32px' }}>{getNotificationIcon(activeToast.type)}</span>
+                </motion.div>
                 
-                {/* Title - Dynamic from notification (intelligent AI-generated) */}
-                <h2 style={{ 
-                  color: 'white', 
-                  margin: 0, 
-                  fontSize: '17px',
-                  fontWeight: '600',
-                  lineHeight: '1.3'
-                }}>
+                {/* Greeting text */}
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    margin: '0 0 6px',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {activeToast.type === 'reminder' && "👋 Hey there!"}
+                  {activeToast.type === 'streak' && "🔥 Amazing work!"}
+                  {activeToast.type === 'achievement' && "🎉 Congratulations!"}
+                  {activeToast.type === 'help' && "💙 I'm here for you!"}
+                  {!['reminder', 'streak', 'achievement', 'help'].includes(activeToast.type) && "✨ Hey!"}
+                </motion.p>
+                
+                {/* Title - Dynamic from notification */}
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ 
+                    color: 'white', 
+                    margin: 0, 
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    lineHeight: '1.35'
+                  }}
+                >
                   {stripMarkdown(activeToast.title) || 'Time for a quick review'}
-                </h2>
+                </motion.h2>
               </div>
               
               {/* Content */}
-              <div style={{ padding: '20px' }}>
-                <p style={{ 
-                  color: '#4b5563', 
-                  margin: '0 0 20px', 
-                  fontSize: '14px',
-                  lineHeight: '1.55',
-                  textAlign: 'center'
-                }}>
-                  {formatMessage(activeToast)}
-                </p>
+              <div style={{ padding: '20px 24px 24px' }}>
+                {/* Message card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <p style={{ 
+                    color: 'rgba(255, 255, 255, 0.85)', 
+                    margin: 0, 
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    textAlign: 'center'
+                  }}>
+                    {formatMessage(activeToast)}
+                  </p>
+                </motion.div>
+                
+                {/* Motivational nudge */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.08) 100%)',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    marginBottom: '20px',
+                    border: '1px solid rgba(34, 197, 94, 0.15)'
+                  }}
+                >
+                  <p style={{
+                    margin: 0,
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    textAlign: 'center'
+                  }}>
+                    {activeToast.type === 'reminder' && "💪 Small steps lead to big achievements!"}
+                    {activeToast.type === 'streak' && "🚀 You're building something amazing!"}
+                    {activeToast.type === 'achievement' && "⭐ Your hard work is paying off!"}
+                    {!['reminder', 'streak', 'achievement'].includes(activeToast.type) && "✨ Every moment of learning counts!"}
+                  </p>
+                </motion.div>
                 
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {/* Primary Action */}
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
+                    whileHover={{ scale: 1.02, boxShadow: '0 6px 20px rgba(99, 102, 241, 0.4)' }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleStartStudying(activeToast)}
                     style={{
@@ -802,68 +1110,85 @@ const NotificationBell = ({ userId, onStartStudy, onNavigateToChat }) => {
                       background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                       border: 'none',
                       color: 'white',
-                      padding: '13px 20px',
-                      borderRadius: '12px',
-                      fontSize: '14px',
+                      padding: '14px 20px',
+                      borderRadius: '14px',
+                      fontSize: '15px',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
+                      boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
                     }}
                   >
-                    📚 View Details
+                    <span>🚀</span> Let's Go!
                   </motion.button>
                   
-                  {/* Secondary Actions - Matching style */}
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  {/* Secondary Actions */}
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    style={{ display: 'flex', gap: '10px' }}
+                  >
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, background: 'rgba(255, 255, 255, 0.12)' }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleSnooze(activeToast, 30)}
                       style={{
                         flex: 1,
-                        background: '#f3f4f6',
-                        border: 'none',
-                        color: '#374151',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'rgba(255, 255, 255, 0.9)',
                         padding: '12px 14px',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         fontSize: '13px',
                         fontWeight: '500',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
                       }}
                     >
-                      ⏰ Snooze 30m
+                      <span>⏰</span> Remind me later
                     </motion.button>
                     
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, background: 'rgba(255, 255, 255, 0.12)' }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setActiveToast(null)}
                       style={{
                         flex: 1,
-                        background: '#f3f4f6',
-                        border: 'none',
-                        color: '#6b7280',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: 'rgba(255, 255, 255, 0.7)',
                         padding: '12px 14px',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         fontSize: '13px',
                         fontWeight: '500',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
                       }}
                     >
-                      Later
+                      Maybe later
                     </motion.button>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
               
-              {/* Auto-dismiss progress bar */}
+              {/* Auto-dismiss progress bar with gradient */}
               <motion.div
                 initial={{ width: '100%' }}
                 animate={{ width: '0%' }}
-                transition={{ duration: 10, ease: 'linear' }}
+                transition={{ duration: 12, ease: 'linear' }}
                 style={{
                   height: '3px',
-                  background: 'linear-gradient(90deg, #6366f1, #8b5cf6)'
+                  background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)'
                 }}
               />
             </motion.div>

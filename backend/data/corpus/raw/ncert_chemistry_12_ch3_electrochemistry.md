@@ -146,3 +146,5 @@ Z = E/F = M/(nF)
 - High efficiency (40-70%)
 
 
+
+

@@ -515,12 +515,39 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  position: relative;
 }
 
-.sathi-voice-btn:hover {
+.sathi-voice-btn:hover:not(:disabled) {
   border-color: var(--sathi-accent-primary);
   color: var(--sathi-accent-primary);
   background: rgba(99, 102, 241, 0.1);
+}
+
+.sathi-voice-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 🎙️ ACTIVE LISTENING STATE - Clear visual feedback */
+.sathi-voice-btn.sathi-voice-active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2),
+              0 0 20px rgba(239, 68, 68, 0.4);
+  animation: voice-pulse 2s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2),
+                0 0 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.1),
+                0 0 30px rgba(239, 68, 68, 0.6);
+  }
 }
 
 .sathi-hero-send {
@@ -2026,14 +2053,16 @@
 .sathi-chat-input-form {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
   background: #1c1c2a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 10px 10px 10px 20px;
+  padding: 12px 12px 12px 20px;
   transition: all 0.3s ease;
   z-index: 1;
+  min-height: 64px;
+  cursor: text;
 }
 
 .sathi-chat-input-wrapper:focus-within .sathi-chat-input-form {
@@ -2051,12 +2080,16 @@
   font-size: 15px;
   line-height: 1.6;
   resize: none;
-  min-height: 26px;
+  min-height: 44px;
   max-height: 120px;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
 }
 
 .sathi-chat-textarea::placeholder {
   color: #64748b;
+  opacity: 0.8;
 }
 
 .sathi-chat-attach-btn {
@@ -2071,11 +2104,38 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
 }
 
-.sathi-chat-attach-btn:hover {
+.sathi-chat-attach-btn:hover:not(:disabled) {
   background: rgba(99, 102, 241, 0.1);
   color: #818cf8;
+}
+
+.sathi-chat-attach-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* 🎙️ ACTIVE LISTENING STATE - Chat input area */
+.sathi-chat-attach-btn.sathi-voice-listening {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2),
+              0 0 15px rgba(239, 68, 68, 0.4);
+  animation: voice-pulse-chat 2s ease-in-out infinite;
+}
+
+@keyframes voice-pulse-chat {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2),
+                0 0 15px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1),
+                0 0 25px rgba(239, 68, 68, 0.6);
+  }
 }
 
 .sathi-chat-send-btn {
@@ -2154,7 +2214,19 @@
   }
   
   .sathi-chat-input-form {
-    padding: 8px 8px 8px 16px;
+    padding: 10px 10px 10px 16px;
+    min-height: 56px;
+  }
+  
+  .sathi-chat-textarea {
+    font-size: 14px;
+    min-height: 40px;
+    padding: 8px 0;
+  }
+  
+  .sathi-chat-attach-btn {
+    width: 36px;
+    height: 36px;
   }
   
   .sathi-chat-send-btn {

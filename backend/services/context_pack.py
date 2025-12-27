@@ -497,6 +497,8 @@ class ContextPackBuilder:
                 # Fetch from memory service
                 try:
                     if self.memory_integration:
+                        # Increased timeout from 5s to 8s - memory is critical for personalization
+                        # Memory integration now uses parallel fetching, so this should be faster
                         context = await asyncio.wait_for(
                             self.memory_integration.get_enhanced_context(
                                 user_id=user_id,
@@ -504,7 +506,7 @@ class ContextPackBuilder:
                                 question=message,
                                 subject=subject
                             ),
-                            timeout=5.0
+                            timeout=8.0
                         )
                         
                         recent = context.get('recent_context', {})

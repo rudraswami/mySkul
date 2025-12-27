@@ -44,6 +44,7 @@ class ProfessorAgent(ReActAgent):
         # Register Exam Strategy Tool (replaces Exam Coach Agent)
         from agents.core.tools.exam_strategy import ExamStrategyTool
         self.tool_registry.register(ExamStrategyTool())
+        self._exam_strategy_registered = True  # Track that tool is registered
         
         # Register Calculator Tool for math verification
         from agents.core.tools.calculator import CalculatorTool

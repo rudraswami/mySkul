@@ -392,6 +392,19 @@ def create_app() -> FastAPI:
         logger.info("🔔 Notifications router registered")
     except Exception as e:
         logger.warning(f"Could not load notifications router: {e}")
+    
+    # 🔌 WebSocket API (Real-time notification delivery)
+    try:
+        from api import websocket as ws_api
+        app.include_router(ws_api.router, tags=["WebSocket"])
+        logger.info("🔌 WebSocket router registered")
+        
+        # Initialize WebSocket manager
+        from services.websocket_manager import init_websocket_manager
+        init_websocket_manager()
+        logger.info("🔌 WebSocket manager initialized")
+    except Exception as e:
+        logger.warning(f"Could not load WebSocket router: {e}")
 
     # 📧 Newsletter API (Landing page subscription)
     try:

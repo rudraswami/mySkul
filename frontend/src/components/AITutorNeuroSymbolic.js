@@ -35,7 +35,9 @@ import {
   Zap,
   Trophy,
   Search,
-  Pencil
+  Pencil,
+  Mic,  // 🎙️ Voice input icon
+  MicOff  // 🎙️ Mic off icon
 } from 'lucide-react';
 import NeuroSymbolicResponse from './neuro-symbolic/NeuroSymbolicResponse';
 import MentorResponseV2 from './mentor-v2/MentorResponseV2';
@@ -49,6 +51,9 @@ import '../styles/sathi-premium-v2.css'; // Neural Premium Theme
 import '../styles/sathi-ux-audit-fixes.css'; // UI/UX Audit Permanent Fixes
 import '../styles/ui-comprehensive-fixes.css'; // Comprehensive UI/UX Fixes - ALL ISSUES
 import '../styles/classroom-layout.css'; // Digital Classroom Layout
+
+// 🎙️ Voice Input Hook
+import { useVoiceInput } from '../hooks/useVoiceInput';
 
 // Premium Welcome Component - Neural AI Interface
 import PremiumWelcome from './chat/PremiumWelcome';
@@ -518,13 +523,62 @@ export default function AITutorNeuroSymbolic() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // DEBUG: Track inputMessage changes
+  // 🎙️ VOICE INPUT INTEGRATION
+  const {
+    isListening,
+    transcript,
+    error: voiceError,
+    isSupported: isVoiceSupported,
+    startListening,
+    stopListening,
+    toggleListening,
+    clearTranscript,
+    clearError: clearVoiceError
+  } = useVoiceInput();
+  
+  // AUTO-POPULATE: Update input when voice transcript changes
   useEffect(() => {
-    console.log('📝 INPUT STATE CHANGED:', {
-      value: inputMessage,
-      length: inputMessage.length,
-      timestamp: new Date().toISOString()
-    });
+    if (transcript && transcript.trim()) {
+      console.log('🎙️ Voice transcript updated:', transcript);
+      setInputMessage(transcript);
+    }
+  }, [transcript]);
+  
+  // VOICE ERROR HANDLING: Show toast when voice error occurs
+  useEffect(() => {
+    if (voiceError) {
+      toastError('Voice Input Error', voiceError);
+      // Auto-clear error after showing
+      setTimeout(() => clearVoiceError(), 3000);
+    }
+  }, [voiceError, toastError, clearVoiceError]);
+  
+  // 🎙️ Voice Input Handlers
+  const handleVoiceToggle = useCallback(() => {
+    if (!isVoiceSupported) {
+      toastError('Not Supported', 'Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+    
+    if (isListening) {
+      console.log('🎙️ User clicked stop');
+      stopListening();
+      // Keep the transcript in the input field
+    } else {
+      // Clear previous transcript before starting
+      console.log('🎙️ User clicked start - clearing previous transcript');
+      clearTranscript();
+      startListening();
+      toastSuccess('Listening...', 'Speak now! 🎤');
+    }
+  }, [isVoiceSupported, isListening, stopListening, startListening, clearTranscript, toastSuccess, toastError]);
+  
+  // DEBUG: Track inputMessage changes (REDUCED LOGGING)
+  useEffect(() => {
+    // Only log if input is significant (not every single character)
+    if (inputMessage.length % 10 === 0 || inputMessage.length < 5) {
+      console.log('📝 INPUT STATE:', inputMessage.substring(0, 50) + (inputMessage.length > 50 ? '...' : ''));
+    }
   }, [inputMessage]);
   
   // CRITICAL FIX: Persist currentSession to localStorage for ChatGPT-style persistence
@@ -705,6 +759,9 @@ export default function AITutorNeuroSymbolic() {
   useEffect(() => {
     // Debounced save (only save after 500ms of no typing)
     const timeoutId = setTimeout(() => {
+      // CRITICAL FIX: Don't save draft when loading (prevents overwriting user's new input during AI response)
+      if (loading) return;
+      
       if (inputMessage.trim()) {
         localStorage.setItem('sathi_draft_message', inputMessage);
         localStorage.setItem('sathi_draft_session', currentSession || '');
@@ -715,10 +772,16 @@ export default function AITutorNeuroSymbolic() {
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [inputMessage, currentSession]);
+  }, [inputMessage, currentSession, loading]);
   
   // RESTORE DRAFT: Load saved draft on mount
+  // CRITICAL FIX: Use ref to prevent re-restoration and race conditions
+  // Also check messages.length to ensure we don't restore draft in active chat
+  const draftRestoredRef = useRef(false);
   useEffect(() => {
+    // Only restore once per component lifecycle and only if no messages yet
+    if (draftRestoredRef.current || messages.length > 0) return;
+    
     const savedDraft = localStorage.getItem('sathi_draft_message');
     const savedSession = localStorage.getItem('sathi_draft_session');
     
@@ -726,6 +789,7 @@ export default function AITutorNeuroSymbolic() {
       // Only restore if we're in the same session or no session
       if (!savedSession || savedSession === currentSession || !currentSession) {
         setInputMessage(savedDraft);
+        draftRestoredRef.current = true;
         // Show toast that draft was restored
         if (savedDraft.length > 10) {
           toastSuccess('Draft restored', 'Your unsent message was restored 📝');
@@ -2098,7 +2162,16 @@ export default function AITutorNeuroSymbolic() {
               {messages.length > 0 && <div className="sathi-chat-input-glow" />}
               
               {/* Input Form - Premium styling when in chat */}
-              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className={messages.length > 0 ? 'sathi-chat-input-form' : ''}>
+              <form 
+                onSubmit={(e) => { e.preventDefault(); handleSend(); }} 
+                className={messages.length > 0 ? 'sathi-chat-input-form' : ''}
+                onClick={(e) => {
+                  // Make entire input area clickable to focus textarea
+                  if (e.target === e.currentTarget && inputRef.current) {
+                    inputRef.current.focus();
+                  }
+                }}
+              >
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
                 {messages.length === 0 ? (
                   /* Welcome state - original styling */
@@ -2106,6 +2179,31 @@ export default function AITutorNeuroSymbolic() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
                       <ImageIcon className="w-5 h-5" />
                     </button>
+                    {/* 🎙️ VOICE INPUT BUTTON - Welcome State */}
+                    <motion.button
+                      type="button"
+                      onClick={handleVoiceToggle}
+                      disabled={loading || !isVoiceSupported}
+                      whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
+                      whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
+                      className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                        isListening 
+                          ? 'bg-red-100 text-red-600' 
+                          : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'
+                      }`}
+                      title={!isVoiceSupported ? 'Voice input not supported' : isListening ? 'Stop listening' : 'Voice input'}
+                    >
+                      {isListening ? (
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ repeat: Infinity, duration: 1.5 }}
+                        >
+                          <Mic className="w-5 h-5" />
+                        </motion.div>
+                      ) : (
+                        isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />
+                      )}
+                    </motion.button>
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
@@ -2137,6 +2235,27 @@ export default function AITutorNeuroSymbolic() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="sathi-chat-attach-btn">
                       <ImageIcon className="w-5 h-5" />
                     </button>
+                    {/* 🎙️ VOICE INPUT BUTTON */}
+                    <motion.button
+                      type="button"
+                      onClick={handleVoiceToggle}
+                      disabled={loading || !isVoiceSupported}
+                      whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
+                      whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
+                      className={`sathi-chat-attach-btn ${isListening ? 'sathi-voice-listening' : ''}`}
+                      title={!isVoiceSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop listening (click or just stop speaking)' : 'Voice input'}
+                    >
+                      {isListening ? (
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ repeat: Infinity, duration: 1.5 }}
+                        >
+                          <Mic className="w-5 h-5" />
+                        </motion.div>
+                      ) : (
+                        isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-40" />
+                      )}
+                    </motion.button>
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
@@ -2146,7 +2265,8 @@ export default function AITutorNeuroSymbolic() {
                       className="sathi-chat-textarea"
                       rows={1}
                       disabled={loading}
-                      style={{ minHeight: '24px', maxHeight: '120px' }}
+                      style={{ minHeight: '44px', maxHeight: '120px' }}
+                      onClick={(e) => e.currentTarget.focus()}
                     />
                     <motion.button
                       type="submit"

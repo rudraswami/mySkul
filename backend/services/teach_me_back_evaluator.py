@@ -400,38 +400,45 @@ class TeachMeBackEvaluator:
     - VALIDATE correctness - catch misconceptions early
     """
     
-    EVALUATION_PROMPT = """You are an intelligent tutor evaluating a student's explanation. Be supportive but HONEST about correctness.
+    EVALUATION_PROMPT = """You are a warm, supportive tutor helping a student learn through the Feynman technique.
 
 CONCEPT: {concept}
 
-CORRECT EXPLANATION (from AI tutor):
+REFERENCE EXPLANATION:
 {original_explanation}
 
 STUDENT'S EXPLANATION:
 {student_explanation}
 
-Your task: Evaluate their understanding ACCURATELY AND CONSTRUCTIVELY.
+Your role: Help the student see what they understand and guide them to deeper understanding.
 
-IMPORTANT:
-1. If their explanation is WRONG, IRRELEVANT, or NONSENSICAL - you MUST point this out gently but clearly
-2. If they wrote gibberish, random words, or completely wrong concepts - identify this
-3. If they understood correctly, praise specifically what they got right
-4. Be encouraging but NEVER fake understanding - that harms learning
+GOLDEN RULES:
+1. CELEBRATE effort - every attempt is valuable
+2. Find something positive FIRST - even partial understanding counts
+3. Frame gaps as "opportunities to explore" not "mistakes"
+4. Use encouraging, conversational language (like a supportive friend)
+5. Be honest but NEVER harsh - we want them to try again!
+
+LANGUAGE GUIDELINES:
+- Instead of "wrong" → "let's look at this differently"
+- Instead of "doesn't match" → "could connect more to"
+- Instead of "lacks coherence" → "could flow more smoothly"
+- Instead of "random" → "your ideas are forming - let's organize them"
 
 Respond in this EXACT JSON format:
 {{
-    "understood": ["specific point they got right" or "You attempted to explain the concept" if wrong],
-    "gaps": ["specific misconception or missing concept" or "The explanation doesn't match the concept" if wrong],
-    "tip": "One specific, actionable next step",
-    "encouragement": "Warm message (honest based on their actual understanding)"
+    "understood": ["Specific thing they showed understanding of - be generous but honest"],
+    "gaps": ["Gentle guidance on what to explore next - frame as curiosity, not criticism"],
+    "tip": "One friendly, actionable next step they can try right now",
+    "encouragement": "A warm, personalized message that makes them want to try again"
 }}
 
 Examples:
-- If student wrote nonsense: gaps = ["The response doesn't relate to the concept"], tip = "Try explaining what the concept means in one sentence"
-- If student was close: gaps = ["Missing the part about X"], understood = ["Got Y correct"]
-- If student nailed it: gaps = [], understood = [multiple specific points]
+- Weak attempt: understood = ["You're thinking about the concept!"], gaps = ["Let's connect your ideas to the core meaning"], tip = "Try starting with: 'This concept means...'", encouragement = "Great start! Each try builds understanding."
+- Partial: understood = ["You captured the basic idea"], gaps = ["The part about X could be clearer"], tip = "Add an example to make it concrete", encouragement = "You're getting it! One more piece and you've got it."
+- Great: understood = ["You explained the core perfectly", "Great use of examples"], gaps = [], tip = "Try teaching this to a friend!", encouragement = "Wow! You really understand this!"
 
-Keep each point under 20 words. Be kind but ACCURATE.
+Keep each point under 25 words. Be the tutor every student deserves.
 """
 
     def __init__(self, config: Dict[str, Any] = None):
@@ -570,7 +577,7 @@ Keep each point under 20 words. Be kind but ACCURATE.
     def _generate_intelligent_fallback(self, explanation: str, concept: str) -> Dict[str, Any]:
         """
         Generate intelligent fallback feedback when LLM is unavailable.
-        Uses heuristics to give reasonable feedback.
+        Uses heuristics but with student-friendly, encouraging language.
         """
         word_count = len(explanation.split())
         words_in_concept = set(concept.lower().split())
@@ -583,46 +590,46 @@ Keep each point under 20 words. Be kind but ACCURATE.
         educational_terms = ['because', 'therefore', 'means', 'example', 'such as', 'like', 'when', 'how', 'why']
         uses_reasoning = any(term in explanation.lower() for term in educational_terms)
         
-        # Too short
+        # Too short - encourage more detail
         if word_count < 15:
             return {
-                "understood": ["You started explaining the concept"],
-                "gaps": ["Your explanation needs more depth and detail"],
-                "tip": "Try explaining: what it is, why it matters, and give an example",
-                "encouragement": "You're on the right track! Add more detail to show your understanding.",
+                "understood": ["You're engaging with the concept - that's the first step!"],
+                "gaps": ["Let's add more detail to really show what you know"],
+                "tip": "Try this formula: What is it? Why does it matter? Give an example!",
+                "encouragement": "Great start! 🌱 A few more sentences will really show your understanding.",
                 "score": 35,
-                "understanding_level": UnderstandingLevel.INCORRECT.value
+                "understanding_level": UnderstandingLevel.PARTIAL.value
             }
         
-        # No overlap with concept - likely wrong or off-topic
+        # No overlap with concept - guide them back
         elif overlap == 0:
             return {
-                "understood": ["You wrote an explanation"],
-                "gaps": ["Your explanation doesn't seem to address the concept directly"],
-                "tip": f"Make sure to explain what '{concept}' means in your answer",
-                "encouragement": "Try again! Think about what the concept really means.",
+                "understood": ["You're putting effort into explaining - that's valuable!"],
+                "gaps": [f"Let's connect your explanation more directly to {concept}"],
+                "tip": f"Start by asking yourself: 'What is the main idea of {concept}?'",
+                "encouragement": "You're thinking! 💭 Let's focus that thinking on the key concept.",
                 "score": 30,
-                "understanding_level": UnderstandingLevel.INCORRECT.value
+                "understanding_level": UnderstandingLevel.PARTIAL.value
             }
         
-        # Good length but lacks reasoning
+        # Good length but lacks reasoning - nudge deeper
         elif not uses_reasoning and word_count > 20:
             return {
-                "understood": ["You provided detail about the concept"],
-                "gaps": ["Try explaining WHY or HOW it works, not just WHAT it is"],
-                "tip": "Add words like 'because', 'therefore', or 'for example' to show deeper understanding",
-                "encouragement": "You're getting there! Show the reasoning behind the concept.",
+                "understood": ["You've got the basic description down!"],
+                "gaps": ["Now let's explore the WHY and HOW behind it"],
+                "tip": "Try adding 'because...' or 'for example...' to show deeper thinking",
+                "encouragement": "You're almost there! 💪 Adding reasoning will take this to the next level.",
                 "score": 55,
                 "understanding_level": UnderstandingLevel.PARTIAL.value
             }
         
-        # Looks decent
+        # Looks good!
         else:
             return {
-                "understood": ["You explained the concept with detail", "You used reasoning words to connect ideas"],
+                "understood": ["You explained the concept clearly!", "You connected ideas with good reasoning"],
                 "gaps": [],
-                "tip": "Now try teaching this concept to someone who has never heard of it",
-                "encouragement": "Well done! Your explanation shows understanding. Keep practicing!",
+                "tip": "Challenge yourself: Could you teach this to a friend now?",
+                "encouragement": "Excellent work! 🌟 You really understand this. Keep that momentum!",
                 "score": 80,
                 "understanding_level": UnderstandingLevel.GOOD.value
             }

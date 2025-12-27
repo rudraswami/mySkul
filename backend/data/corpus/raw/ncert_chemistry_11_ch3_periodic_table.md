@@ -113,3 +113,5 @@ First element of each group differs from others:
 - O exists as O₂ (unlike S₈)
 
 
+
+

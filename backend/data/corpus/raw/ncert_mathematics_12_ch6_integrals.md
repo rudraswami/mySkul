@@ -119,3 +119,5 @@ where f(x) is upper curve, g(x) is lower curve.
 - ∫₀^(π/2) sinⁿx dx = ∫₀^(π/2) cosⁿx dx (reduction formulas)
 
 
+
+

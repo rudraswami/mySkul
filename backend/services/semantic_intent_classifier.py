@@ -317,12 +317,17 @@ Return ONLY valid JSON, no other text."""
     def __init__(self, llm_api_key: str = None):
         self.llm_api_key = llm_api_key or os.environ.get('OPENAI_API_KEY')
         self._client = None
-        logger.info("🧠 SemanticIntentClassifier initialized - TRUE AI understanding active")
+        if not self.llm_api_key:
+            logger.warning("⚠️ OPENAI_API_KEY not set - semantic classification will use fallback")
+        else:
+            logger.info("🧠 SemanticIntentClassifier initialized - TRUE AI understanding active")
     
     @property
     def client(self):
         """Lazy load OpenAI client"""
         if self._client is None:
+            if not self.llm_api_key:
+                raise ValueError("OPENAI_API_KEY not configured - cannot use semantic classification")
             try:
                 from openai import AsyncOpenAI
                 self._client = AsyncOpenAI(api_key=self.llm_api_key)

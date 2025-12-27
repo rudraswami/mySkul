@@ -40,7 +40,9 @@ const TeachMeBackModal = ({
   isOpen,
   onClose,
   concept,
-  originalExplanation
+  originalExplanation,
+  initialPrompt = '',  // Backend-provided prompt (intelligent, context-aware)
+  mode = 'quick_check' // Backend-determined mode: quick_check | step_check | deep_teach
 }) => {
   const [step, setStep] = useState('input'); // input | loading | result | error
   const [explanation, setExplanation] = useState('');
@@ -48,6 +50,9 @@ const TeachMeBackModal = ({
   const [error, setError] = useState(null);
   const [promptIndex, setPromptIndex] = useState(0);
   const textareaRef = useRef(null);
+
+  // Use backend prompt if provided, otherwise use random fallback
+  const displayPrompt = initialPrompt || WRITING_PROMPTS[promptIndex];
 
   // LOCK BODY SCROLL when modal opens
   useEffect(() => {
@@ -75,10 +80,13 @@ const TeachMeBackModal = ({
       setExplanation('');
       setFeedback(null);
       setError(null);
-      setPromptIndex(Math.floor(Math.random() * WRITING_PROMPTS.length));
+      // Only set random prompt index if no backend prompt provided
+      if (!initialPrompt) {
+        setPromptIndex(Math.floor(Math.random() * WRITING_PROMPTS.length));
+      }
       setTimeout(() => textareaRef.current?.focus(), 300);
     }
-  }, [isOpen]);
+  }, [isOpen, initialPrompt]);
 
   // Handle escape key
   useEffect(() => {
@@ -229,7 +237,7 @@ const TeachMeBackModal = ({
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                       <span>✨</span>
-                      <p className="text-sm font-medium">{WRITING_PROMPTS[promptIndex]}</p>
+                      <p className="text-sm font-medium">{displayPrompt}</p>
                     </div>
 
                     <textarea
@@ -295,103 +303,206 @@ const TeachMeBackModal = ({
                   </div>
                 )}
 
-                {/* RESULT STEP */}
+                {/* RESULT STEP - Student-Friendly, Encouraging Design */}
                 {step === 'result' && feedback && (
-                  <div className="space-y-5">
-                    {/* Mastery indicator */}
-                    <div className={`p-5 rounded-2xl ${
+                  <div className="space-y-4">
+                    {/* Progress Ring + Celebration Header */}
+                    <div className={`p-5 rounded-2xl text-center ${
                       masteryLevel === 'solid' 
-                        ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-800'
+                        ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30'
+                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20'
                     }`}>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-3xl">{masteryLevel === 'solid' ? '🏆' : '💡'}</span>
-                        <h3 className={`font-bold text-lg ${
+                      {/* Animated celebration icon */}
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring', damping: 12, delay: 0.1 }}
+                        className="text-5xl mb-3"
+                      >
+                        {masteryLevel === 'solid' ? '🎉' : '🌱'}
+                      </motion.div>
+                      
+                      <motion.h3 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className={`font-bold text-xl mb-2 ${
                           masteryLevel === 'solid' 
                             ? 'text-emerald-700 dark:text-emerald-300'
-                            : 'text-amber-700 dark:text-amber-300'
-                        }`}>
-                          {masteryLevel === 'solid' ? '🌟 Excellent Understanding!' : '💪 Good Progress!'}
-                        </h3>
-                      </div>
-                      <p className={`text-sm ${
-                        masteryLevel === 'solid'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-amber-600 dark:text-amber-400'
-                      }`}>
-                        {feedback.encouragement}
-                      </p>
+                            : 'text-blue-700 dark:text-blue-300'
+                        }`}
+                      >
+                        {masteryLevel === 'solid' ? 'You nailed it!' : 'Great effort!'}
+                      </motion.h3>
+                      
+                      <motion.p 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className={`text-sm ${
+                          masteryLevel === 'solid'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-blue-600 dark:text-blue-400'
+                        }`}
+                      >
+                        {masteryLevel === 'solid' 
+                          ? feedback.encouragement 
+                          : "Every attempt strengthens your understanding. You're building mastery! 💪"}
+                      </motion.p>
+                      
+                      {/* XP Earned indicator */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="inline-flex items-center gap-2 mt-3 px-4 py-1.5 bg-white/60 dark:bg-gray-800/60 rounded-full"
+                      >
+                        <span className="text-lg">⚡</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          +{masteryLevel === 'solid' ? '15' : hasGaps ? '5' : '10'} XP earned
+                        </span>
+                      </motion.div>
                     </div>
 
-                    {/* What you understood */}
-                    {feedback.understood?.length > 0 && (
-                      <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                    {/* What you understood - Only show if they actually understood something meaningful */}
+                    {feedback.understood?.length > 0 && !feedback.understood.every(p => p.toLowerCase().includes('attempt')) && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800"
+                      >
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-emerald-500">✓</span>
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">What you nailed</h4>
+                          <span className="text-xl">✨</span>
+                          <h4 className="font-semibold text-emerald-800 dark:text-emerald-200">What's clicking</h4>
                         </div>
                         <ul className="space-y-2">
                           {feedback.understood.map((point, i) => (
-                            <li key={i} className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
-                              <span className="text-emerald-500 mt-1">✓</span>
+                            <li key={i} className="flex items-start gap-2 text-emerald-700 dark:text-emerald-300 text-sm">
+                              <span className="text-emerald-500 mt-0.5">✓</span>
                               <span>{point}</span>
                             </li>
                           ))}
                         </ul>
-                      </div>
+                      </motion.div>
                     )}
 
-                    {/* Areas to strengthen */}
-                    {feedback.gaps?.length > 0 && (
-                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                    {/* Areas to strengthen - Reframed as "Let's explore" with softer language */}
+                    {hasGaps && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800"
+                      >
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-amber-500">💡</span>
-                          <h4 className="font-semibold text-amber-800 dark:text-amber-200">To strengthen next time</h4>
+                          <span className="text-xl">🧭</span>
+                          <h4 className="font-semibold text-indigo-800 dark:text-indigo-200">Let's explore together</h4>
                         </div>
                         <ul className="space-y-2">
-                          {feedback.gaps.map((gap, i) => (
-                            <li key={i} className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
-                              <span className="text-amber-500 mt-1">→</span>
-                              <span>{gap}</span>
-                            </li>
-                          ))}
+                          {feedback.gaps.map((gap, i) => {
+                            // Soften harsh language
+                            let softenedGap = gap
+                              .replace(/doesn't match/gi, "could connect better to")
+                              .replace(/random words/gi, "ideas that need organizing")
+                              .replace(/lacks coherence/gi, "need a clearer flow")
+                              .replace(/incorrect/gi, "could be refined")
+                              .replace(/wrong/gi, "worth revisiting");
+                            
+                            return (
+                              <li key={i} className="flex items-start gap-2 text-indigo-700 dark:text-indigo-300 text-sm">
+                                <span className="text-indigo-400 mt-0.5">→</span>
+                                <span>{softenedGap}</span>
+                              </li>
+                            );
+                          })}
                         </ul>
-                      </div>
+                      </motion.div>
                     )}
 
-                    {/* Quick tip */}
+                    {/* Actionable Next Step - Make it prominent! */}
                     {feedback.tip && (
-                      <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
-                        <p className="text-violet-700 dark:text-violet-300">
-                          <span className="font-semibold">💡 Pro tip:</span> {feedback.tip}
-                        </p>
-                      </div>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl border-2 border-amber-300 dark:border-amber-700"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">🎯</span>
+                          <div>
+                            <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">Your next move</h4>
+                            <p className="text-amber-700 dark:text-amber-300 text-sm">
+                              {feedback.tip}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-3 pt-2">
-                      {hasGaps && (
-                        <button
-                          onClick={handleTryAgain}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Try Again
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={onClose}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
+                    {/* Encouraging message for students who struggled */}
+                    {hasGaps && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="text-center py-2"
                       >
-                        Continue Learning
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </button>
-                    </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          💙 Remember: The best learners explain things multiple times. Each try makes you stronger!
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {/* Action buttons - Clearer hierarchy */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                      className="flex flex-col gap-3 pt-2"
+                    >
+                      {hasGaps ? (
+                        <>
+                          {/* Primary: Try Again - Make it inviting, not punitive */}
+                          <button
+                            onClick={handleTryAgain}
+                            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
+                          >
+                            <span>🚀</span>
+                            Give it another shot
+                          </button>
+                          
+                          {/* Secondary: Review */}
+                          <button
+                            onClick={onClose}
+                            className="flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
+                          >
+                            Review the explanation first
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {/* When they did well - Celebrate! */}
+                          <button
+                            onClick={onClose}
+                            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+                          >
+                            <span>🎉</span>
+                            Awesome! Keep learning
+                          </button>
+                          
+                          <button
+                            onClick={handleTryAgain}
+                            className="flex items-center justify-center gap-2 w-full px-5 py-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors"
+                          >
+                            Practice again anyway
+                          </button>
+                        </>
+                      )}
+                    </motion.div>
                   </div>
                 )}
               </div>

@@ -118,3 +118,5 @@ Velocity of A relative to B: v_AB = v_A - v_B
 - Area under curve = change in velocity
 
 
+
+

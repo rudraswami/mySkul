@@ -156,3 +156,5 @@ BE = -E = GMm/2r = ½mv_o²
 Need additional energy = GMm/2r
 
 
+
+

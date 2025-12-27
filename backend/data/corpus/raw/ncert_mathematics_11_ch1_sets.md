@@ -164,3 +164,5 @@ f⁻¹: B → A such that f⁻¹(f(x)) = x
 - f ∘ f⁻¹ = Identity on B
 
 
+
+

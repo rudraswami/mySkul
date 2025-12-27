@@ -135,3 +135,5 @@ Add high resistance R in series
 R = V/Ig - G
 
 
+
+

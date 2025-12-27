@@ -244,25 +244,40 @@ class SemanticLearningExtractor:
         self,
         query: str,
         response: Dict[str, Any],
-        semantic_analysis: 'SemanticAnalysis',
+        semantic_analysis,  # Can be SemanticAnalysis object or dict
         context: Dict[str, Any]
     ) -> List[SemanticSignal]:
         """
         Extract semantic signals from an interaction.
         
         Returns structured signals, NOT raw text.
+        Handles both SemanticAnalysis objects and dicts gracefully.
         """
         signals = []
         now = datetime.now(timezone.utc)
-        subject = semantic_analysis.subject_area if semantic_analysis else "General"
+        
+        # Helper to safely get values from object or dict
+        def _get(key: str, default=None):
+            if semantic_analysis is None:
+                return default
+            if isinstance(semantic_analysis, dict):
+                return semantic_analysis.get(key, default)
+            return getattr(semantic_analysis, key, default)
+        
+        # Extract with safe fallbacks for fields that may not exist
+        subject = _get('subject_area', _get('topic_mentioned', 'General')) or 'General'
+        main_topic = _get('main_topic', _get('topic_mentioned'))
+        reasoning_depth = _get('reasoning_depth', 1) or 1
+        complexity = _get('complexity_score', 0.5) or 0.5
+        emotional_tone = _get('emotional_tone')
         
         # Signal 1: Topic engagement
-        if semantic_analysis and semantic_analysis.main_topic:
+        if main_topic:
             signals.append(SemanticSignal(
                 signal_type="engaged_topic",
                 subject=subject,
-                concept=semantic_analysis.main_topic,
-                value={"depth": semantic_analysis.reasoning_depth or 1},
+                concept=main_topic,
+                value={"depth": reasoning_depth},
                 confidence=0.8,
                 timestamp=now
             ))
@@ -280,7 +295,6 @@ class SemanticLearningExtractor:
             ))
         
         # Signal 3: Complexity level
-        complexity = semantic_analysis.complexity_score if semantic_analysis else 0.5
         signals.append(SemanticSignal(
             signal_type="query_complexity",
             subject=subject,
@@ -291,12 +305,12 @@ class SemanticLearningExtractor:
         ))
         
         # Signal 4: Emotional state (if detected)
-        if semantic_analysis and semantic_analysis.emotional_tone:
+        if emotional_tone:
             signals.append(SemanticSignal(
                 signal_type="emotional_state",
                 subject=subject,
                 concept="emotion",
-                value={"tone": semantic_analysis.emotional_tone},
+                value={"tone": emotional_tone},
                 confidence=0.7,
                 timestamp=now
             ))

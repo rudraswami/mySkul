@@ -2906,6 +2906,11 @@ Response:"""
             # 🤖 GAP 2: SELECTED MODEL (from semantic criteria)
             # =================================================================
             "selected_model": selected_model,
+            # =================================================================
+            # 🧠 SEMANTIC ANALYSIS - Critical for intelligent intent detection
+            # Without this, supervisor falls back to legacy keyword matching!
+            # =================================================================
+            "semantic_analysis": semantic_analysis,
         }
         
         # Log actionable request routing for observability

@@ -512,7 +512,10 @@ class IntelligentRoutingEngine:
             return decision
             
         except Exception as e:
-            logger.warning(f"⚠️ Semantic classification failed, falling back to pattern matching: {e}")
+            # Log with stack trace for debugging
+            logger.warning(f"⚠️ Semantic classification failed, falling back to pattern matching: {type(e).__name__}: {e}")
+            import traceback
+            logger.debug(f"Semantic classification traceback: {traceback.format_exc()}")
             # Fall through to pattern matching ONLY if LLM fails
         
         # ============================================================
@@ -555,7 +558,9 @@ class IntelligentRoutingEngine:
             use_knowledge_graph=False,
             use_memory=True,
             priority_factors={'fallback': 1.0},
-            enable_agent_negotiation=True  # IMPORTANT: Let agents decide
+            enable_agent_negotiation=True,  # IMPORTANT: Let agents decide
+            # CRITICAL: Pass None explicitly so supervisor knows semantic failed
+            extra_context={'semantic_analysis': None, 'fallback_reason': 'semantic_classification_failed'}
         )
 
         logger.info(f"✅ Routing: {decision.pipeline.value} (LEGACY fallback)")

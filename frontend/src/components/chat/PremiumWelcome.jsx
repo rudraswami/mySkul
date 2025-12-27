@@ -6,6 +6,7 @@
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useVoiceInput } from '../../hooks/useVoiceInput';  // 🎙️ Voice input hook
 import { 
   Sparkles, 
   Brain, 
@@ -24,6 +25,7 @@ import {
   HelpCircle,
   FileText,
   Mic,
+  MicOff,  // 🎙️ Add MicOff icon
   Camera,
   Eye,
   Send,
@@ -540,6 +542,41 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
   const [activeMode, setActiveMode] = useState('conceptual');
   const [inputValue, setInputValue] = useState('');
   
+  // 🎙️ VOICE INPUT INTEGRATION
+  const {
+    isListening,
+    transcript,
+    error: voiceError,
+    isSupported: isVoiceSupported,
+    startListening,
+    stopListening,
+    toggleListening,
+    clearTranscript,
+    clearError: clearVoiceError
+  } = useVoiceInput();
+  
+  // AUTO-POPULATE: Update input when voice transcript changes
+  useEffect(() => {
+    if (transcript && transcript.trim()) {
+      setInputValue(transcript);
+    }
+  }, [transcript]);
+  
+  // 🎙️ Voice Input Handler
+  const handleVoiceToggle = useCallback(() => {
+    if (!isVoiceSupported) {
+      console.warn('Voice input not supported in this browser');
+      return;
+    }
+    
+    if (isListening) {
+      stopListening();
+    } else {
+      clearTranscript();
+      startListening();
+    }
+  }, [isVoiceSupported, isListening, stopListening, startListening, clearTranscript]);
+  
   // Emotionally intelligent, context-aware greeting
   const greetingData = useMemo(() => {
     const hour = new Date().getHours();
@@ -955,13 +992,26 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
                   autoFocus
                 />
                 <div className="sathi-input-actions">
-                  <button 
+                  <motion.button 
                     type="button" 
-                    className="sathi-voice-btn"
-                    title="Voice input coming soon"
+                    onClick={handleVoiceToggle}
+                    disabled={!isVoiceSupported}
+                    whileHover={isVoiceSupported ? { scale: 1.1 } : {}}
+                    whileTap={isVoiceSupported ? { scale: 0.9 } : {}}
+                    className={`sathi-voice-btn ${isListening ? 'sathi-voice-active' : ''}`}
+                    title={!isVoiceSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop listening (click or just stop speaking)' : 'Voice input'}
                   >
-                    <Mic size={18} />
-                  </button>
+                    {isListening ? (
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                      >
+                        <Mic size={18} />
+                      </motion.div>
+                    ) : (
+                      isVoiceSupported ? <Mic size={18} /> : <MicOff size={18} />
+                    )}
+                  </motion.button>
                   <button 
                     type="submit" 
                     className="sathi-hero-send"

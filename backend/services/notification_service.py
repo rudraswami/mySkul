@@ -13,16 +13,25 @@ Features:
 - Rate limiting (don't spam students)
 - Quiet hours respect
 - Channel preferences
+- Retry logic with exponential backoff
+- Dead-letter queue for failed notifications
+- Graceful fallback (WebSocket → polling, push/email → retry)
 """
 
 import logging
-from datetime import datetime, timedelta
+import os
+import json
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import uuid
 import asyncio
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRY_ATTEMPTS = 3
+RETRY_DELAYS = [30, 120, 300]  # Seconds: 30s, 2min, 5min
 
 
 class NotificationChannel(Enum):
@@ -99,6 +108,16 @@ class NotificationService:
         self.db = db_client
         self.ws_manager = websocket_manager
         self._notification_queue = asyncio.Queue()
+        
+        # Auto-inject WebSocket manager if not provided
+        if self.ws_manager is None:
+            try:
+                from services.websocket_manager import get_websocket_manager
+                self.ws_manager = get_websocket_manager()
+            except ImportError:
+                logger.debug("WebSocket manager not available")
+            except Exception as e:
+                logger.debug(f"Could not get WebSocket manager: {e}")
     
     # ================================================================
     # 🎯 POLICY ENGINE: should_send_notification()
@@ -399,17 +418,29 @@ class NotificationService:
                 'scheduled_time': schedule_time.isoformat()
             }
         
-        # Deliver through each channel
+        # Deliver through each channel with retry support
         results = {}
+        failed_channels = []
+        
         for channel in channels:
             try:
                 result = await self._deliver_to_channel(
                     channel, notification
                 )
                 results[channel] = result
+                
+                # Track failures for retry
+                if result.get('status') == 'failed':
+                    failed_channels.append(channel)
+                    
             except Exception as e:
                 logger.error(f"Failed to deliver to {channel}: {e}")
                 results[channel] = {'status': 'failed', 'error': str(e)}
+                failed_channels.append(channel)
+        
+        # Queue failed channels for retry (dead-letter queue)
+        if failed_channels and self.db is not None:
+            await self._queue_for_retry(notification, failed_channels, results)
         
         # Update delivery status
         if self.db is not None:
@@ -418,8 +449,9 @@ class NotificationService:
                 {
                     '$set': {
                         'delivery_status': results,
-                        'status': 'sent',
-                        'sent_at': datetime.utcnow()
+                        'status': 'sent' if not failed_channels else 'partial',
+                        'sent_at': datetime.utcnow(),
+                        'failed_channels': failed_channels
                     }
                 }
             )
@@ -540,28 +572,78 @@ class NotificationService:
         if not subscriptions:
             return {'status': 'no_subscription'}
         
-        # In production, use webpush library
-        # For now, log and mark as sent
-        logger.info(f"📱 Push notification to {user_id}: {notification['title']}")
+        # Build push payload
+        push_payload = json.dumps({
+            'title': notification['title'],
+            'body': notification['message'],
+            'icon': '/icon-192.png',
+            'badge': '/badge-72.png',
+            'data': {
+                'notification_id': notification.get('notification_id'),
+                'type': notification.get('type'),
+                'url': f"/dashboard?notification={notification.get('notification_id')}",
+                **(notification.get('data') or {})
+            },
+            'actions': [
+                {'action': 'open', 'title': 'Open'},
+                {'action': 'dismiss', 'title': 'Dismiss'}
+            ]
+        })
         
-        # Example structure for actual implementation:
-        # from pywebpush import webpush, WebPushException
-        # for sub in subscriptions:
-        #     try:
-        #         webpush(
-        #             subscription_info=sub['subscription'],
-        #             data=json.dumps({
-        #                 'title': notification['title'],
-        #                 'body': notification['message'],
-        #                 'data': notification.get('data')
-        #             }),
-        #             vapid_private_key=os.environ.get('VAPID_PRIVATE_KEY'),
-        #             vapid_claims={'sub': 'mailto:support@druvai.com'}
-        #         )
-        #     except WebPushException as e:
-        #         logger.error(f"Push failed: {e}")
+        # Get VAPID keys from environment
+        vapid_private_key = os.environ.get('VAPID_PRIVATE_KEY', '')
+        vapid_email = os.environ.get('VAPID_EMAIL', 'mailto:support@druvai.com')
         
-        return {'status': 'sent', 'subscriptions': len(subscriptions)}
+        if not vapid_private_key:
+            logger.warning("⚠️ VAPID_PRIVATE_KEY not configured - push notifications disabled")
+            return {'status': 'not_configured', 'reason': 'VAPID keys missing'}
+        
+        # Send push notifications
+        success_count = 0
+        failed_subscriptions = []
+        
+        try:
+            from pywebpush import webpush, WebPushException
+            
+            for sub in subscriptions:
+                try:
+                    webpush(
+                        subscription_info=sub.get('subscription', sub),
+                        data=push_payload,
+                        vapid_private_key=vapid_private_key,
+                        vapid_claims={'sub': vapid_email}
+                    )
+                    success_count += 1
+                except WebPushException as e:
+                    logger.warning(f"Push failed for subscription: {e}")
+                    failed_subscriptions.append(sub.get('_id'))
+                    
+                    # Remove invalid subscriptions (410 Gone)
+                    if e.response and e.response.status_code == 410:
+                        await self.db.push_subscriptions.delete_one({'_id': sub['_id']})
+                        logger.info(f"Removed expired push subscription")
+                except Exception as e:
+                    logger.warning(f"Push send error: {e}")
+                    failed_subscriptions.append(sub.get('_id'))
+            
+            if success_count > 0:
+                logger.info(f"📱 Push sent to {user_id}: {success_count}/{len(subscriptions)} subscriptions")
+                return {
+                    'status': 'sent',
+                    'success_count': success_count,
+                    'failed_count': len(failed_subscriptions),
+                    'subscriptions': len(subscriptions)
+                }
+            else:
+                return {
+                    'status': 'failed',
+                    'reason': 'all_subscriptions_failed',
+                    'failed_count': len(failed_subscriptions)
+                }
+                
+        except ImportError:
+            logger.warning("⚠️ pywebpush not installed - push notifications unavailable")
+            return {'status': 'not_available', 'reason': 'pywebpush not installed'}
     
     async def _send_email(
         self,
@@ -583,18 +665,186 @@ class NotificationService:
         # Build email content
         email_body = self._build_email_template(notification)
         
-        # In production, use email service (SendGrid, SES, etc.)
-        logger.info(f"📧 Email to {email}: {notification['title']}")
+        # Use real email service
+        try:
+            from services.email_service import get_email_service
+            
+            email_service = get_email_service()
+            result = await email_service.send_email(
+                to=email,
+                subject=notification['title'],
+                html_content=email_body
+            )
+            
+            if result.success:
+                logger.info(f"📧 Email sent to {email}: {notification['title']}")
+                return {
+                    'status': 'sent',
+                    'email': email,
+                    'message_id': result.message_id,
+                    'provider': result.provider
+                }
+            else:
+                logger.warning(f"📧 Email failed to {email}: {result.error}")
+                return {
+                    'status': 'failed',
+                    'email': email,
+                    'error': result.error,
+                    'provider': result.provider
+                }
+                
+        except ImportError:
+            logger.warning("⚠️ Email service not available")
+            return {'status': 'not_available', 'reason': 'email_service_missing'}
+        except Exception as e:
+            logger.error(f"📧 Email send error: {e}")
+            return {'status': 'failed', 'email': email, 'error': str(e)}
+    
+    # ================================================================
+    # 🔄 RETRY LOGIC + DEAD-LETTER QUEUE
+    # ================================================================
+    
+    async def _queue_for_retry(
+        self,
+        notification: Dict[str, Any],
+        failed_channels: List[str],
+        results: Dict[str, Any]
+    ):
+        """
+        Queue failed notification deliveries for retry.
         
-        # Example structure for actual implementation:
-        # from services.email_service import send_email
-        # await send_email(
-        #     to=email,
-        #     subject=notification['title'],
-        #     html=email_body
-        # )
+        Uses exponential backoff: 30s, 2min, 5min
+        After MAX_RETRY_ATTEMPTS, moves to dead-letter queue.
+        """
+        notification_id = notification.get('notification_id')
+        retry_count = notification.get('retry_count', 0)
         
-        return {'status': 'sent', 'email': email}
+        if retry_count >= MAX_RETRY_ATTEMPTS:
+            # Move to dead-letter queue
+            await self._move_to_dead_letter(notification, failed_channels, results)
+            return
+        
+        # Calculate next retry time
+        delay_seconds = RETRY_DELAYS[min(retry_count, len(RETRY_DELAYS) - 1)]
+        next_retry = datetime.utcnow() + timedelta(seconds=delay_seconds)
+        
+        # Create retry record
+        retry_doc = {
+            'notification_id': notification_id,
+            'notification': notification,
+            'failed_channels': failed_channels,
+            'retry_count': retry_count + 1,
+            'next_retry_at': next_retry,
+            'last_error': {channel: results.get(channel, {}).get('error') for channel in failed_channels},
+            'created_at': datetime.utcnow(),
+            'status': 'pending'
+        }
+        
+        try:
+            await self.db.notification_retry_queue.insert_one(retry_doc)
+            logger.info(f"🔄 Queued for retry: {notification_id}, attempt {retry_count + 1}, next at {next_retry}")
+        except Exception as e:
+            logger.error(f"Failed to queue for retry: {e}")
+    
+    async def _move_to_dead_letter(
+        self,
+        notification: Dict[str, Any],
+        failed_channels: List[str],
+        results: Dict[str, Any]
+    ):
+        """
+        Move permanently failed notification to dead-letter queue.
+        
+        Notifications here need manual review or are unrecoverable.
+        """
+        notification_id = notification.get('notification_id')
+        
+        dead_letter_doc = {
+            'notification_id': notification_id,
+            'notification': notification,
+            'failed_channels': failed_channels,
+            'final_errors': {channel: results.get(channel, {}).get('error') for channel in failed_channels},
+            'retry_count': notification.get('retry_count', 0),
+            'moved_at': datetime.utcnow(),
+            'reason': 'max_retries_exceeded'
+        }
+        
+        try:
+            await self.db.notification_dead_letters.insert_one(dead_letter_doc)
+            logger.warning(f"💀 Moved to dead-letter: {notification_id} after {notification.get('retry_count', 0)} retries")
+        except Exception as e:
+            logger.error(f"Failed to move to dead-letter: {e}")
+    
+    async def process_retry_queue(self):
+        """
+        Process pending retries from the retry queue.
+        Call this periodically from the background scheduler.
+        """
+        if self.db is None:
+            return 0
+        
+        now = datetime.utcnow()
+        processed = 0
+        
+        try:
+            # Get due retries
+            pending_retries = await self.db.notification_retry_queue.find({
+                'status': 'pending',
+                'next_retry_at': {'$lte': now}
+            }).to_list(length=50)
+            
+            for retry in pending_retries:
+                notification = retry.get('notification', {})
+                notification['retry_count'] = retry.get('retry_count', 0)
+                failed_channels = retry.get('failed_channels', [])
+                
+                # Retry delivery for failed channels only
+                results = {}
+                still_failed = []
+                
+                for channel in failed_channels:
+                    try:
+                        result = await self._deliver_to_channel(channel, notification)
+                        results[channel] = result
+                        if result.get('status') == 'failed':
+                            still_failed.append(channel)
+                    except Exception as e:
+                        results[channel] = {'status': 'failed', 'error': str(e)}
+                        still_failed.append(channel)
+                
+                # Update retry status
+                if still_failed:
+                    # Queue for another retry or move to dead-letter
+                    await self._queue_for_retry(notification, still_failed, results)
+                
+                # Mark this retry as processed
+                await self.db.notification_retry_queue.update_one(
+                    {'_id': retry['_id']},
+                    {'$set': {'status': 'processed', 'processed_at': now}}
+                )
+                
+                processed += 1
+                logger.info(f"🔄 Processed retry: {notification.get('notification_id')}, still_failed={len(still_failed)}")
+            
+            if processed > 0:
+                logger.info(f"🔄 Processed {processed} notification retries")
+                
+        except Exception as e:
+            logger.error(f"Error processing retry queue: {e}")
+        
+        return processed
+    
+    async def get_dead_letter_count(self) -> int:
+        """Get count of notifications in dead-letter queue"""
+        if self.db is None:
+            return 0
+        return await self.db.notification_dead_letters.count_documents({})
+    
+    async def get_pending_retry_count(self) -> int:
+        """Get count of notifications pending retry"""
+        if self.db is None:
+            return 0
+        return await self.db.notification_retry_queue.count_documents({'status': 'pending'})
     
     def _build_email_template(
         self,

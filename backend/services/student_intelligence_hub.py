@@ -915,6 +915,9 @@ class StudentIntelligenceHub:
             started_at = session.get("started_at")
             duration_mins = 0
             if started_at:
+                # Ensure timezone-aware comparison
+                if started_at.tzinfo is None:
+                    started_at = started_at.replace(tzinfo=timezone.utc)
                 duration = datetime.now(timezone.utc) - started_at
                 duration_mins = int(duration.total_seconds() / 60)
             
@@ -1100,6 +1103,9 @@ class StudentIntelligenceHub:
             # Check streak risk
             last_active = profile.get("updated_at")
             if last_active:
+                # Ensure timezone-aware comparison
+                if last_active.tzinfo is None:
+                    last_active = last_active.replace(tzinfo=timezone.utc)
                 hours_since = (datetime.now(timezone.utc) - last_active).total_seconds() / 3600
                 streak = profile.get("stats", {}).get("current_streak_days", 0)
                 
@@ -1391,6 +1397,11 @@ class StudentIntelligenceHub:
             if recent:
                 unlocked_at = recent.get("unlocked_at")
                 if unlocked_at:
+                    # Ensure timezone-aware comparison
+                    # MongoDB may store datetime as naive (no timezone), but we use UTC
+                    if unlocked_at.tzinfo is None:
+                        # Treat naive datetime as UTC
+                        unlocked_at = unlocked_at.replace(tzinfo=timezone.utc)
                     hours_since = (datetime.now(timezone.utc) - unlocked_at).total_seconds() / 3600
                     if hours_since < 24:
                         return recent.get("name", "")

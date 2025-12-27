@@ -75,24 +75,24 @@ const ClassroomHeader = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           aria-label="Open menu"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
+          <Menu className="w-5 h-5 text-slate-300" />
         </button>
         
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-orange-400 rounded-xl flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="text-base font-semibold text-gray-800">{title}</h1>
-            <p className="text-xs text-gray-500 hidden sm:block">LEARNING WORKSPACE</p>
+            <h1 className="text-base font-semibold text-white">{title}</h1>
+            <p className="text-xs text-slate-400 hidden sm:block">LEARNING WORKSPACE</p>
           </div>
           {/* AI Status Indicator */}
           <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700/50">
             <span className={`w-2 h-2 rounded-full ${status.color} ${status.pulse ? 'animate-pulse' : ''}`} />
-            <span className="text-xs text-gray-500 font-medium">{status.text}</span>
+            <span className="text-xs text-slate-400 font-medium">{status.text}</span>
           </div>
         </div>
       </div>

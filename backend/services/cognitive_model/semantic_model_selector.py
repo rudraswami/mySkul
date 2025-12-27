@@ -90,53 +90,75 @@ class ModelSelectionCriteria:
     quality_vs_speed: float = 0.5       # 0=speed, 1=quality
     
     @classmethod
-    def from_semantic_analysis(cls, analysis: 'SemanticAnalysis', context: Dict[str, Any] = None) -> 'ModelSelectionCriteria':
+    def from_semantic_analysis(cls, analysis, context: Dict[str, Any] = None) -> 'ModelSelectionCriteria':
         """
-        Create selection criteria from SemanticAnalysis.
+        Create selection criteria from SemanticAnalysis object or dict.
         
-        This is the ONLY way to create criteria - from semantic signals.
+        Handles both:
+        - SemanticAnalysis object (direct attribute access)
+        - Dict from to_dict() conversion in routing context
+        
+        Missing fields are handled gracefully with sensible defaults.
         """
         context = context or {}
+        
+        # Helper to safely get values from object or dict
+        def _get(key: str, default=None):
+            if isinstance(analysis, dict):
+                return analysis.get(key, default)
+            return getattr(analysis, key, default)
+        
+        # Extract fields with safe access
+        reasoning_depth = _get('reasoning_depth', 1)  # Not in SemanticAnalysis, default to 1
+        response_expectation = _get('response_expectation', 'conversational_advice')
+        abstraction_level = _get('abstraction_level', 'concrete')  # Not in SemanticAnalysis
+        subject_area = _get('subject_area', _get('topic_mentioned', 'General'))  # Fallback to topic_mentioned
+        reasoning = _get('reasoning', '') or ''
+        suggested_response_style = _get('suggested_response_style', '') or ''
         
         # Compute semantic complexity from multiple signals
         complexity = 0.3  # Base
         
-        if analysis.reasoning_depth and analysis.reasoning_depth > 2:
+        # Reasoning depth contributes to complexity
+        if reasoning_depth and reasoning_depth > 2:
             complexity += 0.2
         
-        if analysis.response_expectation in ["detailed_explanation", "step_by_step_solution"]:
+        # Detailed explanations need higher complexity
+        if response_expectation in ["detailed_explanation", "step_by_step_solution", "structured_deliverable"]:
             complexity += 0.2
         
-        if analysis.abstraction_level in ["theoretical", "philosophical"]:
+        # Abstract topics need more reasoning
+        if abstraction_level in ["theoretical", "philosophical"]:
             complexity += 0.15
         
         complexity = min(1.0, complexity)
         
         # Determine task characteristics from semantic fields
         involves_math = any([
-            analysis.subject_area in ["Mathematics", "Physics", "Chemistry"],
-            "calculation" in analysis.reasoning.lower() if analysis.reasoning else False,
-            "solve" in str(analysis.response_expectation).lower()
+            subject_area in ["Mathematics", "Physics", "Chemistry", "math", "physics", "chemistry"],
+            "calculation" in reasoning.lower(),
+            "solve" in str(response_expectation).lower()
         ])
         
         involves_creative = any([
-            analysis.response_expectation in ["analogy", "metaphor", "story"],
-            "creative" in str(analysis.suggested_response_style).lower()
+            response_expectation in ["analogy", "metaphor", "story"],
+            "creative" in suggested_response_style.lower()
         ])
         
         involves_analysis = any([
-            analysis.response_expectation in ["comparison", "evaluation", "analysis"],
-            analysis.reasoning_depth and analysis.reasoning_depth > 3
+            response_expectation in ["comparison", "evaluation", "analysis"],
+            reasoning_depth and reasoning_depth > 3
         ])
         
         involves_step_by_step = any([
-            analysis.response_expectation == "step_by_step_solution",
-            "process" in analysis.reasoning.lower() if analysis.reasoning else False
+            response_expectation == "step_by_step_solution",
+            "process" in reasoning.lower()
         ])
         
-        # Accuracy requirements
-        factual_precision = analysis.subject_area in [
-            "Science", "Mathematics", "History", "Geography"
+        # Accuracy requirements based on subject
+        factual_precision = subject_area in [
+            "Science", "Mathematics", "History", "Geography",
+            "science", "math", "mathematics", "history", "geography"
         ]
         
         # Get latency budget from context
@@ -153,7 +175,7 @@ class ModelSelectionCriteria:
         
         return cls(
             semantic_complexity=complexity,
-            reasoning_depth_required=analysis.reasoning_depth or 1,
+            reasoning_depth_required=reasoning_depth or 1,
             confidence_required=context.get("confidence_required", 0.7),
             factual_precision_needed=factual_precision,
             involves_math=involves_math,
