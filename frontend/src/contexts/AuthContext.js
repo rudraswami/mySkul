@@ -74,11 +74,21 @@ export function AuthProvider({ children }) {
       
       try {
         // Check for session via new endpoint (supports both OAuth and JWT)
+        // CRITICAL FIX: Send JWT token in Authorization header so backend can fall back
+        // when session cookie expires (after 7 days)
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add JWT token to Authorization header if available
+        // This allows backend to fall back to JWT when session cookie expires
+        if (currentToken) {
+          headers['Authorization'] = `Bearer ${currentToken}`;
+        }
+        
         const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
         
         if (response.ok) {
