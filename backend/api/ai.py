@@ -2033,8 +2033,16 @@ You MUST reference specific content from the image in your response."""
                 
                 logger.info(f"🧠 Memory context prepared: {len(recent_context)} recent, {len(relevant_memories)} relevant, continuity={continuity.get('is_continuation')}")
                 
-                # Run Supervisor
-                agentic_response = await supervisor.run(contextual_message, agentic_context)
+                # ================================================================
+                # FIX 1: Route to run_enhanced() when available
+                # This enables RAG, verification, and hybrid reasoning
+                # ================================================================
+                if hasattr(supervisor, 'run_enhanced'):
+                    logger.info("🚀 Using EnhancedSupervisor.run_enhanced() with RAG + Verification + Hybrid Reasoning")
+                    agentic_response = await supervisor.run_enhanced(contextual_message, agentic_context)
+                else:
+                    logger.info("📦 Using standard Supervisor.run()")
+                    agentic_response = await supervisor.run(contextual_message, agentic_context)
                 
                 # Build visual scene if present
                 if agentic_response.get("visual"):

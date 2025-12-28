@@ -520,7 +520,37 @@ export default function AITutorNeuroSymbolic() {
       }
     }
   };
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessageRaw] = useState('');
+  
+  // 🛡️ GUARD: Ref to track if input was cleared by explicit user send
+  // This prevents any race conditions or effects from accidentally clearing input
+  const inputClearedByUserRef = useRef(false);
+  const lastUserInputRef = useRef(''); // Track last typed value for debugging
+  
+  // Protected setInputMessage - logs any suspicious clears
+  const setInputMessage = useCallback((newValue) => {
+    const prevValue = lastUserInputRef.current;
+    
+    // If clearing input and it wasn't from a user send, log warning
+    if (newValue === '' && prevValue.length > 0 && !inputClearedByUserRef.current) {
+      console.warn('⚠️ INPUT CLEAR DETECTED (not from send):', {
+        prevValue: prevValue.substring(0, 50),
+        stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
+      });
+    }
+    
+    // Reset the flag after any clear
+    if (newValue === '') {
+      inputClearedByUserRef.current = false;
+    }
+    
+    // Track for next comparison
+    if (newValue !== '') {
+      lastUserInputRef.current = newValue;
+    }
+    
+    setInputMessageRaw(newValue);
+  }, []);
   const [loading, setLoading] = useState(false);
   
   // 🎙️ VOICE INPUT INTEGRATION
@@ -1034,6 +1064,7 @@ export default function AITutorNeuroSymbolic() {
     
     // Clear input and image immediately (better UX - instant feedback)
     console.log('🧹 handleSend CLEARING input, was:', messageToSend);
+    inputClearedByUserRef.current = true; // 🛡️ Mark as intentional clear
     setInputMessage('');
     setSelectedImage(null);
     setImagePreview(null);

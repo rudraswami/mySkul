@@ -202,9 +202,9 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
     borderRadius: '12px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-    borderLeft: isActive ? '4px solid #7C3AED' : '4px solid transparent',
-    boxShadow: isActive ? '0 2px 8px rgba(124, 58, 237, 0.15)' : 'none',
+    backgroundColor: isActive ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+    borderLeft: isActive ? '4px solid #8b5cf6' : '4px solid transparent',
+    boxShadow: isActive ? '0 2px 8px rgba(139, 92, 246, 0.25)' : 'none',
     marginLeft: '8px',
     marginRight: '8px',
     marginBottom: '4px'
@@ -215,9 +215,9 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
       <div
         onClick={() => !isEditing && onClick?.(chat)}
         style={itemStyle}
-        className="group hover:bg-white/80"
+        className="group hover:bg-slate-800/50"
         onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.backgroundColor = '#F9FAFB';
+          if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(28, 28, 42, 0.5)';
         }}
         onMouseLeave={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
@@ -249,7 +249,8 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                 border: '2px solid #7C3AED',
                 borderRadius: '8px',
                 outline: 'none',
-                backgroundColor: 'white'
+                backgroundColor: '#1c1c2a',
+                color: '#f1f5f9'
               }}
               autoFocus
               onClick={(e) => e.stopPropagation()}
@@ -265,7 +266,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                 whiteSpace: 'nowrap',
                 fontWeight: isActive ? '600' : isPlaceholder ? '400' : '500',
                 fontStyle: isPlaceholder ? 'italic' : 'normal',
-                color: isActive ? '#581C87' : isPlaceholder ? '#9CA3AF' : '#1F2937'
+                color: isActive ? '#e879a9' : isPlaceholder ? '#6b6b80' : '#f1f5f9'
               }}>
                 {displayTitle}
                 {chat.isPinned && (
@@ -283,7 +284,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
               </p>
               <p style={{
                 fontSize: '12px',
-                color: '#9CA3AF',
+                color: '#6b6b80',
                 margin: '2px 0 0 0'
               }}>
                 {formatTime(chat.date || chat.updatedAt || chat.createdAt)}
@@ -303,15 +304,15 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
               padding: '6px',
               borderRadius: '8px',
               border: 'none',
-              background: showMenu ? '#F3F4F6' : 'transparent',
+              background: showMenu ? 'rgba(28, 28, 42, 0.85)' : 'transparent',
               cursor: 'pointer',
               opacity: showMenu ? 1 : 0,
               transition: 'opacity 0.15s, background 0.15s'
             }}
-            className="group-hover:!opacity-100 hover:!bg-gray-100"
+            className="group-hover:!opacity-100 hover:!bg-slate-800/50"
             aria-label="Chat options"
           >
-            <MoreHorizontal style={{ width: '16px', height: '16px', color: '#6B7280' }} />
+            <MoreHorizontal style={{ width: '16px', height: '16px', color: '#a1a1b5' }} />
           </button>
         )}
       </div>
@@ -336,10 +337,10 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                 marginTop: '4px',
                 zIndex: 50,
                 width: '140px',
-                backgroundColor: 'white',
+                backgroundColor: '#1c1c2a',
                 borderRadius: '12px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                border: '1px solid #E5E7EB',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: '4px 0',
                 overflow: 'hidden'
               }}
@@ -354,15 +355,15 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   gap: '10px',
                   padding: '10px 14px',
                   fontSize: '14px',
-                  color: '#374151',
+                  color: '#f1f5f9',
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
                   textAlign: 'left'
                 }}
-                className="hover:bg-gray-50"
+                className="hover:bg-slate-800/50"
               >
-                <Edit2 style={{ width: '15px', height: '15px', color: '#9CA3AF' }} /> 
+                <Edit2 style={{ width: '15px', height: '15px', color: '#a1a1b5' }} /> 
                 Rename
               </button>
               <button 
@@ -374,18 +375,18 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   gap: '10px',
                   padding: '10px 14px',
                   fontSize: '14px',
-                  color: '#374151',
+                  color: '#f1f5f9',
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
                   textAlign: 'left'
                 }}
-                className="hover:bg-gray-50"
+                className="hover:bg-slate-800/50"
               >
-                <Pin style={{ width: '15px', height: '15px', color: '#9CA3AF' }} /> 
+                <Pin style={{ width: '15px', height: '15px', color: '#a1a1b5' }} /> 
                 {chat.isPinned ? 'Unpin' : 'Pin'}
               </button>
-              <div style={{ height: '1px', backgroundColor: '#E5E7EB', margin: '4px 0' }} />
+              <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
               <button 
                 onClick={() => { onDelete?.(chat.id); setShowMenu(false); }} 
                 style={{
@@ -401,7 +402,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   cursor: 'pointer',
                   textAlign: 'left'
                 }}
-                className="hover:bg-red-50"
+                className="hover:bg-red-900/20"
               >
                 <Trash2 style={{ width: '15px', height: '15px' }} /> 
                 Delete
@@ -438,7 +439,7 @@ const Section = ({ title, icon, count, children, defaultOpen = true }) => {
           borderRadius: '8px',
           transition: 'background 0.15s'
         }}
-        className="hover:bg-gray-100/60"
+        className="hover:bg-slate-800/50"
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {icon}
@@ -447,24 +448,24 @@ const Section = ({ title, icon, count, children, defaultOpen = true }) => {
             fontWeight: '700',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: '#9CA3AF'
+            color: '#6b6b80'
           }}>
             {title}
           </span>
           <span style={{
             padding: '2px 8px',
-            backgroundColor: '#F3F4F6',
+            backgroundColor: 'rgba(28, 28, 42, 0.85)',
             borderRadius: '10px',
             fontSize: '11px',
             fontWeight: '600',
-            color: '#6B7280'
+            color: '#a1a1b5'
           }}>
             {count}
           </span>
         </span>
         {open 
-          ? <ChevronUp style={{ width: '16px', height: '16px', color: '#9CA3AF' }} /> 
-          : <ChevronDown style={{ width: '16px', height: '16px', color: '#9CA3AF' }} />
+          ? <ChevronUp style={{ width: '16px', height: '16px', color: '#6b6b80' }} /> 
+          : <ChevronDown style={{ width: '16px', height: '16px', color: '#6b6b80' }} />
         }
       </button>
       <AnimatePresence initial={false}>
@@ -546,13 +547,13 @@ const UserProfileDropdown = ({ onClose }) => {
           alignItems: 'center',
           gap: '12px',
           padding: '12px 16px',
-          backgroundColor: isExpanded ? '#F3F4F6' : '#FAFAFA',
+          backgroundColor: isExpanded ? 'rgba(28, 28, 42, 0.85)' : 'rgba(20, 20, 32, 0.8)',
           border: 'none',
           borderRadius: '14px',
           cursor: 'pointer',
           transition: 'all 0.2s ease'
         }}
-        className="hover:bg-gray-100"
+        className="hover:bg-slate-800/50"
       >
         {/* Avatar */}
         <div style={{
@@ -578,7 +579,7 @@ const UserProfileDropdown = ({ onClose }) => {
             margin: 0,
             fontSize: '14px',
             fontWeight: '600',
-            color: '#111827',
+            color: '#f1f5f9',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
@@ -588,7 +589,7 @@ const UserProfileDropdown = ({ onClose }) => {
           <p style={{
             margin: '2px 0 0 0',
             fontSize: '12px',
-            color: isPro ? '#7C3AED' : '#6B7280',
+            color: isPro ? '#e879a9' : '#6b6b80',
             display: 'flex',
             alignItems: 'center',
             gap: '4px'
@@ -603,7 +604,7 @@ const UserProfileDropdown = ({ onClose }) => {
           style={{ 
             width: '18px', 
             height: '18px', 
-            color: '#9CA3AF',
+            color: '#6b6b80',
             transition: 'transform 0.2s ease',
             transform: isExpanded ? 'rotate(0deg)' : 'rotate(180deg)'
           }} 
@@ -624,10 +625,10 @@ const UserProfileDropdown = ({ onClose }) => {
               left: 0,
               right: 0,
               marginBottom: '8px',
-              backgroundColor: 'white',
+              backgroundColor: '#1c1c2a',
               borderRadius: '16px',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-              border: '1px solid #E5E7EB',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               overflow: 'hidden',
               zIndex: 60
             }}
@@ -650,24 +651,24 @@ const UserProfileDropdown = ({ onClose }) => {
                   textAlign: 'left',
                   transition: 'background 0.15s'
                 }}
-                className="hover:bg-gray-50"
+                className="hover:bg-slate-800/50"
               >
                 <div style={{
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  backgroundColor: '#DBEAFE',
+                  backgroundColor: 'rgba(99, 102, 241, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <LayoutDashboard style={{ width: '18px', height: '18px', color: '#2563EB' }} />
+                  <LayoutDashboard style={{ width: '18px', height: '18px', color: '#6366f1' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#f1f5f9' }}>
                     Home
                   </p>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6b6b80' }}>
                     Go to dashboard
                   </p>
                 </div>
@@ -689,24 +690,24 @@ const UserProfileDropdown = ({ onClose }) => {
                   textAlign: 'left',
                   transition: 'background 0.15s'
                 }}
-                className="hover:bg-gray-50"
+                className="hover:bg-slate-800/50"
               >
                 <div style={{
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  backgroundColor: '#F3E8FF',
+                  backgroundColor: 'rgba(139, 92, 246, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <User style={{ width: '18px', height: '18px', color: '#7C3AED' }} />
+                  <User style={{ width: '18px', height: '18px', color: '#8b5cf6' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#f1f5f9' }}>
                     Profile
                   </p>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6b6b80' }}>
                     Edit your details
                   </p>
                 </div>
@@ -775,24 +776,24 @@ const UserProfileDropdown = ({ onClose }) => {
                   cursor: 'pointer',
                   transition: 'background 0.15s'
                 }}
-                className="hover:bg-gray-50"
+                className="hover:bg-slate-800/50"
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '36px',
                     height: '36px',
                     borderRadius: '10px',
-                    backgroundColor: isDarkMode ? '#FEF3C7' : '#1F2937',
+                    backgroundColor: isDarkMode ? 'rgba(251, 191, 36, 0.2)' : 'rgba(28, 28, 42, 0.85)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
                     {isDarkMode 
-                      ? <Sun style={{ width: '18px', height: '18px', color: '#D97706' }} />
-                      : <Moon style={{ width: '18px', height: '18px', color: '#E5E7EB' }} />
+                      ? <Sun style={{ width: '18px', height: '18px', color: '#fbbf24' }} />
+                      : <Moon style={{ width: '18px', height: '18px', color: '#a1a1b5' }} />
                     }
                   </div>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#f1f5f9' }}>
                     {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                   </p>
                 </div>
@@ -840,20 +841,20 @@ const UserProfileDropdown = ({ onClose }) => {
                   textAlign: 'left',
                   transition: 'background 0.15s'
                 }}
-                className="hover:bg-red-50"
+                className="hover:bg-red-900/20"
               >
                 <div style={{
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  backgroundColor: '#FEE2E2',
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <LogOut style={{ width: '18px', height: '18px', color: '#DC2626' }} />
+                  <LogOut style={{ width: '18px', height: '18px', color: '#ef4444' }} />
                 </div>
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#DC2626' }}>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#ef4444' }}>
                   Sign Out
                 </p>
               </button>
@@ -928,19 +929,19 @@ export default function HistorySidebar({
     transform: 'translateY(0)'
   };
 
-  // Search input style (inline for reliability)
+  // Search input style (inline for reliability) - Dark theme
   const searchInputStyle = {
     width: '100%',
     paddingLeft: '40px',
     paddingRight: '16px',
     paddingTop: '12px',
     paddingBottom: '12px',
-    backgroundColor: '#F3F4F6',
-    border: 'none',
+    backgroundColor: 'rgba(28, 28, 42, 0.85)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
     borderRadius: '12px',
     fontSize: '14px',
     outline: 'none',
-    color: '#1F2937',
+    color: '#f1f5f9',
     transition: 'all 0.2s ease'
   };
 
@@ -977,8 +978,8 @@ export default function HistorySidebar({
           left: 0,
           bottom: 0,
           width: '320px',
-          backgroundColor: '#FAFAFA',
-          boxShadow: '4px 0 30px rgba(0,0,0,0.1)',
+          backgroundColor: '#0f0f16',
+          boxShadow: '4px 0 30px rgba(0,0,0,0.5)',
           zIndex: 50,
           display: 'flex',
           flexDirection: 'column'
@@ -987,8 +988,8 @@ export default function HistorySidebar({
         {/* === HEADER === */}
         <div style={{
           padding: '20px',
-          backgroundColor: 'white',
-          borderBottom: '1px solid #E5E7EB'
+          backgroundColor: '#141420',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           {/* Title Row */}
           <div style={{
@@ -1003,10 +1004,10 @@ export default function HistorySidebar({
               gap: '10px',
               fontSize: '22px',
               fontWeight: '700',
-              color: '#111827',
+              color: '#f1f5f9',
               margin: 0
             }}>
-              <BookOpen style={{ width: '24px', height: '24px', color: '#7C3AED' }} />
+              <BookOpen style={{ width: '24px', height: '24px', color: '#8b5cf6' }} />
               Library
             </h2>
             <button 
@@ -1019,10 +1020,10 @@ export default function HistorySidebar({
                 borderRadius: '12px',
                 transition: 'background 0.15s'
               }}
-              className="hover:bg-gray-100"
+              className="hover:bg-slate-800/50"
               aria-label="Close"
             >
-              <X style={{ width: '20px', height: '20px', color: '#6B7280' }} />
+              <X style={{ width: '20px', height: '20px', color: '#a1a1b5' }} />
             </button>
           </div>
           
@@ -1035,7 +1036,7 @@ export default function HistorySidebar({
               transform: 'translateY(-50%)',
               width: '16px',
               height: '16px',
-              color: '#9CA3AF'
+              color: '#6b6b80'
             }} />
             <input
               placeholder="Search sessions..."
@@ -1043,11 +1044,13 @@ export default function HistorySidebar({
               onChange={(e) => setSearch(e.target.value)}
               style={searchInputStyle}
               onFocus={(e) => {
-                e.target.style.backgroundColor = 'white';
-                e.target.style.boxShadow = '0 0 0 2px rgba(124, 58, 237, 0.3)';
+                e.target.style.backgroundColor = 'rgba(38, 38, 55, 0.9)';
+                e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(139, 92, 246, 0.2)';
               }}
               onBlur={(e) => {
-                e.target.style.backgroundColor = '#F3F4F6';
+                e.target.style.backgroundColor = 'rgba(28, 28, 42, 0.85)';
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -1071,8 +1074,8 @@ export default function HistorySidebar({
               <div style={{
                 width: '32px',
                 height: '32px',
-                border: '3px solid #E5E7EB',
-                borderTopColor: '#7C3AED',
+                border: '3px solid rgba(255, 255, 255, 0.08)',
+                borderTopColor: '#8b5cf6',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite'
               }} />
@@ -1086,16 +1089,16 @@ export default function HistorySidebar({
                 width: '64px',
                 height: '64px',
                 margin: '0 auto 16px',
-                backgroundColor: '#F3F4F6',
+                backgroundColor: 'rgba(28, 28, 42, 0.85)',
                 borderRadius: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <MessageCircle style={{ width: '32px', height: '32px', color: '#D1D5DB' }} />
+                <MessageCircle style={{ width: '32px', height: '32px', color: '#6b6b80' }} />
               </div>
-              <p style={{ fontWeight: '500', color: '#6B7280', margin: '0 0 4px 0' }}>No sessions yet</p>
-              <p style={{ fontSize: '14px', color: '#9CA3AF', margin: 0 }}>Start a conversation to begin</p>
+              <p style={{ fontWeight: '500', color: '#a1a1b5', margin: '0 0 4px 0' }}>No sessions yet</p>
+              <p style={{ fontSize: '14px', color: '#6b6b80', margin: 0 }}>Start a conversation to begin</p>
             </div>
           ) : (
             <>
@@ -1146,8 +1149,8 @@ export default function HistorySidebar({
 
         {/* === FOOTER: NEW CHAT + USER PROFILE === */}
         <div style={{
-          backgroundColor: 'white',
-          borderTop: '1px solid #E5E7EB'
+          backgroundColor: '#141420',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           {/* New Chat Button */}
           <div style={{ padding: '12px 16px 8px 16px' }}>
@@ -1172,7 +1175,7 @@ export default function HistorySidebar({
           </div>
           
           {/* Divider */}
-          <div style={{ height: '1px', backgroundColor: '#E5E7EB', margin: '0 16px' }} />
+          <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)', margin: '0 16px' }} />
           
           {/* User Profile Dropdown */}
           <div style={{ padding: '12px 16px 16px 16px' }}>

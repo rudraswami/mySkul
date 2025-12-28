@@ -528,6 +528,49 @@ I'd love to help you understand this better! Let me know:
 Tell me more and I'll explain it in a way that clicks for you! 📚"""
                 result['metadata']['fallback_used'] = True
             
+            # ================================================================
+            # FIX 2: SELF-VERIFICATION - Call verifier for math/factual domains
+            # This makes the "self-verifying AI" claim TRUE
+            # Non-blocking: verification failure does NOT block response
+            # ================================================================
+            verifiable_subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Science']
+            should_verify = (
+                self.verifier and 
+                subject in verifiable_subjects and
+                len(result.get('content', '')) > 50  # Only verify substantive content
+            )
+            
+            if should_verify:
+                try:
+                    logger.info(f"[MentorAgent] 🔍 Running self-verification for {subject}")
+                    verification_result = await self.verifier.verify_response(
+                        response=result.get('content', ''),
+                        context={
+                            'subject': subject,
+                            'query': query,
+                            'student_level': student_profile.get('grade', 'unknown')
+                        }
+                    )
+                    
+                    # Attach verification metadata (non-blocking)
+                    result['metadata']['verification'] = {
+                        'verified': verification_result.get('verified', True),
+                        'confidence': verification_result.get('confidence', 0.8),
+                        'checks_performed': verification_result.get('checks', []),
+                        'issues': verification_result.get('issues', [])
+                    }
+                    
+                    if verification_result.get('verified', True):
+                        logger.info(f"[MentorAgent] ✅ Verification passed: confidence={verification_result.get('confidence', 0.8):.2f}")
+                    else:
+                        logger.warning(f"[MentorAgent] ⚠️ Verification flagged issues: {verification_result.get('issues', [])}")
+                        # Add disclaimer if verification failed (non-blocking)
+                        result['metadata']['needs_review'] = True
+                        
+                except Exception as verify_err:
+                    logger.warning(f"[MentorAgent] Verification skipped due to error: {verify_err}")
+                    result['metadata']['verification'] = {'skipped': True, 'reason': str(verify_err)}
+            
             # Log reasoning quality
             iterations = result.get('iterations', 0)
             tools_used = result.get('tools_used', [])
@@ -591,10 +634,21 @@ Tell me more and I'll explain it in a way that clicks for you! 📚"""
             return 'listener'  # Be empathetic, don't redirect to studies
         
         # Query content signals
+        # IMPORTANT: "help me" alone is TOO broad - it matches academic queries like "help me solve"
+        # Only match emotional keywords when they indicate emotional state, not requests for help
         emotional_words = ['feeling', 'sad', 'happy', 'stressed', 'worried', 'scared', 'tired', 
-                          'frustrated', 'bored', 'lonely', 'help me', 'need support']
+                          'frustrated', 'bored', 'lonely', 'need support', 'need someone', 
+                          'talk to someone', 'feeling down', 'feeling overwhelmed']
         if any(word in query_lower for word in emotional_words):
             return 'listener'
+        
+        # "help me" is emotional ONLY when NOT followed by academic verbs
+        academic_verbs = ['solve', 'understand', 'learn', 'study', 'revise', 'explain', 
+                         'calculate', 'practice', 'prepare', 'remember', 'memorize']
+        if 'help me' in query_lower:
+            # Check if followed by academic action
+            if not any(verb in query_lower for verb in academic_verbs):
+                return 'listener'
         
         casual_words = ['joke', 'funny', 'random', 'chat', 'talk', "what's up", 'how are you']
         if any(word in query_lower for word in casual_words):
@@ -684,6 +738,7 @@ Keep it short (3-4 sentences), warm, and authentic. One emoji max."""
 
             response = await call_llm(
                 prompt=prompt,
+                api_key=os.environ.get('OPENAI_API_KEY', ''),
                 model="gpt-4o-mini",
                 temperature=0.8,
                 max_tokens=200
@@ -738,6 +793,7 @@ Keep it short and genuine. One emoji max."""
 
             response = await call_llm(
                 prompt=prompt,
+                api_key=os.environ.get('OPENAI_API_KEY', ''),
                 model="gpt-4o-mini",
                 temperature=0.9,
                 max_tokens=200

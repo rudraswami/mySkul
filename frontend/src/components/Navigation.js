@@ -1,28 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ThemeToggle } from '../contexts/ThemeContext';
-import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { LoadingSpinner } from './ui/loading';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  LayoutDashboard, 
-  MessageCircle, 
-  CreditCard,
   LogOut,
   User,
-  X,
   Crown,
-  BookOpen,
   Brain,
   ChevronDown,
   Settings,
-  Moon,
-  Sun,
-  Sparkles,
-  Home,
-  Zap
+  Home
 } from 'lucide-react';
 
 /**
@@ -45,8 +34,8 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
   const userMenuRef = useRef(null);
   
   const isSathiPage = location.pathname === '/tutor' || location.pathname.startsWith('/tutor');
+  // On AI Sathi page: show collapsed sidebar for consistency (not hidden)
   const isCollapsed = collapsed !== undefined ? collapsed : isSathiPage;
-  const isHidden = isSathiPage;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -77,8 +66,6 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
   const subscriptionTier = user?.subscription_type || 'Free';
   const displayName = user?.full_name || 'Student';
   const firstName = displayName.split(' ')[0];
-
-  if (isHidden && !mobileMenuOpen) return null;
 
   return (
     <>
@@ -180,28 +167,6 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
             );
           })}
           
-          {/* Divider */}
-          <div className={`h-px bg-slate-800/60 my-4 ${isCollapsed ? 'mx-2' : 'mx-2'}`} />
-          
-          {/* Quick Links (Collapsed shows icons) */}
-          {!isCollapsed && (
-            <div className="px-2 space-y-1">
-              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Quick Access</p>
-              {[
-                { icon: Sparkles, label: 'Study Materials', color: 'text-amber-400' },
-                { icon: Crown, label: 'Go Premium', color: 'text-yellow-400' },
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => navigate(item.label === 'Go Premium' ? '/subscription' : '/materials')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-white hover:bg-slate-800/30 rounded-lg transition-all text-sm"
-                >
-                  <item.icon className={`w-4 h-4 ${item.color}`} strokeWidth={1.5} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </nav>
 
         {/* USER PROFILE */}
