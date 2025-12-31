@@ -1516,12 +1516,27 @@ class UnifiedAIOrchestrator:
             if context_pack and hasattr(context_pack, 'get_conversation_summary'):
                 conversation_summary = context_pack.get_conversation_summary()
             
+            # CRITICAL FIX: Build honest conversation context - don't pretend if no history
+            if conversation_summary and len(conversation_summary.strip()) > 10:
+                conversation_context_block = f"""PREVIOUS CONVERSATION:
+{conversation_summary}"""
+            elif topic and len(topic.strip()) > 2 and topic.lower() not in ['general', 'unknown', 'none']:
+                conversation_context_block = f"""PREVIOUS CONVERSATION:
+You were discussing {topic}"""
+            else:
+                conversation_context_block = """PREVIOUS CONVERSATION:
+This appears to be a new conversation or the start of a session. No prior discussion to reference.
+
+CRITICAL: If the student asks "what did we discuss earlier" or similar:
+- Be HONEST: Say "This seems to be the start of our conversation" or "We haven't discussed anything yet in this session"
+- Do NOT hallucinate or make up previous conversations
+- Offer to help with whatever they'd like to learn"""
+            
             system_prompt = f"""You are Druv AI, a warm and intelligent learning companion.
 
 {continuation_prompt}
 
-PREVIOUS CONVERSATION:
-{conversation_summary if conversation_summary else "You were discussing " + topic if topic else "You were in a conversation"}
+{conversation_context_block}
 
 CRITICAL RULES (STATE LAW - CANNOT BE VIOLATED):
 1. You MUST continue the existing conversation naturally
@@ -3251,11 +3266,17 @@ Response:"""
         
         if context_pack:
             # Use ContextPack - single source of truth
-            actual_topic = context_pack.current_topic.replace('_', ' ') if context_pack.current_topic else ''
+            raw_topic = context_pack.current_topic.replace('_', ' ') if context_pack.current_topic else ''
+            
+            # CRITICAL FIX: Filter out generic default values like "general", "General", empty
+            # These are placeholders, not actual topics
+            generic_values = {'general', 'general', '', 'unknown', 'none', 'n/a'}
+            actual_topic = raw_topic if raw_topic.lower() not in generic_values else ''
             
             # Check previous topic
             if not actual_topic and context_pack.previous_topic:
-                actual_topic = context_pack.previous_topic.replace('_', ' ')
+                prev = context_pack.previous_topic.replace('_', ' ')
+                actual_topic = prev if prev.lower() not in generic_values else ''
             
             # Check conversation summary for context
             if context_pack.last_n_messages:
@@ -3264,8 +3285,8 @@ Response:"""
                         last_topic_hint = "what we just discussed"
                         break
             
-            # Build topic hint
-            if actual_topic:
+            # Build topic hint - only use actual meaningful topics
+            if actual_topic and len(actual_topic) > 2:
                 last_topic_hint = actual_topic
             
             # Log event for acknowledgement
@@ -3283,13 +3304,18 @@ Response:"""
             memory_context = await self._get_memory_context(context)
             recent_context = memory_context.get('recent_context', {})
             
+            # CRITICAL FIX: Filter out generic default values
+            generic_values = {'general', 'General', '', 'unknown', 'none', 'n/a'}
+            
             current_topic = memory_context.get('current_topic', '')
-            if current_topic:
+            if current_topic and current_topic.lower() not in generic_values:
                 actual_topic = current_topic.replace('_', ' ')
             
             concept_thread = memory_context.get('concept_thread', [])
             if concept_thread and isinstance(concept_thread, list) and len(concept_thread) > 0:
-                actual_topic = concept_thread[-1] if isinstance(concept_thread[-1], str) else ''
+                last_concept = concept_thread[-1] if isinstance(concept_thread[-1], str) else ''
+                if last_concept and last_concept.lower() not in generic_values:
+                    actual_topic = last_concept
             
             message_history = context.get('message_history', [])
             if message_history and isinstance(message_history, list):
@@ -3310,7 +3336,8 @@ Response:"""
                                 last_topic_hint = "what we just discussed"
                                 break
             
-            if actual_topic:
+            # Only use actual_topic if it's meaningful
+            if actual_topic and len(actual_topic) > 2:
                 last_topic_hint = actual_topic
         
         logger.info(f"🔄 Acknowledgement context: topic_hint='{last_topic_hint}' | request_id={request_id}")

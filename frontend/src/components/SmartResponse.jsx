@@ -20,7 +20,10 @@ import {
   ThumbsUp,
   ThumbsDown,
   Share2,
-  Bookmark
+  Bookmark,
+  CheckCircle2,
+  ArrowRight,
+  PlayCircle
 } from 'lucide-react';
 import AdaptiveMarkdown from './AdaptiveMarkdown';
 import VisualSketchViewer from './visual/VisualSketchViewer';
@@ -44,6 +47,91 @@ import TeachMeBackModal from './ui/TeachMeBackModal';
 const isFollowUpQuestion = (question) => {
   const q = (question || '').toLowerCase();
   return q.match(/(what did we|earlier|before|previously|last time|you said|you mentioned|continue|go on|more about)/);
+};
+
+/**
+ * 🧠 Cognitive Mirror™ - Detect student state from question
+ * Returns one-line acknowledgment (UX layer only, no backend changes)
+ */
+const detectStudentState = (question, response) => {
+  if (!question) return null;
+  
+  const q = question.toLowerCase();
+  const metadata = response?.metadata || {};
+  const emotionalState = metadata.emotional_state || metadata.emotion || null;
+  
+  // Use backend-detected emotion if available
+  if (emotionalState) {
+    const stateMap = {
+      'confused': 'I see you\'re confused about this',
+      'frustrated': 'This can be frustrating',
+      'anxious': 'I understand the pressure',
+      'stressed': 'I know this feels overwhelming',
+      'curious': 'Great question',
+      'excited': 'Love your enthusiasm',
+      'confident': 'You\'ve got this'
+    };
+    return stateMap[emotionalState] || null;
+  }
+  
+  // Frontend fallback: pattern detection
+  if (q.match(/(confused|don't understand|not clear|unclear|what do you mean|help me understand)/)) {
+    return 'I see you\'re confused about this';
+  }
+  if (q.match(/(frustrated|stuck|can't|unable|difficult|hard|struggling)/)) {
+    return 'This can be frustrating';
+  }
+  if (q.match(/(exam|test|pressure|anxious|worried|nervous|stress)/)) {
+    return 'I understand the pressure';
+  }
+  if (q.match(/(why|how|what|explain|tell me|show me)/)) {
+    return 'Great question';
+  }
+  
+  return null;
+};
+
+
+/**
+ * Generate micro next-step CTA based on response type and question
+ */
+const generateNextStepCTA = (responseType, question, response) => {
+  const q = (question || '').toLowerCase();
+  const metadata = response?.metadata || {};
+  
+  // Check if backend provided a CTA
+  if (metadata.next_step_cta) {
+    return metadata.next_step_cta;
+  }
+  
+  // ENHANCED: More contextual CTAs based on question content
+  // Math/calculation questions
+  if (responseType === 'calculation' || q.match(/(solve|calculate|find|evaluate|compute|integrate|differentiate)/)) {
+    return { text: 'Try a similar problem?', action: 'practice' };
+  }
+  // Theory/explanation questions
+  if (responseType === 'explanation' || q.match(/(explain|what is|define|meaning|describe)/)) {
+    return { text: 'Quick revision?', action: 'review' };
+  }
+  // Exam-related questions
+  if (q.match(/(exam|test|jee|neet|board|cbse|icse|previous year)/)) {
+    return { text: 'Practice exam question?', action: 'exam' };
+  }
+  // Comparison questions
+  if (responseType === 'comparison' || q.match(/(difference|compare|vs|versus|distinguish)/)) {
+    return { text: 'See examples of each?', action: 'examples' };
+  }
+  // Formula/derivation questions
+  if (q.match(/(derive|derivation|prove|proof|formula)/)) {
+    return { text: 'See the proof steps?', action: 'proof' };
+  }
+  // Concept understanding
+  if (q.match(/(how does|why does|what happens|understand)/)) {
+    return { text: 'Try explaining it yourself?', action: 'teach' };
+  }
+  
+  // Default - only for non-trivial responses
+  return { text: 'Want to explore more?', action: 'explore' };
 };
 
 /**
@@ -148,7 +236,7 @@ const SmartResponse = ({
     const knowledgeGraph = metadata.knowledge_graph || null;
     const learningPath = response.learning_path || [];
     
-    // Determine which agent was primary
+    // Determine which agent was primary (HIDDEN from UI - only for internal use)
     const agentsUsed = metadata.agents_used || [];
     let primaryAgent = 'mentor';
     if (agentsUsed.includes('professor')) primaryAgent = 'professor';
@@ -374,9 +462,12 @@ const SmartResponse = ({
     }
     // Priority 8: ULTIMATE FALLBACK - if still no content, generate a placeholder
     // This ensures the UI NEVER shows empty response
+    // FIXED: Don't show error-like message during streaming - skeleton handles that
     if (!mainContent && response) {
-      console.warn('⚠️ SmartResponse: All content extraction failed, using ultimate fallback');
-      mainContent = "I'm processing your question. Please try asking again or rephrase your question for a better response.";
+      // During streaming, return null to let skeleton show
+      // Only show fallback for completed responses that truly have no content
+      console.warn('⚠️ SmartResponse: All content extraction failed');
+      mainContent = null; // Let parent handle empty state
     }
     
     // CRITICAL: Ensure mainContent is always a string or null, never an object
@@ -413,9 +504,44 @@ const SmartResponse = ({
     };
   }, [response]);
 
+  // 🧠 Cognitive Mirror™ - Detect student state (after content is defined)
+  const studentStateAcknowledgment = useMemo(() => 
+    detectStudentState(question, response),
+    [question, response]
+  );
+  
+  // ✅ Verification status for trust signals
+  const verificationStatus = useMemo(() => {
+    if (!response) return null;
+    const verification = response.verification || {};
+    const metadata = response.metadata || {};
+    
+    // Check if verified
+    const isVerified = verification.status === 'verified' || 
+                      verification.is_verified === true ||
+                      metadata.verified === true;
+    
+    const confidence = verification.confidence || metadata.confidence || 0.75;
+    
+    return {
+      isVerified: isVerified && confidence > 0.7,
+      confidence,
+      hasMathVerification: verification.math_verified === true,
+      hasFactVerification: response.rag?.curriculum_aligned === true,
+      hasLogicVerification: verification.logic_verified === true
+    };
+  }, [response]);
+  
+  // 🎯 Generate next-step CTA (after responseType is defined)
+  const nextStepCTA = useMemo(() => 
+    generateNextStepCTA(responseType, question, response),
+    [responseType, question, response]
+  );
+
   if (!content) return null;
 
   // COGNITO-OS v4.0 - Render response with transparency wrapper
+  // Always render full content - beautiful formatting handled by AdaptiveMarkdown
   const renderMainContent = () => {
     switch (responseType) {
       case 'greeting':
@@ -456,6 +582,7 @@ const SmartResponse = ({
     case 'adaptive':
       // For follow-ups and adaptive responses, use clean markdown
       // The AI decides structure, not the frontend
+      // Beautiful formatting: headings, spacing, math-first, step numbering handled by AdaptiveMarkdown
       if (!content.mainContent || typeof content.mainContent !== 'string') {
         return null;
       }
@@ -528,7 +655,10 @@ const SmartResponse = ({
       };
     }
     // Fallback to heuristic if backend didn't provide payload
-    if (responseType === 'explanation' && content?.mainContent?.length > 200) {
+    // FIXED: Added question complexity check - only show for educational explanations, not greetings
+    const isEducationalContent = question && question.length > 20 && 
+      /\b(explain|how|why|what|solve|derive|prove|calculate|find)\b/i.test(question);
+    if (responseType === 'explanation' && content?.mainContent?.length > 300 && isEducationalContent) {
       return {
         show: true,
         topic: question?.substring(0, 100) || 'this concept',
@@ -581,12 +711,39 @@ const SmartResponse = ({
   }, [onInteraction, question, content?.mainContent]);
   
   // Show interaction bar for non-greeting responses with content
-  const showInteractionBar = !isSimpleResponse && content?.mainContent?.length > 50;
+  // FIXED: Lowered threshold from 50 to 15 to show copy/feedback for short answers
+  // CRITICAL: Hide during streaming to prevent flickering, show only when complete
+  const showInteractionBar = !isStreaming && !isSimpleResponse && content?.mainContent?.length > 15;
   
   return (
     <div className="smart-response-container">
-      {/* CLEAN FINAL ANSWER - No panels, no badges, no chips, just content */}
+      {/* 🧠 Cognitive Mirror™ - One line acknowledgment (UX layer only) */}
+      {studentStateAcknowledgment && !isSimpleResponse && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-3 text-sm text-gray-600 dark:text-gray-400 italic"
+        >
+          {studentStateAcknowledgment}{/[.!?]$/.test(studentStateAcknowledgment) ? '' : '.'}
+        </motion.div>
+      )}
+      
+      {/* BEAUTIFUL FULL RESPONSE - Always visible, beautifully formatted */}
+      {/* Formatting handled by AdaptiveMarkdown: headings, spacing, math-first, step numbering */}
       {renderMainContent()}
+      
+      {/* ✅ Verified Trust Signal - MOVED AFTER content so it doesn't float during streaming */}
+      {verificationStatus?.isVerified && !isSimpleResponse && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Verified answer</span>
+        </motion.div>
+      )}
       
       {/* INTERACTION BAR - Copy, Feedback, Bookmark */}
       {showInteractionBar && (
@@ -674,6 +831,38 @@ const SmartResponse = ({
               </button>
             </div>
           </div>
+        </motion.div>
+      )}
+      
+      {/* 🎯 Micro Next-Step CTA - One optional action */}
+      {!isSimpleResponse && nextStepCTA && (
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800"
+        >
+          <button
+            onClick={() => {
+              if (onFollowUp) {
+                // Generate a follow-up question based on CTA action
+                const followUpMap = {
+                  'practice': 'Give me a similar problem to practice',
+                  'review': 'Quick revision of this concept',
+                  'exam': 'Show me an exam-style question',
+                  'explore': 'Tell me more about this',
+                  'examples': 'Show me examples of each',
+                  'proof': 'Walk me through the proof steps',
+                  'teach': 'Let me try explaining this concept'
+                };
+                onFollowUp(followUpMap[nextStepCTA.action] || nextStepCTA.text);
+              }
+            }}
+            className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-2 transition-colors group"
+          >
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>{nextStepCTA.text}</span>
+          </button>
         </motion.div>
       )}
       
@@ -928,7 +1117,8 @@ const ExplanationResponse = ({
     return null;
   }
   
-  const hasContent = content.mainContent && typeof content.mainContent === 'string' && content.mainContent.length > 10;
+  // FIXED: Lowered threshold from 10 to 3 to show very short but valid responses
+  const hasContent = content.mainContent && typeof content.mainContent === 'string' && content.mainContent.length > 3;
   
   // Whiteboard visual is the ONLY visual system
   const hasWhiteboardVisual = whiteboardVisual && whiteboardVisual.concept;
@@ -998,7 +1188,7 @@ const ExplanationResponse = ({
                   <span className="text-sm font-semibold text-orange-700 block">Watch Visual Explanation</span>
                   <span className="text-xs text-orange-500">Click to see animated diagram</span>
                 </div>
-                <ChevronDown className="w-5 h-5 text-orange-500 animate-bounce" />
+                <ChevronDown className="w-5 h-5 text-orange-500" />
               </motion.button>
             )}
           </AnimatePresence>

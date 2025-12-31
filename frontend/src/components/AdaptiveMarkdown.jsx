@@ -9,12 +9,29 @@
  * - Code blocks
  * 
  * Works across all AI response types (mentor, professor, unified)
+ * 
+ * PERFORMANCE OPTIMIZED:
+ * - Memoized parsing (only re-parse when content changes)
+ * - Lazy load KaTeX CSS (only when math content detected)
  */
 
-import React from 'react';
+import React, { useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { InlineMath, BlockMath } from 'react-katex';
-import 'katex/dist/katex.min.css';
+
+// Lazy load KaTeX components and CSS
+const InlineMath = lazy(() => 
+  import('react-katex').then(module => {
+    import('katex/dist/katex.min.css');
+    return { default: module.InlineMath };
+  })
+);
+
+const BlockMath = lazy(() => 
+  import('react-katex').then(module => {
+    import('katex/dist/katex.min.css');
+    return { default: module.BlockMath };
+  })
+);
 
 /**
  * Pre-process text to extract and protect block math BEFORE line splitting
@@ -87,15 +104,15 @@ const parseMarkdown = (text, blockMathMap) => {
               key={i} 
               className="flex items-start gap-3 group"
             >
-              {/* Custom bullet/number styling */}
+              {/* Custom bullet/number styling - FIXED: Larger bullets, responsive text */}
               <span className={`flex-shrink-0 ${
                 isOrdered 
-                  ? 'w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm'
-                  : 'w-2 h-2 mt-2 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500'
+                  ? 'w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm'
+                  : 'w-2.5 h-2.5 mt-1.5 sm:mt-2 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500'
               }`}>
                 {isOrdered ? i + 1 : ''}
               </span>
-              <span className="text-[15px] text-gray-700 dark:text-gray-200 leading-[1.7] flex-1">
+              <span className="text-sm sm:text-[15px] text-gray-700 dark:text-gray-200 leading-relaxed sm:leading-[1.7] flex-1">
                 {renderInline(item)}
               </span>
             </div>
@@ -117,8 +134,9 @@ const parseMarkdown = (text, blockMathMap) => {
         const bodyRows = dataRows.slice(1);
         
         elements.push(
-          <div key={`table-${elements.length}`} className="overflow-x-auto my-4">
-            <table className="w-full border-collapse text-sm">
+          <div key={`table-${elements.length}`} className="relative overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            {/* FIXED: Added border container for scroll visibility hint */}
+            <table className="w-full border-collapse text-sm min-w-max">
               <thead>
                 <tr className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30">
                   {headerCells.map((cell, i) => (
@@ -153,13 +171,26 @@ const parseMarkdown = (text, blockMathMap) => {
     // Handle code blocks
     if (trimmed.startsWith('```')) {
       if (inCodeBlock) {
-        // End code block
+        // End code block - FIXED: Added copy button wrapper
+        const codeContent = codeBlockContent.join('\n');
+        const codeKey = `code-${elements.length}`;
         elements.push(
-          <pre key={`code-${elements.length}`} className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-3 text-sm font-mono">
-            <code className={codeLanguage ? `language-${codeLanguage}` : ''}>
-              {codeBlockContent.join('\n')}
-            </code>
-          </pre>
+          <div key={codeKey} className="relative group my-3">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(codeContent);
+              }}
+              className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Copy code"
+            >
+              Copy
+            </button>
+            <pre className="bg-gray-900 text-gray-100 p-4 pr-16 rounded-lg overflow-x-auto text-sm font-mono">
+              <code className={codeLanguage ? `language-${codeLanguage}` : ''}>
+                {codeContent}
+              </code>
+            </pre>
+          </div>
         );
         codeBlockContent = [];
         codeLanguage = '';
@@ -179,7 +210,7 @@ const parseMarkdown = (text, blockMathMap) => {
       return;
     }
     
-    // Check for block math placeholder
+    // Check for block math placeholder - Math-First Formatting: Each formula on separate line
     if (trimmed.match(/^__BLOCK_MATH_\d+__$/)) {
       flushList();
       flushTable();
@@ -187,13 +218,13 @@ const parseMarkdown = (text, blockMathMap) => {
       if (latex) {
         try {
           elements.push(
-            <div key={`block-math-${index}`} className="my-4 py-3 overflow-x-auto bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10 rounded-lg">
+            <div key={`block-math-${index}`} className="my-4 py-3 px-4 overflow-x-auto bg-gray-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-purple-400">
               <BlockMath math={latex} />
             </div>
           );
         } catch (e) {
           elements.push(
-            <div key={`block-math-err-${index}`} className="my-4 text-center font-mono text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+            <div key={`block-math-err-${index}`} className="my-4 text-center font-mono text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-red-600 dark:text-red-400 border-l-4 border-red-400">
               <span className="block text-xs mb-1 opacity-70">Math rendering error:</span>
               {latex}
             </div>
@@ -220,12 +251,12 @@ const parseMarkdown = (text, blockMathMap) => {
       flushTable();
     }
     
-    // Headers - ENHANCED: Beautiful, visually appealing headers
+    // Headers - FIXED: Responsive font sizes for mobile
     if (trimmed.startsWith('#### ')) {
       flushList();
       elements.push(
-        <h4 key={`h4-${index}`} className="text-[15px] font-semibold text-gray-700 dark:text-gray-200 mt-5 mb-2 flex items-center gap-2">
-          <span className="w-1 h-4 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></span>
+        <h4 key={`h4-${index}`} className="text-sm sm:text-[15px] font-semibold text-gray-700 dark:text-gray-200 mt-4 sm:mt-5 mb-2 flex items-center gap-2">
+          <span className="w-1 h-3.5 sm:h-4 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></span>
           {renderInline(trimmed.slice(5))}
         </h4>
       );
@@ -235,8 +266,8 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={`h3-${index}`} className="text-[16px] font-semibold text-gray-800 dark:text-white mt-6 mb-3 flex items-center gap-2">
-          <span className="w-1.5 h-5 bg-gradient-to-b from-indigo-400 to-indigo-600 rounded-full"></span>
+        <h3 key={`h3-${index}`} className="text-[15px] sm:text-[16px] font-semibold text-gray-800 dark:text-white mt-5 sm:mt-6 mb-2 sm:mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-4 sm:h-5 bg-gradient-to-b from-indigo-400 to-indigo-600 rounded-full"></span>
           {renderInline(trimmed.slice(4))}
         </h3>
       );
@@ -246,7 +277,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={`h2-${index}`} className="text-[18px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 mt-6 mb-3 pb-2 border-b border-purple-100 dark:border-purple-900/30">
+        <h2 key={`h2-${index}`} className="text-base sm:text-[18px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 mt-5 sm:mt-6 mb-2 sm:mb-3 pb-2 border-b border-purple-100 dark:border-purple-900/30">
           {renderInline(trimmed.slice(3))}
         </h2>
       );
@@ -256,7 +287,7 @@ const parseMarkdown = (text, blockMathMap) => {
     if (trimmed.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={`h1-${index}`} className="text-[20px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-700 dark:from-purple-300 dark:to-indigo-300 mt-6 mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-800">
+        <h1 key={`h1-${index}`} className="text-lg sm:text-[20px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-700 dark:from-purple-300 dark:to-indigo-300 mt-5 sm:mt-6 mb-3 sm:mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-800">
           {renderInline(trimmed.slice(2))}
         </h1>
       );
@@ -286,11 +317,12 @@ const parseMarkdown = (text, blockMathMap) => {
     // Blockquote - ENHANCED: Better visual callout style
     if (trimmed.startsWith('>')) {
       flushList();
-      // Check if it's a special callout type
+      // Check if it's a special callout type - FIXED: Use word boundaries to avoid false matches
       const calloutContent = trimmed.slice(1).trim();
-      const isRemember = calloutContent.toLowerCase().includes('remember') || calloutContent.toLowerCase().includes('key');
-      const isTip = calloutContent.toLowerCase().includes('tip') || calloutContent.toLowerCase().includes('exam');
-      const isWarning = calloutContent.toLowerCase().includes('warning') || calloutContent.toLowerCase().includes('avoid') || calloutContent.toLowerCase().includes('don\'t');
+      const lowerContent = calloutContent.toLowerCase();
+      const isRemember = /\b(remember|key point|important)\b/.test(lowerContent);
+      const isTip = /\b(tip|exam tip|hint|pro tip)\b/.test(lowerContent);
+      const isWarning = /\b(warning|caution|avoid|don't|do not|never)\b/.test(lowerContent);
       
       let borderColor = 'border-purple-400 dark:border-purple-500';
       let bgColor = 'bg-purple-50 dark:bg-purple-900/20';
@@ -328,10 +360,49 @@ const parseMarkdown = (text, blockMathMap) => {
       return;
     }
     
-    // Regular paragraph - IMPROVED: Better font size and line height
+    // Math-first formatting: Check if line contains math formulas
+    const hasBlockMath = trimmed.match(/^\$\$|^\\\[|^\\begin\{(equation|align)/);
+    const hasInlineMath = trimmed.match(/\$[^$]+\$|\\\([^)]+\\\)/);
+    
+    // If line contains block math or starts with formula, render separately
+    if (hasBlockMath || (hasInlineMath && trimmed.length < 100)) {
+      flushList();
+      elements.push(
+        <div key={`math-line-${index}`} className="my-4 py-2 px-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-purple-400">
+          {renderInline(trimmed)}
+        </div>
+      );
+      return;
+    }
+    
+    // Step labels detection - ENHANCED to catch more formats
+    // Matches: "Step 1", "Step 2:", "1.", "1)", "Part A", "Phase 1", etc.
+    const stepMatch = trimmed.match(/^(step\s*\d+[.:]?|step\s*[a-z][.:]?|part\s*[a-z\d][.:]?|phase\s*\d+[.:]?|\d{1,2}[.)]\s+|\([a-z\d]\)\s*)/i);
+    if (stepMatch) {
+      flushList();
+      const stepLabel = stepMatch[0].trim();
+      const stepContent = trimmed.slice(stepMatch[0].length).trim();
+      // Extract step number/letter for badge
+      const stepNum = stepMatch[1]?.match(/\d+/)?.[0] || stepMatch[1]?.match(/[a-z]/i)?.[0] || '';
+      elements.push(
+        <div key={`step-${index}`} className="my-4 flex items-start gap-3">
+          <span className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
+            {stepNum}
+          </span>
+          <div className="flex-1">
+            <p className="text-sm sm:text-[15px] text-gray-700 dark:text-gray-200 mb-2 leading-relaxed sm:leading-[1.75]">
+              {renderInline(stepContent)}
+            </p>
+          </div>
+        </div>
+      );
+      return;
+    }
+    
+    // Regular paragraph - FIXED: Responsive font sizes for mobile
     flushList();
     elements.push(
-      <p key={`p-${index}`} className="text-[15px] text-gray-700 dark:text-gray-200 mb-3.5 leading-[1.75]">
+      <p key={`p-${index}`} className="text-sm sm:text-[15px] text-gray-700 dark:text-gray-200 mb-3 sm:mb-3.5 leading-relaxed sm:leading-[1.75]">
         {renderInline(trimmed)}
       </p>
     );
@@ -413,8 +484,10 @@ const renderInline = (text) => {
     switch (m.type) {
       case 'inline-math':
         try {
+          // FIXED: Reduced visual boxing - formulas should flow naturally in text
+          // Only add subtle spacing, no background/border for inline formulas
           parts.push(
-            <span key={key++} className="mx-0.5">
+            <span key={key++} className="mx-0.5 text-purple-700 dark:text-purple-300 font-medium">
               <InlineMath math={m.content.trim()} />
             </span>
           );
@@ -479,32 +552,71 @@ const renderInline = (text) => {
 
 /**
  * Main AdaptiveMarkdown component
+ * PERFORMANCE OPTIMIZED: Memoized parsing
  */
 const AdaptiveMarkdown = ({ content, className = '', animate = true }) => {
   // CRITICAL: Ensure content is a string, never an object
-  if (!content) return null;
-  
-  // If content is an object, try to extract string from it
-  let contentString = content;
-  if (typeof content === 'object' && !Array.isArray(content)) {
-    // Try common fields
-    contentString = content.text || content.content || content.message || content.mainContent || null;
-    if (!contentString || typeof contentString !== 'string') {
-      console.warn('⚠️ AdaptiveMarkdown: Received object instead of string, cannot render:', content);
-      return null;
+  const contentString = useMemo(() => {
+    if (!content) return null;
+    
+    // If content is an object, try to extract string from it
+    if (typeof content === 'object' && !Array.isArray(content)) {
+      // PRIORITY ORDER for content extraction (handles all AI response formats)
+      const extracted = 
+        // Neuro-symbolic format: {default_view: {main_content: {content: "..."}}}
+        content.default_view?.main_content?.content ||
+        content.default_view?.greeting ||
+        // Response wrapper: {response: {default_view: ...}}
+        content.response?.default_view?.main_content?.content ||
+        content.response?.main_response ||
+        content.response?.content ||
+        content.response?.text ||
+        // Simple formats
+        content.main_response ||
+        content.text || 
+        content.content || 
+        content.message || 
+        content.mainContent ||
+        content.answer ||
+        content.explanation ||
+        // Progressive sections fallback
+        content.progressive_sections?.explanation ||
+        null;
+      
+      if (!extracted || typeof extracted !== 'string') {
+        // Last resort: try to stringify if it's a simple value
+        if (typeof content.response === 'string') {
+          return content.response;
+        }
+        console.warn('⚠️ AdaptiveMarkdown: Could not extract string from object:', Object.keys(content));
+        return null;
+      }
+      return extracted;
+    } else if (typeof content !== 'string') {
+      // Convert to string if possible
+      if (typeof content === 'number' || Array.isArray(content)) {
+        return String(content);
+      } else {
+        console.warn('⚠️ AdaptiveMarkdown: Invalid content type:', typeof content);
+        return null;
+      }
     }
-  } else if (typeof content !== 'string') {
-    // Convert to string if possible
-    if (typeof content === 'number' || Array.isArray(content)) {
-      contentString = String(content);
-    } else {
-      console.warn('⚠️ AdaptiveMarkdown: Invalid content type:', typeof content);
-      return null;
-    }
-  }
+    
+    return content;
+  }, [content]);
   
-  // Pre-process to extract block math
-  const { processedText, blockMathMap } = extractBlockMath(contentString);
+  // PERFORMANCE FIX: Memoize parsing - only re-parse when content changes
+  const parsedContent = useMemo(() => {
+    if (!contentString) return null;
+    
+    // Pre-process to extract block math
+    const { processedText, blockMathMap } = extractBlockMath(contentString);
+    
+    // Parse markdown
+    return parseMarkdown(processedText, blockMathMap);
+  }, [contentString]);
+  
+  if (!parsedContent) return null;
   
   const Container = animate ? motion.div : 'div';
   const animationProps = animate ? {
@@ -514,12 +626,14 @@ const AdaptiveMarkdown = ({ content, className = '', animate = true }) => {
   } : {};
   
   return (
-    <Container
-      className={`adaptive-markdown prose prose-gray dark:prose-invert max-w-none ${className}`}
-      {...animationProps}
-    >
-      {parseMarkdown(processedText, blockMathMap)}
-    </Container>
+    <Suspense fallback={<div className="animate-pulse">Loading...</div>}>
+      <Container
+        className={`adaptive-markdown prose prose-gray dark:prose-invert max-w-none ${className}`}
+        {...animationProps}
+      >
+        {parsedContent}
+      </Container>
+    </Suspense>
   );
 };
 

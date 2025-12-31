@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { LoadingSpinner } from './ui/loading';
+import BrandLogo from './ui/BrandLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LogOut,
@@ -11,7 +12,8 @@ import {
   Brain,
   ChevronDown,
   Settings,
-  Home
+  Home,
+  Sparkles
 } from 'lucide-react';
 
 /**
@@ -49,7 +51,7 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, current: location.pathname === '/dashboard' },
-    { name: 'Ask Sathi', href: '/tutor', icon: Brain, current: location.pathname === '/tutor', badge: 'AI' }
+    { name: 'Ask Sathi', href: '/tutor', icon: Sparkles, current: location.pathname === '/tutor', badge: 'AI' }
   ];
 
   const handleLogout = () => logout();
@@ -95,27 +97,15 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
           border-r border-slate-800/60
           lg:translate-x-0 lg:static lg:inset-0"
       >
-        {/* LOGO */}
+        {/* LOGO — Unified Brand */}
         <div className={`flex-shrink-0 border-b border-slate-800/60 ${isCollapsed ? 'px-4 py-6' : 'px-6 py-6'}`}>
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-4'}`}>
-            {/* Logo Icon */}
-            <div className="relative group cursor-pointer">
-              <div className="absolute inset-0 bg-violet-500 blur-xl opacity-40 group-hover:opacity-70 transition-opacity rounded-2xl" />
-              <div className="relative w-11 h-11 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg border border-white/10">
-                <Brain className="w-6 h-6 text-white" strokeWidth={1.5} />
-              </div>
-            </div>
-            
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <h1 className="text-lg font-bold text-white tracking-tight">
-                  DRON <span className="text-violet-400">AI</span>
-                </h1>
-                <span className="text-[11px] text-slate-500 font-medium">
-                  Your AI Study Partner
-                </span>
-              </div>
-            )}
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+            <BrandLogo 
+              size="md" 
+              variant={isCollapsed ? 'icon' : 'full'}
+              showTagline={!isCollapsed}
+              onClick={() => navigate('/dashboard')}
+            />
           </div>
         </div>
 

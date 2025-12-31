@@ -171,3 +171,6 @@ VNTRs (Variable Number Tandem Repeats) - unique to individuals
 
 
 
+
+
+

@@ -111,49 +111,60 @@ class EnhancedSupervisor(SupervisorAgent):
             # Get subject from context
             subject = context.get('subject', 'General')
             
-            # Step 1: Enhance query with RAG (curriculum grounding)
+            # Step 1: Enhance query with RAG (curriculum grounding) - ALWAYS ATTEMPT
             enhanced_prompt = None
             if self.enable_rag:
-                enhanced_prompt = self.rag.enhance_prompt(
-                    query, 
-                    subject=subject,
-                    include_formulas=True
-                )
-                logger.info(f"📚 RAG: Found {len(enhanced_prompt.sources_used)} curriculum sources")
-                
-                # Update context with curriculum info
-                context['curriculum_context'] = enhanced_prompt.curriculum_context
-                context['available_formulas'] = enhanced_prompt.formulas_available
-            
-            # 🆕 Step 1.5: Hybrid Reasoning (Neural + Symbolic + Graph)
-            hybrid_result = None
-            if self.enable_hybrid_reasoning and self.hybrid_engine:
                 try:
-                    hybrid_result = await self.hybrid_engine.reason(query, context)
-                    logger.info(f"🧠 Hybrid Reasoning: mode={hybrid_result.reasoning_mode.value}, confidence={hybrid_result.confidence:.2f}")
+                    enhanced_prompt = self.rag.enhance_prompt(
+                        query, 
+                        subject=subject,
+                        include_formulas=True
+                    )
+                    logger.info(f"📚 RAG: Found {len(enhanced_prompt.sources_used)} curriculum sources")
                     
-                    # If we have a symbolic proof, inject it into context for agents
-                    if hybrid_result.symbolic_proof:
-                        context['symbolic_solution'] = hybrid_result.symbolic_proof
-                        logger.info("   ├── Symbolic proof available (deterministic)")
-                    
-                    # Inject knowledge graph context
-                    if hybrid_result.graph_context:
-                        gc = hybrid_result.graph_context
-                        context['knowledge_graph'] = {
-                            'concepts': [c.name for c in gc.concepts[:3]],
-                            'prerequisites': [p.name for p in gc.prerequisites[:3]],
-                            'applications': [a.name for a in gc.applications[:3]],
-                            'formulas': gc.related_formulas[:5]
-                        }
-                        logger.info(f"   ├── Knowledge Graph: {len(gc.concepts)} concepts found")
-                    
-                    # Add recommendations for learning path
-                    if hybrid_result.recommendations:
-                        context['learning_recommendations'] = hybrid_result.recommendations
+                    # Update context with curriculum info
+                    context['curriculum_context'] = enhanced_prompt.curriculum_context
+                    context['available_formulas'] = enhanced_prompt.formulas_available
+                except Exception as rag_err:
+                    # Degrade internally - log but continue execution
+                    logger.warning(f"⚠️ RAG enhancement failed (non-critical, continuing): {rag_err}")
+                    # Continue without RAG enhancement
+            
+            # 🆕 Step 1.5: Hybrid Reasoning (Neural + Symbolic + Graph) - ALWAYS ATTEMPT
+            hybrid_result = None
+            # Always attempt hybrid reasoning if enabled (degrade internally on failure)
+            if self.enable_hybrid_reasoning:
+                if self.hybrid_engine:
+                    try:
+                        hybrid_result = await self.hybrid_engine.reason(query, context)
+                        logger.info(f"🧠 Hybrid Reasoning: mode={hybrid_result.reasoning_mode.value}, confidence={hybrid_result.confidence:.2f}")
                         
-                except Exception as e:
-                    logger.warning(f"⚠️ Hybrid reasoning failed (non-critical): {e}")
+                        # If we have a symbolic proof, inject it into context for agents
+                        if hybrid_result.symbolic_proof:
+                            context['symbolic_solution'] = hybrid_result.symbolic_proof
+                            logger.info("   ├── Symbolic proof available (deterministic)")
+                        
+                        # Inject knowledge graph context
+                        if hybrid_result.graph_context:
+                            gc = hybrid_result.graph_context
+                            context['knowledge_graph'] = {
+                                'concepts': [c.name for c in gc.concepts[:3]],
+                                'prerequisites': [p.name for p in gc.prerequisites[:3]],
+                                'applications': [a.name for a in gc.applications[:3]],
+                                'formulas': gc.related_formulas[:5]
+                            }
+                            logger.info(f"   ├── Knowledge Graph: {len(gc.concepts)} concepts found")
+                        
+                        # Add recommendations for learning path
+                        if hybrid_result.recommendations:
+                            context['learning_recommendations'] = hybrid_result.recommendations
+                            
+                    except Exception as e:
+                        # Degrade internally - log but continue execution
+                        logger.warning(f"⚠️ Hybrid reasoning failed (non-critical, continuing): {e}")
+                else:
+                    # Hybrid engine unavailable - log but continue
+                    logger.debug("⚠️ Hybrid engine unavailable (non-critical, continuing)")
             
             # ================================================================
             # Step 1.6: PRE-GENERATION FORMULA CONSTRAINT INJECTION

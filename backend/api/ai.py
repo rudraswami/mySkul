@@ -160,49 +160,32 @@ def analyze_query_complexity(query: str, semantic_analysis: dict = None) -> str:
 
 def get_appropriate_supervisor(query: str, config: dict, semantic_analysis: dict = None) -> SupervisorAgent:
     """
-    COGNITO-OS v4.0 - Intelligent supervisor selection based on query complexity
+    COGNITO-OS v4.0 - ALWAYS-ON Intelligence for Educational Queries
     
-    UPGRADED: Now accepts semantic_analysis for more accurate routing.
+    CHANGED: Always returns EnhancedSupervisor for educational queries.
+    All intelligence features (RAG, Hybrid Reasoning, Verification) are ALWAYS-ON.
+    Failures degrade internally, never skip execution.
     
     Routing Strategy:
-    - simple → SupervisorAgent (fast mode, <500ms)
-    - standard → EnhancedSupervisor (RAG + math verify)
-    - complex → EnhancedSupervisor (full verify + knowledge graph + hybrid reasoning)
+    - ALL educational queries → EnhancedSupervisor (RAG + Verification + Hybrid Reasoning)
+    - Only falls back to SupervisorAgent if EnhancedSupervisor unavailable
     """
-    complexity = analyze_query_complexity(query, semantic_analysis)
-    logger.info(f"🎯 Query complexity: {complexity}")
-    
-    if complexity == "simple":
-        # Fast mode - just SupervisorAgent
-        return SupervisorAgent(config=config)
-    
-    elif complexity == "standard" and ENHANCED_SUPERVISOR_AVAILABLE:
-        # Standard mode - RAG + light verification
+    if ENHANCED_SUPERVISOR_AVAILABLE:
+        # ALWAYS use EnhancedSupervisor with full capabilities for educational queries
         supervisor = EnhancedSupervisor(config=config)
-        supervisor.configure(
-            enable_rag=True,
-            verify_math=True,
-            verify_facts=False,  # Skip for speed
-            verify_logic=False,
-            enable_hybrid_reasoning=False  # Skip for speed
-        )
-        logger.info("🔧 Using EnhancedSupervisor (standard mode)")
-        return supervisor
-    
-    elif complexity == "complex" and ENHANCED_SUPERVISOR_AVAILABLE:
-        # Full mode - complete verification + knowledge graph + hybrid reasoning
-        supervisor = EnhancedSupervisor(config=config)
+        # Configure with ALL features enabled (RAG, Verification, Hybrid Reasoning)
         supervisor.configure(
             enable_rag=True,
             verify_math=True,
             verify_facts=True,
             verify_logic=True,
-            enable_hybrid_reasoning=True  # 🆕 Enable Neural + Symbolic + Graph for complex queries
+            enable_hybrid_reasoning=True  # Always attempt hybrid reasoning
         )
-        logger.info("🔧 Using EnhancedSupervisor (full verification + hybrid reasoning mode)")
+        logger.info("🚀 Using EnhancedSupervisor (ALWAYS-ON: RAG + Verification + Hybrid Reasoning)")
         return supervisor
     
-    # Fallback to standard SupervisorAgent
+    # Fallback ONLY if EnhancedSupervisor unavailable (should not happen in production)
+    logger.warning("⚠️ EnhancedSupervisor unavailable, falling back to SupervisorAgent")
     return SupervisorAgent(config=config)
 
 
@@ -2007,10 +1990,11 @@ You MUST reference specific content from the image in your response."""
                     "user_id": user.user_id,
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
                     "request_visual": True,  # Always request visual for neuro-symbolic
-                    # 🆕 Enable agent negotiation for standard+ complexity (not just complex)
+                    # ALWAYS-ON: Agent negotiation enabled for ALL educational queries
                     # This is what makes us different from chatbots - agents actually collaborate
-                    "use_agent_negotiation": query_complexity in ["standard", "complex"],
-                    "enable_agent_negotiation": query_complexity in ["standard", "complex"],
+                    # Failures degrade internally, never skip execution
+                    "use_agent_negotiation": True,
+                    "enable_agent_negotiation": True,
                     "query_complexity": query_complexity,
                     "student_profile": {
                         "name": user_name,  # Personalized!
@@ -2034,14 +2018,16 @@ You MUST reference specific content from the image in your response."""
                 logger.info(f"🧠 Memory context prepared: {len(recent_context)} recent, {len(relevant_memories)} relevant, continuity={continuity.get('is_continuation')}")
                 
                 # ================================================================
-                # FIX 1: Route to run_enhanced() when available
-                # This enables RAG, verification, and hybrid reasoning
+                # ALWAYS-ON: run_enhanced() is default for ALL educational queries
+                # This ensures RAG, verification, and hybrid reasoning always execute
+                # Failures degrade internally within run_enhanced(), never skip execution
                 # ================================================================
-                if hasattr(supervisor, 'run_enhanced'):
-                    logger.info("🚀 Using EnhancedSupervisor.run_enhanced() with RAG + Verification + Hybrid Reasoning")
+                if isinstance(supervisor, EnhancedSupervisor):
+                    logger.info("🚀 Using EnhancedSupervisor.run_enhanced() (ALWAYS-ON: RAG + Verification + Hybrid Reasoning)")
                     agentic_response = await supervisor.run_enhanced(contextual_message, agentic_context)
                 else:
-                    logger.info("📦 Using standard Supervisor.run()")
+                    # Fallback ONLY if supervisor is not EnhancedSupervisor (should not happen)
+                    logger.warning("⚠️ Supervisor is not EnhancedSupervisor, using standard run()")
                     agentic_response = await supervisor.run(contextual_message, agentic_context)
                 
                 # Build visual scene if present

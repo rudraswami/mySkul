@@ -29,7 +29,7 @@ import ToastRenderer from './components/ToastRenderer';
 // Lazy loaded components (code splitting for better initial load)
 const PremiumDashboard = lazy(() => import('./components/dashboard/PremiumDashboard'));
 const AITutor = lazy(() => import('./components/AITutorNeuroSymbolic')); // Neuro-Symbolic v3.0 - lazy load
-const StudyPlanner = lazy(() => import('./components/StudyPlanner')); // AI Study Planner
+const StudyPlanner = lazy(() => import('./components/dashboard/StudyPlanner')); // AI Study Planner (Dashboard Version - Dark Theme)
 const MockTests = lazy(() => import('./components/MockTests'));
 const AutoNoteMentor = lazy(() => import('./components/AutoNoteMentor'));
 const Subscription = lazy(() => import('./components/Subscription'));
@@ -55,13 +55,14 @@ import { initializeAlerts, replaceGlobalAlert } from './utils/modernAlerts';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Create React Query client with optimized config for low-connectivity students
+// PERFORMANCE OPTIMIZED: Longer cache times, fewer refetches
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2, // Retry failed requests twice
-      staleTime: 3 * 60 * 1000, // 3 minutes - data considered fresh
-      cacheTime: 10 * 60 * 1000, // 10 minutes - keep in cache
-      refetchOnWindowFocus: true, // Refetch when user returns to tab
+      staleTime: 15 * 60 * 1000, // 15 minutes - data considered fresh (increased from 3)
+      cacheTime: 60 * 60 * 1000, // 1 hour - keep in cache (increased from 10)
+      refetchOnWindowFocus: false, // Don't refetch on focus (reduced unnecessary calls)
       refetchOnReconnect: true, // Refetch when network reconnects
       refetchOnMount: false, // Don't refetch on component mount if data is fresh
     },

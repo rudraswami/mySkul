@@ -341,8 +341,10 @@ export default function AITutorNeuroSymbolic() {
       searchInput?.focus();
     },
     onStopGeneration: () => {
-      // TODO: Implement stop generation if streaming is active
-      console.log('Stop generation triggered');
+      // Stop generation if streaming is active
+      if (loading && apiAbortControllerRef.current) {
+        handleStopGeneration();
+      }
     },
     onEscape: () => {
       setShowUpgradeModal(false);
@@ -355,6 +357,9 @@ export default function AITutorNeuroSymbolic() {
   
   // Visual polling abort controller ref
   const visualPollingAbortRef = useRef(null);
+  
+  // Main API request abort controller ref (for Stop button)
+  const apiAbortControllerRef = useRef(null);
   const [isGeneratingVisual, setIsGeneratingVisual] = useState(false);
   
   useEffect(() => {
@@ -553,55 +558,92 @@ export default function AITutorNeuroSymbolic() {
   }, []);
   const [loading, setLoading] = useState(false);
   
-  // 🎙️ VOICE INPUT INTEGRATION
+  // 🎙️ VOICE INPUT INTEGRATION (ENHANCED)
+  // Now includes: multi-language, audio feedback, confidence tracking, auto-retry
   const {
     isListening,
     transcript,
+    interimTranscript,
     error: voiceError,
     isSupported: isVoiceSupported,
     startListening,
     stopListening,
     toggleListening,
     clearTranscript,
-    clearError: clearVoiceError
-  } = useVoiceInput();
+    clearError: clearVoiceError,
+    // New features from enhanced hook
+    language: voiceLanguage,
+    supportedLanguages,
+    changeLanguage,
+    audioLevel,
+    isLowVolume,
+    confidence: voiceConfidence,
+    getConfidenceStatus,
+  } = useVoiceInput({ language: 'en-IN' }); // Default to Indian English
   
   // AUTO-POPULATE: Update input when voice transcript changes
   useEffect(() => {
     if (transcript && transcript.trim()) {
-      console.log('🎙️ Voice transcript updated:', transcript);
+      console.log('🎙️ Voice transcript updated:', transcript.substring(0, 50));
       setInputMessage(transcript);
     }
   }, [transcript]);
   
-  // VOICE ERROR HANDLING: Show toast when voice error occurs
+  // VOICE ERROR HANDLING: Show toast when voice error occurs (with auto-recovery message)
   useEffect(() => {
     if (voiceError) {
-      toastError('Voice Input Error', voiceError);
+      // Don't show toast for auto-retry messages
+      if (voiceError.includes('Retrying')) {
+        console.log('🔄 Voice auto-retrying...');
+        return;
+      }
+      toastError('Voice Input', voiceError);
       // Auto-clear error after showing
-      setTimeout(() => clearVoiceError(), 3000);
+      setTimeout(() => clearVoiceError(), 4000);
     }
   }, [voiceError, toastError, clearVoiceError]);
   
-  // 🎙️ Voice Input Handlers
+  // LOW VOLUME WARNING: Alert user when mic level is too low
+  useEffect(() => {
+    if (isLowVolume && isListening) {
+      // Only show once per listening session
+      const key = 'lowVolumeWarned';
+      if (!sessionStorage.getItem(key)) {
+        toastError('Low Volume', 'Speak louder or move closer to your microphone');
+        sessionStorage.setItem(key, 'true');
+      }
+    } else if (!isListening) {
+      sessionStorage.removeItem('lowVolumeWarned');
+    }
+  }, [isLowVolume, isListening, toastError]);
+  
+  // 🎙️ Voice Input Handlers (Enhanced)
   const handleVoiceToggle = useCallback(() => {
     if (!isVoiceSupported) {
-      toastError('Not Supported', 'Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      toastError('Not Supported', 'Voice input requires Chrome, Edge, or Safari. You can still type your question!');
       return;
     }
     
     if (isListening) {
       console.log('🎙️ User clicked stop');
       stopListening();
-      // Keep the transcript in the input field
+      // Final transcript already applied via useEffect
+      toastSuccess('Voice Captured', 'Your message is ready to send');
     } else {
       // Clear previous transcript before starting
-      console.log('🎙️ User clicked start - clearing previous transcript');
+      console.log('🎙️ User clicked start');
       clearTranscript();
       startListening();
-      toastSuccess('Listening...', 'Speak now! 🎤');
+      toastSuccess('Listening...', `Speak now in ${supportedLanguages[voiceLanguage]?.name || 'English'} 🎤`);
     }
-  }, [isVoiceSupported, isListening, stopListening, startListening, clearTranscript, toastSuccess, toastError]);
+  }, [isVoiceSupported, isListening, stopListening, startListening, clearTranscript, 
+      toastSuccess, toastError, voiceLanguage, supportedLanguages]);
+  
+  // 🌐 Language Change Handler
+  const handleVoiceLanguageChange = useCallback((newLang) => {
+    changeLanguage(newLang);
+    toastSuccess('Language Changed', `Voice input set to ${supportedLanguages[newLang]?.name}`);
+  }, [changeLanguage, supportedLanguages, toastSuccess]);
   
   // DEBUG: Track inputMessage changes (REDUCED LOGGING)
   useEffect(() => {
@@ -1182,15 +1224,19 @@ export default function AITutorNeuroSymbolic() {
         
         setMessages(prev => [...prev, streamingAiMsg]);
         
+        // Create AbortController for this request (allows Stop button to cancel)
+        apiAbortControllerRef.current = new AbortController();
+        
         try {
-          // Use streaming endpoint
+          // Use streaming endpoint with abort signal
           const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic/stream`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
+            signal: apiAbortControllerRef.current.signal
           });
           
           if (!response.ok) {
@@ -1203,6 +1249,10 @@ export default function AITutorNeuroSymbolic() {
           let finalResponse = null;
           
           while (true) {
+            // Check if aborted before reading
+            if (apiAbortControllerRef.current?.signal?.aborted) {
+              break;
+            }
             const { done, value } = await reader.read();
             if (done) break;
             
@@ -1280,21 +1330,23 @@ export default function AITutorNeuroSymbolic() {
             ));
           } else if (accumulatedText.length > 0) {
             // Fallback - use accumulated text
-            data = { 
-              response: { 
-                default_view: { 
-                  main_content: { content: accumulatedText },
-                  greeting: '',
-                  metaphor: { text: '' }
-                },
-                progressive_sections: {}
-              } 
+            // CRITICAL FIX: Properly structure the content with accumulated text
+            const fallbackContent = {
+              default_view: { 
+                main_content: { content: accumulatedText },
+                greeting: '',
+                metaphor: { text: '' }
+              },
+              progressive_sections: {}
             };
+            data = { response: fallbackContent };
             streamingHandledFlag = true; // Mark as handled
+            // FIX: Update BOTH content AND isStreaming flag
             setMessages(prev => prev.map(msg => 
               msg.message_id === streamingMsgId 
                 ? { 
-                    ...msg, 
+                    ...msg,
+                    content: fallbackContent, // ✅ Now properly sets content
                     isStreaming: false,
                     user_question: messageToSend
                   }
@@ -1303,6 +1355,19 @@ export default function AITutorNeuroSymbolic() {
           }
           
         } catch (streamError) {
+          // Handle abort gracefully (user clicked Stop)
+          if (streamError.name === 'AbortError' || apiAbortControllerRef.current?.signal?.aborted) {
+            console.log('🛑 User stopped generation');
+            // Remove streaming message
+            setMessages(prev => prev.filter(msg => msg.message_id !== streamingMsgId));
+            setLoading(false);
+            setIsGeneratingVisual(false);
+            // Cancel visual polling if active
+            if (visualPollingAbortRef.current) {
+              visualPollingAbortRef.current.abort();
+            }
+            return; // Exit early - don't fall back to regular endpoint
+          }
           console.warn('⚠️ Streaming failed, falling back to regular endpoint:', streamError);
           // Remove streaming message
           setMessages(prev => prev.filter(msg => msg.message_id !== streamingMsgId));
@@ -1312,13 +1377,24 @@ export default function AITutorNeuroSymbolic() {
       
       // Fallback to non-streaming endpoint if streaming failed or disabled
       if (!data) {
+        // Check if aborted before making fallback request
+        if (apiAbortControllerRef.current?.signal?.aborted) {
+          setLoading(false);
+          setIsGeneratingVisual(false);
+          return;
+        }
+        
+        // Create new AbortController for fallback request
+        apiAbortControllerRef.current = new AbortController();
+        
         const response = await fetch(`${BACKEND_URL}/api/ai/neuro-symbolic`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
+          signal: apiAbortControllerRef.current.signal
         });
 
         if (!response.ok) {
@@ -1571,10 +1647,50 @@ export default function AITutorNeuroSymbolic() {
       
       // 🎨 Stop visual loading on error
       setIsGeneratingVisual(false);
+      
+      // Handle abort errors gracefully (user clicked Stop)
+      if (error.name === 'AbortError' || apiAbortControllerRef.current?.signal?.aborted) {
+        console.log('🛑 Request cancelled by user');
+        // Cancel visual polling if active
+        if (visualPollingAbortRef.current) {
+          visualPollingAbortRef.current.abort();
+        }
+      }
     } finally {
       setLoading(false);
+      // Clear abort controller ref
+      apiAbortControllerRef.current = null;
     }
   };
+  
+  // Stop generation handler
+  const handleStopGeneration = useCallback(() => {
+    console.log('🛑 Stop generation clicked');
+    
+    // Abort streaming response
+    if (apiAbortControllerRef.current) {
+      apiAbortControllerRef.current.abort();
+    }
+    
+    // Cancel visual polling
+    if (visualPollingAbortRef.current) {
+      visualPollingAbortRef.current.abort();
+    }
+    
+    // Clear loading states
+    setLoading(false);
+    setIsGeneratingVisual(false);
+    
+    // Clear floating follow-ups (prevent auto follow-ups)
+    setFloatingFollowUps([]);
+    
+    // Focus input after stop (cursor focus returns)
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+    
+    // Input text is NEVER cleared - preserved automatically by state
+  }, []);
 
   // Handle image upload
   const handleImageSelect = (event) => {
@@ -2026,7 +2142,7 @@ export default function AITutorNeuroSymbolic() {
           }}
           isLoadingHistory={sessionsLoading}
           visualArtifact={visualArtifact}
-          headerTitle="AI Sathi"
+          headerTitle="Sathi"
           headerRightActions={headerRightActions}
           hasStartedChat={messages.length > 0}
           isGeneratingVisual={isGeneratingVisual}
@@ -2086,14 +2202,16 @@ export default function AITutorNeuroSymbolic() {
                         )}
                         
                         {message.type === 'ai' && (() => {
-                          // BUGFIX: Skip streaming placeholders - thinking indicator handles this
-                          // This prevents duplicate icons during loading
+                          // PRODUCTION FIX: Single loading indicator strategy
+                          // The "Thinking..." indicator (below) handles the loading state
+                          // This prevents duplicate loading UIs
                           if (message.isStreaming) {
                             const hasRealContent = 
                               message.content?.default_view?.main_content?.content?.trim?.()?.length > 0 ||
                               message.content?.default_view?.greeting?.trim?.()?.length > 0 ||
                               (typeof message.content?.default_view?.main_content === 'string' && 
                                message.content.default_view.main_content.trim().length > 0);
+                            // No content yet = don't render, let "Thinking..." indicator handle this phase
                             if (!hasRealContent) return null;
                           }
                           
@@ -2110,6 +2228,7 @@ export default function AITutorNeuroSymbolic() {
                                   visualSketch={message.visual_sketch || message.content?.visual_sketch}
                                   question={message.user_question || ''}
                                   onFollowUp={(q) => { setInputMessage(q); inputRef.current?.focus(); }}
+                                  isStreaming={message.isStreaming}
                                 />
                               </div>
                             </div>
@@ -2119,7 +2238,7 @@ export default function AITutorNeuroSymbolic() {
                         {message.type === 'error' && (
                           <div className="flex justify-center mb-4">
                             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 max-w-md">
-                              <p className="text-sm">{message.content}</p>
+                              <p className="text-sm">{typeof message.content === 'string' ? message.content : 'An error occurred'}</p>
                               {message.canRetry && (
                                 <button onClick={() => handleRetry(message)} className="mt-2 text-sm text-red-600 hover:underline">
                                   Retry
@@ -2133,7 +2252,7 @@ export default function AITutorNeuroSymbolic() {
                   </AnimatePresence>
                 </div>
               
-                {/* Loading Indicator - Clean */}
+                {/* Loading Indicator - Production Quality */}
                 {loading && (
                   <div className="flex gap-3 mb-6 sathi-ai-message-row">
                     <div className="sathi-ai-avatar-left sathi-avatar-thinking">
@@ -2142,7 +2261,7 @@ export default function AITutorNeuroSymbolic() {
                     <div className="sathi-thinking-indicator">
                       <span className="sathi-thinking-text">Thinking</span>
                       <span className="sathi-thinking-dots">
-                        <span>.</span><span>.</span><span>.</span>
+                        <span></span><span></span><span></span>
                       </span>
                     </div>
                   </div>
@@ -2194,7 +2313,14 @@ export default function AITutorNeuroSymbolic() {
               
               {/* Input Form - Premium styling when in chat */}
               <form 
-                onSubmit={(e) => { e.preventDefault(); handleSend(); }} 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  if (loading) {
+                    handleStopGeneration();
+                  } else {
+                    handleSend();
+                  }
+                }} 
                 className={messages.length > 0 ? 'sathi-chat-input-form' : ''}
                 onClick={(e) => {
                   // Make entire input area clickable to focus textarea
@@ -2210,54 +2336,95 @@ export default function AITutorNeuroSymbolic() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50">
                       <ImageIcon className="w-5 h-5" />
                     </button>
-                    {/* 🎙️ VOICE INPUT BUTTON - Welcome State */}
-                    <motion.button
-                      type="button"
-                      onClick={handleVoiceToggle}
-                      disabled={loading || !isVoiceSupported}
-                      whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
-                      whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
-                      className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                        isListening 
-                          ? 'bg-red-100 text-red-600' 
-                          : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'
-                      }`}
-                      title={!isVoiceSupported ? 'Voice input not supported' : isListening ? 'Stop listening' : 'Voice input'}
-                    >
-                      {isListening ? (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.5 }}
+                    {/* 🎙️ VOICE INPUT BUTTON - Welcome State (Enhanced with audio level) */}
+                    <div className="relative">
+                      <motion.button
+                        type="button"
+                        onClick={handleVoiceToggle}
+                        disabled={loading || !isVoiceSupported}
+                        whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
+                        whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
+                        className={`p-2 rounded-lg transition-colors disabled:opacity-50 relative ${
+                          isListening 
+                            ? 'bg-red-100 text-red-600' 
+                            : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'
+                        }`}
+                        title={!isVoiceSupported 
+                          ? 'Voice input requires Chrome, Edge, or Safari' 
+                          : isListening 
+                            ? `Listening... (${supportedLanguages[voiceLanguage]?.name || 'English'})` 
+                            : 'Voice input'
+                        }
+                      >
+                        {isListening ? (
+                          <>
+                            {/* Audio Level Ring */}
+                            <motion.div
+                              className="absolute inset-0 rounded-lg border-2 border-red-400"
+                              animate={{ 
+                                scale: [1, 1 + (audioLevel / 100) * 0.3, 1],
+                                opacity: [0.5, 0.8, 0.5]
+                              }}
+                              transition={{ repeat: Infinity, duration: 0.5 }}
+                            />
+                            <motion.div
+                              animate={{ scale: [1, 1.15, 1] }}
+                              transition={{ repeat: Infinity, duration: 1.2 }}
+                            >
+                              <Mic className="w-5 h-5 relative z-10" />
+                            </motion.div>
+                          </>
+                        ) : (
+                          isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />
+                        )}
+                      </motion.button>
+                      {/* Low volume indicator */}
+                      {isListening && isLowVolume && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute -top-8 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded whitespace-nowrap"
                         >
-                          <Mic className="w-5 h-5" />
+                          Speak louder
                         </motion.div>
-                      ) : (
-                        isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />
                       )}
-                    </motion.button>
+                    </div>
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                      onKeyDown={(e) => { 
+                        if (e.key === 'Enter' && !e.shiftKey) { 
+                          e.preventDefault(); 
+                          if (loading) {
+                            handleStopGeneration();
+                          } else {
+                            handleSend();
+                          }
+                        } 
+                      }}
                       placeholder="Ask anything... I'll explain like a friend 💪"
                       className="flex-1 px-2 py-2 bg-transparent border-0 focus:ring-0 outline-none resize-none text-gray-800 placeholder-gray-400 text-sm leading-relaxed"
                       rows={1}
-                      disabled={loading}
+                      disabled={false}
                       style={{ minHeight: '38px', maxHeight: '120px' }}
                     />
                     <motion.button
-                      type="submit"
-                      disabled={(!inputMessage.trim() && !selectedImage) || loading}
+                      type={loading ? "button" : "submit"}
+                      onClick={loading ? handleStopGeneration : undefined}
+                      disabled={!loading && (!inputMessage.trim() && !selectedImage)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                        inputMessage.trim() || selectedImage
+                        loading
+                          ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm'
+                          : (inputMessage.trim() || selectedImage)
                           ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
                           : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       }`}
+                      title={loading ? "Stop generation" : "Send message"}
                     >
-                      {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {loading ? <X className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                     </motion.button>
                   </div>
                 ) : (
@@ -2266,47 +2433,105 @@ export default function AITutorNeuroSymbolic() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading} className="sathi-chat-attach-btn">
                       <ImageIcon className="w-5 h-5" />
                     </button>
-                    {/* 🎙️ VOICE INPUT BUTTON */}
-                    <motion.button
-                      type="button"
-                      onClick={handleVoiceToggle}
-                      disabled={loading || !isVoiceSupported}
-                      whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
-                      whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
-                      className={`sathi-chat-attach-btn ${isListening ? 'sathi-voice-listening' : ''}`}
-                      title={!isVoiceSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop listening (click or just stop speaking)' : 'Voice input'}
-                    >
-                      {isListening ? (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.5 }}
+                    {/* 🎙️ VOICE INPUT BUTTON (Enhanced with audio level & language) */}
+                    <div className="relative">
+                      <motion.button
+                        type="button"
+                        onClick={handleVoiceToggle}
+                        disabled={loading || !isVoiceSupported}
+                        whileHover={isVoiceSupported ? { scale: 1.05 } : {}}
+                        whileTap={isVoiceSupported ? { scale: 0.95 } : {}}
+                        className={`sathi-chat-attach-btn relative ${isListening ? 'sathi-voice-listening' : ''}`}
+                        title={!isVoiceSupported 
+                          ? 'Voice input requires Chrome, Edge, or Safari' 
+                          : isListening 
+                            ? `Listening in ${supportedLanguages[voiceLanguage]?.name || 'English'}... Click to stop` 
+                            : `Voice input (${supportedLanguages[voiceLanguage]?.flag || '🎤'})`
+                        }
+                      >
+                        {isListening ? (
+                          <>
+                            {/* Animated audio level ring */}
+                            <motion.div
+                              className="absolute inset-0 rounded-xl"
+                              style={{
+                                background: `radial-gradient(circle, rgba(239,68,68,${audioLevel/200}) 0%, transparent 70%)`
+                              }}
+                              animate={{ 
+                                scale: [1, 1 + (audioLevel / 150), 1],
+                              }}
+                              transition={{ repeat: Infinity, duration: 0.3 }}
+                            />
+                            <motion.div
+                              animate={{ scale: [1, 1.15, 1] }}
+                              transition={{ repeat: Infinity, duration: 1.2 }}
+                              className="relative z-10"
+                            >
+                              <Mic className="w-5 h-5" />
+                            </motion.div>
+                          </>
+                        ) : (
+                          isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-40" />
+                        )}
+                      </motion.button>
+                      {/* Low volume warning tooltip */}
+                      {isListening && isLowVolume && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="absolute -top-10 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap shadow-lg z-20"
                         >
-                          <Mic className="w-5 h-5" />
+                          📢 Speak louder
                         </motion.div>
-                      ) : (
-                        isVoiceSupported ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-40" />
                       )}
-                    </motion.button>
+                      {/* Interim transcript preview */}
+                      {isListening && interimTranscript && (
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 0.7 }}
+                          className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded-lg whitespace-nowrap max-w-[200px] truncate shadow-lg z-20"
+                        >
+                          {interimTranscript.substring(0, 30)}...
+                        </motion.div>
+                      )}
+                    </div>
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                      onKeyDown={(e) => { 
+                        if (e.key === 'Enter' && !e.shiftKey) { 
+                          e.preventDefault(); 
+                          if (loading) {
+                            handleStopGeneration();
+                          } else {
+                            handleSend();
+                          }
+                        } 
+                      }}
                       placeholder="Ask a follow-up... I'm still here 💪"
                       className="sathi-chat-textarea"
                       rows={1}
-                      disabled={loading}
+                      disabled={false}
                       style={{ minHeight: '44px', maxHeight: '120px' }}
                       onClick={(e) => e.currentTarget.focus()}
                     />
                     <motion.button
-                      type="submit"
-                      disabled={(!inputMessage.trim() && !selectedImage) || loading}
+                      type={loading ? "button" : "submit"}
+                      onClick={loading ? handleStopGeneration : undefined}
+                      disabled={!loading && (!inputMessage.trim() && !selectedImage)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`sathi-chat-send-btn ${(!inputMessage.trim() && !selectedImage) || loading ? 'opacity-40' : ''}`}
+                      className={`sathi-chat-send-btn ${
+                        loading
+                          ? 'bg-red-500 hover:bg-red-600 text-white'
+                          : (!inputMessage.trim() && !selectedImage)
+                          ? 'opacity-40'
+                          : ''
+                      }`}
+                      title={loading ? "Stop generation" : "Send message"}
                     >
-                      {loading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {loading ? <X className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                     </motion.button>
                   </>
                 )}
@@ -3269,13 +3494,17 @@ export default function AITutorNeuroSymbolic() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSend();
+                      if (loading) {
+                        handleStopGeneration();
+                      } else {
+                        handleSend();
+                      }
                     }
                   }}
                   placeholder="Ask anything... I'll explain like a friend 💪"
                   className="flex-1 px-3 py-2.5 bg-transparent border-0 focus:ring-0 outline-none resize-none text-slate-800 dark:text-gray-100 placeholder-slate-400 dark:placeholder-gray-500 text-sm leading-relaxed max-h-[120px] font-medium"
                   rows="1"
-                  disabled={loading}
+                  disabled={false}
                   style={{ 
                     minHeight: '44px',
                     height: 'auto',
@@ -3285,38 +3514,23 @@ export default function AITutorNeuroSymbolic() {
 
                 {/* Dynamic Send/Stop Button */}
                 <div className="flex-shrink-0">
-                  {loading ? (
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setLoading(false);
-                        toastSuccess('Stopped');
-                      }}
-                      className="w-9 h-9 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all flex items-center justify-center"
-                      title="Stop generating"
-                    >
-                      <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                        <rect x="6" y="6" width="12" height="12" rx="2" />
-                      </svg>
-                    </motion.button>
-                  ) : (
-                    <motion.button
-                      type="submit"
-                      disabled={!inputMessage.trim() && !selectedImage}
-                      whileHover={{ scale: inputMessage.trim() || selectedImage ? 1.05 : 1 }}
-                      whileTap={{ scale: inputMessage.trim() || selectedImage ? 0.95 : 1 }}
-                      className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
-                        inputMessage.trim() || selectedImage
-                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      }`}
-                      title="Send message"
-                    >
-                      <Send className="h-4 w-4" />
-                    </motion.button>
-                  )}
+                  <motion.button
+                    type={loading ? "button" : "submit"}
+                    onClick={loading ? handleStopGeneration : undefined}
+                    disabled={!loading && (!inputMessage.trim() && !selectedImage)}
+                    whileHover={{ scale: (!loading && (inputMessage.trim() || selectedImage)) ? 1.05 : 1.02 }}
+                    whileTap={{ scale: (!loading && (inputMessage.trim() || selectedImage)) ? 0.95 : 0.98 }}
+                    className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                      loading
+                        ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
+                        : (inputMessage.trim() || selectedImage)
+                        ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    title={loading ? "Stop generating" : "Send message"}
+                  >
+                    {loading ? <X className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                  </motion.button>
                 </div>
               </div>
               

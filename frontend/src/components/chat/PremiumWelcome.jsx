@@ -542,18 +542,24 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
   const [activeMode, setActiveMode] = useState('conceptual');
   const [inputValue, setInputValue] = useState('');
   
-  // 🎙️ VOICE INPUT INTEGRATION
+  // 🎙️ VOICE INPUT INTEGRATION (Enhanced)
   const {
     isListening,
     transcript,
+    interimTranscript,
     error: voiceError,
     isSupported: isVoiceSupported,
     startListening,
     stopListening,
     toggleListening,
     clearTranscript,
-    clearError: clearVoiceError
-  } = useVoiceInput();
+    clearError: clearVoiceError,
+    // Enhanced features
+    audioLevel,
+    isLowVolume,
+    voiceLanguage,
+    supportedLanguages,
+  } = useVoiceInput({ language: 'en-IN' }); // Default to Indian English
   
   // AUTO-POPULATE: Update input when voice transcript changes
   useEffect(() => {
@@ -562,10 +568,10 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
     }
   }, [transcript]);
   
-  // 🎙️ Voice Input Handler
+  // 🎙️ Voice Input Handler (Enhanced)
   const handleVoiceToggle = useCallback(() => {
     if (!isVoiceSupported) {
-      console.warn('Voice input not supported in this browser');
+      console.warn('Voice input requires Chrome, Edge, or Safari');
       return;
     }
     

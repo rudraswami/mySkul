@@ -29,6 +29,7 @@ Author: Druv AI Engineering
 import logging
 import uuid
 import asyncio
+import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
@@ -459,84 +460,86 @@ class ContextPackBuilder:
         
         try:
             # ============================================================
-            # STEP 1: CONVERSATION STATE (CORE - must complete)
+            # SIMPLIFIED MEMORY LOADING - PRODUCTION GRADE
             # ============================================================
-            try:
-                conversation_state = await asyncio.wait_for(
-                    self.state_manager.get_state(user_id, session_id),
-                    timeout=5.0
-                )
-                
-                pack.conversation_phase = conversation_state.get('conversation_phase', 'active')
-                pack.pending_action = conversation_state.get('pending_action')
-                pack.response_mode = conversation_state.get('response_mode', 'mentor')
-                pack.emotional_signal = conversation_state.get('emotional_signal', 'neutral')
-                
-                # Check first turn
-                is_first = await asyncio.wait_for(
-                    self.state_manager.is_truly_first_turn(user_id, session_id),
-                    timeout=2.0
-                )
-                pack.is_first_turn = is_first
-                
-                loaded_components.append("state")
-                logger.debug(f"   ✓ State loaded: phase={pack.conversation_phase}")
-            except asyncio.TimeoutError:
-                logger.warning(f"⚠️ State load timeout | request_id={request_id}")
-            except Exception as e:
-                logger.warning(f"⚠️ State load failed: {e}")
+            # Single-level parallelism with individual timeouts
+            # Each component has 1s timeout - fast fail, fast fallback
+            # Total time: max(all) ≤ 1.5s (not cumulative)
+            # ============================================================
             
-            # ============================================================
-            # STEP 2: MESSAGE HISTORY (Last N messages)
-            # ============================================================
-            if message_history:
-                # Use provided history
-                pack.last_n_messages = message_history[-5:]
-                loaded_components.append("messages_provided")
-            else:
-                # Fetch from memory service
+            async def load_conversation_state():
+                """Load conversation state - 1s timeout"""
                 try:
-                    if self.memory_integration:
-                        # Increased timeout from 5s to 8s - memory is critical for personalization
-                        # Memory integration now uses parallel fetching, so this should be faster
-                        context = await asyncio.wait_for(
-                            self.memory_integration.get_enhanced_context(
-                                user_id=user_id,
-                                session_id=session_id,
-                                question=message,
-                                subject=subject
-                            ),
-                            timeout=8.0
-                        )
-                        
-                        recent = context.get('recent_context', {})
-                        if isinstance(recent, dict):
-                            pack.last_n_messages = recent.get('messages', [])[-5:]
-                        elif isinstance(recent, list):
-                            pack.last_n_messages = recent[-5:]
-                        
-                        # Get additional context from memory
-                        pack.current_topic = context.get('current_topic', '')
-                        
-                        # Get previous topic with fallback chain
-                        continuity = context.get('continuity', {})
-                        pack.previous_topic = (
-                            continuity.get('previous_topic', '') or  # From continuity
-                            continuity.get('last_topic', '') or      # Alternative key
-                            context.get('weak_topics', [''])[0]      # Fallback to first weak topic
-                        )
-                        pack.is_continuation = context.get('is_continuation', False)
-                        pack.student_name = context.get('user_name', '')
-                        
-                        # ============= REAL PERSISTENT MEMORY =============
-                        # Get relevant memories (semantic search results)
-                        pack.relevant_memories = context.get('relevant_memories', [])
-                        
-                        loaded_components.append("memory")
+                    state = await asyncio.wait_for(
+                        self.state_manager.get_state(user_id, session_id),
+                        timeout=1.0
+                    )
+                    return {
+                        'success': True,
+                        'conversation_phase': state.get('conversation_phase', 'active'),
+                        'pending_action': state.get('pending_action'),
+                        'response_mode': state.get('response_mode', 'mentor'),
+                        'emotional_signal': state.get('emotional_signal', 'neutral'),
+                        'is_first_turn': state.get('is_first_turn', True)
+                    }
                 except asyncio.TimeoutError:
-                    logger.warning(f"⚠️ Memory load timeout | request_id={request_id}")
+                    logger.debug("State load timeout - using defaults")
+                    return {'success': False}
                 except Exception as e:
-                    logger.warning(f"⚠️ Memory load failed: {e}")
+                    logger.debug(f"State load failed: {e}")
+                    return {'success': False}
+            
+            
+            async def load_message_history():
+                """Load message history - 1s timeout (or use provided)"""
+                if message_history:
+                    return {'success': True, 'provided': True, 'messages': message_history[-5:]}
+                
+                if not self.memory_integration:
+                    return {'success': False}
+                
+                try:
+                    # Direct call to memory service with timeout
+                    context = await asyncio.wait_for(
+                        self.memory_integration.get_enhanced_context(
+                            user_id=user_id,
+                            session_id=session_id,
+                            question=message,
+                            subject=subject
+                        ),
+                        timeout=1.5  # Strict 1.5s timeout
+                    )
+                    
+                    recent = context.get('recent_context', {})
+                    if isinstance(recent, dict):
+                        messages = recent.get('messages', [])[-5:]
+                    elif isinstance(recent, list):
+                        messages = recent[-5:]
+                    else:
+                        messages = []
+                    
+                    continuity = context.get('continuity', {})
+                    weak_topics = context.get('weak_topics', [])
+                    
+                    return {
+                        'success': True,
+                        'messages': messages,
+                        'current_topic': context.get('current_topic', ''),
+                        'previous_topic': (
+                            continuity.get('previous_topic', '') or
+                            continuity.get('last_topic', '') or
+                            (weak_topics[0] if weak_topics else '')
+                        ),
+                        'is_continuation': context.get('is_continuation', False),
+                        'student_name': context.get('user_name', ''),
+                        'relevant_memories': context.get('relevant_memories', [])
+                    }
+                except asyncio.TimeoutError:
+                    logger.debug("Message history timeout - using defaults")
+                    return {'success': False}
+                except Exception as e:
+                    logger.debug(f"Message history load failed: {e}")
+                    return {'success': False}
             
             # ============================================================
             # STEP 2b: LAST TASK TRACKING (Continuity v2 - Phase C Fix)
@@ -556,88 +559,82 @@ class ContextPackBuilder:
             except Exception as e:
                 logger.debug(f"Last task tracking failed (non-critical): {e}")
             
-            # ============================================================
-            # STEP 2c: PERSISTENT STUDENT PROFILE (Real Memory)
-            # ============================================================
-            try:
-                if self.memory_integration:
-                    # Get REAL student profile from MemoryService
-                    memory_pack = await asyncio.wait_for(
-                        self.memory_integration.get_memory_context_pack(
-                            user_id=user_id,
-                            session_id=session_id,
-                            query=message,
-                            route_type="educational"
-                        ),
-                        timeout=3.0
+            
+            async def load_student_profile():
+                """Load student profile - 1s timeout"""
+                if not self.memory_integration:
+                    return {'success': False}
+                
+                try:
+                    # Use timeout for profile fetch
+                    profile = await asyncio.wait_for(
+                        self.memory_integration.memory_service.get_student_profile(user_id),
+                        timeout=1.0
                     )
                     
-                    # Populate persistent memory fields
-                    pack.learning_preference = memory_pack.get('preferred_explanation', '')
-                    pack.relevant_memories = memory_pack.get('relevant_memories', [])
-                    pack.past_struggles = pack.weak_areas  # Already loaded weak areas serve as struggles
-                    
-                    # Get student profile for more details
-                    profile = await self.memory_integration.memory_service.get_student_profile(user_id)
+                    what_helped = ""
                     if profile:
-                        pack.preferred_analogies = profile.get('preferred_analogies', [])
-                        
-                        # What helped before - infer from profile
                         if profile.get('preferred_explanation'):
-                            pack.what_helped_before = f"{profile.get('preferred_explanation')} explanations"
+                            what_helped = f"{profile.get('preferred_explanation')} explanations"
                         if profile.get('pacing'):
-                            pack.what_helped_before += f", {profile.get('pacing')} pacing"
+                            what_helped += f", {profile.get('pacing')} pacing"
                     
-                    loaded_components.append("student_profile")
-                    logger.debug(f"   ✓ Student profile: pref={pack.learning_preference}")
-            except asyncio.TimeoutError:
-                logger.warning(f"⚠️ Student profile timeout | request_id={request_id}")
-            except Exception as e:
-                logger.debug(f"Student profile load failed (non-critical): {e}")
+                    return {
+                        'success': True,
+                        'learning_preference': profile.get('preferred_explanation', '') if profile else '',
+                        'relevant_memories': [],  # Skip slow semantic search here
+                        'preferred_analogies': profile.get('preferred_analogies', []) if profile else [],
+                        'what_helped_before': what_helped
+                    }
+                except asyncio.TimeoutError:
+                    logger.debug("Student profile timeout - using defaults")
+                    return {'success': False}
+                except Exception as e:
+                    logger.debug(f"Student profile load failed: {e}")
+                    return {'success': False}
             
-            # ============================================================
-            # STEP 3: MASTERY SNAPSHOT (CORE - must complete)
-            # ============================================================
-            try:
-                # Extract topic from message if not set
-                if not pack.current_topic:
-                    pack.current_topic = self._extract_topic(message, subject)
-                
-                # Get mastery for current topic
-                mastery = await asyncio.wait_for(
-                    self.mastery_tracker.get_mastery_level(user_id, pack.current_topic),
-                    timeout=3.0
-                )
-                pack.current_topic_mastery = mastery
-                pack.mastery_bucket = self._get_mastery_bucket(mastery)
-                
-                # Get weak areas
-                weak_topics = await asyncio.wait_for(
-                    self.mastery_tracker.get_weak_topics(user_id, threshold=40),
-                    timeout=3.0
-                )
-                pack.weak_areas = [t.get('topic', '') for t in weak_topics[:5]]
-                
-                # FIX: If no weak areas exist, initialize defaults based on exam type/subject
-                # This ensures new users get personalized defaults instead of empty lists
-                if not pack.weak_areas:
-                    pack.weak_areas = self._get_default_weak_areas(subject, pack.exam_name)
-                    if pack.weak_areas:
-                        loaded_components.append("default_weak_areas")
-                        logger.info(f"   📋 Initialized default weak areas: {pack.weak_areas[:3]}")
-                
-                loaded_components.append("mastery")
-                logger.debug(f"   ✓ Mastery: {pack.current_topic}={mastery}%")
-            except asyncio.TimeoutError:
-                logger.warning(f"⚠️ Mastery load timeout | request_id={request_id}")
-            except Exception as e:
-                logger.warning(f"⚠️ Mastery load failed: {e}")
             
-            # ============================================================
-            # STEP 4: MAGIC CONTEXT (Enrichment - best effort)
-            # ============================================================
-            try:
-                if self.intelligence_hub:
+            async def load_mastery_data():
+                """Load mastery data - 1s timeout"""
+                try:
+                    topic = self._extract_topic(message, subject)
+                    
+                    # Parallel fetch with timeout
+                    mastery_task = self.mastery_tracker.get_mastery_level(user_id, topic)
+                    weak_task = self.mastery_tracker.get_weak_topics(user_id, threshold=40)
+                    
+                    try:
+                        mastery, weak_topics = await asyncio.wait_for(
+                            asyncio.gather(mastery_task, weak_task),
+                            timeout=1.0
+                        )
+                    except asyncio.TimeoutError:
+                        return {'success': False}
+                    
+                    weak_areas = [t.get('topic', '') for t in weak_topics[:5]]
+                    
+                    # Use defaults if no weak areas
+                    if not weak_areas:
+                        weak_areas = self._get_default_weak_areas(subject, pack.exam_name)
+                    
+                    return {
+                        'success': True,
+                        'topic': topic,
+                        'mastery': mastery,
+                        'mastery_bucket': self._get_mastery_bucket(mastery),
+                        'weak_areas': weak_areas
+                    }
+                except Exception as e:
+                    logger.debug(f"Mastery load failed: {e}")
+                    return {'success': False}
+            
+            
+            async def load_magic_context():
+                """Load magic context - 1s timeout"""
+                if not self.intelligence_hub:
+                    return {'success': False}
+                
+                try:
                     magic = await asyncio.wait_for(
                         self.intelligence_hub.get_magic_context(
                             user_id=user_id,
@@ -645,29 +642,123 @@ class ContextPackBuilder:
                             current_query=message,
                             detected_topic=pack.current_topic
                         ),
-                        timeout=3.0
+                        timeout=1.0
                     )
                     
-                    # Extract magic fields
-                    pack.exam_name = magic.exam_name or ""
-                    pack.days_to_exam = magic.days_to_exam
-                    pack.exam_urgency = magic.exam_urgency.value if magic.exam_urgency else "normal"
-                    pack.current_streak = magic.current_streak or 0
-                    pack.recent_achievement = magic.recent_achievement or ""
-                    pack.needs_encouragement = magic.needs_encouragement or False
-                    pack.due_reviews = magic.due_reviews[:5] if magic.due_reviews else []
-                    pack.magic_prompts = magic.get_magic_prompts()[:5]
-                    
-                    # Override student name if magic has it
-                    if magic.student_name:
-                        pack.student_name = magic.student_name
-                    
+                    return {
+                        'success': True,
+                        'exam_name': magic.exam_name or "",
+                        'days_to_exam': magic.days_to_exam,
+                        'exam_urgency': magic.exam_urgency.value if magic.exam_urgency else "normal",
+                        'current_streak': magic.current_streak or 0,
+                        'recent_achievement': magic.recent_achievement or "",
+                        'needs_encouragement': magic.needs_encouragement or False,
+                        'due_reviews': magic.due_reviews[:5] if magic.due_reviews else [],
+                        'magic_prompts': magic.get_magic_prompts()[:5],
+                        'student_name': magic.student_name
+                    }
+                except asyncio.TimeoutError:
+                    logger.debug("Magic context timeout - using defaults")
+                    return {'success': False}
+                except Exception as e:
+                    logger.debug(f"Magic context load failed: {e}")
+                    return {'success': False}
+            
+            # ============================================================
+            # LAUNCH ALL MEMORY LOADS IN PARALLEL - FAST PATH
+            # ============================================================
+            # Each function has 1-1.5s internal timeout
+            # Outer timeout is 2.5s safety net (not 5s)
+            # Total max time: 2.5s (not cumulative since parallel)
+            # ============================================================
+            try:
+                start_time = time.time()
+                
+                # Create all tasks
+                tasks = [
+                    load_conversation_state(),
+                    load_message_history(),
+                    load_student_profile(),
+                    load_mastery_data(),
+                    load_magic_context()
+                ]
+                
+                # 2.5s timeout - functions have internal 1s timeouts
+                results = await asyncio.wait_for(
+                    asyncio.gather(*tasks, return_exceptions=True),
+                    timeout=2.5
+                )
+                
+                # Unpack results
+                state_result, history_result, profile_result, mastery_result, magic_result = results
+                
+                load_time = time.time() - start_time
+                logger.info(f"⚡ Parallel memory load completed in {load_time:.2f}s | request_id={request_id}")
+                
+                # Apply results to pack (with safe fallbacks)
+                
+                # 1. Conversation State
+                if isinstance(state_result, dict) and state_result.get('success'):
+                    pack.conversation_phase = state_result['conversation_phase']
+                    pack.pending_action = state_result.get('pending_action')
+                    pack.response_mode = state_result['response_mode']
+                    pack.emotional_signal = state_result['emotional_signal']
+                    pack.is_first_turn = state_result['is_first_turn']
+                    loaded_components.append("state")
+                
+                # 2. Message History
+                if isinstance(history_result, dict) and history_result.get('success'):
+                    if history_result.get('provided'):
+                        pack.last_n_messages = history_result['messages']
+                        loaded_components.append("messages_provided")
+                    else:
+                        pack.last_n_messages = history_result.get('messages', [])
+                        pack.current_topic = history_result.get('current_topic', '')
+                        pack.previous_topic = history_result.get('previous_topic', '')
+                        pack.is_continuation = history_result.get('is_continuation', False)
+                        pack.student_name = history_result.get('student_name', '')
+                        pack.relevant_memories = history_result.get('relevant_memories', [])
+                        loaded_components.append("memory")
+                
+                # 3. Student Profile
+                if isinstance(profile_result, dict) and profile_result.get('success'):
+                    pack.learning_preference = profile_result.get('learning_preference', '')
+                    if not pack.relevant_memories:  # Don't override if already set
+                        pack.relevant_memories = profile_result.get('relevant_memories', [])
+                    pack.preferred_analogies = profile_result.get('preferred_analogies', [])
+                    pack.what_helped_before = profile_result.get('what_helped_before', '')
+                    loaded_components.append("student_profile")
+                
+                # 4. Mastery Data
+                if isinstance(mastery_result, dict) and mastery_result.get('success'):
+                    if not pack.current_topic:  # Don't override if already set
+                        pack.current_topic = mastery_result.get('topic', '')
+                    pack.current_topic_mastery = mastery_result.get('mastery', 0)
+                    pack.mastery_bucket = mastery_result.get('mastery_bucket', 'beginner')
+                    pack.weak_areas = mastery_result.get('weak_areas', [])
+                    pack.past_struggles = pack.weak_areas  # Use weak areas as struggles
+                    loaded_components.append("mastery")
+                
+                # 5. Magic Context
+                if isinstance(magic_result, dict) and magic_result.get('success'):
+                    pack.exam_name = magic_result.get('exam_name', '')
+                    pack.days_to_exam = magic_result.get('days_to_exam')
+                    pack.exam_urgency = magic_result.get('exam_urgency', 'normal')
+                    pack.current_streak = magic_result.get('current_streak', 0)
+                    pack.recent_achievement = magic_result.get('recent_achievement', '')
+                    pack.needs_encouragement = magic_result.get('needs_encouragement', False)
+                    pack.due_reviews = magic_result.get('due_reviews', [])
+                    pack.magic_prompts = magic_result.get('magic_prompts', [])
+                    if magic_result.get('student_name'):
+                        pack.student_name = magic_result['student_name']
                     loaded_components.append("magic")
-                    logger.debug(f"   ✓ Magic: exam in {pack.days_to_exam} days")
+                
+                logger.info(f"✅ Loaded components: {', '.join(loaded_components)} | request_id={request_id}")
+                
             except asyncio.TimeoutError:
-                logger.warning(f"⚠️ Magic context timeout | request_id={request_id}")
+                logger.warning(f"⚡ Memory load timeout (>2.5s), using fast defaults | request_id={request_id}")
             except Exception as e:
-                logger.warning(f"⚠️ Magic context failed: {e}")
+                logger.warning(f"⚠️ Parallel memory load failed: {e} | request_id={request_id}")
             
             # ============================================================
             # STEP 5: RECENT EVENTS (if available)

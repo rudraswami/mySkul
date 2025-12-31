@@ -21,6 +21,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SathiPersonaBadge } from '../ui/BrandLogo';
 import {
   Menu,
   MessageSquare,
@@ -53,7 +54,7 @@ const SMARTBOARD_ENABLED = false;
 // ============================================
 const ClassroomHeader = ({ 
   onMenuClick, 
-  title = 'AI Sathi',
+  title = 'Sathi',
   rightActions,
   isBoardOpen,
   onToggleBoard,
@@ -81,13 +82,12 @@ const ClassroomHeader = ({
           <Menu className="w-5 h-5 text-slate-300" />
         </button>
         
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          {/* Unified Brand Logo with Status */}
+          <SathiPersonaBadge size="md" status={aiStatus} />
           <div>
             <h1 className="text-base font-semibold text-white">{title}</h1>
-            <p className="text-xs text-slate-400 hidden sm:block">LEARNING WORKSPACE</p>
+            <p className="text-xs text-slate-400 hidden sm:block">DRON AI • Learning Workspace</p>
           </div>
           {/* AI Status Indicator */}
           <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700/50">
@@ -195,7 +195,7 @@ export default function ClassroomLayout({
   isLoadingHistory = false,
   visualArtifact = null,
   onVisualFullscreen,
-  headerTitle = 'AI Sathi',
+  headerTitle = 'Sathi',
   headerRightActions,
   hasStartedChat = true, // Controls whether to show split layout or full-width welcome
   welcomeScreen = null, // Optional custom welcome screen component

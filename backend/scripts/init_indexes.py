@@ -274,6 +274,83 @@ async def create_indexes():
             print(f"   ✓ {index_spec[0]}")
         
         # =========================================================================
+        # NOTIFICATIONS COLLECTION (PERFORMANCE FIX - 2025-12-31)
+        # =========================================================================
+        print("\n🔔 Creating indexes for 'notifications' collection...")
+        
+        notifications_indexes = [
+            ("user_id", {}),
+            ("read", {}),
+            ("created_at", {}),
+            ([("user_id", 1), ("read", 1), ("created_at", -1)], {}),  # Compound for unread query
+            ([("user_id", 1), ("created_at", -1)], {}),  # For all notifications
+        ]
+        
+        for index_spec in notifications_indexes:
+            await safe_create_index(db.notifications, index_spec, "notifications")
+        
+        # =========================================================================
+        # USER PROGRESS COLLECTION (PERFORMANCE FIX - 2025-12-31)
+        # =========================================================================
+        print("\n🏆 Creating indexes for 'user_progress' collection...")
+        
+        user_progress_indexes = [
+            ("user_id", {"unique": True}),
+            ("updated_at", {}),
+            ("level", {}),
+            ([("user_id", 1), ("updated_at", -1)], {}),
+        ]
+        
+        for index_spec in user_progress_indexes:
+            await safe_create_index(db.user_progress, index_spec, "user_progress")
+        
+        # =========================================================================
+        # STUDY PLANS COLLECTION (PERFORMANCE FIX - 2025-12-31)
+        # =========================================================================
+        print("\n📅 Creating indexes for 'study_plans' collection...")
+        
+        study_plans_indexes = [
+            ("user_id", {}),
+            ("date", {}),
+            ("status", {}),
+            ([("user_id", 1), ("date", -1)], {}),  # For user's plans by date
+            ([("user_id", 1), ("status", 1)], {}),  # For active/completed plans
+        ]
+        
+        for index_spec in study_plans_indexes:
+            await safe_create_index(db.study_plans, index_spec, "study_plans")
+        
+        # =========================================================================
+        # LEARNING EVENTS COLLECTION (PERFORMANCE FIX - Already in memory_indexes.py but adding here for completeness)
+        # =========================================================================
+        print("\n📊 Creating indexes for 'learning_events' collection...")
+        
+        learning_events_indexes = [
+            ("user_id", {}),
+            ("timestamp", {}),
+            ("event_type", {}),
+            ([("user_id", 1), ("timestamp", -1)], {}),
+            ([("user_id", 1), ("event_type", 1), ("timestamp", -1)], {}),
+            ([("session_id", 1), ("timestamp", -1)], {}),
+        ]
+        
+        for index_spec in learning_events_indexes:
+            await safe_create_index(db.learning_events, index_spec, "learning_events")
+        
+        # =========================================================================
+        # CHAT MESSAGES ENHANCED INDEX (PERFORMANCE FIX - 2025-12-31)
+        # =========================================================================
+        print("\n💬 Creating enhanced indexes for 'chat_messages' collection...")
+        
+        # Add compound index for common query pattern
+        chat_messages_enhanced_indexes = [
+            ([("session_id", 1), ("user_id", 1), ("timestamp", 1)], {}),  # Most common query
+        ]
+        
+        for index_spec in chat_messages_enhanced_indexes:
+            await safe_create_index(db.chat_messages, index_spec, "chat_messages")
+        
+        # =========================================================================
         # SUMMARY
         # =========================================================================
         print("\n" + "="*60)
@@ -282,8 +359,9 @@ async def create_indexes():
         
         # Print index statistics
         collections = [
-            "users", "chat_sessions", "messages", "subscriptions",
-            "usage_tracking", "mock_tests", "test_attempts", "auto_notes", "oauth_states"
+            "users", "chat_sessions", "messages", "chat_messages", "subscriptions",
+            "usage_tracking", "mock_tests", "test_attempts", "auto_notes", "oauth_states",
+            "notifications", "user_progress", "study_plans", "learning_events"
         ]
         
         print("\n📈 Index Statistics:")

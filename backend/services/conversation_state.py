@@ -56,21 +56,44 @@ class ConversationStateManager:
     
     CORE RULE: If pending_action exists and user clarifies → 
                Execute action immediately, don't re-route.
+               
+    FIX #3: Added bounded LRU cache with TTL to prevent memory leaks
     """
+    
+    # FIX #3: Cache configuration
+    MAX_CACHE_SIZE = 1000  # Maximum number of sessions to cache
+    CACHE_TTL_SECONDS = 3600  # 1 hour TTL for cache entries
     
     def __init__(self, db):
         self.db = db
-        self._cache: Dict[str, Dict] = {}  # In-memory cache for speed
+        # FIX #3: Bounded cache with timestamps for TTL
+        self._cache: Dict[str, Dict] = {}  # {cache_key: {"state": {...}, "timestamp": datetime}}
+        self._cache_access_order: List[str] = []  # LRU tracking
     
     async def get_state(self, user_id: str, session_id: str) -> Dict[str, Any]:
         """
         Get current conversation state with all behavioral fields.
+        
+        FIX #3: Uses bounded LRU cache with TTL
         """
         cache_key = f"{user_id}_{session_id}"
         
-        # Check cache first (memory for speed)
+        # FIX #3: Check cache with TTL validation
         if cache_key in self._cache:
-            return self._cache[cache_key]
+            cache_entry = self._cache[cache_key]
+            cache_time = cache_entry.get("timestamp", datetime.min)
+            
+            # Check if cache entry is still valid (within TTL)
+            if isinstance(cache_time, datetime):
+                age_seconds = (datetime.now(timezone.utc) - cache_time.replace(tzinfo=timezone.utc)).total_seconds()
+                if age_seconds < self.CACHE_TTL_SECONDS:
+                    # Update LRU order
+                    self._update_cache_lru(cache_key)
+                    return cache_entry.get("state", self._create_default_state())
+            else:
+                # Legacy cache entry, still use it but update structure
+                self._update_cache_lru(cache_key)
+                return cache_entry if isinstance(cache_entry, dict) and "state" not in cache_entry else cache_entry.get("state", cache_entry)
         
         # Load from database (DB for persistence)
         try:
@@ -81,15 +104,52 @@ class ConversationStateManager:
             
             if state_doc:
                 state = self._doc_to_state(state_doc)
-                self._cache[cache_key] = state
+                self._set_cache(cache_key, state)
                 return state
         except Exception as e:
             logger.warning(f"Failed to load state: {e}")
         
         # Return default state - FIRST_TURN phase
         default_state = self._create_default_state()
-        self._cache[cache_key] = default_state
+        self._set_cache(cache_key, default_state)
         return default_state
+    
+    def _set_cache(self, cache_key: str, state: Dict[str, Any]) -> None:
+        """
+        FIX #3: Set cache with TTL and LRU eviction
+        """
+        # Evict oldest entries if cache is full
+        while len(self._cache) >= self.MAX_CACHE_SIZE:
+            if self._cache_access_order:
+                oldest_key = self._cache_access_order.pop(0)
+                self._cache.pop(oldest_key, None)
+                logger.debug(f"🗑️ Cache evicted: {oldest_key[:16]}...")
+            else:
+                # Fallback: remove any key
+                if self._cache:
+                    self._cache.pop(next(iter(self._cache)), None)
+                break
+        
+        # Store with timestamp
+        self._cache[cache_key] = {
+            "state": state,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        self._update_cache_lru(cache_key)
+    
+    def _update_cache_lru(self, cache_key: str) -> None:
+        """FIX #3: Update LRU access order"""
+        if cache_key in self._cache_access_order:
+            self._cache_access_order.remove(cache_key)
+        self._cache_access_order.append(cache_key)
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """FIX #3: Get cache statistics for monitoring"""
+        return {
+            "size": len(self._cache),
+            "max_size": self.MAX_CACHE_SIZE,
+            "ttl_seconds": self.CACHE_TTL_SECONDS
+        }
     
     def _doc_to_state(self, doc: Dict) -> Dict[str, Any]:
         """Convert database document to state dict with all fields."""
@@ -389,11 +449,12 @@ class ConversationStateManager:
     ) -> None:
         """
         Save state to both cache and database.
+        FIX #3: Uses bounded cache with _set_cache
         """
         cache_key = f"{user_id}_{session_id}"
         
-        # Update cache (memory)
-        self._cache[cache_key] = state
+        # FIX #3: Update cache using bounded cache method
+        self._set_cache(cache_key, state)
         
         # Persist to database
         try:

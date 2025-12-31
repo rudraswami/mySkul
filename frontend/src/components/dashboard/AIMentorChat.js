@@ -126,7 +126,12 @@ const AIMentorChat = ({ isOpen, onClose }) => {
               className={`flex chat-message ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`chat-bubble ${message.type === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`}>
-                {message.content}
+                {typeof message.content === 'string' 
+                  ? message.content 
+                  : (message.content?.default_view?.main_content?.content || 
+                     message.content?.text || 
+                     message.content?.message || 
+                     JSON.stringify(message.content))}
               </div>
             </div>
           ))}

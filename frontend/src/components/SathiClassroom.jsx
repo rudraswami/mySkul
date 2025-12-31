@@ -104,7 +104,7 @@ try {
       <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-orange-400 rounded-3xl flex items-center justify-center mb-6 shadow-lg">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to AI Sathi!</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Sathi!</h2>
       <p className="text-gray-500 mb-6 max-w-sm">I'm your personal learning companion. Ask me anything about Physics, Chemistry, Biology, or Math!</p>
       <div className="flex flex-wrap justify-center gap-2">
         {['Explain Newton\'s laws', 'What is photosynthesis?', 'Solve x² + 5x + 6 = 0'].map((suggestion, idx) => (
@@ -727,7 +727,7 @@ export default function SathiClassroom() {
         }}
         isLoadingHistory={isLoadingHistory}
         visualArtifact={visualArtifact}
-        headerTitle="AI Sathi"
+        headerTitle="Sathi"
         headerRightActions={headerRightActions}
       >
         {ChatContent}

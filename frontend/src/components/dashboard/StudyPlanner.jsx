@@ -27,7 +27,8 @@ import {
   Loader,
   ChevronRight,
   Lightbulb,
-  TrendingUp
+  TrendingUp,
+  Play
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
@@ -109,7 +110,7 @@ const ProgressRing = ({ progress, size = 140 }) => {
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-slate-200 dark:text-slate-700"
+          className="text-slate-700"
         />
         <motion.circle
           cx={size / 2}
@@ -132,8 +133,8 @@ const ProgressRing = ({ progress, size = 140 }) => {
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-slate-900 dark:text-white">{Math.round(progress)}%</span>
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Complete</span>
+        <span className="text-3xl font-bold text-white">{Math.round(progress)}%</span>
+        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Complete</span>
       </div>
     </div>
   );
@@ -152,12 +153,12 @@ const StudyBlockCard = ({ block, index, onComplete, isActive }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
+      className={`relative p-4 rounded-xl border transition-all duration-200 ${
         isCompleted 
-          ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700' 
+          ? 'bg-emerald-950/40 border-emerald-700/50' 
           : isActive 
-            ? `${config.bg} ${config.border} ring-2 ring-indigo-500/20`
-            : `bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600`
+            ? `bg-slate-800/80 border-indigo-500/50 ring-2 ring-indigo-500/20`
+            : `bg-slate-800/50 border-slate-700/50 hover:border-slate-600`
       }`}
     >
       {/* Completed badge */}
@@ -180,38 +181,38 @@ const StudyBlockCard = ({ block, index, onComplete, isActive }) => {
             <span className={`px-2 py-0.5 rounded-md text-xs font-semibold text-white ${config.badge}`}>
               {config.label}
             </span>
-            <span className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1 text-sm text-slate-400">
               <Clock className="w-3.5 h-3.5" />
               {block.duration_minutes} min
             </span>
             {block.subject && (
-              <span className="text-xs text-slate-400 dark:text-slate-500">• {block.subject}</span>
+              <span className="text-xs text-slate-500">• {block.subject}</span>
             )}
           </div>
           
           {/* Title */}
-          <h4 className={`font-semibold text-slate-900 dark:text-white ${isCompleted ? 'line-through opacity-60' : ''}`}>
+          <h4 className={`font-semibold text-white ${isCompleted ? 'line-through opacity-60' : ''}`}>
             {block.topic}
           </h4>
           
           {/* Description */}
           {block.description && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
+            <p className="text-sm text-slate-400 mt-1 line-clamp-2">
               {block.description}
             </p>
           )}
           
           {/* Tip */}
           {block.tips && block.tips.length > 0 && !isCompleted && (
-            <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-800 dark:text-amber-200">{block.tips[0]}</p>
+            <div className="mt-3 p-2.5 bg-amber-950/30 border border-amber-700/30 rounded-lg flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-200">{block.tips[0]}</p>
             </div>
           )}
           
           {/* Footer */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-700/50">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-400">
               <Zap className="w-4 h-4" />
               +{block.xp_reward || 0} XP
             </span>
@@ -229,7 +230,7 @@ const StudyBlockCard = ({ block, index, onComplete, isActive }) => {
             )}
             
             {isCompleted && (
-              <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
                 <CheckCircle className="w-4 h-4" />
                 Completed
               </span>
@@ -253,12 +254,32 @@ const StudyPlanner = ({ onStartStudy }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [initialized, setInitialized] = useState(false);
   
-  // Generate new plan
-  const generateNewPlan = useCallback(async (hours = 4) => {
+  // Study plan customization options
+  const [studyHoursOption, setStudyHoursOption] = useState(4);
+  const [selectedSubject, setSelectedSubject] = useState('All');
+  
+  const SUBJECT_OPTIONS = ['All', 'Physics', 'Chemistry', 'Mathematics', 'Biology'];
+  const HOURS_OPTIONS = [2, 3, 4, 5, 6];
+  
+  // Generate new plan with customization options
+  const generateNewPlan = useCallback(async (hours = null, subject = null) => {
     try {
       setGenerating(true);
       setError(null);
       const token = localStorage.getItem('dhruv_ai_token');
+      
+      const finalHours = hours || studyHoursOption;
+      const finalSubject = subject || selectedSubject;
+      
+      const requestBody = {
+        available_hours: finalHours,
+        energy_pattern: new Date().getHours() < 12 ? 'morning' : 'evening'
+      };
+      
+      // Add subject filter if not "All"
+      if (finalSubject && finalSubject !== 'All') {
+        requestBody.preferred_subjects = [finalSubject];
+      }
       
       const response = await fetch(`${BACKEND_URL}/api/study-planner/generate`, {
         method: 'POST',
@@ -266,10 +287,7 @@ const StudyPlanner = ({ onStartStudy }) => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          available_hours: hours,
-          energy_pattern: new Date().getHours() < 12 ? 'morning' : 'evening'
-        })
+        body: JSON.stringify(requestBody)
       });
       
       if (response.ok) {
@@ -287,7 +305,7 @@ const StudyPlanner = ({ onStartStudy }) => {
       setGenerating(false);
     }
     return false;
-  }, []);
+  }, [studyHoursOption, selectedSubject]);
   
   // Fetch today's plan
   const fetchPlan = useCallback(async (autoGenerate = true) => {
@@ -392,12 +410,16 @@ const StudyPlanner = ({ onStartStudy }) => {
   // Loading state
   if (loading || generating) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-          <p className="text-slate-600 dark:text-slate-400 font-medium">
-            {generating ? 'Creating your study plan...' : 'Loading study plan...'}
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 p-8">
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-14 h-14 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mb-4" />
+              <p className="text-slate-300 font-medium">
+                {generating ? '✨ Creating your personalized study plan...' : 'Loading study plan...'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -406,23 +428,32 @@ const StudyPlanner = ({ onStartStudy }) => {
   // Error/Empty state
   if (error || !plan || !plan.blocks || plan.blocks.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
-        <div className="text-center py-8">
-          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 p-8">
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-violet-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-violet-500/30">
+                <Calendar className="w-10 h-10 text-violet-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">No Study Plan Yet</h3>
+              <p className="text-slate-400 mb-8 max-w-md mx-auto">
+                Let's create your personalized daily plan! I'll optimize your study time based on your goals and weak areas.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => generateNewPlan(4)}
+                disabled={generating}
+                className="px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-all flex items-center gap-3 mx-auto"
+              >
+                <Sparkles className="w-5 h-5" />
+                Generate Today's Plan
+              </motion.button>
+              {error && (
+                <p className="mt-4 text-red-400 text-sm">{error}</p>
+              )}
+            </div>
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Today's Study Plan</h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">Let's create your personalized study schedule</p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => generateNewPlan(4)}
-            disabled={generating}
-            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-xl transition-shadow flex items-center gap-2 mx-auto"
-          >
-            <Sparkles className="w-5 h-5" />
-            Generate Study Plan
-          </motion.button>
         </div>
       </div>
     );
@@ -434,9 +465,11 @@ const StudyPlanner = ({ onStartStudy }) => {
   const progress = plan?.completion_percentage || 0;
   
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-      {/* Header - Clean gradient */}
-      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 overflow-hidden">
+          {/* Header - Premium gradient */}
+          <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 text-white/80 text-sm mb-1">
@@ -450,16 +483,53 @@ const StudyPlanner = ({ onStartStudy }) => {
             <h2 className="text-2xl font-bold text-white">Today's Study Plan</h2>
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => generateNewPlan(4)}
-            disabled={generating}
-            className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors backdrop-blur-sm"
-          >
-            <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-            Regenerate
-          </motion.button>
+          <div className="flex items-center gap-3">
+            {/* Subject Filter */}
+            <select
+              value={selectedSubject}
+              onChange={(e) => {
+                setSelectedSubject(e.target.value);
+                // Auto-regenerate with new subject
+                generateNewPlan(studyHoursOption, e.target.value);
+              }}
+              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium border border-white/20 focus:outline-none focus:ring-2 focus:ring-violet-500/50 backdrop-blur-sm cursor-pointer"
+            >
+              {SUBJECT_OPTIONS.map(subj => (
+                <option key={subj} value={subj} className="bg-slate-800 text-white">
+                  {subj === 'All' ? '📚 All Subjects' : `${subj}`}
+                </option>
+              ))}
+            </select>
+            
+            {/* Hours Selector */}
+            <select
+              value={studyHoursOption}
+              onChange={(e) => {
+                const hours = parseInt(e.target.value);
+                setStudyHoursOption(hours);
+                generateNewPlan(hours, selectedSubject);
+              }}
+              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium border border-white/20 focus:outline-none focus:ring-2 focus:ring-violet-500/50 backdrop-blur-sm cursor-pointer"
+            >
+              {HOURS_OPTIONS.map(h => (
+                <option key={h} value={h} className="bg-slate-800 text-white">
+                  {h} hours
+                </option>
+              ))}
+            </select>
+            
+            {/* Regenerate Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => generateNewPlan()}
+              disabled={generating}
+              className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors backdrop-blur-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+              Regenerate
+            </motion.button>
+          </div>
         </div>
         
         {/* Stats - Clean cards */}
@@ -494,58 +564,136 @@ const StudyPlanner = ({ onStartStudy }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Progress & Goals */}
           <div className="space-y-6">
-            {/* Progress Ring */}
-            <div className="flex flex-col items-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+            {/* Progress Ring with Encouragement */}
+            <div className="flex flex-col items-center p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
               <ProgressRing progress={progress} size={140} />
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Daily Progress</p>
+              <p className="text-sm font-medium text-slate-400 mt-2">Daily Progress</p>
+              {/* Dynamic encouragement based on progress */}
+              <p className="text-xs text-center mt-2 px-2">
+                {progress === 0 && (
+                  <span className="text-violet-400">Ready to start? Complete your first session! 💪</span>
+                )}
+                {progress > 0 && progress < 25 && (
+                  <span className="text-blue-400">Great start! Keep the momentum going 🚀</span>
+                )}
+                {progress >= 25 && progress < 50 && (
+                  <span className="text-cyan-400">You're making progress! Halfway there 📈</span>
+                )}
+                {progress >= 50 && progress < 75 && (
+                  <span className="text-emerald-400">Awesome! More than halfway done! 🌟</span>
+                )}
+                {progress >= 75 && progress < 100 && (
+                  <span className="text-amber-400">Almost there! Finish strong! 🔥</span>
+                )}
+                {progress >= 100 && (
+                  <span className="text-emerald-400">🎉 All done! You crushed it today!</span>
+                )}
+              </p>
             </div>
             
-            {/* Today's Goals */}
+            {/* Today's Goals - With completion tracking */}
             {plan?.daily_goals && plan.daily_goals.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-violet-500" />
+              <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-violet-400" />
                   Today's Goals
+                  <span className="ml-auto text-xs text-slate-500">
+                    {plan.blocks?.filter(b => b.completed).length || 0}/{plan.blocks?.filter(b => b.block_type !== 'break').length || 0}
+                  </span>
                 </h3>
-                <ul className="space-y-2">
-                  {plan.daily_goals.map((goal, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                      <CheckCircle className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0 mt-0.5" />
-                      <span>{goal}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-2.5">
+                  {plan.daily_goals.map((goal, i) => {
+                    // Determine if goal is completed based on related blocks
+                    const isCompleted = (() => {
+                      const goalLower = goal.toLowerCase();
+                      if (goalLower.includes('revision') && plan.blocks?.some(b => b.block_type === 'revision' && b.completed)) return true;
+                      if (goalLower.includes('mastery') && plan.blocks?.some(b => b.block_type === 'deep_focus' && b.completed)) return true;
+                      if (goalLower.includes('learn') && plan.blocks?.some(b => b.block_type === 'new_learning' && b.completed)) return true;
+                      if (goalLower.includes('practice') && plan.blocks?.some(b => b.block_type === 'practice' && b.completed)) return true;
+                      if (goalLower.includes('streak') && progress > 0) return true;
+                      return false;
+                    })();
+                    
+                    return (
+                      <li 
+                        key={i} 
+                        className={`flex items-start gap-2.5 text-sm transition-all duration-300 ${
+                          isCompleted ? 'text-emerald-400' : 'text-slate-300'
+                        }`}
+                      >
+                        <CheckCircle 
+                          className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-colors ${
+                            isCompleted 
+                              ? 'text-emerald-400' 
+                              : 'text-slate-600'
+                          }`} 
+                        />
+                        <span className={isCompleted ? 'line-through opacity-70' : ''}>
+                          {goal}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
             
             {/* Motivational Quote */}
             {plan?.motivational_quote && (
-              <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
-                <Sparkles className="w-5 h-5 text-amber-500 mb-2" />
-                <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
+              <div className="p-4 bg-gradient-to-br from-amber-950/40 to-orange-950/40 rounded-xl border border-amber-700/30">
+                <Sparkles className="w-5 h-5 text-amber-400 mb-2" />
+                <p className="text-sm text-slate-300 italic leading-relaxed">
                   "{plan.motivational_quote}"
                 </p>
               </div>
             )}
             
-            {/* AI Recommendations */}
+            {/* AI Recommendations - Enhanced with actions */}
             {recommendations.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-indigo-500" />
+              <div className="bg-gradient-to-br from-indigo-950/30 to-violet-950/30 rounded-xl p-4 border border-indigo-700/30">
+                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-indigo-400" />
                   AI Insights
+                  <span className="ml-auto text-xs text-indigo-400/70 font-normal">
+                    Personalized for you
+                  </span>
                 </h3>
-                <div className="space-y-2">
-                  {recommendations.slice(0, 3).map((rec, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                      <span className="text-lg">{rec.icon}</span>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{rec.title}</p>
+                <div className="space-y-2.5">
+                  {recommendations.slice(0, 4).map((rec, i) => (
+                    <motion.div 
+                      key={i} 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer hover:scale-[1.02] ${
+                        rec.type === 'urgent' || rec.type === 'exam_countdown'
+                          ? 'bg-red-950/40 border-red-700/40 hover:bg-red-950/60'
+                          : rec.type === 'focus'
+                          ? 'bg-amber-950/30 border-amber-700/30 hover:bg-amber-950/50'
+                          : rec.type === 'achievement'
+                          ? 'bg-emerald-950/30 border-emerald-700/30 hover:bg-emerald-950/50'
+                          : 'bg-slate-800/50 border-slate-700/30 hover:bg-slate-800/70'
+                      }`}
+                      onClick={() => {
+                        // Handle recommendation action
+                        if (rec.action && onStartStudy) {
+                          onStartStudy(rec.action);
+                        }
+                      }}
+                    >
+                      <span className="text-xl">{rec.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{rec.title}</p>
                         {rec.description && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{rec.description}</p>
+                          <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{rec.description}</p>
                         )}
                       </div>
-                    </div>
+                      {rec.action && (
+                        <span className="text-xs text-indigo-400 font-medium whitespace-nowrap">
+                          {rec.action} →
+                        </span>
+                      )}
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -554,10 +702,38 @@ const StudyPlanner = ({ onStartStudy }) => {
           
           {/* Right: Study Sessions */}
           <div className="lg:col-span-2">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-indigo-500" />
-              Study Sessions
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-indigo-400" />
+                Study Sessions
+                <span className="ml-2 text-xs text-slate-500 font-normal">
+                  {plan?.blocks?.filter(b => b.block_type !== 'break').length || 0} sessions
+                </span>
+              </h3>
+              
+              {/* Start Study CTA when nothing completed */}
+              {progress === 0 && plan?.blocks?.length > 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    // Find first non-break block
+                    const firstSession = plan.blocks?.find(b => b.block_type !== 'break');
+                    if (onStartStudy && firstSession) {
+                      onStartStudy({
+                        topic: firstSession.topic,
+                        subject: firstSession.subject,
+                        duration: firstSession.duration_minutes
+                      });
+                    }
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                >
+                  <Play className="w-4 h-4" />
+                  Start First Session
+                </motion.button>
+              )}
+            </div>
             
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
               {plan?.blocks?.map((block, index) => (
@@ -571,6 +747,8 @@ const StudyPlanner = ({ onStartStudy }) => {
               ))}
             </div>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>

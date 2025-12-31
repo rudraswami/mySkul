@@ -82,7 +82,8 @@ class MasteryTracker:
             # Determine mastery bucket
             bucket = self._get_mastery_bucket(new_mastery)
             
-            # Update in database
+            # FIX #6: Update in database with upsert=True (already present)
+            # Added $slice to bound mastery_history growth (max 100 entries)
             await self.db.user_learning_profile.update_one(
                 {"user_id": user_id},
                 {
@@ -93,17 +94,21 @@ class MasteryTracker:
                     },
                     "$push": {
                         "mastery_history": {
-                            "topic": topic,
-                            "old_level": current,
-                            "new_level": new_mastery,
-                            "delta": delta,
-                            "reason": reason,
-                            "timestamp": datetime.now(timezone.utc),
-                            "bucket": bucket
+                            # FIX #6: Bound history growth to prevent unbounded array
+                            "$each": [{
+                                "topic": topic,
+                                "old_level": current,
+                                "new_level": new_mastery,
+                                "delta": delta,
+                                "reason": reason,
+                                "timestamp": datetime.now(timezone.utc),
+                                "bucket": bucket
+                            }],
+                            "$slice": -100  # Keep only last 100 entries
                         }
                     }
                 },
-                upsert=True
+                upsert=True  # FIX #6: Verified - creates profile if doesn't exist
             )
             
             logger.info(f"📈 Mastery updated: {topic} {current} → {new_mastery} ({bucket}) [{reason}]")

@@ -166,3 +166,6 @@ f⁻¹: B → A such that f⁻¹(f(x)) = x
 
 
 
+
+
+

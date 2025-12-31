@@ -316,6 +316,8 @@ You've got this! Let's make learning engaging and effective. Ready when you are!
             
             # Build conversation history string from memory_context
             conversation_history = ""
+            has_real_history = False
+            
             if memory_context and memory_context.get("conversation_summary"):
                 conversation_history = f"""
 PREVIOUS CONVERSATION IN THIS SESSION:
@@ -324,6 +326,7 @@ PREVIOUS CONVERSATION IN THIS SESSION:
 IMPORTANT: If student asks about "what we discussed earlier" or "previous topic", 
 refer to the conversation history above and provide a clear summary.
 """
+                has_real_history = True
             elif memory_context and memory_context.get("recent_context"):
                 # Fallback: build from recent_context
                 recent = memory_context.get("recent_context", [])
@@ -339,6 +342,19 @@ PREVIOUS CONVERSATION:
 {chr(10).join(history_parts)}
 
 IMPORTANT: If student asks about previous discussion, refer to the history above.
+"""
+                        has_real_history = True
+            
+            # CRITICAL FIX: If no conversation history, tell LLM to be honest
+            if not has_real_history:
+                conversation_history = """
+NO PREVIOUS CONVERSATION IN THIS SESSION.
+
+CRITICAL: If student asks "what did we discuss earlier" or similar:
+- Be HONEST: Say "This appears to be the start of our conversation" or "We haven't discussed anything yet in this session"
+- Do NOT hallucinate or make up previous conversations
+- Do NOT pretend to remember things that didn't happen
+- Offer to help with whatever they'd like to learn
 """
             
             # ============================================

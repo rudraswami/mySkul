@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -117,12 +117,12 @@ export default function AITutorPremium() {
    * NEW: LocalStorage persistence utilities
    * Store and retrieve chat history per user + subject
    */
-  const getStorageKey = () => {
+  const getStorageKey = useCallback(() => {
     const userId = user?.user_id || 'anonymous';
     return `tutorChatHistory_${userId}_${selectedSubject}`;
-  };
+  }, [user?.user_id, selectedSubject]);
   
-  const saveChatToStorage = (messagesToSave) => {
+  const saveChatToStorage = useCallback((messagesToSave) => {
     try {
       const storageKey = getStorageKey();
       // Keep only last 10 exchanges (20 messages: 10 user + 10 AI)
@@ -131,9 +131,9 @@ export default function AITutorPremium() {
     } catch (error) {
       console.warn('Failed to save chat to localStorage:', error);
     }
-  };
+  }, [getStorageKey]);
   
-  const loadChatFromStorage = () => {
+  const loadChatFromStorage = useCallback(() => {
     try {
       const storageKey = getStorageKey();
       const stored = localStorage.getItem(storageKey);
@@ -145,16 +145,16 @@ export default function AITutorPremium() {
       console.warn('Failed to load chat from localStorage:', error);
     }
     return [];
-  };
+  }, [getStorageKey]);
   
-  const clearChatStorage = () => {
+  const clearChatStorage = useCallback(() => {
     try {
       const storageKey = getStorageKey();
       localStorage.removeItem(storageKey);
     } catch (error) {
       console.warn('Failed to clear chat storage:', error);
     }
-  };
+  }, [getStorageKey]);
   
   // Initialize - Load persisted chat on mount
   useEffect(() => {
@@ -1194,7 +1194,7 @@ export default function AITutorPremium() {
                       // Error Message
                       <div className="flex justify-center">
                         <div className="max-w-md bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl p-4">
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm">{typeof message.content === 'string' ? message.content : 'An error occurred'}</p>
                         </div>
                       </div>
                     ) : message.type === 'ai' ? (

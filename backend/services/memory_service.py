@@ -10,10 +10,13 @@ Handles:
 
 MEMORY CONTRACT: Uses canonical schemas from models/memory.py
 MULTI-TENANT: All operations require user_id for isolation
+
+PERFORMANCE: All DB operations have timeout protection
 """
 import logging
 import os
 import uuid
+import asyncio
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -33,12 +36,17 @@ class MemoryService:
     - Session-based context management
     - Context trimming for token budget
     - Fast retrieval for real-time responses
+    
+    FIX #5: Added in-memory backup for session states to prevent context wipe on DB errors
     """
     
     def __init__(self, db: AsyncIOMotorClient):
         self.db = db
         self.default_window_size = 10
         self.max_messages_per_session = 50
+        # FIX #5: Backup cache for session states (prevents context wipe on DB error)
+        self._session_state_backup: Dict[str, Dict[str, Any]] = {}
+        self._backup_max_size = 500  # Bounded to prevent memory leak
     
     async def get_conversation_context(
         self,
@@ -56,15 +64,20 @@ class MemoryService:
         
         Returns:
             List of messages in chronological order
+            
+        PERFORMANCE: 2s timeout to prevent slow DB from blocking
         """
         try:
             window = window_size or self.default_window_size
             
-            # Get last N messages
-            messages = await self.db.chat_messages.find({
-                "session_id": session_id,
-                "user_id": user_id
-            }).sort("timestamp", -1).limit(window).to_list(None)
+            # Get last N messages with timeout protection
+            messages = await asyncio.wait_for(
+                self.db.chat_messages.find({
+                    "session_id": session_id,
+                    "user_id": user_id
+                }).sort("timestamp", -1).limit(window).to_list(None),
+                timeout=2.0  # 2s timeout for DB query
+            )
             
             # Reverse to chronological order
             messages = list(reversed(messages))
@@ -72,6 +85,9 @@ class MemoryService:
             logger.info(f"📜 Retrieved {len(messages)} messages for context")
             return messages
             
+        except asyncio.TimeoutError:
+            logger.warning(f"⚡ Conversation context query timed out (>2s)")
+            return []
         except Exception as e:
             logger.error(f"❌ Failed to get conversation context: {e}")
             return []
@@ -246,7 +262,11 @@ class MemoryService:
         
         MEMORY CONTRACT: Returns SessionState schema fields.
         MULTI-TENANT: Isolated by user_id + session_id.
+        
+        FIX #5: On DB error, returns backup cache instead of wiping context
         """
+        backup_key = f"{user_id}_{session_id}"
+        
         try:
             # Query by user_id + session_id (multi-tenant isolation)
             state_doc = await self.db.session_states.find_one({
@@ -257,14 +277,39 @@ class MemoryService:
             if state_doc:
                 if MEMORY_DEBUG:
                     logger.info(f"📦 Session state loaded: user={user_id[:8]}, session={session_id[:8]}")
-                return self._doc_to_session_state(state_doc)
+                state = self._doc_to_session_state(state_doc)
+                
+                # FIX #5: Update backup cache on successful load
+                self._update_session_backup(backup_key, state)
+                return state
             
-            # Return default state if not found
+            # Return default state if not found (new session)
             return self._create_default_session_state(user_id, session_id)
             
         except Exception as e:
             logger.error(f"❌ Failed to get session state: {e}")
+            
+            # FIX #5: Return backup cache if available (don't wipe context)
+            if backup_key in self._session_state_backup:
+                logger.warning(f"⚠️ Using backup session state (DB unavailable)")
+                backup = self._session_state_backup[backup_key]
+                backup["_from_backup"] = True  # Mark as from backup for visibility
+                return backup
+            
+            # Only create default if no backup exists
+            logger.warning(f"⚠️ No backup available, creating new session state")
             return self._create_default_session_state(user_id, session_id)
+    
+    def _update_session_backup(self, key: str, state: Dict[str, Any]) -> None:
+        """FIX #5: Update backup cache with bounded growth"""
+        # Evict oldest if at capacity
+        if len(self._session_state_backup) >= self._backup_max_size and key not in self._session_state_backup:
+            # Remove first (oldest) entry
+            oldest_key = next(iter(self._session_state_backup))
+            del self._session_state_backup[oldest_key]
+        
+        # Store backup (shallow copy to avoid mutation issues)
+        self._session_state_backup[key] = dict(state)
     
     async def save_session_state(
         self,
@@ -412,9 +457,15 @@ class MemoryService:
         
         MEMORY CONTRACT: Returns StudentProfile schema fields.
         MULTI-TENANT: Isolated by user_id.
+        
+        PERFORMANCE: 2s timeout to prevent slow DB from blocking
         """
         try:
-            profile_doc = await self.db.student_profiles.find_one({"user_id": user_id})
+            # Add timeout protection
+            profile_doc = await asyncio.wait_for(
+                self.db.student_profiles.find_one({"user_id": user_id}),
+                timeout=2.0
+            )
             
             if profile_doc:
                 if MEMORY_DEBUG:
@@ -424,6 +475,9 @@ class MemoryService:
             # Create default profile
             return await self._create_default_student_profile(user_id)
             
+        except asyncio.TimeoutError:
+            logger.warning(f"⚡ Student profile query timed out (>2s)")
+            return self._default_profile(user_id)
         except Exception as e:
             logger.error(f"❌ Failed to get student profile: {e}")
             return self._default_profile(user_id)

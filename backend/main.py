@@ -184,6 +184,10 @@ def create_app() -> FastAPI:
             # 📧 Newsletter API (public - no auth required)
             "/api/newsletter/subscribe",
             "/api/newsletter/unsubscribe",
+            # 📊 Analytics API (authenticated via JWT, CSRF not needed)
+            "/api/analytics/feedback",
+            "/api/analytics/wellness-check",
+            "/api/analytics/track-session",
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")

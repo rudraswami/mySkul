@@ -59,12 +59,17 @@ class ShortTermMemory:
     
     Maintains a sliding window of recent interactions.
     Used to maintain conversation coherence.
+    
+    FIX #9: Added optional persistence hooks for durability
     """
     
-    def __init__(self, max_items: int = 20):
+    def __init__(self, max_items: int = 20, persistence_callback: callable = None):
         self.max_items = max_items
         self._memories: deque = deque(maxlen=max_items)
         self._session_facts: Dict[str, Any] = {}  # Quick facts for this session
+        # FIX #9: Optional persistence callback
+        self._persistence_callback = persistence_callback
+        self._dirty = False  # Track if memory has unsaved changes
     
     def add(self, content: str, memory_type: str = "conversation", **metadata) -> None:
         """Add a memory item"""
@@ -74,6 +79,7 @@ class ShortTermMemory:
             metadata=metadata
         )
         self._memories.append(item)
+        self._dirty = True  # FIX #9: Mark as dirty for persistence
     
     def add_fact(self, key: str, value: Any) -> None:
         """Add a quick session fact"""
@@ -109,6 +115,7 @@ class ShortTermMemory:
         """Clear all short-term memories"""
         self._memories.clear()
         self._session_facts.clear()
+        self._dirty = True
     
     def search(self, query: str) -> List[MemoryItem]:
         """Search memories by content"""
@@ -117,6 +124,52 @@ class ShortTermMemory:
             m for m in self._memories 
             if query_lower in m.content.lower()
         ]
+    
+    # FIX #9: Persistence methods
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize memory for persistence"""
+        return {
+            "memories": [m.to_dict() for m in self._memories],
+            "session_facts": self._session_facts
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], max_items: int = 20) -> 'ShortTermMemory':
+        """Deserialize memory from storage"""
+        memory = cls(max_items=max_items)
+        for m_data in data.get("memories", []):
+            try:
+                memory._memories.append(MemoryItem.from_dict(m_data))
+            except Exception:
+                pass  # Skip malformed entries
+        memory._session_facts = data.get("session_facts", {})
+        memory._dirty = False
+        return memory
+    
+    async def persist(self) -> bool:
+        """
+        FIX #9: Persist memory using callback if available
+        Returns True if persisted, False otherwise
+        """
+        if not self._dirty:
+            return True  # Nothing to persist
+        
+        if self._persistence_callback:
+            try:
+                result = self._persistence_callback(self.to_dict())
+                # Handle async callbacks
+                if hasattr(result, '__await__'):
+                    await result
+                self._dirty = False
+                return True
+            except Exception as e:
+                logger.warning(f"Memory persistence failed: {e}")
+                return False
+        return False
+    
+    def is_dirty(self) -> bool:
+        """FIX #9: Check if memory has unsaved changes"""
+        return self._dirty
 
 
 class LongTermMemory:

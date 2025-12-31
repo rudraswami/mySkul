@@ -415,34 +415,120 @@ class StudyPlannerAgent:
             return []
     
     async def _get_weak_areas(self, user_id: str) -> List[Dict]:
-        """Get student's weak areas from knowledge tracker"""
+        """
+        Get student's weak areas from multiple sources:
+        1. concept_knowledge collection (direct tracking)
+        2. student_profiles collection (long-term weak topics)
+        3. mastery_tracker data
+        4. Smart fallback based on exam type
+        """
+        weak_areas = []
+        
         if self.db is None:
-            return [{"topic": "Physics - Mechanics", "subject": "Physics", "mastery": 0.35}]
+            return self._get_smart_fallback_topics(None)
         
         try:
-            # Query concept_knowledge collection for low mastery items
+            # Source 1: concept_knowledge collection (direct tracking)
             cursor = self.db.concept_knowledge.find({
                 "user_id": user_id,
                 "mastery_level": {"$lt": 0.6}
             }).sort("mastery_level", 1).limit(5)
             
-            weak = await cursor.to_list(length=5)
+            concept_weak = await cursor.to_list(length=5)
             
-            if not weak:
-                # Return default if no data
-                return [{"topic": "Core Concepts", "subject": "General", "mastery": 0.5}]
-            
-            return [
-                {
+            for w in concept_weak:
+                weak_areas.append({
                     "topic": w.get("concept_name", "Unknown"),
                     "subject": w.get("subject", "General"),
-                    "mastery": w.get("mastery_level", 0.5)
-                }
-                for w in weak
-            ]
+                    "mastery": w.get("mastery_level", 0.5),
+                    "source": "concept_tracking"
+                })
+            
+            # Source 2: student_profiles weak_topics
+            profile = await self.db.student_profiles.find_one({"user_id": user_id})
+            if profile and profile.get("weak_topics"):
+                for topic in profile["weak_topics"][:3]:
+                    if not any(w["topic"].lower() == topic.lower() for w in weak_areas):
+                        weak_areas.append({
+                            "topic": topic,
+                            "subject": self._detect_subject(topic),
+                            "mastery": 0.4,
+                            "source": "student_profile"
+                        })
+            
+            # Source 3: mastery_by_topic from profile
+            if profile and profile.get("mastery_by_topic"):
+                for topic, data in profile["mastery_by_topic"].items():
+                    mastery = data.get("level", 0.5) if isinstance(data, dict) else data
+                    if mastery < 0.6 and not any(w["topic"].lower() == topic.lower() for w in weak_areas):
+                        weak_areas.append({
+                            "topic": topic.replace("_", " ").title(),
+                            "subject": self._detect_subject(topic),
+                            "mastery": mastery,
+                            "source": "mastery_tracker"
+                        })
+            
+            # If we have data, sort by mastery and return
+            if weak_areas:
+                weak_areas.sort(key=lambda x: x.get("mastery", 0.5))
+                return weak_areas[:5]
+            
+            # Source 4: Smart fallback based on exam type
+            user_doc = await self.db.users.find_one({"user_id": user_id})
+            exam_type = user_doc.get("exam_type") if user_doc else None
+            
+            return self._get_smart_fallback_topics(exam_type)
+            
         except Exception as e:
             logger.error(f"Error getting weak areas: {e}")
-            return [{"topic": "Practice Areas", "subject": "General", "mastery": 0.5}]
+            return self._get_smart_fallback_topics(None)
+    
+    def _get_smart_fallback_topics(self, exam_type: Optional[str]) -> List[Dict]:
+        """
+        Generate smart fallback topics based on exam type.
+        These are commonly challenging topics for each exam.
+        """
+        COMMON_WEAK_AREAS = {
+            "JEE": [
+                {"topic": "Rotational Mechanics", "subject": "Physics", "mastery": 0.45},
+                {"topic": "Organic Chemistry - Reactions", "subject": "Chemistry", "mastery": 0.40},
+                {"topic": "Definite Integrals", "subject": "Mathematics", "mastery": 0.50},
+            ],
+            "NEET": [
+                {"topic": "Genetics & Molecular Biology", "subject": "Biology", "mastery": 0.45},
+                {"topic": "Human Physiology", "subject": "Biology", "mastery": 0.50},
+                {"topic": "Organic Chemistry", "subject": "Chemistry", "mastery": 0.40},
+            ],
+            "CBSE": [
+                {"topic": "Application of Derivatives", "subject": "Mathematics", "mastery": 0.50},
+                {"topic": "Electrostatics", "subject": "Physics", "mastery": 0.45},
+                {"topic": "Organic Reactions", "subject": "Chemistry", "mastery": 0.40},
+            ],
+        }
+        
+        if exam_type and exam_type in COMMON_WEAK_AREAS:
+            return COMMON_WEAK_AREAS[exam_type]
+        
+        # Generic fallback (still useful, not just "Core Concepts")
+        return [
+            {"topic": "Problem Solving Fundamentals", "subject": "General", "mastery": 0.50, "is_starter": True},
+            {"topic": "Formula Application", "subject": "General", "mastery": 0.45, "is_starter": True},
+        ]
+    
+    def _detect_subject(self, topic: str) -> str:
+        """Detect subject from topic name"""
+        topic_lower = topic.lower()
+        
+        if any(kw in topic_lower for kw in ['physics', 'mechanics', 'electro', 'optics', 'thermo', 'motion', 'force', 'energy']):
+            return "Physics"
+        elif any(kw in topic_lower for kw in ['chemistry', 'organic', 'inorganic', 'chemical', 'reaction', 'bond']):
+            return "Chemistry"
+        elif any(kw in topic_lower for kw in ['math', 'calculus', 'algebra', 'geometry', 'trigon', 'integral', 'derivative']):
+            return "Mathematics"
+        elif any(kw in topic_lower for kw in ['biology', 'cell', 'genetics', 'physiology', 'ecology', 'evolution']):
+            return "Biology"
+        
+        return "General"
     
     async def _get_recent_topics(self, user_id: str) -> List[str]:
         """Get recently studied topics to avoid repetition"""
@@ -474,27 +560,167 @@ class StudyPlannerAgent:
             return {}
     
     async def _get_next_topic(self, user_id: str, preferred_subjects: Optional[List[str]] = None) -> Dict:
-        """Determine the next topic to learn based on syllabus progression"""
+        """
+        Determine the next topic to learn based on:
+        1. Student's exam target (JEE/NEET/Boards)
+        2. Recently studied topics (to avoid repetition)
+        3. Syllabus progression
+        4. Preferred subjects
+        """
         
-        # Default topic suggestions based on common JEE/NEET curriculum
-        default_topics = [
-            {"topic": "Kinematics - Projectile Motion", "subject": "Physics"},
-            {"topic": "Chemical Bonding", "subject": "Chemistry"},
-            {"topic": "Calculus - Integration", "subject": "Mathematics"},
-            {"topic": "Cell Biology", "subject": "Biology"},
-            {"topic": "Thermodynamics", "subject": "Physics"},
-            {"topic": "Organic Chemistry - Reactions", "subject": "Chemistry"}
-        ]
+        # Exam-specific curriculum topics (prioritized for each exam)
+        EXAM_CURRICULA = {
+            "JEE": {
+                "Physics": [
+                    {"topic": "Kinematics - Projectile Motion", "priority": 1},
+                    {"topic": "Newton's Laws of Motion", "priority": 1},
+                    {"topic": "Work, Energy & Power", "priority": 2},
+                    {"topic": "Rotational Mechanics", "priority": 2},
+                    {"topic": "Thermodynamics", "priority": 1},
+                    {"topic": "Electrostatics", "priority": 1},
+                    {"topic": "Current Electricity", "priority": 2},
+                    {"topic": "Magnetism & EMI", "priority": 2},
+                    {"topic": "Optics - Ray & Wave", "priority": 2},
+                    {"topic": "Modern Physics", "priority": 1},
+                ],
+                "Chemistry": [
+                    {"topic": "Atomic Structure", "priority": 1},
+                    {"topic": "Chemical Bonding", "priority": 1},
+                    {"topic": "Thermodynamics & Equilibrium", "priority": 2},
+                    {"topic": "Electrochemistry", "priority": 2},
+                    {"topic": "Organic Chemistry - GOC", "priority": 1},
+                    {"topic": "Organic Chemistry - Reactions", "priority": 1},
+                    {"topic": "Coordination Chemistry", "priority": 2},
+                    {"topic": "p-Block Elements", "priority": 2},
+                ],
+                "Mathematics": [
+                    {"topic": "Calculus - Limits & Continuity", "priority": 1},
+                    {"topic": "Calculus - Differentiation", "priority": 1},
+                    {"topic": "Calculus - Integration", "priority": 1},
+                    {"topic": "Coordinate Geometry - Conics", "priority": 1},
+                    {"topic": "Trigonometry", "priority": 2},
+                    {"topic": "Probability & Statistics", "priority": 2},
+                    {"topic": "Vectors & 3D Geometry", "priority": 2},
+                    {"topic": "Matrices & Determinants", "priority": 2},
+                ],
+            },
+            "NEET": {
+                "Physics": [
+                    {"topic": "Mechanics - Newton's Laws", "priority": 1},
+                    {"topic": "Thermodynamics", "priority": 2},
+                    {"topic": "Electrostatics & Capacitance", "priority": 1},
+                    {"topic": "Current Electricity", "priority": 2},
+                    {"topic": "Optics", "priority": 2},
+                    {"topic": "Modern Physics", "priority": 1},
+                ],
+                "Chemistry": [
+                    {"topic": "Chemical Bonding & Molecular Structure", "priority": 1},
+                    {"topic": "Coordination Compounds", "priority": 2},
+                    {"topic": "Organic Chemistry - IUPAC & Isomerism", "priority": 1},
+                    {"topic": "Biomolecules", "priority": 1},
+                    {"topic": "Polymers", "priority": 2},
+                    {"topic": "Chemistry in Everyday Life", "priority": 2},
+                ],
+                "Biology": [
+                    {"topic": "Cell Biology - Structure & Function", "priority": 1},
+                    {"topic": "Genetics & Evolution", "priority": 1},
+                    {"topic": "Human Physiology - Digestion", "priority": 1},
+                    {"topic": "Human Physiology - Respiration", "priority": 2},
+                    {"topic": "Plant Physiology - Photosynthesis", "priority": 1},
+                    {"topic": "Ecology & Environment", "priority": 2},
+                    {"topic": "Reproduction - Human", "priority": 1},
+                    {"topic": "Biotechnology & Applications", "priority": 2},
+                ],
+            },
+            "CBSE": {
+                "Physics": [
+                    {"topic": "Electric Charges & Fields", "priority": 1},
+                    {"topic": "Current Electricity", "priority": 1},
+                    {"topic": "Moving Charges & Magnetism", "priority": 2},
+                    {"topic": "Ray Optics", "priority": 1},
+                    {"topic": "Wave Optics", "priority": 2},
+                    {"topic": "Dual Nature of Radiation", "priority": 1},
+                ],
+                "Chemistry": [
+                    {"topic": "Solid State", "priority": 2},
+                    {"topic": "Solutions", "priority": 1},
+                    {"topic": "Electrochemistry", "priority": 1},
+                    {"topic": "Haloalkanes & Haloarenes", "priority": 1},
+                    {"topic": "Alcohols, Phenols, Ethers", "priority": 1},
+                ],
+                "Mathematics": [
+                    {"topic": "Relations & Functions", "priority": 1},
+                    {"topic": "Continuity & Differentiability", "priority": 1},
+                    {"topic": "Application of Derivatives", "priority": 1},
+                    {"topic": "Integrals", "priority": 1},
+                    {"topic": "Probability", "priority": 2},
+                    {"topic": "Vectors", "priority": 2},
+                ],
+                "Biology": [
+                    {"topic": "Reproduction in Organisms", "priority": 1},
+                    {"topic": "Genetics - Mendel's Laws", "priority": 1},
+                    {"topic": "Molecular Basis of Inheritance", "priority": 1},
+                    {"topic": "Human Health & Disease", "priority": 2},
+                ],
+            }
+        }
         
-        if preferred_subjects:
-            # Filter by preferred subjects
-            filtered = [t for t in default_topics if t["subject"] in preferred_subjects]
-            if filtered:
-                import random
-                return random.choice(filtered)
+        # Get student's exam target
+        exam_target = None
+        if self.db is not None:
+            try:
+                user_doc = await self.db.users.find_one({"user_id": user_id})
+                if user_doc:
+                    exam_target = user_doc.get("exam_type") or user_doc.get("exam_target")
+            except Exception as e:
+                logger.warning(f"Could not fetch exam target: {e}")
         
+        # Get recently studied topics to avoid repetition
+        recent_topics = await self._get_recent_topics(user_id)
+        recent_topic_names = [t.lower() for t in recent_topics]
+        
+        # Select curriculum based on exam
+        curriculum = EXAM_CURRICULA.get(exam_target, EXAM_CURRICULA.get("CBSE", {}))
+        
+        # Collect all available topics
+        available_topics = []
+        
+        for subject, topics in curriculum.items():
+            # Filter by preferred subjects if specified
+            if preferred_subjects and subject not in preferred_subjects:
+                continue
+            
+            for topic_info in topics:
+                topic_name = topic_info["topic"]
+                # Skip recently studied topics
+                if any(recent in topic_name.lower() for recent in recent_topic_names):
+                    continue
+                
+                available_topics.append({
+                    "topic": topic_name,
+                    "subject": subject,
+                    "priority": topic_info["priority"]
+                })
+        
+        # Sort by priority (1 = highest)
+        available_topics.sort(key=lambda x: x["priority"])
+        
+        if available_topics:
+            # Return highest priority topic (with some randomization among same priority)
+            top_priority = available_topics[0]["priority"]
+            top_topics = [t for t in available_topics if t["priority"] == top_priority]
+            import random
+            selected = random.choice(top_topics)
+            return {"topic": selected["topic"], "subject": selected["subject"]}
+        
+        # Fallback if no curriculum match
         import random
-        return random.choice(default_topics)
+        fallback_topics = [
+            {"topic": "Problem Solving Techniques", "subject": "General"},
+            {"topic": "Exam Strategy & Time Management", "subject": "General"},
+            {"topic": "Formula Revision", "subject": "General"},
+        ]
+        return random.choice(fallback_topics)
     
     async def _save_plan(self, user_id: str, plan: DailyStudyPlan) -> None:
         """Save the generated plan to database"""

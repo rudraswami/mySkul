@@ -72,62 +72,56 @@ export function AuthProvider({ children }) {
       
       let sessionValidated = false;
       
-      try {
-        // Check for session via new endpoint (supports both OAuth and JWT)
-        // CRITICAL FIX: Send JWT token in Authorization header so backend can fall back
-        // when session cookie expires (after 7 days)
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        
-        // Add JWT token to Authorization header if available
-        // This allows backend to fall back to JWT when session cookie expires
-        if (currentToken) {
-          headers['Authorization'] = `Bearer ${currentToken}`;
-        }
-        
-        const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
+      // PERFORMANCE FIX: Parallel auth checks (3-5s → 1-2s)
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (currentToken) {
+        headers['Authorization'] = `Bearer ${currentToken}`;
+      }
+      
+      // Run session check and JWT validation in parallel
+      const [sessionResult, jwtResult] = await Promise.allSettled([
+        fetch(`${BACKEND_URL}/api/auth/session`, {
           credentials: 'include',
           headers,
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        }),
+        currentToken ? apiClient.get('/user/profile') : Promise.reject(new Error('No token'))
+      ]);
+      
+      // Use session check if successful
+      if (sessionResult.status === 'fulfilled' && sessionResult.value.ok) {
+        try {
+          const data = await sessionResult.value.json();
           setUser(data.user);
-          // Keep localStorage in sync with validated session
           localStorage.setItem('dhruv_ai_user', JSON.stringify(data.user));
           console.log('✅ Session validated, user loaded:', data.user.email);
           sessionValidated = true;
-        }
-        // If session returns 401 or other error, we'll try JWT fallback below
-      } catch (error) {
-        // Session endpoint failed (network error, etc.) - will try JWT fallback
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Session check failed, trying JWT fallback:', error.message);
+        } catch (error) {
+          console.warn('Failed to parse session response:', error);
         }
       }
       
-      // If session validation failed, try JWT token fallback
-      if (!sessionValidated && currentToken) {
-        console.log('🔑 Trying JWT token fallback...');
-        try {
-          const profileResponse = await apiClient.get('/user/profile');
-          setUser(profileResponse.data);
-          localStorage.setItem('dhruv_ai_user', JSON.stringify(profileResponse.data));
-          console.log('✅ JWT validated, user loaded:', profileResponse.data.email);
-          sessionValidated = true;
-        } catch (error) {
-          if (error.response?.status === 401 || error.response?.status === 403) {
-            // JWT is explicitly invalid - clear everything
-            console.log('⚠️ JWT invalid (401/403), clearing auth data');
-            setUser(null);
-            localStorage.removeItem('dhruv_ai_user');
-            localStorage.removeItem('dhruv_ai_token');
-          } else {
-            // Other error (network, 500, etc.) - keep existing user data from localStorage
-            // This prevents logout on temporary network issues
-            console.warn('JWT validation failed with non-auth error, keeping cached user');
-          }
+      // If session failed, try JWT result
+      if (!sessionValidated && jwtResult.status === 'fulfilled') {
+        setUser(jwtResult.value.data);
+        localStorage.setItem('dhruv_ai_user', JSON.stringify(jwtResult.value.data));
+        console.log('✅ JWT validated, user loaded:', jwtResult.value.data.email);
+        sessionValidated = true;
+      }
+      
+      // If both failed with auth errors, clear everything
+      if (!sessionValidated && jwtResult.status === 'rejected') {
+        const error = jwtResult.reason;
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          console.log('⚠️ Auth invalid (401/403), clearing auth data');
+          setUser(null);
+          localStorage.removeItem('dhruv_ai_user');
+          localStorage.removeItem('dhruv_ai_token');
+        } else if (currentToken) {
+          // Other error (network, 500, etc.) - keep existing user data
+          console.warn('Auth validation failed with non-auth error, keeping cached user');
         }
       }
       

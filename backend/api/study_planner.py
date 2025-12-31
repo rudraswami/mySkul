@@ -261,8 +261,24 @@ async def get_study_recommendations(
     💡 Get personalized study recommendations
     
     AI-powered suggestions based on performance patterns.
+    Always returns at least 3 actionable recommendations.
     """
     try:
+        # Get user's profile for timezone and exam info
+        user_doc = await db.users.find_one({"user_id": user.user_id})
+        user_timezone = user_doc.get("timezone", "Asia/Kolkata") if user_doc else "Asia/Kolkata"
+        exam_type = user_doc.get("exam_type") if user_doc else None
+        exam_date_str = user_doc.get("exam_date") if user_doc else None
+        
+        # Calculate local hour for time-based recommendations
+        try:
+            from zoneinfo import ZoneInfo
+            local_now = datetime.now(ZoneInfo(user_timezone))
+            local_hour = local_now.hour
+        except Exception:
+            # Fallback to IST assumption (most users are Indian students)
+            local_hour = (datetime.now(timezone.utc).hour + 5) % 24  # UTC+5:30 approximation
+        
         # Get user's weak areas
         weak_cursor = db.concept_knowledge.find({
             "user_id": user.user_id,
@@ -281,14 +297,27 @@ async def get_study_recommendations(
         # Get recent study streak
         streak = 0
         try:
-            user_doc = await db.users.find_one({"user_id": user.user_id})
             streak = user_doc.get("current_streak", 0) if user_doc else 0
         except:
             pass
         
+        # Calculate exam countdown
+        days_to_exam = None
+        if exam_date_str:
+            try:
+                if isinstance(exam_date_str, str):
+                    exam_date = datetime.fromisoformat(exam_date_str.replace('Z', '+00:00'))
+                else:
+                    exam_date = exam_date_str
+                days_to_exam = (exam_date - datetime.now(timezone.utc)).days
+            except:
+                pass
+        
         recommendations = []
         
-        # Recommendation 1: Spaced repetition
+        # ===== PRIORITY 1: Urgent Actions =====
+        
+        # Recommendation: Spaced repetition (if due)
         if due_count > 0:
             recommendations.append({
                 "type": "urgent",
@@ -299,20 +328,46 @@ async def get_study_recommendations(
                 "priority": 1
             })
         
-        # Recommendation 2: Weak areas
+        # Recommendation: Exam countdown (if close)
+        if days_to_exam and days_to_exam <= 30:
+            urgency = "⚠️" if days_to_exam <= 7 else "📅"
+            recommendations.append({
+                "type": "exam_countdown",
+                "icon": urgency,
+                "title": f"{days_to_exam} days to {exam_type or 'exam'}!",
+                "description": "Focus on high-weightage topics and revision" if days_to_exam <= 7 else "Stay consistent with your study plan",
+                "action": "Focus Mode",
+                "priority": 1 if days_to_exam <= 7 else 2
+            })
+        
+        # ===== PRIORITY 2: Focus Areas =====
+        
+        # Recommendation: Weak areas
         if weak_areas:
             weak_topic = weak_areas[0].get("concept_name", "a topic")
+            mastery_pct = int(weak_areas[0].get("mastery_level", 0.5) * 100)
             recommendations.append({
                 "type": "focus",
                 "icon": "🎯",
-                "title": f"Focus on {weak_topic}",
-                "description": f"Your mastery is below 60%. Dedicate focused time today.",
+                "title": f"Strengthen: {weak_topic}",
+                "description": f"Currently at {mastery_pct}% mastery. Focused practice can boost this!",
                 "action": "Practice Now",
                 "priority": 2
             })
         
-        # Recommendation 3: Streak
-        if streak >= 3:
+        # ===== PRIORITY 3: Motivation & Habits =====
+        
+        # Recommendation: Streak motivation
+        if streak >= 7:
+            recommendations.append({
+                "type": "achievement",
+                "icon": "🔥",
+                "title": f"Amazing {streak}-day streak!",
+                "description": "You're building champion habits. Keep the momentum!",
+                "action": "Continue",
+                "priority": 3
+            })
+        elif streak >= 3:
             recommendations.append({
                 "type": "motivation",
                 "icon": "🔥",
@@ -325,38 +380,113 @@ async def get_study_recommendations(
             recommendations.append({
                 "type": "motivation",
                 "icon": "✨",
-                "title": "Start a study streak today",
-                "description": "Study consistently to build momentum and habits",
+                "title": "Start your study streak today",
+                "description": "Consistency beats intensity. Begin building momentum!",
                 "action": "Begin",
                 "priority": 3
             })
         
-        # Recommendation 4: Time-based
-        hour = datetime.now(timezone.utc).hour
-        if 5 <= hour < 10:
+        # ===== PRIORITY 4: Time-Optimized Suggestions =====
+        
+        # Time-based recommendations (using LOCAL time)
+        if 5 <= local_hour < 10:
             recommendations.append({
                 "type": "timing",
                 "icon": "🌅",
                 "title": "Morning is best for new learning",
                 "description": "Your brain is fresh - tackle difficult concepts now",
-                "action": "Learn New",
+                "action": "Learn New Topic",
                 "priority": 4
             })
-        elif 14 <= hour < 18:
+        elif 10 <= local_hour < 14:
             recommendations.append({
                 "type": "timing",
                 "icon": "☀️",
-                "title": "Afternoon is great for practice",
-                "description": "Apply what you've learned with problem solving",
-                "action": "Practice",
+                "title": "Great time for problem practice",
+                "description": "You're warmed up - solve challenging problems",
+                "action": "Solve Problems",
                 "priority": 4
             })
+        elif 14 <= local_hour < 18:
+            recommendations.append({
+                "type": "timing",
+                "icon": "📝",
+                "title": "Afternoon: Review & Practice",
+                "description": "Perfect for applying what you've learned",
+                "action": "Practice Session",
+                "priority": 4
+            })
+        elif 18 <= local_hour < 21:
+            recommendations.append({
+                "type": "timing",
+                "icon": "🌙",
+                "title": "Evening revision window",
+                "description": "Great for consolidating today's learning",
+                "action": "Quick Revision",
+                "priority": 4
+            })
+        else:
+            recommendations.append({
+                "type": "timing",
+                "icon": "😴",
+                "title": "Rest is important too!",
+                "description": "Good sleep helps memory consolidation",
+                "action": "Rest Well",
+                "priority": 5
+            })
+        
+        # ===== PRIORITY 5: Growth Tips =====
+        
+        # Always add a growth tip (so we always have 3+ recommendations)
+        growth_tips = [
+            {
+                "type": "tip",
+                "icon": "💡",
+                "title": "Teach to learn better",
+                "description": "Explaining concepts helps you understand them deeply",
+                "action": "Try TeachBack",
+                "priority": 5
+            },
+            {
+                "type": "tip",
+                "icon": "📊",
+                "title": "Track your progress",
+                "description": "Review your mastery levels weekly to stay on track",
+                "action": "View Progress",
+                "priority": 5
+            },
+            {
+                "type": "tip",
+                "icon": "🎯",
+                "title": "Quality over quantity",
+                "description": "Deep understanding beats surface-level coverage",
+                "action": "Deep Focus",
+                "priority": 5
+            },
+        ]
+        
+        # Add a growth tip if we have less than 4 recommendations
+        if len(recommendations) < 4:
+            import random
+            recommendations.append(random.choice(growth_tips))
+        
+        # Ensure we always return at least 3 recommendations
+        while len(recommendations) < 3:
+            import random
+            tip = random.choice(growth_tips)
+            if tip not in recommendations:
+                recommendations.append(tip)
+        
+        # Sort by priority and return top 4
+        sorted_recs = sorted(recommendations, key=lambda x: x["priority"])[:4]
         
         return {
-            "recommendations": sorted(recommendations, key=lambda x: x["priority"]),
+            "recommendations": sorted_recs,
             "weak_areas_count": len(weak_areas),
             "due_reviews_count": due_count,
-            "current_streak": streak
+            "current_streak": streak,
+            "days_to_exam": days_to_exam,
+            "exam_type": exam_type
         }
         
     except Exception as e:

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { useGamification } from '../../hooks/useGamification';
+import { BrandLoadingScreen } from '../ui/BrandLogo';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -207,16 +208,9 @@ const PremiumDashboard = () => {
     return diff > 0 ? diff : null;
   }, []);
 
-  // Loading State
+  // Loading State - Unified Brand Loading
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}>
-          <Loader2 className="w-10 h-10 text-violet-500" />
-        </motion.div>
-        <p className="text-slate-400 text-sm">Loading your intelligence dashboard...</p>
-      </div>
-    );
+    return <BrandLoadingScreen message="Loading your intelligence dashboard..." />;
   }
 
   // Check if new user (zero state)

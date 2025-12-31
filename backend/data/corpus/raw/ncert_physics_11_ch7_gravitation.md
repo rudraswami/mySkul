@@ -158,3 +158,6 @@ Need additional energy = GMm/2r
 
 
 
+
+
+

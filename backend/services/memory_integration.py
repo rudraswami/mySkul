@@ -56,6 +56,12 @@ class MemoryIntegrationService:
         self._continuity_engine = None
         self._spaced_repetition = None
         self._memory_extractor = None
+        
+        # FIX #12: Deduplication cache for memory writes
+        # Prevents same interaction from being written multiple times
+        self._recent_write_keys: Dict[str, float] = {}  # {key: timestamp}
+        self._dedup_window_seconds = 5  # Ignore duplicate writes within 5 seconds
+        self._max_dedup_cache_size = 100
     
     @property
     def memory_service(self):
@@ -142,7 +148,10 @@ class MemoryIntegrationService:
             # ================================================================
             # PARALLEL EXECUTION: Run independent async calls concurrently
             # This reduces total time from ~sum(all_calls) to ~max(slowest_call)
+            # FIX #4: Track failures for visibility (not silent degradation)
             # ================================================================
+            memory_errors = []  # FIX #4: Track all component failures
+            
             async def safe_get_conversation():
                 try:
                     return await self.memory_service.get_conversation_context(
@@ -151,6 +160,7 @@ class MemoryIntegrationService:
                         window_size=10
                     )
                 except Exception as e:
+                    memory_errors.append(("conversation_context", str(e)))
                     logger.warning(f"Conversation context fetch failed: {e}")
                     return []
             
@@ -163,6 +173,7 @@ class MemoryIntegrationService:
                         min_similarity=0.4
                     )
                 except Exception as e:
+                    memory_errors.append(("semantic_memory", str(e)))
                     logger.warning(f"Semantic memory search failed: {e}")
                     return []
             
@@ -173,6 +184,7 @@ class MemoryIntegrationService:
                         current_query=question
                     )
                 except Exception as e:
+                    memory_errors.append(("continuity", str(e)))
                     logger.warning(f"Continuity detection failed: {e}")
                     return {}
             
@@ -183,6 +195,7 @@ class MemoryIntegrationService:
                         topic=current_topic
                     )
                 except Exception as e:
+                    memory_errors.append(("mastery", str(e)))
                     logger.warning(f"Mastery fetch failed: {e}")
                     return 0
             
@@ -190,6 +203,7 @@ class MemoryIntegrationService:
                 try:
                     return await self._get_user_profile(user_id)
                 except Exception as e:
+                    memory_errors.append(("profile", str(e)))
                     logger.warning(f"User profile fetch failed: {e}")
                     return {}
             
@@ -197,22 +211,41 @@ class MemoryIntegrationService:
                 try:
                     return await self.mastery_tracker.get_weak_topics(user_id, threshold=40)
                 except Exception as e:
+                    memory_errors.append(("weak_topics", str(e)))
                     logger.warning(f"Weak topics fetch failed: {e}")
                     return []
             
-            # Run all in parallel
-            results = await asyncio.gather(
-                safe_get_conversation(),
-                safe_search_memories(),
-                safe_detect_continuation(),
-                safe_get_mastery(),
-                safe_get_profile(),
-                safe_get_weak_topics(),
-                return_exceptions=False  # Exceptions already handled in safe_* functions
-            )
+            # Run all in parallel with timeout protection
+            # FIX: Added 3s timeout to prevent slow semantic search from blocking
+            try:
+                results = await asyncio.wait_for(
+                    asyncio.gather(
+                        safe_get_conversation(),
+                        safe_search_memories(),
+                        safe_detect_continuation(),
+                        safe_get_mastery(),
+                        safe_get_profile(),
+                        safe_get_weak_topics(),
+                        return_exceptions=False  # Exceptions already handled in safe_* functions
+                    ),
+                    timeout=3.0  # Aggressive 3s timeout for all memory operations
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"⚠️ Memory parallel gather timed out (>3s), using defaults")
+                # Return empty results for all components
+                results = ([], [], {}, 0, {}, [])
             
             # Unpack results
             recent_messages, relevant_memories, continuity, mastery_level, user_profile, weak_topics = results
+            
+            # FIX #4: Track component health in context for visibility
+            if memory_errors:
+                context["_memory_degraded"] = True
+                context["_memory_errors"] = memory_errors
+                context["_components_failed"] = len(memory_errors)
+                logger.warning(f"⚠️ Memory partially degraded: {len(memory_errors)}/6 components failed: {[e[0] for e in memory_errors]}")
+            else:
+                context["_memory_degraded"] = False
             
             # 1. Recent conversation context
             context["recent_context"] = recent_messages
@@ -750,47 +783,67 @@ class MemoryIntegrationService:
         
         Returns:
             Dict matching MemoryContextPack schema
-        """
-        try:
-            pack = {
-                "user_id": user_id,
-                "session_id": session_id,
-                "student_name": "",
-                "exam_target": None,
-                "current_mastery": 0,
-                "mastery_bucket": "beginner",
-                "relevant_memories": [],
-                "session_summary": "",
-                "active_task": None,
-                "last_topic": None,
-                "preferred_explanation": "step_by_step",
-                "pacing": "normal",
-                "is_weak_area": False,
-                "needs_encouragement": False
-            }
             
-            # 1. Get session state (persistent)
+        FIX #11: Partial failure handling - keeps successful data, doesn't wipe everything
+        """
+        # FIX #11: Start with default pack (always returned, even on failures)
+        pack = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "student_name": "",
+            "exam_target": None,
+            "current_mastery": 0,
+            "mastery_bucket": "beginner",
+            "relevant_memories": [],
+            "session_summary": "",
+            "active_task": None,
+            "last_topic": None,
+            "preferred_explanation": "step_by_step",
+            "pacing": "normal",
+            "is_weak_area": False,
+            "needs_encouragement": False,
+            "_partial_failure": False,  # FIX #11: Track if any component failed
+            "_failed_components": []    # FIX #11: List of failed components
+        }
+        
+        # FIX #11: Each component wrapped individually - failures don't cascade
+        
+        # 1. Get session state (persistent)
+        try:
             session_state = await self.memory_service.get_session_state(user_id, session_id)
             pack["session_summary"] = session_state.get("session_summary", "")
             pack["active_task"] = session_state.get("active_task")
             pack["last_topic"] = session_state.get("last_retrieval_topics", [None])[0] if session_state.get("last_retrieval_topics") else None
-            
-            # 2. Get student profile (persistent)
+        except Exception as e:
+            pack["_partial_failure"] = True
+            pack["_failed_components"].append("session_state")
+            logger.warning(f"⚠️ MemoryContextPack: session_state failed: {e}")
+        
+        # 2. Get student profile (persistent)
+        profile = {}
+        try:
             profile = await self.memory_service.get_student_profile(user_id)
             pack["exam_target"] = profile.get("exam_target")
             pack["preferred_explanation"] = profile.get("preferred_explanation", "step_by_step")
             pack["pacing"] = profile.get("pacing", "normal")
-            
-            # Get student name
-            try:
-                user_doc = await self.db.users.find_one({"user_id": user_id})
-                if user_doc:
-                    full_name = user_doc.get("full_name", "")
-                    pack["student_name"] = full_name.split()[0] if full_name else ""
-            except:
-                pass
-            
-            # 3. Get mastery for current topic
+        except Exception as e:
+            pack["_partial_failure"] = True
+            pack["_failed_components"].append("student_profile")
+            logger.warning(f"⚠️ MemoryContextPack: student_profile failed: {e}")
+        
+        # Get student name
+        try:
+            user_doc = await self.db.users.find_one({"user_id": user_id})
+            if user_doc:
+                full_name = user_doc.get("full_name", "")
+                pack["student_name"] = full_name.split()[0] if full_name else ""
+        except Exception as e:
+            pack["_partial_failure"] = True
+            pack["_failed_components"].append("student_name")
+            logger.debug(f"Student name fetch failed: {e}")
+        
+        # 3. Get mastery for current topic
+        try:
             topic = self._extract_main_topic(query)
             if topic:
                 topic_key = topic.lower().replace(" ", "_")
@@ -802,8 +855,13 @@ class MemoryIntegrationService:
                 # Check if weak area
                 weak_topics = profile.get("weak_topics", [])
                 pack["is_weak_area"] = topic_key in [t.lower().replace(" ", "_") for t in weak_topics]
-            
-            # 4. SELECTIVE RECALL - Only relevant memories (max 5)
+        except Exception as e:
+            pack["_partial_failure"] = True
+            pack["_failed_components"].append("mastery")
+            logger.warning(f"⚠️ MemoryContextPack: mastery failed: {e}")
+        
+        # 4. SELECTIVE RECALL - Only relevant memories (max 5)
+        try:
             if route_type in ["educational", "problem_solving", "concept"]:
                 relevant_memories = await self.semantic_memory.search_relevant_memories(
                     user_id=user_id,
@@ -813,45 +871,34 @@ class MemoryIntegrationService:
                 )
                 
                 # Compact the memories (only essential fields)
-                # Defensive: only process dict items
                 pack["relevant_memories"] = [
                     {
-                        "content": m.get("content", "")[:200],  # Bounded
+                        "content": m.get("content", "")[:200],
                         "topic": m.get("topic", ""),
                         "similarity": m.get("similarity_score", 0)
                     }
                     for m in relevant_memories[:5]
                     if isinstance(m, dict)
                 ]
-            
-            # 5. Check if needs encouragement
-            if pack["is_weak_area"] or pack["current_mastery"] < 30:
-                pack["needs_encouragement"] = True
-            
-            if MEMORY_DEBUG:
-                logger.info(f"📦 MemoryContextPack built: user={user_id[:8]}, "
-                           f"mastery={pack['current_mastery']}%, memories={len(pack['relevant_memories'])}")
-            
-            return pack
-            
         except Exception as e:
-            logger.error(f"❌ Failed to build MemoryContextPack: {e}")
-            return {
-                "user_id": user_id,
-                "session_id": session_id,
-                "student_name": "",
-                "exam_target": None,
-                "current_mastery": 0,
-                "mastery_bucket": "beginner",
-                "relevant_memories": [],
-                "session_summary": "",
-                "active_task": None,
-                "last_topic": None,
-                "preferred_explanation": "step_by_step",
-                "pacing": "normal",
-                "is_weak_area": False,
-                "needs_encouragement": False
-            }
+            pack["_partial_failure"] = True
+            pack["_failed_components"].append("semantic_memory")
+            logger.warning(f"⚠️ MemoryContextPack: semantic_memory failed: {e}")
+        
+        # 5. Check if needs encouragement
+        if pack["is_weak_area"] or pack["current_mastery"] < 30:
+            pack["needs_encouragement"] = True
+        
+        # FIX #11: Log degradation if any components failed
+        if pack["_partial_failure"]:
+            logger.warning(f"⚠️ MemoryContextPack partially degraded: {pack['_failed_components']}")
+        
+        if MEMORY_DEBUG:
+            logger.info(f"📦 MemoryContextPack built: user={user_id[:8]}, "
+                       f"mastery={pack['current_mastery']}%, memories={len(pack['relevant_memories'])}, "
+                       f"degraded={pack['_partial_failure']}")
+        
+        return pack
     
     # =========================================================================
     # MEMORY v2 - INTELLIGENT WRITE (Memory Update Policy)
@@ -895,24 +942,74 @@ class MemoryIntegrationService:
         Returns:
             Dict with update summary
         """
+        # FIX #12: Deduplication check
+        import time
+        dedup_key = f"{user_id}:{session_id}:{request_id or user_message[:50]}"
+        current_time = time.time()
+        
+        # Clean old entries from dedup cache
+        if len(self._recent_write_keys) > self._max_dedup_cache_size:
+            cutoff = current_time - self._dedup_window_seconds
+            self._recent_write_keys = {
+                k: v for k, v in self._recent_write_keys.items()
+                if v > cutoff
+            }
+        
+        # Check for duplicate
+        if dedup_key in self._recent_write_keys:
+            last_write = self._recent_write_keys[dedup_key]
+            if current_time - last_write < self._dedup_window_seconds:
+                logger.debug(f"🔄 Deduplicated memory write: {dedup_key[:30]}...")
+                return {
+                    "turn_added": False,
+                    "summary_updated": False,
+                    "mastery_updated": False,
+                    "event_logged": False,
+                    "errors": [],
+                    "retries": 0,
+                    "deduplicated": True  # FIX #12: Mark as deduplicated
+                }
+        
+        # Record this write
+        self._recent_write_keys[dedup_key] = current_time
+        
         results = {
             "turn_added": False,
             "summary_updated": False,
             "mastery_updated": False,
             "event_logged": False,
-            "errors": []
+            "errors": [],
+            "retries": 0,  # FIX #7: Track retry attempts
+            "deduplicated": False  # FIX #12: Not a duplicate
         }
         
         try:
-            # 1. Always add turn to session state (bounded)
-            turn_success = await self.memory_service.update_session_turn(
-                user_id=user_id,
-                session_id=session_id,
-                user_message=user_message,
-                ai_response=ai_response,
-                agent_name=agent_name,
-                topics=topics
-            )
+            # FIX #7: Add retry logic for turn addition (critical operation)
+            # 1. Always add turn to session state (bounded) - WITH RETRY
+            turn_success = False
+            max_retries = 2
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    turn_success = await self.memory_service.update_session_turn(
+                        user_id=user_id,
+                        session_id=session_id,
+                        user_message=user_message,
+                        ai_response=ai_response,
+                        agent_name=agent_name,
+                        topics=topics
+                    )
+                    if turn_success:
+                        break
+                except Exception as turn_err:
+                    results["retries"] += 1
+                    if attempt < max_retries:
+                        await asyncio.sleep(0.1 * (attempt + 1))  # Backoff
+                        logger.warning(f"⚠️ Turn update retry {attempt + 1}/{max_retries}: {turn_err}")
+                    else:
+                        results["errors"].append(f"turn_update: {str(turn_err)}")
+                        logger.error(f"❌ Turn update failed after {max_retries + 1} attempts: {turn_err}")
+            
             results["turn_added"] = turn_success
             
             # 2. Update session summary if enough turns accumulated

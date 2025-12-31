@@ -191,26 +191,29 @@ export const ButtonLoader = () => (
 );
 
 /**
- * Full Page Loading
+ * Full Page Loading — Dark Theme
  */
 export const FullPageLoader = ({ text = 'Loading...' }) => (
-  <div className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
-    <div className="text-center">
+  <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 flex items-center justify-center">
+    {/* Subtle glow */}
+    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-violet-600/20 blur-[100px] rounded-full pointer-events-none" />
+    
+    <div className="relative text-center">
       <motion.div
         animate={{ 
-          scale: [1, 1.1, 1],
-          rotate: [0, 5, -5, 0]
+          scale: [1, 1.05, 1],
         }}
         transition={{ 
           duration: 2, 
           repeat: Infinity,
           ease: 'easeInOut'
         }}
-        className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-violet-500/30"
+        className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-500 flex items-center justify-center shadow-2xl shadow-violet-500/30"
       >
-        <Sparkles className="w-8 h-8 text-white" />
+        <Brain className="w-8 h-8 text-white" />
       </motion.div>
-      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+      <h2 className="text-lg font-semibold text-white mb-1">DRON AI</h2>
+      <p className="text-sm text-slate-400">
         {text}
       </p>
     </div>

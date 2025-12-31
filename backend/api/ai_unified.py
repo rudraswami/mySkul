@@ -229,6 +229,7 @@ Answer based on the image content above. Be direct and accurate."""
         
         # 🆕 MEMORY WRITE: Persist memory after EVERY response
         # Uses MemoryIntegrationService as SINGLE SOURCE OF TRUTH
+        # FIX #1: Added reliable async write with error tracking (not fire-and-forget)
         try:
             from services.memory_integration import MemoryIntegrationService
             memory_integration = MemoryIntegrationService(db)
@@ -242,21 +243,38 @@ Answer based on the image content above. Be direct and accurate."""
             except (AttributeError, TypeError):
                 response_text = str(result.get("response", ""))[:1000]
             
-            # Write memory (non-blocking for performance)
-            asyncio.create_task(
-                memory_integration.write_memory_after_response(
-                    user_id=user.user_id,
-                    session_id=session_id,
-                    user_message=request.message[:500],  # Bounded
-                    ai_response=response_text,
-                    agent_name="unified_ai",
-                    topics=[detected_subject] if detected_subject != "General" else None,
-                    request_id=message_id
-                )
-            )
+            # FIX: Reliable memory write with error handling wrapper
+            async def _safe_memory_write():
+                """Memory write with retry and error tracking"""
+                max_retries = 2
+                for attempt in range(max_retries + 1):
+                    try:
+                        result = await memory_integration.write_memory_after_response(
+                            user_id=user.user_id,
+                            session_id=session_id,
+                            user_message=request.message[:500],
+                            ai_response=response_text,
+                            agent_name="unified_ai",
+                            topics=[detected_subject] if detected_subject != "General" else None,
+                            request_id=message_id
+                        )
+                        if result.get("errors"):
+                            logger.warning(f"⚠️ Memory write partial failure: {result['errors']}")
+                        else:
+                            logger.debug(f"💾 Memory write success: request_id={message_id}")
+                        return
+                    except Exception as e:
+                        if attempt < max_retries:
+                            await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                            continue
+                        logger.error(f"❌ Memory write failed after {max_retries+1} attempts: {e}")
+            
+            # Schedule with error handling (task won't be silently lost)
+            task = asyncio.create_task(_safe_memory_write())
+            task.add_done_callback(lambda t: t.exception() if t.exception() else None)
             logger.info(f"💾 Memory write scheduled for user {user.user_id[:8]}...")
         except Exception as e:
-            logger.warning(f"Memory write failed (non-critical): {e}")
+            logger.warning(f"Memory write setup failed (non-critical): {e}")
         
         # 🆕 PHASE 3: Detect emotional state change
         try:

@@ -251,17 +251,27 @@ class SupervisorAgent(BaseAgent):
             logger.info(f"🎯 Detected intent: {intent} | semantic_available: {semantic_analysis is not None}")
             
             # 🆕 Step 1.5: Use Agent Negotiation for TRUE multi-agent collaboration
-            # EXPANDED: Now enabled for most educational intents, not just complex queries
-            # This is what makes us different from chatbots - agents actually collaborate
-            use_negotiation = context.get('use_agent_negotiation', False) or context.get('enable_agent_negotiation', False)
+            # Enable by default for complex educational queries (safe change)
+            # Explicit flags can still disable it if needed
+            explicit_flag = context.get('use_agent_negotiation') or context.get('enable_agent_negotiation')
             
-            # Expanded intent list - negotiation for most educational queries
+            # ALL educational intents use negotiation (expanded from limited list)
             negotiation_intents = [
                 'concept', 'comparison', 'derivation', 'application', 
-                'explanation', 'problem', 'analysis', 'doubt'
+                'explanation', 'problem', 'analysis', 'doubt', 'question',
+                'help', 'understand', 'learn', 'study', 'practice'
             ]
             
-            if use_negotiation and self.agent_negotiator and intent in negotiation_intents:
+            # Enable negotiation by default for complex queries (if negotiator available)
+            # Explicit False flag can disable it
+            use_negotiation = (
+                (explicit_flag is not False) and  # Not explicitly disabled
+                self.agent_negotiator is not None and  # Negotiator available
+                intent in negotiation_intents  # Complex educational intent
+            )
+            
+            # Attempt negotiation if enabled
+            if use_negotiation:
                 logger.info("🤝 Using Agent Negotiation for complex query")
                 try:
                     negotiation_result = await self.agent_negotiator.negotiate(query, context)

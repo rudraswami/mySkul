@@ -41,14 +41,18 @@ class StreamingAIService:
         - event: text_chunk (progressive text)
         - event: visual_upgrade (if Tier 2 succeeds)
         - event: complete (final response)
+        
+        CRITICAL: Handles client disconnection (abort signal) gracefully.
         """
+        text_task = None
+        visual_task = None
         try:
             start_time = time.time()
             
             # Step 1: Immediately send visual fallback (Tier 1: SVG template)
             visual_fallback = self._get_visual_fallback_tier_1(
-                student_profile.get('preferred_metaphor', 'cricket'),
-                student_profile.get('region', 'Bangalore')
+                student_profile.get('preferred_metaphor', 'cricket') if student_profile else 'cricket',
+                student_profile.get('region', 'Bangalore') if student_profile else 'Bangalore'
             )
             
             yield self._format_sse_event('visual_fallback', {
@@ -60,7 +64,7 @@ class StreamingAIService:
             })
             
             # Step 2: Check cache (Tier 0)
-            cache_key = self._generate_cache_key(message, student_profile, subject)
+            cache_key = self._generate_cache_key(message, student_profile or {}, subject)
             cached_response = None
             if self.cache_service:
                 cached_response = await self.cache_service.get(cache_key)
@@ -121,17 +125,39 @@ class StreamingAIService:
             })
             
             # Step 5: Cache the response for future use
-            if self.cache_service and text_complete:
-                await self.cache_service.set(cache_key, {
-                    'text': text_task.result(),
-                    'timestamp': time.time()
-                }, ttl=3600)  # 1 hour TTL
+            if self.cache_service and text_complete and text_task:
+                try:
+                    result = await text_task
+                    await self.cache_service.set(cache_key, {
+                        'text': result,
+                        'timestamp': time.time()
+                    }, ttl=3600)  # 1 hour TTL
+                except Exception as cache_err:
+                    # Non-critical - log but don't fail
+                    import logging
+                    logging.getLogger(__name__).warning(f"Cache write failed: {cache_err}")
+                
+        except asyncio.CancelledError:
+            # Client disconnected (stop button clicked or connection closed)
+            # Cancel background tasks and cleanup gracefully
+            if text_task and not text_task.done():
+                text_task.cancel()
+            if visual_task and not visual_task.done():
+                visual_task.cancel()
+            # Don't yield anything - connection is already closed
+            # Re-raise to let FastAPI handle cleanup
+            raise
                 
         except Exception as e:
-            yield self._format_sse_event('error', {
-                'error': str(e),
-                'fallback_emoji': '🤔'
-            })
+            # Only yield error if connection is still open
+            try:
+                yield self._format_sse_event('error', {
+                    'error': str(e),
+                    'fallback_emoji': '🤔'
+                })
+            except (asyncio.CancelledError, GeneratorExit):
+                # Connection closed while yielding error - ignore
+                pass
     
     def _get_visual_fallback_tier_1(self, metaphor_category: str, region: str) -> Dict[str, str]:
         """
@@ -265,16 +291,32 @@ class StreamingAIService:
             }
     
     async def _yield_from_task(self, task: asyncio.Task):
-        """Yield results from async task as they become available"""
+        """
+        Yield results from async task as they become available.
+        
+        CRITICAL: Handles cancellation gracefully when client disconnects.
+        """
         try:
             result = await task
             if isinstance(result, dict):
                 yield result
-            else:
+            elif hasattr(result, '__aiter__'):
+                # It's an async generator
                 async for item in result:
                     yield item
+            else:
+                # Single result
+                yield result
+        except asyncio.CancelledError:
+            # Task was cancelled (client disconnected)
+            # Cancel the task if it's still running
+            if not task.done():
+                task.cancel()
+            # Re-raise to propagate cancellation
+            raise
         except Exception as e:
-            yield {'error': str(e)}
+            # Only yield error if not cancelled
+            yield {'error': str(e), 'complete': True}
     
     async def _stream_cached_response(self, cached_data: Dict[str, Any]):
         """Stream cached response progressively"""

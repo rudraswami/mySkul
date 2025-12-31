@@ -24,6 +24,45 @@ class ContinuityEngine:
         self.db = db
         self.continuation_threshold_hours = 72  # Consider continuation if within 3 days
     
+    def _normalize_datetime(self, dt_value) -> Optional[datetime]:
+        """
+        FIX #10: Robust datetime normalization with proper timezone handling
+        
+        Handles:
+        - datetime objects (aware and naive)
+        - ISO format strings
+        - MongoDB datetime
+        
+        Returns timezone-aware datetime or None if parsing fails
+        """
+        try:
+            # Handle None
+            if dt_value is None:
+                return None
+            
+            # Handle string
+            if isinstance(dt_value, str):
+                from dateutil import parser
+                dt_value = parser.parse(dt_value)
+            
+            # Handle datetime
+            if isinstance(dt_value, datetime):
+                # If naive, assume UTC (most common in our system)
+                if dt_value.tzinfo is None:
+                    # Log warning for visibility
+                    logger.debug(f"Converting naive datetime to UTC (assumed)")
+                    return dt_value.replace(tzinfo=timezone.utc)
+                
+                # If already timezone-aware, convert to UTC for comparison
+                return dt_value.astimezone(timezone.utc)
+            
+            logger.warning(f"Unknown datetime type: {type(dt_value)}")
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Failed to normalize datetime: {e}")
+            return None
+    
     async def detect_topic_continuation(
         self,
         user_id: str,
@@ -52,19 +91,19 @@ class ContinuityEngine:
             last_updated = profile.get("updated_at")
             
             # Check if within continuation window
+            # FIX #10: Robust timezone handling
             if last_updated:
-                if isinstance(last_updated, str):
-                    from dateutil import parser
-                    last_updated = parser.parse(last_updated)
+                last_updated = self._normalize_datetime(last_updated)
                 
-                # Ensure both datetimes are timezone-aware
-                if last_updated.tzinfo is None:
-                    last_updated = last_updated.replace(tzinfo=timezone.utc)
-                
-                hours_since = (datetime.now(timezone.utc) - last_updated).total_seconds() / 3600
-                if hours_since > self.continuation_threshold_hours:
-                    # Too old, not a continuation
-                    return {"is_continuation": False}
+                if last_updated:
+                    hours_since = (datetime.now(timezone.utc) - last_updated).total_seconds() / 3600
+                    if hours_since > self.continuation_threshold_hours:
+                        # Too old, not a continuation
+                        return {"is_continuation": False}
+                else:
+                    # FIX #10: If we can't parse the datetime, log and continue without time check
+                    logger.warning(f"⚠️ Could not parse last_updated timestamp, skipping time check")
+                    hours_since = None
             
             # Extract concepts from current query
             current_concepts = self._extract_concepts(current_query)
