@@ -101,39 +101,14 @@ def create_app() -> FastAPI:
     # =============================================================================
     # MIDDLEWARE CONFIGURATION
     # =============================================================================
-    # CRITICAL: Order matters! In Starlette, middleware added FIRST is OUTERMOST.
-    # Request flow: CORS → Session → CSRF → SecurityHeaders → RequestID → Route
+    # CRITICAL: In Starlette, add_middleware() inserts at index 0.
+    # Therefore: LAST added = FIRST in list = OUTERMOST (processes request first)
+    # 
+    # We add in this order so the final stack is:
+    #   CORS (outermost) → RequestID → SecurityHeaders → CSRF → Session (innermost)
     # =============================================================================
 
-    # 1. CORS Middleware - MUST be FIRST (outermost) to handle preflight OPTIONS
-    # This ensures CORS headers are ALWAYS added before any other middleware runs
-    logger.info("Configuring CORS (FIRST - outermost)...")
-    cors_origins = settings.CORS_ORIGINS
-    logger.info(f"   - FRONTEND_URL: {settings.FRONTEND_URL}")
-    logger.info(f"   - Allowed origins ({len(cors_origins)}): {cors_origins}")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-        allow_headers=[
-            "Content-Type",
-            "Authorization",
-            "X-Requested-With",
-            "X-CSRF-Token",
-            "Cache-Control",
-            "Cookie",
-            "Accept",
-            "Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
-        ],
-        expose_headers=["X-CSRF-Token", "Set-Cookie", "Content-Length"],
-        max_age=600,  # Cache preflight for 10 minutes
-    )
-
-    # 2. Session Middleware
+    # 1. Session Middleware (will be innermost)
     logger.info("Configuring SessionMiddleware...")
     is_https = settings.BACKEND_URL.startswith('https://')
     cookie_domain = settings.SESSION_COOKIE_DOMAIN
@@ -149,9 +124,8 @@ def create_app() -> FastAPI:
     logger.info(f"   - same_site: {settings.SESSION_COOKIE_SAMESITE}")
     logger.info(f"   - https_only: {is_https}")
     logger.info(f"   - domain: {cookie_domain or 'auto (no restriction)'}")
-    logger.info(f"   - BACKEND_URL: {settings.BACKEND_URL}")
 
-    # 3. CSRF Middleware
+    # 2. CSRF Middleware
     logger.info("Configuring CSRF Protection...")
     app.add_middleware(
         CSRFMiddleware,
@@ -180,30 +154,24 @@ def create_app() -> FastAPI:
             "/api/agentic/doubt",
             "/api/agentic/tools",
             "/api/agentic/health",
-            # Study Planner API (authenticated via JWT)
             "/api/study-planner/today",
             "/api/study-planner/generate",
             "/api/study-planner/complete-block",
             "/api/study-planner/history",
             "/api/study-planner/recommendations",
-            # Notifications API
             "/api/notifications",
             "/api/notifications/unread-count",
             "/api/notifications/mark-read",
             "/api/notifications/mark-all-read",
-            # 🔮 NETRA Visual Engine API
             "/api/netra/parse-concept",
             "/api/netra/health",
-            # 🔮 NETRA v4.0 Visual Intelligence API
             "/api/netra/v4/generate",
             "/api/netra/v4/generate-simple",
             "/api/netra/v4/analyze",
             "/api/netra/v4/health",
             "/api/netra/v4/metrics",
-            # 📧 Newsletter API (public - no auth required)
             "/api/newsletter/subscribe",
             "/api/newsletter/unsubscribe",
-            # 📊 Analytics API (authenticated via JWT, CSRF not needed)
             "/api/analytics/feedback",
             "/api/analytics/wellness-check",
             "/api/analytics/track-session",
@@ -211,16 +179,43 @@ def create_app() -> FastAPI:
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
     
-    # 4. Security Headers Middleware
+    # 3. Security Headers Middleware
     logger.info("Configuring Security Headers...")
     app.add_middleware(SecurityHeadersMiddleware)
-    logger.info("   - HSTS, CSP, X-Frame-Options, and other security headers enabled")
+    logger.info("   - Security headers enabled")
 
-    # 5. Request ID Middleware (innermost)
+    # 4. Request ID Middleware
     logger.info("Configuring Request ID Middleware...")
     from middleware.request_id import RequestIDMiddleware
     app.add_middleware(RequestIDMiddleware)
-    logger.info("   - Request ID tracing enabled for all requests")
+    logger.info("   - Request ID tracing enabled")
+
+    # 5. CORS Middleware - MUST be LAST (becomes outermost, processes first)
+    logger.info("Configuring CORS (LAST - outermost)...")
+    cors_origins = settings.CORS_ORIGINS
+    logger.info(f"   - FRONTEND_URL: {settings.FRONTEND_URL}")
+    logger.info(f"   - Allowed origins ({len(cors_origins)}): {cors_origins}")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "X-CSRF-Token",
+            "Cache-Control",
+            "Cookie",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+        ],
+        expose_headers=["X-CSRF-Token", "Set-Cookie", "Content-Length"],
+        max_age=600,
+    )
 
     # =============================================================================
     # STARTUP EVENT
