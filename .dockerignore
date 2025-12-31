@@ -1,0 +1,54 @@
+# ===================================================
+# Docker Ignore - Repo Root (Railway build context)
+# Only backend/ is needed for deployment
+# ===================================================
+
+# Exclude frontend entirely
+frontend/
+
+# Exclude documentation and markdown files
+*.md
+docs/
+screenshot/
+tests/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python cache (at root level)
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Logs
+*.log
+
+# Test and dev files at root
+*.py
+!backend/**/*.py
+docker-compose*.yml
+yarn.lock
+*.png
+*.json
+
+# Large unnecessary files
+landing_*.png
+

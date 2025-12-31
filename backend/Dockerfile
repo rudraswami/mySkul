@@ -2,6 +2,11 @@
 # PRODUCTION DOCKERFILE - Optimized for Railway (< 2GB)
 # Multi-stage build to minimize final image size
 # ===================================================
+# 
+# NOTE: Railway build context is REPO ROOT (not backend/)
+# because Dockerfile path is /backend/Dockerfile
+# So we must COPY from backend/ explicitly
+# ===================================================
 
 # === STAGE 1: Builder ===
 FROM python:3.11-slim AS builder
@@ -14,8 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy production requirements
-COPY requirements-prod.txt .
+# Copy production requirements from backend/
+COPY backend/requirements-prod.txt .
 
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv
@@ -42,22 +47,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy application code
-COPY . .
+# Copy ONLY backend/ contents as app root
+# This makes /app contain: main.py, api/, services/, core/, etc.
+COPY backend/ .
 
 # Remove unnecessary files from final image
 RUN rm -rf \
     tests/ \
     scripts/ \
     *.md \
-    .git/ \
-    .gitignore \
     __pycache__/ \
     .pytest_cache/ \
     .mypy_cache/ \
     requirements.txt \
     requirements-dev.txt \
     audio_processor.py \
+    Dockerfile \
+    .dockerignore \
     2>/dev/null || true
 
 # Create necessary directories
