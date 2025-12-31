@@ -35,7 +35,7 @@ class Settings:
     # SERVER SETTINGS
     # =============================================================================
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8001"))
+    PORT: int = int(os.getenv("PORT", 8001))
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8001")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
