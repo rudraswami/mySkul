@@ -1,36 +1,83 @@
-FROM python:3.11-slim
+# ===================================================
+# PRODUCTION DOCKERFILE - Optimized for Railway (< 2GB)
+# Multi-stage build to minimize final image size
+# ===================================================
 
-# Set working directory
-WORKDIR /app
+# === STAGE 1: Builder ===
+FROM python:3.11-slim AS builder
 
-# Install system dependencies required for audio processing and other features
-RUN apt-get update && apt-get install -y \
+WORKDIR /build
+
+# Install build dependencies (only in builder stage)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
-    libsndfile1 \
-    ffmpeg \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for Docker layer caching)
-COPY requirements.txt .
+# Copy production requirements
+COPY requirements-prod.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies into a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install deps with no cache to reduce size
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements-prod.txt
+
+
+# === STAGE 2: Production Runtime ===
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Install only runtime system dependencies (minimal)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && rm -rf /var/cache/apt/archives/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application code
 COPY . .
 
+# Remove unnecessary files from final image
+RUN rm -rf \
+    tests/ \
+    scripts/ \
+    *.md \
+    .git/ \
+    .gitignore \
+    __pycache__/ \
+    .pytest_cache/ \
+    .mypy_cache/ \
+    requirements.txt \
+    requirements-dev.txt \
+    audio_processor.py \
+    2>/dev/null || true
+
 # Create necessary directories
 RUN mkdir -p logs temp
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
 # Expose port
 EXPOSE 8001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8001/api/health', timeout=5)" || exit 1
+    CMD curl -f http://localhost:8001/api/health || exit 1
 
 # Run application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
-

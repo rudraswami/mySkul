@@ -1,4 +1,8 @@
-# Python
+# ===================================================
+# Docker Ignore - Minimize build context for Railway
+# ===================================================
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
@@ -16,19 +20,33 @@ venv/
 env/
 ENV/
 
-# Environment files - NEVER include in Docker image
+# Environment files - NEVER include
 .env
 .env.*
 *.env
-*.env.*
+.env.local
+.env.production
+.env.development
 
-# Testing
+# Testing (not needed in production)
 .pytest_cache/
 .mypy_cache/
 .coverage
 htmlcov/
 *.cover
 .hypothesis/
+tests/
+test_*.py
+*_test.py
+conftest.py
+
+# Dev tools config
+.flake8
+.isort.cfg
+mypy.ini
+pytest.ini
+setup.cfg
+pyproject.toml
 
 # IDEs
 .vscode/
@@ -36,15 +54,20 @@ htmlcov/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# Documentation
+# Documentation (not needed in runtime)
 *.md
+README*
+CHANGELOG*
 docs/
+documentation/
 
 # Git
 .git/
 .gitignore
 .gitattributes
+.github/
 
 # Logs
 *.log
@@ -54,12 +77,42 @@ logs/
 temp/
 tmp/
 *.tmp
+*.temp
 
-# Database files (use external DB)
+# Database files
 *.db
 *.sqlite
+*.sqlite3
 
-# Large test files
-tests/fixtures/
-tests/data/
+# Test fixtures
+tests/
+fixtures/
+test_data/
 
+# Scripts (not needed in runtime)
+scripts/
+
+# Heavy audio processor (we use lite version)
+audio_processor.py
+
+# Dev requirements
+requirements-dev.txt
+
+# Local development files
+.editorconfig
+Makefile
+docker-compose*.yml
+docker-compose*.yaml
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Coverage reports
+coverage.xml
+*.coverage
+
+# Build artifacts
+*.tar
+*.tar.gz
+*.zip

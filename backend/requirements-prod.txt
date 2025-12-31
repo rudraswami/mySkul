@@ -1,0 +1,95 @@
+# ===================================================
+# PRODUCTION REQUIREMENTS - Optimized for Railway Deploy
+# Size target: < 500MB (vs 9.3GB full)
+# ===================================================
+# 
+# This file excludes:
+# - Heavy ML models (whisper, torch, transformers)
+# - Audio processing (librosa, soundfile, noisereduce)
+# - Dev tools (black, flake8, pytest, mypy)
+# - Unused deps (matplotlib, celery, huggingface-hub)
+# 
+# Uses OpenAI API for transcription instead of local models
+# ===================================================
+
+# === Core FastAPI Stack ===
+fastapi==0.110.1
+starlette==0.37.2
+uvicorn==0.25.0
+python-multipart==0.0.20
+sse-starlette==3.0.3
+
+# === Async & HTTP ===
+aiofiles==24.1.0
+aiohttp==3.12.15
+httpx==0.28.1
+requests==2.32.5
+anyio==4.10.0
+
+# === Database (MongoDB) ===
+motor==3.7.0
+pymongo==4.10.1
+dnspython==2.8.0
+
+# === Authentication & Security ===
+Authlib==1.6.5
+bcrypt==4.2.1
+cryptography==46.0.1
+passlib==1.7.4
+python-jose==3.5.0
+PyJWT==2.10.1
+starlette-csrf==3.0.0
+
+# === AI Services (API-based, no local models) ===
+openai==1.99.9
+tiktoken==0.11.0
+litellm==1.77.3
+
+# === Google AI (Gemini) ===
+google-generativeai==0.8.5
+google-genai==1.38.0
+google-api-python-client==2.182.0
+google-auth==2.40.3
+protobuf>=4.0.0
+grpcio>=1.50.0
+
+# === Data Processing (minimal) ===
+numpy==2.0.2
+pydantic==2.11.9
+python-dateutil==2.9.0.post0
+PyYAML==6.0.2
+Jinja2==3.1.6
+regex==2025.9.18
+
+# === Payments ===
+stripe==12.5.1
+razorpay==2.0.0
+
+# === AWS (S3 uploads) ===
+boto3==1.40.35
+
+# === PDF Processing ===
+PyPDF2==3.0.1
+
+# === Utilities ===
+python-dotenv==1.1.1
+tenacity==9.1.2
+cachetools==5.5.2
+rich==14.1.0
+tqdm==4.67.1
+
+# === Rate Limiting ===
+slowapi==0.1.9
+
+# === Email Validation ===
+email-validator==2.3.0
+
+# === WebSocket Support ===
+websockets==15.0.1
+
+# === Session Management ===
+itsdangerous==2.2.0
+
+# === Type hints support ===
+typing_extensions>=4.0.0
+
