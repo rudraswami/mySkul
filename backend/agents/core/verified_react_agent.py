@@ -769,7 +769,7 @@ I hope this helps! Let me know if you'd like me to explore further."""
             if not self.llm_key:
                 return None
             
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from services.llm_compat import LlmChat, UserMessage
             
             chat = LlmChat(
                 api_key=self.llm_key,

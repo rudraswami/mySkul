@@ -15,7 +15,7 @@ import urllib.parse
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from motor.motor_asyncio import AsyncIOMotorClient
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from services.llm_compat import LlmChat, UserMessage
 
 # Add utils to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))

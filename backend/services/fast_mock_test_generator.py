@@ -32,8 +32,8 @@ class FastMockTestGenerator:
         Returns test with all questions in 10-30 seconds
         """
         try:
-            # Use Emergent integrations library (same as agents)
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            # Use OpenAI SDK directly (via compatibility wrapper)
+            from services.llm_compat import LlmChat, UserMessage
             
             # Create optimized prompt for batch generation
             prompt = self._create_batch_generation_prompt(

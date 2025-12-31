@@ -407,7 +407,7 @@ The heavier something is, the more force you need to move it. That's why pushing
                 return response if isinstance(response, str) else str(response)
             
             # === PRIORITY 3: OpenAI GPT-4o (final fallback) ===
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from services.llm_compat import LlmChat, UserMessage
             import os
             
             emergent_llm_key = os.environ.get('OPENAI_API_KEY') or self.config.get('emergent_llm_key')

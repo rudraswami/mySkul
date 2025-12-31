@@ -267,7 +267,7 @@ Remember:
         )
         
         # Use LLM to generate strategy
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from services.llm_compat import LlmChat, UserMessage
         import os
         
         emergent_llm_key = os.environ.get('OPENAI_API_KEY') or self.config.get('emergent_llm_key')

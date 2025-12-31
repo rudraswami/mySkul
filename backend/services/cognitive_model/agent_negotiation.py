@@ -944,7 +944,7 @@ Output ONLY the final synthesized response for the student. Do not mention that 
                 logger.warning("No LLM key for synthesis, returning first response")
                 return "Let me explain this concept..."
             
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from services.llm_compat import LlmChat, UserMessage
             
             chat = LlmChat(
                 api_key=self.llm_key,

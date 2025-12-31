@@ -4,7 +4,7 @@ Combines AI-powered parsing with rule-based fallback for reliable micro-lesson g
 """
 import re
 from typing import Dict, Any, List, Optional
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from services.llm_compat import LlmChat, UserMessage
 
 
 class ResponseParser:

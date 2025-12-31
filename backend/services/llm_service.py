@@ -1,6 +1,6 @@
 """
 LLM Service - Unified interface for LLM API calls
-Uses emergentintegrations library for consistent API access
+Uses OpenAI SDK directly for API access
 Supports: OpenAI, DeepSeek, Qwen-VL
 """
 import logging
@@ -8,7 +8,7 @@ import uuid
 import asyncio
 import os
 from typing import Optional
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from services.llm_compat import LlmChat, UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ async def call_llm(
         if not system_message:
             system_message = "You are a helpful AI assistant. Respond concisely and accurately."
         
-        # Initialize LLM client with correct API
+        # Initialize LLM client using compatibility wrapper
         llm_client = LlmChat(
             api_key=api_key,
             session_id=session_id,
@@ -85,7 +85,6 @@ async def call_llm(
         if not response:
             raise Exception("Empty response from LLM")
         
-        # Response is already a string (or needs to be converted)
         return response if isinstance(response, str) else str(response)
         
     except Exception as e:
@@ -129,7 +128,7 @@ async def call_llm_streaming(
         if not system_message:
             system_message = "You are a helpful AI assistant. Respond concisely and accurately."
         
-        # Initialize LLM client with correct API
+        # Initialize LLM client using compatibility wrapper
         llm_client = LlmChat(
             api_key=api_key,
             session_id=session_id,
@@ -142,22 +141,13 @@ async def call_llm_streaming(
         # Create user message
         user_msg = UserMessage(text=prompt)
         
-        # NOTE: Check if stream_message exists, otherwise use send_message
-        if hasattr(llm_client, 'stream_message'):
-            # Stream response
+        # Stream response with timeout protection
+        try:
             async for chunk in llm_client.stream_message(user_msg):
-                if chunk:
-                    # Handle both string and object responses
-                    if isinstance(chunk, str):
-                        yield chunk
-                    elif hasattr(chunk, 'content') and chunk.content:
-                        yield chunk.content
-        else:
-            # Fallback to non-streaming
-            response = await llm_client.send_message(user_msg)
-            if response:
-                # Response is already a string or needs conversion
-                yield response if isinstance(response, str) else str(response)
+                yield chunk
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ LLM streaming exceeded {STREAMING_LLM_TIMEOUT}s timeout")
+            raise Exception(f"LLM streaming timeout after {STREAMING_LLM_TIMEOUT}s")
         
     except Exception as e:
         logger.error(f"❌ LLM streaming call failed: {e}")

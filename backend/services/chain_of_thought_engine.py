@@ -755,7 +755,7 @@ I'm still working on a complete answer. Would you like me to continue or focus o
     async def _call_llm(self, prompt: str, json_mode: bool = False) -> str:
         """Call LLM for reasoning"""
         try:
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from services.llm_compat import LlmChat, UserMessage
             
             params = {
                 "temperature": 0.3,

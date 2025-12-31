@@ -25,7 +25,7 @@ import hashlib
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from functools import lru_cache
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from services.llm_compat import LlmChat, UserMessage
 
 from .intelligent_response_engine import (
     detect_intent, 
