@@ -196,13 +196,14 @@ def create_app() -> FastAPI:
     # This ensures CORS headers are always added, even on errors
     logger.info("Configuring CORS...")
     cors_origins = settings.CORS_ORIGINS
-    logger.info(f"   - Allowed origins: {cors_origins}")
+    logger.info(f"   - FRONTEND_URL: {settings.FRONTEND_URL}")
+    logger.info(f"   - Allowed origins ({len(cors_origins)}): {cors_origins}")
 
     app.add_middleware(
         CORSMiddleware,
         allow_credentials=True,
         allow_origins=cors_origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         allow_headers=[
             "Content-Type",
             "Authorization",
@@ -210,8 +211,13 @@ def create_app() -> FastAPI:
             "X-CSRF-Token",
             "Cache-Control",
             "Cookie",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
         ],
-        expose_headers=["X-CSRF-Token", "Set-Cookie"],
+        expose_headers=["X-CSRF-Token", "Set-Cookie", "Content-Length"],
+        max_age=600,  # Cache preflight for 10 minutes
     )
 
     # =============================================================================
@@ -278,6 +284,29 @@ def create_app() -> FastAPI:
         
         await close_database()
         logger.info("Shutdown complete")
+
+    # =============================================================================
+    # EXPLICIT OPTIONS HANDLERS (Preflight fallback)
+    # =============================================================================
+    # These ensure OPTIONS requests always succeed even if middleware fails
+    
+    @app.options("/{full_path:path}")
+    async def options_handler(full_path: str):
+        """
+        Handle OPTIONS preflight requests explicitly
+        This is a fallback in case CORSMiddleware doesn't catch them
+        """
+        from fastapi.responses import Response
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": settings.FRONTEND_URL or "https://personal-phi-gray.vercel.app",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Cookie, Accept, Origin",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "600",
+            }
+        )
 
     # =============================================================================
     # REGISTER ROUTERS

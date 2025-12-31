@@ -206,27 +206,50 @@ async def google_login(request: Request, db = Depends(get_database)):
     """
     Initiate Google OAuth flow
     Redirects user to Google sign-in
+    
+    CRITICAL: This must ALWAYS return a RedirectResponse or error, never hang
     """
+    import logging
+    import secrets
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=== GOOGLE LOGIN INITIATED ===")
+    
     try:
-        # Get the base URL from environment - MUST be production domain
+        # Get environment variables FIRST (fast operation)
         backend_url = os.getenv('BACKEND_URL')
+        client_id = os.getenv('GOOGLE_CLIENT_ID')
+        
+        logger.info(f"BACKEND_URL: {backend_url}")
+        logger.info(f"GOOGLE_CLIENT_ID present: {bool(client_id)}")
+        
         if not backend_url:
-            raise ValueError("BACKEND_URL environment variable is required for OAuth")
+            logger.error("BACKEND_URL not set!")
+            raise HTTPException(status_code=500, detail="BACKEND_URL environment variable is required for OAuth")
+        
+        if not client_id:
+            logger.error("GOOGLE_CLIENT_ID not set!")
+            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID environment variable is required for OAuth")
+        
         redirect_uri = f"{backend_url}/api/auth/google/callback"
+        logger.info(f"Redirect URI: {redirect_uri}")
         
-        print(f"🔐 Initiating Google OAuth...")
-        print(f"📍 Redirect URI: {redirect_uri}")
-        print(f"🔑 Client ID: {os.getenv('GOOGLE_CLIENT_ID', 'NOT_SET')[:20]}...")
+        # Generate state inline (faster than DB for initial request)
+        # State will be validated on callback
+        try:
+            state_store = OAuthStateStore(db)
+            state = await state_store.create_state()
+            logger.info(f"OAuth state created: {state[:20]}...")
+        except Exception as state_err:
+            logger.error(f"Failed to create OAuth state: {state_err}")
+            # Fallback to simple state if DB fails
+            state = secrets.token_urlsafe(32)
+            logger.warning(f"Using fallback state: {state[:20]}...")
         
-        # Create and store state in database
-        state_store = OAuthStateStore(db)
-        state = await state_store.create_state()
-        print(f"🎫 Created OAuth state: {state[:20]}...")
-        
-        # Build Google OAuth URL manually with our state
+        # Build Google OAuth URL
         auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
         params = {
-            "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+            "client_id": client_id,
             "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": "openid email profile",
@@ -235,13 +258,17 @@ async def google_login(request: Request, db = Depends(get_database)):
         }
         
         google_oauth_url = f"{auth_url}?{urlencode(params)}"
-        print(f"🔄 Redirecting to Google...")
+        logger.info(f"Redirecting to Google OAuth...")
         
-        return RedirectResponse(url=google_oauth_url)
+        # Return redirect immediately
+        return RedirectResponse(url=google_oauth_url, status_code=302)
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ Error in google_login: {str(e)}")
         import traceback
-        traceback.print_exc()
+        logger.error(f"OAuth initialization failed: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"OAuth initialization failed: {str(e)}")
 
 
