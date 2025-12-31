@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy production requirements from backend/
-COPY backend/requirements-prod.txt .
+COPY requirements-prod.txt .
 
 # Install Python dependencies into a virtual environment
 RUN python -m venv /opt/venv
@@ -49,7 +49,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy ONLY backend/ contents as app root
 # This makes /app contain: main.py, api/, services/, core/, etc.
-COPY backend/ .
+COPY . .
 
 # Remove unnecessary files from final image
 RUN rm -rf \
