@@ -101,19 +101,39 @@ def create_app() -> FastAPI:
     # =============================================================================
     # MIDDLEWARE CONFIGURATION
     # =============================================================================
+    # CRITICAL: Order matters! In Starlette, middleware added FIRST is OUTERMOST.
+    # Request flow: CORS → Session → CSRF → SecurityHeaders → RequestID → Route
+    # =============================================================================
 
-    # Request ID Middleware (MUST be first for tracing)
-    logger.info("Configuring Request ID Middleware...")
-    from middleware.request_id import RequestIDMiddleware
-    app.add_middleware(RequestIDMiddleware)
-    logger.info("   - Request ID tracing enabled for all requests")
-    
-    # Security Headers Middleware
-    logger.info("Configuring Security Headers...")
-    app.add_middleware(SecurityHeadersMiddleware)
-    logger.info("   - HSTS, CSP, X-Frame-Options, and other security headers enabled")
+    # 1. CORS Middleware - MUST be FIRST (outermost) to handle preflight OPTIONS
+    # This ensures CORS headers are ALWAYS added before any other middleware runs
+    logger.info("Configuring CORS (FIRST - outermost)...")
+    cors_origins = settings.CORS_ORIGINS
+    logger.info(f"   - FRONTEND_URL: {settings.FRONTEND_URL}")
+    logger.info(f"   - Allowed origins ({len(cors_origins)}): {cors_origins}")
 
-    # Session Middleware (MUST be before CORS for cookie handling)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "X-CSRF-Token",
+            "Cache-Control",
+            "Cookie",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+        ],
+        expose_headers=["X-CSRF-Token", "Set-Cookie", "Content-Length"],
+        max_age=600,  # Cache preflight for 10 minutes
+    )
+
+    # 2. Session Middleware
     logger.info("Configuring SessionMiddleware...")
     is_https = settings.BACKEND_URL.startswith('https://')
     cookie_domain = settings.SESSION_COOKIE_DOMAIN
@@ -131,8 +151,7 @@ def create_app() -> FastAPI:
     logger.info(f"   - domain: {cookie_domain or 'auto (no restriction)'}")
     logger.info(f"   - BACKEND_URL: {settings.BACKEND_URL}")
 
-    # CSRF Middleware - Add FIRST so it's processed AFTER CORS (inner middleware)
-    # In Starlette, last-added middleware is outermost (processes first)
+    # 3. CSRF Middleware
     logger.info("Configuring CSRF Protection...")
     app.add_middleware(
         CSRFMiddleware,
@@ -191,34 +210,17 @@ def create_app() -> FastAPI:
         ],
     )
     logger.info("   - CSRF protection enabled for POST/PUT/PATCH/DELETE requests")
+    
+    # 4. Security Headers Middleware
+    logger.info("Configuring Security Headers...")
+    app.add_middleware(SecurityHeadersMiddleware)
+    logger.info("   - HSTS, CSP, X-Frame-Options, and other security headers enabled")
 
-    # CORS Middleware - Add LAST so it's outermost (processes first)
-    # This ensures CORS headers are always added, even on errors
-    logger.info("Configuring CORS...")
-    cors_origins = settings.CORS_ORIGINS
-    logger.info(f"   - FRONTEND_URL: {settings.FRONTEND_URL}")
-    logger.info(f"   - Allowed origins ({len(cors_origins)}): {cors_origins}")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-        allow_headers=[
-            "Content-Type",
-            "Authorization",
-            "X-Requested-With",
-            "X-CSRF-Token",
-            "Cache-Control",
-            "Cookie",
-            "Accept",
-            "Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
-        ],
-        expose_headers=["X-CSRF-Token", "Set-Cookie", "Content-Length"],
-        max_age=600,  # Cache preflight for 10 minutes
-    )
+    # 5. Request ID Middleware (innermost)
+    logger.info("Configuring Request ID Middleware...")
+    from middleware.request_id import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+    logger.info("   - Request ID tracing enabled for all requests")
 
     # =============================================================================
     # STARTUP EVENT
@@ -284,29 +286,6 @@ def create_app() -> FastAPI:
         
         await close_database()
         logger.info("Shutdown complete")
-
-    # =============================================================================
-    # EXPLICIT OPTIONS HANDLERS (Preflight fallback)
-    # =============================================================================
-    # These ensure OPTIONS requests always succeed even if middleware fails
-    
-    @app.options("/{full_path:path}")
-    async def options_handler(full_path: str):
-        """
-        Handle OPTIONS preflight requests explicitly
-        This is a fallback in case CORSMiddleware doesn't catch them
-        """
-        from fastapi.responses import Response
-        return Response(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": settings.FRONTEND_URL or "https://personal-phi-gray.vercel.app",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Cookie, Accept, Origin",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "600",
-            }
-        )
 
     # =============================================================================
     # REGISTER ROUTERS
