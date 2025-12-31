@@ -61,6 +61,12 @@ PyYAML==6.0.2
 Jinja2==3.1.6
 regex==2025.9.18
 
+# === Timezone Support (required by reminder_tool.py) ===
+pytz==2024.1
+
+# === Math/Symbolic (required by math_verifier, hybrid_reasoning) ===
+sympy>=1.12
+
 # === Payments ===
 stripe==12.5.1
 razorpay==2.0.0
