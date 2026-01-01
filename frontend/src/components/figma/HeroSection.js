@@ -101,8 +101,9 @@ const ClarityEngineAnimation = () => {
                     transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
                 />
             </svg>
-
+            
             {/* === LAYER 3: Floating Geometric Elements === */}
+            
             <div className="absolute inset-0 pointer-events-none">
                 {/* Hexagon 1 */}
                 <motion.div
