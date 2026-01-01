@@ -240,13 +240,24 @@ GUIDANCE: {hint}
 ✅ Use **bold** for key terms and definitions
 ✅ Use bullet points (-) for lists
 ✅ Use numbered lists (1. 2. 3.) for steps
-✅ Use \\( \\) for inline math, \\[ \\] for block math
 ✅ Use > for important callouts
 ✅ Use | | | for tables
 ✅ Add blank lines between sections
 
+━━━ MATH/FORMULA FORMAT (CRITICAL) ━━━
+✅ ALWAYS use LaTeX for ALL mathematical expressions
+✅ Inline math: \\( F = ma \\) - for formulas in text
+✅ Block math: \\[ E = mc^2 \\] - for important equations
+✅ Subscripts: \\( H_2O \\), \\( x_1 \\) - NEVER use ₂ or unicode
+✅ Superscripts: \\( x^2 \\), \\( e^{-x} \\) - NEVER use ² or unicode
+✅ Fractions: \\( \\frac{{a}}{{b}} \\)
+✅ Greek: \\( \\alpha, \\beta, \\theta, \\lambda \\)
+✅ Chemical: \\( 6CO_2 + 6H_2O \\rightarrow C_6H_{{12}}O_6 + 6O_2 \\)
+
+❌ NO unicode subscripts/superscripts (₂, ², ₆) - they break rendering
 ❌ NO walls of unformatted text
 ❌ NO missing structure
+❌ NO "Great question!" or similar generic openers
 ❌ NO casual paragraph dumps"""
         
         return prompt

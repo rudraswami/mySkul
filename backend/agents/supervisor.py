@@ -1207,17 +1207,9 @@ What would you like to start with?"""
         """
         query_short = query[:100] + '...' if len(query) > 100 else query
         
-        return f"""Great question! Let me help you with that. 🎯
+        return f"""I can help you with this. To give you the clearest explanation:
 
-**You asked:** "{query_short}"
+Could you let me know the subject area (Physics, Chemistry, Math, or Biology)?
 
-I can help you in several ways:
-- **Explain concepts** with examples and analogies
-- **Solve problems** step-by-step
-- **Create practice questions** to test understanding
-- **Provide revision tips** for any topic
-
-**💡 To give you the best answer:** Could you tell me which subject this is about (Physics, Chemistry, Biology, Math)?
-
-Or just ask your question in more detail, and I'll jump right in!"""
+Once I know that, I'll explain the concept clearly with examples that make sense."""
 

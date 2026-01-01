@@ -1630,6 +1630,15 @@ export default function AITutorNeuroSymbolic() {
       const canRetry = error.canRetry !== false; // Default to true
       const originalMessage = error.originalMessage || messageToSend;
       
+      // 🛡️ UX FIX: Restore user input on error (so they can modify/resend easily)
+      // Only restore if NOT user-initiated abort (they intentionally stopped)
+      const isUserAbort = error.name === 'AbortError' || apiAbortControllerRef.current?.signal?.aborted;
+      if (!isUserAbort && originalMessage) {
+        setInputMessage(originalMessage);
+        // Mark as intentional restore (not user typing)
+        inputClearedByUserRef.current = false;
+      }
+      
       setMessages(prev => [
         ...prev,
         {
@@ -1649,7 +1658,7 @@ export default function AITutorNeuroSymbolic() {
       setIsGeneratingVisual(false);
       
       // Handle abort errors gracefully (user clicked Stop)
-      if (error.name === 'AbortError' || apiAbortControllerRef.current?.signal?.aborted) {
+      if (isUserAbort) {
         console.log('🛑 Request cancelled by user');
         // Cancel visual polling if active
         if (visualPollingAbortRef.current) {

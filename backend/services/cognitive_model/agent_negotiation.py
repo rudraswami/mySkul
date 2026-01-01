@@ -569,17 +569,23 @@ class AgentNegotiator:
         if not tasks:
             return []
         
-        # Run all in parallel
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Run all in parallel with cancellation safety
+        try:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        except asyncio.CancelledError:
+            # Streaming client disconnected - return empty, don't crash
+            logger.info("Agent execution cancelled (client disconnect)")
+            return []
         
-        # Process results
+        # Process results - FIX: Explicit None check, not truthy
         responses = []
         for agent_name, result in zip(all_agents, results):
             if isinstance(result, Exception):
                 logger.warning(f"Agent {agent_name} failed: {result}")
                 continue
             
-            if result:
+            # FIX: Explicit check for None/AgentResponse, not truthy (avoids DB bool issue)
+            if result is not None and isinstance(result, AgentResponse):
                 responses.append(result)
         
         return responses

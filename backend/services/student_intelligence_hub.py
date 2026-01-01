@@ -1184,10 +1184,10 @@ class StudentIntelligenceHub:
         try:
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
             
-            if profile:
+            if profile is not None:
                 # Get name from users collection
                 user = await self.db.users.find_one({"user_id": user_id})
-                if user:
+                if user is not None:
                     full_name = user.get("full_name", "")
                     profile["name"] = full_name.split()[0] if full_name else ""
                 return profile
@@ -1218,7 +1218,7 @@ class StudentIntelligenceHub:
         try:
             exam_target = await self.db.user_exam_targets.find_one({"user_id": user_id})
             
-            if not exam_target:
+            if exam_target is None:
                 return None
             
             exam_date = exam_target.get("exam_date")
@@ -1368,9 +1368,9 @@ class StudentIntelligenceHub:
         pattern = ""
         try:
             profile = await self.db.user_emotional_profile.find_one({"user_id": user_id})
-            if profile:
+            if profile is not None:
                 pattern = profile.get("dominant_pattern", "")
-        except:
+        except Exception:
             pass
         
         needs_encouragement = detected in [

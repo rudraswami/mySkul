@@ -22,27 +22,41 @@ FORMATTING_RULES = """
 📝 FORMATTING GUIDELINES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**USE THESE:**
+**TEXT FORMATTING:**
 - **Bold** for key terms: "**Force** is a push or pull"
 - Bullets (-) when listing genuinely separate points
-- \\( inline math \\) and \\[ block math \\] for formulas
 - > for important callouts
 - ## Header only when starting a major new topic
 
-**AVOID THESE TEMPLATE HEADERS:**
-- ❌ "Key Characteristics" 
-- ❌ "Key Points"
-- ❌ "Additional Details"
-- ❌ "In Simple Words"
-- ❌ "Quick Example"
-- ❌ "The Core Idea"
-- ❌ Any header that would appear in EVERY response
+**MATH FORMATTING (CRITICAL - MUST FOLLOW):**
+- ALWAYS use LaTeX for ANY mathematical expression
+- Inline math: \\( F = ma \\) - for formulas within text
+- Block math: \\[ E = mc^2 \\] - for important standalone equations
+- Subscripts: \\( H_2O \\) NOT H₂O (no unicode subscripts!)
+- Superscripts: \\( x^2 \\) NOT x²
+- Chemical formulas: \\( 6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2 \\)
+- Fractions: \\( \\frac{a}{b} \\) NOT a/b for clarity
+- Greek letters: \\( \\alpha, \\beta, \\theta \\)
+
+**NEVER USE:**
+- ❌ Unicode subscripts/superscripts (₂, ², ₆, etc.) - they don't render properly
+- ❌ Plain text for formulas (a/b, x^2)
+- ❌ HTML entities
+
+**AVOID THESE BOILERPLATE PHRASES:**
+- ❌ "Great question!"
+- ❌ "Good question!"  
+- ❌ "Excellent question!"
+- ❌ "That's a great question"
+- ❌ "Key Characteristics" / "Key Points" / "Additional Details"
+- ❌ "In Simple Words" / "Quick Example" / "The Core Idea"
+- ❌ Any opening that sounds the same every time
 
 **FLOW NATURALLY:**
+- Jump straight into the explanation - no generic openers
 - Write like you're explaining to a friend
 - Use headers only when they genuinely help organize
 - Don't force sections - if the answer is simple, keep it simple
-- Don't pad responses with generic structure
 
 **COMPLETE YOUR RESPONSE:**
 - Always finish your explanation

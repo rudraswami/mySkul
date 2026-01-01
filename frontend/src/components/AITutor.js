@@ -618,13 +618,20 @@ export default function AITutorPremium() {
     } catch (error) {
       console.error('Failed to send message:', error);
 
-      // Add error message
+      // 🛡️ UX FIX: Restore user input on error (so they can modify/resend easily)
+      if (messageToSend) {
+        setInputMessage(messageToSend);
+      }
+
+      // Add error message with retry info
       const errorMsgId = `error_${Date.now()}`;
       setMessages(prev => [...prev, {
         type: 'error',
         content: 'Failed to get AI response. Please try again.',
         timestamp: new Date().toISOString(),
-        message_id: errorMsgId
+        message_id: errorMsgId,
+        originalMessage: messageToSend,
+        canRetry: true
       }]);
     } finally {
       setLoading(false);
@@ -811,10 +818,17 @@ export default function AITutorPremium() {
     } catch (error) {
       console.error('Failed to send message:', error);
 
+      // 🛡️ UX FIX: Restore user input on error (so they can modify/resend easily)
+      if (messageContent) {
+        setInputMessage(messageContent);
+      }
+
       setMessages(prev => [...prev, {
         type: 'error',
         content: 'Failed to get AI response. Please try again.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        originalMessage: messageContent,
+        canRetry: true
       }]);
     } finally {
       setLoading(false);

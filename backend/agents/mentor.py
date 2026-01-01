@@ -516,16 +516,14 @@ You are NOT just a tutor. You are:
                 logger.warning(f"[MentorAgent] Empty content detected, generating fallback")
                 student_name = student_profile.get('name', '')
                 name_prefix = f"{student_name}, " if student_name else ""
-                result['content'] = f"""Hey {name_prefix}that's a great question! 🤝
+                topic_hint = query[:80] + "..." if len(query) > 80 else query
+                result['content'] = f"""{name_prefix}I'd be happy to help you with this.
 
-You asked about: "{query[:100]}{'...' if len(query) > 100 else ''}"
+To give you the most useful explanation, could you tell me:
+• What specific part would you like me to focus on?
+• Are you looking for the concept explanation or problem-solving approach?
 
-I'd love to help you understand this better! Let me know:
-• Which part is most confusing?
-• Do you want the basics or dive deeper?
-• Are you preparing for an exam or just curious?
-
-Tell me more and I'll explain it in a way that clicks for you! 📚"""
+Once I know what you need, I can explain it clearly."""
                 result['metadata']['fallback_used'] = True
             
             # ================================================================

@@ -153,7 +153,7 @@ class MoodDetector:
                 "examples": "fascinating applications",
                 "pace": "engaging",
                 "encouragement": "fuel curiosity",
-                "opener": "Ooh, great question! This is where it gets really interesting..."
+                "opener": "Let me explain this — it's quite interesting..."
             },
             EmotionalState.EXCITED: {
                 "tone": "equally enthusiastic",

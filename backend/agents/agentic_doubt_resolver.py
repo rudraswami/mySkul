@@ -386,7 +386,7 @@ NEVER:
                 insights.append(ta.observation)
         
         if insights:
-            return f"""That's a great question! Let me help you understand this. 🤔
+            return f"""Let me help you understand this.
 
 Based on what I found:
 {chr(10).join(['- ' + i[:150] for i in insights[:3]])}
@@ -396,7 +396,7 @@ Would you like me to:
 2. **Show step-by-step** - Break it down into smaller pieces  
 3. **Give an example** - See how it works in practice
 
-What would help you most? 💪"""
+What would help you most?"""
         
         return """I want to make sure I fully understand your doubt before explaining. 🤔
 

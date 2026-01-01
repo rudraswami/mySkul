@@ -3094,7 +3094,8 @@ Response:"""
         if self.db is not None and context.get("user_id"):
             try:
                 user_doc = await self.db.users.find_one({"user_id": context["user_id"]})
-                if user_doc:
+                # FIX: Explicit None check, not truthy (avoids Motor document bool issue)
+                if user_doc is not None:
                     profile["name"] = user_doc.get("full_name", "").split()[0]
                     profile["mastery_level"] = user_doc.get("overall_mastery", 50)
             except Exception:
@@ -3435,17 +3436,13 @@ Response:"""
         if not mentor_content or len(mentor_content.strip()) < 20:
             query = result.get("query", "your question")
             query_short = query[:80] + "..." if len(query) > 80 else query
-            mentor_content = f"""I'm here to help! 🤝
+            mentor_content = f"""I can help you with this. To give you the clearest explanation, which aspect would you like me to focus on?
 
-You asked: "{query_short}"
-
-This is a great question! Let me know which aspect you'd like me to explain:
-• The core concept
-• Step-by-step breakdown  
+• The core concept and how it works
+• Step-by-step breakdown
 • Real-world examples
-• Quick tips and tricks
 
-Just tell me what would help you most, and I'll dive right in! 📚"""
+Let me know and I'll explain it clearly."""
             logger.warning(f"⚠️ [Orchestrator] Empty mentor_content, using fallback")
         
         professor_content = ""

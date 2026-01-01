@@ -309,7 +309,7 @@ Now, {self._get_transition_phrase()} what should I do next?"""
             prefixes = ["I'm not entirely sure, but ", "Let me think... ", "Hmm, "]
             thought = random.choice(prefixes) + thought.lower()
         elif state.emotional_state == EmotionalState.EXCITED:
-            prefixes = ["Oh, this is interesting! ", "Great question! ", "I love this! "]
+            prefixes = ["Oh, this is interesting! ", "I enjoy explaining this! ", "Let me share this with you! "]
             thought = random.choice(prefixes) + thought
         elif state.emotional_state == EmotionalState.EMPATHETIC:
             prefixes = ["I understand this can be confusing. ", "Let me help clarify. ", "I see where you're coming from. "]
@@ -411,7 +411,7 @@ Now, {self._get_transition_phrase()} what should I do next?"""
                 response = "I understand this can be challenging. " + response
         elif state.emotional_state == EmotionalState.EXCITED:
             if not any(word in response.lower() for word in ['great', 'excellent', 'interesting']):
-                response = "This is a great question! " + response
+                response = "Let me explain this! " + response
 
         # Add confidence qualifier if uncertain
         if state.confidence < 0.6:

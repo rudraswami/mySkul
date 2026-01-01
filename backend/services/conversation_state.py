@@ -19,6 +19,7 @@ State can OVERRIDE intent classifier.
 If pending_action exists and user clarifies → ACT, don't re-classify.
 """
 
+import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
@@ -102,10 +103,14 @@ class ConversationStateManager:
                 "session_id": session_id
             })
             
-            if state_doc:
+            # FIX: Explicit None check, not truthy (avoids Motor document bool issue)
+            if state_doc is not None:
                 state = self._doc_to_state(state_doc)
                 self._set_cache(cache_key, state)
                 return state
+        except asyncio.CancelledError:
+            # Client disconnected - return default, don't crash
+            pass
         except Exception as e:
             logger.warning(f"Failed to load state: {e}")
         

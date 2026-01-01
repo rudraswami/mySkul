@@ -858,9 +858,9 @@ I hope this helps! Let me know if you'd like me to explore further."""
         return {
             "success": True,
             "agent": self.get_agent_name(),
-            "content": f"""That's a great question about "{short_query}"
+            "content": f"""I can help you with this. Which specific aspect would you like me to explain?
 
-I'm thinking through the best way to explain this to you. What specific part are you most curious about? That'll help me give you exactly what you need. 🎯""",
+That'll help me give you exactly the right level of detail.""",
             "confidence": 0.4,
             "metadata": {"agent_type": "verified_react", "timeout": True}
         }

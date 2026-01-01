@@ -573,7 +573,7 @@ class ContextPackBuilder:
                     )
                     
                     what_helped = ""
-                    if profile:
+                    if profile is not None:
                         if profile.get('preferred_explanation'):
                             what_helped = f"{profile.get('preferred_explanation')} explanations"
                         if profile.get('pacing'):
@@ -581,9 +581,9 @@ class ContextPackBuilder:
                     
                     return {
                         'success': True,
-                        'learning_preference': profile.get('preferred_explanation', '') if profile else '',
+                        'learning_preference': profile.get('preferred_explanation', '') if profile is not None else '',
                         'relevant_memories': [],  # Skip slow semantic search here
-                        'preferred_analogies': profile.get('preferred_analogies', []) if profile else [],
+                        'preferred_analogies': profile.get('preferred_analogies', []) if profile is not None else [],
                         'what_helped_before': what_helped
                     }
                 except asyncio.TimeoutError:
@@ -684,10 +684,16 @@ class ContextPackBuilder:
                 ]
                 
                 # 2.5s timeout - functions have internal 1s timeouts
-                results = await asyncio.wait_for(
-                    asyncio.gather(*tasks, return_exceptions=True),
-                    timeout=2.5
-                )
+                # FIX: Handle CancelledError to prevent "_GatheringFuture never retrieved"
+                try:
+                    results = await asyncio.wait_for(
+                        asyncio.gather(*tasks, return_exceptions=True),
+                        timeout=2.5
+                    )
+                except asyncio.CancelledError:
+                    # Client disconnected during memory load - graceful fallback
+                    logger.info("ContextPack build cancelled (client disconnect), using fast defaults")
+                    results = [{'success': False}] * 5
                 
                 # Unpack results
                 state_result, history_result, profile_result, mastery_result, magic_result = results
@@ -1001,7 +1007,7 @@ class ContextPackBuilder:
                 sort=[("timestamp", -1)]
             )
             
-            if not last_message:
+            if last_message is None:
                 return None
             
             # Extract the assistant response

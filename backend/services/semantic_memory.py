@@ -286,6 +286,10 @@ class SemanticMemoryService:
             except asyncio.TimeoutError:
                 logger.warning(f"⚡ Memory fetch timeout - returning empty")
                 return []
+            except asyncio.CancelledError:
+                # Client disconnected - graceful fallback, not crash
+                logger.debug("Memory fetch cancelled (client disconnect)")
+                return []
             
             if not all_memories:
                 return []
@@ -302,7 +306,11 @@ class SemanticMemoryService:
             else:
                 # Keyword search (instant, always works)
                 return self._search_by_keywords(all_memories, query, top_k)
-                
+        
+        except asyncio.CancelledError:
+            # Top-level cancellation safety
+            logger.debug("Memory search cancelled")
+            return []
         except Exception as e:
             logger.error(f"Memory search error: {str(e)[:50]}")
             return []

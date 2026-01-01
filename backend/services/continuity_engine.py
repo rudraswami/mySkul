@@ -82,7 +82,8 @@ class ContinuityEngine:
             # Get user's learning profile
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
             
-            if not profile:
+            # FIX: Explicit None check, not truthy (avoids Motor document bool issue)
+            if profile is None:
                 return {"is_continuation": False}
             
             # Get last active info

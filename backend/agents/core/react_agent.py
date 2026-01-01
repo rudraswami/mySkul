@@ -1092,17 +1092,13 @@ I hope this helps! Let me know if you'd like me to explore further."""
         if not content or len(content.strip()) < 20:
             subject = state.context.get('subject', 'your question')
             query_short = state.query[:80] + "..." if len(state.query) > 80 else state.query
-            content = f"""Great question about {subject}! 📚
+            content = f"""I can help you with {subject}. To give you the clearest answer, which aspect would you like me to focus on?
 
-You asked: "{query_short}"
+• The core concept and why it works
+• Step-by-step problem solving approach
+• Common mistakes to avoid
 
-Let me help you understand this better. Could you tell me which specific part you'd like me to focus on? That way I can give you the most useful explanation.
-
-Feel free to ask about:
-• The basic concept
-• How to apply it
-• Practice problems
-• Tips for remembering it"""
+Let me know and I'll explain it clearly."""
             logger.warning(f"[ReAct] Empty content detected, using fallback for: {state.query[:50]}...")
         
         # ================================================================

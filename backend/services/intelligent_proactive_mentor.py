@@ -401,7 +401,8 @@ class IntelligentProactiveMentor:
         try:
             # ===== USER PROFILE =====
             user = await self.db.users.find_one({"user_id": user_id})
-            if user:
+            # FIX: Explicit None check, not truthy (avoids Motor document bool issue)
+            if user is not None:
                 state.name = (user.get("full_name") or user.get("name") or "").split()[0]
                 state.streak_days = user.get("streak", 0)
                 
@@ -1098,7 +1099,8 @@ Generate:"""
         try:
             # Get user profile
             user = await self.db.users.find_one({"user_id": user_id})
-            if user:
+            # FIX: Explicit None check, not truthy (avoids Motor document bool issue)
+            if user is not None:
                 context["name"] = (user.get("full_name") or user.get("name") or "").split()[0]
                 context["current_streak"] = user.get("streak", 0)
                 

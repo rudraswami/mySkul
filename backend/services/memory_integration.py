@@ -217,6 +217,7 @@ class MemoryIntegrationService:
             
             # Run all in parallel with timeout protection
             # FIX: Added 3s timeout to prevent slow semantic search from blocking
+            # FIX: Handle CancelledError to prevent "_GatheringFuture never retrieved"
             try:
                 results = await asyncio.wait_for(
                     asyncio.gather(
@@ -233,6 +234,10 @@ class MemoryIntegrationService:
             except asyncio.TimeoutError:
                 logger.warning(f"⚠️ Memory parallel gather timed out (>3s), using defaults")
                 # Return empty results for all components
+                results = ([], [], {}, 0, {}, [])
+            except asyncio.CancelledError:
+                # Streaming client disconnected - graceful degradation, not crash
+                logger.info("Memory load cancelled (client disconnect), using defaults")
                 results = ([], [], {}, 0, {}, [])
             
             # Unpack results
@@ -483,10 +488,10 @@ class MemoryIntegrationService:
             # Try to get from learning profile
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
             
-            if profile:
+            if profile is not None:
                 # Get user name from users collection
                 user = await self.db.users.find_one({"user_id": user_id})
-                if user:
+                if user is not None:
                     full_name = user.get("full_name", "")
                     profile["name"] = full_name.split()[0] if full_name else ""
                 return profile
@@ -528,7 +533,7 @@ class MemoryIntegrationService:
             
             # Get user name
             user = await self.db.users.find_one({"user_id": user_id})
-            if user:
+            if user is not None:
                 full_name = user.get("full_name", "")
                 default_profile["name"] = full_name.split()[0] if full_name else ""
             
@@ -834,9 +839,12 @@ class MemoryIntegrationService:
         # Get student name
         try:
             user_doc = await self.db.users.find_one({"user_id": user_id})
-            if user_doc:
+            if user_doc is not None:
                 full_name = user_doc.get("full_name", "")
                 pack["student_name"] = full_name.split()[0] if full_name else ""
+        except asyncio.CancelledError:
+            # Client disconnected - don't crash, use default
+            pass
         except Exception as e:
             pack["_partial_failure"] = True
             pack["_failed_components"].append("student_name")

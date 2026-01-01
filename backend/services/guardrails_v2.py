@@ -557,15 +557,10 @@ class ExamIntegrityChecker:
         """Dynamic response for conceptual question cheating attempts"""
         subject_hint = f" in {subject}" if subject else ""
         return (
-            f"Great question about this topic{subject_hint}! "
-            "Let me help you really understand it 📚\n\n"
-            "**Here's the learning path:**\n"
-            "1. **Core concept** - What's the main idea?\n"
-            "2. **How it works** - What's the mechanism/process?\n"
-            "3. **Apply it** - Can you give an example?\n\n"
-            "**Your turn:** Before I explain, tell me:\n"
+            f"Let me help you understand this{subject_hint}.\n\n"
+            "To give you the clearest explanation, tell me:\n"
             "- What do you already know about this?\n"
-            "- What specifically confuses you?\n\n"
+            "- What specific part is unclear?\n\n"
             "**Practice:** After understanding, try explaining it back to me in your own words!\n\n"
             "This way, you'll really remember it for your exam. What part should we start with? 🎓"
         )
@@ -1134,15 +1129,11 @@ class GuardrailsEngine:
             section_hint = f" about {', '.join(sections)}" if sections else ""
             
             return (
-                f"Great question! I found some information{section_hint}. 🎯\n\n"
-                "To give you the best explanation, I'd love to know:\n"
-                "- What specific aspect interests you most?\n"
+                f"I can help with this{section_hint}.\n\n"
+                "To give you the best explanation:\n"
+                "- What specific aspect would you like to focus on?\n"
                 "- Is this for exam prep or concept understanding?\n\n"
-                "**Quick options:**\n"
-                "• Tell me more details → I'll explain step-by-step\n"
-                "• \"Give me an example\" → I'll show you how it works\n"
-                "• \"Quiz me\" → Let's test your understanding\n\n"
-                "What sounds good?"
+                "Let me know and I'll explain it clearly."
             )
         else:
             # No context at all - STILL help, just differently

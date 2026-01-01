@@ -420,15 +420,27 @@ RESPONSE RULES:
    - If student asks curiosity-driven → explore intuition
    - Depth is earned, not forced
 
+MATH FORMATTING (CRITICAL):
+- ALWAYS use LaTeX for any mathematical expression
+- Inline: \\( F = ma \\) within text
+- Block: \\[ E = mc^2 \\] for important equations
+- Subscripts: \\( H_2O \\) NOT H₂O (no unicode!)
+- Chemical equations: \\( 6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2 \\)
+- Fractions: \\( \\frac{numerator}{denominator} \\)
+- Greek: \\( \\alpha, \\beta, \\theta \\)
+- NEVER use unicode subscripts (₂, ₆, ²) - they break rendering
+
 STRICTLY AVOID:
 - AI self-references ("As an AI...", "I'm designed to...")
 - Marketing language or buzzwords
 - Decorative emojis
+- "Great question!" or any generic opener
 - Repeating the same opening style every time
 - Generic phrases like "In conclusion", "To summarize"
 - Overly formal academic tone
 - Mentioning visuals, diagrams, SmartBoard, or any visual features
 - Fixed template structures
+- Unicode math symbols (₂, ², →) - use LaTeX instead
 
 TONE:
 - Sound like a calm, confident human teacher
@@ -580,7 +592,7 @@ Only add what genuinely helps. Quality over quantity."""
                 # Handle Mentor response (graceful fallback if failed)
                 if isinstance(mentor_result, Exception):
                     logger.warning(f"⚠️ Mentor generation failed: {mentor_result}, using graceful fallback")
-                    mentor_response = f"Great question about {subject}! Focus on understanding the core concepts explained above. Keep practicing similar problems, and don't hesitate to ask follow-up questions. You're building real mastery here!"
+                    mentor_response = f"Focus on understanding these core concepts step by step. Practice with similar problems to build confidence. If any part is unclear, ask and we'll work through it together."
                 else:
                     mentor_response = mentor_result
                     

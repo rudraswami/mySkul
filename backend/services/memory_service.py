@@ -274,7 +274,7 @@ class MemoryService:
                 "session_id": session_id
             })
             
-            if state_doc:
+            if state_doc is not None:
                 if MEMORY_DEBUG:
                     logger.info(f"📦 Session state loaded: user={user_id[:8]}, session={session_id[:8]}")
                 state = self._doc_to_session_state(state_doc)
@@ -467,7 +467,7 @@ class MemoryService:
                 timeout=2.0
             )
             
-            if profile_doc:
+            if profile_doc is not None:
                 if MEMORY_DEBUG:
                     logger.info(f"👤 Student profile loaded: user={user_id[:8]}")
                 return self._doc_to_student_profile(profile_doc)
@@ -539,7 +539,7 @@ class MemoryService:
             )
             
             current = 0.0
-            if profile and "mastery_by_topic" in profile:
+            if profile is not None and "mastery_by_topic" in profile:
                 topic_data = profile["mastery_by_topic"].get(topic_key, {})
                 current = topic_data.get("mastery_score", 0.0)
             

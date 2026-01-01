@@ -212,9 +212,9 @@ class SpacedRepetitionEngine:
             concepts: List of concepts covered in this session
         """
         try:
-            # Get current thread
+            # Get current thread - FIX: Explicit None check
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
-            current_thread = profile.get("last_active_concept_thread", []) if profile else []
+            current_thread = profile.get("last_active_concept_thread", []) if profile is not None else []
             
             # Append new concepts (keep last 10)
             updated_thread = (current_thread + concepts)[-10:]
