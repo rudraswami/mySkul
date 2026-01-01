@@ -3297,9 +3297,9 @@ export default function AITutorNeuroSymbolic() {
                             
                             {/* Visual loading indicator removed - was adding noise */}
                             
-                            {/* Action Buttons - Copy & Feedback */}
-                            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1">
-                              {/* Copy Button */}
+                            {/* Action Buttons - Copy & Feedback - Mobile touch-friendly */}
+                            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1 sm:gap-1 flex-wrap">
+                              {/* Copy Button - Touch friendly */}
                               <button
                                 onClick={() => {
                                   const textContent = message.content?.default_view?.main_content?.content || 
@@ -3308,7 +3308,7 @@ export default function AITutorNeuroSymbolic() {
                                   navigator.clipboard.writeText(textContent);
                                   toastSuccess('Copied!');
                                 }}
-                                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+                                className="p-2.5 sm:p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex items-center justify-center"
                                 title="Copy response"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3316,15 +3316,15 @@ export default function AITutorNeuroSymbolic() {
                                 </svg>
                               </button>
                               
-                              <div className="w-px h-4 bg-gray-200 mx-1" />
+                              <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 hidden sm:block" />
                               
-                              {/* Thumbs Up */}
+                              {/* Thumbs Up - Touch friendly */}
                               <button
                                 onClick={() => {
                                   toastSuccess('Thanks for your feedback!');
                                   console.log('Positive feedback for message:', message.id);
                                 }}
-                                className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-all"
+                                className="p-2.5 sm:p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition-all flex items-center justify-center"
                                 title="Good response"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3332,13 +3332,13 @@ export default function AITutorNeuroSymbolic() {
                                 </svg>
                               </button>
                               
-                              {/* Thumbs Down */}
+                              {/* Thumbs Down - Touch friendly */}
                               <button
                                 onClick={() => {
                                   toastSuccess('We\'ll improve!');
                                   console.log('Negative feedback for message:', message.id);
                                 }}
-                                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                className="p-2.5 sm:p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all flex items-center justify-center"
                                 title="Needs improvement"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

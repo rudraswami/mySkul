@@ -855,20 +855,22 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
       )}
       
       {/* Quick Actions Bar - Feedback & Copy (Moved before follow-ups) */}
-      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600 font-semibold">Was this helpful?</span>
-          <div className="flex items-center gap-3">
-            {/* LARGER FEEDBACK ICONS - 40x40 with better contrast */}
+      {/* Mobile: Stack vertically for better touch targets */}
+      <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Feedback section */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <span className="text-sm text-gray-600 dark:text-gray-400 font-semibold">Was this helpful?</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Touch-friendly feedback buttons */}
             <button
               onClick={() => {
                 setFeedback('helpful');
                 if (onInteraction) onInteraction('feedback_positive');
               }}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
+              className={`w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
                 feedback === 'helpful'
-                  ? 'bg-emerald-100 text-emerald-600 border-emerald-300 shadow-sm'
-                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300'
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-600 shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 hover:border-emerald-300'
               }`}
               title="This was helpful!"
               aria-label="Mark as helpful"
@@ -880,10 +882,10 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
                 setFeedback('not_helpful');
                 if (onInteraction) onInteraction('feedback_negative');
               }}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
+              className={`w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border-2 transition-all duration-200 ${
                 feedback === 'not_helpful'
-                  ? 'bg-red-100 text-red-600 border-red-300 shadow-sm'
-                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300'
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-600 shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-300'
               }`}
               title="Not helpful"
               aria-label="Mark as not helpful"
@@ -892,14 +894,16 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
             </button>
           </div>
           {feedback === 'helpful' && (
-            <span className="text-sm text-emerald-600 font-semibold animate-pulse">Thanks for your feedback! 🙌</span>
+            <span className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Thanks! 🙌</span>
           )}
           {feedback === 'not_helpful' && (
-            <span className="text-sm text-gray-500 font-medium">We'll work on improving this</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">We'll improve</span>
           )}
         </div>
         
+        {/* Actions section */}
         <div className="flex items-center gap-2">
+          {/* Copy button - Touch friendly */}
           <button
             onClick={() => {
               // Copy full response to clipboard
@@ -915,7 +919,7 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
                 setTimeout(() => setCopied(false), 2000);
               });
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all min-h-[44px] sm:min-h-0"
             title="Copy response"
           >
             {copied ? (
@@ -931,6 +935,7 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
             )}
           </button>
           
+          {/* WhatsApp button - Touch friendly */}
           <button
             onClick={() => {
               // Create WhatsApp share text
@@ -944,7 +949,7 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
               window.open(whatsappUrl, '_blank');
               if (onInteraction) onInteraction('share_whatsapp', { text: shareText });
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-all min-h-[44px] sm:min-h-0"
             title="Share on WhatsApp"
           >
             <span className="text-lg">💬</span>
@@ -954,9 +959,9 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
       </div>
       
       {/* Follow-up Actions - Ask Related Questions (Moved to END) */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <p className="text-sm font-semibold text-gray-700 mb-3">📌 Quick Follow-ups</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📌 Quick Follow-ups</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
           {followUpActions.map((action, idx) => (
             <button
               key={idx}

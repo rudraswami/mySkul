@@ -1270,12 +1270,12 @@ export default function AITutorPremium() {
                             </div>
                           )}
                           
-                          {/* Feedback Buttons */}
-                          <div className="flex items-center justify-between px-2 mt-3">
+                          {/* Feedback Buttons - Mobile touch-friendly */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 mt-3 gap-2 sm:gap-0">
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleFeedback(message.message_id, 'positive')}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                                className="p-2.5 sm:p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group flex items-center justify-center"
                                 title="Helpful"
                                 aria-label="Mark as helpful"
                                 tabIndex={0}
@@ -1284,7 +1284,7 @@ export default function AITutorPremium() {
                               </button>
                               <button
                                 onClick={() => handleFeedback(message.message_id, 'negative')}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                                className="p-2.5 sm:p-2 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group flex items-center justify-center"
                                 title="Not helpful"
                                 aria-label="Mark as not helpful"
                                 tabIndex={0}
@@ -1294,7 +1294,7 @@ export default function AITutorPremium() {
                             </div>
                             <button
                               onClick={() => handleFollowUp('Can you explain this in more detail?')}
-                              className="px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors"
+                              className="w-full sm:w-auto px-3 py-2.5 sm:py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900 rounded-lg transition-colors min-h-[44px] sm:min-h-0"
                               tabIndex={0}
                             >
                               Ask Follow-up

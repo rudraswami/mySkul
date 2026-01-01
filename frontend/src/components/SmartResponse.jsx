@@ -746,6 +746,8 @@ const SmartResponse = ({
       )}
       
       {/* INTERACTION BAR - Copy, Feedback, Bookmark */}
+      {/* Mobile: Stack vertically for better touch targets */}
+      {/* Desktop: Horizontal layout with justify-between */}
       {showInteractionBar && (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
@@ -753,13 +755,14 @@ const SmartResponse = ({
           transition={{ delay: 0.3 }}
           className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800"
         >
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            {/* Left side - Feedback */}
-            <div className="flex items-center gap-2">
+          {/* Mobile: flex-col, Desktop: flex-row justify-between */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Feedback section - Full width on mobile */}
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Was this helpful?</span>
               <button
                 onClick={() => handleFeedback('helpful')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-2.5 sm:p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${
                   feedback === 'helpful'
                     ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600'
@@ -770,7 +773,7 @@ const SmartResponse = ({
               </button>
               <button
                 onClick={() => handleFeedback('not_helpful')}
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-2.5 sm:p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${
                   feedback === 'not_helpful'
                     ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600'
@@ -792,12 +795,12 @@ const SmartResponse = ({
               )}
             </div>
             
-            {/* Right side - Actions */}
+            {/* Actions section - Full width on mobile */}
             <div className="flex items-center gap-2">
-              {/* Copy button */}
+              {/* Copy button - Touch friendly on mobile */}
               <button
                 onClick={handleCopy}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 min-h-[40px] sm:min-h-0 ${
                   copied
                     ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400'
@@ -817,10 +820,10 @@ const SmartResponse = ({
                 )}
               </button>
               
-              {/* Bookmark button */}
+              {/* Bookmark button - Touch friendly on mobile */}
               <button
                 onClick={() => setBookmarked(!bookmarked)}
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-2.5 sm:p-2 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${
                   bookmarked
                     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600'
@@ -835,6 +838,7 @@ const SmartResponse = ({
       )}
       
       {/* 🎯 Micro Next-Step CTA - One optional action */}
+      {/* Mobile: Touch-friendly button with better tap target */}
       {!isSimpleResponse && nextStepCTA && (
         <motion.div
           initial={{ opacity: 0, y: 5 }}
@@ -858,23 +862,24 @@ const SmartResponse = ({
                 onFollowUp(followUpMap[nextStepCTA.action] || nextStepCTA.text);
               }
             }}
-            className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-2 transition-colors group"
+            className="w-full sm:w-auto text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-2 transition-colors group px-3 py-2.5 sm:px-0 sm:py-0 bg-purple-50 dark:bg-purple-900/20 sm:bg-transparent sm:dark:bg-transparent rounded-lg sm:rounded-none min-h-[44px] sm:min-h-0"
           >
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            <span>{nextStepCTA.text}</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+            <span className="text-left">{nextStepCTA.text}</span>
           </button>
         </motion.div>
       )}
       
       {/* TEACH ME BACK - Dynamic invitation based on backend intelligence */}
+      {/* Mobile: Full width touch-friendly button */}
       {showTeachMeBackOption && (
         <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
           <button
             onClick={() => setShowTeachMeBackModal(true)}
-            className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center gap-2 transition-colors"
+            className="w-full sm:w-auto text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center gap-2 transition-colors px-3 py-2.5 sm:px-0 sm:py-0 bg-amber-50 dark:bg-amber-900/20 sm:bg-transparent sm:dark:bg-transparent rounded-lg sm:rounded-none min-h-[44px] sm:min-h-0"
           >
-            <span>💭</span>
-            <span>{teachbackPayload.ctaText}</span>
+            <span className="flex-shrink-0">💭</span>
+            <span className="text-left">{teachbackPayload.ctaText}</span>
           </button>
         </div>
       )}
