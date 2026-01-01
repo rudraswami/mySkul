@@ -37,14 +37,47 @@ const BlockMath = lazy(() =>
  * Pre-process text to extract and protect block math BEFORE line splitting
  * This handles multi-line \[...\] and $$...$$ blocks
  */
+/**
+ * Pre-process raw LaTeX commands that are not wrapped in delimiters
+ * This fixes cases where LLM outputs like "F = G \frac{m_1 m_2}{r^2}" without $
+ */
+const wrapRawLatex = (text) => {
+  if (!text) return text;
+  
+  // Common LaTeX commands that should be wrapped if not already in math mode
+  // Matches: \frac{...}{...}, \sqrt{...}, \sum, \int, \lim, etc.
+  let result = text;
+  
+  // Pattern to match LaTeX commands that aren't already in $ or \( \)
+  // This handles \frac{...}{...} and similar constructs
+  const latexCommandPattern = /(?<!\$|\\[\(\[])\\(frac|sqrt|sum|int|lim|prod|infty|alpha|beta|gamma|delta|theta|pi|sigma|omega|partial|nabla|cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|rightarrow|leftarrow|Rightarrow|Leftarrow)\b(\{[^{}]*(\{[^{}]*\}[^{}]*)*\})?(\{[^{}]*(\{[^{}]*\}[^{}]*)*\})?/g;
+  
+  // Find matches that aren't already inside math delimiters
+  result = result.replace(latexCommandPattern, (match) => {
+    return `$${match}$`;
+  });
+  
+  // Handle subscripts like m_1, m_2 that aren't in math mode
+  // But avoid double-wrapping if already in $...$
+  result = result.replace(/(?<!\$)([a-zA-Z])_(\d+|[a-zA-Z])(?!\$)/g, '$$$1_{$2}$$');
+  
+  // Handle superscripts like x^2, r^2 that aren't in math mode
+  result = result.replace(/(?<!\$)([a-zA-Z])(\^)(\d+|[a-zA-Z])(?!\$)/g, '$$$1^{$3}$$');
+  
+  return result;
+};
+
 const extractBlockMath = (text) => {
   if (!text) return { processedText: text, blockMathMap: {} };
+  
+  // First, wrap any raw LaTeX commands
+  const preProcessed = wrapRawLatex(text);
   
   const blockMathMap = {};
   let counter = 0;
   
   // Handle \[...\] block math (including multi-line)
-  let processedText = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+  let processedText = preProcessed.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
     const placeholder = `__BLOCK_MATH_${counter}__`;
     blockMathMap[placeholder] = content.trim();
     counter++;

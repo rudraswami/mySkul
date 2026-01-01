@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Brain, BookOpen } from 'lucide-react';
@@ -106,6 +106,10 @@ function AppContent() {
   const { user, loading } = useAuth();
   const { upsellModal, setUpsellModal } = useSubscription();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  
+  // Routes that have their own header (don't show DRON AI mobile header)
+  const routesWithOwnHeader = ['/tutor'];
   
   // Initialize modern alerts system
   const toast = useToast();
@@ -206,34 +210,46 @@ function AppContent() {
                 mobileMenuOpen={mobileMenuOpen} 
                 setMobileMenuOpen={setMobileMenuOpen} 
               />
-              <main id="main-content" className="flex-1 overflow-auto bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm lg:ml-0 dark:from-gray-900/40 dark:to-gray-800/60">
-                {/* Mobile Header with Hamburger - Professional */}
-                <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shadow-sm">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="hamburger-menu min-h-10 min-w-10 p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center transition-colors"
-                    aria-label="Open navigation menu"
-                    aria-controls="mobile-menu"
-                  >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </motion.button>
-                  <div className="flex items-center gap-2.5">
-                    {/* Logo: Brain + Book */}
-                    <div className="relative w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <Brain className="h-5 w-5 text-white absolute -top-0.5 -left-0.5" strokeWidth={2.5} />
-                      <BookOpen className="h-4 w-4 text-white absolute -bottom-0.5 -right-0.5" strokeWidth={2.5} />
+              {/* Main content area - overflow-hidden for /tutor to let child handle scroll */}
+              <main 
+                id="main-content" 
+                className={`flex-1 bg-gradient-to-br from-white/40 to-blue-50/60 backdrop-blur-sm lg:ml-0 dark:from-gray-900/40 dark:to-gray-800/60 flex flex-col ${
+                  routesWithOwnHeader.includes(location.pathname) 
+                    ? 'overflow-hidden' 
+                    : 'overflow-auto'
+                }`}
+              >
+                {/* Mobile Header with Hamburger - HIDDEN on routes with own header (e.g., /tutor) */}
+                {!routesWithOwnHeader.includes(location.pathname) && (
+                  <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shadow-sm flex-shrink-0">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setMobileMenuOpen(true)}
+                      className="hamburger-menu min-h-10 min-w-10 p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center transition-colors"
+                      aria-label="Open navigation menu"
+                      aria-controls="mobile-menu"
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </motion.button>
+                    <div className="flex items-center gap-2.5">
+                      {/* Logo: Brain + Book */}
+                      <div className="relative w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <Brain className="h-5 w-5 text-white absolute -top-0.5 -left-0.5" strokeWidth={2.5} />
+                        <BookOpen className="h-4 w-4 text-white absolute -bottom-0.5 -right-0.5" strokeWidth={2.5} />
+                      </div>
+                      <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                        DRON <span className="text-violet-500">AI</span>
+                      </h1>
                     </div>
-                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-                      DRON <span className="text-violet-500">AI</span>
-                    </h1>
+                    <div className="w-10" /> {/* Spacer for centering */}
                   </div>
-                  <div className="w-10" /> {/* Spacer for centering */}
-                </div>
+                )}
                 
+                {/* Routes container - flex-1 for full height on /tutor */}
+                <div className={routesWithOwnHeader.includes(location.pathname) ? 'flex-1 flex flex-col min-h-0' : 'flex-1'}>
                 <Routes>
                   <Route path="/dashboard" element={
                     <Suspense fallback={<PageLoader message="Loading dashboard..." />}>
@@ -272,6 +288,7 @@ function AppContent() {
                   } />
                   <Route path="*" element={<Navigate to="/dashboard" />} />
                 </Routes>
+                </div>
               </main>
             </div>
           </ProtectedRoute>

@@ -301,7 +301,7 @@ export default function ClassroomLayout({
   );
 
   return (
-    <div className="flex-1 h-full w-full flex flex-col bg-slate-950 overflow-hidden">
+    <div className="flex-1 h-full w-full flex flex-col bg-slate-950 overflow-hidden min-h-0">
       {/* Header */}
       <ClassroomHeader
         onMenuClick={openSidebar}
@@ -370,7 +370,8 @@ export default function ClassroomLayout({
 
             {/* === MOBILE LAYOUT === */}
             {/* When SMARTBOARD_ENABLED is false, no bottom padding needed (no tab bar) */}
-            <div className={`md:hidden flex-1 flex flex-col overflow-hidden ${SMARTBOARD_ENABLED ? 'pb-16' : ''}`}>
+            {/* min-h-0 is critical for flex children to shrink properly */}
+            <div className={`md:hidden flex-1 flex flex-col overflow-hidden min-h-0 ${SMARTBOARD_ENABLED ? 'pb-16' : ''}`}>
               <AnimatePresence mode="wait">
                 {/* When SmartBoard disabled, always show chat */}
                 {/* PREMIUM: Clean dark theme when chat is active */}

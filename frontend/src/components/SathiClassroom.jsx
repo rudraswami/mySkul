@@ -562,13 +562,13 @@ export default function SathiClassroom() {
     </>
   );
 
-  // Chat content component
+  // Chat content component - Full height flex layout for proper input visibility
   const ChatContent = (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Messages Area */}
+    <div className="flex flex-col h-full min-h-0 max-h-full">
+      {/* Messages Area - Scrollable, takes remaining space */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 min-h-0"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 min-h-0 overscroll-contain"
       >
         {/* Memory Banner */}
         <MemoryContextBanner />
