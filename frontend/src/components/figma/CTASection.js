@@ -58,7 +58,7 @@ export function CTASection() {
     ];
 
     return (
-        <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
             <div className="relative">
                 {/* Background Glow */}
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-3xl blur-3xl" />
@@ -78,7 +78,7 @@ export function CTASection() {
                         }} />
                     </div>
 
-                    <div className="relative p-12 lg:p-16">
+                        <div className="relative p-5 sm:p-8 lg:p-12 xl:p-16">
                         <div className="grid lg:grid-cols-2 gap-12 items-center">
                             {/* Left Content */}
                             <div>
@@ -93,14 +93,14 @@ export function CTASection() {
                                     <span className="text-purple-300 text-sm">Launch Offer - 50% Off</span>
                                 </motion.div>
 
-                                <h2 className="text-5xl text-white mb-6 leading-tight">
+                                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-white mb-4 sm:mb-6 leading-tight">
                                     Start Your{" "}
                                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                                         Learning Revolution
                                     </span>
                                 </h2>
 
-                                <p className="text-white/70 text-xl mb-8 leading-relaxed">
+                                <p className="text-white/70 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 leading-relaxed">
                                     Join thousands of students who are already learning smarter with DRON AI's
                                     revolutionary Dual-Layer AI system.
                                 </p>
@@ -153,7 +153,7 @@ export function CTASection() {
                             </div>
 
                             {/* Right Pricing Cards */}
-                            <div id="pricing-cards" className="space-y-4">
+                            <div id="pricing-cards" className="space-y-4 overflow-hidden">
                                 {plans.map((plan, index) => (
                                     <motion.div
                                         key={plan.name}
@@ -162,7 +162,7 @@ export function CTASection() {
                                         viewport={{ once: true }}
                                         transition={{ duration: 0.6, delay: index * 0.1 }}
                                         whileHover={{ scale: 1.02, x: -10 }}
-                                        className={`relative backdrop-blur-xl rounded-2xl p-6 ${
+                                        className={`relative backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 ${
                                             plan.highlight 
                                                 ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30' 
                                                 : 'bg-white/5 border border-white/10'
@@ -182,7 +182,7 @@ export function CTASection() {
                                                 <p className="text-white/60 text-sm">{plan.tagline}</p>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-3xl text-white font-bold">{plan.price}</div>
+                                                <div className="text-2xl sm:text-3xl text-white font-bold">{plan.price}</div>
                                                 <div className="text-white/60 text-sm">{plan.period}</div>
                                             </div>
                                         </div>

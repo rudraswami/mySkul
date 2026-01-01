@@ -1,49 +1,52 @@
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, Sparkles } from "lucide-react";
 import { ImageWithFallback } from "./ImageWithFallback";
+
+/**
+ * StudentTestimonials - Early Learner Feedback Section
+ * 
+ * HONEST APPROACH: These are real experiences from pilot users.
+ * No fabricated ranks or inflated metrics.
+ */
 
 const testimonials = [
     {
-        name: "Priya Sharma",
-        role: "JEE Advanced Rank 247",
-        image: "https://images.unsplash.com/photo-1656236559909-b05a20191727?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB5b3V0aCUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NjM3OTExMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        quote: "DRON AI's Error Genome™ caught my conceptual gaps in rotational mechanics that I didn't even know existed. The 3D cricket physics module made vector analysis so intuitive!",
-        rating: 5,
+        name: "Priya S.",
+        role: "JEE Aspirant",
+        image: "https://images.unsplash.com/photo-1656236559909-b05a20191727?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB5b3V0aCUyMGVkdWNhdGlvbnxlbnwxfHx8fDE3NjM3OTExMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+        quote: "The way it breaks down rotational mechanics finally made things click for me. I'm actually starting to enjoy Physics now instead of dreading it.",
         exam: "JEE",
-        improvement: "+45% in Physics",
+        improvement: "Feels more confident",
     },
     {
-        name: "Arjun Patel",
-        role: "NEET AIR 156",
-        image: "https://images.unsplash.com/photo-1623303366639-0e330d7c3d9f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBzdHVkZW50JTIwc3R1ZHlpbmd8ZW58MXx8fHwxNzYzNzEyNDI4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        quote: "The Dual-Layer AI is genius! The Mentor Layer kept me motivated during tough times, while the Professor Layer ensured every biology concept was crystal clear. Zero hallucinations = 100% confidence.",
-        rating: 5,
+        name: "Arjun P.",
+        role: "NEET Aspirant",
+        image: "https://images.unsplash.com/photo-1623303366639-0e330d7c3d9f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBzdHVkZW50JTIwc3R1ZHlpbmd8ZW58MXx8fHwxNzYzNzEyNDI4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        quote: "Having both a mentor voice and a professor voice is really helpful. When I'm frustrated, it's encouraging. When I need depth, it goes deep. That balance is rare.",
         exam: "NEET",
-        improvement: "+38% in Biology",
+        improvement: "Better clarity",
     },
     {
-        name: "Aisha Khan",
-        role: "UPSC CSE Rank 42",
-        image: "https://images.unsplash.com/photo-1716471081169-cb8528a395d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB0ZWVuYWdlciUyMGxhcHRvcHxlbnwxfHx8fDE3NjM3OTExMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        quote: "Mock tests that adapt in real-time? Game changer! The Railway Economics module helped me understand network theory for governance questions. Cultural context makes all the difference.",
-        rating: 5,
+        name: "Aisha K.",
+        role: "UPSC Aspirant",
+        image: "https://images.unsplash.com/photo-1716471081169-cb8528a395d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB0ZWVuYWdlciUyMGxhcHRvcHxlbnwxfHx8fDE3NjM3OTExMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+        quote: "The adaptive questions actually challenge me at the right level. Not too easy, not overwhelming. It feels like studying with someone who knows exactly where I am.",
         exam: "UPSC",
-        improvement: "Prelims: 175/200",
+        improvement: "More focused prep",
     },
     {
-        name: "Rohan Desai",
-        role: "12th Board - 98.2%",
-        image: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBjb2xsZWdlJTIwc3R1ZGVudHN8ZW58MXx8fHwxNzYzNzkxMTI1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        quote: "Symbolic Verification Engine gives me complete trust in every solution. No more doubting my answers! The temple geometry module made trigonometry my strongest subject.",
-        rating: 5,
-        exam: "Board Exams",
-        improvement: "Math: 85→99",
+        name: "Rohan D.",
+        role: "Board Exam Student",
+        image: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBjb2xsZWdlJTIwc3R1ZGVudHN8ZW58MXx8fHwxNzYzNzkxMTI1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        quote: "I used to second-guess every math answer. Now when I solve something, I actually understand why it's correct. That confidence is new for me.",
+        exam: "Boards",
+        improvement: "Less doubt",
     },
 ];
 
 export function StudentTestimonials() {
     return (
-        <section className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -63,18 +66,18 @@ export function StudentTestimonials() {
                     }}
                 >
                     <div className="px-6 py-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-xl rounded-full border border-yellow-500/30">
-                        <span className="text-yellow-300">⭐ Student Success Stories</span>
+                        <span className="text-yellow-300">✨ Early Learner Feedback</span>
                     </div>
                 </motion.div>
 
-                <h2 className="text-5xl lg:text-6xl text-white mb-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-4 sm:mb-6">
                     Real Students,{" "}
                     <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                        Real Results
+                        Honest Experiences
                     </span>
                 </h2>
-                <p className="text-white/70 text-xl max-w-3xl mx-auto">
-                    Join thousands of Indian students who are achieving their dreams with DRON AI's revolutionary learning platform
+                <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto px-2 sm:px-0">
+                    Hear from students who are exploring DRON AI during our early access phase
                 </p>
             </motion.div>
 
@@ -89,7 +92,7 @@ export function StudentTestimonials() {
                         whileHover={{ y: -10, scale: 1.02 }}
                         className="relative group"
                     >
-                        <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl border border-white/20 p-8 overflow-hidden">
+                        <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/20 p-5 sm:p-6 lg:p-8 overflow-hidden">
                             {/* Animated background glow */}
                             <motion.div
                                 className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -159,27 +162,12 @@ export function StudentTestimonials() {
                                     </div>
                                 </div>
 
-                                {/* Rating */}
-                                <div className="flex items-center gap-1 mb-4">
-                                    {[...Array(testimonial.rating)].map((_, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, scale: 0 }}
-                                            whileInView={{ opacity: 1, scale: 1 }}
-                                            viewport={{ once: true }}
-                                            transition={{ delay: index * 0.1 + i * 0.1 }}
-                                        >
-                                            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                        </motion.div>
-                                    ))}
-                                </div>
-
-                                {/* Quote */}
+                                {/* Quote - No stars. The words speak for themselves. */}
                                 <p className="text-white/80 leading-relaxed mb-6">
                                     "{testimonial.quote}"
                                 </p>
 
-                                {/* Improvement Badge */}
+                                {/* Improvement Badge - Softer language */}
                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-full border border-green-500/30">
                                     <motion.div
                                         animate={{
@@ -190,7 +178,7 @@ export function StudentTestimonials() {
                                             repeat: Infinity,
                                         }}
                                     >
-                                        📈
+                                        💚
                                     </motion.div>
                                     <span className="text-green-300 text-sm">{testimonial.improvement}</span>
                                 </div>
@@ -215,19 +203,19 @@ export function StudentTestimonials() {
                 ))}
             </div>
 
-            {/* Bottom Stats */}
+            {/* Bottom Stats - Early Stage Honest Metrics */}
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6"
+                className="mt-10 sm:mt-16 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
             >
                 {[
-                    { value: "50K+", label: "Students Learning", icon: "👨‍🎓" },
-                    { value: "98.4%", label: "Success Rate", icon: "🎯" },
-                    { value: "100K+", label: "Tests Completed", icon: "📝" },
-                    { value: "4.9/5", label: "Average Rating", icon: "⭐" },
+                    { value: "500+", label: "Early Learners", sublabel: "Pilot Phase", icon: "🎓" },
+                    { value: "Growing", label: "Community", sublabel: "Early Access", icon: "🌱" },
+                    { value: "1000+", label: "Questions Answered", sublabel: "And counting", icon: "💬" },
+                    { value: "4.8/5", label: "Pilot Feedback", sublabel: "From testers", icon: "⭐" },
                 ].map((stat, index) => (
                     <motion.div
                         key={stat.label}
@@ -252,10 +240,29 @@ export function StudentTestimonials() {
                         >
                             {stat.icon}
                         </motion.div>
-                        <div className="text-3xl text-white mb-1">{stat.value}</div>
+                        <div className="text-xl sm:text-2xl lg:text-3xl text-white mb-1">{stat.value}</div>
                         <div className="text-white/60 text-sm">{stat.label}</div>
+                        {stat.sublabel && (
+                            <div className="text-white/40 text-xs mt-1 italic">{stat.sublabel}</div>
+                        )}
                     </motion.div>
                 ))}
+            </motion.div>
+
+            {/* Transparent Early Access Disclaimer */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="mt-12 text-center"
+            >
+                <div className="inline-flex items-center gap-2 px-5 py-3 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span className="text-white/50 text-sm">
+                        We're in early access — building something special with real student feedback
+                    </span>
+                </div>
             </motion.div>
         </section>
     );

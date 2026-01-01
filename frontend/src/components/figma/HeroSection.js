@@ -1,309 +1,442 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Sparkles, Zap, Target, ShieldCheck, Cpu, GraduationCap, HeartHandshake, Eye } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, BookOpen, MessageCircle, CheckCircle } from "lucide-react";
 
-// --- Custom Hooks ---
+/**
+ * HeroSection - Production-Grade with Premium Animation
+ * 
+ * "The Clarity Engine" - Visual metaphor for understanding
+ * Multi-layered, sophisticated, responsive across all devices
+ */
 
-const useMousePosition = () => {
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+// --- Premium Learning Animation ---
+// Represents the transformation: confusion → clarity → mastery
 
-    useEffect(() => {
-        const updateMousePosition = (e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener("mousemove", updateMousePosition);
-        return () => window.removeEventListener("mousemove", updateMousePosition);
-    }, []);
-
-    return mousePosition;
-};
-
-// --- Sub-components ---
-
-const CognitiveSymbol = () => (
-    <div className="relative w-48 h-48">
-        {/* Outer Glow */}
-        <motion.div
-            className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400/40 via-purple-500/40 to-blue-500/40 blur-[40px]"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* Main Symbol Container */}
-        <div className="relative w-full h-full rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-blue-600 p-1 shadow-[0_0_80px_rgba(6,214,160,0.6)]">
-            <div className="w-full h-full rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center overflow-hidden border-2 border-white/20">
-
-                {/* SVG Hybrid Symbol */}
-                <svg width="140" height="140" viewBox="0 0 140 140" className="relative z-10">
-                    {/* Neural Network Base */}
-                    <g opacity="0.8">
-                        {/* Central Node */}
-                        <motion.circle
-                            cx="70" cy="70" r="12"
-                            fill="url(#neuralGradient)"
-                            animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-
-                        {/* Surrounding Nodes */}
-                        {[0, 60, 120, 180, 240, 300].map((angle, i) => {
-                            const x = 70 + 35 * Math.cos((angle * Math.PI) / 180);
-                            const y = 70 + 35 * Math.sin((angle * Math.PI) / 180);
-                            return (
-                                <motion.g key={i}>
-                                    <line
-                                        x1="70" y1="70" x2={x} y2={y}
-                                        stroke="url(#lineGradient)"
-                                        strokeWidth="2"
-                                        opacity="0.6"
-                                    />
-                                    <motion.circle
-                                        cx={x} cy={y} r="6"
-                                        fill="url(#nodeGradient)"
-                                        animate={{ scale: [1, 1.2, 1] }}
-                                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                                    />
-                                </motion.g>
-                            );
-                        })}
-                    </g>
-
-                    {/* Graduation Cap Overlay */}
-                    <g transform="translate(70, 50)">
-                        <motion.path
-                            d="M -20,-10 L 0,-20 L 20,-10 L 20,0 L -20,0 Z"
-                            fill="url(#capGradient)"
-                            stroke="#06D6A0"
-                            strokeWidth="2"
-                            animate={{ y: [0, -3, 0] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-                        <rect x="-2" y="0" width="4" height="15" fill="#A855F7" opacity="0.8" />
-                    </g>
-
-                    {/* Infinity Loop */}
-                    <motion.path
-                        d="M 40,90 Q 50,80 60,90 T 80,90 Q 90,80 100,90 T 80,90 Q 70,100 60,90 T 40,90"
-                        fill="none"
-                        stroke="url(#infinityGradient)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        animate={{ pathLength: [0, 1], opacity: [0.3, 0.8, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                    />
-
-                    {/* Spark of Discovery */}
-                    <motion.g transform="translate(100, 30)">
-                        <motion.path
-                            d="M 0,-8 L 2,0 L 8,2 L 2,4 L 0,12 L -2,4 L -8,2 L -2,0 Z"
-                            fill="#FCD34D"
-                            animate={{ scale: [1, 1.3, 1], rotate: [0, 180, 360] }}
-                            transition={{ duration: 4, repeat: Infinity }}
-                        />
-                    </motion.g>
-
-                    {/* Gradients */}
-                    <defs>
-                        <linearGradient id="neuralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#06D6A0" />
-                            <stop offset="100%" stopColor="#3B82F6" />
-                        </linearGradient>
-                        <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#A855F7" />
-                            <stop offset="100%" stopColor="#3B82F6" />
-                        </linearGradient>
-                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#06D6A0" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#A855F7" stopOpacity="0.6" />
-                        </linearGradient>
-                        <linearGradient id="capGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#06D6A0" />
-                            <stop offset="100%" stopColor="#A855F7" />
-                        </linearGradient>
-                        <linearGradient id="infinityGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#3B82F6" />
-                            <stop offset="50%" stopColor="#A855F7" />
-                            <stop offset="100%" stopColor="#06D6A0" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-
-                {/* Internal Energy Swirl */}
+const ClarityEngineAnimation = () => {
+    return (
+        <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
+            {/* === LAYER 1: Deep Background Glow === */}
+            <div className="absolute inset-0 flex items-center justify-center">
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-tr from-transparent via-cyan-500/20 to-transparent rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    className="absolute w-[600px] h-[600px] md:w-[700px] md:h-[700px] rounded-full opacity-30"
+                    style={{
+                        background: 'radial-gradient(circle, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.2) 40%, transparent 70%)',
+                    }}
+                    animate={{ 
+                        scale: [1, 1.15, 1],
+                        rotate: [0, 180, 360],
+                    }}
+                    transition={{ 
+                        scale: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+                        rotate: { duration: 60, repeat: Infinity, ease: "linear" }
+                    }}
                 />
             </div>
-        </div>
-    </div>
-);
 
-const NeonRing = ({ size, duration, delay, reverse = false, gradient, opacity = 0.6 }) => (
-    <motion.div
-        className="absolute top-1/2 left-1/2 rounded-full border-2"
-        style={{
-            width: size,
-            height: size,
-            x: "-50%",
-            y: "-50%",
-            borderImage: `linear-gradient(${gradient}) 1`,
-            opacity
-        }}
-        animate={{ rotate: reverse ? -360 : 360 }}
-        transition={{ duration, repeat: Infinity, ease: "linear", delay: -delay }}
-    />
-);
+            {/* === LAYER 2: Flowing Light Streams === */}
+            <svg className="absolute w-[500px] h-[500px] md:w-[600px] md:h-[600px]" viewBox="0 0 600 600">
+                <defs>
+                    <linearGradient id="stream1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0" />
+                        <stop offset="50%" stopColor="#8B5CF6" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#06B6D4" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id="stream2" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#06B6D4" stopOpacity="0" />
+                        <stop offset="50%" stopColor="#06B6D4" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id="stream3" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0" />
+                        <stop offset="50%" stopColor="#8B5CF6" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
 
-const StaticNode = ({ icon: Icon, x, y, color, label }) => {
-    const [isHovered, setIsHovered] = useState(false);
-
-    return (
-        <motion.div
-            className="absolute z-40 cursor-pointer group"
-            style={{ left: x, top: y, x: "-50%", y: "-50%" }}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
-            onHoverStart={() => setIsHovered(true)}
-            onHoverEnd={() => setIsHovered(false)}
-        >
-            {/* Node Container */}
-            <motion.div
-                className={`relative w-32 h-32 ${color} backdrop-blur-xl rounded-3xl border-2 border-white/70 flex flex-col items-center justify-center shadow-[0_0_70px_rgba(6,214,160,0.9)]`}
-                animate={{
-                    scale: isHovered ? 1.1 : 1,
-                    boxShadow: isHovered
-                        ? "0 0 100px rgba(6,214,160,1)"
-                        : "0 0 70px rgba(6,214,160,0.9)",
-                    rotateY: isHovered ? 10 : 0
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-                <Icon className="w-16 h-16 text-white drop-shadow-[0_0_25px_rgba(255,255,255,1)]" strokeWidth={2.5} />
-
-                {/* Pulsing Glow */}
-                <motion.div
-                    className={`absolute inset-0 rounded-3xl ${color} blur-2xl`}
-                    animate={{
-                        opacity: isHovered ? [0.7, 1, 0.7] : [0.5, 0.8, 0.5]
+                {/* Flowing curves - knowledge streams */}
+                <motion.path
+                    d="M 100,300 Q 200,200 300,300 T 500,300"
+                    fill="none"
+                    stroke="url(#stream1)"
+                    strokeWidth="2"
+                    filter="url(#glow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ 
+                        pathLength: [0, 1, 1, 0],
+                        opacity: [0, 0.8, 0.8, 0]
                     }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.path
+                    d="M 300,100 Q 400,200 300,300 T 300,500"
+                    fill="none"
+                    stroke="url(#stream2)"
+                    strokeWidth="2"
+                    filter="url(#glow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ 
+                        pathLength: [0, 1, 1, 0],
+                        opacity: [0, 0.7, 0.7, 0]
+                    }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                />
+                <motion.path
+                    d="M 150,450 Q 250,350 350,400 T 500,200"
+                    fill="none"
+                    stroke="url(#stream3)"
+                    strokeWidth="2"
+                    filter="url(#glow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ 
+                        pathLength: [0, 1, 1, 0],
+                        opacity: [0, 0.6, 0.6, 0]
+                    }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+                />
+            </svg>
+
+            {/* === LAYER 3: Floating Geometric Elements === */}
+            <div className="absolute inset-0 pointer-events-none">
+                {/* Hexagon 1 */}
+                <motion.div
+                    className="absolute top-[15%] left-[20%] w-12 h-12 md:w-16 md:h-16"
+                    animate={{ 
+                        y: [0, -20, 0],
+                        rotate: [0, 90, 0],
+                        opacity: [0.3, 0.6, 0.3]
+                    }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <polygon 
+                            points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" 
+                            fill="none" 
+                            stroke="rgba(139,92,246,0.4)" 
+                            strokeWidth="2"
+                        />
+                    </svg>
+                </motion.div>
+
+                {/* Circle 1 */}
+                <motion.div
+                    className="absolute top-[25%] right-[15%] w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-cyan-400/30"
+                    animate={{ 
+                        y: [0, 15, 0],
+                        scale: [1, 1.2, 1],
+                        opacity: [0.4, 0.7, 0.4]
+                    }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 />
 
-                {/* Floating Particles around node */}
-                {[...Array(3)].map((_, i) => (
+                {/* Triangle */}
+                <motion.div
+                    className="absolute bottom-[20%] left-[15%] w-10 h-10 md:w-14 md:h-14"
+                    animate={{ 
+                        y: [0, -15, 0],
+                        rotate: [0, -60, 0],
+                        opacity: [0.3, 0.5, 0.3]
+                    }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                >
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <polygon 
+                            points="50,10 90,90 10,90" 
+                            fill="none" 
+                            stroke="rgba(16,185,129,0.4)" 
+                            strokeWidth="2"
+                        />
+                    </svg>
+                </motion.div>
+
+                {/* Small dots - knowledge particles */}
+                {[...Array(6)].map((_, i) => (
                     <motion.div
                         key={i}
-                        className="absolute w-2 h-2 rounded-full bg-white/80"
+                        className="absolute w-2 h-2 rounded-full bg-violet-400/40"
+                        style={{
+                            top: `${20 + Math.random() * 60}%`,
+                            left: `${15 + Math.random() * 70}%`,
+                        }}
                         animate={{
-                            x: [0, 20 * Math.cos((i * 120) * Math.PI / 180), 0],
-                            y: [0, 20 * Math.sin((i * 120) * Math.PI / 180), 0],
-                            opacity: [0, 1, 0]
+                            opacity: [0, 0.6, 0],
+                            scale: [0.5, 1, 0.5],
+                            y: [0, -30, 0],
                         }}
                         transition={{
-                            duration: 2,
+                            duration: 4 + Math.random() * 3,
                             repeat: Infinity,
-                            delay: i * 0.4,
+                            delay: i * 0.8,
                             ease: "easeInOut"
                         }}
                     />
                 ))}
+            </div>
+
+            {/* === LAYER 4: Central Clarity Lens === */}
+            <div className="relative z-10">
+                {/* Outer rotating ring */}
+                <motion.div
+                    className="absolute -inset-8 md:-inset-12 rounded-full border border-violet-400/20"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                >
+                    {/* Ring markers */}
+                    {[0, 90, 180, 270].map((angle) => (
+                        <motion.div
+                            key={angle}
+                            className="absolute w-2 h-2 md:w-3 md:h-3 bg-violet-400/40 rounded-full"
+                            style={{
+                                top: '50%',
+                                left: '50%',
+                                transform: `rotate(${angle}deg) translateX(calc(50% + 60px)) translateY(-50%)`,
+                            }}
+                        />
+                    ))}
+                </motion.div>
+
+                {/* Second rotating ring - opposite direction */}
+                <motion.div
+                    className="absolute -inset-4 md:-inset-6 rounded-full border border-cyan-400/15"
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                />
+
+                {/* Main lens container */}
+                <motion.div
+                    className="relative w-32 h-32 md:w-44 md:h-44 rounded-full"
+                    animate={{ 
+                        boxShadow: [
+                            '0 0 60px rgba(139,92,246,0.3), 0 0 120px rgba(6,182,212,0.2)',
+                            '0 0 80px rgba(139,92,246,0.5), 0 0 160px rgba(6,182,212,0.3)',
+                            '0 0 60px rgba(139,92,246,0.3), 0 0 120px rgba(6,182,212,0.2)',
+                        ]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    {/* Glass effect outer */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 via-transparent to-cyan-500/20 backdrop-blur-xl border border-white/10" />
+                    
+                    {/* Inner glow ring */}
+                    <motion.div
+                        className="absolute inset-3 md:inset-4 rounded-full border-2 border-violet-400/30"
+                        animate={{ 
+                            borderColor: [
+                                'rgba(139,92,246,0.3)',
+                                'rgba(6,182,212,0.4)',
+                                'rgba(139,92,246,0.3)',
+                            ]
+                        }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    />
+
+                    {/* Core gradient */}
+                    <motion.div
+                        className="absolute inset-6 md:inset-8 rounded-full bg-gradient-to-br from-violet-600 via-purple-500 to-cyan-500"
+                        animate={{ 
+                            scale: [1, 1.05, 1],
+                        }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                        {/* Inner shine */}
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/20 via-transparent to-transparent" />
+                        
+                        {/* Center icon - abstract clarity symbol */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <motion.svg
+                                className="w-12 h-12 md:w-16 md:h-16"
+                                viewBox="0 0 64 64"
+                                animate={{ rotate: [0, 5, -5, 0] }}
+                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                            >
+                                {/* Abstract lens/prism shape */}
+                                <motion.path
+                                    d="M32 8 L52 24 L52 40 L32 56 L12 40 L12 24 Z"
+                                    fill="none"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                    strokeLinejoin="round"
+                                    initial={{ pathLength: 0 }}
+                                    animate={{ pathLength: 1 }}
+                                    transition={{ duration: 2, ease: "easeOut" }}
+                                />
+                                {/* Inner diamond */}
+                                <motion.path
+                                    d="M32 18 L42 28 L42 36 L32 46 L22 36 L22 28 Z"
+                                    fill="rgba(255,255,255,0.3)"
+                                    stroke="white"
+                                    strokeWidth="1.5"
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ delay: 0.5, duration: 0.8 }}
+                                />
+                                {/* Center point - moment of clarity */}
+                                <motion.circle
+                                    cx="32"
+                                    cy="32"
+                                    r="4"
+                                    fill="white"
+                                    initial={{ scale: 0 }}
+                                    animate={{ 
+                                        scale: [1, 1.3, 1],
+                                        opacity: [0.8, 1, 0.8]
+                                    }}
+                                    transition={{ 
+                                        scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                                        opacity: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                                    }}
+                                />
+                            </motion.svg>
+                        </div>
+                    </motion.div>
+                </motion.div>
+
+                {/* Pulse ripples */}
+                <motion.div
+                    className="absolute inset-0 rounded-full border border-violet-400/30"
+                    animate={{
+                        scale: [1, 2],
+                        opacity: [0.5, 0],
+                    }}
+                    transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeOut",
+                    }}
+                />
+                <motion.div
+                    className="absolute inset-0 rounded-full border border-cyan-400/20"
+                    animate={{
+                        scale: [1, 2.5],
+                        opacity: [0.4, 0],
+                    }}
+                    transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeOut",
+                        delay: 1.5
+                    }}
+                />
+            </div>
+
+            {/* === LAYER 5: Floating State Labels === */}
+            <motion.div
+                className="absolute top-[12%] right-[10%] md:top-[18%] md:right-[18%]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.8 }}
+            >
+                <motion.div
+                    className="px-4 py-2 bg-violet-500/10 backdrop-blur-md rounded-xl border border-violet-400/20 shadow-lg shadow-violet-500/10"
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                        <span className="text-violet-200 text-sm font-medium">Concepts clicking</span>
+                    </div>
+                </motion.div>
             </motion.div>
 
-            {/* Label */}
-            <div className="absolute top-full mt-6 left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none">
+            <motion.div
+                className="absolute bottom-[15%] left-[8%] md:bottom-[20%] md:left-[15%]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5, duration: 0.8 }}
+            >
                 <motion.div
-                    className="px-5 py-2.5 bg-black/95 backdrop-blur-md border-2 border-cyan-400/60 rounded-xl text-base font-bold text-white shadow-[0_0_30px_rgba(6,214,160,0.5)]"
-                    animate={{
-                        borderColor: isHovered ? "rgba(6,214,160,1)" : "rgba(6,214,160,0.6)",
-                        boxShadow: isHovered
-                            ? "0 0 40px rgba(6,214,160,0.7)"
-                            : "0 0 30px rgba(6,214,160,0.5)",
-                        scale: isHovered ? 1.05 : 1
-                    }}
+                    className="px-4 py-2 bg-cyan-500/10 backdrop-blur-md rounded-xl border border-cyan-400/20 shadow-lg shadow-cyan-500/10"
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 >
-                    {label}
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-cyan-200 text-sm font-medium">Understanding clear</span>
+                    </div>
                 </motion.div>
-            </div>
-        </motion.div>
+            </motion.div>
+
+            <motion.div
+                className="absolute top-[55%] right-[5%] md:top-[50%] md:right-[10%]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2, duration: 0.8 }}
+            >
+                <motion.div
+                    className="px-4 py-2 bg-emerald-500/10 backdrop-blur-md rounded-xl border border-emerald-400/20 shadow-lg shadow-emerald-500/10"
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-emerald-200 text-sm font-medium">Answers verified</span>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </div>
     );
 };
 
-const StatCard = ({ value, label, icon: Icon, delay }) => (
+// Outcome-focused feature card
+const OutcomeCard = ({ icon: Icon, title, description, delay }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay }}
-        className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors group cursor-pointer"
+        className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-5 hover:bg-white/10 transition-colors group cursor-pointer"
     >
         <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform border border-white/5">
-                <Icon className="w-5 h-5 text-cyan-300" />
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform border border-white/5">
+                <Icon className="w-4 h-4 md:w-5 md:h-5 text-cyan-300" />
             </div>
-            <span className="text-white/50 text-xs font-bold uppercase tracking-widest">{label}</span>
+            <span className="text-white font-semibold text-sm md:text-base">{title}</span>
         </div>
-        <div className="text-3xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-purple-400 transition-all">{value}</div>
+        <p className="text-white/60 text-xs md:text-sm leading-relaxed">{description}</p>
     </motion.div>
 );
 
 // --- Main Component ---
 
 export function HeroSection() {
-    // Calculate perfect triangle positions - responsive scaling
-    // Base values for larger screens, will be scaled down via CSS transform
-    const centerX = 450;
-    const centerY = 450;
-    const radius = 320;
-
-    const mentorPos = {
-        x: centerX + radius * Math.cos((0 - 90) * Math.PI / 180),
-        y: centerY + radius * Math.sin((0 - 90) * Math.PI / 180)
-    };
-
-    const professorPos = {
-        x: centerX + radius * Math.cos((120 - 90) * Math.PI / 180),
-        y: centerY + radius * Math.sin((120 - 90) * Math.PI / 180)
-    };
-
-    const supervisorPos = {
-        x: centerX + radius * Math.cos((240 - 90) * Math.PI / 180),
-        y: centerY + radius * Math.sin((240 - 90) * Math.PI / 180)
-    };
-
     return (
-        <section className="relative z-10 w-full max-w-[1400px] mx-auto px-6 pt-24 pb-16 min-h-[90vh] flex items-center overflow-visible">
+        <section className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 pt-16 sm:pt-20 md:pt-24 pb-12 md:pb-16 min-h-[90vh] flex items-center overflow-hidden">
 
             {/* Deep Space Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] bg-purple-900/30 blur-[180px] rounded-full mix-blend-screen" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-cyan-900/30 blur-[120px] rounded-full mix-blend-screen" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] md:w-[1400px] h-[800px] md:h-[1400px] bg-purple-900/20 blur-[150px] md:blur-[180px] rounded-full mix-blend-screen" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] md:w-[900px] h-[500px] md:h-[900px] bg-cyan-900/20 blur-[100px] md:blur-[120px] rounded-full mix-blend-screen" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center w-full relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-center w-full relative z-10">
 
-                {/* --- Left Content (5 Columns) --- */}
+                {/* --- Left Content (6 Columns on lg+) --- */}
                 <motion.div
-                    className="lg:col-span-5 flex flex-col justify-center relative z-40"
-                    initial={{ opacity: 0, x: -50 }}
+                    className="lg:col-span-5 xl:col-span-5 flex flex-col justify-center relative z-40 text-center lg:text-left"
+                    initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
                 >
                     {/* Badge */}
                     <motion.div
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/50 rounded-full mb-8 w-fit backdrop-blur-md shadow-[0_0_20px_rgba(6,214,160,0.3)]"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/50 rounded-full mb-6 md:mb-8 w-fit mx-auto lg:mx-0 backdrop-blur-md shadow-[0_0_20px_rgba(6,214,160,0.3)]"
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <Cpu className="w-4 h-4 text-cyan-400" />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300 text-sm font-bold tracking-wide uppercase">
-                            Your 24/7 Study Companion
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300 text-xs sm:text-sm font-bold tracking-wide">
+                            Your 24/7 STUDY COMPANION
                         </span>
                     </motion.div>
 
                     {/* Headline */}
-                    <h1 className="text-5xl lg:text-7xl font-bold text-white mb-8 leading-[1.1] tracking-tight drop-shadow-2xl">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 md:mb-8 leading-[1.1] tracking-tight drop-shadow-2xl">
                         Learn Smarter, <br />
                         <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(6,214,160,0.5)]">
                             Not Harder
@@ -311,202 +444,77 @@ export function HeroSection() {
                     </h1>
 
                     {/* Subtext */}
-                    <p className="text-lg text-white/80 mb-6 leading-relaxed max-w-xl">
-                        Your personal AI tutor that explains concepts like a friend, verifies answers like a professor, and adapts to your learning style.
-                    </p>
-                    
-                    <p className="text-base text-white/70 mb-12 leading-relaxed max-w-xl">
-                        🤝 AI Mentor explains intuitively • 🎓 AI Professor verifies academically • 
-                        🏏 Hinglish support • ✨ Free to start
+                    <p className="text-base sm:text-lg text-white/80 mb-6 md:mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                        Your personal AI tutor that explains concepts like a friend, checks your understanding, and adapts to how you learn best.
                     </p>
 
                     {/* CTAs */}
-                    <div className="flex flex-wrap gap-5 mb-12">
+                    <div className="flex flex-wrap gap-4 md:gap-5 mb-8 md:mb-10 justify-center lg:justify-start">
                         <a href="/register">
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold rounded-xl shadow-[0_0_40px_rgba(6,214,160,0.4)] hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] transition-all flex items-center gap-3 border border-white/20 text-lg"
+                                className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold rounded-xl shadow-[0_0_40px_rgba(6,214,160,0.4)] hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] transition-all flex items-center gap-2 sm:gap-3 border border-white/20 text-base sm:text-lg"
                             >
                                 Start Learning Free
-                                <Zap className="w-5 h-5 fill-white" />
+                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
                             </motion.button>
                         </a>
                     </div>
                     
                     {/* Trust Signals */}
-                    <div className="flex flex-wrap items-center gap-6 text-sm text-white/70 mb-16">
+                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6 text-xs sm:text-sm text-white/70 mb-10 md:mb-12">
                         <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <ShieldCheck className="w-3 h-3 text-white" />
+                            <div className="w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <ShieldCheck className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
                             </div>
-                            <span>100% Free to Start</span>
+                            <span>Free to start</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <ShieldCheck className="w-3 h-3 text-white" />
+                            <div className="w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <ShieldCheck className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
                             </div>
-                            <span>No Credit Card Required</span>
+                            <span>No credit card</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <ShieldCheck className="w-3 h-3 text-white" />
+                            <div className="w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <ShieldCheck className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
                             </div>
-                            <span>Cancel Anytime</span>
+                            <span>Works for all exams</span>
                         </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-5 w-full border-t border-white/10 pt-10">
-                        <StatCard value="10K+" label="Active Learners" icon={GraduationCap} delay={0.4} />
-                        <StatCard value="4.8/5" label="Student Rating" icon={Target} delay={0.5} />
-                        <StatCard value="All Exams" label="JEE • NEET • UPSC & More" icon={Sparkles} delay={0.6} />
+                    {/* Outcome Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 w-full border-t border-white/10 pt-8 md:pt-10">
+                        <OutcomeCard 
+                            icon={MessageCircle} 
+                            title="Explains clearly" 
+                            description="Breaks down hard topics until they click"
+                            delay={0.4} 
+                        />
+                        <OutcomeCard 
+                            icon={CheckCircle} 
+                            title="Catches mistakes" 
+                            description="Spots where you went wrong and why"
+                            delay={0.5} 
+                        />
+                        <OutcomeCard 
+                            icon={BookOpen} 
+                            title="Adapts to you" 
+                            description="Learns your pace and adjusts"
+                            delay={0.6} 
+                        />
                     </div>
                 </motion.div>
 
-                {/* --- Right Content (7 Columns) - Premium Cognitive Engine --- */}
+                {/* --- Right Content (7 Columns on lg+) - Premium Animation --- */}
                 <motion.div
-                    id="orbit-container"
-                    className="lg:col-span-7 relative h-[600px] lg:h-[800px] xl:h-[900px] flex items-center justify-center perspective-1000 scale-[0.6] sm:scale-[0.7] lg:scale-[0.85] xl:scale-100 origin-center"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    className="lg:col-span-7 xl:col-span-7 relative h-[400px] sm:h-[450px] md:h-[500px] lg:h-[600px] xl:h-[650px] flex items-center justify-center order-first lg:order-last"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease: "easeOut" }}
                 >
-                    {/* Layered Neon Rings */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <NeonRing size={300} duration={20} gradient="90deg, #06D6A0, #A855F7" opacity={0.8} />
-                        <NeonRing size={340} duration={25} reverse gradient="90deg, #A855F7, #3B82F6" opacity={0.6} />
-                        <NeonRing size={700} duration={40} gradient="90deg, #3B82F6, #06D6A0" opacity={0.4} />
-                        <NeonRing size={750} duration={50} reverse gradient="90deg, #06D6A0, #A855F7" opacity={0.3} />
-                    </div>
-
-                    {/* Animated Connection Lines & Energy Flow */}
-                    <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" width="900" height="900" style={{ zIndex: 15 }}>
-                        {/* Triangle Connection Lines with Gradient */}
-                        <motion.line
-                            x1={mentorPos.x} y1={mentorPos.y}
-                            x2={professorPos.x} y2={professorPos.y}
-                            stroke="url(#energyGradient1)"
-                            strokeWidth="3"
-                            opacity="0.7"
-                            animate={{ strokeDashoffset: [0, -40] }}
-                            strokeDasharray="10 10"
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        />
-
-                        <motion.line
-                            x1={professorPos.x} y1={professorPos.y}
-                            x2={supervisorPos.x} y2={supervisorPos.y}
-                            stroke="url(#energyGradient2)"
-                            strokeWidth="3"
-                            opacity="0.7"
-                            animate={{ strokeDashoffset: [0, -40] }}
-                            strokeDasharray="10 10"
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
-                        />
-
-                        <motion.line
-                            x1={supervisorPos.x} y1={supervisorPos.y}
-                            x2={mentorPos.x} y2={mentorPos.y}
-                            stroke="url(#energyGradient3)"
-                            strokeWidth="3"
-                            opacity="0.7"
-                            animate={{ strokeDashoffset: [0, -40] }}
-                            strokeDasharray="10 10"
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 2 }}
-                        />
-
-                        {/* Energy Orbs flowing through connections */}
-                        {[0, 1, 2].map((i) => (
-                            <motion.circle
-                                key={`orb-${i}`}
-                                r="6"
-                                fill={i === 0 ? "#A855F7" : i === 1 ? "#06D6A0" : "#F59E0B"}
-                                filter="url(#glow)"
-                                animate={{
-                                    cx: i === 0
-                                        ? [mentorPos.x, professorPos.x, mentorPos.x]
-                                        : i === 1
-                                            ? [professorPos.x, supervisorPos.x, professorPos.x]
-                                            : [supervisorPos.x, mentorPos.x, supervisorPos.x],
-                                    cy: i === 0
-                                        ? [mentorPos.y, professorPos.y, mentorPos.y]
-                                        : i === 1
-                                            ? [professorPos.y, supervisorPos.y, professorPos.y]
-                                            : [supervisorPos.y, mentorPos.y, supervisorPos.y],
-                                    opacity: [0, 1, 1, 1, 0]
-                                }}
-                                transition={{
-                                    duration: 4,
-                                    repeat: Infinity,
-                                    ease: "easeInOut",
-                                    delay: i * 1.33
-                                }}
-                            />
-                        ))}
-
-                        {/* Gradients */}
-                        <defs>
-                            <linearGradient id="energyGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#A855F7" />
-                                <stop offset="50%" stopColor="#06D6A0" />
-                                <stop offset="100%" stopColor="#A855F7" />
-                            </linearGradient>
-                            <linearGradient id="energyGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#06D6A0" />
-                                <stop offset="50%" stopColor="#F59E0B" />
-                                <stop offset="100%" stopColor="#06D6A0" />
-                            </linearGradient>
-                            <linearGradient id="energyGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#F59E0B" />
-                                <stop offset="50%" stopColor="#A855F7" />
-                                <stop offset="100%" stopColor="#F59E0B" />
-                            </linearGradient>
-                            <filter id="glow">
-                                <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur" />
-                                    <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                            </filter>
-                        </defs>
-                    </svg>
-
-                    {/* Central Cognitive Symbol */}
-                    <motion.div
-                        className="relative z-20"
-                        initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        transition={{ duration: 1.5, type: "spring", bounce: 0.3 }}
-                    >
-                        <CognitiveSymbol />
-                    </motion.div>
-
-                    {/* Static Triangle Nodes - NO ROTATION */}
-                    <StaticNode
-                        icon={HeartHandshake}
-                        label="AI Mentor"
-                        x={mentorPos.x}
-                        y={mentorPos.y}
-                        color="bg-gradient-to-br from-purple-500/50 to-pink-500/50"
-                    />
-
-                    <StaticNode
-                        icon={GraduationCap}
-                        label="AI Professor"
-                        x={professorPos.x}
-                        y={professorPos.y}
-                        color="bg-gradient-to-br from-cyan-500/50 to-teal-500/50"
-                    />
-
-                    <StaticNode
-                        icon={Eye}
-                        label="AI Supervisor"
-                        x={supervisorPos.x}
-                        y={supervisorPos.y}
-                        color="bg-gradient-to-br from-amber-500/50 to-orange-500/50"
-                    />
-
+                    <ClarityEngineAnimation />
                 </motion.div>
             </div>
         </section>

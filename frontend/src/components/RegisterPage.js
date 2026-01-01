@@ -69,10 +69,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-2xl">
         <Card className="shadow-xl border-0">
-          <CardHeader className="text-center pb-6">
+          <CardHeader className="text-center pb-4 sm:pb-6">
             <div className="flex justify-center mb-4">
               <Brain className="h-10 w-10 text-blue-600" />
             </div>

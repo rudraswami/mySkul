@@ -77,14 +77,18 @@ function FlipCard({ feature, index }) {
     const [isFlipped, setIsFlipped] = useState(false);
     const Icon = feature.icon;
 
+    // Touch-safe: toggle on click for mobile, hover for desktop
+    const handleToggle = () => setIsFlipped(prev => !prev);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="h-[400px] cursor-pointer"
+            className="h-[340px] sm:h-[380px] lg:h-[400px] cursor-pointer"
             style={{ perspective: "1000px" }}
+            onClick={handleToggle}
             onHoverStart={() => setIsFlipped(true)}
             onHoverEnd={() => setIsFlipped(false)}
         >
@@ -96,7 +100,7 @@ function FlipCard({ feature, index }) {
             >
                 {/* Front Side */}
                 <div
-                    className={`absolute inset-0 ${feature.bgColor} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden`}
+                    className={`absolute inset-0 ${feature.bgColor} backdrop-blur-xl rounded-2xl sm:rounded-3xl border ${feature.borderColor} p-5 sm:p-6 lg:p-8 overflow-hidden`}
                     style={{ backfaceVisibility: "hidden" }}
                 >
                     {/* Coming Soon Badge */}
@@ -135,8 +139,8 @@ function FlipCard({ feature, index }) {
                         />
                     </motion.div>
 
-                    <h3 className="text-2xl text-white mb-4">{feature.title}</h3>
-                    <p className="text-white/70 leading-relaxed mb-6">{feature.description}</p>
+                    <h3 className="text-xl sm:text-2xl text-white mb-3 sm:mb-4">{feature.title}</h3>
+                    <p className="text-white/70 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">{feature.description}</p>
 
                     {/* Hover hint */}
                     <div className="absolute bottom-8 left-8 right-8">
@@ -175,7 +179,7 @@ function FlipCard({ feature, index }) {
 
                 {/* Back Side */}
                 <div
-                    className={`absolute inset-0 bg-gradient-to-br ${feature.color} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden`}
+                    className={`absolute inset-0 bg-gradient-to-br ${feature.color} backdrop-blur-xl rounded-2xl sm:rounded-3xl border ${feature.borderColor} p-5 sm:p-6 lg:p-8 overflow-hidden`}
                     style={{
                         backfaceVisibility: "hidden",
                         transform: "rotateY(180deg)",
@@ -187,8 +191,8 @@ function FlipCard({ feature, index }) {
                                 <Icon className="w-8 h-8 text-white" />
                             </div>
 
-                            <h3 className="text-2xl text-white mb-4">{feature.title}</h3>
-                            <p className="text-white/90 leading-relaxed mb-6">{feature.details}</p>
+                            <h3 className="text-xl sm:text-2xl text-white mb-3 sm:mb-4">{feature.title}</h3>
+                            <p className="text-white/90 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">{feature.details}</p>
                         </div>
 
                         <div>
@@ -223,7 +227,7 @@ function FlipCard({ feature, index }) {
 
 export function InnovativeFeaturesGrid() {
     return (
-        <section id="features" className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+        <section id="features" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -247,13 +251,13 @@ export function InnovativeFeaturesGrid() {
                     </div>
                 </motion.div>
 
-                <h2 className="text-5xl lg:text-6xl text-white mb-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-4 sm:mb-6">
                     Experience Learning{" "}
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                         Reimagined
                     </span>
                 </h2>
-                <p className="text-white/70 text-xl max-w-3xl mx-auto">
+                <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto px-2 sm:px-0">
                     Hover over each card to discover how our cutting-edge AI features transform your learning journey
                 </p>
             </motion.div>

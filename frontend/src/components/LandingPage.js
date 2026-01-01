@@ -34,7 +34,7 @@ const Navbar = () => {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-[#000005]/95 backdrop-blur-2xl border-b border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] py-3' : 'bg-transparent py-5'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative w-9 h-9">
@@ -237,7 +237,7 @@ const Footer = () => {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Top Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand Column */}
@@ -344,7 +344,7 @@ const Footer = () => {
           <div className="max-w-md mx-auto text-center">
             <h3 className="text-white font-bold text-lg mb-2">Stay Updated</h3>
             <p className="text-gray-400 text-sm mb-4">Get the latest updates on AI-powered learning</p>
-            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-2">
               <input
                 type="email"
                 value={newsletterEmail}
@@ -357,7 +357,7 @@ const Footer = () => {
               <button 
                 type="submit"
                 disabled={newsletterStatus.loading}
-                className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm rounded-lg hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {newsletterStatus.loading ? (
                   <>

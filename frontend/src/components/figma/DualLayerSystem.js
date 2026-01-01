@@ -6,7 +6,7 @@ export function DualLayerSystem() {
     const [hoveredLayer, setHoveredLayer] = useState(null);
 
     return (
-        <section id="how-it-works" className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+        <section id="how-it-works" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -30,13 +30,13 @@ export function DualLayerSystem() {
                     </div>
                 </motion.div>
 
-                <h2 className="text-5xl lg:text-6xl text-white mb-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-4 sm:mb-6">
                     The Power of{" "}
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                         Dual-Layer AI
                     </span>
                 </h2>
-                <p className="text-white/70 text-xl max-w-3xl mx-auto">
+                <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto px-2 sm:px-0">
                     Two specialized AI systems working in perfect harmony to deliver the most comprehensive learning experience
                 </p>
             </motion.div>
@@ -79,7 +79,7 @@ export function DualLayerSystem() {
                         className="relative group"
                     >
                         <motion.div
-                            className="relative bg-gradient-to-br from-purple-500/10 to-purple-600/5 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 overflow-hidden"
+                            className="relative bg-gradient-to-br from-purple-500/10 to-purple-600/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-purple-500/30 p-5 sm:p-6 lg:p-8 overflow-hidden"
                             animate={{
                                 scale: hoveredLayer === "mentor" ? 1.02 : 1,
                                 borderColor: hoveredLayer === "mentor" ? "rgba(168, 85, 247, 0.5)" : "rgba(168, 85, 247, 0.3)",
@@ -111,8 +111,8 @@ export function DualLayerSystem() {
                                     <Heart className="w-8 h-8 text-purple-400" />
                                 </motion.div>
 
-                                <h3 className="text-3xl text-white mb-4">Mentor Layer</h3>
-                                <p className="text-white/70 mb-6 text-lg leading-relaxed">
+                                <h3 className="text-2xl sm:text-3xl text-white mb-3 sm:mb-4">Mentor Layer</h3>
+                                <p className="text-white/70 mb-4 sm:mb-6 text-base sm:text-lg leading-relaxed">
                                     Your emotional companion that understands your learning journey, provides encouragement,
                                     and guides you through conceptual understanding with empathy.
                                 </p>
@@ -202,7 +202,7 @@ export function DualLayerSystem() {
                         className="relative group"
                     >
                         <motion.div
-                            className="relative bg-gradient-to-br from-pink-500/10 to-pink-600/5 backdrop-blur-xl rounded-3xl border border-pink-500/30 p-8 overflow-hidden"
+                            className="relative bg-gradient-to-br from-pink-500/10 to-pink-600/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-pink-500/30 p-5 sm:p-6 lg:p-8 overflow-hidden"
                             animate={{
                                 scale: hoveredLayer === "professor" ? 1.02 : 1,
                                 borderColor: hoveredLayer === "professor" ? "rgba(236, 72, 153, 0.5)" : "rgba(236, 72, 153, 0.3)",
@@ -234,8 +234,8 @@ export function DualLayerSystem() {
                                     <Atom className="w-8 h-8 text-pink-400" />
                                 </motion.div>
 
-                                <h3 className="text-3xl text-white mb-4">Professor Layer</h3>
-                                <p className="text-white/70 mb-6 text-lg leading-relaxed">
+                                <h3 className="text-2xl sm:text-3xl text-white mb-3 sm:mb-4">Professor Layer</h3>
+                                <p className="text-white/70 mb-4 sm:mb-6 text-base sm:text-lg leading-relaxed">
                                     Your analytical powerhouse that delivers deep reasoning, symbolic verification,
                                     and zero-hallucination solutions backed by rigorous logic.
                                 </p>

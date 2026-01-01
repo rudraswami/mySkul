@@ -46,7 +46,7 @@ export function VisualLearning() {
     const [activeModule, setActiveModule] = useState(0);
 
     return (
-        <section className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
             {/* Coming Soon Overlay */}
             <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-sm rounded-3xl flex items-center justify-center">
                 <div className="text-center">

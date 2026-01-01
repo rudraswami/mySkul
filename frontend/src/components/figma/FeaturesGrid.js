@@ -60,7 +60,7 @@ const features = [
 
 export function FeaturesGrid() {
     return (
-        <section id="features" className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <section id="features" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
             <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -68,18 +68,18 @@ export function FeaturesGrid() {
                 transition={{ duration: 0.8 }}
                 className="text-center mb-20"
             >
-                <h2 className="text-5xl text-white mb-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl text-white mb-4 sm:mb-6">
                     Revolutionary{" "}
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                         Learning Features
                     </span>
                 </h2>
-                <p className="text-white/70 text-xl max-w-3xl mx-auto">
+                <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto px-2 sm:px-0">
                     Scientifically designed features that transform how you learn, practice, and master concepts
                 </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                 {features.map((feature, index) => {
                     const Icon = feature.icon;
                     return (
@@ -93,7 +93,7 @@ export function FeaturesGrid() {
                             className="group"
                         >
                             <div
-                                className={`relative h-full ${feature.bgColor} backdrop-blur-xl rounded-3xl border ${feature.borderColor} p-8 overflow-hidden transition-all`}
+                                className={`relative h-full ${feature.bgColor} backdrop-blur-xl rounded-2xl sm:rounded-3xl border ${feature.borderColor} p-5 sm:p-6 lg:p-8 overflow-hidden transition-all`}
                             >
                                 {/* 3D Icon Container */}
                                 <motion.div
@@ -112,7 +112,7 @@ export function FeaturesGrid() {
                                     />
                                 </motion.div>
 
-                                <h3 className="text-2xl text-white mb-4">{feature.title}</h3>
+                                <h3 className="text-xl sm:text-2xl text-white mb-3 sm:mb-4">{feature.title}</h3>
                                 <p className="text-white/70 leading-relaxed">{feature.description}</p>
 
                                 {/* Floating particle effect on hover */}

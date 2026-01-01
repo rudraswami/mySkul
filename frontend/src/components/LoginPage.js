@@ -39,7 +39,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-12">
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-8 xl:p-12">
         <div className="max-w-md text-white">
           <div className="flex items-center mb-8">
             <Brain className="h-12 w-12 mr-4" />
@@ -90,7 +90,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-md">
           <div className="bg-white shadow-xl rounded-lg p-8 border-0">
             <div className="text-center pb-8">
@@ -177,7 +177,7 @@ export default function LoginPage() {
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-3">Trusted by 50,000+ students across India</p>
-                  <div className="flex justify-center items-center space-x-4 text-xs text-gray-600 mb-3">
+                  <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 text-xs text-gray-600 mb-3">
                     <div className="flex items-center">
                       <div className="h-2 w-2 bg-green-500 rounded-full mr-1"></div>
                       <span>Hallucination-Free AI</span>
