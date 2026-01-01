@@ -88,7 +88,7 @@ const SathiMascot = () => {
       />
       
       {/* Main logo container */}
-      <div className="relative w-28 h-28 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
         {/* Animated gradient background */}
         <motion.div
           className="absolute inset-0"
@@ -126,7 +126,7 @@ const SathiMascot = () => {
         {/* Main emoji */}
         <div className="relative w-full h-full flex items-center justify-center">
           <motion.span 
-            className="text-6xl"
+            className="text-4xl sm:text-5xl md:text-6xl"
             animate={isHovered ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
             transition={{ duration: 0.5 }}
           >
@@ -287,7 +287,7 @@ export default function WelcomeScreen({
   ];
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[70vh] px-4 py-12 overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] px-4 py-6 sm:py-8 md:py-12 overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient mesh background */}
@@ -330,9 +330,9 @@ export default function WelcomeScreen({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mt-10 text-center"
+          className="mt-6 sm:mt-8 md:mt-10 text-center"
         >
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 bg-clip-text text-transparent">
               {userName ? `Hey ${userName}!` : 'Hey!'} Ready to Learn?
             </span>
@@ -351,7 +351,7 @@ export default function WelcomeScreen({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="mt-4 text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-lg mx-auto font-medium"
+                className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-lg mx-auto font-medium px-2"
               >
                 Your AI friend who explains things in the coolest way!
               </motion.p>
@@ -364,7 +364,7 @@ export default function WelcomeScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="flex flex-wrap items-center justify-center gap-2 mt-6"
+          className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 px-2"
         >
           <FeatureBadge icon="🏏" text="Cricket analogies" delay={0.7} />
           <FeatureBadge icon="🎯" text="Real examples" delay={0.8} />
@@ -377,7 +377,7 @@ export default function WelcomeScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="w-full max-w-2xl mt-12"
+          className="w-full max-w-2xl mt-6 sm:mt-8 md:mt-12 px-2"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {defaultPrompts.map((prompt, index) => (
@@ -400,7 +400,7 @@ export default function WelcomeScreen({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.3 }}
-          className="mt-10 text-center"
+          className="mt-6 sm:mt-8 md:mt-10 text-center"
         >
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Ask anything - I'll explain it like a friend! 

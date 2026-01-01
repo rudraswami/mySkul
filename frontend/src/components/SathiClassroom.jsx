@@ -564,11 +564,11 @@ export default function SathiClassroom() {
 
   // Chat content component
   const ChatContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Messages Area */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-4"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 min-h-0"
       >
         {/* Memory Banner */}
         <MemoryContextBanner />
@@ -619,8 +619,8 @@ export default function SathiClassroom() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Properly centered */}
-      <div className="flex-shrink-0 border-t border-slate-800/60 bg-gradient-to-t from-slate-900 to-slate-900/95 px-4 py-4">
+      {/* Input Area - Properly centered with mobile-safe padding */}
+      <div className="flex-shrink-0 border-t border-slate-800/60 bg-gradient-to-t from-slate-900 to-slate-900/95 px-3 sm:px-4 py-3 sm:py-4 pb-[env(safe-area-inset-bottom,12px)]">
         <div className="max-w-3xl mx-auto">
         {/* Image Preview */}
         {imagePreview && (

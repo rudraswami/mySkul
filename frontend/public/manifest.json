@@ -1,7 +1,7 @@
 {
-  "name": "Dhruv AI Auto-Note Mentor",
-  "short_name": "Auto-Note Mentor",
-  "description": "AI-powered note-taking with studio-quality audio processing and contextual understanding",
+  "name": "DRON AI - Your AI Study Partner",
+  "short_name": "DRON AI",
+  "description": "AI-powered learning companion for JEE, NEET & CBSE with personalized explanations and exam preparation",
   "version": "1.0.0",
   "start_url": "/auto-notes",
   "display": "standalone",
@@ -139,8 +139,8 @@
   
   "protocol_handlers": [
     {
-      "protocol": "web+dhruvai",
-      "url": "/auto-notes?action=%s"
+      "protocol": "web+dronai",
+      "url": "/tutor?action=%s"
     }
   ],
   
@@ -166,7 +166,7 @@
   },
   
   "scope": "/",
-  "id": "dhruv-ai-auto-note-mentor",
+  "id": "dron-ai-study-partner",
   "launch_handler": {
     "client_mode": "navigate-existing"
   }
