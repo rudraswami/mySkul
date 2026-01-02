@@ -1,0 +1,28 @@
+# DRON AI - Robots.txt
+# https://dronai.co.in
+
+User-agent: *
+
+# Allow all public pages
+Allow: /
+Allow: /login
+Allow: /policies/
+
+# Block authenticated/app routes (not useful for crawlers)
+Disallow: /dashboard
+Disallow: /tutor
+Disallow: /study-planner
+Disallow: /subscription
+Disallow: /profile
+Disallow: /auth/
+Disallow: /tests
+Disallow: /auto-notes
+
+# Block API calls and static assets that don't need indexing
+Disallow: /api/
+Disallow: /static/js/
+Disallow: /static/css/
+
+# Sitemap location
+Sitemap: https://dronai.co.in/sitemap.xml
+
