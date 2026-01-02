@@ -555,11 +555,15 @@ body:has(.ai-tutor-redesign) {
 
 .chat-input-area {
   padding: var(--safe-padding-desktop);
+  padding-bottom: calc(var(--safe-padding-desktop) + env(safe-area-inset-bottom, 0px));
   background: white;
   border-top: 1px solid var(--neutral-200);
+  /* Critical: Prevent input from being pushed off screen */
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  /* Ensure it stays at bottom */
+  margin-top: auto;
 }
 
 .dark .chat-input-area {
@@ -570,6 +574,8 @@ body:has(.ai-tutor-redesign) {
 .chat-input-wrapper {
   max-width: 720px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ============================================
@@ -668,6 +674,21 @@ textarea:focus-visible,
 @supports (padding: env(safe-area-inset-bottom)) {
   .chat-input-area {
     padding-bottom: calc(var(--safe-padding-desktop) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ============================================
+   Mobile Input Area Fixes
+   ============================================ */
+
+@media (max-width: 768px) {
+  .chat-input-area {
+    padding: var(--safe-padding-mobile);
+    padding-bottom: calc(var(--safe-padding-mobile) + env(safe-area-inset-bottom, 0px));
+  }
+  
+  .chat-input-wrapper {
+    padding: 0 4px;
   }
 }
 
