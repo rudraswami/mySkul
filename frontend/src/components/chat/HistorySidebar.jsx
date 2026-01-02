@@ -293,7 +293,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
           )}
         </div>
 
-        {/* Menu Button */}
+        {/* Menu Button - Touch-friendly */}
         {!isEditing && (
           <button
             onClick={(e) => { 
@@ -301,18 +301,23 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
               setShowMenu(!showMenu); 
             }}
             style={{
-              padding: '6px',
+              padding: '8px',
               borderRadius: '8px',
               border: 'none',
               background: showMenu ? 'rgba(28, 28, 42, 0.85)' : 'transparent',
               cursor: 'pointer',
-              opacity: showMenu ? 1 : 0,
-              transition: 'opacity 0.15s, background 0.15s'
+              opacity: showMenu ? 1 : 0.7,
+              transition: 'opacity 0.15s, background 0.15s',
+              minWidth: '40px',
+              minHeight: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
             className="group-hover:!opacity-100 hover:!bg-slate-800/50"
             aria-label="Chat options"
           >
-            <MoreHorizontal style={{ width: '16px', height: '16px', color: '#a1a1b5' }} />
+            <MoreHorizontal style={{ width: '18px', height: '18px', color: '#a1a1b5' }} />
           </button>
         )}
       </div>
@@ -353,17 +358,18 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '10px 14px',
+                  padding: '12px 14px',
                   fontSize: '14px',
                   color: '#f1f5f9',
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  minHeight: '44px'
                 }}
                 className="hover:bg-slate-800/50"
               >
-                <Edit2 style={{ width: '15px', height: '15px', color: '#a1a1b5' }} /> 
+                <Edit2 style={{ width: '16px', height: '16px', color: '#a1a1b5' }} /> 
                 Rename
               </button>
               <button 
@@ -373,17 +379,18 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '10px 14px',
+                  padding: '12px 14px',
                   fontSize: '14px',
                   color: '#f1f5f9',
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  minHeight: '44px'
                 }}
                 className="hover:bg-slate-800/50"
               >
-                <Pin style={{ width: '15px', height: '15px', color: '#a1a1b5' }} /> 
+                <Pin style={{ width: '16px', height: '16px', color: '#a1a1b5' }} /> 
                 {chat.isPinned ? 'Unpin' : 'Pin'}
               </button>
               <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
@@ -394,17 +401,18 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '10px 14px',
+                  padding: '12px 14px',
                   fontSize: '14px',
                   color: '#DC2626',
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  minHeight: '44px'
                 }}
                 className="hover:bg-red-900/20"
               >
-                <Trash2 style={{ width: '15px', height: '15px' }} /> 
+                <Trash2 style={{ width: '16px', height: '16px' }} /> 
                 Delete
               </button>
             </motion.div>
@@ -967,7 +975,7 @@ export default function HistorySidebar({
         )}
       </AnimatePresence>
 
-      {/* Sidebar Drawer */}
+      {/* Sidebar Drawer - Responsive width */}
       <motion.div
         initial={false}
         animate={{ x: isOpen ? 0 : '-100%' }}
@@ -977,7 +985,8 @@ export default function HistorySidebar({
           top: 0,
           left: 0,
           bottom: 0,
-          width: '320px',
+          width: 'min(320px, 85vw)',
+          maxWidth: '320px',
           backgroundColor: '#0f0f16',
           boxShadow: '4px 0 30px rgba(0,0,0,0.5)',
           zIndex: 50,
@@ -1018,7 +1027,12 @@ export default function HistorySidebar({
                 background: 'transparent',
                 cursor: 'pointer',
                 borderRadius: '12px',
-                transition: 'background 0.15s'
+                transition: 'background 0.15s',
+                minWidth: '44px',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
               className="hover:bg-slate-800/50"
               aria-label="Close"
@@ -1148,9 +1162,11 @@ export default function HistorySidebar({
         </div>
 
         {/* === FOOTER: NEW CHAT + USER PROFILE === */}
+        {/* Added safe-area padding for iOS devices */}
         <div style={{
           backgroundColor: '#141420',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
         }}>
           {/* New Chat Button */}
           <div style={{ padding: '12px 16px 8px 16px' }}>

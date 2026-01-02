@@ -313,7 +313,7 @@ export default function ClassroomLayout({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* === WELCOME MODE (Full Width, Centered) - No Chat Yet === */}
         {!hasStartedChat ? (
           <div className="flex-1 flex flex-col bg-slate-900 overflow-y-auto">
@@ -326,12 +326,12 @@ export default function ClassroomLayout({
         ) : (
           <>
             {/* === DESKTOP LAYOUT === */}
-            <div className="hidden md:flex flex-1 overflow-hidden">
+            <div className="hidden md:flex flex-1 overflow-hidden min-h-0">
               {/* Left Panel - Chat */}
               {/* ZEN MODE: Full width, content centered inside (like ChatGPT) */}
               {/* PREMIUM: Clean dark theme when chat is active */}
               <div 
-                className={`flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
+                className={`flex flex-col overflow-hidden min-h-0 transition-all duration-500 ease-in-out ${
                   SMARTBOARD_ENABLED && isBoardOpen 
                     ? 'w-[40%] min-w-[400px] border-r border-gray-200' 
                     : 'flex-1'
@@ -382,7 +382,7 @@ export default function ClassroomLayout({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="flex-1 flex flex-col overflow-hidden"
+                    className="flex-1 flex flex-col overflow-hidden min-h-0"
                     style={{ background: hasStartedChat ? '#12121c' : 'white' }}
                   >
                     {children}
