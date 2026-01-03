@@ -835,13 +835,13 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
     const name = firstName ? `, ${firstName}` : '';
     
     if (hour >= 22 || hour < 5) {
-      return { line1: `Late night grind${name}?`, line2: "Let's make it count." };
+      return { line1: `Late night${name}?`, line2: "I'm here with you." };
     } else if (hour >= 5 && hour < 12) {
-      return { line1: `Morning${name}!`, line2: "Fresh mind = faster learning." };
+      return { line1: `Morning${name}!`, line2: "Fresh mind, fresh start." };
     } else if (hour >= 12 && hour < 17) {
       return { line1: `Hey${name}!`, line2: "Ready when you are." };
     } else {
-      return { line1: `Evening${name}!`, line2: "Let's clear some doubts." };
+      return { line1: `Evening${name}!`, line2: "How can I help?" };
     }
   };
   

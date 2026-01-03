@@ -314,11 +314,11 @@ export default function ClassroomLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* === WELCOME MODE (Full Width, Centered) - No Chat Yet === */}
+        {/* === WELCOME MODE (Full Width, Centered on Desktop, Top-aligned on Mobile) === */}
         {!hasStartedChat ? (
-          <div className="flex-1 flex flex-col bg-slate-900 overflow-y-auto">
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-full max-w-4xl mx-auto px-6 py-8">
+          <div className="flex-1 flex flex-col bg-slate-900 overflow-y-auto cognito-welcome-container">
+            <div className="flex-1 flex items-center justify-center md:items-center cognito-welcome-content">
+              <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-8">
                 {welcomeScreen || children}
               </div>
             </div>
