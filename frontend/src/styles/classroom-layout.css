@@ -91,6 +91,39 @@
     height: calc(100vh - 56px - 64px); /* header + tab bar */
     height: calc(100dvh - 56px - 64px); /* dynamic viewport height */
   }
+  
+  /* ========================================
+     MOBILE VIEWPORT FIX - Header + Layout
+     ======================================== */
+  
+  /* Header must stay fixed at top, never shift */
+  header.flex-shrink-0.h-14 {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+  }
+  
+  /* Main content area - proper flex layout */
+  .flex-1.flex.overflow-hidden.min-h-0 {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobile layout container - ensure proper flex */
+  .md\:hidden.flex-1.flex.flex-col.overflow-hidden.min-h-0 {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Motion div wrapper - must fill and flex properly */
+  .md\:hidden.flex-1.flex.flex-col.overflow-hidden.min-h-0 > div {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
 }
 
 /* Hide scrollbar but keep functionality */

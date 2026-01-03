@@ -157,12 +157,60 @@
   }
   
   /* ========================================
-     AI TUTOR MOBILE
+     AI TUTOR MOBILE - CRITICAL VIEWPORT FIX
      ======================================== */
   
-  /* Chat Container */
+  /* 
+   * FIX: Main tutor container uses h-screen (100vh) which doesn't work on mobile.
+   * On mobile browsers, 100vh includes browser chrome (URL bar).
+   * When keyboard opens, visible viewport shrinks but 100vh stays the same.
+   * This pushes the input area below visible viewport.
+   * 
+   * Solution: Use fixed positioning with inset:0 which respects actual visible area.
+   */
+  
+  /* Main AITutor container - override h-screen on mobile */
+  .flex.h-screen.bg-gray-50.overflow-hidden.relative {
+    position: fixed !important;
+    inset: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  
+  /* ClassroomLayout container - ensure proper height */
+  .flex-1.h-full.w-full.flex.flex-col.bg-slate-950.overflow-hidden.min-h-0 {
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+  
+  /* Chat wrapper - must fill available space */
+  .sathi-chat-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+  
+  /* Scrollable area - flex-1 with min-h-0 for proper shrinking */
+  .sathi-chat-scroll {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Input container - MUST stay visible, never pushed off screen */
+  .sathi-chat-input-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+  
+  /* Chat Container (legacy) */
   .chat-container {
-    height: calc(100vh - 120px) !important;
+    height: auto !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
     padding: 8px !important;
   }
   

@@ -2377,6 +2377,42 @@
 
 /* ===== Responsive Chat ===== */
 @media (max-width: 768px) {
+  /* 
+   * CRITICAL MOBILE FIX: Chat layout structure
+   * The chat wrapper must be a proper flex container that:
+   * 1. Fills available height (flex: 1)
+   * 2. Can shrink (min-height: 0)
+   * 3. Contains scrollable messages area
+   * 4. Has fixed input at bottom
+   */
+  
+  .sathi-chat-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Messages scroll area - takes remaining space */
+  .sathi-chat-scroll {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+  }
+  
+  /* Input stays at bottom, never hidden */
+  .sathi-chat-input-container {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 20 !important;
+    padding: 12px 10px 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  
   .sathi-user-message {
     max-width: 88%;
     padding: 12px 16px;
@@ -2391,11 +2427,6 @@
   
   .sathi-ai-message-content p {
     font-size: 14px !important;
-  }
-  
-  .sathi-chat-input-container {
-    padding: 12px 10px 16px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
   
   .sathi-chat-input-form {

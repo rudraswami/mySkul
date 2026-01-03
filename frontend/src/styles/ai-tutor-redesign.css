@@ -61,15 +61,19 @@
 
 .ai-tutor-redesign {
   display: flex;
-  height: 100vh;
-  max-height: 100vh;
-  background: #fafafa;
-  overflow: hidden;
+  /* Use fixed positioning with inset for reliable viewport handling */
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  /* Dynamic viewport height fallback */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  background: #fafafa;
+  overflow: hidden;
 }
 
 /* Main chat column - must fill height and contain scroll */
@@ -77,8 +81,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: 100vh;
+  max-height: 100%;
   overflow: hidden;
+  /* Critical for flex children to shrink properly */
+  min-height: 0;
 }
 
 /* Messages container - this is the ONLY element that should scroll */
