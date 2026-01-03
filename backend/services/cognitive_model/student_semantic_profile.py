@@ -388,7 +388,7 @@ class SemanticProfileManager:
             return self._cache[user_id]
         
         # Try to load from DB
-        if self.db:
+        if self.db is not None:
             try:
                 profile_data = await self.db.semantic_profiles.find_one({"user_id": user_id})
                 if profile_data:

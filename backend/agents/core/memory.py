@@ -204,7 +204,7 @@ class LongTermMemory:
     def _get_memory_service(self, db=None):
         """Get or create MemoryService instance."""
         actual_db = db or self._db
-        if actual_db and self._memory_service is None:
+        if actual_db is not None and self._memory_service is None:
             try:
                 from services.memory_service import MemoryService
                 self._memory_service = MemoryService(actual_db)
@@ -406,7 +406,7 @@ class MemorySystem:
     async def initialize(self, db=None) -> None:
         """Initialize memory system with database connection."""
         actual_db = db or self._db
-        if actual_db:
+        if actual_db is not None:
             self._db = actual_db
         await self.long_term.load(self._db)
         self._initialized = True

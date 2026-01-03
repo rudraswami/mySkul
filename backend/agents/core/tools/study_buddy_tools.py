@@ -405,7 +405,7 @@ class PracticeTrackerTool(BaseTool):
         }
         
         # Try to save to database
-        if db:
+        if db is not None:
             try:
                 await db.practice_sessions.insert_one(session_record)
                 logger.info(f"📊 [PracticeTracker] Recorded session for {user_id}: {topic}")
@@ -452,7 +452,7 @@ class PracticeTrackerTool(BaseTool):
         
         # Try to fetch from database
         sessions = []
-        if db:
+        if db is not None:
             try:
                 cutoff = (datetime.utcnow() - timedelta(days=30)).isoformat()
                 cursor = db.practice_sessions.find({
@@ -674,7 +674,7 @@ class SpacedRepetitionTool(BaseTool):
         due_topics = []
         
         # Try to get from database
-        if db:
+        if db is not None:
             try:
                 # Get recent practice sessions
                 sessions = await db.practice_sessions.find({

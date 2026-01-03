@@ -298,7 +298,7 @@ NEVER:
         if student_id not in self._memory_cache:
             self._memory_cache[student_id] = MemorySystem(student_id, db=db)
             await self._memory_cache[student_id].initialize(db=db)
-        elif db and not self._memory_cache[student_id]._db:
+        elif db is not None and self._memory_cache[student_id]._db is None:
             # If db is now available but wasn't before, update the memory system
             self._memory_cache[student_id].set_db(db)
         

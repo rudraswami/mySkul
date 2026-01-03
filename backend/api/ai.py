@@ -2059,6 +2059,15 @@ You MUST reference specific content from the image in your response."""
                     student_profile=agentic_context.get('student_profile')  # For personalization
                 )
                 
+                # ================================================================
+                # FIX: Track internal degradation for visibility
+                # ================================================================
+                if agentic_context.get('_agents_degraded'):
+                    # Use production-safe key naming (not stripped by sanitizer)
+                    result['partial_failure'] = True
+                    result['degraded_components'] = [f['agent'] for f in agentic_context.get('_agent_failures', [])]
+                    logger.warning(f"⚠️ Response generated with degraded agents: {len(result['degraded_components'])} failures")
+                
                 logger.info("✅ Agentic system response generated successfully")
                 
                 # ================================================================
@@ -2642,6 +2651,16 @@ You MUST reference specific content from the image in your response."""
         # Add detected subject and memory context to response
         if isinstance(result, dict):
             result['detected_subject'] = detected_subject
+            
+            # ================================================================
+            # FIX: Track memory degradation for production visibility
+            # ================================================================
+            if memory_context and memory_context.get('_memory_degraded'):
+                result['partial_failure'] = True
+                memory_failures = [e[0] for e in memory_context.get('_memory_errors', [])]
+                existing_components = result.get('degraded_components', [])
+                result['degraded_components'] = list(set(existing_components + memory_failures))
+                logger.warning(f"⚠️ Response includes degraded memory context: {len(memory_failures)} failures")
             
             # Add memory context for frontend display
             if memory_context and 'response' in result:

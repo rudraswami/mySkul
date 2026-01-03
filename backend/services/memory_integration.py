@@ -159,6 +159,9 @@ class MemoryIntegrationService:
                         user_id=user_id,
                         window_size=10
                     )
+                except asyncio.CancelledError:
+                    # Re-raise CancelledError to let gather handle it properly
+                    raise
                 except Exception as e:
                     memory_errors.append(("conversation_context", str(e)))
                     logger.warning(f"Conversation context fetch failed: {e}")
@@ -172,6 +175,8 @@ class MemoryIntegrationService:
                         top_k=3,
                         min_similarity=0.4
                     )
+                except asyncio.CancelledError:
+                    raise
                 except Exception as e:
                     memory_errors.append(("semantic_memory", str(e)))
                     logger.warning(f"Semantic memory search failed: {e}")
@@ -183,6 +188,8 @@ class MemoryIntegrationService:
                         user_id=user_id,
                         current_query=question
                     )
+                except asyncio.CancelledError:
+                    raise
                 except Exception as e:
                     memory_errors.append(("continuity", str(e)))
                     logger.warning(f"Continuity detection failed: {e}")
@@ -194,6 +201,8 @@ class MemoryIntegrationService:
                         user_id=user_id,
                         topic=current_topic
                     )
+                except asyncio.CancelledError:
+                    raise
                 except Exception as e:
                     memory_errors.append(("mastery", str(e)))
                     logger.warning(f"Mastery fetch failed: {e}")
@@ -202,6 +211,8 @@ class MemoryIntegrationService:
             async def safe_get_profile():
                 try:
                     return await self._get_user_profile(user_id)
+                except asyncio.CancelledError:
+                    raise
                 except Exception as e:
                     memory_errors.append(("profile", str(e)))
                     logger.warning(f"User profile fetch failed: {e}")
@@ -210,6 +221,8 @@ class MemoryIntegrationService:
             async def safe_get_weak_topics():
                 try:
                     return await self.mastery_tracker.get_weak_topics(user_id, threshold=40)
+                except asyncio.CancelledError:
+                    raise
                 except Exception as e:
                     memory_errors.append(("weak_topics", str(e)))
                     logger.warning(f"Weak topics fetch failed: {e}")
@@ -529,7 +542,14 @@ class MemoryIntegrationService:
                 "mastery_history": []
             }
             
-            await self.db.user_learning_profile.insert_one(default_profile)
+            # FIX: Wrap insert in try-except to handle cancellation during insert
+            try:
+                await self.db.user_learning_profile.insert_one(default_profile)
+            except asyncio.CancelledError:
+                # Don't let profile insert cancellation orphan the future
+                # Just log and return the default profile (not persisted)
+                logger.info("Profile insert cancelled (client disconnect)")
+                return default_profile
             
             # Get user name
             user = await self.db.users.find_one({"user_id": user_id})
@@ -539,6 +559,9 @@ class MemoryIntegrationService:
             
             return default_profile
             
+        except asyncio.CancelledError:
+            # Re-raise CancelledError - don't swallow it
+            raise
         except Exception as e:
             logger.error(f"❌ Failed to get user profile: {e}")
             return {}
@@ -819,6 +842,10 @@ class MemoryIntegrationService:
             pack["session_summary"] = session_state.get("session_summary", "")
             pack["active_task"] = session_state.get("active_task")
             pack["last_topic"] = session_state.get("last_retrieval_topics", [None])[0] if session_state.get("last_retrieval_topics") else None
+        except asyncio.CancelledError:
+            # Client disconnected - return partial pack
+            logger.info("MemoryContextPack: session_state cancelled (client disconnect)")
+            return pack
         except Exception as e:
             pack["_partial_failure"] = True
             pack["_failed_components"].append("session_state")
@@ -831,6 +858,9 @@ class MemoryIntegrationService:
             pack["exam_target"] = profile.get("exam_target")
             pack["preferred_explanation"] = profile.get("preferred_explanation", "step_by_step")
             pack["pacing"] = profile.get("pacing", "normal")
+        except asyncio.CancelledError:
+            logger.info("MemoryContextPack: student_profile cancelled (client disconnect)")
+            return pack
         except Exception as e:
             pack["_partial_failure"] = True
             pack["_failed_components"].append("student_profile")
@@ -863,6 +893,9 @@ class MemoryIntegrationService:
                 # Check if weak area
                 weak_topics = profile.get("weak_topics", [])
                 pack["is_weak_area"] = topic_key in [t.lower().replace(" ", "_") for t in weak_topics]
+        except asyncio.CancelledError:
+            logger.info("MemoryContextPack: mastery cancelled (client disconnect)")
+            return pack
         except Exception as e:
             pack["_partial_failure"] = True
             pack["_failed_components"].append("mastery")
@@ -888,6 +921,9 @@ class MemoryIntegrationService:
                     for m in relevant_memories[:5]
                     if isinstance(m, dict)
                 ]
+        except asyncio.CancelledError:
+            logger.info("MemoryContextPack: semantic_memory cancelled (client disconnect)")
+            return pack
         except Exception as e:
             pack["_partial_failure"] = True
             pack["_failed_components"].append("semantic_memory")

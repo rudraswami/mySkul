@@ -221,7 +221,7 @@ You are NOT just a tutor. You are:
                     import asyncio
                     from services.student_intelligence_hub import get_student_intelligence_hub
                     db = context.get('db')
-                    if db:
+                    if db is not None:
                         hub = get_student_intelligence_hub(db)
                         try:
                             hub_intelligence = await asyncio.wait_for(

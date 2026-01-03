@@ -533,14 +533,32 @@ export default function AITutorNeuroSymbolic() {
   const lastUserInputRef = useRef(''); // Track last typed value for debugging
   
   // Protected setInputMessage - logs any suspicious clears
+  // ENHANCED: Track more context to debug input disappearing issue
+  // NOTE: loadingRef is updated after loading state is declared (see below)
+  const loadingRef = useRef(false);
+  
   const setInputMessage = useCallback((newValue) => {
     const prevValue = lastUserInputRef.current;
+    const timestamp = new Date().toISOString().substring(11, 23);
     
     // If clearing input and it wasn't from a user send, log warning
     if (newValue === '' && prevValue.length > 0 && !inputClearedByUserRef.current) {
       console.warn('⚠️ INPUT CLEAR DETECTED (not from send):', {
+        timestamp,
         prevValue: prevValue.substring(0, 50),
-        stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
+        newValue: '(empty)',
+        wasLoading: loadingRef.current,
+        stack: new Error().stack?.split('\n').slice(1, 5).join('\n')
+      });
+    }
+    
+    // Log ANY change to input (not just clears) - helps trace the issue
+    // Only log if value actually changes to reduce noise
+    if (newValue !== prevValue) {
+      console.log(`📝 INPUT CHANGE [${timestamp}]:`, {
+        from: prevValue.length > 20 ? prevValue.substring(0, 20) + '...' : prevValue || '(empty)',
+        to: newValue.length > 20 ? newValue.substring(0, 20) + '...' : newValue || '(empty)',
+        intentional: inputClearedByUserRef.current
       });
     }
     
@@ -557,6 +575,7 @@ export default function AITutorNeuroSymbolic() {
     setInputMessageRaw(newValue);
   }, []);
   const [loading, setLoading] = useState(false);
+  loadingRef.current = loading; // Keep ref in sync for logging
   
   // 🎙️ VOICE INPUT INTEGRATION (ENHANCED)
   // Now includes: multi-language, audio feedback, confidence tracking, auto-retry

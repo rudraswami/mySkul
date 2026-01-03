@@ -547,7 +547,7 @@ class ContextPackBuilder:
             # This enables proper "okay"/"got it" continuation
             try:
                 from core.config import settings
-                if settings.ENABLE_CONTINUITY_TRACKING and self.db:
+                if settings.ENABLE_CONTINUITY_TRACKING and self.db is not None:
                     last_task_info = await self._get_last_task_info(user_id, session_id)
                     if last_task_info:
                         pack.last_output_type = last_task_info.get('output_type', '')

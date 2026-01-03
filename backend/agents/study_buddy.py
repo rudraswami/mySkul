@@ -284,7 +284,7 @@ class StudyBuddyAgent(ReActAgent):
         if user_id not in self._memory_cache:
             # Create memory with database connection for persistence
             self._memory_cache[user_id] = MemorySystem(student_id=user_id, db=db)
-        elif db and not self._memory_cache[user_id]._db:
+        elif db is not None and self._memory_cache[user_id]._db is None:
             # Update db if now available
             self._memory_cache[user_id].set_db(db)
         return self._memory_cache[user_id]
@@ -322,7 +322,7 @@ class StudyBuddyAgent(ReActAgent):
         
         # Try to get from database
         db = context.get('db')
-        if db and user_id:
+        if db is not None and user_id:
             try:
                 # Get recent practice sessions
                 from datetime import timedelta
@@ -373,7 +373,7 @@ class StudyBuddyAgent(ReActAgent):
         MEMORY WRITE: Session outcomes, topics covered, performance
         """
         db = context.get('db')
-        if not db:
+        if db is None:
             logger.debug("[StudyBuddy] No DB connection, skipping session write")
             return
         

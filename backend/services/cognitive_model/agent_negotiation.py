@@ -563,7 +563,7 @@ class AgentNegotiator:
         tasks = []
         for agent_name in all_agents:
             agent = self.agents.get(agent_name)
-            if agent:
+            if agent is not None:
                 tasks.append(self._run_agent(agent, agent_name, query, context))
         
         if not tasks:
@@ -579,14 +579,22 @@ class AgentNegotiator:
         
         # Process results - FIX: Explicit None check, not truthy
         responses = []
+        failed_agents = []  # Track failures for visibility
         for agent_name, result in zip(all_agents, results):
             if isinstance(result, Exception):
                 logger.warning(f"Agent {agent_name} failed: {result}")
+                failed_agents.append({"agent": agent_name, "error": str(result)})
                 continue
             
             # FIX: Explicit check for None/AgentResponse, not truthy (avoids DB bool issue)
             if result is not None and isinstance(result, AgentResponse):
                 responses.append(result)
+        
+        # Store failed agents in context for visibility in response
+        if failed_agents:
+            context["_agent_failures"] = failed_agents
+            context["_agents_degraded"] = True
+            logger.warning(f"⚠️ {len(failed_agents)}/{len(all_agents)} agents failed: {[f['agent'] for f in failed_agents]}")
         
         return responses
     
